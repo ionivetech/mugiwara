@@ -63,12 +63,14 @@ async function install(flags) {
   const home = homedir();
   const allFiles = [];
   const allNotes = [];
+  const installed = [];
   for (const id of targetIds) {
     const t = targets[id];
     if (scope === 'global' && !t.native) {
       console.log(`! ${t.label}: project scope only — skipped for global install`);
       continue;
     }
+    installed.push(id);
     console.log(`\n-> ${t.label} (${scope})`);
     const r = installTo(t, { scope, projectDir, type, home, dryRun: !!flags.dryRun, force: !!flags.force });
     console.log(`   written ${r.written.length}, skipped ${r.skipped.length}, backed up ${r.backedUp.length}`);
@@ -84,7 +86,7 @@ async function install(flags) {
     scope,
     type,
     installedAt: new Date().toISOString(),
-    targets: [...new Set([...(prev?.targets ?? []), ...targetIds])],
+    targets: [...new Set([...(prev?.targets ?? []), ...installed])],
     files: [...new Set([...(prev?.files ?? []), ...allFiles])],
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
