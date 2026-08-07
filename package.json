@@ -7,6 +7,6 @@
   "bin": { "mugiwara": "bin/mugiwara.js" },
   "files": ["bin", "src", "content", "scripts/install.sh", "scripts/install.ps1", "README.md", "LICENSE"],
   "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/" },
+  "scripts": { "test": "node --test" },
   "keywords": ["ai", "agents", "skills", "claude-code", "opencode", "copilot", "gemini", "codex", "windsurf", "cline", "multi-agent", "workflow"]
 }
