@@ -370,6 +370,21 @@ description: Use at the start of any non-trivial mission to run the Mugiwara cre
 
 The Straw Hat pipeline: Wave 0 triage + Waves 1-9. Waves are phases of the mission, not files — Nami writes them into the plan doc, Zoro executes them.
 
+## Workspace layout
+
+Every mission creates and works inside `.mugiwara/` at the repo root:
+
+```
+.mugiwara/
+├── spec/          # brainstorm output (before planning)
+├── plans/         # plan docs — single source of truth from Wave 2
+├── results/       # wave results: audit reports, test output, gate verdicts
+├── review/        # review + security findings, code review reports
+└── ...            # any other mission artifacts
+```
+
+The owning agent creates the folder it needs on first write. No mission artifacts go outside `.mugiwara/`.
+
 ## Wave 0 — Luffy Triage (always first)
 
 Dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planning.
@@ -397,7 +412,7 @@ Luffy routes: vague idea / unclear requirements → Wave 1 first. Clear requirem
 3. Heal loop is bounded: Wave 8 → Wave 4, max 3 cycles. After that, escalate to the human with full history.
 4. Any agent may consult Luffy mid-flight (re-dispatch `luffy-orchestrator`) for decisions and escalations.
 5. Wave 7 runs Robin and Jinbe in parallel.
-6. The plan doc (`docs/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
+6. The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
 ````
 
@@ -449,7 +464,7 @@ For UI ideas, sketch structure in markdown/ASCII or minimal HTML before committi
 
 ## Handoff
 
-When direction is locked, write a short brief (problem, chosen option + reasoning, risks, open questions) and hand to Nami (`mugiwara-planning`).
+When direction is locked, write a short brief (problem, chosen option + reasoning, risks, open questions) to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` and hand to Nami (`mugiwara-planning`).
 ````
 
 - [ ] **Step 2: Verify** — `node scripts/validate-content.mjs --check content/skills/mugiwara-brainstorm/SKILL.md` → `✓`.
@@ -482,7 +497,7 @@ Batch all blocking ambiguities into ONE question round before starting. If a maj
 
 ## Plan format
 
-Save to `docs/plans/YYYY-MM-DD-<mission>.md`:
+Save to `.mugiwara/plans/YYYY-MM-DD-<mission>.md`:
 
 - Header: goal (one sentence), architecture (2-3 sentences), tech stack, global constraints.
 - Waves: group tasks into waves; each wave ends in a reviewable, testable state.
@@ -997,7 +1012,7 @@ Owns the whole mission flow: triage routing, wave transitions, decisions, closur
 
 ## Output
 
-Triage decision / check-in verdict / decision record / closure report — appended to `docs/plans/<mission>.md`.
+Triage decision / check-in verdict / decision record / closure report — appended to `.mugiwara/plans/<mission>.md`.
 ````
 
 - [ ] **Step 2: Verify** — `node scripts/validate-content.mjs --check content/agents/luffy-orchestrator.md` → `✓`.
@@ -1040,7 +1055,7 @@ Wave 2 of `mugiwara-workflow`.
 
 ## Output
 
-`docs/plans/YYYY-MM-DD-<mission>.md` — reviewed by the user before Zoro starts.
+`.mugiwara/plans/YYYY-MM-DD-<mission>.md` — reviewed by the user before Zoro starts.
 ````
 
 - [ ] **Step 2: Verify** — `node scripts/validate-content.mjs --check content/agents/nami-planner.md` → `✓`.
