@@ -33,7 +33,9 @@
       "mugiwara-review",
       "mugiwara-security",
       "mugiwara-healing",
-      "mugiwara-frontend"
+      "mugiwara-frontend",
+      "mugiwara-git",
+      "mugiwara-ship"
     ]
   }
 }

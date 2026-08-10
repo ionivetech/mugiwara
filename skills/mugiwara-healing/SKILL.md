@@ -1,15 +1,31 @@
 ---
 name: mugiwara-healing
-description: Use when earlier waves produced failures - test failures, gate failures, review findings, security findings. Triages each failure, applies minimal root-cause fixes, prepares rollback for risky ones, re-runs failed checks.
+description: Use when earlier waves produced failures - test failures, gate failures, review findings, security findings. Reads the .mugiwara/issues ledger first, stop-the-line triage per failure, prove-it before fixing, minimal root-cause fixes, ledger updated with evidence.
 ---
 
 # Healing (Brook)
 
 Fix what failed, minimally, and prove it. One clean retry per cycle.
 
-## Inputs
+## Read the ledger first
 
-Failure ledger (Chopper), quality report (Sanji), gate verdict (Franky), review findings (Robin), security report (Jinbe).
+Brook's inputs: `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` rows + quality report (Sanji), gate verdict (Franky), review findings (Robin), security report (Jinbe). Process each ledger row — every row is one healing unit. Rows are appended by any agent that hit a blocker; never skip a row.
+
+## Stop-the-Line triage (per failure)
+
+1. PRESERVE evidence: save the failing output/state before touching anything.
+2. Reproduce: re-run the failure, confirm it is real and current.
+3. Localize: layer map of where it sits (config/test/code/env); use `git bisect` when a regression window is unclear.
+4. Reduce: shrink to the minimal case that still fails.
+5. Fix the ROOT cause — grep all callers before patching; never patch only the symptom path.
+6. Guard with a regression test that fails without the fix.
+7. Verify end-to-end: run the failed check, capture output.
+
+Never push past a failing test — a red test stops the line until it is green or escalated.
+
+## Prove-It pattern
+
+Before fixing a bug: write the failing test that reproduces it, watch it fail, then fix until green. Red → code → green, in that order. A fix with no reproducing test is unproven.
 
 ## Triage matrix
 
@@ -26,18 +42,21 @@ Failure ledger (Chopper), quality report (Sanji), gate verdict (Franky), review 
 1. One fix = smallest diff resolving the finding. No drive-by refactors.
 2. Every code fix ships with the failed check now passing (run it, capture output).
 3. Never delete or weaken tests/configs to make a failure disappear.
-4. Cycle counter: after this wave the flow returns to Wave 4 (Chopper). Same failure surviving 3 heal cycles → stop, escalate with full history.
+4. After healing: update the ledger — mark each healed row with evidence; keep unfixed rows for escalation.
+5. Cycle counter: after this wave the flow returns to Wave 4 (Chopper) for re-audit. Same failure surviving 3 heal cycles → stop, escalate with full history.
 
 ## Output
 
-Fixed list (finding → commit → evidence) and escalated list (finding → plan → owner).
+Fixed list (finding → commit → evidence), escalated list (finding → plan → owner), updated ledger → back to Wave 4 (Chopper).
 
 ## Red flags
 
 - Patching the symptom path instead of the root cause (fix at the shared function, not the one caller that surfaced).
+- A fix shipped without a reproducing test (Prove-It skipped).
 - A test or config deleted or weakened to silence a failure.
 - A drive-by refactor riding along with a fix.
 - A code failure marked `env` to close the ledger.
+- A ledger row processed with no evidence recorded.
 - The same failure healing past 3 cycles without escalation.
 
 All mean: the fix is not real. Stop, find the root cause, or escalate with full history.

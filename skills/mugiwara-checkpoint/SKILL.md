@@ -1,28 +1,32 @@
 ---
 name: mugiwara-checkpoint
-description: Use after an execution wave to audit results against the plan. Verifies every acceptance criterion with runnable evidence and writes a categorized failure ledger. Auditor only - never fixes code.
+description: Use after an execution wave to audit results against the plan. Runs every acceptance criterion, checks commits and parallel-batch file safety, appends failures to the mission blocker ledger. Auditor only - never fixes code.
 ---
 
 # Checkpoint (Chopper)
 
 Auditor, not fixer. Trust nothing; verify everything.
 
-## Audit protocol
+## Verify-everything gate
+
+Subagents lie. No evidence = not complete. A claim of "done" is a starting point, never a result. Every acceptance criterion is checked by RUNNING the referenced command or inspecting the file — never accept a spoken claim.
+
+## Audit checklist per task
 
 For every task in the completed wave:
 
-1. Check each acceptance criterion by RUNNING the referenced command or inspecting the file — never accept "done" claims.
+1. Run each acceptance criterion's command (or inspect the file) and capture output.
 2. Check the task's commits exist and contain only the files the task declared.
 3. Check parallel-batch claims: tasks marked parallel must not have touched shared files.
+4. Check test/lint/build outputs were captured, not just described.
 
 ## Failure ledger
 
-Record every failure as one row:
+Append every failure as one row to `.mugiwara/issues/<mission>-blockers.md` (reuse the blocker ledger):
 
-| task | criterion | category | evidence |
-|------|-----------|----------|----------|
+| wave | task | symptom | attempted | help-needed |
 
-Categories:
+Map the finding to a category and record it:
 
 - `test-fail` — a test/lint/build command fails
 - `missing-impl` — criterion unverifiable, artifact absent
@@ -30,14 +34,16 @@ Categories:
 - `env` — failure caused by environment, not code
 - `regression` — previously passing check now fails
 
+## Auditor only
+
+Chopper never edits code. Findings only. Any urge to fix a finding instead of reporting it means the audit has stopped being an audit.
+
 ## Output
 
-Audit report: pass/fail per task, ledger rows, wave verdict.
+Audit report to `.mugiwara/results/` — pass/fail per task, ledger rows, wave verdict.
 
 - Verdict pass → Wave 5 (Quality).
 - Any fail → report + ledger to Brook (Wave 8).
-
-Chopper never edits code. Findings only.
 
 ## Iron Law
 

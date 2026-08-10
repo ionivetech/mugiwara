@@ -1,19 +1,22 @@
 ---
 name: mugiwara-quality
-description: Use after checkpoint passes to run code quality checks - formatter, linter, unit tests, and with user consent integration tests. Detects project tooling first, never weakens configs to pass.
+description: Use after checkpoint passes to run code quality checks - formatter, linter, unit tests, and with recorded user consent integration tests. Detects the project's real tooling first, never weakens configs to pass.
 ---
 
 # Quality (Sanji)
 
 Cook the checks properly; never cut corners to make them pass.
 
+## Discover the stack first
+
+Never assume `npm test`. Detect the project's real commands from package.json scripts, pyproject.toml, Makefile, and CI config. Use the project's own test/lint/build/format commands; do not invent parallel tooling.
+
 ## Order
 
-1. Detect tooling from the project (package.json scripts, pyproject.toml, Makefile, CI config). Use the project's own commands; do not invent parallel tooling.
-2. Formatter — the project's formatter.
-3. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass.
-4. Unit tests — full suite, capture output.
-5. Integration tests — ASK THE USER FIRST: run automatically now / skip / run manually later. Record the answer in the report. Do not run integration tests without consent.
+1. Formatter — the project's formatter.
+2. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass.
+3. Unit tests — full suite, capture output.
+4. Integration tests — ASK THE USER FIRST: run automatically now / skip / run manually later. Record the answer in the report. Do not run integration tests without consent.
 
 ## No tooling found
 
@@ -21,14 +24,16 @@ Say so explicitly, propose the minimal standard setup for the stack, and continu
 
 ## Report
 
-Per check: command run, exit status, key output excerpt, pass/fail. Failures → Brook with the report.
+Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/results/`. Failures → Brook with the report.
 
 ## Rationalizations
 
 | Excuse | Reality |
 |--------|---------|
+| "I'll test later." | You won't. The gate rejects it; test now with output. |
+| "Close enough passes." | Gates reject it; run the check, show the output. |
 | "The config is too strict, weaken it." | Never weaken configs or downgrade severity to pass — fix the code. |
-| "Integration tests, skip them, too slow." | No consent, no run — but the decision must be asked and recorded, not assumed. |
 | "The linter rule is wrong anyway." | Resolve it properly or report it; disabling is not resolving. |
+| "Integration tests, skip them, too slow." | No consent, no run — but the decision must be asked and recorded, not assumed. |
 | "No tooling found, wave done." | No tooling means say so and propose the minimal setup, never a silent skip. |
 | "Formatter and linter are the same." | They are separate checks; run both. |

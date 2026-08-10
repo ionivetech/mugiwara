@@ -43,33 +43,35 @@ subagent machinery and may call the crew's shared skills.
 
 | Agent | Crew member | Role |
 |-------|-------------|------|
-| `luffy-orchestrator` | Luffy | Triage every mission, coordinate wave transitions, answer inter-agent escalations, close missions |
-| `usopp-brainstorm` | Usopp | Principal-engineer sparring partner for vague ideas and architecture exploration |
-| `nami-planner` | Nami | Write wave-structured execution plans with acceptance criteria |
-| `zoro-execution` | Zoro | Execute approved plans through subagents, verify evidence per task |
-| `chopper-checkpoint` | Chopper | Audit wave results against the plan; writes the failure ledger (never fixes code) |
-| `sanji-quality` | Sanji | Run formatter, linter, unit tests; integration tests only with consent |
-| `franky-gates` | Franky | Enforce quality gates: coverage thresholds and build validation |
-| `robin-reviewer` | Robin | Review the diff for breaking changes, smells, duplication, doc gaps |
-| `jinbe-security` | Jinbe | Security review: OWASP surface, secrets, injection, auth, dependencies |
-| `brook-healing` | Brook | Triage and fix failures from any wave, up to 3 heal cycles |
+| `luffy-orchestrator` | Luffy | Main gateway: 5-way triage, background check-ins, work splitting, decision log, closure |
+| `usopp-brainstorm` | Usopp | Critical brainstorming friend: facts over hype, options + trade-offs, no over-engineering |
+| `nami-planner` | Nami | Interview-first planner: full-context scan, wave structure, anti-patterns, parallel-safe plans |
+| `zoro-execution` | Zoro | Execute plans: todo list first, parallel/sequential subagent dispatch, evidence per task |
+| `chopper-checkpoint` | Chopper | Verify-everything audit of wave results; writes the failure ledger (never fixes code) |
+| `sanji-quality` | Sanji | Discover the stack, then format/lint/test; integration tests only with consent |
+| `franky-gates` | Franky | Binary gates: coverage ≥90/80, build exit 0, Definition of Done |
+| `robin-reviewer` | Robin | Doubt-driven diff review: breaking-change first, five-axis, severity-tagged findings |
+| `jinbe-security` | Jinbe | Security review: OWASP, secrets, injection, auth, dependencies, untrusted-data doctrine |
+| `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, ≤3 heal cycles |
 
-### The techniques — 12 skills
+### The techniques — 14 skills
 
 | Skill | Purpose |
 |-------|---------|
-| `mugiwara-workflow` | Run the full crew pipeline — the entry point for any non-trivial mission |
-| `mugiwara-orchestration` | Luffy's captain behavior: triage, check-ins, decision log, closure report |
-| `mugiwara-brainstorm` | Usopp's probing questions, trade-offs, and recommendations |
-| `mugiwara-planning` | Wave-structured plans with parallel/sequential markers |
-| `mugiwara-execution` | Parallel batches and sequential chains, subagent dispatch |
-| `mugiwara-checkpoint` | Evidence-first audit of every acceptance criterion |
-| `mugiwara-quality` | Project-tooling detection: formatter, linter, unit + integration tests |
-| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation |
-| `mugiwara-review` | Severity-tagged diff review findings |
-| `mugiwara-security` | OWASP-driven security review, severity-tagged report |
-| `mugiwara-healing` | Minimal root-cause fixes, rollback prep, re-runs failed checks |
-| `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction |
+| `mugiwara-workflow` | The harness entry point: gateway triage, wave pipeline, workspace layout, blocker protocol, cleanup |
+| `mugiwara-orchestration` | Luffy's captain behavior: 5-way classifier, check-ins, work splitting, decision log, closure |
+| `mugiwara-brainstorm` | Usopp's critical sparring: interrogate, research facts, cut over-engineering, recommend |
+| `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers + anti-patterns |
+| `mugiwara-execution` | Todo list, parallel batches + sequential chains, 6-field subagent delegation, one task one commit |
+| `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion; failure rows to the blocker ledger |
+| `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit + consent-gated integration tests |
+| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done |
+| `mugiwara-review` | Doubt-driven review: breaking-change analysis, five-axis, severity-tagged findings |
+| `mugiwara-security` | OWASP-driven security review, untrusted-data doctrine, severity by exploitability × impact |
+| `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |
+| `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction, slop list |
+| `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
+| `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
 
 ### No runtime
 
@@ -86,13 +88,15 @@ AI-slop patterns — framework-agnostic.
 
 ## How it works
 
-Every mission runs as a **wave pipeline** owned by one crew member per wave.
-Wave 0 (triage) is always first; clear, small tasks skip ahead to planning
-with the reason recorded.
+Every mission starts at the **Luffy gateway** — he classifies the request
+(trivial / explicit / exploratory / open-ended / ambiguous) and routes it:
+exploratory ideas go to Usopp's brainstorm, clear work goes straight to Nami's
+planning. You can also summon any crew member directly. From there the mission
+runs as a **wave pipeline** owned by one crew member per wave.
 
 | Wave | Owner | Skill | Output |
 |------|-------|-------|--------|
-| 0 Triage | Luffy | `mugiwara-orchestration` | route decision + reason |
+| 0 Triage | Luffy | `mugiwara-orchestration` | 5-way route decision + reason |
 | 1 Brainstorm | Usopp | `mugiwara-brainstorm` | refined direction, options, recommendation |
 | 2 Planning | Nami | `mugiwara-planning` | plan doc: waves, tasks, acceptance criteria |
 | 3 Execution | Zoro | `mugiwara-execution` | implemented tasks with evidence |
@@ -107,7 +111,7 @@ Two rules hold the pipeline together:
 
 - **Evidence over claims.** No wave passes on assertion — the owning agent runs
   the checks and shows output. A wave that cannot produce evidence is a failed
-  wave.
+  wave. ("Subagents lie. No evidence = not complete.")
 - **The plan is the source of truth.** From Wave 2 on, everything lives in
   `.mugiwara/plans/<date>-<mission>.md`. No wave is skipped without the reason
   recorded there.
@@ -118,12 +122,22 @@ Every mission works inside `.mugiwara/` at the repo root:
 
 ```
 .mugiwara/
-├── spec/          # brainstorm output (before planning)
+├── spec/          # brainstorm output: YYYY-MM-DD-<mission>.md
 ├── plans/         # plan docs — single source of truth from Wave 2
-├── results/       # wave results: audits, test output, gate verdicts
+├── results/       # wave results: audits, test output, gate verdicts, todos
 ├── review/        # review + security findings
-└── ...            # any other mission artifacts
+├── issues/        # blocker + failure ledger: YYYY-MM-DD-<mission>-blockers.md
+└── logs/          # Luffy's decision log
 ```
+
+**Blocker protocol:** any crew member that hits a blocker appends a row
+(`wave | task | symptom | attempted | help needed`) to
+`.mugiwara/issues/<mission>-blockers.md` and escalates — never a silent
+workaround. Brook reads the ledger in Wave 8 and heals what it lists.
+
+**Cleanup:** at closure, Luffy deletes the superseded intermediate markdown
+files (consumed results, review, and issues reports). The plan doc and closure
+report stay.
 
 The owning agent creates the folder it needs on first write. Mission artifacts
 never land outside `.mugiwara/`.
@@ -230,7 +244,7 @@ tool points at the crew.
 ## Claude Code plugin install
 
 Mugiwara also ships as a **Claude Code plugin** with a marketplace — the
-primary target. The plugin bundles the 10 agents + 12 skills as copies at the
+primary target. The plugin bundles the 10 agents + 14 skills as copies at the
 repo root (`agents/`, `skills/`) plus a `SessionStart` hook that announces the
 crew. Regenerate the copies from `content/` with `.claude-plugin/sync.sh`.
 
@@ -313,7 +327,7 @@ mugiwara/
 │   └── targets/         # one adapter per AI agent (claude, opencode, gemini, ...)
 ├── test/                # vitest suites
 ├── content/             # single source of truth for the crew
-│   ├── skills/          # 12 skills (one dir per skill, SKILL.md inside)
+│   ├── skills/          # 14 skills (one dir per skill, SKILL.md inside)
 │   └── agents/          # 10 agents (<name>.md)
 ├── scripts/             # install.sh, install.ps1, validate-content.mjs
 ├── hooks/               # Claude Code SessionStart hook (hooks.json + session-start.js)
