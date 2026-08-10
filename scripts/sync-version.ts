@@ -12,6 +12,10 @@ const targets = [
   join(root, '.claude-plugin', 'plugin.json'),
   join(root, 'plugin.json'),
   join(root, '.claude-plugin', 'marketplace.json'),
+  join(root, 'gemini-extension.json'),
+  join(root, '.codex-plugin', 'plugin.json'),
+  join(root, '.cursor-plugin', 'plugin.json'),
+  join(root, '.kimi-plugin', 'plugin.json'),
 ];
 
 for (const file of targets) {

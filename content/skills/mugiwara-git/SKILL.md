@@ -39,6 +39,12 @@ Git hygiene keeps the mission reversible: one logical change per commit, a save-
 2. Copy the observed conventions: prefix style (`feat:`/`fix:` vs plain), subject case, body usage, subject length.
 3. No commits in the repo yet → adopt conventional commits and note it in the plan.
 
+## Worktrees — isolated workspaces
+
+1. For risky or parallel work, prefer a worktree over the shared working tree: `git worktree add ../<name> <branch>` gives an isolated checkout and lets you return to the main one without stashing.
+2. One worktree per mission/branch; two tasks never share a worktree.
+3. Remove when done: `git worktree remove ../<name>` (after the branch is merged or abandoned).
+
 ## Debugging via history
 
 1. `git bisect start`, then `git bisect bad <current>` and `git bisect good <known-good>` to find the regression commit. Log the bad commit range in the result.

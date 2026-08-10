@@ -13,11 +13,11 @@ What survives on disk and drives resume:
 
 | File | Holds |
 |------|-------|
-| `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | waves, tasks, acceptance criteria, decisions |
+| `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | waves, tasks, acceptance criteria (clean plan) |
 | `.mugiwara/results/<mission>-todos.md` | checkbox per task, checked = done with evidence |
 | `.mugiwara/results/<mission>-trace.md` | every dispatch, outcome |
 | `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` | blocker rows with owners / heal state |
-| `.mugiwara/logs/` | Luffy's decision log |
+| `.mugiwara/logs/YYYY-MM-DD-<mission>.md` | Luffy's decision + check-in log |
 
 ## Resume protocol
 
