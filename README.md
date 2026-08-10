@@ -79,3 +79,22 @@ node scripts/validate-content.mjs   # content schema lint
 ```
 
 Zero runtime dependencies. MIT.
+
+## Plugin install
+
+Mugiwara also ships as a Claude Code plugin + marketplace (works for GitHub
+Copilot CLI too — it reads the same `.claude-plugin/` manifests).
+
+```bash
+# Claude Code
+/plugin marketplace add ionivetech/mugiwara
+/plugin install mugiwara
+
+# GitHub Copilot CLI
+copilot plugin marketplace add ionivetech/mugiwara
+copilot plugin install mugiwara
+```
+
+The plugin bundles the 10 agents + 12 skills as copies at the repo root
+(`agents/`, `skills/`) plus a SessionStart hook. Regenerate the copies from
+`content/` with `.claude-plugin/sync.sh`.
