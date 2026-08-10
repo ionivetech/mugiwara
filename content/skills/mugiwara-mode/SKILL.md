@@ -19,14 +19,13 @@ Consent is an invariant in ALL levels — see below. Every level ends at push + 
 
 ## Config
 
-Two files, four keys, `key=value` lines, optional `#` comments:
+Two files, three keys, `key=value` lines, optional `#` comments:
 
 ```
 # .mugiwara/config (project) overrides ~/.mugiwara/config (global)
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
-pr=ready
 ```
 
 | Key | Values | Default (no mugiwara branding) |
@@ -34,7 +33,6 @@ pr=ready
 | mode | guided / semi / auto | guided |
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
-| pr | ready | ready |
 
 The `branch` value is a naming pattern, never executed: its placeholders (`{type}`/`{issue}`/`{slug}`) are filled from mission metadata and validated against a safe charset (alphanumerics, `-`, `_`) before any git command.
 
@@ -54,7 +52,7 @@ The plan proceeds past approval in `auto` ONLY with zero blocking ambiguities AN
 
 ## Terminal invariant
 
-Every mode ends at: push the mission branch → open a ready PR (per the `pr` key, default `ready`, never draft) → post one verdict comment + check-run. The crew never merges, never deploys, never auto-reacts to review comments or CI in any mode. PR review is the terminal gate.
+Every mode ends at: push the mission branch (per the `branch` key) → write the PR verdict file per `mugiwara-pr` → hand the branch + verdict to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. PR review is the terminal gate.
 
 ## Rules
 

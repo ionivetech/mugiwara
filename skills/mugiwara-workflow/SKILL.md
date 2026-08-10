@@ -61,7 +61,7 @@ Alongside triage, read the mode config per `mugiwara-mode`: `.mugiwara/config` (
 | 6 Gates | Franky | mugiwara-gates | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | mugiwara-review + mugiwara-security | severity-tagged findings |
 | 8 Healing | Brook | mugiwara-healing | fixes, then loop back to Wave 4 |
-| 9 Closure | Luffy | mugiwara-orchestration | closure report + push mission branch + open ready PR, hand link to user (terminal gate in every mode) |
+| 9 Closure | Luffy | mugiwara-orchestration | closure report + push mission branch + PR verdict file handed to user, who opens the PR (terminal gate in every mode) |
 
 Wave 4.5 is optional — Luffy invokes Skeptic after Chopper on high-stakes missions (verdicts, plans, reviews), or parallel to Wave 7 review when he calls for it. Skip means recorded without a pass.
 
@@ -88,7 +88,7 @@ At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` �
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
 8. One agent may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 11 members); dispatch the agent, not the skill.
 9. On session start, context loss, or "where were we?" — resume before any wave via `resume-coordinator` (mugiwara-resume); never start over.
-10. The crew never merges and never deploys — push + ready PR is the terminal gate in every mode; PR review is where the mission ends.
+10. The crew never merges and never deploys — push the branch + hand the verdict file to the user, who opens the PR; PR review is the terminal gate in every mode.
 
 ## Iron Law
 

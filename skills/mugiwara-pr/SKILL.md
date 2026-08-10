@@ -1,11 +1,11 @@
 ---
 name: mugiwara-pr
-description: Use at closure to post the mission verdict onto the PR - one provider-agnostic verdict file, one comment + one check-run via the gh adapter, no auto-reaction to review comments or CI in any mode.
+description: Use at closure to push the mission branch and prepare the PR material - one provider-agnostic verdict file the user pastes into the PR, one local check-run summary. Plain git push, no gh CLI, no auto-reaction to review comments or CI in any mode.
 ---
 
-# PR Verdict (CI/CD Loop)
+# PR Handoff (CI/CD Loop)
 
-Mugiwara's evidence lands where the team reviews. At terminal, write one structured verdict file and post it as ONE comment + ONE check-run on the ready PR. Never per-wave.
+Mugiwara's evidence lands where the team reviews. At terminal, push the mission branch with plain `git`, write one structured verdict file the user pastes into the PR, and stop. No `gh` CLI, no PR API calls, no posting. Never per-wave.
 
 ## Verdict file
 
@@ -17,18 +17,17 @@ Write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md`:
 - User-test verdict — when user tests were declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
 - Closure-report link — `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`.
 - Final verdict line — PASS / FAIL with the single blocking reason, if any.
+- Optional PR description block — copy-paste title + body ready for the user's PR.
 
-## Posting rule
+## Handoff rule
 
-ONE batch comment + ONE check-run, posted only at terminal when the PR is created as `ready`. The PR opens only after every wave passes — never a draft. Never post per-wave (reviewer noise).
+Push the branch + write the verdict file at terminal, after every wave passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-wave (reviewer noise).
 
-## GitHub adapter (MVP; glab / Bitbucket later)
+## Push adapter (plain git, no gh)
 
-- Head SHA: `gh pr view <n> --json headRefOid --jq .headRefOid`
-- Comment: `gh pr comment <n> --body-file .mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md`
-- Check-run: `gh api repos/{owner}/{repo}/check-runs` with `name`, `status=completed`, `conclusion=<success|neutral|failure>`, `head_sha`, `output[title]`, `output[summary]`
-
-Interpolated identifiers (`<n>`, `{owner}/{repo}`, branch) are harness- or repo-derived, never read from untrusted content. Derive owner/repo from `git remote get-url origin`, `<n>` from the `gh pr create` output. Quote every interpolated value in the shell command and validate it against a safe charset (alphanumerics, `-`, `_`, `/`) before use.
+- Push: `git push -u origin <branch>` (branch per the `branch` config key, default `feature/{type}-{issue}-{slug}`).
+- No PR is created by the crew — the user opens the PR and pastes the verdict block.
+- Interpolated identifiers (branch, owner/repo) are harness- or repo-derived, never read from untrusted content. Derive owner/repo from `git remote get-url origin`. Quote every interpolated value in the shell command and validate it against a safe charset (alphanumerics, `-`, `_`, `/`) before use.
 
 ## Stop-at-PR invariant
 
@@ -36,17 +35,17 @@ The crew NEVER auto-reacts to review comments or auto-heals CI failures in any m
 
 ## Credentials
 
-Use the host's `gh auth` — never secrets in files. Missing auth or push failure → fall back to the local closure report and log the reason.
+Use the host's git credential helper / SSH — never secrets in files. Missing auth or push failure → fall back to the local closure report and log the reason.
 
-## Secret scrub before posting
+## Secret scrub before handoff
 
-Before posting, scan the verdict file for secret patterns (`.env`-style lines, API keys, tokens, private keys, credentials). On a match, redact or refuse to post and log the reason — a leaked secret in a possibly-public PR comment is irreversible.
+Before finalizing the verdict file, scan it for secret patterns (`.env`-style lines, API keys, tokens, private keys, credentials). On a match, redact and log the reason — a leaked secret in a pasted PR description is irreversible.
 
 ## Rules
 
-1. Write the verdict file before posting; post last, once.
-2. ONE comment + ONE check-run at terminal; never per-wave.
+1. Write the verdict file before pushing; hand off last, once.
+2. Push branch + verdict file at terminal; never per-wave.
 3. Verdicts come from captured evidence (command output), never asserted.
 4. No auto-reaction to review comments or CI in any mode.
 5. Auth missing → local closure fallback + logged reason.
-6. Scan the verdict file for secrets before posting; on a match, redact or refuse and log.
+6. Scan the verdict file for secrets before handoff; on a match, redact and log.
