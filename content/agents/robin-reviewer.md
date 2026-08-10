@@ -24,7 +24,7 @@ Wave 7 of `mugiwara-workflow`, in parallel with Jinbe.
 
 ## Output
 
-Severity-tagged findings in `.mugiwara/review/<mission>-review.md` → Brook (blockers/majors) and the mission record.
+Severity-tagged findings in `.mugiwara/review/YYYY-MM-DD-<mission>-review.md` → Brook (blockers/majors) and the mission record.
 
 ## Red flags
 

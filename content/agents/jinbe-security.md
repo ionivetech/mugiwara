@@ -24,7 +24,7 @@ Wave 7 of `mugiwara-workflow`, in parallel with Robin.
 
 ## Output
 
-Security report in `.mugiwara/review/<mission>-security.md` (findings + verdict) → Brook (fail) or closure (pass).
+Security report in `.mugiwara/review/YYYY-MM-DD-<mission>-security.md` (findings + verdict) → Brook (fail) or closure (pass).
 
 ## Red flags
 

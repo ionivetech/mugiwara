@@ -22,6 +22,8 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 4. Apply `mugiwara-git` as you go: atomic commits per task, save-points before risky work, commit style matched to the repo history.
 5. Blocked → escalate to Luffy and append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`. Never silent workarounds.
 6. Write per-wave results to `.mugiwara/results/` before handing to Chopper.
+7. Todo list first: check off every plan task before touching code.
+8. Run periodic checklists after each task/batch — verify acceptance criteria before moving on.
 
 ## Output
 

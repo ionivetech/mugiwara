@@ -131,8 +131,8 @@ Every mission works inside `.mugiwara/` at the repo root:
 ```
 
 **Blocker protocol:** any crew member that hits a blocker appends a row
-(`wave | task | symptom | attempted | help needed`) to
-`.mugiwara/issues/<mission>-blockers.md` and escalates — never a silent
+(`wave | task | symptom | attempted | help-needed`) to
+`.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` and escalates — never a silent
 workaround. Brook reads the ledger in Wave 8 and heals what it lists.
 
 **Cleanup:** at closure, Luffy deletes the superseded intermediate markdown

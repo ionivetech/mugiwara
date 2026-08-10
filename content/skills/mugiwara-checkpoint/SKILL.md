@@ -22,7 +22,7 @@ For every task in the completed wave:
 
 ## Failure ledger
 
-Append every failure as one row to `.mugiwara/issues/<mission>-blockers.md` (reuse the blocker ledger):
+Append every failure as one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` (reuse the blocker ledger):
 
 | wave | task | symptom | attempted | help-needed |
 

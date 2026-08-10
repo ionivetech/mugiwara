@@ -45,7 +45,7 @@ A delegation prompt shorter than ~30 lines is too short — beef it up. Thin pro
 
 ## Blockers → issues ledger
 
-Blocked → write one row to `.mugiwara/issues/<mission>-blockers.md`:
+Blocked → write one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`:
 
 | wave | task | symptom | attempted | help-needed |
 

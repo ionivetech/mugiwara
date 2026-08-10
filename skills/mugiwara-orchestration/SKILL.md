@@ -32,7 +32,7 @@ After every wave AND at the end of each execution batch, verify:
 1. Outputs match the plan's acceptance criteria — evidence, not claims.
 2. No task silently dropped or reordered.
 3. Heal-loop counters within bounds (max 3 cycles).
-4. Blocker ledger `.mugiwara/issues/<mission>-blockers.md` reviewed; every row has an owner or a path forward.
+4. Blocker ledger `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` reviewed; every row has an owner or a path forward.
 
 On drift: stop, diagnose with Chopper's ledger, decide continue / retry / escalate to human.
 

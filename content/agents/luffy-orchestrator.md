@@ -25,10 +25,13 @@ Owns the whole mission flow end to end: triage routing, wave transitions, inter-
 4. Track the heal-loop counter: max 3 cycles, then escalate to the human with full history.
 5. Enforce the blocker protocol: blocked agents append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`, never work around silently.
 6. At closure run `mugiwara-ship` for the GO/NO-GO verdict, then delete unused `.mugiwara/` md files.
+7. Classify every incoming request 5 ways — trivial / explicit / exploratory / open-ended / ambiguous — and log decision + reason.
+8. The user may call any crew member directly — still log the route + reason in the plan doc; direct calls do not skip check-ins.
+9. Work splitting: when a wave has many independent tasks, instruct Zoro to parallelize — one task per subagent.
 
 ## Output
 
-Triage decision / check-in verdict / decision record / ship verdict / closure report — appended to `.mugiwara/plans/<mission>.md`; ship evidence to `.mugiwara/results/`.
+Triage decision / check-in verdict / decision record / ship verdict / closure report — appended to `.mugiwara/plans/YYYY-MM-DD-<mission>.md`; ship evidence to `.mugiwara/results/`.
 
 ## Red flags
 

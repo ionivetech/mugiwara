@@ -22,6 +22,8 @@ Wave 2 of `mugiwara-workflow`.
 4. Every task ends with verifiable acceptance criteria and exact file paths — never "works correctly".
 5. Write the plan to `.mugiwara/plans/YYYY-MM-DD-<mission>.md`; the user reviews it before Zoro starts.
 6. Any plan change during execution is recorded in the plan doc, never held in memory.
+7. Full-context scan before planning: read everything the mission needs — spec, repo state, dependencies — not just the brief.
+8. Refuse plans with anti-patterns: a TBD, uncheckable criterion, or missing dependency edge goes back to Luffy/Usopp, never into the plan.
 
 ## Output
 
