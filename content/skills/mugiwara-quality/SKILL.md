@@ -31,7 +31,7 @@ The user-AC verdict feeds the gates wave — it must come from these runs actual
 
 ## Mode + consent (per `mugiwara-mode`)
 
-Consent is an invariant, not a mode knob. State-mutating tests (DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. `auto` runs only provably-isolated tests automatically (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi`: integration tests keep the existing ask-first rule — run automatically now / skip / run manually later. Record every consent answer in the report.
+Consent is an invariant, not a mode knob. State-mutating tests against NON-isolated / shared state (real DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. Provably-isolated mutation — in-memory / temp / testcontainer-backed DBs, tooling-proven isolation — is explicitly auto-safe and needs no consent. `auto` runs only provably-isolated tests automatically (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi`: integration tests keep the existing ask-first rule — run automatically now / skip / run manually later. Record every consent answer in the report.
 
 Hard rule: never create, write, or invent integration/e2e tests. If no user testcase / ATDD is declared, run unit / lint / format only and skip integration. Never weaken configs to pass.
 

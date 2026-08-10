@@ -44,7 +44,7 @@ In-session phrase `mugiwara mode <guided|semi|auto>` → write the project `.mug
 
 ## Consent invariant
 
-State-mutating tests (DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. `auto` runs only provably-isolated tests (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi` keep the existing ask-first rule for integration tests. Consent is not a mode knob. Record every consent answer in the report.
+State-mutating tests against NON-isolated / shared state (real DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. Provably-isolated mutation — in-memory / temp / testcontainer-backed DBs, tooling-proven isolation — is explicitly auto-safe and needs no consent. `auto` runs only provably-isolated tests (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi` keep the existing ask-first rule for integration tests. Consent is not a mode knob. Record every consent answer in the report.
 
 ## Auto plan-GO gate
 
@@ -58,6 +58,6 @@ Every mode ends at: push the mission branch → open a ready PR (per the `pr` ke
 
 1. Read the config once per wave at dispatch; a flip never applies mid-wave.
 2. Missing config on read = guided; the file is created only on a write.
-3. State-mutating consent holds in every mode — auto never runs a state-mutating test without it.
+3. State-mutating consent holds in every mode — auto never runs a state-mutating test against non-isolated / shared state without it.
 4. Auto plan-GO is gated, never assumed.
 5. The terminal is push + ready PR + verdict in every mode.

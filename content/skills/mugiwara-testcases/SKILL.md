@@ -29,7 +29,7 @@ Gherkin has no step-definition glue in mugiwara — never "run the .feature file
 
 ## Consent
 
-State-mutating user tests (DB writes, network, browsers) always require consent in ALL modes; `auto` runs only provably-isolated user tests.
+State-mutating user tests against non-isolated / shared state (real DB writes, network, browsers) always require consent in ALL modes; provably-isolated user tests (in-memory / temp / testcontainer-backed, tooling-proven) run without consent. `auto` runs only provably-isolated user tests.
 
 ## Failure adjudication
 
@@ -44,5 +44,5 @@ Sanji never creates integration tests; user-declared suites are the only integra
 1. Read the declared test source at Wave 0; no source declared = no user tests.
 2. User executable tests are immutable gold — edit or skip only with consent + a ledger row.
 3. Declarative AC always routes to translate-or-command-check; "run the .feature file" is banned.
-4. State-mutating user tests consent in every mode; auto runs only provably-isolated ones.
+4. State-mutating user tests against shared state consent in every mode; provably-isolated ones run without consent.
 5. A red user test escalates untouched after the heal loop — never skipped to pass.
