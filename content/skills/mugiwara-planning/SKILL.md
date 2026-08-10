@@ -21,6 +21,14 @@ Pick the smallest level that fits. Oversized plan wastes effort; undersized plan
 
 Batch ALL blocking ambiguities into ONE question round before writing. If a major decision appears mid-plan, stop and ask then — never assume silently. Unanswered question goes back to Luffy, never forward to Zoro.
 
+## Mode (per `mugiwara-mode`)
+
+- `guided`: batch ONE question round, wait for answers, then present the plan for an explicit user GO — current behavior.
+- `semi`: self-answer non-blocking ambiguities + log them in the decision log; still present the plan for user GO.
+- `auto`: proceed past approval only with zero blocking ambiguities AND zero high-risk tasks (task `Risk` line = deploy / migration / DB / public API / state-mutating); else stop and present the plan for user GO.
+
+Never hand to the executor without a GO except through the auto gate above; the anti-pattern list binds in every mode.
+
 ## Full context scan
 
 Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. If the mission needs it, scan everything — a plan written without the real code is fiction. Ground every file path and step in what exists; confirm tooling, do not assume.
@@ -41,13 +49,9 @@ A senior principal's plan leaves nothing to the executor's judgment. Every task 
 
 Before the detail blocks, add two markdown tables so Zoro can read the shape at a glance and parallelize safely:
 
-**Wave overview table**
-
 | Wave | Focus | Tasks | Gate |
 |------|-------|-------|------|
 | 3 | <what this wave delivers> | T1-T3 | <the command-verifiable exit check> |
-
-**Task index table**
 
 | # | Task | Files | Size | Depends-on | Acceptance |
 |---|------|-------|------|------------|------------|
@@ -77,9 +81,7 @@ Group tasks into waves; each wave ends in a verified, reviewable state. Build th
 - State the proof in the wave header: disjoint files + no common consumed/produced interface.
 - Otherwise `[SEQUENTIAL, depends-on: Task M]`. Never mark parallel on assumption.
 
-## Per-wave gate
-
-Each wave ends in a verified, reviewable state: acceptance checks run, evidence captured. A wave starts only when its dependencies are proven done.
+Per-wave gate: acceptance checks run, evidence captured; a wave starts only when its dependencies are proven done.
 
 ## Acceptance vs Definition of Done
 
@@ -99,10 +101,7 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 
 ## Common rationalizations
 
-- "Plan can be vague, executor will figure it out" → stops, asks, or guesses — wave stalls or ships wrong.
-- "Skipping the context scan saves time" → plan grounded in imagined code is fiction; rework costs more than the scan.
-- "These two tasks are parallel, trust me" → shared file or interface = race or conflict. Proof required.
-- "Rollback is someone else's problem" → no rollback on a risky task = data loss with no way back.
+"Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → a plan grounded in imagined code is fiction; "trust me, they're parallel" → shared file or interface = race; "rollback is someone else's problem" → data loss with no way back. Any of these is the plan failing its quality bar.
 
 ## Full-level skeleton
 
@@ -121,4 +120,4 @@ The plan doc contains ONLY this. Route reasons, check-in verdicts, and closure g
 
 ## Handoff
 
-STOP after writing. The plan is written to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). Present a 2-3 line summary (waves, task count, key risks) and ASK the user: approve now, revise, or continue in a new session (resume-coordinator rebuilds from the plan doc). Never hand to Zoro without an explicit user GO.
+STOP after writing. The plan is written to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). Present a 2-3 line summary (waves, task count, key risks) and ASK the user: approve now, revise, or continue in a new session (resume-coordinator rebuilds from the plan doc). Never hand to Zoro without an explicit user GO — except the gated auto-GO (zero blocking ambiguities AND zero high-risk tasks, per the Mode section).
