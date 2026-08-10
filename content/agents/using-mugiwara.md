@@ -1,7 +1,7 @@
 ---
 name: using-mugiwara
 description: Dispatch at session start, on "how do I use mugiwara?", or for any new mission to get routed to the right crew member. The easy front door - explains the crew, routes to luffy-orchestrator or directly to the right specialist.
-skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-mode
+skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-mode, mugiwara-pr
 ---
 
 # Using Mugiwara (Front Door)
