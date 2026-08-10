@@ -41,3 +41,15 @@ Any agent may route a question to Luffy. Answer with: decision + reason + impact
 
 Gate: every task's acceptance criteria verified; every gate passed; findings resolved or explicitly deferred with an owner.
 Append the closure report to the plan doc: mission summary, per-wave outcomes, deferred items, lessons learned.
+
+## Spirit vs letter
+
+The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan — do not bend the mission to the plan. Log the amendment with a reason.
+
+## Triage decision gate
+
+- Unknowns none/few AND (spec exists OR small well-understood change) → Wave 2 directly.
+- Unknowns many OR no spec AND size ≥ one wave → Wave 1 first.
+- Risk touches money/security/data/public API → full pipeline; never shortcut to Wave 2 without recording why.
+
+Any route taken without a recorded reason is a red flag.

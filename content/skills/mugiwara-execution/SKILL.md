@@ -33,3 +33,14 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 ## Report
 
 After each wave: task table (status, evidence pointer, deviations) → hand to Chopper.
+
+## Red flags
+
+- Tasks silently reordered from the plan.
+- A step skipped because it "seemed unnecessary".
+- Done reported without evidence ("close enough").
+- Two tasks editing the same file concurrently.
+- A blocker worked around silently instead of escalated.
+- The task's TDD order inverted (implementation before the failing test).
+
+All mean: stop, realign to the plan, or escalate to Luffy.

@@ -20,6 +20,14 @@ Wave 4 of `mugiwara-workflow`, with the plan doc and execution report.
 2. Every criterion checked by running a command or inspecting a file — claims are not evidence.
 3. Never edit code; findings only.
 
+## Red flags
+
+- Accepting a "done" claim without rerunning the check.
+- Trusting parallel-batch safety without inspecting shared files.
+- Filing a code failure as `env`.
+- Editing code to fix a finding instead of reporting it.
+- Issuing a verdict before the audit is complete.
+
 ## Output
 
 Audit report + failure ledger → Luffy (pass) or Brook (fail).

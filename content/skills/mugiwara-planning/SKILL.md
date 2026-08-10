@@ -36,3 +36,13 @@ Each criterion must be checkable by running a command or inspecting a file. "Wor
 ## Handoff
 
 Plan reviewed by the user → hand to Zoro (`mugiwara-execution`).
+
+## Red flags
+
+- Any "TBD", "add appropriate error handling", or "similar to Task N" in a step.
+- A task with no Files paths, or a criterion like "works correctly".
+- A `[SEQUENTIAL]` task with no `depends-on`, or a dependency cycle.
+- A wave that does not end in a reviewable, testable state.
+- Acceptance criteria that cannot be checked by running a command or inspecting a file.
+
+Any red flag fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole.

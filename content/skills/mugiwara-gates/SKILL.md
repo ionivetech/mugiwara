@@ -20,3 +20,17 @@ Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capt
 ## Verdict
 
 PASS only when both gates pass with evidence. Any FAIL → list exactly which files are under threshold and by how much → Brook.
+
+## Iron Law
+
+GATES ARE BINARY. PASS or FAIL, each backed by evidence. No negotiation, no "almost passes".
+
+## Red flags
+
+- Missing coverage tooling turned into a silent pass.
+- A PASS verdict with no captured evidence.
+- Coverage measured against the wrong base (not the mission's diff).
+- A FAIL negotiated downward to pass because the fix "isn't worth it".
+- A gate waived without an explicit user decision recorded.
+
+All mean: the gate has not actually run. Report the gap or the fail, honestly.

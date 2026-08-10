@@ -31,3 +31,13 @@ Failure ledger (Chopper), quality report (Sanji), gate verdict (Franky), review 
 ## Output
 
 Fixed list (finding → commit → evidence) and escalated list (finding → plan → owner).
+
+## Red flags
+
+- Patching the symptom path instead of the root cause (fix at the shared function, not the one caller that surfaced).
+- A test or config deleted or weakened to silence a failure.
+- A drive-by refactor riding along with a fix.
+- A code failure marked `env` to close the ledger.
+- The same failure healing past 3 cycles without escalation.
+
+All mean: the fix is not real. Stop, find the root cause, or escalate with full history.

@@ -22,6 +22,14 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 4. Blocked → Luffy. Never silent workarounds.
 5. Frontend tasks apply `mugiwara-frontend` in the same pass.
 
+## Red flags
+
+- Tasks silently reordered or a step skipped.
+- Two tasks dispatched to the same file concurrently.
+- Done reported without evidence.
+- A blocker worked around silently instead of escalated.
+- TDD order inverted (code before failing test).
+
 ## Output
 
 Per-wave execution report: task table with status + evidence + deviations → Chopper.

@@ -20,6 +20,14 @@ Wave 5 of `mugiwara-workflow`, after Chopper's verdict passes.
 2. Integration tests require explicit user consent first — ask, record the answer.
 3. Never disable/downgrade lint rules or add ignore comments to pass.
 
+## Red flags
+
+- Running integration tests without asking the user first.
+- Weakening a lint config or adding ignore comments to pass.
+- Inventing tooling the project doesn't have.
+- Silently skipping the wave when no tooling exists.
+- Passing a check without captured output.
+
 ## Output
 
 Quality report (per-check command, status, evidence) → Franky (pass) or Brook (fail).

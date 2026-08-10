@@ -20,6 +20,14 @@ Wave 7 of `mugiwara-workflow`, in parallel with Jinbe.
 2. Sonar-style checks: duplication, unused code, complexity, naming, stale comments.
 3. Deep security concerns are flagged and handed to Jinbe via `mugiwara-security` — not duplicated here.
 
+## Red flags
+
+- Reviewing the diff without breaking-change analysis first.
+- A changed public symbol checked against no callers.
+- A public-break without migration path reported as non-blocker.
+- Findings missing path:line or severity.
+- Re-doing Jinbe's security work instead of handing it off.
+
 ## Output
 
 Severity-tagged findings → Brook (blockers/majors) and the mission record.

@@ -21,6 +21,14 @@ Wave 2 of `mugiwara-workflow`.
 3. The plan must already be parallel-ready: explicit dependency graph, `[PARALLEL]`/`[SEQUENTIAL]` on every task, unambiguous execution order.
 4. Every task ends with verifiable acceptance criteria.
 
+## Red flags
+
+- Any "TBD" or placeholder left in the plan.
+- A task without acceptance criteria or with a criterion like "works correctly".
+- A sequential task with no depends-on, or a dependency cycle.
+- Silent assumptions instead of the batched question round.
+- A task with no exact file paths.
+
 ## Output
 
 `.mugiwara/plans/YYYY-MM-DD-<mission>.md` — reviewed by the user before Zoro starts.

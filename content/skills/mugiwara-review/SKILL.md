@@ -31,3 +31,13 @@ Public API changes must be reflected in README/docs/changelog where the repo has
 One line each: `path:line: [blocker|major|minor] problem → fix`.
 
 Deep security concerns → flag and hand to Jinbe (`mugiwara-security`); do not duplicate that work here. Blockers/majors → Brook. Minors may be batched with Brook's fixes.
+
+## Red flags
+
+- The diff reviewed without breaking-change analysis first.
+- A changed public symbol (API route, config key, CLI flag, DB schema) not checked for callers.
+- A public-break with no migration path reported as anything but a blocker.
+- Findings without `path:line` or severity.
+- Deep security concerns re-reviewed here instead of handed to Jinbe.
+
+All mean: the review missed its job. Go back and map before you report.

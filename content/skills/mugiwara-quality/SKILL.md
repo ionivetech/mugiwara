@@ -22,3 +22,13 @@ Say so explicitly, propose the minimal standard setup for the stack, and continu
 ## Report
 
 Per check: command run, exit status, key output excerpt, pass/fail. Failures → Brook with the report.
+
+## Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "The config is too strict, weaken it." | Never weaken configs or downgrade severity to pass — fix the code. |
+| "Integration tests, skip them, too slow." | No consent, no run — but the decision must be asked and recorded, not assumed. |
+| "The linter rule is wrong anyway." | Resolve it properly or report it; disabling is not resolving. |
+| "No tooling found, wave done." | No tooling means say so and propose the minimal setup, never a silent skip. |
+| "Formatter and linter are the same." | They are separate checks; run both. |

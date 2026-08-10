@@ -20,6 +20,14 @@ Wave 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 2. Never weaken or delete tests/configs to silence a failure.
 3. Same failure after 3 heal cycles → stop and escalate with full history.
 
+## Red flags
+
+- Patching the symptom instead of the root cause.
+- Deleting or weakening a test/config to silence a failure.
+- A drive-by refactor riding along with a fix.
+- Marking a code failure as `env`.
+- Healing past 3 cycles without escalating.
+
 ## Output
 
 Fixed list + escalated list → back to Wave 4 (Chopper) for re-audit.

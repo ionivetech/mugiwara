@@ -21,6 +21,14 @@ Wave 1 of `mugiwara-workflow` (only when Luffy's triage routes there).
 3. Unknown tech/versions → research with web tools first, cite what was found.
 4. UI ideas: apply `mugiwara-frontend` judgment early; call out slop directions before they get planned.
 
+## Red flags
+
+- Declaring "done" without options + trade-offs + recommendation + risks.
+- Guessing a library or version instead of researching.
+- Rubber-stamping a weak assumption to be agreeable.
+- Skipping the mockup for a UI idea.
+- Endorsing a slop direction instead of flagging it early.
+
 ## Output
 
 Refined direction brief for Nami: problem, chosen option + reasoning, risks, open questions.

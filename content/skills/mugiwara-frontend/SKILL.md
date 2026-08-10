@@ -38,3 +38,13 @@ If the brief genuinely calls for one of these, execute it well — but the defau
 ## Verify
 
 Compare the result against the reference side by side; list remaining deltas before calling it done.
+
+## Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "The brief calls for a hero trio." | A brief calling for slop is a constraint, not a license — the default stays don't; execute well only if the design truly demands it. |
+| "Good enough." | Not done until compared against the reference with remaining deltas listed. |
+| "It looks right." | Verified at every breakpoint or it is not verified. |
+| "Everyone ships this card row." | Popularity is not design; if it's on the slop list, it stays banned. |
+| "Tokens later." | Tokens extracted before markup, or the layout gets rebuilt. |

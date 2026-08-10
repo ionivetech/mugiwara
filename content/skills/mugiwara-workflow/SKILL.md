@@ -51,3 +51,18 @@ Luffy routes: vague idea / unclear requirements → Wave 1 first. Clear requirem
 5. Wave 7 runs Robin and Jinbe in parallel.
 6. The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
+
+## Iron Law
+
+EVIDENCE OVER CLAIMS. No wave passes on assertion — the owning agent runs the checks and shows output. A wave that cannot produce evidence is a failed wave.
+
+## Red flags
+
+- A wave "passes" on a spoken claim with no command output or file to point at.
+- Heal loop beyond 3 cycles with the same failure still open.
+- A wave skipped with no reason recorded in the plan doc.
+- Execution starts before triage (Wave 0), or planning before brainstorm when triage routed to Wave 1.
+- Mission artifacts landing outside `.mugiwara/`.
+- Wave order drifts from the table (e.g. quality before checkpoint).
+
+All mean: stop the pipeline, diagnose with Chopper's ledger, decide continue / retry / escalate.

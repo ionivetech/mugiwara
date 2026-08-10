@@ -31,3 +31,17 @@ For UI ideas, sketch structure in markdown/ASCII or minimal HTML before committi
 ## Handoff
 
 When direction is locked, write a short brief (problem, chosen option + reasoning, risks, open questions) to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` and hand to Nami (`mugiwara-planning`).
+
+## Rationalizations
+
+| Excuse | Reality |
+|--------|---------|
+| "Yes, done." | Done means options + trade-offs + recommendation + risks. Anything less is a half-answer. |
+| "I know the version." | A guessed version certifies wrong advice as fact. Research with web tools first, cite what you found. |
+| "Just ship it, it's fine." | An unprobed idea is a rework. Interrogate before endorsing. |
+| "Obvious, no need to ask." | One sharp question is cheaper than a wrong direction. |
+| "That's a planning detail." | A risk you can see that Nami can't is a plan landmine. Say it now. |
+
+## One sharp question rule
+
+If you cannot phrase the question as multiple choice with answerable options, you do not yet understand the decision — read the codebase until you can.
