@@ -1,0 +1,39 @@
+{
+  "name": "mugiwara",
+  "displayName": "Mugiwara",
+  "version": "0.1.0",
+  "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, healing.",
+  "author": {
+    "name": "ionive"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/ionivetech/mugiwara",
+  "metadata": {
+    "agents": [
+      "luffy-orchestrator",
+      "usopp-brainstorm",
+      "nami-planner",
+      "zoro-execution",
+      "chopper-checkpoint",
+      "sanji-quality",
+      "franky-gates",
+      "robin-reviewer",
+      "jinbe-security",
+      "brook-healing"
+    ],
+    "skills": [
+      "mugiwara-workflow",
+      "mugiwara-orchestration",
+      "mugiwara-brainstorm",
+      "mugiwara-planning",
+      "mugiwara-execution",
+      "mugiwara-checkpoint",
+      "mugiwara-quality",
+      "mugiwara-gates",
+      "mugiwara-review",
+      "mugiwara-security",
+      "mugiwara-healing",
+      "mugiwara-frontend"
+    ]
+  }
+}
