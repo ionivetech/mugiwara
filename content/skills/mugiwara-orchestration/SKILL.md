@@ -15,6 +15,8 @@ The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean executi
 
 Read the runtime mode via `mugiwara-mode` at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave.
 
+Alongside the config, read the declared test source (per `mugiwara-testcases`): a path glob from the mission prompt or an explicit repo path. Record it in the decision log like the mode config. No source declared → no user tests for the mission.
+
 ## 5-way request classifier (Wave 0)
 
 Classify every incoming request:
