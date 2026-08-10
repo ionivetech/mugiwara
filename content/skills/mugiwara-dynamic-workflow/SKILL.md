@@ -1,6 +1,6 @@
 ---
 name: mugiwara-dynamic-workflow
-description: Use when a mission or subproblem has many independent subtasks, needs comparison, or risks agent bias - pick the right dynamic workflow pattern: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, generate-and-filter.
+description: Use when a mission or subproblem has many independent subtasks, needs comparison, or risks agent bias - pick the right dynamic workflow pattern - fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, generate-and-filter.
 ---
 
 # Dynamic Workflow Patterns (Luffy)

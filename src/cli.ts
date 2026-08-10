@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
 import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
-import { installTo, removeInstalled, VERSION } from './installer.ts';
+import { installTo, removeInstalled, VERSION, CONTENT_DIR } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
+import { parseFrontmatter } from './frontmatter.ts';
 
 const TYPES = ['frontend', 'backend', 'fullstack', 'general'];
 
@@ -24,6 +25,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'update': return install({ ...flags, force: true });
     case 'uninstall': return uninstall(flags);
     case 'list': return list(flags);
+    case 'skills': return skills();
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -133,6 +135,19 @@ function list(flags: Args['flags']): void {
   if (!found) console.log('No mugiwara installation found.');
 }
 
+function skills(): void {
+  const dir = join(CONTENT_DIR, 'skills');
+  const names = readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort();
+  const rows = names.map(name => {
+    const { data } = parseFrontmatter(readFileSync(join(dir, name, 'SKILL.md'), 'utf8'));
+    return [name, data.description ?? ''] as const;
+  });
+  const w = Math.max(...rows.map(r => r[0].length)) + 2;
+  console.log(`mugiwara ${VERSION} — ${rows.length} skills (agentskills.io format):\n`);
+  for (const [name, description] of rows) console.log(`  ${name.padEnd(w)}${description}`);
+  console.log(`\nInstall skills into any agent via skills.sh:\n  npx skills add ionivetech/mugiwara`);
+}
+
 function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
@@ -141,6 +156,7 @@ Usage:
   mugiwara update        replace existing files (backs up differences first)
   mugiwara uninstall     remove installed files via manifest
   mugiwara list          show installations
+  mugiwara skills        list installable skills (agentskills.io)
   mugiwara --help        this help
   mugiwara --version     print version
 

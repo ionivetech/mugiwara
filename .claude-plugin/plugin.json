@@ -20,7 +20,8 @@
       "robin-reviewer",
       "jinbe-security",
       "brook-healing",
-      "skeptic-verifier"
+      "skeptic-verifier",
+      "eval-runner"
     ],
     "skills": [
       "mugiwara-workflow",
@@ -39,7 +40,9 @@
       "mugiwara-ship",
       "mugiwara-dynamic-workflow",
       "mugiwara-agent-security",
-      "mugiwara-backend"
+      "mugiwara-backend",
+      "mugiwara-eval",
+      "mugiwara-observability"
     ]
   }
 }

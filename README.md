@@ -30,7 +30,7 @@ machinery — no daemons, no plugins to keep updated, nothing to host.
 - 🧪 **Everything validated.** Coverage gates, build gates, OWASP security
   review, doubt-driven diff review, Definition of Done.
 
-### The crew — 11 agents
+### The crew — 12 agents
 
 Each agent is a focused specialist. Agents are dispatched by your AI tool's
 subagent machinery and may call the crew's shared skills.
@@ -48,8 +48,9 @@ subagent machinery and may call the crew's shared skills.
 | `jinbe-security` | Jinbe | Security review: OWASP, secrets, injection, auth, dependencies, untrusted-data doctrine |
 | `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, ≤3 heal cycles |
 | `skeptic-verifier` | Skeptic | Adversarial verification: doubt every output/plan/verdict, find what's wrong, do NOT validate |
+| `eval-runner` | Eval Runner | Test engineer for the harness itself: task suites, judge-agent rubric comparison, fix the skill not the eval |
 
-### The techniques — 17 skills
+### The techniques — 19 skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -70,6 +71,8 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-dynamic-workflow` | Runtime workflow patterns: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, adversarial verification |
 | `mugiwara-agent-security` | Secure the agent layer: prompt injection, memory poisoning, excessive agency, secret handling, sandboxing |
 | `mugiwara-backend` | Backend/server code: repo standards first, API design, data integrity, error handling, correctness, performance, server-side security |
+| `mugiwara-eval` | Test the harness itself: task suites, judge-agent rubric comparison, pass/fail per case |
+| `mugiwara-observability` | Trace the crew: structured logs, OTel-compatible spans, session correlation, end-of-mission summary |
 
 ### Frontend anti-slop gating
 
@@ -196,6 +199,21 @@ irm https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.p
 The `install.sh` / `install.ps1` scripts check your Node version, then run the
 same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 
+### skills.sh — skills only, any agent
+
+The 19 skills also ship in the standard [agentskills.io](https://agentskills.io)
+layout (`skills/<name>/SKILL.md`), so you can install just the skills into
+Claude Code, opencode, Copilot, Cursor, Codex, Gemini CLI, and 70+ other agents
+via the [skills.sh](https://skills.sh) CLI:
+
+```bash
+npx skills add ionivetech/mugiwara
+```
+
+Skills only — the agents (Luffy, Nami, Zoro, …) are harness-specific and install
+via the mugiwara CLI or Claude plugin above. `mugiwara skills` lists the
+installable set.
+
 ### Requirements
 
 | Dependency | Required for | Version |
@@ -208,7 +226,7 @@ same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 ```console
 $ npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
 mugiwara — installing crew for: claude
-  ✓ claude    11 agents, 17 skills → ~/.claude/skills + ~/.claude/agents
+  ✓ claude    12 agents, 19 skills → ~/.claude/skills + ~/.claude/agents
   ✓ manifest  wrote ~/.mugiwara/manifest.json
   ✓ done      24 files written
 
@@ -236,6 +254,7 @@ and review Brook's rollback note if a fix is risky.
 | `mugiwara update` | Replace installed files, backing up differences to `.mugiwara/backup/<timestamp>/` first (project root, or `~` for global) |
 | `mugiwara uninstall` | Remove exactly what the install manifest recorded |
 | `mugiwara list` | Show installations (project + global manifests) |
+| `mugiwara skills` | List the installable skills (agentskills.io) + skills.sh install command |
 | `mugiwara --help` | Print usage and flags |
 | `mugiwara --version` | Print the package version |
 
@@ -296,7 +315,7 @@ tool points at the crew.
 ## Claude Code plugin install
 
 Mugiwara also ships as a **Claude Code plugin** with a marketplace — the
-primary target. The plugin bundles the 11 agents + 17 skills as copies at the
+primary target. The plugin bundles the 12 agents + 19 skills as copies at the
 repo root (`agents/`, `skills/`) plus a `SessionStart` hook that announces the
 crew. Regenerate the copies from `content/` with `.claude-plugin/sync.sh`.
 
@@ -385,8 +404,8 @@ mugiwara/
 │   └── targets/         # one adapter per AI agent (claude, opencode, gemini, ...)
 ├── test/                # vitest suites
 ├── content/             # single source of truth for the crew
-│   ├── skills/          # 17 skills (one dir per skill, SKILL.md inside)
-│   └── agents/          # 11 agents (<name>.md)
+│   ├── skills/          # 19 skills (one dir per skill, SKILL.md inside)
+│   └── agents/          # 12 agents (<name>.md)
 ├── scripts/             # install.sh, install.ps1, validate-content.mjs
 ├── hooks/               # Claude Code SessionStart hook (hooks.json + session-start.js)
 ├── .claude-plugin/      # Claude plugin + marketplace metadata; sync.sh copies
