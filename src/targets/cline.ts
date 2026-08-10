@@ -1,5 +1,5 @@
-// src/targets/cline.js
-import { makeGeneric } from './generic.js';
+// src/targets/cline.ts
+import { makeGeneric } from './generic.ts';
 
 export const target = makeGeneric({
   id: 'cline',

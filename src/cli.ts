@@ -1,55 +1,60 @@
-// src/cli.js
+#!/usr/bin/env node
+// src/cli.ts
 import { existsSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
-import { parseArgs } from './args.js';
-import { createRl, choose, multiChoose, confirm } from './prompt.js';
-import { targets, TARGET_IDS } from './targets/index.js';
-import { installTo, removeInstalled, VERSION } from './installer.js';
-import { manifestPath, readManifest, writeManifest } from './manifest.js';
+import { pathToFileURL } from 'node:url';
+import { parseArgs, type FlagValue, type Args } from './args.ts';
+import { createRl, choose, multiChoose, confirm } from './prompt.ts';
+import { targets, TARGET_IDS } from './targets/index.ts';
+import { installTo, removeInstalled, VERSION } from './installer.ts';
+import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 
 const TYPES = ['frontend', 'backend', 'fullstack', 'general'];
 
-export async function run(argv) {
+const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
+const flag = (v: FlagValue): boolean => v === true;
+
+export async function run(argv: string[]): Promise<void> {
   const { command, flags } = parseArgs(argv);
-  if (flags.help || command === 'help') return help();
-  if (flags.version) { console.log(`mugiwara ${VERSION}`); return; }
+  if (flag(flags.help) || command === 'help') return help();
+  if (flag(flags.version)) { console.log(`mugiwara ${VERSION}`); return; }
   switch (command) {
     case 'install': return install(flags);
     case 'update': return install({ ...flags, force: true });
     case 'uninstall': return uninstall(flags);
-    case 'list': return list(flags);
+    case 'list': return list();
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
 
-async function resolveOptions(flags) {
-  const interactive = !flags.yes;
+async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[]; type: string }> {
+  const interactive = !flag(flags.yes);
   const rl = interactive ? createRl() : null;
   try {
-    let scope = flags.global ? 'global' : flags.project ? 'project' : null;
+    let scope: Scope | null = flag(flags.global) ? 'global' : str(flags.project) ? 'project' : null;
     if (!scope) {
       if (!interactive) throw new Error('Specify --global or --project <dir> with --yes');
-      scope = (await choose(rl, 'Install scope?', ['global (user-wide)', 'project (this repo)'])) === 0 ? 'global' : 'project';
+      scope = (await choose(rl!, 'Install scope?', ['global (user-wide)', 'project (this repo)'])) === 0 ? 'global' : 'project';
     }
-    const projectDir = resolve(flags.project ?? process.cwd());
+    const projectDir = resolve(str(flags.project) ?? process.cwd());
     if (scope === 'project' && !existsSync(projectDir)) throw new Error(`Project dir not found: ${projectDir}`);
 
-    let targetIds = flags.target ? flags.target.split(',').map(s => s.trim()) : null;
+    let targetIds = str(flags.target)?.split(',').map(s => s.trim()) ?? null;
     if (targetIds && targetIds.includes('all')) targetIds = [...TARGET_IDS];
     if (!targetIds) {
       if (!interactive) throw new Error('Specify --target <ids|all> with --yes');
-      const idx = await multiChoose(rl, 'Target AI agents?', ['all targets', ...TARGET_IDS]);
+      const idx = await multiChoose(rl!, 'Target AI agents?', ['all targets', ...TARGET_IDS]);
       targetIds = idx.includes(0) ? [...TARGET_IDS] : idx.map(i => TARGET_IDS[i - 1]);
     }
     for (const id of targetIds) {
       if (!targets[id]) throw new Error(`Unknown target: ${id} (valid: ${TARGET_IDS.join(', ')}, all)`);
     }
 
-    let type = flags.type ?? null;
+    let type = str(flags.type) ?? null;
     if (!type) {
       if (!interactive) throw new Error('Specify --type with --yes');
-      type = TYPES[await choose(rl, 'Project type?', TYPES)];
+      type = TYPES[await choose(rl!, 'Project type?', TYPES)];
     }
     if (!TYPES.includes(type)) throw new Error(`Unknown type: ${type} (valid: ${TYPES.join(', ')})`);
     return { scope, projectDir, targetIds, type };
@@ -58,12 +63,12 @@ async function resolveOptions(flags) {
   }
 }
 
-async function install(flags) {
+async function install(flags: Args['flags']): Promise<void> {
   const { scope, projectDir, targetIds, type } = await resolveOptions(flags);
   const home = homedir();
-  const allFiles = [];
-  const allNotes = [];
-  const installed = [];
+  const allFiles: string[] = [];
+  const allNotes: string[] = [];
+  const installed: string[] = [];
   for (const id of targetIds) {
     const t = targets[id];
     if (scope === 'global' && !t.native) {
@@ -72,13 +77,13 @@ async function install(flags) {
     }
     installed.push(id);
     console.log(`\n-> ${t.label} (${scope})`);
-    const r = installTo(t, { scope, projectDir, type, home, dryRun: !!flags.dryRun, force: !!flags.force });
+    const r = installTo(t, { scope, projectDir, type, home, dryRun: flag(flags.dryRun), force: flag(flags.force) });
     console.log(`   written ${r.written.length}, skipped ${r.skipped.length}, backed up ${r.backedUp.length}`);
     for (const n of r.notes) console.log(`   note: ${n}`);
     allFiles.push(...r.written);
     allNotes.push(...r.notes);
   }
-  if (flags.dryRun) { console.log('\nDry run — nothing written.'); return; }
+  if (flag(flags.dryRun)) { console.log('\nDry run — nothing written.'); return; }
   const file = manifestPath({ scope, projectDir, home });
   const prev = readManifest(file);
   writeManifest(file, {
@@ -93,26 +98,26 @@ async function install(flags) {
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
 }
 
-async function uninstall(flags) {
-  const scope = flags.global ? 'global' : 'project';
-  const projectDir = resolve(flags.project ?? process.cwd());
+async function uninstall(flags: Args['flags']): Promise<void> {
+  const scope: Scope = flag(flags.global) ? 'global' : 'project';
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
   const home = homedir();
   const file = manifestPath({ scope, projectDir, home });
   const manifest = readManifest(file);
   if (!manifest) { console.log('Nothing installed (no manifest found).'); return; }
   console.log(`Will remove ${manifest.files.length} files (targets: ${manifest.targets.join(', ')}).`);
-  if (!flags.yes) {
+  if (!flag(flags.yes)) {
     const rl = createRl();
     const ok = await confirm(rl, 'Proceed?');
     rl.close();
     if (!ok) { console.log('Aborted.'); return; }
   }
-  const removed = removeInstalled(manifest, { dryRun: !!flags.dryRun });
-  if (!flags.dryRun) rmSync(file);
+  const removed = removeInstalled(manifest, { dryRun: flag(flags.dryRun) });
+  if (!flag(flags.dryRun)) rmSync(file);
   console.log(`OK removed ${removed.length} files`);
 }
 
-function list() {
+function list(): void {
   const home = homedir();
   const projectDir = resolve(process.cwd());
   let found = false;
@@ -128,7 +133,7 @@ function list() {
   if (!found) console.log('No mugiwara installation found.');
 }
 
-function help() {
+function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
 Usage:
@@ -147,4 +152,12 @@ Flags:
   --yes, -y              non-interactive (needs --global/--project, --target, --type)
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing`);
+}
+
+const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (isMain) {
+  run(process.argv.slice(2)).catch(err => {
+    console.error(`mugiwara: ${err.message}`);
+    process.exit(1);
+  });
 }

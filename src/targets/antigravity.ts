@@ -1,5 +1,5 @@
-// src/targets/antigravity.js
-import { makeGeneric } from './generic.js';
+// src/targets/antigravity.ts
+import { makeGeneric } from './generic.ts';
 
 export const target = makeGeneric({
   id: 'antigravity',

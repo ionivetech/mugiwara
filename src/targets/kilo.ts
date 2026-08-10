@@ -1,5 +1,5 @@
-// src/targets/kilo.js
-import { makeGeneric } from './generic.js';
+// src/targets/kilo.ts
+import { makeGeneric } from './generic.ts';
 
 export const target = makeGeneric({
   id: 'kilo',

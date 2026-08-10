@@ -1,5 +1,5 @@
-// src/targets/windsurf.js
-import { makeGeneric } from './generic.js';
+// src/targets/windsurf.ts
+import { makeGeneric } from './generic.ts';
 
 export const target = makeGeneric({
   id: 'windsurf',

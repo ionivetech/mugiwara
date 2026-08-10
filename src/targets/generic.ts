@@ -1,13 +1,21 @@
-// src/targets/generic.js
+// src/targets/generic.ts
 import { existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Target } from '../installer.ts';
 
-export function makeGeneric({ id, label, rulesDir, bootstrapFile, bootstrapPointer }) {
+export function makeGeneric(opts: {
+  id: string;
+  label: string;
+  rulesDir: string;
+  bootstrapFile: string | null;
+  bootstrapPointer: string | null;
+}): Target {
+  const { id, label, rulesDir, bootstrapFile, bootstrapPointer } = opts;
   return {
     id,
     label,
     native: false,
-    paths({ scope, projectDir }) {
+    paths({ scope, projectDir }: { scope: 'global' | 'project'; projectDir: string; home: string }) {
       if (scope === 'global') throw new Error(`${label} supports project scope only`);
       const dir = join(projectDir, rulesDir);
       return { skillsDir: dir, agentsDir: dir };
@@ -20,8 +28,8 @@ export function makeGeneric({ id, label, rulesDir, bootstrapFile, bootstrapPoint
     },
     postInstall({ projectDir, dryRun }) {
       if (!bootstrapFile) return { written: [], notes: [] };
-      const notes = [];
-      const written = [];
+      const notes: string[] = [];
+      const written: string[] = [];
       const file = join(projectDir, bootstrapFile);
       if (!existsSync(file)) {
         if (!dryRun) writeFileSync(file, `${bootstrapPointer}\n`);

@@ -1,12 +1,11 @@
-// test/installer.test.js
-import test from 'node:test';
-import assert from 'node:assert/strict';
+// test/installer.test.ts
+import { test, expect } from 'vitest';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { collectContent, installTo, removeInstalled } from '../src/installer.js';
+import { collectContent, installTo, removeInstalled, type Target, type InstallOptions } from '../src/installer.ts';
 
-const fakeTarget = {
+const fakeTarget: Target = {
   id: 'fake', label: 'Fake', native: true,
   paths: ({ scope, projectDir, home }) => ({
     skillsDir: join(scope === 'global' ? home : projectDir, 'sk'),
@@ -18,51 +17,51 @@ const fakeTarget = {
 
 const projectDir = mkdtempSync(join(tmpdir(), 'mugi-t-'));
 const home = mkdtempSync(join(tmpdir(), 'mugi-h-'));
-const opts = { scope: 'project', projectDir, home, type: 'frontend', dryRun: false, force: false };
+const opts: InstallOptions = { scope: 'project', projectDir, home, type: 'frontend', dryRun: false, force: false };
 
 test('collectContent includes frontend for frontend type', () => {
   const { skills, agents } = collectContent({ includeFrontend: true });
-  assert.ok(skills.some(s => s.name === 'mugiwara-frontend'));
-  assert.ok(agents.some(a => a.name === 'luffy-orchestrator'));
+  expect(skills.some(s => s.name === 'mugiwara-frontend')).toBe(true);
+  expect(agents.some(a => a.name === 'luffy-orchestrator')).toBe(true);
 });
 
 test('collectContent excludes frontend when gated', () => {
   const { skills } = collectContent({ includeFrontend: false });
-  assert.ok(!skills.some(s => s.name === 'mugiwara-frontend'));
+  expect(skills.some(s => s.name === 'mugiwara-frontend')).toBe(false);
 });
 
 test('installTo writes skills and agents, rerun skips identical', () => {
   const r1 = installTo(fakeTarget, opts);
-  assert.ok(r1.written.length >= 21); // 11 skills (frontend incl) + 10 agents
-  assert.ok(existsSync(join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md')));
-  assert.ok(existsSync(join(projectDir, 'ag', 'luffy-orchestrator.md')));
+  expect(r1.written.length).toBeGreaterThanOrEqual(21); // 11 skills (frontend incl) + 10 agents
+  expect(existsSync(join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
+  expect(existsSync(join(projectDir, 'ag', 'luffy-orchestrator.md'))).toBe(true);
   const r2 = installTo(fakeTarget, opts);
-  assert.equal(r2.written.length, 0);
-  assert.equal(r2.skipped.length, r1.written.length);
+  expect(r2.written.length).toBe(0);
+  expect(r2.skipped.length).toBe(r1.written.length);
 });
 
 test('conflicting file not overwritten without force; backed up with force', () => {
   const f = join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md');
   writeFileSync(f, 'USER EDIT');
   const r1 = installTo(fakeTarget, opts);
-  assert.equal(readFileSync(f, 'utf8'), 'USER EDIT');
-  assert.ok(r1.notes.some(n => n.includes('conflict')));
+  expect(readFileSync(f, 'utf8')).toBe('USER EDIT');
+  expect(r1.notes.some(n => n.includes('conflict'))).toBe(true);
   const r2 = installTo(fakeTarget, { ...opts, force: true });
-  assert.notEqual(readFileSync(f, 'utf8'), 'USER EDIT');
-  assert.equal(r2.backedUp.length, 1);
+  expect(readFileSync(f, 'utf8')).not.toBe('USER EDIT');
+  expect(r2.backedUp.length).toBe(1);
 });
 
 test('dryRun writes nothing', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-dry-'));
   const r = installTo(fakeTarget, { ...opts, projectDir: dir, dryRun: true });
-  assert.ok(r.written.length > 0);
-  assert.ok(!existsSync(join(dir, 'sk')));
+  expect(r.written.length).toBeGreaterThan(0);
+  expect(existsSync(join(dir, 'sk'))).toBe(false);
 });
 
 test('removeInstalled deletes exactly manifest files + prunes empty dirs', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-rm-'));
   const r = installTo(fakeTarget, { ...opts, projectDir: dir });
   removeInstalled({ files: r.written }, {});
-  assert.ok(!existsSync(join(dir, 'sk')));
-  assert.ok(!existsSync(join(dir, 'ag')));
+  expect(existsSync(join(dir, 'sk'))).toBe(false);
+  expect(existsSync(join(dir, 'ag'))).toBe(false);
 });

@@ -1,0 +1,50 @@
+// test/e2e.test.ts
+import { test, expect } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const DIST = join(import.meta.dirname, '..', 'dist', 'mugiwara.js');
+if (!existsSync(DIST)) {
+  execFileSync('bun', ['build', 'src/cli.ts', '--outfile', 'dist/mugiwara.js', '--target', 'node', '--format', 'esm'], { cwd: join(import.meta.dirname, '..') });
+}
+
+const runCli = (args: string[]) => execFileSync(process.execPath, [DIST, ...args], { encoding: 'utf8' });
+
+test('install claude project scope, then uninstall clean', () => {
+  const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
+  runCli(['install', '--project', proj, '--target', 'claude', '--type', 'frontend', '--yes']);
+  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
+  expect(existsSync(join(proj, '.claude', 'agents', 'luffy-orchestrator.md'))).toBe(true);
+  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-frontend', 'SKILL.md'))).toBe(true);
+  expect(existsSync(join(proj, '.mugiwara', 'manifest.json'))).toBe(true);
+  runCli(['uninstall', '--project', proj, '--yes']);
+  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-workflow'))).toBe(false);
+  expect(existsSync(join(proj, '.mugiwara', 'manifest.json'))).toBe(false);
+});
+
+test('backend type excludes frontend skill', () => {
+  const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
+  runCli(['install', '--project', proj, '--target', 'opencode', '--type', 'backend', '--yes']);
+  expect(existsSync(join(proj, '.opencode', 'skills', 'mugiwara-frontend'))).toBe(false);
+  expect(existsSync(join(proj, '.opencode', 'skills', 'mugiwara-planning', 'SKILL.md'))).toBe(true);
+});
+
+test('tier-2 target installs flat rule files (project scope)', () => {
+  const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
+  runCli(['install', '--project', proj, '--target', 'cline', '--type', 'general', '--yes']);
+  expect(existsSync(join(proj, '.clinerules', 'mugiwara-workflow.md'))).toBe(true);
+  expect(existsSync(join(proj, '.clinerules', 'agent-luffy-orchestrator.md'))).toBe(true);
+});
+
+test('dry-run writes nothing', () => {
+  const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
+  runCli(['install', '--project', proj, '--target', 'claude', '--type', 'general', '--yes', '--dry-run']);
+  expect(existsSync(join(proj, '.claude'))).toBe(false);
+});
+
+test('version and unknown flag behavior', () => {
+  expect(runCli(['--version'])).toMatch(/mugiwara \d+\.\d+\.\d+/);
+  expect(() => runCli(['--bogus'])).toThrow(/Unknown flag/i);
+});

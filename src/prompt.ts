@@ -1,11 +1,13 @@
-// src/prompt.js
+// src/prompt.ts
 import readline from 'node:readline/promises';
 
-export function createRl() {
+export type Rl = { question: (prompt: string) => Promise<string> };
+
+export function createRl(): readline.Interface {
   return readline.createInterface({ input: process.stdin, output: process.stdout });
 }
 
-export async function choose(rl, question, options) {
+export async function choose(rl: Rl, question: string, options: string[]): Promise<number> {
   for (;;) {
     console.log(`\n${question}`);
     options.forEach((o, i) => console.log(`  ${i + 1}) ${o}`));
@@ -15,7 +17,7 @@ export async function choose(rl, question, options) {
   }
 }
 
-export async function multiChoose(rl, question, options) {
+export async function multiChoose(rl: Rl, question: string, options: string[]): Promise<number[]> {
   for (;;) {
     console.log(`\n${question} (comma-separated numbers, or "all")`);
     options.forEach((o, i) => console.log(`  ${i + 1}) ${o}`));
@@ -29,7 +31,7 @@ export async function multiChoose(rl, question, options) {
   }
 }
 
-export async function confirm(rl, question) {
+export async function confirm(rl: Rl, question: string): Promise<boolean> {
   const raw = (await rl.question(`${question} [y/N] `)).trim().toLowerCase();
   return raw === 'y' || raw === 'yes';
 }

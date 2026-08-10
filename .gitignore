@@ -1,3 +1,5 @@
 node_modules/
 .mugiwara/
 *.tgz
+dist/
+.superpowers/

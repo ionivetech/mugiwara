@@ -1,5 +1,5 @@
-// src/targets/gemini.js
-import { makeGeneric } from './generic.js';
+// src/targets/gemini.ts
+import { makeGeneric } from './generic.ts';
 
 export const target = makeGeneric({
   id: 'gemini',

@@ -1,12 +1,19 @@
-// src/args.js
-const VALUE_FLAGS = { '--project': 'project', '--target': 'target', '--type': 'type' };
-const BOOL_FLAGS = {
+// src/args.ts
+export type FlagValue = string | boolean | undefined;
+export type Args = {
+  command: string;
+  _: string[];
+  flags: Record<string, FlagValue>;
+};
+
+const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target', '--type': 'type' };
+const BOOL_FLAGS: Record<string, string> = {
   '--global': 'global', '--yes': 'yes', '-y': 'yes', '--force': 'force',
   '--dry-run': 'dryRun', '--help': 'help', '-h': 'help', '--version': 'version', '-v': 'version',
 };
 
-export function parseArgs(argv) {
-  const out = { _: [], flags: {} };
+export function parseArgs(argv: string[]): Args {
+  const out: Args = { _: [], flags: {}, command: 'install' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a in BOOL_FLAGS) { out.flags[BOOL_FLAGS[a]] = true; continue; }

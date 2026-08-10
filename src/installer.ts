@@ -1,13 +1,45 @@
-// src/installer.js
+// src/installer.ts
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
-import { parseFrontmatter } from './frontmatter.js';
+import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
+import type { Scope } from './manifest.ts';
+
+export type ContentItem = { name: string; data: FrontmatterData; body: string };
+
+export type InstallOptions = {
+  scope: Scope;
+  projectDir: string;
+  type: string;
+  dryRun?: boolean;
+  force?: boolean;
+  home?: string;
+};
+
+export type InstallResult = {
+  written: string[];
+  skipped: string[];
+  backedUp: string[];
+  notes: string[];
+};
+
+export type TransformOut = { relPath: string; text: string } | null;
+
+export interface Target {
+  id: string;
+  label: string;
+  native: boolean;
+  paths(opts: { scope: Scope; projectDir: string; home: string }): { skillsDir: string; agentsDir: string };
+  transformSkill(data: FrontmatterData, body: string): TransformOut;
+  transformAgent(data: FrontmatterData, body: string): TransformOut;
+  postInstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean; files: string[] }): { written: string[]; notes: string[] };
+}
 
 export const CONTENT_DIR = join(import.meta.dirname, '..', 'content');
-export const VERSION = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')).version;
+const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')) as { version: string };
+export const VERSION = pkg.version;
 
-export function collectContent({ includeFrontend }) {
+export function collectContent({ includeFrontend }: { includeFrontend: boolean }): { skills: ContentItem[]; agents: ContentItem[] } {
   const skillNames = readdirSync(join(CONTENT_DIR, 'skills'), { withFileTypes: true })
     .filter(e => e.isDirectory()).map(e => e.name)
     .filter(name => includeFrontend || name !== 'mugiwara-frontend');
@@ -24,15 +56,15 @@ export function collectContent({ includeFrontend }) {
   return { skills, agents };
 }
 
-export function installTo(target, opts) {
+export function installTo(target: Target, opts: InstallOptions): InstallResult {
   const { scope, projectDir, type, dryRun = false, force = false } = opts;
   const home = opts.home ?? homedir();
   const { skills, agents } = collectContent({ includeFrontend: type === 'frontend' || type === 'fullstack' });
   const dirs = target.paths({ scope, projectDir, home });
   const backupRoot = join(scope === 'global' ? home : projectDir, '.mugiwara');
-  const result = { written: [], skipped: [], backedUp: [], notes: [] };
+  const result: InstallResult = { written: [], skipped: [], backedUp: [], notes: [] };
 
-  const writeOne = (absPath, text) => {
+  const writeOne = (absPath: string, text: string) => {
     if (existsSync(absPath)) {
       if (readFileSync(absPath, 'utf8') === text) { result.skipped.push(absPath); return; }
       if (!force) {
@@ -66,8 +98,8 @@ export function installTo(target, opts) {
   return result;
 }
 
-export function removeInstalled(manifest, { dryRun = false } = {}) {
-  const removed = [];
+export function removeInstalled(manifest: { files: string[] }, { dryRun = false }: { dryRun?: boolean } = {}): string[] {
+  const removed: string[] = [];
   for (const f of manifest.files) {
     if (existsSync(f)) { if (!dryRun) rmSync(f); removed.push(f); }
   }

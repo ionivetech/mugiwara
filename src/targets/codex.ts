@@ -1,5 +1,5 @@
-// src/targets/codex.js
-import { makeGeneric } from './generic.js';
+// src/targets/codex.ts
+import { makeGeneric } from './generic.ts';
 
 export const target = makeGeneric({
   id: 'codex',

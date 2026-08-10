@@ -4,9 +4,25 @@
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, self-healing. Installs into Claude Code, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity.",
   "type": "module",
   "license": "MIT",
-  "bin": { "mugiwara": "bin/mugiwara.js" },
-  "files": ["bin", "src", "content", "scripts/install.sh", "scripts/install.ps1", "README.md", "LICENSE"],
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test" },
-  "keywords": ["ai", "agents", "skills", "claude-code", "opencode", "copilot", "gemini", "codex", "windsurf", "cline", "multi-agent", "workflow"]
+  "bin": {
+    "mugiwara": "dist/mugiwara.js"
+  },
+  "files": ["dist", "src", "content", "scripts/install.sh", "scripts/install.ps1", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "build": "bun build src/cli.ts --outfile dist/mugiwara.js --target node --format esm",
+    "validate": "node scripts/validate-content.mjs",
+    "prepack": "bun run build"
+  },
+  "keywords": ["ai", "agents", "skills", "claude-code", "opencode", "copilot", "gemini", "codex", "windsurf", "cline", "multi-agent", "workflow"],
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
 }
