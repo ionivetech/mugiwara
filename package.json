@@ -1,6 +1,6 @@
 {
   "name": "@ionivetech/mugiwara",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, self-healing. Installs into Claude Code, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity.",
   "type": "module",
   "license": "MIT",
