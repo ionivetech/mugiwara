@@ -48,24 +48,27 @@ subagent machinery and may call the crew's shared skills.
 | `resume-coordinator` | Resume Coordinator | Rebuild the picture from `.mugiwara/` state after context loss; continue, never restart |
 | `memory-keeper` | Memory Keeper | Institutional memory: surface past lessons at mission start, capture new ones at closure |
 
-### The techniques — 21 skills
+### The techniques — 25 skills
 
 | Skill | Purpose |
 |-------|---------|
 | `mugiwara-workflow` | The harness entry point: gateway triage, wave pipeline, workspace layout, blocker protocol, cleanup |
 | `mugiwara-orchestration` | Luffy's captain behavior: 5-way classifier, check-ins, work splitting, decision log, closure |
+| `mugiwara-mode` | Runtime levels guided / semi / auto via `.mugiwara/config`: branch + commit style, consent invariants, gated auto-GO, push + ready-PR terminal |
 | `mugiwara-brainstorm` | Usopp's critical sparring: interrogate, research facts, cut over-engineering, recommend |
 | `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers + anti-patterns |
 | `mugiwara-execution` | Todo list, parallel batches + sequential chains, 6-field subagent delegation, one task one commit |
 | `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion; failure rows to the blocker ledger |
 | `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit + consent-gated integration tests |
-| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done |
+| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done; user-AC verdict overrides thresholds |
+| `mugiwara-testcases` | User-test intake (ATDD): accepted formats, immutable-gold rule, declarative-AC routing, consent, failure adjudication |
 | `mugiwara-review` | Doubt-driven review: breaking-change analysis, five-axis, severity-tagged findings |
 | `mugiwara-security` | OWASP-driven security review, untrusted-data doctrine, severity by exploitability × impact |
 | `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |
 | `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction, slop list |
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
+| `mugiwara-pr` | CI/CD loop terminal: one verdict file + one comment + one check-run on the ready PR via `gh`, stop-at-PR invariant |
 | `mugiwara-dynamic-workflow` | Runtime workflow patterns: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, adversarial verification |
 | `mugiwara-agent-security` | Secure the agent layer: prompt injection, memory poisoning, excessive agency, secret handling, sandboxing |
 | `mugiwara-backend` | Backend/server code: repo standards first, API design, data integrity, error handling, correctness, performance, server-side security |
@@ -76,7 +79,7 @@ subagent machinery and may call the crew's shared skills.
 
 ### Every capability, always
 
-Every install ships the full crew — all 21 skills and 15 agents, including
+Every install ships the full crew — all 25 skills and 15 agents, including
 the anti-slop `mugiwara-frontend`, `mugiwara-backend`, and `mugiwara-agent-security`
 skills. No project-type selection: you get every capability, and the harness
 routes each task to the right skill.
@@ -122,7 +125,9 @@ The same pipeline as a portable table (renders anywhere markdown does):
 | 6 Gates | Franky | `mugiwara-gates` | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | `mugiwara-review` + `mugiwara-security` | severity-tagged findings (parallel) |
 | 8 Healing | Brook | `mugiwara-healing` | fixes; loops back to Wave 4, max 3 cycles |
-| 9 Closure | Luffy | `mugiwara-orchestration` | closure report in `.mugiwara/results/` + cleanup |
+| 9 Closure | Luffy | `mugiwara-orchestration` | push + ready PR, verdict comment + check-run via `mugiwara-pr`, closure report in `.mugiwara/results/` + cleanup |
+
+Three runtimes in one crew: the mission runs at a mode level (`guided` asks at every gate, `semi`/`auto` self-answer and log, all from `.mugiwara/config`); declared user test cases are taken in as ATDD gold (`mugiwara-testcases`); every mission ends at a push + ready PR with one verdict comment + check-run (`mugiwara-pr`).
 
 Two rules hold the pipeline together:
 
@@ -227,7 +232,7 @@ gemini extensions install https://github.com/ionivetech/mugiwara
 pi install git:github.com/ionivetech/mugiwara
 ```
 
-Agent installs register the 21 skills; the agents (Luffy, Nami, Zoro, …) come
+Agent installs register the 25 skills; the agents (Luffy, Nami, Zoro, …) come
 natively with the harnesses that support them (Claude Code, opencode). On
 harnesses that install skills only (Gemini, Codex, Cursor, Kimi, pi), the
 agents are available via the CLI below.
@@ -264,7 +269,7 @@ irm https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.p
 The `install.sh` / `install.ps1` scripts check your Node version, then run the
 same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 
-**Skills only, any agent** — the 21 skills also ship in the standard
+**Skills only, any agent** — the 25 skills also ship in the standard
 [agentskills.io](https://agentskills.io) layout (`skills/<name>/SKILL.md`), so
 you can install just the skills into Claude Code, opencode, Copilot, Cursor,
 Codex, Gemini CLI, and 70+ other agents via [skills.sh](https://skills.sh):
@@ -289,7 +294,7 @@ lists the installable set.
 ```console
 $ npx @ionivetech/mugiwara@latest --global --target claude --yes
 mugiwara — installing crew for: claude
-  ✓ claude    15 agents, 21 skills → ~/.claude/skills + ~/.claude/agents
+  ✓ claude    15 agents, 25 skills → ~/.claude/skills + ~/.claude/agents
   ✓ manifest  wrote ~/.mugiwara/manifest.json
   ✓ done      24 files written
 
