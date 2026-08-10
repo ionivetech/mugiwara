@@ -16,7 +16,14 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 1. Formatter — the project's formatter.
 2. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass.
 3. Unit tests — full suite, capture output.
-4. Integration tests — ASK THE USER FIRST: run automatically now / skip / run manually later. Record the answer in the report. Do not run integration tests without consent.
+4. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
+5. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
+
+## Mode + consent (per `mugiwara-mode`)
+
+Consent is an invariant, not a mode knob. State-mutating tests (DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. `auto` runs only provably-isolated tests automatically (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi`: integration tests keep the existing ask-first rule — run automatically now / skip / run manually later. Record every consent answer in the report.
+
+Hard rule: never create, write, or invent integration/e2e tests. If no user testcase / ATDD is declared, run unit / lint / format only and skip integration. Never weaken configs to pass.
 
 ## No tooling found
 

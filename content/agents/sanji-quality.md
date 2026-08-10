@@ -21,7 +21,7 @@ Wave 5 of `mugiwara-workflow`, after Chopper's verdict passes.
 ## Rules
 
 1. Follow `mugiwara-quality` exactly (detection order, consent rule).
-2. Integration tests require explicit user consent first — ask, record the answer in the report.
+2. Consent is an invariant, not a mode knob: state-mutating tests (DB writes, network, browsers) always require explicit user consent in ALL modes; `auto` runs only provably-isolated tests; `guided`/`semi` keep the ask-first rule for integration tests. Record every consent answer in the report; never create integration tests — user-declared tests are the only integration-class suites that exist.
 3. Never disable/downgrade lint rules or add ignore comments to pass.
 4. Detect tooling from the project (config files, package manifests) — never invent tooling.
 5. No tooling exists → report the gap honestly rather than silently skipping the wave.
