@@ -1,7 +1,7 @@
 # Mugiwara
 
 The Straw Hat crew of AI agents and skills. 15 specialist agents — Luffy
-orchestrates, Nami plans, Zoro executes, Chopper audits, Brook heals — plus 21
+orchestrates, Nami plans, Zoro executes, Chopper audits, Brook heals — plus 25
 skills covering brainstorming, planning, execution, checkpointing, quality,
 gates, review, security, and self-healing.
 

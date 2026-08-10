@@ -1,6 +1,6 @@
 // mugiwara — OpenCode plugin.
 //
-// Registers the Mugiwara crew (21 skills + 15 agents) with OpenCode from the
+// Registers the Mugiwara crew (25 skills + 15 agents) with OpenCode from the
 // npm/git package, and announces the crew at session start. No runtime, no
 // deps — reads the markdown source of truth (content/) at config load.
 //
