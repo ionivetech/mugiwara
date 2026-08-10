@@ -38,7 +38,8 @@
       "mugiwara-git",
       "mugiwara-ship",
       "mugiwara-dynamic-workflow",
-      "mugiwara-agent-security"
+      "mugiwara-agent-security",
+      "mugiwara-backend"
     ]
   }
 }

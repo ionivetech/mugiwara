@@ -1,22 +1,31 @@
 ---
 name: mugiwara-review
-description: Use after quality gates pass to review the diff adversarially - doubt-driven review, breaking-change analysis via caller mapping first, five-axis review with verdict per axis, sonar smells, severity criteria, dispute hierarchy, docs gaps. Findings to .mugiwara/review/. Max 3 cycles then escalate.
+description: Use after quality gates pass to review the diff adversarially - doubt-driven review, breaking-change damage map via repo-wide caller mapping first, five-axis review with regression emphasis, sonar smells, severity criteria, dispute hierarchy, docs gaps. Findings to .mugiwara/review/. Max 3 cycles then escalate.
 ---
 
 # Review (Robin)
 
 Review like the diff will be maintained by someone else at 3am — and like the implementer is wrong until proven otherwise.
 
-## Breaking-change analysis (do this FIRST)
+## Breaking-change analysis (do this FIRST) — build the damage map
 
-1. List every changed/removed/renamed public symbol, CLI flag, config key, API route, DB schema item.
-2. For each: grep callers, imports, references across the repo.
-3. Classify: safe (no external refs) / internal-break (callers updated?) / public-break (needs migration, changelog, deprecation).
-4. Any public-break without a migration path = blocker.
+1. List every changed/removed/renamed public surface item: exports, functions, classes, CLI flags, config keys, API routes, DB schema, env vars, event names, message formats.
+2. Build the internal damage map: for EVERY changed function or signature, grep all callers, imports, and uses repo-wide — tests, examples, docs, scripts, configs, generated code. A rename that misses one caller is major. A signature that compiles everywhere but changes semantics is still a break.
+3. Cross-layer: a changed DTO, model, or DB field can break the API layer, the frontend contract, or a consumer package. Trace each past the layer it was edited in.
+4. Type/schema: when types, interfaces, or schemas change, verify every implementer and consumer against the new shape — not only the ones in the diff.
+5. Behavior drift: a change that "shouldn't change behavior" but does (ordering, defaults, error handling, error codes) is a break. Check the tests still assert the real behavior, not just the new one.
+6. Classify each entry: safe (no external refs) / internal-break (all callers updated?) / public-break (needs migration, changelog, deprecation). Any public-break without a migration path = blocker.
+7. Deliverable: a damage map in the review output — changed symbol → callers checked → verdict — not just a conclusion. A verdict without the map is an unproven claim.
 
 ## Five-axis review
 
 One verdict + evidence per axis: correctness / readability / architecture / security / performance. No axis passes on assertion.
+
+Correctness always asks: does this change BREAK anything that currently works? Run the suite, exercise the feature tests for the touched areas, and verify no silent regression.
+
+## Regression emphasis
+
+"No damage elsewhere" is claimed, not assumed. Re-run the tests covering ALL callers of the changed code, not just the changed files. Flag any behavior change outside the task's declared scope as major — scope creep that changes behavior is a regression in disguise.
 
 ## Sonar-style checks
 
@@ -29,7 +38,7 @@ One verdict + evidence per axis: correctness / readability / architecture / secu
 ## Severity
 
 - blocker: public-break with no migration path, wrong behavior shipped, security hole, correctness failure reaching users. Fix before merge.
-- major: internal-break with callers unfixed, missed contract, real-cost readability/architecture/performance issue. Fix this mission.
+- major: internal-break with callers unfixed, missed contract, real-cost readability/architecture/performance issue, behavior change outside declared scope. Fix this mission.
 - minor: polish, style drift, batched items. May go to Brook's batch.
 
 ## Dispute hierarchy
@@ -56,15 +65,18 @@ One line each: `path:line: [blocker|major|minor] problem → fix`. Write finding
 
 ## Common rationalizations
 
-- "I reviewed the diff already" → you reviewed your own work. Fresh eyes + breaking-change map required.
+- "I reviewed the diff already" → you reviewed your own work. Fresh eyes + damage map required.
 - "It's just internal" → internal breaks still block the mission; callers are users too.
 - "No time for breaking-change map" → mapping callers is the point of review. No map, no review.
+- "The tests pass" → the suite only proves what it covers; it proves nothing about callers outside the changed files.
 
 ## Red flags
 
-- The diff reviewed without breaking-change analysis first.
+- The diff reviewed without a damage map first.
 - The implementer's claim accepted without adversarial re-derivation.
-- A changed public symbol (API route, config key, CLI flag, DB schema) not checked for callers.
+- A changed public symbol (export, function, route, config key, CLI flag, DB schema, env var, event, message format) not checked for callers.
+- A damage map incomplete: changed symbols with no caller grep, or callers not all checked.
+- Behavior drift unflagged: altered behavior outside the declared scope passed as benign.
 - A public-break with no migration path reported as anything but a blocker.
 - A severity without criteria backing it, or findings without `path:line`.
 - Deep security concerns re-reviewed here instead of handed to Jinbe.

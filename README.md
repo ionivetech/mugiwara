@@ -49,7 +49,7 @@ subagent machinery and may call the crew's shared skills.
 | `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, ≤3 heal cycles |
 | `skeptic-verifier` | Skeptic | Adversarial verification: doubt every output/plan/verdict, find what's wrong, do NOT validate |
 
-### The techniques — 16 skills
+### The techniques — 17 skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -69,6 +69,7 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
 | `mugiwara-dynamic-workflow` | Runtime workflow patterns: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, adversarial verification |
 | `mugiwara-agent-security` | Secure the agent layer: prompt injection, memory poisoning, excessive agency, secret handling, sandboxing |
+| `mugiwara-backend` | Backend/server code: repo standards first, API design, data integrity, error handling, correctness, performance, server-side security |
 
 ### Frontend anti-slop gating
 
@@ -207,7 +208,7 @@ same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 ```console
 $ npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
 mugiwara — installing crew for: claude
-  ✓ claude    11 agents, 16 skills → ~/.claude/skills + ~/.claude/agents
+  ✓ claude    11 agents, 17 skills → ~/.claude/skills + ~/.claude/agents
   ✓ manifest  wrote ~/.mugiwara/manifest.json
   ✓ done      24 files written
 
@@ -295,7 +296,7 @@ tool points at the crew.
 ## Claude Code plugin install
 
 Mugiwara also ships as a **Claude Code plugin** with a marketplace — the
-primary target. The plugin bundles the 11 agents + 16 skills as copies at the
+primary target. The plugin bundles the 11 agents + 17 skills as copies at the
 repo root (`agents/`, `skills/`) plus a `SessionStart` hook that announces the
 crew. Regenerate the copies from `content/` with `.claude-plugin/sync.sh`.
 
@@ -384,7 +385,7 @@ mugiwara/
 │   └── targets/         # one adapter per AI agent (claude, opencode, gemini, ...)
 ├── test/                # vitest suites
 ├── content/             # single source of truth for the crew
-│   ├── skills/          # 16 skills (one dir per skill, SKILL.md inside)
+│   ├── skills/          # 17 skills (one dir per skill, SKILL.md inside)
 │   └── agents/          # 11 agents (<name>.md)
 ├── scripts/             # install.sh, install.ps1, validate-content.mjs
 ├── hooks/               # Claude Code SessionStart hook (hooks.json + session-start.js)
