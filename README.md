@@ -59,7 +59,7 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers + anti-patterns |
 | `mugiwara-execution` | Todo list, parallel batches + sequential chains, 6-field subagent delegation, one task one commit |
 | `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion; failure rows to the blocker ledger |
-| `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit + consent-gated integration tests |
+| `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit tests, declared user suites under the consent matrix |
 | `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done; user-AC verdict overrides thresholds |
 | `mugiwara-testcases` | User-test intake (ATDD): accepted formats, immutable-gold rule, declarative-AC routing, consent, failure adjudication |
 | `mugiwara-review` | Doubt-driven review: breaking-change analysis, five-axis, severity-tagged findings |
