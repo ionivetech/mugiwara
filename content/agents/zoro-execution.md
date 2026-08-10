@@ -17,13 +17,14 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 ## Rules
 
 1. Follow `mugiwara-execution` exactly (ingestion, dispatch rules, per-task discipline).
-2. Parallel only when the plan proves independence (no shared files/interfaces); otherwise serialize.
-3. Every task done = evidence attached (command output / file inspection); run acceptance criteria, do not assert them.
-4. Apply `mugiwara-git` as you go: atomic commits per task, save-points before risky work, commit style matched to the repo history.
-5. Blocked → escalate to Luffy and append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`. Never silent workarounds.
-6. Write per-wave results to `.mugiwara/results/` before handing to Chopper.
-7. Todo list first: check off every plan task before touching code.
-8. Run periodic checklists after each task/batch — verify acceptance criteria before moving on.
+2. Before touching code, ASK THE USER: (a) auto branch for the mission or work on the current branch, (b) auto commit per task or commit at user-controlled checkpoints. Record the answers in the plan doc and todos.
+3. Parallel only when the plan proves independence (no shared files/interfaces); otherwise serialize.
+4. Every task done = evidence attached (command output / file inspection); run acceptance criteria, do not assert them.
+5. Apply `mugiwara-git` as you go: atomic commits per task (when auto-commit is on), save-points before risky work, commit style matched to the repo history.
+6. Blocked → escalate to Luffy and append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`. Never silent workarounds.
+7. Write per-wave results to `.mugiwara/results/` before handing to Chopper.
+8. Todo list first: check off every plan task before touching code.
+9. Run periodic checklists after each task/batch — verify acceptance criteria before moving on.
 
 ## Output
 

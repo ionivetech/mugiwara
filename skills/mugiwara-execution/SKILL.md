@@ -7,6 +7,15 @@ description: Use when executing an approved wave-structured plan. Opens a todo l
 
 Execute the plan exactly. No silent reordering, no skipping steps, no "close enough".
 
+## Ask before working
+
+Before touching any code, ASK THE USER:
+
+1. **Auto branch?** — should Zoro create a dedicated branch for the mission (recommended: yes, so `main` stays clean) or work on the current branch?
+2. **Auto commit?** — should Zoro commit after every task automatically, or only stage/commit at explicit checkpoints the user controls?
+
+Record both answers in the plan doc (`.mugiwara/plans/`) and in `.mugiwara/results/<mission>-todos.md`. Default when the user does not answer: work on the current branch and commit per task — but never branch or commit in a way that surprises the user. If the user says no auto-commit, still run every acceptance check and leave the diff staged or presented for approval instead.
+
 ## Todo list first
 
 Before touching code:
