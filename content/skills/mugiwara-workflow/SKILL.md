@@ -29,7 +29,7 @@ At session start, after context loss, or on any "where were we?" — dispatch `r
 
 ## Wave 0 — Luffy Triage (always first)
 
-Dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
+Front door: dispatch `using-mugiwara` (easy to remember) — it routes to the right crew member and records the route. For a full triage dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
 
 ## Waves
 

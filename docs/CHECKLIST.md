@@ -28,7 +28,7 @@ bun run typecheck
 bun run test          # 36/36
 bun run build
 node dist/mugiwara.js --version    # mugiwara 0.1.0
-node scripts/validate-content.mjs  # ✓ 21 skills, 14 agents
+node scripts/validate-content.mjs  # ✓ 21 skills, 15 agents
 node scripts/validate-content.mjs --check-sync
 ```
 

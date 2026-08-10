@@ -10,6 +10,7 @@
   "repository": "https://github.com/ionivetech/mugiwara",
   "metadata": {
     "agents": [
+      "using-mugiwara",
       "luffy-orchestrator",
       "usopp-brainstorm",
       "nami-planner",

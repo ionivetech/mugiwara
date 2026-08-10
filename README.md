@@ -30,13 +30,14 @@ machinery — no daemons, no plugins to keep updated, nothing to host.
 - 🧪 **Everything validated.** Coverage gates, build gates, OWASP security
   review, doubt-driven diff review, Definition of Done.
 
-### The crew — 14 agents
+### The crew — 15 agents
 
 Each agent is a focused specialist. Agents are dispatched by your AI tool's
 subagent machinery and may call the crew's shared skills.
 
 | Agent | Crew member | Role |
 |-------|-------------|------|
+| `using-mugiwara` | Front Door | Start here: routes any request to the right crew member — no agent names to remember |
 | `luffy-orchestrator` | Luffy | Main gateway: 5-way triage, background check-ins, work splitting, decision log, closure |
 | `usopp-brainstorm` | Usopp | Critical brainstorming friend: facts over hype, options + trade-offs, no over-engineering |
 | `nami-planner` | Nami | Interview-first planner: full-context scan, wave structure, anti-patterns, parallel-safe plans |
@@ -87,15 +88,18 @@ AI-slop patterns — framework-agnostic.
 
 ## How it works
 
-Every mission starts at the **Luffy gateway** — he classifies the request
-(trivial / explicit / exploratory / open-ended / ambiguous) and routes it:
-exploratory ideas go to Usopp's brainstorm, clear work goes straight to Nami's
-planning. You can also summon any crew member directly. From there the mission
-runs as a **wave pipeline** owned by one crew member per wave.
+Every mission starts with `using-mugiwara` — the easy-to-remember front door
+that routes you to the right crew member (no agent names to memorize). It
+feeds the **Luffy gateway**, which classifies the request (trivial / explicit /
+exploratory / open-ended / ambiguous) and routes it: exploratory ideas go to
+Usopp's brainstorm, clear work goes straight to Nami's planning. You can also
+summon any crew member directly. From there the mission runs as a **wave
+pipeline** owned by one crew member per wave.
 
 ```mermaid
 flowchart TD
-    A[User request] --> B{Luffy gateway<br/>5-way triage}
+    A[User request] --> F[using-mugiwara<br/>front door]
+    F --> B{Luffy gateway<br/>5-way triage}
     B -- exploratory --> C[Usopp brainstorm<br/>.mugiwara/spec/]
     B -- clear work --> D[Nami plan<br/>.mugiwara/plans/]
     C --> D
@@ -230,7 +234,7 @@ installable set.
 ```console
 $ npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
 mugiwara — installing crew for: claude
-  ✓ claude    14 agents, 21 skills → ~/.claude/skills + ~/.claude/agents
+  ✓ claude    15 agents, 21 skills → ~/.claude/skills + ~/.claude/agents
   ✓ manifest  wrote ~/.mugiwara/manifest.json
   ✓ done      24 files written
 
@@ -319,7 +323,7 @@ tool points at the crew.
 ## Claude Code plugin install
 
 Mugiwara also ships as a **Claude Code plugin** with a marketplace — the
-primary target. The plugin bundles the 14 agents + 21 skills as copies at the
+primary target. The plugin bundles the 15 agents + 21 skills as copies at the
 repo root (`agents/`, `skills/`) plus a `SessionStart` hook that announces the
 crew. Regenerate the copies from `content/` with `.claude-plugin/sync.sh`.
 
@@ -409,7 +413,7 @@ mugiwara/
 ├── test/                # vitest suites
 ├── content/             # single source of truth for the crew
 │   ├── skills/          # 21 skills (one dir per skill, SKILL.md inside)
-│   └── agents/          # 14 agents (<name>.md)
+│   └── agents/          # 15 agents (<name>.md)
 ├── scripts/             # install.sh, install.ps1, validate-content.mjs
 ├── hooks/               # Claude Code SessionStart hook (hooks.json + session-start.js)
 ├── .claude-plugin/      # Claude plugin + marketplace metadata; sync.sh copies
