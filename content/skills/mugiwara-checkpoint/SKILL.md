@@ -1,60 +1,62 @@
 ---
 name: mugiwara-checkpoint
-description: Use after an execution wave to audit results against the plan. Runs every acceptance criterion, checks commits and parallel-batch file safety, appends failures to the mission blocker ledger. Auditor only - never fixes code.
+description: Use after an execution wave to audit results against the plan. Runs every acceptance criterion as a command or file inspect, verifies commit hygiene and parallel-file safety, classifies failures honestly, appends ledger rows, and issues a Definition-of-Done verdict. Auditor only - never fixes code.
 ---
 
 # Checkpoint (Chopper)
 
-Auditor, not fixer. Trust nothing; verify everything.
+Auditor, not fixer. Trust nothing; verify everything. Output is an audit report, not a code change.
 
 ## Verify-everything gate
 
-Subagents lie. No evidence = not complete. A claim of "done" is a starting point, never a result. Every acceptance criterion is checked by RUNNING the referenced command or inspecting the file — never accept a spoken claim.
+Subagents lie. No evidence = not complete. A "done" claim is a starting point, never a result. RUN every acceptance criterion — the referenced command or a file inspect — and capture output. Never accept a spoken claim, and never reuse a prior run's result: re-run it now.
 
-## Audit checklist per task
+## Audit protocol
 
-For every task in the completed wave:
+For every task in the completed wave, in order:
 
-1. Run each acceptance criterion's command (or inspect the file) and capture output.
-2. Check the task's commits exist and contain only the files the task declared.
-3. Check parallel-batch claims: tasks marked parallel must not have touched shared files.
-4. Check test/lint/build outputs were captured, not just described.
+1. **Per-task audit table.** For each acceptance criterion record `task | criterion | command run | evidence | status`. Evidence is output or a file path — never a paraphrase.
+2. **Commit hygiene.** Run `git show --stat` on each task commit: it must touch ONLY the files the task declared. Undeclared files added or declared files missing = fail.
+3. **Parallel-conflict check.** Run `git diff --name-only` across parallel task commits: no file may be touched by 2 tasks. A shared file means the parallel claim was false.
+4. **Honest classification.** Classify every failure truthfully as code or env. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code.
 
 ## Failure ledger
 
-Append every failure as one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` (reuse the blocker ledger):
+Append each failing criterion as one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`:
 
-| wave | task | symptom | attempted | help-needed |
+`| wave | task | symptom | attempted | help-needed |`
 
-Map the finding to a category and record it:
+Category goes in `symptom` or `help-needed` as context. Categories: `test-fail` (test/lint/build command fails), `missing-impl` (criterion unverifiable, artifact absent), `parallel-conflict` (concurrent tasks modified shared state), `env` (environment, proven), `regression` (previously passing check now fails). Reuse the existing blocker ledger; create it only if absent.
 
-- `test-fail` — a test/lint/build command fails
-- `missing-impl` — criterion unverifiable, artifact absent
-- `parallel-conflict` — concurrent tasks modified shared state
-- `env` — failure caused by environment, not code
-- `regression` — previously passing check now fails
+## Definition of Done check
+
+Verdict per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one wave verdict. Any FAIL axis → wave verdict FAIL.
 
 ## Auditor only
 
-Chopper never edits code. Findings only. Any urge to fix a finding instead of reporting it means the audit has stopped being an audit.
+Never edit code. Findings only. Any urge to fix a finding means the audit has stopped being an audit.
 
 ## Output
 
-Audit report to `.mugiwara/results/` — pass/fail per task, ledger rows, wave verdict.
+Audit report to `.mugiwara/results/YYYY-MM-DD-<mission>-audit.md`: per-task table, commit hygiene, parallel-conflict, honest classification, DoD verdicts, ledger rows. PASS → next wave. FAIL → report + ledger to Brook (Wave 8).
 
-- Verdict pass → Wave 5 (Quality).
-- Any fail → report + ledger to Brook (Wave 8).
+## Common rationalizations
+
+- "The test passed last run." → Re-run it now; a stale result is not evidence.
+- "It's just an env issue." → Prove it on a clean checkout; unproven env is code.
+- "One small fix would clear it." → You are the auditor, not the healer. Report it.
 
 ## Iron Law
 
-TRUST NOTHING; VERIFY EVERYTHING. Every acceptance criterion is checked by running the referenced command or inspecting the file — a claim of done is a starting point, not a result.
+TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must be produced by your own re-run, not borrowed from the executor.
 
 ## Red flags
 
-- A criterion marked pass because someone said so, without rerunning the check.
-- Parallel tasks' shared-file conflict assumed safe without checking.
+- A criterion marked pass from a claim or a prior run, without re-running the check.
+- Parallel tasks' shared-file conflict assumed safe without `git diff --name-only`.
 - A code failure filed as `env` to soften the report.
 - Commits containing undeclared files, or missing declared files.
-- Any urge to edit code instead of reporting the finding — Chopper audits, never fixes.
+- A DoD axis passed with no evidence.
+- Any urge to edit code instead of reporting the finding.
 
 All mean: the audit is incomplete. Finish it before issuing the verdict.
