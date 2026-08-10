@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, rmSync } from 'node:fs';
+import { existsSync, realpathSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -154,7 +154,15 @@ Flags:
   --dry-run              print actions without writing`);
 }
 
-const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+let entry = process.argv[1] !== undefined ? resolve(process.argv[1]) : undefined;
+if (entry !== undefined) {
+  try {
+    entry = realpathSync(entry);
+  } catch {
+    // ponytail: realpath can throw on a missing/odd path — fall back to the raw resolve
+  }
+}
+const isMain = entry !== undefined && import.meta.url === pathToFileURL(entry).href;
 if (isMain) {
   run(process.argv.slice(2)).catch(err => {
     console.error(`mugiwara: ${err.message}`);

@@ -74,23 +74,28 @@ in `.mugiwara/plans/`, execution results in `.mugiwara/results/`, and reviews in
 ## Development
 
 ```bash
-npm test                # node:test suites
-node scripts/validate-content.mjs   # content schema lint
+bun run build            # bundle src/cli.ts → dist/mugiwara.js
+bun run test             # vitest suites
+bun run typecheck        # tsc --noEmit
+bun run validate         # node scripts/validate-content.mjs (content schema lint)
 ```
 
 Zero runtime dependencies. MIT.
 
 ## Plugin install
 
-Mugiwara also ships as a Claude Code plugin + marketplace (works for GitHub
-Copilot CLI too — it reads the same `.claude-plugin/` manifests).
+Mugiwara ships as a **Claude Code** plugin + marketplace (the primary target).
+GitHub Copilot CLI can read the same `.claude-plugin/` marketplace and consume
+the skills as native Copilot skills, but the **agents are Claude-native `.md`
+files** — they will not auto-discover in Copilot and may need `.agent.md`
+conversion to work as Copilot plugin agents.
 
 ```bash
-# Claude Code
+# Claude Code (fully supported)
 /plugin marketplace add ionivetech/mugiwara
 /plugin install mugiwara
 
-# GitHub Copilot CLI
+# GitHub Copilot CLI (skills + marketplace readable; agents need .agent.md conversion)
 copilot plugin marketplace add ionivetech/mugiwara
 copilot plugin install mugiwara
 ```
