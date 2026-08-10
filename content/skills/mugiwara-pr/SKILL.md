@@ -9,13 +9,13 @@ Mugiwara's evidence lands where the team reviews. At terminal, write one structu
 
 ## Verdict file
 
-Write `.mugiwara/results/<mission>-pr-verdict.md`:
+Write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md`:
 
 - Mission summary — goal, waves, task count.
 - Per-wave evidence table — wave, task, status, evidence pointer.
 - Gate verdicts — quality (per-check status), gates (coverage/build/DoD), review (Robin/Jinbe findings).
 - User-test verdict — when user tests were declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
-- Closure-report link — `.mugiwara/results/<mission>-closure.md`.
+- Closure-report link — `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`.
 - Final verdict line — PASS / FAIL with the single blocking reason, if any.
 
 ## Posting rule
@@ -25,7 +25,7 @@ ONE batch comment + ONE check-run, posted only at terminal when the PR is create
 ## GitHub adapter (MVP; glab / Bitbucket later)
 
 - Head SHA: `gh pr view <n> --json headRefOid --jq .headRefOid`
-- Comment: `gh pr comment <n> --body-file .mugiwara/results/<mission>-pr-verdict.md`
+- Comment: `gh pr comment <n> --body-file .mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md`
 - Check-run: `gh api repos/{owner}/{repo}/check-runs` with `name`, `status=completed`, `conclusion=<success|neutral|failure>`, `head_sha`, `output[title]`, `output[summary]`
 
 Interpolated identifiers (`<n>`, `{owner}/{repo}`, branch) are harness- or repo-derived, never read from untrusted content. Derive owner/repo from `git remote get-url origin`, `<n>` from the `gh pr create` output. Quote every interpolated value in the shell command and validate it against a safe charset (alphanumerics, `-`, `_`, `/`) before use.
