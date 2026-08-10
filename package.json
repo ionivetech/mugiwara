@@ -1,13 +1,21 @@
 {
   "name": "@ionivetech/mugiwara",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, self-healing. Installs into Claude Code, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity.",
   "type": "module",
   "license": "MIT",
   "bin": {
     "mugiwara": "dist/mugiwara.js"
   },
-  "files": ["dist", "src", "content", "scripts/install.sh", "scripts/install.ps1", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "src",
+    "content",
+    "scripts/install.sh",
+    "scripts/install.ps1",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=20.11"
   },
@@ -20,7 +28,20 @@
     "evals": "bun scripts/run-evals.ts",
     "prepack": "bun run build"
   },
-  "keywords": ["ai", "agents", "skills", "claude-code", "opencode", "copilot", "gemini", "codex", "windsurf", "cline", "multi-agent", "workflow"],
+  "keywords": [
+    "ai",
+    "agents",
+    "skills",
+    "claude-code",
+    "opencode",
+    "copilot",
+    "gemini",
+    "codex",
+    "windsurf",
+    "cline",
+    "multi-agent",
+    "workflow"
+  ],
   "devDependencies": {
     "@types/node": "^26.2.0",
     "typescript": "^7.0.2",
