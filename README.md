@@ -27,8 +27,9 @@ machinery — no daemons, no plugins to keep updated, nothing to host.
 
 ### The crew — 15 agents
 
-Each agent is a focused specialist. Agents are dispatched by your AI tool's
-subagent machinery and may call the crew's shared skills.
+Each agent is a focused specialist. The main thread embodies each crew role
+inline using its skill; agents may also be summoned directly by your AI tool's
+agent machinery and may call the crew's shared skills.
 
 | Agent | Crew member | Role |
 |-------|-------------|------|
@@ -36,8 +37,8 @@ subagent machinery and may call the crew's shared skills.
 | `luffy-orchestrator` | Luffy | Main gateway: 5-way triage, background check-ins, work splitting, decision log, closure |
 | `usopp-brainstorm` | Usopp | Critical brainstorming friend: facts over hype, options + trade-offs, no over-engineering |
 | `nami-planner` | Nami | Interview-first planner: full-context scan, wave structure, anti-patterns, parallel-safe plans |
-| `zoro-execution` | Zoro | Execute plans: todo list first, parallel/sequential subagent dispatch, evidence per task |
-| `chopper-checkpoint` | Chopper | Verify-everything audit of wave results; writes the failure ledger (never fixes code) |
+| `zoro-execution` | Zoro | Execute plans inline: todo list first, sequential tasks in the main thread, parallel batches via worker subagents, evidence per task |
+| `chopper-checkpoint` | Chopper | Verify-everything audit of wave results (deduped + scoped re-runs); writes the failure ledger (never fixes code) |
 | `sanji-quality` | Sanji | Discover the stack, then format/lint/test; integration tests only with consent |
 | `franky-gates` | Franky | Binary gates: coverage ≥90/80, build exit 0, Definition of Done |
 | `robin-reviewer` | Robin | Doubt-driven diff review: breaking-change first, five-axis, severity-tagged findings |
@@ -52,13 +53,13 @@ subagent machinery and may call the crew's shared skills.
 
 | Skill | Purpose |
 |-------|---------|
-| `mugiwara-workflow` | The harness entry point: gateway triage, wave pipeline, workspace layout, blocker protocol, cleanup |
+| `mugiwara-workflow` | The harness entry point: inline execution model, gateway triage, wave pipeline, workspace layout, blocker protocol, cleanup |
 | `mugiwara-orchestration` | Luffy's captain behavior: 5-way classifier, check-ins, work splitting, decision log, closure |
 | `mugiwara-mode` | Runtime levels guided / semi / auto via `.mugiwara/config`: branch + commit style, consent invariants, gated auto-GO, push + ready-PR terminal |
 | `mugiwara-brainstorm` | Usopp's critical sparring: interrogate, research facts, cut over-engineering, recommend |
 | `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers + anti-patterns |
-| `mugiwara-execution` | Todo list, parallel batches + sequential chains, 6-field subagent delegation, one task one commit |
-| `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion; failure rows to the blocker ledger |
+| `mugiwara-execution` | Todo list, sequential tasks inline + parallel worker batches, 6-field delegation for parallel work, one commit per logical task |
+| `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion — deduped and scoped to the wave's diff; failure rows to the blocker ledger |
 | `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit tests, declared user suites under the consent matrix |
 | `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done; user-AC verdict overrides thresholds |
 | `mugiwara-testcases` | User-test intake (ATDD): accepted formats, immutable-gold rule, declarative-AC routing, consent, failure adjudication |
@@ -93,24 +94,25 @@ feeds the **Luffy gateway**, which classifies the request (trivial / explicit /
 exploratory / open-ended / ambiguous) and routes it: exploratory ideas go to
 Usopp's brainstorm, clear work goes straight to Nami's planning. You can also
 summon any crew member directly. From there the mission runs as a **wave
-pipeline** owned by one crew member per wave.
+pipeline** owned by one crew member per wave, executed inline in your main
+conversation.
 
 ```mermaid
 flowchart TD
-    U[User request] --> FD[using-mugiwara<br/>front door]
-    FD --> G{Luffy gateway<br/>5-way triage}
-    G -- exploratory --> B[Usopp brainstorm<br/>.mugiwara/spec/]
-    G -- clear work --> N[Nami plan<br/>.mugiwara/plans/]
+    U[User request] --> FD[using-mugiwara]
+    FD --> G{Luffy triage}
+    G -- exploratory --> B[Usopp brainstorm]
+    G -- clear work --> N[Nami plan]
     B --> N
-    N --> Z[Zoro execute<br/>parallel / sequential]
-    Z --> CP[Chopper audit<br/>failure ledger]
+    N --> Z[Zoro execute]
+    Z --> CP[Chopper audit]
     CP --> SQ[Sanji quality]
     SQ --> FG[Franky gates]
-    FG --> RJ[Robin + Jinbe review<br/>parallel]
-    RJ -- pass --> LC[Luffy closure<br/>ship gate]
-    RJ -- fail --> BH[Brook heal<br/>max 3 cycles]
+    FG --> RJ[Robin + Jinbe review]
+    RJ -- pass --> LC[Luffy closure]
+    RJ -- fail --> BH[Brook heal]
     BH --> CP
-    LC --> CL[.mugiwara/ cleanup]
+    LC --> CL[cleanup]
 ```
 
 The same pipeline as a portable table (renders anywhere markdown does):
@@ -128,7 +130,48 @@ The same pipeline as a portable table (renders anywhere markdown does):
 | 8 Healing | Brook | `mugiwara-healing` | fixes; loops back to Wave 4, max 3 cycles |
 | 9 Closure | Luffy | `mugiwara-orchestration` | push + ready PR, verdict comment + check-run via `mugiwara-pr`, closure report in `.mugiwara/results/` + cleanup |
 
-Three runtimes in one crew: the mission runs at a mode level (`guided` asks at every gate, `semi`/`auto` self-answer and log, all from `.mugiwara/config`); declared user test cases are taken in as ATDD gold (`mugiwara-testcases`); every mission ends at a push + ready PR with one verdict comment + check-run (`mugiwara-pr`).
+### Modes
+
+The crew runs at one of three autonomy levels, set in `.mugiwara/config`
+(project, overrides global `~/.mugiwara/config`):
+
+```
+mode=guided
+branch=feature/{type}-{issue}-{slug}
+commit=conventional
+```
+
+| Level | Plan GO | Branch / commits | Ambiguities | Check-ins |
+|-------|---------|------------------|-------------|-----------|
+| **guided** | ask the user | ask the user | ask the user | ask the user |
+| **semi** | present plan for user GO | auto | self-answer + log | log, no pause |
+| **auto** | gated auto-GO | auto | self-answer + log | log, no pause |
+
+- **guided** — the default, for when you want to steer everything. You approve
+  the plan, decide branch and commit style, answer ambiguities, and get asked at
+  every gate.
+- **semi** — the crew self-manages branch, commits, and ambiguities (logging
+  each decision), but you still give the plan an explicit GO.
+- **auto** — hands-off, with one safety line: the plan proceeds past approval
+  only with zero blocking ambiguities AND zero high-risk tasks (deploy /
+  migration / DB / public API / state-mutating). Otherwise it stops for you.
+
+Two invariants hold in **every** mode:
+
+- **Consent.** State-mutating tests against non-isolated/shared state (real DB
+  writes, network, browsers) always require your explicit consent. Provably
+  isolated mutation (in-memory / temp / testcontainer-backed) is auto-safe.
+- **Terminal.** Every mode ends at push + ready PR + verdict file handed to
+  you — the crew never merges, never deploys, never auto-reacts to review
+  comments or CI.
+
+Flip mid-mission with the in-session phrase `mugiwara mode <guided|semi|auto>` —
+the change applies from the next wave, never mid-wave. Missing config on read =
+`guided`. See `mugiwara-mode` for the full contract.
+
+Alongside modes: declared user test cases are taken in as ATDD gold
+(`mugiwara-testcases`); every mission ends at a push + ready PR with one verdict
+comment + check-run (`mugiwara-pr`).
 
 Two rules hold the pipeline together:
 
@@ -154,9 +197,11 @@ Every mission works inside `.mugiwara/` at the repo root:
 
 Every non-trivial mission starts with `using-mugiwara`, which routes through the
 Luffy gateway; from Wave 2 the mission runs as a wave pipeline owned by one crew
-member per wave. The main thread dispatches each crew member one at a time as a
-top-level task (never nested crew-inside-crew), so every agent's work is visible
-as it happens.
+member per wave. **The main thread runs every wave inline** — it embodies each
+crew role using that member's skill, so the whole pipeline plays out in your
+main conversation and you watch it as it happens. Subagents are used only where
+they genuinely help: independent `[PARALLEL]` task batches and background
+checks. No work is hidden behind a subagent expand-click.
 
 **Blocker protocol:** any crew member that hits a blocker appends a row
 (`wave | task | symptom | attempted | help-needed`) to
@@ -413,6 +458,7 @@ Open an issue or pull request on GitHub.
 
 ## Resources
 
+- Docs: [docs/index.md](docs/index.md) — adoption guide, per-harness installs, crew & skill references
 - GitHub: <https://github.com/ionivetech/mugiwara>
 - npm: <https://www.npmjs.com/package/@ionivetech/mugiwara>
 
