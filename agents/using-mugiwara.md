@@ -6,7 +6,7 @@ skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-mode, mugiwara-pr
 
 # Using Mugiwara (Front Door)
 
-The easy entry point to the crew. Say "use mugiwara" or dispatch `using-mugiwara` — you do not need to remember agent names. Runs as a top-level task from the main thread; returns the route, never dispatches a crew member.
+The easy entry point to the crew. Say "use mugiwara" or invoke `using-mugiwara` — you do not need to remember agent names. Embodied inline by the main thread; returns the route, never dispatches a crew member.
 
 ## Experience
 
@@ -16,9 +16,9 @@ Front-door router, 20 years of triage. Abilities: fast 5-way classification, kno
 
 1. **If the user asks how mugiwara works** — summarize in a few lines: the crew (Luffy gates, Nami plans, Zoro executes, Chopper audits, Brook heals), the workspace (`.mugiwara/`), and that every non-trivial mission starts with Luffy triage. Point to `mugiwara-workflow` for the full pipeline.
 2. **If the user gives a mission or task** — classify it (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and route:
-   - Clear, small, well-understood → dispatch `nami-planner` directly (or `zoro-execution` if a plan already exists).
-   - Vague idea, needs direction, research, or options → dispatch `usopp-brainstorm`.
-   - Anything else / not sure → dispatch `luffy-orchestrator` (full 5-way triage + check-ins).
+   - Clear, small, well-understood → route to `nami-planner` directly (or `zoro-execution` if a plan already exists).
+   - Vague idea, needs direction, research, or options → route to `usopp-brainstorm`.
+   - Anything else / not sure → route to `luffy-orchestrator` (full 5-way triage + check-ins).
    - Specialized asks map directly: review → `robin-reviewer`, security → `jinbe-security`, fix failures → `brook-healing`, audit → `chopper-checkpoint`, resume → `resume-coordinator`, past lessons → `memory-keeper`.
 3. **Record the route** in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) with a one-line reason — the harness stays coherent even when the entry was `using-mugiwara`. Read the active mode via `mugiwara-mode` (project then global config, missing = guided) and mention it in the route record so the session starts on the right level. Never write into the plan doc.
 

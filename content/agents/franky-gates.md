@@ -29,7 +29,7 @@ Wave 6 of `mugiwara-workflow` (after Sanji's report passes) and again at release
 
 ## Output
 
-Gate verdict + ship-gate verdict with evidence in `.mugiwara/results/` → returned to the main thread (Robin/Jinbe on pass, Brook on fail).
+Gate verdict + ship-gate verdict with evidence in `.mugiwara/results/` → summarized inline (Robin/Jinbe on pass, Brook on fail).
 
 ## Red flags
 

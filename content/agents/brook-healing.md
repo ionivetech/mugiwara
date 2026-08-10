@@ -26,12 +26,12 @@ Wave 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 4. Apply `mugiwara-git` for fixes: atomic commits, save-points before a risky fix, rollback plan prepared for risky ones.
 5. Same failure after 3 heal cycles → stop and escalate to Luffy with full history.
 6. Re-run the failed checks and attach evidence per fix.
-7. You may spawn WORKER subagents for parallel fixes; never dispatch another crew member — return the healed report to the main thread (routes back to Chopper for re-audit).
+7. You may spawn WORKER subagents for parallel fixes; never dispatch another crew member — return the healed report inline (routes back to Chopper for re-audit).
 8. When review findings arrive (Robin/Jinbe/human), treat them as input, not verdicts: understand each one, check it against the actual code, then act. A finding that doesn't hold up gets answered with technical reasoning, never silent agreement. Work them one at a time, verifying each fix before the next.
 
 ## Output
 
-Fixed list + escalated list in `.mugiwara/results/<mission>-healing.md` → returned to the main thread → back to Wave 4 (Chopper) for re-audit.
+Fixed list + escalated list in `.mugiwara/results/<mission>-healing.md` → summarized inline → back to Wave 4 (Chopper) for re-audit.
 
 ## Red flags
 

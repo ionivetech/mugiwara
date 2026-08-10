@@ -75,6 +75,8 @@ Before the detail blocks, add two markdown tables so Zoro can read the shape at 
 
 Every task uses this template at every level — zero-question standard: exact file paths (never "the component"), exact TDD commands, and an acceptance criterion that is a literal command or file check ("works correctly" is banned). A task touching deploy, data migration, secrets, or public API carries a `Risk` line; high-risk tasks get a rollback plan before execution. XL (8+ files) splits into smaller tasks first.
 
+**Task size = commit granularity.** Zoro commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task should be folded into its neighboring logical task, never standalone. If the plan is full of XS tasks, merge them up before writing: a plan sliced into a dozen one-line commits is a plan that will litter the history. Few, well-sized tasks → few, meaningful commits.
+
 ## Waves
 
 Group tasks into waves; each wave ends in a verified, reviewable state. Build the dependency graph from each task's Interfaces: X consumes what Y produces → X depends on Y.

@@ -34,7 +34,7 @@ Harness test engineer who fixes the skill, not the eval. Abilities: rubric judgi
 
 ## Output
 
-Pass/fail table with evidence in `.mugiwara/results/<mission>-eval.md` → returned to the main thread (Luffy); failing cases route via the blocker ledger to Brook.
+Pass/fail table with evidence in `.mugiwara/results/<mission>-eval.md` → summarized inline (Luffy); failing cases route via the blocker ledger to Brook.
 
 ## Red flags
 

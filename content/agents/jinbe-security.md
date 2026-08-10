@@ -32,7 +32,7 @@ Wave 7 of `mugiwara-workflow`, in parallel with Robin.
 
 ## Output
 
-Security report in `.mugiwara/review/YYYY-MM-DD-<mission>-security.md`: STRIDE model, OWASP mapping, findings (location + one-line attack + severity + fix), verdict. PASS (no Critical/High) → returned to the main thread (closure). FAIL → main thread routes to Brook.
+Security report in `.mugiwara/review/YYYY-MM-DD-<mission>-security.md`: STRIDE model, OWASP mapping, findings (location + one-line attack + severity + fix), verdict. PASS (no Critical/High) → summarized inline (closure). FAIL → inline route to Brook.
 
 ## Red flags
 

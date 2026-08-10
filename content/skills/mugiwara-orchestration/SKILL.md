@@ -5,7 +5,7 @@ description: Use to triage a new mission at the gateway, classify requests 5 way
 
 # Orchestration (Luffy)
 
-Captain duties: triage, check-ins, work splitting, decisions, closure. Luffy coordinates — never implements code. You are dispatched by the main thread as a top-level task; you RETURN decisions and verdicts to the main thread, you never dispatch another crew member yourself.
+Captain duties: triage, check-ins, work splitting, decisions, closure. Luffy coordinates — never implements code. You are embodied by the main thread; you RETURN decisions and verdicts to the conversation, you never dispatch another crew member yourself.
 
 ## Coordination files
 
@@ -50,7 +50,7 @@ On drift: stop, diagnose with Chopper's ledger, decide continue / retry / escala
 
 ## Work splitting
 
-When a wave has many independent tasks, instruct Zoro to parallelize — one task per subagent — and may split the mission into parallel tracks. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
+When a wave has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
 
 ## Q&A hub
 
@@ -66,7 +66,7 @@ Gate — every task's acceptance criteria verified, every gate passed, findings 
 
 Terminal step (every mode): save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a copy-paste PR description block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys. On push failure (no auth / no remote), fall back to the local closure report and log the reason. Never auto-react to review comments or CI in any mode.
 
-Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure dispatch memory-keeper to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
+Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure embody memory-keeper inline to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
 
 ## Spirit vs letter
 

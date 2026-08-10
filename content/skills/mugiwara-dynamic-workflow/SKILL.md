@@ -15,7 +15,7 @@ Six primitives for missions too big or too biased for one linear pass. Choose th
 
 ## Fan-out-and-synthesize
 
-1. Split work into independent tasks; run each in a parallel subagent.
+1. Split work into independent tasks; run each in a parallel worker subagent (this is the one case that legitimately dispatches — parallel batches, never sequential work).
 2. Prove disjointness first: each task touches distinct files or interfaces. No shared writes, no shared state.
 3. A synthesizer merges results into ONE output with source attribution per part.
 4. Conflicts resolve by evidence (re-run, inspect), never by vote count.

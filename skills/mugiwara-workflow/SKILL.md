@@ -5,16 +5,18 @@ description: Use at the start of any non-trivial mission to run the Mugiwara cre
 
 # Mugiwara Workflow
 
-The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial pass at Wave 4.5. Waves are phases of the mission, not files — Nami writes them into the plan doc, Zoro executes them. The main thread runs the harness and dispatches each crew member one at a time (Dispatch protocol below); the harness always starts through Luffy unless the user summons a crew member directly.
+The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial pass at Wave 4.5. Waves are phases of the mission, not files — Nami writes them into the plan doc, Zoro executes them. The main thread runs the harness and embodies each crew role inline (Execution model below); the harness always starts through Luffy unless the user summons a crew member directly.
 
-## Dispatch protocol (every harness)
+## Execution model (every harness)
 
-1. The main/primary agent runs the pipeline. Dispatch ONE crew member at a time with the host's native task/subagent mechanism — each as a TOP-LEVEL task, so its work is visible. Wait for the report before dispatching the next.
-2. Crew members NEVER dispatch another crew member. Each returns its report/output to the main thread; the main thread routes the next wave (re-dispatch Luffy for the check-in at each boundary).
-3. Exceptions: Zoro (Wave 3) and Brook (Wave 8) spawn their own WORKER subagents — host-native, not crew members — for parallel task execution and parallel fixes. Chopper, Robin, and Jinbe may spawn check subagents. Workers are fine nested; crew members are not.
-4. Escalation from a crew member = "blocked" + ledger row returned to the main thread, which routes it to Luffy/Brook. Never a nested crew dispatch.
+**Inline by default.** The main/primary agent runs the pipeline and plays each crew role itself using that member's skill. Every wave's work is performed in the main conversation so the user sees the process live — no hidden subagent jumps, no click-to-expand. The crew members are personas + skills the main thread embodies, not mandatory dispatch targets.
 
-Deep crew-inside-crew nesting hides work and bloats context. Every crew member's name is visible in the CLI as its task runs.
+1. For each wave, the main thread loads the owning crew member's skill (e.g. `mugiwara-checkpoint` for Wave 4) and performs that role inline: triage, planning, execution, audit, quality, gates, review, closure — all in the main thread.
+2. Dispatch a subagent ONLY when the work is genuinely parallel or background: an independent `[PARALLEL]` task batch (Zoro's WORKER subagents, Wave 3), parallel fixes (Brook, Wave 8), or a long-running check that would stall the conversation. Subagent results return to the main thread as a report; the main thread summarizes the outcome inline with evidence pointers.
+3. Crew members NEVER dispatch another crew member. A crew role that must split work returns the split plan to the main thread, which spawns the workers.
+4. Escalation = "blocked" + ledger row returned to the main thread, which routes it to Luffy/Brook. Never a nested crew dispatch.
+
+Why: crew-inside-crew nesting hides work behind subagent expansion and bloats context. Inline roles keep every wave visible as it happens. Subagents exist to parallelize, not to hide. In any harness — Claude Code, opencode, Codex, Cursor, Gemini — subagent internals sit behind a click; the only way the user sees the process is to run it in the main conversation.
 
 ## Workspace layout
 
@@ -39,11 +41,11 @@ The owning agent creates the folder it needs on first write. No mission artifact
 
 ## Resume
 
-At session start, after context loss, or on any "where were we?" — dispatch `resume-coordinator` (mugiwara-resume) BEFORE Wave 0 triage. It rebuilds the picture from disk (plan, todos, trace, blockers) and reports the resume point. Resume before any wave; never start over. Disk state is truth.
+At session start, after context loss, or on any "where were we?" — embody `resume-coordinator` inline (mugiwara-resume) BEFORE Wave 0 triage. Rebuild the picture from disk (plan, todos, trace, blockers) and report the resume point. Resume before any wave; never start over. Disk state is truth.
 
 ## Wave 0 — Luffy Triage (always first)
 
-Front door: dispatch `using-mugiwara` (easy to remember) — it routes to the right crew member and records the route. For a full triage dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
+Front door: embody `using-mugiwara` inline (the router) — it routes to the right crew member and records the route. For a full triage embody `luffy-orchestrator` inline. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
 
 Alongside triage, read the mode config per `mugiwara-mode`: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Lazy-create the project config on first WRITE only, never auto-create on read.
 
@@ -82,11 +84,11 @@ At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` �
 1. Evidence over claims: no wave passes on assertion. The owning agent runs the checks and shows output.
 2. No wave skipped without the reason recorded in the decision log (`.mugiwara/logs/`).
 3. Heal loop is bounded: Wave 8 → Wave 4, max 3 cycles. After that, escalate to the human with full history.
-4. Any agent may consult Luffy mid-flight (re-dispatch `luffy-orchestrator`) for decisions and escalations.
-5. Wave 7 runs Robin and Jinbe in parallel.
+4. Any agent may consult Luffy mid-flight (embody `luffy-orchestrator` inline) for decisions and escalations.
+5. Wave 7 runs Robin and Jinbe review passes in parallel — both are inline passes over the same diff, or parallel review subagents for large diffs.
 6. The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
-8. One agent may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 11 members); dispatch the agent, not the skill.
+8. One crew member may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 15 members); load the member's skills, embody the role inline.
 9. On session start, context loss, or "where were we?" — resume before any wave via `resume-coordinator` (mugiwara-resume); never start over.
 10. The crew never merges and never deploys — push the branch + hand the verdict file to the user, who opens the PR; PR review is the terminal gate in every mode.
 

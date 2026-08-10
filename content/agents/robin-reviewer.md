@@ -30,7 +30,7 @@ Wave 7 of `mugiwara-workflow`, in parallel with Jinbe.
 
 ## Output
 
-Severity-tagged findings in `.mugiwara/review/YYYY-MM-DD-<mission>-review.md` → returned to the main thread (Brook on blockers/majors) and the mission record. Runs as a top-level task parallel to Jinbe; you may spawn check subagents, never another crew member.
+Severity-tagged findings in `.mugiwara/review/YYYY-MM-DD-<mission>-review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; you may spawn check subagents, never another crew member.
 
 ## Red flags
 

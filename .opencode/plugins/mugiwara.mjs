@@ -20,7 +20,7 @@ const skillsDir = join(contentDir, 'skills');
 const agentsDir = join(contentDir, 'agents');
 
 const ANNOUNCE =
-  "Mugiwara crew available. Start non-trivial missions by dispatching `using-mugiwara` (or ask 'how do I use mugiwara?') - it routes you to the right crew member. Run the crew pipeline yourself: dispatch ONE crew member at a time as a top-level task, wait for its report, then dispatch the next. Crew members never dispatch each other. See skills/mugiwara-workflow.";
+  "Mugiwara crew available. Start non-trivial missions by invoking `using-mugiwara` (or ask 'how do I use mugiwara?') - it routes you to the right crew member. Run the crew pipeline inline: embody ONE crew role at a time in the main conversation using its skill, wait for its report, then move to the next. Subagents only for [PARALLEL] task batches and background checks. Crew members never dispatch each other. See skills/mugiwara-workflow.";
 
 // OpenCode per-agent tuning. Content stays portable markdown; these knobs
 // (color, temperature, permission, steps) are opencode-only.
