@@ -65,6 +65,7 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-review` | Doubt-driven review: breaking-change analysis, five-axis, severity-tagged findings |
 | `mugiwara-security` | OWASP-driven security review, untrusted-data doctrine, severity by exploitability × impact |
 | `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |
+| `mugiwara-deprecation` | Sunset & migration discipline: keep-or-retire gate, cutover playbooks, safe schema changes |
 | `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction, slop list |
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
