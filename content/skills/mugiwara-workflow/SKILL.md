@@ -22,6 +22,7 @@ Every mission creates and works inside `.mugiwara/` at the repo root:
 
 ```
 .mugiwara/
+├── config         # runtime mode config: mode/branch/commit/pr key=value (gitignored; project overrides global)
 ├── spec/          # brainstorm output: YYYY-MM-DD-<mission>.md
 ├── plans/         # plan doc: YYYY-MM-DD-<mission>.md — CLEAN, Nami-only, source of truth from Wave 2. No agent names, no log, no closure.
 ├── results/       # wave results: audit/quality/gate reports, todos, closure report

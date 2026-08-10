@@ -143,6 +143,7 @@ Every mission works inside `.mugiwara/` at the repo root:
 
 ```
 .mugiwara/
+├── config         # runtime mode config: mode/branch/commit/pr key=value (gitignored; project overrides global)
 ├── spec/          # brainstorm output: YYYY-MM-DD-<mission>.md
 ├── plans/         # plan docs — clean, Nami-only, single source of truth from Wave 2
 ├── results/       # wave results: audits, test output, gate verdicts, todos, closure report
