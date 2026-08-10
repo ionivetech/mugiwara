@@ -51,6 +51,6 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 | "Close enough passes." | Gates reject it; run the check, show the output. |
 | "The config is too strict, weaken it." | Never weaken configs or downgrade severity to pass — fix the code. |
 | "The linter rule is wrong anyway." | Resolve it properly or report it; disabling is not resolving. |
-| "Integration tests, skip them, too slow." | No consent, no run — but the decision must be asked and recorded, not assumed. |
+| "Integration tests, skip them, too slow." | Skipping is policy, not laziness: we never create integration tests, and undeclared suites don't run. Declared user suites run under the consent matrix. |
 | "No tooling found, wave done." | No tooling means say so and propose the minimal setup, never a silent skip. |
 | "Formatter and linter are the same." | They are separate checks; run both. |
