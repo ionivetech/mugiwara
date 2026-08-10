@@ -55,7 +55,7 @@ Expected output:
 | `bun run typecheck` | Exit 0, no errors (`tsc --noEmit`) |
 | `bun run test` | `Test Files ... passed`, all suites green |
 | `bun run build` | Recreates `dist/mugiwara.js` |
-| `node scripts/validate-content.mjs` | `✓ content valid: 14 skills, 10 agents` |
+| `node scripts/validate-content.mjs` | `✓ content valid: 16 skills, 11 agents` |
 | `node dist/mugiwara.js --version` | `mugiwara 0.1.0` (current version) |
 
 If any step fails, fix before releasing — never ship a release that fails its own checks.
@@ -86,7 +86,7 @@ This does **not** publish. It runs `prepack` (`bun run build`), builds the tarba
 
 - `package.json`
 - `dist/mugiwara.js` — the `bin` target
-- `content/` — **24 files** (10 agents + 14 skills)
+- `content/` — **27 files** (11 agents + 16 skills)
 - `scripts/install.sh`, `scripts/install.ps1`
 - `src/` (cli, installer, targets)
 - `README.md`, `LICENSE`
@@ -190,7 +190,7 @@ Expected: marketplace resolves, plugin installs, validation passes with no stric
 | **minor** | `npm version minor` | New features: a new agent, new skill, or new target platform, backwards compatible |
 | **major** | `npm version major` | Breaking changes: changed install paths, removed CLI flags, incompatible content/frontmatter schema |
 
-The package currently has 10 agents + 14 skills (`content/`), 8 targets (`src/targets/`), and is at `0.1.0` — pre-1.0, so per semver `0.x` behaves loosely; treat "feature → minor, fix → patch" as the default until `1.0.0`.
+The package currently has 11 agents + 16 skills (`content/`), 8 targets (`src/targets/`), and is at `0.1.0` — pre-1.0, so per semver `0.x` behaves loosely; treat "feature → minor, fix → patch" as the default until `1.0.0`.
 
 ## Rollback / troubleshooting
 

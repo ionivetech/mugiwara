@@ -8,35 +8,29 @@
 [![Bun](https://img.shields.io/badge/bundler-Bun-black)](https://bun.sh)
 [![GitHub](https://img.shields.io/badge/GitHub-ionivetech%2Fmugiwara-181717?logo=github)](https://github.com/ionivetech/mugiwara)
 
-The Straw Hat crew of AI agents and skills. One install gives your AI coding
-agent a complete multi-agent workflow: brainstorm → plan → execute → checkpoint
-→ quality → gates → review → security → heal → closure.
+The Straw Hat crew of AI agents and skills.
 
-Mugiwara ships **ten specialist agents** — each a named crew member with a
-narrow job (Luffy orchestrates, Nami plans, Zoro executes, Brook heals) — and
-**twelve skills** they call as their techniques. Your existing AI agent
-(Claude Code, opencode, GitHub Copilot, Gemini CLI, Codex, Windsurf, Cline,
-Kilo Code, or Antigravity) runs the crew with its own subagent machinery. There
-is **no runtime**: Mugiwara is markdown, installed as native skills and agents
-(or rules files) for whatever tool you use.
+Zero runtime: pure markdown your existing AI agent runs with its own subagent
+machinery — no daemons, no plugins to keep updated, nothing to host.
 
-## Table of contents
+## Why Mugiwara
 
-- [Features](#features--what-you-get)
-- [How it works](#how-it-works)
-- [Install](#install)
-- [Commands and flags](#commands-and-flags)
-- [Targets](#targets)
-- [Claude Code plugin install](#claude-code-plugin-install)
-- [Usage example](#usage-example)
-- [Development](#development)
-- [Content schema](#content-schema)
-- [License](#license)
-- [Links](#links)
+- 🧭 **A named crew.** Ten specialist agents — Luffy orchestrates, Nami plans,
+  Zoro executes, Chopper audits, Brook heals — each with a narrow job.
+- 📦 **No runtime.** Ships markdown only: native skills and agents for
+  Claude Code, opencode, Copilot, Gemini CLI, Codex, Windsurf, Cline,
+  Kilo Code, and Antigravity.
+- 🔁 **Wave pipeline.** brainstorm → plan → execute → audit → quality → gates
+  → review → security → heal → closure. Failure loops back through healing
+  (max 3 cycles), never ships broken.
+- 🛡 **Evidence over claims.** No wave passes on assertion — the owning agent
+  shows output. No evidence, not complete.
+- ⚡ **One-command install.** `npx`, `npm -g`, curl, or PowerShell — interactive
+  wizard or fully scriptable with flags.
+- 🧪 **Everything validated.** Coverage gates, build gates, OWASP security
+  review, doubt-driven diff review, Definition of Done.
 
-## Features / What you get
-
-### The crew — 10 agents
+### The crew — 11 agents
 
 Each agent is a focused specialist. Agents are dispatched by your AI tool's
 subagent machinery and may call the crew's shared skills.
@@ -53,8 +47,9 @@ subagent machinery and may call the crew's shared skills.
 | `robin-reviewer` | Robin | Doubt-driven diff review: breaking-change first, five-axis, severity-tagged findings |
 | `jinbe-security` | Jinbe | Security review: OWASP, secrets, injection, auth, dependencies, untrusted-data doctrine |
 | `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, ≤3 heal cycles |
+| `skeptic-verifier` | Skeptic | Adversarial verification: doubt every output/plan/verdict, find what's wrong, do NOT validate |
 
-### The techniques — 14 skills
+### The techniques — 16 skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -72,12 +67,8 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction, slop list |
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
-
-### No runtime
-
-Mugiwara ships markdown only — zero runtime dependencies, zero daemons, zero
-plugins to keep updated in your editor. Your AI agent loads the crew as native
-skills/agents and runs them with machinery it already has.
+| `mugiwara-dynamic-workflow` | Runtime workflow patterns: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, adversarial verification |
+| `mugiwara-agent-security` | Secure the agent layer: prompt injection, memory poisoning, excessive agency, secret handling, sandboxing |
 
 ### Frontend anti-slop gating
 
@@ -93,6 +84,25 @@ Every mission starts at the **Luffy gateway** — he classifies the request
 exploratory ideas go to Usopp's brainstorm, clear work goes straight to Nami's
 planning. You can also summon any crew member directly. From there the mission
 runs as a **wave pipeline** owned by one crew member per wave.
+
+```mermaid
+flowchart TD
+    A[User request] --> B{Luffy gateway<br/>5-way triage}
+    B -- exploratory --> C[Usopp brainstorm<br/>.mugiwara/spec/]
+    B -- clear work --> D[Nami plan<br/>.mugiwara/plans/]
+    C --> D
+    D --> E[Zoro execute<br/>parallel / sequential]
+    E --> F[Chopper audit<br/>failure ledger]
+    F --> G[Sanji quality]
+    G --> H[Franky gates]
+    H --> I[Robin + Jinbe review<br/>parallel]
+    I -- pass --> J[Luffy closure<br/>ship gate]
+    I -- fail --> K[Brook heal<br/>max 3 cycles]
+    K --> F
+    J --> L[.mugiwara/ cleanup]
+```
+
+The same pipeline as a portable table (renders anywhere markdown does):
 
 | Wave | Owner | Skill | Output |
 |------|-------|-------|--------|
@@ -147,20 +157,38 @@ never land outside `.mugiwara/`.
 Requires **Node.js >= 20.11**. Bun is optional — you only need it to build
 from source.
 
+### npx
+
 ```bash
-# interactive wizard (scope, target agent, project type)
+# npx — run without installing (recommended)
 npx @ionivetech/mugiwara@latest
 
+# interactive wizard (scope, target agent, project type)
 # non-interactive: global Claude Code install, general type, no prompts
 npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
 
 # non-interactive: project install for opencode + GitHub Copilot, frontend type
 npx @ionivetech/mugiwara@latest --project ./my-app --target opencode,copilot --type frontend --yes
+```
 
-# mac/linux — curl installer
+### npm — global install
+
+```bash
+# npm — global install, run `mugiwara` anywhere
+npm install -g @ionivetech/mugiwara
+```
+
+### curl — macOS / Linux
+
+```bash
+# curl — macOS/Linux one-liner
 curl -fsSL https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.sh | bash
+```
 
-# windows — PowerShell installer
+### PowerShell — Windows
+
+```powershell
+# PowerShell — Windows one-liner
 irm https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.ps1 | iex
 ```
 
@@ -173,6 +201,29 @@ same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 |------------|--------------|---------|
 | Node.js | running the CLI and the built artifact | >= 20.11 |
 | Bun | building from source, running tests | optional |
+
+## Quickstart
+
+```console
+$ npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
+mugiwara — installing crew for: claude
+  ✓ claude    11 agents, 16 skills → ~/.claude/skills + ~/.claude/agents
+  ✓ manifest  wrote ~/.mugiwara/manifest.json
+  ✓ done      24 files written
+
+$ # now just ask your Claude Code session
+> add dark mode to the settings page
+
+  Wave 0  Luffy   triage → route: plan (requirements mostly clear)
+  Wave 2  Nami    plan   → .mugiwara/plans/2026-08-10-dark-mode.md (3 waves)
+  Wave 3  Zoro    execute→ 3 tasks, evidence shown per task
+  Wave 4  Chopper audit  → FAIL: toggle does not persist (ledger written)
+  Wave 8  Brook   heal   → fixed persistence + tests, looped back → PASS
+  Wave 9  Luffy   closure→ report appended to plan, intermediate files cleaned
+```
+
+You never drive the sequence — you answer Nami's clarifying questions up front
+and review Brook's rollback note if a fix is risky.
 
 ## Commands and flags
 
@@ -244,7 +295,7 @@ tool points at the crew.
 ## Claude Code plugin install
 
 Mugiwara also ships as a **Claude Code plugin** with a marketplace — the
-primary target. The plugin bundles the 10 agents + 14 skills as copies at the
+primary target. The plugin bundles the 11 agents + 16 skills as copies at the
 repo root (`agents/`, `skills/`) plus a `SessionStart` hook that announces the
 crew. Regenerate the copies from `content/` with `.claude-plugin/sync.sh`.
 
@@ -269,36 +320,42 @@ copilot plugin install mugiwara
 > through the regular CLI install path (which writes Copilot-native
 > `.instructions.md` skills and `.md` agents).
 
-## Usage example
+## FAQ / troubleshooting
 
-Say you ask your agent for *"add dark mode to the settings page."*
+**Why is the content so short?** The skills are dense instructions, not prose.
+Each agent/skill file is one flat-frontmatter markdown doc, body ≤120 lines —
+short enough for your AI tool to read fully and act on. Density beats verbosity:
+the harness doesn't ship essays, it ships protocols.
 
-1. **Wave 0 — Luffy (triage).** Not a trivial one-liner, but requirements are
-   mostly clear. Luffy routes straight to Wave 2 — no brainstorm needed.
-2. **Wave 2 — Nami (plan).** Writes `.mugiwara/plans/2026-08-10-dark-mode.md`:
-   three waves (theme tokens → UI wiring → settings toggle), each task with an
-   acceptance criterion. Because it touches UI, she marks every task to apply
-   `mugiwara-frontend` in the same pass.
-3. **Wave 3 — Zoro (execute).** Batches the independent tasks, dispatches
-   subagents with the plan's acceptance criteria, and shows evidence (diff +
-   test output) for each before moving on.
-4. **Wave 4 — Chopper (checkpoint).** Re-reads the plan, re-runs the criteria,
-   finds one miss — the toggle doesn't persist to `localStorage` — and writes
-   the failure ledger. Auditor only; does not fix it.
-5. **Wave 5 — Sanji (quality).** Runs the formatter, linter, and unit tests,
-   asking before any integration tests.
-6. **Wave 6 — Franky (gates).** Enforces coverage ≥90% on the new files. The
-   toggle component is untested → verdict: FAIL.
-7. **Wave 7 — Robin ∥ Jinbe (review + security, parallel).** Robin flags the
-   duplication between the two theme-context files; Jinbe notes the toggle
-   value is read with no schema guard — low severity, but real.
-8. **Wave 8 — Brook (heal).** Root-cause fixes: persistence, the missing
-   tests, the duplication, the schema guard. Loops back to Wave 4 (≤3 cycles).
-9. **Wave 9 — Luffy (closure).** Appends the closure report to the plan:
-   what shipped, what was deferred, where the evidence lives.
+**Do I need Bun?** No. The runtime is plain Node.js >= 20.11 — the built
+artifact (`dist/mugiwara.js`) runs on Node. Bun is only for building from
+source and running tests.
 
-Your human never drives the sequence — they just answer Nami's clarifying
-questions up front and review Brook's rollback note if a fix is risky.
+**How is Mugiwara different from a framework like CrewAI?** CrewAI is a
+runtime you program against. Mugiwara is content-only: markdown skills and
+agents your existing AI tool loads natively and executes with its own subagent
+machinery. There is no runtime, no SDK, nothing to host.
+
+**Does it work on Windows?** Yes — PowerShell one-liner
+(`irm ...install.ps1 | iex`), and the CLI itself runs anywhere Node >= 20.11
+does.
+
+**How do I uninstall?** `mugiwara uninstall` removes exactly what the install
+manifest recorded — nothing more, nothing less. For a plugin install, remove it
+from the plugin marketplace/manager instead.
+
+**Why is the npm package `@ionivetech/mugiwara` and not `mugiwara`?**
+`mugiwara` is taken on npm. The package is scoped as `@ionivetech/mugiwara`;
+all install methods above already point at the scoped name.
+
+**Where does a plugin install put files?** At the repo root of the plugin
+itself (`agents/`, `skills/`), plus a `SessionStart` hook — it does not copy
+into your project's `.claude/`. The CLI install is what writes into your
+project or home directory.
+
+**How do updates work?** `mugiwara update` replaces installed files, backing up
+differences to `.mugiwara/backup/<timestamp>/` first. Plugin installs update
+through the plugin marketplace when the repo publishes new content.
 
 ## Development
 
@@ -327,8 +384,8 @@ mugiwara/
 │   └── targets/         # one adapter per AI agent (claude, opencode, gemini, ...)
 ├── test/                # vitest suites
 ├── content/             # single source of truth for the crew
-│   ├── skills/          # 14 skills (one dir per skill, SKILL.md inside)
-│   └── agents/          # 10 agents (<name>.md)
+│   ├── skills/          # 16 skills (one dir per skill, SKILL.md inside)
+│   └── agents/          # 11 agents (<name>.md)
 ├── scripts/             # install.sh, install.ps1, validate-content.mjs
 ├── hooks/               # Claude Code SessionStart hook (hooks.json + session-start.js)
 ├── .claude-plugin/      # Claude plugin + marketplace metadata; sync.sh copies
@@ -382,11 +439,22 @@ description: Use when <trigger condition> — <what it does, how it behaves>.
 Run `bun run validate` before opening a PR — it checks all of this and exits
 non-zero on any violation.
 
+## Contributing
+
+Open an issue or pull request on GitHub. If you add content (skills/agents),
+follow the [content schema](#content-schema) and run `bun run validate` before
+opening the PR.
+
+## Resources
+
+- GitHub: <https://github.com/ionivetech/mugiwara>
+- npm: <https://www.npmjs.com/package/@ionivetech/mugiwara>
+- Star history: <https://star-history.com/#ionivetech/mugiwara>
+
 ## License
 
 MIT. Copyright (c) 2026 ionive. See [LICENSE](LICENSE).
 
-## Links
+---
 
-- GitHub: <https://github.com/ionivetech/mugiwara>
-- npm: <https://www.npmjs.com/package/@ionivetech/mugiwara>
+[![Star History Chart](https://api.star-history.com/svg?repos=ionivetech/mugiwara&type=Date)](https://star-history.com/#ionivetech/mugiwara)

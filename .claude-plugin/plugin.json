@@ -19,7 +19,8 @@
       "franky-gates",
       "robin-reviewer",
       "jinbe-security",
-      "brook-healing"
+      "brook-healing",
+      "skeptic-verifier"
     ],
     "skills": [
       "mugiwara-workflow",
@@ -35,7 +36,9 @@
       "mugiwara-healing",
       "mugiwara-frontend",
       "mugiwara-git",
-      "mugiwara-ship"
+      "mugiwara-ship",
+      "mugiwara-dynamic-workflow",
+      "mugiwara-agent-security"
     ]
   }
 }

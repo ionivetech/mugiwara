@@ -5,7 +5,7 @@ description: Use at the start of any non-trivial mission to run the Mugiwara cre
 
 # Mugiwara Workflow
 
-The Straw Hat harness: Wave 0 triage + Waves 1-9. Waves are phases of the mission, not files — Nami writes them into the plan doc, Zoro executes them. The harness always runs through Luffy unless the user summons a crew member directly.
+The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial pass at Wave 4.5. Waves are phases of the mission, not files — Nami writes them into the plan doc, Zoro executes them. The harness always runs through Luffy unless the user summons a crew member directly.
 
 ## Workspace layout
 
@@ -36,11 +36,14 @@ Dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planni
 | 2 Planning | Nami | mugiwara-planning | plan doc: waves/tasks/criteria, parallel markers |
 | 3 Execution | Zoro | mugiwara-execution | implemented tasks with evidence |
 | 4 Checkpoint | Chopper | mugiwara-checkpoint | audit report + failure ledger |
+| 4.5 Adversarial | Skeptic | mugiwara-dynamic-workflow | findings report + failure ledger |
 | 5 Quality | Sanji | mugiwara-quality | formatter/linter/test results |
 | 6 Gates | Franky | mugiwara-gates | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | mugiwara-review + mugiwara-security | severity-tagged findings |
 | 8 Healing | Brook | mugiwara-healing | fixes, then loop back to Wave 4 |
 | 9 Closure | Luffy | mugiwara-orchestration | closure report appended to plan |
+
+Wave 4.5 is optional — Luffy invokes Skeptic after Chopper on high-stakes missions (verdicts, plans, reviews), or parallel to Wave 7 review when he calls for it. Skip means recorded without a pass.
 
 ## Blockers
 
@@ -63,7 +66,7 @@ At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` �
 5. Wave 7 runs Robin and Jinbe in parallel.
 6. The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
-8. One agent may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`); dispatch the agent, not the skill.
+8. One agent may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 11 members); dispatch the agent, not the skill.
 
 ## Iron Law
 
