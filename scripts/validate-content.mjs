@@ -16,7 +16,7 @@ function checkFile(file, wantName, kind) {
   const d = data.description ?? '';
   if (kind === 'skill' && (d.length < 20 || d.length > 500)) errors.push(`skill ${file}: description must be 20-500 chars (got ${d.length})`);
   if (kind === 'agent' && d.length < 20) errors.push(`agent ${file}: description too short`);
-  if (kind === 'skill' && body.split(/\r?\n/).length > 120) errors.push(`skill ${file}: body exceeds 120 lines`);
+  if (kind === 'skill' && body.replace(/\r?\n$/, '').split(/\r?\n/).length > 120) errors.push(`skill ${file}: body exceeds 120 lines`);
   return data;
 }
 
