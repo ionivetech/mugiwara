@@ -38,6 +38,10 @@ The crew NEVER auto-reacts to review comments or auto-heals CI failures in any m
 
 Use the host's `gh auth` — never secrets in files. Missing auth or push failure → fall back to the local closure report and log the reason.
 
+## Secret scrub before posting
+
+Before posting, scan the verdict file for secret patterns (`.env`-style lines, API keys, tokens, private keys, credentials). On a match, redact or refuse to post and log the reason — a leaked secret in a possibly-public PR comment is irreversible.
+
 ## Rules
 
 1. Write the verdict file before posting; post last, once.
@@ -45,3 +49,4 @@ Use the host's `gh auth` — never secrets in files. Missing auth or push failur
 3. Verdicts come from captured evidence (command output), never asserted.
 4. No auto-reaction to review comments or CI in any mode.
 5. Auth missing → local closure fallback + logged reason.
+6. Scan the verdict file for secrets before posting; on a match, redact or refuse and log.
