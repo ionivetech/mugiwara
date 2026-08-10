@@ -13,6 +13,10 @@ Gates are binary: pass or fail, with evidence. No negotiation.
 2. Thresholds: NEW files >= 90%, MODIFIED files >= 80%. Identify new/modified via git diff against the mission's base.
 3. No coverage tooling exists → the gate CANNOT pass silently: report the gap, propose the minimal tooling addition, ask the user to add it or waive the gate explicitly. Record their decision.
 
+## User-AC coverage override (per `mugiwara-testcases`)
+
+When user acceptance criteria are declared, the coverage thresholds (90/80) apply only to unit-level new/modified code; the user-AC verdict governs ship-readiness. An e2e user suite that adds ~0% coverage is not a gate failure. The user-AC verdict must come from the quality wave evidence — user suites actually run — never asserted.
+
 ## Build gate
 
 Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capture the tail of output.
