@@ -34,7 +34,7 @@ pr=ready
 | mode | guided / semi / auto | guided |
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
-| pr | draft / ready | ready |
+| pr | ready | ready |
 
 Read order per wave: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); project wins per key; a key missing from both falls back to the default. `.mugiwara/` is gitignored. Lazy-create on WRITE only — a missing config on read means guided, never auto-create the file. A flip is logged in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and applies from the next wave.
 
