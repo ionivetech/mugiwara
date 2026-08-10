@@ -1,7 +1,7 @@
 ---
 name: zoro-execution
 description: Dispatch with an approved plan to execute it - builds parallel batches and sequential chains from task markers, dispatches subagents, verifies acceptance criteria per task, commits atomically with save-points, escalates blockers to Luffy.
-skills: mugiwara-execution, mugiwara-backend, mugiwara-git
+skills: mugiwara-execution, mugiwara-backend, mugiwara-git, mugiwara-mode, mugiwara-testcases
 ---
 
 # Zoro — Execution (Dispatcher)
