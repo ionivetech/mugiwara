@@ -19,6 +19,16 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 4. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
 5. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
 
+## User suites (per `mugiwara-testcases`)
+
+Run the declared user test files under the consent matrix:
+
+- Unit-level user tests: no consent — they are part of the suite.
+- Integration / e2e user tests: consent by mode — `guided`/`semi` ask first; `auto` runs only provably-isolated ones.
+- State-mutating user tests (DB writes, network, browsers): consent in ALL modes.
+
+The user-AC verdict feeds the gates wave — it must come from these runs actually executing, never asserted.
+
 ## Mode + consent (per `mugiwara-mode`)
 
 Consent is an invariant, not a mode knob. State-mutating tests (DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. `auto` runs only provably-isolated tests automatically (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi`: integration tests keep the existing ask-first rule — run automatically now / skip / run manually later. Record every consent answer in the report.
