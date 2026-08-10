@@ -1,16 +1,16 @@
-#!/usr/bin/env node
-// scripts/validate-content.mjs
+#!/usr/bin/env bun
+// scripts/validate-content.ts
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, basename } from 'node:path';
-import { parseFrontmatter } from '../src/frontmatter.js';
+import { parseFrontmatter } from '../src/frontmatter.ts';
 
 const root = join(import.meta.dirname, '..', 'content');
-const errors = [];
+const errors: string[] = [];
 
-function checkFile(file, wantName, kind) {
+function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Record<string, string> | null {
   let parsed;
   try { parsed = parseFrontmatter(readFileSync(file, 'utf8')); }
-  catch (e) { errors.push(`${kind} ${file}: ${e.message}`); return null; }
+  catch (e) { errors.push(`${kind} ${file}: ${(e as Error).message}`); return null; }
   const { data, body } = parsed;
   if (data.name !== wantName) errors.push(`${kind} ${file}: name "${data.name}" != "${wantName}"`);
   const d = data.description ?? '';
@@ -20,9 +20,9 @@ function checkFile(file, wantName, kind) {
   return data;
 }
 
-function listFiles(dir, prefix = '') {
+function listFiles(dir: string, prefix = ''): string[] {
   if (!existsSync(dir)) return [];
-  const out = [];
+  const out: string[] = [];
   for (const ent of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, ent.name);
     if (ent.isDirectory()) out.push(...listFiles(p, join(prefix, ent.name)));
@@ -33,8 +33,8 @@ function listFiles(dir, prefix = '') {
 
 const syncArg = process.argv.indexOf('--check-sync');
 if (syncArg !== -1) {
-  const pairs = [['content/skills', 'skills'], ['content/agents', 'agents']];
-  const diffs = [];
+  const pairs = [['content/skills', 'skills'], ['content/agents', 'agents']] as const;
+  const diffs: string[] = [];
   for (const [from, to] of pairs) {
     const fromRoot = join(import.meta.dirname, '..', from);
     const toRoot = join(import.meta.dirname, '..', to);
@@ -57,8 +57,8 @@ if (syncArg !== -1) {
 const skillDirs = existsSync(join(root, 'skills'))
   ? readdirSync(join(root, 'skills')).filter(d => statSync(join(root, 'skills', d)).isDirectory())
   : [];
-const names = new Map();
-const usedSkills = new Set();
+const names = new Map<string, string>();
+const usedSkills = new Set<string>();
 
 const checkArg = process.argv.indexOf('--check');
 if (checkArg !== -1) {

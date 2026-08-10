@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
+// hooks/session-start.ts — SessionStart hook: reminds the agent the crew is available.
 console.log(
   JSON.stringify({
     additionalContext:

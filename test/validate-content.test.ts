@@ -2,10 +2,12 @@
 import { test, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 
+const run = (args: string[]) => execFileSync('bun', ['scripts/validate-content.ts', ...args], { stdio: 'pipe' });
+
 test('full content validation passes', () => {
-  expect(() => execFileSync(process.execPath, ['scripts/validate-content.mjs'], { stdio: 'pipe' })).not.toThrow();
+  expect(() => run([])).not.toThrow();
 });
 
 test('single-file check passes on a valid file', () => {
-  expect(() => execFileSync(process.execPath, ['scripts/validate-content.mjs', '--check', 'content/skills/mugiwara-workflow/SKILL.md'], { stdio: 'pipe' })).not.toThrow();
+  expect(() => run(['--check', 'content/skills/mugiwara-workflow/SKILL.md'])).not.toThrow();
 });

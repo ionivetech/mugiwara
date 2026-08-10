@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "bun build src/cli.ts --outfile dist/mugiwara.js --target node --format esm",
-    "validate": "node scripts/validate-content.mjs",
+    "validate": "bun scripts/validate-content.ts",
+    "evals": "bun scripts/run-evals.ts",
     "prepack": "bun run build"
   },
   "keywords": ["ai", "agents", "skills", "claude-code", "opencode", "copilot", "gemini", "codex", "windsurf", "cline", "multi-agent", "workflow"],

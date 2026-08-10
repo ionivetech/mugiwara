@@ -42,7 +42,7 @@ jobs:
         run: bun run build
 
       - name: Validate content
-        run: node scripts/validate-content.mjs
+        run: bun scripts/validate-content.ts
 
       - name: Authenticate with npm
         run: npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"

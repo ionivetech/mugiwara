@@ -44,7 +44,7 @@ Expected: `On branch main` and `nothing to commit, working tree clean` (no uncom
 bun run typecheck
 bun run test
 bun run build
-node scripts/validate-content.mjs
+bun scripts/validate-content.ts
 node dist/mugiwara.js --version
 ```
 
@@ -55,7 +55,7 @@ Expected output:
 | `bun run typecheck` | Exit 0, no errors (`tsc --noEmit`) |
 | `bun run test` | `Test Files ... passed`, all suites green |
 | `bun run build` | Recreates `dist/mugiwara.js` |
-| `node scripts/validate-content.mjs` | `✓ content valid: 21 skills, 15 agents` |
+| `bun scripts/validate-content.ts` | `✓ content valid: 21 skills, 15 agents` |
 | `node dist/mugiwara.js --version` | `mugiwara 0.1.0` (current version) |
 
 If any step fails, fix before releasing — never ship a release that fails its own checks.
@@ -235,7 +235,7 @@ The `bin` target `dist/mugiwara.js` is missing from the published tarball. `prep
 | 1 | `bun run typecheck` | ☐ |
 | 1 | `bun run test` | ☐ |
 | 1 | `bun run build` | ☐ |
-| 1 | `node scripts/validate-content.mjs` → `✓ content valid` | ☐ |
+| 1 | `bun scripts/validate-content.ts` → `✓ content valid` | ☐ |
 | 1 | `node dist/mugiwara.js --version` → `mugiwara <version>` | ☐ |
 | 2 | `npm version patch` | ☐ |
 | 3 | `npm publish --dry-run --access public` → check tarball (46 files, no test//docs/) | ☐ |

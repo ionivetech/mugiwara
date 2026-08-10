@@ -1,18 +1,17 @@
-#!/usr/bin/env node
-// scripts/run-evals.mjs — validates the eval suite exists and prints the case list.
-// Does NOT execute cases: the host agent runs them. Run: node scripts/run-evals.mjs
+#!/usr/bin/env bun
+// scripts/run-evals.ts — validates the eval suite exists and prints the case list.
+// Does NOT execute cases: the host agent runs them. Run: bun scripts/run-evals.ts
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const root = join(import.meta.dirname, '..');
 const casesDir = join(root, 'evals', 'cases');
 const skillsDir = join(root, 'content', 'skills');
-const errors = [];
+const errors: string[] = [];
 
-function listCases(dir, prefix = '') {
+function listCases(dir: string, prefix = ''): string[] {
   if (!existsSync(dir)) return [];
-  const out = [];
+  const out: string[] = [];
   for (const ent of readdirSync(dir, { withFileTypes: true })) {
     const p = join(dir, ent.name);
     if (ent.isDirectory()) out.push(...listCases(p, join(prefix, ent.name)));
@@ -23,12 +22,12 @@ function listCases(dir, prefix = '') {
 
 const cases = listCases(casesDir).sort();
 for (const rel of cases) {
-  let c;
+  let c: { name?: string; skill?: string; task?: string; rubric?: unknown[] };
   try { c = JSON.parse(readFileSync(join(casesDir, rel), 'utf8')); }
-  catch (e) { errors.push(`${rel}: invalid JSON (${e.message})`); continue; }
+  catch (e) { errors.push(`${rel}: invalid JSON (${(e as Error).message})`); continue; }
   if (!c.name || !c.skill || !c.task || !Array.isArray(c.rubric) || !c.rubric.length)
     errors.push(`${rel}: missing name/skill/task/nonempty rubric`);
-  else if (!existsSync(join(skillsDir, c.skill))) errors.push(`${rel}: unknown skill "${c.skill}"`);
+  else if (!existsSync(join(skillsDir, c.skill!))) errors.push(`${rel}: unknown skill "${c.skill}"`);
 }
 
 if (errors.length) { console.error(errors.map(e => `✗ ${e}`).join('\n')); process.exit(1); }
