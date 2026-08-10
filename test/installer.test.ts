@@ -30,7 +30,7 @@ test('collectContent includes all skills and agents', () => {
 
 test('installTo writes skills and agents, rerun skips identical', () => {
   const r1 = installTo(fakeTarget, opts);
-  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 21 skills + 14 agents
+  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 25 skills + 15 agents
   expect(existsSync(join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(projectDir, 'ag', 'luffy-orchestrator.md'))).toBe(true);
   const r2 = installTo(fakeTarget, opts);
