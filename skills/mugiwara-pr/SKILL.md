@@ -28,6 +28,8 @@ ONE batch comment + ONE check-run, posted only at terminal when the PR is create
 - Comment: `gh pr comment <n> --body-file .mugiwara/results/<mission>-pr-verdict.md`
 - Check-run: `gh api repos/{owner}/{repo}/check-runs` with `name`, `status=completed`, `conclusion=<success|neutral|failure>`, `head_sha`, `output[title]`, `output[summary]`
 
+Interpolated identifiers (`<n>`, `{owner}/{repo}`, branch) are harness- or repo-derived, never read from untrusted content. Derive owner/repo from `git remote get-url origin`, `<n>` from the `gh pr create` output. Quote every interpolated value in the shell command and validate it against a safe charset (alphanumerics, `-`, `_`, `/`) before use.
+
 ## Stop-at-PR invariant
 
 The crew NEVER auto-reacts to review comments or auto-heals CI failures in any mode. That is a future, explicitly-opted feature.
