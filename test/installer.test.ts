@@ -17,22 +17,20 @@ const fakeTarget: Target = {
 
 const projectDir = mkdtempSync(join(tmpdir(), 'mugi-t-'));
 const home = mkdtempSync(join(tmpdir(), 'mugi-h-'));
-const opts: InstallOptions = { scope: 'project', projectDir, home, type: 'frontend', dryRun: false, force: false };
+const opts: InstallOptions = { scope: 'project', projectDir, home, dryRun: false, force: false };
 
-test('collectContent includes frontend for frontend type', () => {
-  const { skills, agents } = collectContent({ includeFrontend: true });
+test('collectContent includes all skills and agents', () => {
+  const { skills, agents } = collectContent();
   expect(skills.some(s => s.name === 'mugiwara-frontend')).toBe(true);
+  expect(skills.some(s => s.name === 'mugiwara-backend')).toBe(true);
   expect(agents.some(a => a.name === 'luffy-orchestrator')).toBe(true);
-});
-
-test('collectContent excludes frontend when gated', () => {
-  const { skills } = collectContent({ includeFrontend: false });
-  expect(skills.some(s => s.name === 'mugiwara-frontend')).toBe(false);
+  expect(skills.length).toBeGreaterThanOrEqual(20);
+  expect(agents.length).toBeGreaterThanOrEqual(14);
 });
 
 test('installTo writes skills and agents, rerun skips identical', () => {
   const r1 = installTo(fakeTarget, opts);
-  expect(r1.written.length).toBeGreaterThanOrEqual(21); // 11 skills (frontend incl) + 10 agents
+  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 21 skills + 14 agents
   expect(existsSync(join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(projectDir, 'ag', 'luffy-orchestrator.md'))).toBe(true);
   const r2 = installTo(fakeTarget, opts);

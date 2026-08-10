@@ -19,7 +19,7 @@ test('readManifest returns null when absent', () => {
 
 test('write then read roundtrip', () => {
   const file = manifestPath({ scope: 'project', projectDir: proj, home });
-  const data: Manifest = { version: '0.1.0', scope: 'project', type: 'general', installedAt: 'x', targets: ['claude'], files: ['/a/b.md'] };
+  const data: Manifest = { version: '0.1.0', scope: 'project', installedAt: 'x', targets: ['claude'], files: ['/a/b.md'] };
   writeManifest(file, data);
   expect(readManifest(file)).toEqual(data);
 });

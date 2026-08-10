@@ -14,7 +14,7 @@ const runCli = (args: string[]) => execFileSync(process.execPath, [DIST, ...args
 
 test('install claude project scope, then uninstall clean', () => {
   const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
-  runCli(['install', '--project', proj, '--target', 'claude', '--type', 'frontend', '--yes']);
+  runCli(['install', '--project', proj, '--target', 'claude', '--yes']);
   expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(proj, '.claude', 'agents', 'luffy-orchestrator.md'))).toBe(true);
   expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-frontend', 'SKILL.md'))).toBe(true);
@@ -24,23 +24,23 @@ test('install claude project scope, then uninstall clean', () => {
   expect(existsSync(join(proj, '.mugiwara', 'manifest.json'))).toBe(false);
 });
 
-test('backend type excludes frontend skill', () => {
+test('all skills installed for opencode project scope', () => {
   const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
-  runCli(['install', '--project', proj, '--target', 'opencode', '--type', 'backend', '--yes']);
-  expect(existsSync(join(proj, '.opencode', 'skills', 'mugiwara-frontend'))).toBe(false);
+  runCli(['install', '--project', proj, '--target', 'opencode', '--yes']);
+  expect(existsSync(join(proj, '.opencode', 'skills', 'mugiwara-frontend', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(proj, '.opencode', 'skills', 'mugiwara-planning', 'SKILL.md'))).toBe(true);
 });
 
 test('tier-2 target installs flat rule files (project scope)', () => {
   const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
-  runCli(['install', '--project', proj, '--target', 'cline', '--type', 'general', '--yes']);
+  runCli(['install', '--project', proj, '--target', 'cline', '--yes']);
   expect(existsSync(join(proj, '.clinerules', 'mugiwara-workflow.md'))).toBe(true);
   expect(existsSync(join(proj, '.clinerules', 'agent-luffy-orchestrator.md'))).toBe(true);
 });
 
 test('dry-run writes nothing', () => {
   const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
-  runCli(['install', '--project', proj, '--target', 'claude', '--type', 'general', '--yes', '--dry-run']);
+  runCli(['install', '--project', proj, '--target', 'claude', '--yes', '--dry-run']);
   expect(existsSync(join(proj, '.claude'))).toBe(false);
 });
 

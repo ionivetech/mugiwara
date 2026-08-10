@@ -79,12 +79,12 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/` after compaction/loss; never restart |
 | `mugiwara-lessons` | Cross-mission memory: actionable lessons ledger, read at triage, written at closure |
 
-### Frontend anti-slop gating
+### Every capability, always
 
-`--type frontend` or `--type fullstack` includes `mugiwara-frontend` in the
-install; `backend` and `general` skip it. The skill enforces audit-first
-redesigns, extracts the design system from the reference, and bans generic
-AI-slop patterns — framework-agnostic.
+Every install ships the full crew — all 21 skills and 15 agents, including
+the anti-slop `mugiwara-frontend`, `mugiwara-backend`, and `mugiwara-agent-security`
+skills. No project-type selection: you get every capability, and the harness
+routes each task to the right skill.
 
 ## How it works
 
@@ -175,12 +175,12 @@ from source.
 # npx — run without installing (recommended)
 npx @ionivetech/mugiwara@latest
 
-# interactive wizard (scope, target agent, project type)
-# non-interactive: global Claude Code install, general type, no prompts
-npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
+# interactive wizard (scope, target agent)
+# non-interactive: global Claude Code install, no prompts
+npx @ionivetech/mugiwara@latest --global --target claude --yes
 
-# non-interactive: project install for opencode + GitHub Copilot, frontend type
-npx @ionivetech/mugiwara@latest --project ./my-app --target opencode,copilot --type frontend --yes
+# non-interactive: project install for opencode + GitHub Copilot
+npx @ionivetech/mugiwara@latest --project ./my-app --target opencode,copilot --yes
 ```
 
 ### npm — global install
@@ -232,7 +232,7 @@ installable set.
 ## Quickstart
 
 ```console
-$ npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
+$ npx @ionivetech/mugiwara@latest --global --target claude --yes
 mugiwara — installing crew for: claude
   ✓ claude    15 agents, 21 skills → ~/.claude/skills + ~/.claude/agents
   ✓ manifest  wrote ~/.mugiwara/manifest.json
@@ -273,26 +273,25 @@ and review Brook's rollback note if a fix is risky.
 | `--global` | Install user-wide (writes to your home directory) |
 | `--project <dir>` | Install into a project directory (default: current directory) |
 | `--target <ids\|all>` | Comma-separated target IDs, or `all`. Valid: `claude, opencode, copilot, gemini, codex, windsurf, cline, kilo, antigravity` |
-| `--type <t>` | Project type: `frontend`, `backend`, `fullstack`, `general`. `frontend`/`fullstack` include `mugiwara-frontend` |
-| `--yes`, `-y` | Non-interactive. Requires `--global` or `--project`, `--target`, and `--type` |
+| `--yes`, `-y` | Non-interactive. Requires `--global` or `--project`, and `--target` |
 | `--force` | Overwrite files that differ (conflicting files are backed up first) |
 | `--dry-run` | Print the actions without writing anything |
 
 ```bash
-# non-interactive install requires all three, or it errors out
-npx @ionivetech/mugiwara@latest --project ./app --target claude --type frontend --yes
+# non-interactive install requires scope + target, or it errors out
+npx @ionivetech/mugiwara@latest --project ./app --target claude --yes
 
 # preview what an install would write, without touching the disk
-npx @ionivetech/mugiwara@latest --global --target all --type general --yes --dry-run
+npx @ionivetech/mugiwara@latest --global --target all --yes --dry-run
 
 # global installs skip targets that only support project scope (with a note)
-npx @ionivetech/mugiwara@latest --global --target all --type general --yes
+npx @ionivetech/mugiwara@latest --global --target all --yes
 ```
 
 ### Install manifest
 
 Every install writes `.mugiwara/manifest.json` (in the project dir, or `~` for
-global). The manifest records the version, scope, type, targets, and the exact
+global). The manifest records the version, scope, targets, and the exact
 list of written files — which is what `update` and `uninstall` use to operate
 safely.
 

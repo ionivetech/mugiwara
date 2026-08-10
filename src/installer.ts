@@ -10,7 +10,6 @@ export type ContentItem = { name: string; data: FrontmatterData; body: string };
 export type InstallOptions = {
   scope: Scope;
   projectDir: string;
-  type: string;
   dryRun?: boolean;
   force?: boolean;
   home?: string;
@@ -39,10 +38,9 @@ export const CONTENT_DIR = join(import.meta.dirname, '..', 'content');
 const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')) as { version: string };
 export const VERSION = pkg.version;
 
-export function collectContent({ includeFrontend }: { includeFrontend: boolean }): { skills: ContentItem[]; agents: ContentItem[] } {
+export function collectContent(): { skills: ContentItem[]; agents: ContentItem[] } {
   const skillNames = readdirSync(join(CONTENT_DIR, 'skills'), { withFileTypes: true })
-    .filter(e => e.isDirectory()).map(e => e.name)
-    .filter(name => includeFrontend || name !== 'mugiwara-frontend');
+    .filter(e => e.isDirectory()).map(e => e.name);
   const skills = skillNames.map(name => {
     const { data, body } = parseFrontmatter(readFileSync(join(CONTENT_DIR, 'skills', name, 'SKILL.md'), 'utf8'));
     return { name, data, body };
@@ -57,9 +55,9 @@ export function collectContent({ includeFrontend }: { includeFrontend: boolean }
 }
 
 export function installTo(target: Target, opts: InstallOptions): InstallResult {
-  const { scope, projectDir, type, dryRun = false, force = false } = opts;
+  const { scope, projectDir, dryRun = false, force = false } = opts;
   const home = opts.home ?? homedir();
-  const { skills, agents } = collectContent({ includeFrontend: type === 'frontend' || type === 'fullstack' });
+  const { skills, agents } = collectContent();
   const dirs = target.paths({ scope, projectDir, home });
   const backupRoot = join(scope === 'global' ? home : projectDir, '.mugiwara');
   const result: InstallResult = { written: [], skipped: [], backedUp: [], notes: [] };

@@ -7,7 +7,6 @@ export type Scope = 'global' | 'project';
 export type Manifest = {
   version: string;
   scope: Scope;
-  type: string;
   installedAt: string;
   targets: string[];
   files: string[];

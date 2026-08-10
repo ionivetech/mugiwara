@@ -11,8 +11,6 @@ import { installTo, removeInstalled, VERSION, CONTENT_DIR } from './installer.ts
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { parseFrontmatter } from './frontmatter.ts';
 
-const TYPES = ['frontend', 'backend', 'fullstack', 'general'];
-
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
 
@@ -30,7 +28,7 @@ export async function run(argv: string[]): Promise<void> {
   }
 }
 
-async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[]; type: string }> {
+async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
   const interactive = !flag(flags.yes);
   const rl = interactive ? createRl() : null;
   try {
@@ -53,20 +51,14 @@ async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; pro
       if (!targets[id]) throw new Error(`Unknown target: ${id} (valid: ${TARGET_IDS.join(', ')}, all)`);
     }
 
-    let type = str(flags.type) ?? null;
-    if (!type) {
-      if (!interactive) throw new Error('Specify --type with --yes');
-      type = TYPES[await choose(rl!, 'Project type?', TYPES)];
-    }
-    if (!TYPES.includes(type)) throw new Error(`Unknown type: ${type} (valid: ${TYPES.join(', ')})`);
-    return { scope, projectDir, targetIds, type };
+    return { scope, projectDir, targetIds };
   } finally {
     if (rl) rl.close();
   }
 }
 
 async function install(flags: Args['flags']): Promise<void> {
-  const { scope, projectDir, targetIds, type } = await resolveOptions(flags);
+  const { scope, projectDir, targetIds } = await resolveOptions(flags);
   const home = homedir();
   const allFiles: string[] = [];
   const allNotes: string[] = [];
@@ -79,7 +71,7 @@ async function install(flags: Args['flags']): Promise<void> {
     }
     installed.push(id);
     console.log(`\n-> ${t.label} (${scope})`);
-    const r = installTo(t, { scope, projectDir, type, home, dryRun: flag(flags.dryRun), force: flag(flags.force) });
+    const r = installTo(t, { scope, projectDir, home, dryRun: flag(flags.dryRun), force: flag(flags.force) });
     console.log(`   written ${r.written.length}, skipped ${r.skipped.length}, backed up ${r.backedUp.length}`);
     for (const n of r.notes) console.log(`   note: ${n}`);
     allFiles.push(...r.written);
@@ -91,7 +83,6 @@ async function install(flags: Args['flags']): Promise<void> {
   writeManifest(file, {
     version: VERSION,
     scope,
-    type,
     installedAt: new Date().toISOString(),
     targets: [...new Set([...(prev?.targets ?? []), ...installed])],
     files: [...new Set([...(prev?.files ?? []), ...allFiles])],
@@ -164,8 +155,7 @@ Flags:
   --global               user-wide install
   --project <dir>        project install (default: cwd)
   --target <ids|all>     comma-separated: ${TARGET_IDS.join(', ')}
-  --type <t>             frontend | backend | fullstack | general
-  --yes, -y              non-interactive (needs --global/--project, --target, --type)
+  --yes, -y              non-interactive (needs --global/--project, --target)
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing`);
 }

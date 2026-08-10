@@ -7,12 +7,15 @@ test('default command is install', () => {
 });
 
 test('parses commands and flags', () => {
-  const r = parseArgs(['install', '--global', '--target', 'claude,opencode', '--type', 'frontend', '--yes']);
+  const r = parseArgs(['install', '--global', '--target', 'claude,opencode', '--yes']);
   expect(r.command).toBe('install');
   expect(r.flags.global).toBe(true);
   expect(r.flags.target).toBe('claude,opencode');
-  expect(r.flags.type).toBe('frontend');
   expect(r.flags.yes).toBe(true);
+});
+
+test('unknown --type flag is rejected', () => {
+  expect(() => parseArgs(['--type', 'frontend'])).toThrow(/unknown flag/i);
 });
 
 test('parses uninstall/update/list/dry-run/force/project', () => {
