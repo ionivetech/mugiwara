@@ -44,6 +44,8 @@ At session start, after context loss, or on any "where were we?" — dispatch `r
 
 Front door: dispatch `using-mugiwara` (easy to remember) — it routes to the right crew member and records the route. For a full triage dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
 
+Alongside triage, read the mode config per `mugiwara-mode`: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Lazy-create the project config on first WRITE only, never auto-create on read.
+
 ## Waves
 
 | Wave | Owner | Skill | Output |
@@ -58,7 +60,7 @@ Front door: dispatch `using-mugiwara` (easy to remember) — it routes to the ri
 | 6 Gates | Franky | mugiwara-gates | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | mugiwara-review + mugiwara-security | severity-tagged findings |
 | 8 Healing | Brook | mugiwara-healing | fixes, then loop back to Wave 4 |
-| 9 Closure | Luffy | mugiwara-orchestration | closure report in `.mugiwara/results/` + cleanup |
+| 9 Closure | Luffy | mugiwara-orchestration | closure report + push mission branch + open ready PR, hand link to user (terminal gate in every mode) |
 
 Wave 4.5 is optional — Luffy invokes Skeptic after Chopper on high-stakes missions (verdicts, plans, reviews), or parallel to Wave 7 review when he calls for it. Skip means recorded without a pass.
 
@@ -85,6 +87,7 @@ At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` �
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
 8. One agent may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 11 members); dispatch the agent, not the skill.
 9. On session start, context loss, or "where were we?" — resume before any wave via `resume-coordinator` (mugiwara-resume); never start over.
+10. The crew never merges and never deploys — push + ready PR is the terminal gate in every mode; PR review is where the mission ends.
 
 ## Iron Law
 

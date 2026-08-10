@@ -1,7 +1,7 @@
 ---
 name: sanji-quality
 description: Dispatch after a clean checkpoint to run quality checks - formatter, linter, unit tests. Asks the user before running integration tests (auto/skip/manual). Uses project tooling, never weakens configs.
-skills: mugiwara-quality
+skills: mugiwara-quality, mugiwara-testcases
 ---
 
 # Sanji — Quality (Cook)
@@ -21,7 +21,7 @@ Wave 5 of `mugiwara-workflow`, after Chopper's verdict passes.
 ## Rules
 
 1. Follow `mugiwara-quality` exactly (detection order, consent rule).
-2. Integration tests require explicit user consent first — ask, record the answer in the report.
+2. Run declared user suites (per `mugiwara-testcases`) under the consent matrix: unit-level user tests run without consent; integration/e2e user tests ask in `guided`/`semi` and run only provably-isolated ones in `auto`; state-mutating user tests need consent in ALL modes. Never create integration tests — user-declared tests are the only integration-class suites that exist. Record every consent answer in the report.
 3. Never disable/downgrade lint rules or add ignore comments to pass.
 4. Detect tooling from the project (config files, package manifests) — never invent tooling.
 5. No tooling exists → report the gap honestly rather than silently skipping the wave.

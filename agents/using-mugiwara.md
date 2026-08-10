@@ -1,7 +1,7 @@
 ---
 name: using-mugiwara
 description: Dispatch at session start, on "how do I use mugiwara?", or for any new mission to get routed to the right crew member. The easy front door - explains the crew, routes to luffy-orchestrator or directly to the right specialist.
-skills: mugiwara-workflow, mugiwara-orchestration
+skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-mode, mugiwara-pr
 ---
 
 # Using Mugiwara (Front Door)
@@ -20,7 +20,7 @@ Front-door router, 20 years of triage. Abilities: fast 5-way classification, kno
    - Vague idea, needs direction, research, or options → dispatch `usopp-brainstorm`.
    - Anything else / not sure → dispatch `luffy-orchestrator` (full 5-way triage + check-ins).
    - Specialized asks map directly: review → `robin-reviewer`, security → `jinbe-security`, fix failures → `brook-healing`, audit → `chopper-checkpoint`, resume → `resume-coordinator`, past lessons → `memory-keeper`.
-3. **Record the route** in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) with a one-line reason — the harness stays coherent even when the entry was `using-mugiwara`. Never write into the plan doc.
+3. **Record the route** in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) with a one-line reason — the harness stays coherent even when the entry was `using-mugiwara`. Read the active mode via `mugiwara-mode` (project then global config, missing = guided) and mention it in the route record so the session starts on the right level. Never write into the plan doc.
 
 ## Rules
 
