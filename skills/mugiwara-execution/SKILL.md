@@ -1,6 +1,6 @@
 ---
 name: mugiwara-execution
-description: Use when executing an approved wave-structured plan. Opens a todo list first, builds a task graph, dispatches independent tasks concurrently, one task per commit, and verifies every acceptance criterion with evidence before reporting done.
+description: Use when executing an approved wave-structured plan. Opens a todo list first, runs sequential tasks inline in the main thread, dispatches independent [PARALLEL] batches to worker subagents, commits per logical task, and verifies every acceptance criterion with evidence before reporting done.
 ---
 
 # Execution (Zoro)
@@ -29,12 +29,13 @@ Before touching code:
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
 3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess.
-4. Independent tasks → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. Crew chains → strictly sequential; a task starts only when its dependencies report done with evidence.
-5. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
+4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work.
+5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence pointers before starting the next batch.
+6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
 
-## Delegation format
+## Delegation format (parallel workers only)
 
-Every subagent delegation prompt includes all six fields:
+Sequential work runs inline — no delegation. For every `[PARALLEL]` worker you dispatch, the prompt includes all six fields:
 
 - TASK — the task body, verbatim from the plan.
 - EXPECTED OUTCOME — what "done" looks like, concrete and checkable.
@@ -59,12 +60,13 @@ The test's proof value comes from WHEN it runs, not that it exists. A test that 
 1. User-supplied executable tests are the oracle: run them failing first, green at the end. Never edit or skip them — immutable gold; a change requires user consent + a ledger row.
 2. Declarative user AC → write the project test file first, watch it fail for the intended reason, implement, re-run green. These tests are model-written, so the checkpoint re-runs them and they get extra scrutiny — they can encode the bug.
 
-## One task, one commit
+## One logical task, one commit
 
 1. Follow the task's steps in order — TDD discipline above: failing test first (watch it fail), implement, watch it pass, refactor while green.
 2. Verify every acceptance criterion; capture command output as evidence.
-3. Commit the task alone: only the files that task declared. No task commingles with its neighbors.
-4. Report done (with evidence) or blocked (with reason).
+3. Commit per LOGICAL task: a task is a meaningful unit of work (a feature, a fix, a refactor) — not a micro-step. Adjacent trivial changes (typo, formatting, a one-line tweak) fold into the neighboring logical task's commit; never one commit per keystroke. If the plan slices tasks finer than a logical change, group adjacent tasks into one commit and note the grouping in the execution report.
+4. Commit only the files that task declared. No task commingles with its neighbors.
+5. Report done (with evidence) or blocked (with reason).
 
 ## Blockers → issues ledger
 
@@ -80,7 +82,7 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 ## Report
 
-After each wave: task table (status, evidence pointer, deviations) → return to the main thread (routes to Chopper). You never dispatch another crew member.
+After each wave: task table (status, evidence pointer, deviations) shown inline in the conversation → the main thread hands off to Chopper (Wave 4). You never dispatch another crew member.
 
 ## Red flags
 
@@ -91,6 +93,6 @@ After each wave: task table (status, evidence pointer, deviations) → return to
 - A blocker worked around silently instead of escalated.
 - The task's TDD order inverted (implementation before the failing test).
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
-- A commit containing files beyond its declared task.
+- A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

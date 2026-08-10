@@ -17,6 +17,7 @@
     "dist",
     "src",
     "content",
+    "docs",
     ".opencode",
     "scripts/install.sh",
     "scripts/install.ps1",

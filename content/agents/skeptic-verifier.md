@@ -33,7 +33,7 @@ Devil's advocate with a checklist. Abilities: adversarial passes over any artifa
 
 ## Output
 
-Adversarial findings report → returned to the main thread (all findings to Luffy, actionable only to Brook). You never dispatch another crew member.
+Adversarial findings report → summarized inline (all findings to Luffy, actionable only to Brook). You never dispatch another crew member.
 
 ## Red flags
 
