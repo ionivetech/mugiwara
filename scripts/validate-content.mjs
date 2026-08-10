@@ -11,12 +11,47 @@ function checkFile(file, wantName, kind) {
   let parsed;
   try { parsed = parseFrontmatter(readFileSync(file, 'utf8')); }
   catch (e) { errors.push(`${kind} ${file}: ${e.message}`); return null; }
-  const { data } = parsed;
+  const { data, body } = parsed;
   if (data.name !== wantName) errors.push(`${kind} ${file}: name "${data.name}" != "${wantName}"`);
   const d = data.description ?? '';
   if (kind === 'skill' && (d.length < 20 || d.length > 500)) errors.push(`skill ${file}: description must be 20-500 chars (got ${d.length})`);
   if (kind === 'agent' && d.length < 20) errors.push(`agent ${file}: description too short`);
+  if (kind === 'skill' && body.split(/\r?\n/).length > 120) errors.push(`skill ${file}: body exceeds 120 lines`);
   return data;
+}
+
+function listFiles(dir, prefix = '') {
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const ent of readdirSync(dir, { withFileTypes: true })) {
+    const p = join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...listFiles(p, join(prefix, ent.name)));
+    else out.push(join(prefix, ent.name));
+  }
+  return out;
+}
+
+const syncArg = process.argv.indexOf('--check-sync');
+if (syncArg !== -1) {
+  const pairs = [['content/skills', 'skills'], ['content/agents', 'agents']];
+  const diffs = [];
+  for (const [from, to] of pairs) {
+    const fromRoot = join(import.meta.dirname, '..', from);
+    const toRoot = join(import.meta.dirname, '..', to);
+    const fromFiles = listFiles(fromRoot).sort();
+    const toFiles = listFiles(toRoot).sort();
+    for (const rel of fromFiles) {
+      const f = join(fromRoot, rel), t = join(toRoot, rel);
+      if (!existsSync(t)) diffs.push(`missing copy: ${to}/${rel} (run .claude-plugin/sync.sh)`);
+      else if (readFileSync(f, 'utf8') !== readFileSync(t, 'utf8')) diffs.push(`out of sync: ${to}/${rel}`);
+    }
+    for (const rel of toFiles) {
+      if (!fromFiles.includes(rel)) diffs.push(`stale copy: ${to}/${rel} (not in content/, run .claude-plugin/sync.sh)`);
+    }
+  }
+  if (diffs.length) { console.error(diffs.map(d => `✗ ${d}`).join('\n')); process.exit(1); }
+  console.log('✓ plugin copies in sync with content/');
+  process.exit(0);
 }
 
 const skillDirs = existsSync(join(root, 'skills'))

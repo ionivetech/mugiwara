@@ -23,7 +23,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'install': return install(flags);
     case 'update': return install({ ...flags, force: true });
     case 'uninstall': return uninstall(flags);
-    case 'list': return list();
+    case 'list': return list(flags);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -117,9 +117,9 @@ async function uninstall(flags: Args['flags']): Promise<void> {
   console.log(`OK removed ${removed.length} files`);
 }
 
-function list(): void {
+function list(flags: Args['flags']): void {
   const home = homedir();
-  const projectDir = resolve(process.cwd());
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
   let found = false;
   for (const [label, file] of [
     ['project', manifestPath({ scope: 'project', projectDir, home })],

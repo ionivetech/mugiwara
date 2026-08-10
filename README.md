@@ -167,7 +167,7 @@ same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 | Command | Effect |
 |---------|--------|
 | `mugiwara install` | Install the crew (default; wizard when flags are missing) |
-| `mugiwara update` | Replace installed files, backing up differences first |
+| `mugiwara update` | Replace installed files, backing up differences to `.mugiwara/backup/<timestamp>/` first (project root, or `~` for global) |
 | `mugiwara uninstall` | Remove exactly what the install manifest recorded |
 | `mugiwara list` | Show installations (project + global manifests) |
 | `mugiwara --help` | Print usage and flags |

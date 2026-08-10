@@ -47,5 +47,8 @@ jobs:
       - name: Validate content
         run: node scripts/validate-content.mjs
 
+      - name: Check plugin copies in sync
+        run: node scripts/validate-content.mjs --check-sync
+
       - name: Smoke test
         run: node dist/mugiwara.js --version
