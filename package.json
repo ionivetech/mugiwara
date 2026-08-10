@@ -26,7 +26,8 @@
     "build": "bun build src/cli.ts --outfile dist/mugiwara.js --target node --format esm",
     "validate": "bun scripts/validate-content.ts",
     "evals": "bun scripts/run-evals.ts",
-    "prepack": "bun run build"
+    "sync-version": "bun scripts/sync-version.ts",
+    "prepack": "bun run build && bun run sync-version"
   },
   "keywords": [
     "ai",

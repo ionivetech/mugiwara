@@ -64,6 +64,9 @@ If any step fails, fix before releasing — never ship a release that fails its 
 
 ```bash
 npm version patch
+bun run sync-version   # sync the version into plugin manifests (also runs on prepack)
+git add package.json bun.lock .claude-plugin/plugin.json plugin.json .claude-plugin/marketplace.json
+git commit -m "chore: sync plugin manifests to vX.Y.Z"
 ```
 
 `npm version patch|minor|major` bumps `package.json`, creates a `vX.Y.Z` git commit, and creates the matching git tag. Recommended for the first release after `0.1.0`: **`npm version patch`** → `0.1.1`.
