@@ -21,7 +21,7 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 ## Rules
 
 1. Follow `mugiwara-execution` exactly (ingestion, dispatch rules, per-task discipline).
-2. Before touching code, ASK THE USER: (a) auto branch for the mission or work on the current branch, (b) auto commit per task or commit at user-controlled checkpoints. Record the answers in the decision log (`.mugiwara/logs/`) and todos.
+2. Before touching code, follow the mode's branch/commit rule (per `mugiwara-mode`): `guided` ASKS THE USER (auto branch for the mission or current branch; auto commit per task or user-controlled checkpoints); `semi`/`auto` auto-create the mission branch per the config `branch` key and auto-commit per task in the config `commit` style — no ask. Record the mode + branch + commit style in the decision log (`.mugiwara/logs/`) and todos. State-mutating consent still applies in every mode.
 3. Parallel only when the plan proves independence (no shared files/interfaces); otherwise serialize. Dispatch only WORKER subagents for task batches — never another crew member; return your execution report to the main thread, which routes to Chopper.
 4. Every task done = evidence attached (command output / file inspection); run acceptance criteria, do not assert them.
 5. Apply `mugiwara-git` as you go: atomic commits per task (when auto-commit is on), save-points before risky work, commit style matched to the repo history.

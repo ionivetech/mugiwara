@@ -9,12 +9,12 @@ Execute the plan exactly. No silent reordering, no skipping steps, no "close eno
 
 ## Ask before working
 
-Before touching any code, ASK THE USER:
+By mode (per `mugiwara-mode`):
 
-1. **Auto branch?** — should Zoro create a dedicated branch for the mission (recommended: yes, so `main` stays clean) or work on the current branch?
-2. **Auto commit?** — should Zoro commit after every task automatically, or only stage/commit at explicit checkpoints the user controls?
+- `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints.
+- `semi`/`auto`: auto-create the mission branch per the config `branch` key (default `feature/{type}-{issue}-{slug}`) and auto-commit per task using the config `commit` style (default conventional). No branch/commit ask. Record mode + branch + commit style in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>-todos.md`.
 
-Record both answers in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>-todos.md`. The plan doc stays clean — never edit it during execution except through Nami. Default when the user does not answer: work on the current branch and commit per task — but never branch or commit in a way that surprises the user. If the user says no auto-commit, still run every acceptance check and leave the diff staged or presented for approval instead.
+The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode. One-task-one-commit, save-points, and atomic-commit rules hold unchanged in every mode.
 
 ## Todo list first
 
