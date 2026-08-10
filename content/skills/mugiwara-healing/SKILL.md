@@ -17,11 +17,16 @@ Brook's inputs: `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` rows + quali
 2. Reproduce: re-run the failure, confirm it is real and current.
 3. Localize: layer map of where it sits (config/test/code/env); use `git bisect` when a regression window is unclear.
 4. Reduce: shrink to the minimal case that still fails.
-5. Fix the ROOT cause — grep all callers before patching; never patch only the symptom path.
-6. Guard with a regression test that fails without the fix.
-7. Verify end-to-end: run the failed check, capture output.
+5. Diagnose before you touch code. Read the error in full (line, file, code), ask what changed recently (`git diff`, new deps, config), and chase the bad value upstream to its origin. Grep every caller before patching — a fix aimed only at the visible symptom leaves its siblings broken.
+6. Test one theory at a time. State it, try the smallest change that could confirm it, and check. A failed theory → a new one; never pile a second fix on top of the first.
+7. Guard with a regression test that fails without the fix.
+8. Verify end-to-end: run the failed check, capture output.
 
 Never push past a failing test — a red test stops the line until it is green or escalated.
+
+## When fixes keep failing → question the foundation
+
+Two or three different fixes that each uncover a fresh dependency somewhere else are a signal you're patching a symptom. The foundation, not the failure, is wrong. Stop, lay out the pattern to Luffy and the human, and argue about the architecture before attempting another fix.
 
 ## Prove-It pattern
 
@@ -58,5 +63,6 @@ Fixed list (finding → commit → evidence), escalated list (finding → plan �
 - A code failure marked `env` to close the ledger.
 - A ledger row processed with no evidence recorded.
 - The same failure healing past 3 cycles without escalation.
+- Several failed fixes on one failure without taking the architecture question to Luffy.
 
 All mean: the fix is not real. Stop, find the root cause, or escalate with full history.

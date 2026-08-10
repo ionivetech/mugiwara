@@ -13,11 +13,12 @@ What survives on disk and drives resume:
 
 | File | Holds |
 |------|-------|
-| `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | waves, tasks, acceptance criteria, decisions |
+| `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | waves, tasks, acceptance criteria (clean plan) |
 | `.mugiwara/results/<mission>-todos.md` | checkbox per task, checked = done with evidence |
 | `.mugiwara/results/<mission>-trace.md` | every dispatch, outcome |
 | `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` | blocker rows with owners / heal state |
-| `.mugiwara/logs/` | Luffy's decision log |
+| `.mugiwara/logs/YYYY-MM-DD-<mission>.md` | Luffy's decision + check-in log |
+| `.mugiwara/config` | current mode (project); `~/.mugiwara/config` = global default; per-mission override rows live in the decision log |
 
 ## Resume protocol
 
@@ -27,8 +28,9 @@ Read in this order, then act:
 2. Todos → done/undone (unchecked box = not done, regardless of memory).
 3. Trace → last completed step, last outcome.
 4. Blocker ledger → open rows (they have owners / are mid-heal).
-5. Re-derive position: wave N, tasks remaining, open blockers, heal counter.
-6. State it in one line: "Resumed: Wave 5, tasks 5.3-5.7 pending, 1 blocker (env), heal counter 1." Then CONTINUE — do not re-verify completed waves unless the trace shows a failure.
+5. Config → the mode. Read `.mugiwara/config` (project) then `~/.mugiwara/config` (global) before re-deriving position; missing = `guided`. If a per-mission override row exists in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`), that level wins over the config file for this mission.
+6. Re-derive position: wave N, tasks remaining, open blockers, heal counter, and the resumed mode.
+7. State it in one line: "Resumed: Wave 5, tasks 5.3-5.7 pending, 1 blocker (env), heal counter 1, mode semi." Then CONTINUE — do not re-verify completed waves unless the trace shows a failure.
 
 ## Rules
 

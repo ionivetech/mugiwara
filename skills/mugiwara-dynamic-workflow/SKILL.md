@@ -5,7 +5,7 @@ description: Use when a mission or subproblem has many independent subtasks, nee
 
 # Dynamic Workflow Patterns (Luffy)
 
-Six primitives for missions too big or too biased for one linear pass. Choose the pattern BEFORE executing; record the choice in the plan doc. A mission may chain patterns (e.g. classify, then fan out, then tournament the outputs).
+Six primitives for missions too big or too biased for one linear pass. Choose the pattern BEFORE executing; record the choice in the decision log (.mugiwara/logs/). A mission may chain patterns (e.g. classify, then fan out, then tournament the outputs).
 
 ## Classify-and-act
 
@@ -82,4 +82,4 @@ Six primitives for missions too big or too biased for one linear pass. Choose th
 - Filtering before generating.
 - A skeptic pass that "validates" instead of doubting.
 
-All mean: stop, re-pick the pattern, record the change in the plan doc.
+All mean: stop, re-pick the pattern, record the change in the decision log.
