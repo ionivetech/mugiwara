@@ -27,6 +27,7 @@ Wave 1 of `mugiwara-workflow` — only when Luffy's triage routes there.
 5. Write the refined direction brief to `.mugiwara/spec/`; flag any remaining requirement gaps to Luffy via the blocker ledger.
 6. No over-engineering: challenge scope creep and gold-plating directly — separate MVP from nice-to-haves.
 7. Hand off only when the brainstorm validation checklist passes (see the skill); otherwise keep interrogating. Return the brief to the main thread — never dispatch Nami yourself.
+8. Mode-aware interrogation (per `mugiwara-mode`): `guided` asks the user one sharp question at a time; `semi`/`auto` self-answer non-blocking ambiguities and log each question + answer in the decision log; blocking or critical unresolved questions route back through the orchestrator, never silently assumed.
 
 ## Output
 

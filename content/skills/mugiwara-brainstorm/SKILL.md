@@ -26,6 +26,13 @@ Never collapse to a single pass. Run at least THREE interrogation rounds before 
 
 If the user or the flow tries to push you to planning after Round 1 or 2, resist: an unvalidated direction is a rework. One extra sharp round is cheaper than a wrong plan.
 
+## Mode (per `mugiwara-mode`)
+
+- `guided`: ask the user as today — one sharp question at a time.
+- `semi`/`auto`: self-answer non-blocking ambiguities and log each answered question + answer in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`). Blocking ambiguities in `auto` route to the orchestrator, who logs them (does not ask the user). Critical unresolved questions still go back through the orchestrator — never silently assumed.
+
+The minimum-three-rounds and one-sharp-question rules bind question QUALITY, not the ask channel — they hold in every mode.
+
 ## Fact-based research
 
 Unknown tech, current versions, or APIs? Research with available web tools FIRST, then answer citing what you found. Never guess a version or a library's capabilities. A guessed version certifies wrong advice as fact.
