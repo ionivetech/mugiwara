@@ -54,6 +54,11 @@ The test's proof value comes from WHEN it runs, not that it exists. A test that 
 3. **Each test targets one behavior**, names it plainly, and asserts on real behavior rather than mocks where reasonably possible.
 4. **Green is a floor, not a finish**: refactor while the test stays green; never silence a failing test by deleting or weakening it.
 
+## User tests as the oracle (per `mugiwara-testcases`)
+
+1. User-supplied executable tests are the oracle: run them failing first, green at the end. Never edit or skip them — immutable gold; a change requires user consent + a ledger row.
+2. Declarative user AC → write the project test file first, watch it fail for the intended reason, implement, re-run green. These tests are model-written, so the checkpoint re-runs them and they get extra scrutiny — they can encode the bug.
+
 ## One task, one commit
 
 1. Follow the task's steps in order — TDD discipline above: failing test first (watch it fail), implement, watch it pass, refactor while green.
