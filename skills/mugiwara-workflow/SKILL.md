@@ -23,6 +23,10 @@ Every mission creates and works inside `.mugiwara/` at the repo root:
 
 The owning agent creates the folder it needs on first write. No mission artifacts go outside `.mugiwara/`.
 
+## Resume
+
+At session start, after context loss, or on any "where were we?" — dispatch `resume-coordinator` (mugiwara-resume) BEFORE Wave 0 triage. It rebuilds the picture from disk (plan, todos, trace, blockers) and reports the resume point. Resume before any wave; never start over. Disk state is truth.
+
 ## Wave 0 — Luffy Triage (always first)
 
 Dispatch `luffy-orchestrator`. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
@@ -67,6 +71,7 @@ At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` �
 6. The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
 7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
 8. One agent may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 11 members); dispatch the agent, not the skill.
+9. On session start, context loss, or "where were we?" — resume before any wave via `resume-coordinator` (mugiwara-resume); never start over.
 
 ## Iron Law
 

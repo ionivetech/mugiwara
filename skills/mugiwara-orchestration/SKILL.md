@@ -48,6 +48,8 @@ Any agent routes a question to Luffy. Answer with: decision + reason + impact on
 
 Gate — every task's acceptance criteria verified, every gate passed, findings resolved or explicitly deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Append the closure report to the plan doc: mission summary, per-wave outcomes, deferred items, lessons learned.
 
+Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure dispatch memory-keeper to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
+
 ## Spirit vs letter
 
 The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan — do not bend the mission to the plan. Log the amendment with a reason.

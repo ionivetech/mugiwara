@@ -21,7 +21,9 @@
       "jinbe-security",
       "brook-healing",
       "skeptic-verifier",
-      "eval-runner"
+      "eval-runner",
+      "resume-coordinator",
+      "memory-keeper"
     ],
     "skills": [
       "mugiwara-workflow",
@@ -42,7 +44,9 @@
       "mugiwara-agent-security",
       "mugiwara-backend",
       "mugiwara-eval",
-      "mugiwara-observability"
+      "mugiwara-observability",
+      "mugiwara-resume",
+      "mugiwara-lessons"
     ]
   }
 }

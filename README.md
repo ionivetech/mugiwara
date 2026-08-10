@@ -30,7 +30,7 @@ machinery — no daemons, no plugins to keep updated, nothing to host.
 - 🧪 **Everything validated.** Coverage gates, build gates, OWASP security
   review, doubt-driven diff review, Definition of Done.
 
-### The crew — 12 agents
+### The crew — 14 agents
 
 Each agent is a focused specialist. Agents are dispatched by your AI tool's
 subagent machinery and may call the crew's shared skills.
@@ -49,8 +49,10 @@ subagent machinery and may call the crew's shared skills.
 | `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, ≤3 heal cycles |
 | `skeptic-verifier` | Skeptic | Adversarial verification: doubt every output/plan/verdict, find what's wrong, do NOT validate |
 | `eval-runner` | Eval Runner | Test engineer for the harness itself: task suites, judge-agent rubric comparison, fix the skill not the eval |
+| `resume-coordinator` | Resume Coordinator | Rebuild the picture from `.mugiwara/` state after context loss; continue, never restart |
+| `memory-keeper` | Memory Keeper | Institutional memory: surface past lessons at mission start, capture new ones at closure |
 
-### The techniques — 19 skills
+### The techniques — 21 skills
 
 | Skill | Purpose |
 |-------|---------|
@@ -73,6 +75,8 @@ subagent machinery and may call the crew's shared skills.
 | `mugiwara-backend` | Backend/server code: repo standards first, API design, data integrity, error handling, correctness, performance, server-side security |
 | `mugiwara-eval` | Test the harness itself: task suites, judge-agent rubric comparison, pass/fail per case |
 | `mugiwara-observability` | Trace the crew: structured logs, OTel-compatible spans, session correlation, end-of-mission summary |
+| `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/` after compaction/loss; never restart |
+| `mugiwara-lessons` | Cross-mission memory: actionable lessons ledger, read at triage, written at closure |
 
 ### Frontend anti-slop gating
 
@@ -201,7 +205,7 @@ same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
 
 ### skills.sh — skills only, any agent
 
-The 19 skills also ship in the standard [agentskills.io](https://agentskills.io)
+The 21 skills also ship in the standard [agentskills.io](https://agentskills.io)
 layout (`skills/<name>/SKILL.md`), so you can install just the skills into
 Claude Code, opencode, Copilot, Cursor, Codex, Gemini CLI, and 70+ other agents
 via the [skills.sh](https://skills.sh) CLI:
@@ -226,7 +230,7 @@ installable set.
 ```console
 $ npx @ionivetech/mugiwara@latest --global --target claude --type general --yes
 mugiwara — installing crew for: claude
-  ✓ claude    12 agents, 19 skills → ~/.claude/skills + ~/.claude/agents
+  ✓ claude    14 agents, 21 skills → ~/.claude/skills + ~/.claude/agents
   ✓ manifest  wrote ~/.mugiwara/manifest.json
   ✓ done      24 files written
 
@@ -315,7 +319,7 @@ tool points at the crew.
 ## Claude Code plugin install
 
 Mugiwara also ships as a **Claude Code plugin** with a marketplace — the
-primary target. The plugin bundles the 12 agents + 19 skills as copies at the
+primary target. The plugin bundles the 14 agents + 21 skills as copies at the
 repo root (`agents/`, `skills/`) plus a `SessionStart` hook that announces the
 crew. Regenerate the copies from `content/` with `.claude-plugin/sync.sh`.
 
@@ -404,8 +408,8 @@ mugiwara/
 │   └── targets/         # one adapter per AI agent (claude, opencode, gemini, ...)
 ├── test/                # vitest suites
 ├── content/             # single source of truth for the crew
-│   ├── skills/          # 19 skills (one dir per skill, SKILL.md inside)
-│   └── agents/          # 12 agents (<name>.md)
+│   ├── skills/          # 21 skills (one dir per skill, SKILL.md inside)
+│   └── agents/          # 14 agents (<name>.md)
 ├── scripts/             # install.sh, install.ps1, validate-content.mjs
 ├── hooks/               # Claude Code SessionStart hook (hooks.json + session-start.js)
 ├── .claude-plugin/      # Claude plugin + marketplace metadata; sync.sh copies
