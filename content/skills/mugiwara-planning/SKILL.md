@@ -41,6 +41,8 @@ Scan the whole codebase the mission touches before writing: structure, entry poi
 
 **Feed selectively, not wholesale.** Pull the relevant spec section, the files being touched, and one existing example of the pattern — a plan built on thousands of lines of unrelated context drifts as surely as one built on nothing. A convention the plan doesn't state does not exist for the executor: write it down.
 
+**User AC mapping (per `mugiwara-testcases`).** In the context scan, read the declared test source (none = no user tests) and map each user AC to ≥1 per-task criterion: executable user test → the project test command scoped to that file; declarative AC → "translate to a project test file + run" or a literal command check. Cross-cutting user ACs (an e2e flow spanning tasks) become plan-level criteria re-run at the checkpoint against the whole diff; never invent an integration test as a criterion — user tests are the only integration-class criteria.
+
 ## Zero-question standard
 
 A senior principal's plan leaves nothing to the executor's judgment. Every task specifies: exact file paths (never "the component"), the exact commands to run (TDD steps with the test command), an acceptance criterion that is a literal command or file check ("works correctly" is banned), and the dependency edge. If you cannot write it that specifically, you have not scanned enough context — scan again before the task goes in.
@@ -71,7 +73,7 @@ Before the detail blocks, add two markdown tables so Zoro can read the shape at 
 - Risk: none | <rollback plan>
 ```
 
-Every task uses this template at every level. A task touching deploy, data migration, secrets, or public API carries a `Risk` line; high-risk tasks get a rollback plan before execution. XL (8+ files) splits into smaller tasks first.
+Every task uses this template at every level — zero-question standard: exact file paths (never "the component"), exact TDD commands, and an acceptance criterion that is a literal command or file check ("works correctly" is banned). A task touching deploy, data migration, secrets, or public API carries a `Risk` line; high-risk tasks get a rollback plan before execution. XL (8+ files) splits into smaller tasks first.
 
 ## Waves
 
@@ -97,11 +99,7 @@ Per-wave gate: acceptance checks run, evidence captured; a wave starts only when
 - Missing dependency edges between tasks touching each other's outputs.
 - Gold-plating (speculative features) or a high-risk task with no rollback plan.
 
-Any anti-pattern fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole.
-
-## Common rationalizations
-
-"Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → a plan grounded in imagined code is fiction; "trust me, they're parallel" → shared file or interface = race; "rollback is someone else's problem" → data loss with no way back. Any of these is the plan failing its quality bar.
+Any anti-pattern fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole. "Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → fiction; "trust me, they're parallel" → race; "rollback is someone else's problem" → data loss.
 
 ## Full-level skeleton
 

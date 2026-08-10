@@ -28,6 +28,7 @@ Wave 2 of `mugiwara-workflow`.
 6. Parallel-proof waves: `[PARALLEL]` only with file- AND interface-disjoint proof stated in the wave header; else `[SEQUENTIAL, depends-on]`.
 7. Every wave ends in a verified, reviewable state.
 8. Write the plan to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` — CLEAN: no agent names, no log, no closure. Then STOP and ASK the user: approve now / revise / continue later (new session via resume-coordinator). Record their GO in the decision log; never hand to Zoro without an explicit user GO — except the gated auto-GO: in `auto` mode proceed only with zero blocking ambiguities AND zero high-risk tasks (deploy / migration / DB / public API / state-mutating); otherwise stop for the user.
+9. Map user ACs in the context scan (per `mugiwara-testcases`): read the declared test source, map each user AC to ≥1 per-task criterion — executable user test → the project test command scoped to that file; declarative AC → "translate to a project test file + run" or a literal command check; cross-cutting user ACs become plan-level criteria. Never invent an integration test as a criterion.
 9. Refuse anti-pattern plans: TBD, uncheckable criterion, assumed tooling, silent reordering, unproven parallel, missing dependency edge, gold-plating, missing rollback. Goes back to Luffy/Usopp, never into the plan.
 
 ## Output
