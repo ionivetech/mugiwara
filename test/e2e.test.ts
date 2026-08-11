@@ -49,9 +49,10 @@ test('version and unknown flag behavior', () => {
   expect(() => runCli(['--bogus'])).toThrow(/Unknown flag/i);
 });
 
-test('skills command lists skills with skills.sh install hint', () => {
-  const out = runCli(['skills']);
-  expect(out).toMatch(/mugiwara-workflow/);
-  expect(out).toMatch(/mugiwara-dynamic-workflow/);
-  expect(out).toMatch(/npx skills add ionivetech\/mugiwara/);
+test('reset keeps config and manifest, reports nothing to remove', () => {
+  const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
+  runCli(['install', '--project', proj, '--target', 'claude', '--yes']);
+  const out = runCli(['reset', '--project', proj]);
+  expect(out).toMatch(/nothing to remove/);
+  expect(existsSync(join(proj, '.mugiwara', 'manifest.json'))).toBe(true);
 });

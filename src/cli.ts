@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
 import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
-import { installTo, removeInstalled, VERSION, CONTENT_DIR } from './installer.ts';
+import { installTo, removeInstalled, VERSION } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
-import { parseFrontmatter } from './frontmatter.ts';
+import { resetMission } from './mission.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -23,9 +23,17 @@ export async function run(argv: string[]): Promise<void> {
     case 'update': return install({ ...flags, force: true });
     case 'uninstall': return uninstall(flags);
     case 'list': return list(flags);
-    case 'skills': return skills();
+    case 'reset': return resetCmd(flags);
     default: throw new Error(`Unknown command: ${command}`);
   }
+}
+
+function resetCmd(flags: Args['flags']): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const { removed, kept } = resetMission(projectDir, flag(flags.keepLogs));
+  if (removed.length) console.log(`removed: ${removed.join(', ')}`);
+  else console.log('nothing to remove.');
+  if (kept.length) console.log(`kept: ${kept.join(', ')}`);
 }
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
@@ -126,19 +134,6 @@ function list(flags: Args['flags']): void {
   if (!found) console.log('No mugiwara installation found.');
 }
 
-function skills(): void {
-  const dir = join(CONTENT_DIR, 'skills');
-  const names = readdirSync(dir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name).sort();
-  const rows = names.map(name => {
-    const { data } = parseFrontmatter(readFileSync(join(dir, name, 'SKILL.md'), 'utf8'));
-    return [name, data.description ?? ''] as const;
-  });
-  const w = Math.max(...rows.map(r => r[0].length)) + 2;
-  console.log(`mugiwara ${VERSION} — ${rows.length} skills (agentskills.io format):\n`);
-  for (const [name, description] of rows) console.log(`  ${name.padEnd(w)}${description}`);
-  console.log(`\nInstall skills into any agent via skills.sh:\n  npx skills add ionivetech/mugiwara`);
-}
-
 function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
@@ -147,7 +142,7 @@ Usage:
   mugiwara update        replace existing files (backs up differences first)
   mugiwara uninstall     remove installed files via manifest
   mugiwara list          show installations
-  mugiwara skills        list installable skills (agentskills.io)
+  mugiwara reset         wipe mission state (spec/plans/results/review/issues[/logs])
   mugiwara --help        this help
   mugiwara --version     print version
 
@@ -157,7 +152,8 @@ Flags:
   --target <ids|all>     comma-separated: ${TARGET_IDS.join(', ')}
   --yes, -y              non-interactive (needs --global/--project, --target)
   --force                overwrite differing files (with backup)
-  --dry-run              print actions without writing`);
+  --dry-run              print actions without writing
+  --keep-logs            with reset: keep .mugiwara/logs (lessons ledger survives)`);
 }
 
 let entry = process.argv[1] !== undefined ? resolve(process.argv[1]) : undefined;
