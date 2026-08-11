@@ -59,12 +59,9 @@ A delegation prompt shorter than ~30 lines is too short — beef it up. Thin pro
 
 ## TDD discipline
 
-The test's proof value comes from WHEN it runs, not that it exists. A test that passes on first run has proven nothing — it never demonstrated it could catch the bug.
+Full TDD discipline: `references/tdd.md` — RED-GREEN-REFACTOR, test pyramid, rationalizations, red flags — 89 lines.
 
-1. **Proof order matters:** the failing test comes first, and you must SEE it fail for the intended reason (the feature is missing, not a typo or a wrong assertion). Only then write the minimal implementation that turns it green.
-2. **No grace for untested code:** production code written before its test is not salvageable "as reference" — discard it and redo it test-first.
-3. **Each test targets one behavior**, names it plainly, and asserts on real behavior rather than mocks where reasonably possible.
-4. **Green is a floor, not a finish**: refactor while the test stays green; never silence a failing test by deleting or weakening it.
+The test's proof value comes from WHEN it runs, not that it exists. A test that passes on first run has proven nothing.
 
 ## User tests as the oracle (per `mugiwara-testcases`)
 

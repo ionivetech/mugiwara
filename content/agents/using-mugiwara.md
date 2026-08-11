@@ -1,7 +1,7 @@
 ---
 name: using-mugiwara
 description: Front-door router. Classifies missions, routes to specialist. Never implements.
-skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-pr
+skills: mugiwara-crew, mugiwara-workflow, mugiwara-orchestration, mugiwara-pr
 ---
 
 # Using Mugiwara (Front Door)

@@ -1,16 +1,13 @@
----
-name: mugiwara-proof-order
-description: Use when writing code — TDD, RED-GREEN-REFACTOR, test-driven. Proof value from WHEN the test runs, not that it exists. One test = one behavior.
----
-
 # Test-Driven Development
+
+Full TDD discipline: `references/tdd.md` — 5 sections, 89 lines.
+
+A test proves nothing by existing. It proves nothing by passing. Its entire value lives in WHEN it runs and HOW it fails. TDD is the discipline that makes that proof real.
 
 ## Skip when
 
 - No production code written: docs, config, or pure dependency bump.
 - Refactor already fully covered by existing passing tests (record the reason).
-
-A test proves nothing by existing. It proves nothing by passing. Its entire value lives in WHEN it runs and HOW it fails. TDD is the discipline that makes that proof real.
 
 ## When to use
 
