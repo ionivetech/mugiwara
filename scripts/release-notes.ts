@@ -12,11 +12,13 @@ const sinceIdx = args.indexOf('--since');
 let since = sinceIdx !== -1 ? args[sinceIdx + 1] : null;
 
 if (!since) {
-  try {
-    since = execFileSync('git', ['describe', '--tags', '--abbrev=0'], { encoding: 'utf8' }).trim();
-  } catch {
-    since = null;
-  }
+  // The release workflow tags HEAD BEFORE generating notes, so the newest tag
+  // is the release tag itself. The "since" boundary must be the tag BEFORE it,
+  // otherwise range = "<release>..HEAD" is empty and the notes come out blank.
+  // With only one tag (first release), there is no previous tag — show all.
+  const tags = execFileSync('git', ['tag', '--sort=-version:refname'], { encoding: 'utf8' })
+    .split(/\r?\n/).filter(Boolean);
+  since = tags.length >= 2 ? tags[1] : null;
 }
 
 const range = since ? `${since}..HEAD` : '';
