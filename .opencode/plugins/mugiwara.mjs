@@ -2,47 +2,21 @@
 //
 // Registers skills/agents via config hook (superpowers pattern: one plugin,
 // zero file-copy), announces the crew at session start, and handles runtime
-// mode switching. CLI `mugiwara install --target opencode` remains available
-// as an alternative file-based path.
+// mode switching. Helpers live in mugiwara-helpers.mjs — this module has a
+// single export because OpenCode's legacy loader calls every exported function
+// as a plugin (same constraint ponytail documents).
 //
 // Install: add to opencode.json
 //   { "plugin": ["@ionivetech/mugiwara"] }
 // or from the git repo:
 //   { "plugin": ["mugiwara@git+https://github.com/ionivetech/mugiwara.git"] }
 
-import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, appendFileSync, lstatSync, renameSync } from 'node:fs';
-import { homedir, tmpdir } from 'node:os';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readMode, parseModeChange, applyModeChange } from './mugiwara-helpers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const VALID_MODES = new Set(['guided', 'semi', 'auto']);
-
-// Read the runtime mode: `.mugiwara/config` (project) wins over
-// `~/.mugiwara/config` (global) per key; a missing key or a value outside the
-// enum falls back to `guided`. Never creates files on read.
-export function readMode({ projectDir = process.cwd(), home = homedir() } = {}) {
-  const readValue = (dir) => {
-    const file = join(dir, '.mugiwara', 'config');
-    if (!existsSync(file)) return undefined;
-    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
-      const t = line.trim();
-      if (!t || t.startsWith('#')) continue;
-      const [k, v] = line.split('=').map((s) => s.trim());
-      if (k !== 'mode') continue;
-      return VALID_MODES.has(v) ? v : 'INVALID';
-    }
-    return undefined;
-  };
-  const proj = readValue(projectDir);
-  if (proj === 'INVALID') return 'guided';
-  if (proj) return proj;
-  const glob = readValue(home);
-  if (glob === 'INVALID') return 'guided';
-  if (glob) return glob;
-  return 'guided';
-}
 
 const contentDir = join(__dirname, '..', '..', 'content');
 const skillsDir = join(contentDir, 'skills');
@@ -103,72 +77,6 @@ function readAgents() {
     if (CREW[name]) agents[name] = { ...agents[name], ...CREW[name] };
   }
   return agents;
-}
-
-// Parse a user prompt for a mugiwara mode change. Returns the new mode or null.
-// Mirrors the caveman plugin pattern: opencode expands `/mugiwara-mode <level>`
-// into the command file's body ("Set mugiwara mode: <level>...") before
-// chat.message fires, so parse the template's first line too. The slash command
-// and natural-language phrase must sit at the START of the prompt — a bare
-// mention mid-message (pasted untrusted content) never flips autonomy.
-export function parseModeChange(promptRaw) {
-  if (typeof promptRaw !== 'string') return null;
-  let prompt = promptRaw.trim();
-  const wrapped = /^(["'`])([\s\S]*)\1$/.exec(prompt);
-  if (wrapped) prompt = wrapped[2].trim();
-  prompt = prompt.toLowerCase();
-  if (!prompt) return null;
-
-  const tpl = /^set mugiwara mode:[ \t]*(\S*)/.exec(prompt);
-  if (tpl && VALID_MODES.has(tpl[1])) return tpl[1];
-
-  const slash = /^\/(mugiwara[-\s]?)mode[ \t]+(\S*)/.exec(prompt);
-  if (slash && VALID_MODES.has(slash[2])) return slash[2];
-
-  const natural = /^mugiwara mode[ \t]+(\S*)/.exec(prompt);
-  if (natural && VALID_MODES.has(natural[1])) return natural[1];
-
-  return null;
-}
-
-// Refuse to follow a symlinked .mugiwara/config — a malicious repo could point
-// it at ~/.bashrc and any mode flip would overwrite the target.
-function assertNotSymlink(file) {
-  if (!existsSync(file)) return;
-  try {
-    const st = lstatSync(file);
-    if (st.isSymbolicLink()) throw new Error(`refusing to follow symlink: ${file}`);
-  } catch (e) {
-    if (e.code === 'ENOENT') return;
-    throw e;
-  }
-}
-
-// Write `.mugiwara/config` (project) and append a decision-log row.
-// Atomic: write a temp file next to the target, then rename over it, so a
-// crash mid-write never truncates the config (keeps branch/commit keys).
-export function applyModeChange(mode, { projectDir = process.cwd(), home = homedir() } = {}) {
-  if (!VALID_MODES.has(mode)) return;
-  const dir = join(projectDir, '.mugiwara');
-  const file = join(dir, 'config');
-  assertNotSymlink(file);
-  mkdirSync(dir, { recursive: true });
-  const lines = [];
-  if (existsSync(file)) {
-    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
-      const t = line.trim();
-      if (t.startsWith('mode=')) continue;
-      lines.push(line);
-    }
-  }
-  lines.push(`mode=${mode}`);
-  const body = lines.filter((l, i) => !(l === '' && (i === lines.length - 1 || i === 0))).join('\n') + '\n';
-  const tmp = join(tmpdir(), `mugiwara-config-${process.pid}-${Date.now()}.tmp`);
-  writeFileSync(tmp, body);
-  renameSync(tmp, file);
-  const log = join(dir, 'logs', `${new Date().toISOString().slice(0, 10)}-mode-flip.md`);
-  mkdirSync(dirname(log), { recursive: true });
-  appendFileSync(log, `| ${new Date().toISOString()} | mode flip | guided/semi/auto -> ${mode} | user |\n`);
 }
 
 export default async () => ({

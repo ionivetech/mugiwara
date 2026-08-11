@@ -3,7 +3,8 @@ import { test, expect } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import plugin, { readMode, parseModeChange, applyModeChange } from '../.opencode/plugins/mugiwara.mjs';
+import plugin from '../.opencode/plugins/mugiwara.mjs';
+import { readMode, parseModeChange, applyModeChange } from '../.opencode/plugins/mugiwara-helpers.mjs';
 import { CONTENT_DIR } from '../src/installer.ts';
 
 const contentDir = CONTENT_DIR.replace(/[\\/]+$/, '');
