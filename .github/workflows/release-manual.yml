@@ -51,8 +51,9 @@ jobs:
           bun run typecheck
           bun run test
           bun run build
-          bun scripts/validate-content.ts
-          bun scripts/validate-content.ts --check-sync
+          bun scripts/validate-content.ts --check-manifest --check-docs --check-sync
+          bun scripts/run-evals.ts
+          bun scripts/retrieval-eval.ts
 
       - name: Bump version
         run: echo "RELEASE_VERSION=$(npm version "${{ inputs.version }}" --no-git-tag-version)" >> "$GITHUB_ENV"

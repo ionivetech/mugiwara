@@ -46,7 +46,7 @@ jobs:
         run: bun run build
 
       - name: Validate content
-        run: bun scripts/validate-content.ts
+        run: bun scripts/validate-content.ts --check-manifest --check-docs
 
       - name: Authenticate with npm
         run: npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"

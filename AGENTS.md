@@ -8,16 +8,61 @@ Rules for working on this repo. Follow these or validation fails.
 exceptions. Comments in source code should be English. This conversation is the
 only place Indonesian is acceptable.
 
-## Validation before commit
+## Trunk-based branching strategy
+
+`main` is always stable and releasable. No commits directly to `main`.
+
+| Branch | Purpose | Lifetime |
+|--------|---------|----------|
+| `main` | Source of truth. Always passes CI. | Permanent |
+| `feat/*`, `fix/*`, `chore/*`, `docs/*`, `refactor/*` | Feature work from main, PR to main | Short-lived, delete after merge |
+| `release/vX.Y.Z` | Created from main for publishing. Archival. | Short-lived, delete after tag |
+
+### Flow
+
+1. Branch from `main`
+2. Work + validate locally
+3. PR to `main` — CI must pass (all gates)
+4. Merge to `main`
+5. Run "Manual Release" workflow on GitHub Actions → creates tag + npm publish + GitHub Release
+6. Release branch (`release/vX.Y.Z`) created from the release commit — archival
+
+### Branch naming
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Feature | `feat/<description>` | `feat/add-mcp-audit-skill` |
+| Fix | `fix/<description>` | `fix/token-budget-overflow` |
+| Chore | `chore/<description>` | `chore/update-deps` |
+| Docs | `docs/<description>` | `docs/rewrite-readme` |
+| Refactor | `refactor/<description>` | `refactor/split-checkpoint` |
+| Release | `release/vX.Y.Z` | `release/v0.5.0` |
+
+### Version bumping
+
+| Trigger | Bump |
+|---------|------|
+| Bug fix, no new features | `patch` |
+| New feature, backward-compatible | `minor` |
+| Breaking change | `major` |
+
+All version bumps via the Manual Release workflow — never manually edited.
+
+## Validation before commit (CI gates)
+
+All must pass on every PR. CI runs automatically:
 
 ```bash
-bun scripts/validate-content.ts --check-manifest --check-docs  # content + manifest + docs drift
 bun run typecheck                                              # TypeScript
 bun run test                                                   # 70 tests
+bun run build                                                  # dist/
+bun scripts/validate-content.ts --check-manifest --check-docs  # content + manifest + docs drift
+bun scripts/run-evals.ts                                       # behavioral evals
 bun scripts/retrieval-eval.ts                                  # retrieval ranking
+echo "✓ all checks passed"
 ```
 
-All must pass. Fix failures before committing.
+No PR merges without all green CI.
 
 ## Skill standards
 
