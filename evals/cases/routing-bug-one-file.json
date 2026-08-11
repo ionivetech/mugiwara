@@ -1,6 +1,6 @@
 {
   "name": "routing-bug-one-file",
-  "skill": "mugiwara-systematic-debugging",
+  "skill": "mugiwara-root-cause",
   "task": "There is a bug in src/utils/format.ts where dates render one month off. It is a single-file bug. How should the agent approach this?",
   "rubric": [
     "picks a debugging skill over a planning/brainstorm skill",

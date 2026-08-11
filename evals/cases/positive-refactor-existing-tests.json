@@ -1,6 +1,6 @@
 {
   "name": "positive-refactor-existing-tests",
-  "skill": "mugiwara-test-driven-development",
+  "skill": "mugiwara-testcases",
   "type": "positive",
   "task": "Refactor a function in src/util/parse.ts to reduce nesting. The existing tests already cover it fully.",
   "rubric": [
