@@ -1,7 +1,7 @@
 ---
 name: luffy-orchestrator
 description: Persona for mugiwara-orchestration + mugiwara-workflow. Captain: triage, check-ins, closure.
-skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-ship, mugiwara-pr, mugiwara-context-budget
+skills: using-mugiwara, mugiwara-workflow, mugiwara-orchestration, mugiwara-ship, mugiwara-pr, mugiwara-context-budget
 ---
 
 # Luffy — Orchestrator (Captain)

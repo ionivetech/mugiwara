@@ -17,7 +17,6 @@
   ],
   "metadata": {
     "agents": [
-      "using-mugiwara",
       "luffy-orchestrator",
       "usopp-brainstorm",
       "nami-planner",
@@ -41,7 +40,6 @@
       "mugiwara-claim-audit",
       "mugiwara-context-budget",
       "mugiwara-contract-first",
-      "mugiwara-crew",
       "mugiwara-execution",
       "mugiwara-frontend",
       "mugiwara-gates",
@@ -59,7 +57,8 @@
       "mugiwara-ship",
       "mugiwara-sunset",
       "mugiwara-testcases",
-      "mugiwara-workflow"
+      "mugiwara-workflow",
+      "using-mugiwara"
     ]
   }
 }

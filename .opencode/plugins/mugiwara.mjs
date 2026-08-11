@@ -23,10 +23,9 @@ const skillsDir = join(contentDir, 'skills');
 const agentsDir = join(contentDir, 'agents');
 
 const ANNOUNCE =
-  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it remains an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara-mode` (guided|semi|auto). See skills/mugiwara-workflow.";
+  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
 
 const CREW = {
-  'using-mugiwara': { color: '#84cc16', temperature: 0.2, steps: 10 },
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
   'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 15 },
   'nami-planner': { color: '#f97316', temperature: 0.2, steps: 15 },

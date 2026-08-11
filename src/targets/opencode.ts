@@ -11,7 +11,6 @@ type CrewConfig = {
 };
 
 const CREW: Record<string, CrewConfig> = {
-  'using-mugiwara': { color: '#84cc16', temperature: 0.2, steps: 10 },
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
   'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 15 },
   'nami-planner': { color: '#f97316', temperature: 0.2, steps: 15 },

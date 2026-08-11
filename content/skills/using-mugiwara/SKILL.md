@@ -1,5 +1,5 @@
 ---
-name: mugiwara-crew
+name: using-mugiwara
 description: Use at session start or on any task — explains how the crew works, classifies missions, routes to the right specialist. Front door to the Straw Hat crew.
 ---
 

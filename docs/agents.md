@@ -1,12 +1,14 @@
-# The Crew — 15 Agents
+# The Crew — 14 Agents
 
 Every agent is a focused specialist. The main thread embodies each role inline
 using its skill; you can also summon any member directly. "Dispatch" below
 means "route the mission to this role."
 
+The front door is the `using-mugiwara` skill — load it for crew overview.
+Slash command: `/using-mugiwara`.
+
 | Agent | Crew member | Role | Summon for |
 |-------|-------------|------|------------|
-| `using-mugiwara` | Front Door | Router — classifies and routes, never implements | "how do I use mugiwara?", any new mission |
 | `luffy-orchestrator` | Luffy | Captain — 5-way triage, check-ins, decisions, closure | mission start, wave boundaries, escalations |
 | `usopp-brainstorm` | Usopp | Critical friend — interrogates, researches, no rubber-stamps | vague ideas, direction, options |
 | `nami-planner` | Nami | Planner — interview-first, full-context scan, scaled plans | turning an idea into an execution plan |
@@ -44,7 +46,7 @@ check-ins. The harness stays coherent either way.
 
 ## The crew ships whole
 
-Every install gets all 15 agents and all 26 skills. No project-type selection —
+Every install gets all 14 agents and all 26 skills. No project-type selection —
 the harness routes each task to the right specialist.
 
 See [skills.md](skills.md) for the 26 techniques, or

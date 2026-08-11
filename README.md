@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@ionivetech%2fmugiwara)](https://www.npmjs.com/package/@ionivetech/mugiwara)
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
-Your coding agent becomes a governed engineering team. 15 specialists — triage,
+Your coding agent becomes a governed engineering team. 14 specialists — triage,
 plan, build, audit, review, heal — with evidence at every step, cost tracking,
 and a process that sizes itself to your work. Pure markdown, zero runtime.
 
@@ -102,7 +102,7 @@ One file. Any reviewer reads it in 30 seconds. That's the governance trail.
 
 | Capability | What it does |
 |-----------|-------------|
-| **15 specialist agents** | Luffy triages, Nami plans, Zoro builds TDD, Chopper audits, Sanji checks quality, Franky enforces gates, Robin maps breaking changes, Jinbe runs STRIDE, Brook heals failures. Each with role boundaries: auditors read-only, executor no-network. |
+| **14 specialist agents** | Luffy triages, Nami plans, Zoro builds TDD, Chopper audits, Sanji checks quality, Franky enforces gates, Robin maps breaking changes, Jinbe runs STRIDE, Brook heals failures. Each with role boundaries: auditors read-only, executor no-network. |
 | **Lane sizing** | Process scaled to work size — computed from `git diff` by `scripts/lane.sh`. Typo = 0 waves. Auth migration = full 9-wave pipeline. Sensitive paths auto-escalate. |
 | **9-wave gated pipeline** | Triage → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure. Each wave gated by evidence. Pipeline runs inline — you watch everything. |
 | **Evidence trail** | No wave passes on a claim. `scripts/evidence.sh` captures command output. Chopper re-runs criteria. Mission report at closure — one file any reviewer reads in 30 seconds. |
@@ -130,7 +130,7 @@ team — in your chat window, running inline, visible at every step.
 
 ## The crew
 
-15 personas, 26 skills. Each with a permission boundary.
+14 agents, 26 skills. The front door is the `using-mugiwara` skill — type `/using-mugiwara` or load it from any platform. Each agent has a permission boundary.
 
 | Agent | Role | Permission |
 |-------|------|------------|
@@ -148,7 +148,7 @@ team — in your chat window, running inline, visible at every step.
 | Resume | Continuity — rebuilds from state.json, never restarts | — |
 | Memory | Cross-mission lessons — read at start, write at closure | — |
 
-See [all 15 agents](docs/agents.md) and [all 26 skills](docs/skills.md).
+See [all 14 agents](docs/agents.md) and [all 26 skills](docs/skills.md).
 
 ## Install
 
@@ -323,7 +323,7 @@ matter to you, this is the wrong tool.
 | [Getting started](docs/getting-started.md) | First mission, lane 0-3 examples, setup walkthrough |
 | [Install](docs/install.md) | Per-platform guides: Claude Code, OpenCode, Gemini, Codex, Copilot, Cursor, Antigravity, Kimi, Pi, CLI |
 | [Workflow](docs/workflow.md) | Full 9-wave pipeline with heal loop detail |
-| [Agents](docs/agents.md) | 15 crew members, roles, permissions, how to summon |
+| [Agents](docs/agents.md) | 14 crew members, roles, permissions, how to summon |
 | [Skills](docs/skills.md) | 26 techniques, 3-layer disclosure model |
 | [Lanes](docs/lanes.md) | Deterministic lane sizing — computed from git diff |
 | [Audit trail](docs/audit-trail.md) | 15 artifact types, how to read as reviewer |
