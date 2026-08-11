@@ -93,3 +93,13 @@ test('generic target installs workflow skill with inline doctrine', () => {
   const agentOut = targets['gemini'].transformAgent(luffy.data, luffy.body);
   expect(agentOut!.text).toContain('Agent: luffy-orchestrator');
 });
+
+test('claude target postInstall wires the SessionStart hook', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-claude-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-chome-'));
+  const r = installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const hook = join(dir, '.claude', 'hooks', 'session-start.ts');
+  expect(existsSync(hook)).toBe(true);
+  expect(readFileSync(hook, 'utf8')).toContain('Never Task-dispatch a crew member');
+  expect(r.written).toContain(hook);
+});

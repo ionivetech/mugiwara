@@ -81,7 +81,7 @@ test('announce string carries inline doctrine and flow contract', async () => {
   expect(output.system[0]).toContain('Luffy delegates');
 });
 
-test('system.transform appends the announce string', async () => {
+test('system.transform appends the announce string once (dedupes on repeat)', async () => {
   const hooks = await plugin();
   const transform = hooks['experimental.chat.system.transform'];
   expect(typeof transform).toBe('function');
@@ -90,6 +90,8 @@ test('system.transform appends the announce string', async () => {
   expect(output.system).toHaveLength(2);
   expect(output.system[0]).toContain('Mugiwara crew available');
   expect(output.system[1]).toContain('Active mode:');
+  await transform({}, output);
+  expect(output.system).toHaveLength(2);
 });
 
 const makeCfg = (mode?: string) => mkdtempSync(join(tmpdir(), 'mugi-mode-'));

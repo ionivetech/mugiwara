@@ -205,12 +205,17 @@ export default async () => ({
   },
 
   // ponytail-proven hook; appends the announce string to the system prompt.
+  // Dedupes: repeated transforms (model switch/compaction) must not grow the
+  // prompt unbounded — only append once per string content.
   'experimental.chat.system.transform': async (_input, output) => {
-    if (output.system.length > 0) {
-      output.system[output.system.length - 1] += '\n\n' + ANNOUNCE;
-    } else {
-      output.system.push(ANNOUNCE);
+    if (!output.system.some((s) => s.includes('Mugiwara crew available'))) {
+      if (output.system.length > 0) {
+        output.system[output.system.length - 1] += '\n\n' + ANNOUNCE;
+      } else {
+        output.system.push(ANNOUNCE);
+      }
     }
-    output.system.push(`Active mode: ${readMode()} (guided|semi|auto; flip applies next wave).`);
+    const active = `Active mode: ${readMode()} (guided|semi|auto; flip applies next wave).`;
+    if (!output.system.some((s) => s.includes('Active mode:'))) output.system.push(active);
   },
 });
