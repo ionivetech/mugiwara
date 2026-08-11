@@ -48,6 +48,10 @@ By mode (per `mugiwara-mode`): `guided` checks in with the user as today; `semi`
 
 On drift: stop, diagnose with Chopper's ledger, decide continue / retry / escalate to human.
 
+## Wave transitions (visibility)
+
+Every wave opens with a visible main-thread banner `## Wave N — <crew> (<skill>)` and closes with the handoff line `→ Wave N+1 — <crew>` (Wave 9: `→ closure`). No wave starts without its banner. A wave intentionally omitted is never silent — record wave, owner, and reason in the decision log before moving on. The user must always see which crew runs now and who takes over next.
+
 ## Work splitting
 
 When a wave has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
