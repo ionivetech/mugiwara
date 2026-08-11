@@ -6,5 +6,5 @@ export const target = makeGeneric({
   label: 'Codex',
   rulesDir: '.codex/mugiwara',
   bootstrapFile: 'AGENTS.md',
-  bootstrapPointer: 'Mugiwara crew installed in .codex/mugiwara/ — read .codex/mugiwara/mugiwara-workflow.md to run the pipeline.',
+  bootstrapPointer: 'Mugiwara crew installed in .codex/mugiwara/ — read .codex/mugiwara/mugiwara-workflow.md to run the pipeline inline in the main conversation.',
 });

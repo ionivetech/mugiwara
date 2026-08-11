@@ -19,6 +19,7 @@
     "content",
     "docs",
     ".opencode",
+    "hooks",
     "scripts/install.sh",
     "scripts/install.ps1",
     "README.md",
