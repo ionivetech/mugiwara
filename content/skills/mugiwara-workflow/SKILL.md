@@ -15,6 +15,8 @@ The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial p
 
 **Auto-activation.** Any non-trivial request fires the harness without the user asking. Check first, before exploring or answering: if the request could benefit from the crew, start Wave 0 triage. The user does not need to invoke `using-mugiwara` explicitly — the workflow starts itself.
 
+**Checkpoint-report presentation.** The banner marks a stage boundary; no wave passes silently. At each boundary the owning crew reports inline — one compact per-crew report: what ran, the result, the evidence pointer. No narration of every tool call. Each wave closes with a short progress summary (done / in-flight / blocked + next handoff). On failure or risk, PAUSE: report the problem and get a continue / retry / escalate decision before proceeding.
+
 1. For each wave, the main thread loads the owning crew member's skill (e.g. `mugiwara-checkpoint` for Wave 4) and performs that role inline: triage, planning, execution, audit, quality, gates, review, closure — all in the main thread.
 2. Dispatch a subagent ONLY when the work is genuinely parallel or background: an independent `[PARALLEL]` task batch (Zoro's WORKER subagents, Wave 3), parallel fixes (Brook, Wave 8), or a long-running check that would stall the conversation. Subagent results return to the main thread as a report; the main thread summarizes the outcome inline with evidence pointers.
 3. Crew members NEVER dispatch another crew member. A crew role that must split work returns the split plan to the main thread, which spawns the workers.
