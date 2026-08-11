@@ -14,44 +14,44 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  gate:
+    name: "Gate"
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [20, 22]
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 22
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
           cache: true
 
-      - name: Install dependencies
+      - name: "Install dependencies"
         run: bun install --frozen-lockfile
 
-      - name: Typecheck
+      - name: "Typecheck"
         run: bun run typecheck
 
-      - name: Test
+      - name: "Unit tests"
         run: bun run test
 
-      - name: Build
+      - name: "Build"
         run: bun run build
 
-      - name: Validate content
-        run: bun scripts/validate-content.ts
+      - name: "Validate content (manifest + docs)"
+        run: bun scripts/validate-content.ts --check-manifest --check-docs
 
-      - name: Validate eval cases
+      - name: "Validate eval cases"
         run: bun scripts/run-evals.ts
 
-      - name: Validate plugin sync
+      - name: "Retrieval ranking eval"
+        run: bun scripts/retrieval-eval.ts --json
+
+      - name: "Plugin sync check"
         run: bun scripts/validate-content.ts --check-sync
 
-      - name: Smoke test
+      - name: "Smoke test (CLI --version)"
         run: node dist/mugiwara.js --version

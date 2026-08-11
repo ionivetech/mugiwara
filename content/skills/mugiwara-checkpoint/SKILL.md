@@ -1,6 +1,6 @@
 ---
 name: mugiwara-checkpoint
-description: Use after an execution wave to audit results against the plan. Runs every acceptance criterion as a command or file inspect, verifies commit hygiene and parallel-file safety, classifies failures honestly, appends ledger rows, and issues a Definition-of-Done verdict. Auditor only - never fixes code.
+description: Use after an execution wave to audit results — re-run acceptance criteria, verify commit hygiene, classify failures honestly, issue DoD verdict. Auditor only.
 ---
 
 # Checkpoint (Chopper)
@@ -37,7 +37,7 @@ Category goes in `symptom` or `help-needed` as context. Categories: `test-fail` 
 
 ## Definition of Done check
 
-Verdict per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one wave verdict. Any FAIL axis → wave verdict FAIL.
+Per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one wave verdict. Full definitions: `references/definition-of-done.md`. Any FAIL axis → wave verdict FAIL.
 
 ## Auditor only
 

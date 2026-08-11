@@ -1,6 +1,6 @@
 ---
 name: mugiwara-resume
-description: Use when a mission is interrupted, context is lost or compacted, or a new session starts mid-mission - rebuild the full picture from .mugiwara/ state and continue from the exact point, never restart.
+description: Use when mission interrupted, context lost, or new session mid-mission — rebuild from .mugiwara/state.json, continue never restart.
 ---
 
 # Session Resume (Never Start Over)
@@ -10,47 +10,58 @@ description: Use when a mission is interrupted, context is lost or compacted, or
 - Fresh mission: no `.mugiwara/` state exists to rebuild from.
 - No interruption, compaction, or new-session-mid-mission happened.
 
-The host AI can lose context — compaction, a new session, a crash. Disk state under `.mugiwara/` is the single source of truth. Rebuild the picture from disk, continue from the exact point, never restart.
+The host AI can lose context — compaction, new session, crash. Disk state is truth. Rebuild from one file, continue from exact point, never restart.
 
-## The state contract
+## State contract
 
-What survives on disk and drives resume:
+Resume reads one file: `.mugiwara/state.json`. All position data is computed at every wave boundary by `scripts/savepoint.sh`.
 
-| File | Holds |
-|------|-------|
-| `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | waves, tasks, acceptance criteria (clean plan) |
-| `.mugiwara/results/<mission>-todos.md` | checkbox per task, checked = done with evidence |
-| `.mugiwara/results/<mission>-trace.md` | every dispatch, outcome |
-| `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` | blocker rows with owners / heal state |
-| `.mugiwara/logs/YYYY-MM-DD-<mission>.md` | Luffy's decision + check-in log |
-| `.mugiwara/config` | current mode (project); `~/.mugiwara/config` = global default; per-mission override rows live in the decision log |
+```json
+{
+  "mission": "2026-08-11-invitation-accepted",
+  "actor": "farid",
+  "branch": "feature/feat-MKR-412",
+  "lane": "full",
+  "lane_reason": "auth/ path touched",
+  "wave": 5,
+  "mode": "guided",
+  "base_sha": "a3f1c2e",
+  "files_touched": 11,
+  "loc_delta": 340,
+  "sensitive_paths": ["src/auth/invitation.ts"],
+  "tasks": { "done": 7, "total": 12 },
+  "blockers_open": 1,
+  "heal_cycle": 1,
+  "tokens_est": 14200,
+  "budget": 20000,
+  "evidence": [".mugiwara/results/wave4-audit.md"],
+  "updated_at": "2026-08-11T12:40:00Z"
+}
+```
 
 ## Resume protocol
 
-Read in this order, then act:
-
-1. Plan doc → current wave, remaining tasks.
-2. Todos → done/undone (unchecked box = not done, regardless of memory).
-3. Trace → last completed step, last outcome.
-4. Blocker ledger → open rows (they have owners / are mid-heal).
-5. Config → the mode. Read `.mugiwara/config` (project) then `~/.mugiwara/config` (global) before re-deriving position; missing = `guided`. If a per-mission override row exists in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`), that level wins over the config file for this mission.
-6. Re-derive position: wave N, tasks remaining, open blockers, heal counter, and the resumed mode.
-7. State it in one line: "Resumed: Wave 5, tasks 5.3-5.7 pending, 1 blocker (env), heal counter 1, mode semi." Then CONTINUE — do not re-verify completed waves unless the trace shows a failure.
+1. Read `.mugiwara/state.json`. If absent, this is a fresh mission — no resume needed.
+2. Derive position from fields: wave N, tasks done/total, blockers open, heal cycle, mode.
+3. If `state.json` is stale or corrupted, fall back to legacy files: plan doc → todos → trace → blocker ledger → config. Then write a fresh `state.json`.
+4. State it: "Resumed: Wave 5, 7/12 tasks, 1 blocker, heal cycle 1, mode guided."
+5. Continue — do not re-verify completed waves.
 
 ## Rules
 
 1. Never trust memory over disk — disk is truth.
-2. Never re-run completed work — the trace proves it.
+2. Never re-run completed work — state.json proves it.
 3. Never skip the resume read — guessing position = drift.
-4. If disk state is missing/contradictory → escalate to Luffy to reconcile, do not invent state.
+4. If state.json is absent and no legacy files exist → fresh mission, escalate to Luffy.
 
-## Writing discipline
-
-Update todos/trace AFTER every task, not at the end. Resume quality is proportional to log freshness. A stale log makes the next resume guess.
-
-## Rationalizations + red flags
+## Rationalizations
 
 - "I remember where we were" → memory lies after compaction; disk is truth.
-- "Re-running is safer" → wastes the mission; trust the trace.
-- "I'll update todos later" → later never comes; resume breaks.
-- Red flags: reading any file out of order, re-doing a wave the trace shows complete, skipping the blocker ledger, inventing state instead of escalating, a resume position stated without citing the files.
+- "Re-running is safer" → wastes the mission; trust state.json.
+- "I'll update state later" → savepoint.sh runs at every wave boundary; state is always current.
+
+## Red flags
+
+- Resume position stated without citing state.json or legacy files.
+- Re-doing a wave state.json shows complete.
+- Inventing state instead of escalating when files are missing.

@@ -1,6 +1,6 @@
 ---
 name: mugiwara-quality
-description: Use after checkpoint passes to run code quality checks - formatter, linter, unit tests, and with recorded user consent integration tests. Detects the project's real tooling first, never weakens configs to pass.
+description: Use after checkpoint passes — formatter, linter, unit tests. Discovers project tooling, never weakens configs. User tests under consent matrix.
 ---
 
 # Quality (Sanji)
@@ -41,9 +41,9 @@ Optional, never default-on. Trigger ONLY when BOTH hold:
 - Repo has e2e setup — any of `playwright.config.*`, `cypress.config.*`, `e2e/` dir, `test:e2e` npm script.
 - Changed/staged files match e2e patterns — `e2e/**`, `*.e2e.*`, `specs/**`.
 
-When triggered, consent by mode (per `mugiwara-mode` invariant): `guided`/`semi` ask first — run now / skip / run manually later; `auto` runs only provably-isolated e2e (in-memory / local / tooling-proven isolation). Otherwise skip-and-log: record the skip reason (no setup, no matching files, no consent) in the report. The e2e gate never blocks silently and never blocks a pass — a skip is logged, not a failure.
+When triggered, consent by mode (per mode config invariant): `guided`/`semi` ask first — run now / skip / run manually later; `auto` runs only provably-isolated e2e (in-memory / local / tooling-proven isolation). Otherwise skip-and-log: record the skip reason (no setup, no matching files, no consent) in the report. The e2e gate never blocks silently and never blocks a pass — a skip is logged, not a failure.
 
-## Mode + consent (per `mugiwara-mode`)
+## Mode + consent (per mode config)
 
 Consent is an invariant, not a mode knob. State-mutating tests against NON-isolated / shared state (real DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. Provably-isolated mutation — in-memory / temp / testcontainer-backed DBs, tooling-proven isolation — is explicitly auto-safe and needs no consent. `auto` runs only provably-isolated tests automatically (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi`: integration tests keep the existing ask-first rule — run automatically now / skip / run manually later. Record every consent answer in the report.
 

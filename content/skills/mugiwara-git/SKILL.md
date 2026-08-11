@@ -1,6 +1,6 @@
 ---
 name: mugiwara-git
-description: Use when committing, splitting commits, or debugging via git history during execution or healing. Atomic commits, save-points, style detection, bisect.
+description: Use for commits, splitting, or git history debugging — atomic commits, save-points, style detection, bisect.
 ---
 
 # Git Discipline (Zoro, Brook)

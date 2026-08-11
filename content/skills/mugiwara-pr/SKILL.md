@@ -1,6 +1,6 @@
 ---
 name: mugiwara-pr
-description: Use at closure to push the mission branch and prepare the PR material - one provider-agnostic verdict file with a ready-to-paste PR summary block. Plain git push, no gh CLI, no PR creation, no auto-reaction to review comments or CI in any mode.
+description: Use at closure to push branch + prepare PR material — plain git push, verdict file with ready PR summary. Never creates PR, merges, or deploys.
 ---
 
 # PR Handoff (CI/CD Loop)

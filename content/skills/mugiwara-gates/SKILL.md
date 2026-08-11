@@ -1,6 +1,6 @@
 ---
 name: mugiwara-gates
-description: Use after quality checks to enforce the quality gates - coverage (new >=90%, modified >=80%), build exit 0, and the Definition of Done. Binary verdicts with evidence, no negotiation, no silent pass when tooling is missing.
+description: Use after quality checks — coverage thresholds, build exit 0, Definition of Done. Binary verdicts with evidence, no negotiation.
 ---
 
 # Gates (Franky)
@@ -15,12 +15,12 @@ Gates are binary: pass or fail, with evidence. No negotiation.
 ## Coverage gate
 
 1. Measure coverage with the project's existing tooling (jest --coverage, pytest --cov, go test -cover, cargo tarpaulin, etc.).
-2. Thresholds: NEW files >= 90%, MODIFIED files >= 80%. Identify new/modified via git diff against the mission's base.
+2. **Read thresholds from config.** Read `.mugiwara/config` (project) then `~/.mugiwara/config` (global) for `coverage_new` and `coverage_modified`. Defaults: new files >= 90%, modified files >= 80%. A missing key or a key set to `0` means "no threshold for this category." Identify new/modified via git diff against the mission's base.
 3. No coverage tooling exists → the gate CANNOT pass silently: report the gap, propose the minimal tooling addition, ask the user to add it or waive the gate explicitly. Record their decision.
 
 ## User-AC coverage override (per `mugiwara-testcases`)
 
-When user acceptance criteria are declared, the coverage thresholds (90/80) apply only to unit-level new/modified code; the user-AC verdict governs ship-readiness. An e2e user suite that adds ~0% coverage is not a gate failure. The user-AC verdict must come from the quality wave evidence — user suites actually run — never asserted.
+When user acceptance criteria are declared, config coverage thresholds apply only to unit-level new/modified code; the user-AC verdict governs ship-readiness.
 
 ## Build gate
 
@@ -32,7 +32,7 @@ Position: after quality checks, before the final gates below. Optional — it ru
 
 ## Definition of Done standing gate
 
-A fixed cross-project bar, distinct from per-task acceptance criteria. Verdict PASS only when all hold:
+A fixed cross-project bar, distinct from per-task acceptance criteria. Full definitions: `references/definition-of-done.md`. Verdict PASS only when all hold:
 
 - Correctness — the work does what the plan specifies.
 - Quality — lint/format/unit checks clean, configs unweakened.

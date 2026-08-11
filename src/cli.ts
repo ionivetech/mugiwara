@@ -30,10 +30,15 @@ export async function run(argv: string[]): Promise<void> {
 
 function resetCmd(flags: Args['flags']): void {
   const projectDir = resolve(str(flags.project) ?? process.cwd());
-  const { removed, kept } = resetMission(projectDir, flag(flags.keepLogs));
-  if (removed.length) console.log(`removed: ${removed.join(', ')}`);
+  const force = flag(flags.force);
+  const result = resetMission(projectDir, flag(flags.keepLogs), force);
+  if (result.blocked) {
+    console.error(`✗ ${result.blocked}`);
+    process.exit(1);
+  }
+  if (result.removed.length) console.log(`removed: ${result.removed.join(', ')}`);
   else console.log('nothing to remove.');
-  if (kept.length) console.log(`kept: ${kept.join(', ')}`);
+  if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
 }
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {

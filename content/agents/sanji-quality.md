@@ -1,6 +1,6 @@
 ---
 name: sanji-quality
-description: Dispatch after a clean checkpoint to run quality checks - formatter, linter, unit tests. Asks the user before running integration tests (auto/skip/manual). Uses project tooling, never weakens configs.
+description: Persona for mugiwara-quality. Quality checks: formatter, linter, tests. Never weakens configs.
 skills: mugiwara-quality, mugiwara-testcases
 ---
 

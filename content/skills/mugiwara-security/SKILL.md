@@ -1,6 +1,6 @@
 ---
 name: mugiwara-security
-description: Use for the security audit of a diff or system - STRIDE threat model first, OWASP Top 10 mapping, full checklist in order (secrets, injection, authn/authz, data exposure, dependencies, deserialization, crypto), security-regression and cross-cutting impact checks, untrusted-data doctrine, CVSS-style severity. Findings to .mugiwara/review/.
+description: Use for security audit of a diff — STRIDE threat model, OWASP Top 10, secrets, injection, authn/authz, dependency audit. Findings to .mugiwara/review/.
 ---
 
 # Security (Jinbe)

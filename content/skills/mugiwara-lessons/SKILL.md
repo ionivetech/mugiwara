@@ -1,6 +1,6 @@
 ---
 name: mugiwara-lessons
-description: Use at mission end or before starting work in a repo the crew has worked in before - read and write the accumulated lessons ledger so each mission stands on the previous ones.
+description: Use at mission start/end — cross-mission lessons ledger. Read past lessons at triage, capture new ones at closure. Append-only.
 ---
 
 # Lessons (Mission Memory)
