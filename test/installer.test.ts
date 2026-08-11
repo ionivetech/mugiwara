@@ -108,14 +108,17 @@ test('session-start hook carries inline doctrine, no "dispatch crew" language', 
   expect(hook).not.toMatch(/dispatch.*using-mugiwara/);
 });
 
-test('CLI install targets never force background mode on agents', () => {
+test('CLI install targets never force background mode on agents (opencode agents get mode: all for native config)', () => {
   const { agents } = collectContent();
   const luffy = agents.find(a => a.name === 'luffy-orchestrator')!;
-  for (const id of ['claude', 'opencode', 'copilot']) {
+  for (const id of ['claude', 'copilot']) {
     const out = targets[id].transformAgent(luffy.data, luffy.body);
     expect(out, `${id} transformAgent output`).not.toBeNull();
     expect(out!.text).not.toMatch(/^mode:/m);
   }
+  const opencodeOut = targets['opencode'].transformAgent(luffy.data, luffy.body);
+  expect(opencodeOut, `opencode transformAgent output`).not.toBeNull();
+  expect(opencodeOut!.text).toMatch(/^mode: all/m);
 });
 
 test('generic target installs workflow skill with inline doctrine', () => {

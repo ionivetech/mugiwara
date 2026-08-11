@@ -12,6 +12,13 @@ test('plugin module exports a function', () => {
   expect(typeof plugin).toBe('function');
 });
 
+test('dispose hook present (no-op, prevents plugin dispose error)', async () => {
+  const hooks = await plugin();
+  expect(hooks.dispose).toBeDefined();
+  expect(typeof hooks.dispose).toBe('function');
+  hooks.dispose();
+});
+
 test('config hook registers skills path (absolute, deduped)', async () => {
   const { config } = await plugin();
   const cfg = { skills: { paths: ['/fake/pre-existing'] } };
@@ -69,6 +76,29 @@ test('config hook never clobbers a user-defined agent', async () => {
   await config(cfg);
   expect(cfg.agent['using-mugiwara']).toBe(mine);
   expect((mine as { mode?: string }).mode).toBe('subagent');
+});
+
+test('announce string carries inline doctrine and flow contract', async () => {
+  const hooks = await plugin();
+  const transform = hooks['experimental.chat.system.transform'];
+  const output = { system: ['existing prompt'] };
+  await transform({}, output);
+  expect(output.system[0]).toContain('Mugiwara crew available');
+  expect(output.system[0]).toContain('Never Task-dispatch a crew member');
+  expect(output.system[0]).toContain('auto-activates');
+});
+
+test('system.transform appends the announce string once (dedupes on repeat)', async () => {
+  const hooks = await plugin();
+  const transform = hooks['experimental.chat.system.transform'];
+  expect(typeof transform).toBe('function');
+  const output = { system: ['existing prompt'] };
+  await transform({}, output);
+  expect(output.system).toHaveLength(2);
+  expect(output.system[0]).toContain('Mugiwara crew available');
+  expect(output.system[1]).toContain('Active mode:');
+  await transform({}, output);
+  expect(output.system).toHaveLength(2);
 });
 
 test('announce string carries inline doctrine and flow contract', async () => {

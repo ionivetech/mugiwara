@@ -3,6 +3,44 @@ import { join } from 'node:path';
 import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
 import type { Target } from '../installer.ts';
 
+type CrewConfig = {
+  color: string;
+  temperature: number;
+  steps: number;
+  permission?: Record<string, string>;
+};
+
+const CREW: Record<string, CrewConfig> = {
+  'using-mugiwara': { color: '#84cc16', temperature: 0.2, steps: 10 },
+  'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
+  'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 15 },
+  'nami-planner': { color: '#f97316', temperature: 0.2, steps: 15 },
+  'zoro-execution': { color: '#22c55e', temperature: 0.1, steps: 30 },
+  'chopper-checkpoint': { color: '#3b82f6', temperature: 0.1, permission: { edit: 'deny' }, steps: 15 },
+  'sanji-quality': { color: '#a855f7', temperature: 0.1, permission: { edit: 'deny' }, steps: 10 },
+  'franky-gates': { color: '#06b6d4', temperature: 0.1, permission: { edit: 'deny' }, steps: 10 },
+  'robin-reviewer': { color: '#8b5cf6', temperature: 0.2, permission: { edit: 'deny' }, steps: 15 },
+  'jinbe-security': { color: '#6366f1', temperature: 0.2, permission: { edit: 'deny' }, steps: 15 },
+  'brook-healing': { color: '#ec4899', temperature: 0.1, steps: 20 },
+  'skeptic-verifier': { color: '#64748b', temperature: 0.1, permission: { edit: 'deny' }, steps: 12 },
+  'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 15 },
+  'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 10 },
+  'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 8 },
+};
+
+function agentFrontmatter(name: string, description: string) {
+  const crew = CREW[name];
+  const lines = [`description: ${description}`, `mode: all`];
+  if (crew) {
+    lines.push(`color: '${crew.color}'`, `temperature: ${crew.temperature}`, `steps: ${crew.steps}`);
+    if (crew.permission) {
+      lines.push('permission:');
+      for (const [k, v] of Object.entries(crew.permission)) lines.push(`  ${k}: ${v}`);
+    }
+  }
+  return lines.join('\n');
+}
+
 export const target: Target = {
   id: 'opencode',
   label: 'opencode',
@@ -18,9 +56,8 @@ export const target: Target = {
     };
   },
   transformAgent(data: FrontmatterData, body: string) {
-    const fm: FrontmatterData = { name: data.name, description: data.description };
-    if (data.tools) fm.tools = data.tools;
-    return { relPath: `${data.name}.md`, text: stringifyFrontmatter(fm, body) };
+    const fm = agentFrontmatter(data.name, data.description);
+    return { relPath: `${data.name}.md`, text: `---\n${fm}\n---\n${body}` };
   },
   refsDir({ scope, projectDir, home }, skillName: string) {
     const root = scope === 'global' ? join(home, '.config', 'opencode') : join(projectDir, '.opencode');

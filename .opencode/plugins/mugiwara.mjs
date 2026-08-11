@@ -1,8 +1,9 @@
 // mugiwara — OpenCode plugin.
 //
-// Registers the Mugiwara crew (25 skills + 15 agents) with OpenCode from the
-// npm/git package, and announces the crew at session start. No runtime, no
-// deps — reads the markdown source of truth (content/) at config load.
+// Registers skills/agents via config hook (superpowers pattern: one plugin,
+// zero file-copy), announces the crew at session start, and handles runtime
+// mode switching. CLI `mugiwara install --target opencode` remains available
+// as an alternative file-based path.
 //
 // Install: add to opencode.json
 //   { "plugin": ["@ionivetech/mugiwara"] }
@@ -28,7 +29,7 @@ export function readMode({ projectDir = process.cwd(), home = homedir() } = {}) 
     for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
       const t = line.trim();
       if (!t || t.startsWith('#')) continue;
-      const [k, v] = t.split('=').map((s) => s.trim());
+      const [k, v] = line.split('=').map((s) => s.trim());
       if (k !== 'mode') continue;
       return VALID_MODES.has(v) ? v : 'INVALID';
     }
@@ -50,8 +51,6 @@ const agentsDir = join(contentDir, 'agents');
 const ANNOUNCE =
   "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it remains an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara-mode` (guided|semi|auto). See skills/mugiwara-workflow.";
 
-// OpenCode per-agent tuning. Content stays portable markdown; these knobs
-// (color, temperature, permission, steps) are opencode-only.
 const CREW = {
   'using-mugiwara': { color: '#84cc16', temperature: 0.2, steps: 10 },
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
@@ -173,6 +172,8 @@ export function applyModeChange(mode, { projectDir = process.cwd(), home = homed
 }
 
 export default async () => ({
+  dispose: () => {},
+
   config: (config) => {
     config.skills = config.skills || {};
     config.skills.paths = config.skills.paths || [];
@@ -185,8 +186,6 @@ export default async () => ({
     }
   },
 
-  // Intercept user messages to detect `/mugiwara-mode` and natural-language
-  // mode toggles; write `.mugiwara/config` so the next wave reads the new level.
   'chat.message': async (_input, output) => {
     if (!output) return;
     if (typeof output === 'string') {
@@ -204,9 +203,6 @@ export default async () => ({
     }
   },
 
-  // ponytail-proven hook; appends the announce string to the system prompt.
-  // Dedupes: repeated transforms (model switch/compaction) must not grow the
-  // prompt unbounded — only append once per string content.
   'experimental.chat.system.transform': async (_input, output) => {
     if (!output.system.some((s) => s.includes('Mugiwara crew available'))) {
       if (output.system.length > 0) {
