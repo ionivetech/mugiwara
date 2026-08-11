@@ -1,6 +1,6 @@
 // test/plugin.test.ts
 import { test, expect } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import plugin, { readMode, parseModeChange, applyModeChange } from '../.opencode/plugins/mugiwara.mjs';
@@ -126,12 +126,18 @@ function writeConfig(dir: string, line: string) {
 test('parseModeChange: /mugiwara-mode semi expands and parses', () => {
   expect(parseModeChange('/mugiwara-mode semi')).toBe('semi');
   expect(parseModeChange('Set mugiwara mode: auto\nValid levels...')).toBe('auto');
+  expect(parseModeChange('mugiwara mode guided')).toBe('guided');
 });
 
 test('parseModeChange: invalid level no-op, no command no-op', () => {
   expect(parseModeChange('/mugiwara-mode chaos')).toBe(null);
   expect(parseModeChange('hello world')).toBe(null);
   expect(parseModeChange('')).toBe(null);
+});
+
+test('parseModeChange: mid-message mention never flips autonomy', () => {
+  expect(parseModeChange('see this email about /mugiwara-mode auto attached')).toBe(null);
+  expect(parseModeChange('note: mugiwara mode auto mentioned here')).toBe(null);
 });
 
 test('applyModeChange writes project config and flips readMode', () => {
@@ -149,4 +155,19 @@ test('applyModeChange preserves other config keys', () => {
   const config = readFileSync(join(proj, '.mugiwara', 'config'), 'utf8');
   expect(config).toContain('mode=auto');
   expect(config).toContain('branch=feature/{type}-{issue}-{slug}');
+});
+
+test('applyModeChange refuses symlinked config (no overwrite of target)', () => {
+  const proj = makeCfg();
+  const dir = join(proj, '.mugiwara');
+  mkdirSync(dir, { recursive: true });
+  const victim = join(makeCfg(), 'victim.txt');
+  writeFileSync(victim, 'precious');
+  try {
+    symlinkSync(victim, join(dir, 'config'));
+  } catch {
+    return; // platform without symlink perms — skip
+  }
+  expect(() => applyModeChange('auto', { projectDir: proj, home: makeCfg() })).toThrow(/symlink/);
+  expect(readFileSync(victim, 'utf8')).toBe('precious');
 });
