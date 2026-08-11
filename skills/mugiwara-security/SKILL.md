@@ -24,7 +24,44 @@ List every surface: endpoints, CLI, config inputs, file/DB reads, external calls
 
 ## OWASP Top 10 mapping
 
-Required when the project handles payments, health data, or PII. Map each security check to its OWASP Top 10 category (e.g. injection → A03, authn/authz → A01/A07, data exposure → A02/A05, deps → A06). No mapping row for a handled category = a documentation gap.
+Required when the project handles payments, health data, or PII. Map each security check to its OWASP category; a handled category with no mapping row = documentation gap.
+
+| Code | Category | Review area |
+|------|----------|-------------|
+| A01 | Broken access control | authz gaps, IDOR, missing server-side checks |
+| A02 | Cryptographic failures | PII in transit/at rest, weak crypto, exposed secrets |
+| A03 | Injection | SQL/NoSQL/OS/template injection, unsanitized input to exec/render |
+| A04 | Insecure design | missing threat model, trust-boundary failures |
+| A05 | Misconfiguration | default creds, verbose errors, permissive headers, debug on |
+| A06 | Vulnerable components | dependency audit, known-vuln check, outdated libs |
+| A07 | Authn failures | broken sessions, brute-forceable login, credential reuse |
+| A08 | Integrity | insecure deserialization, supply-chain tamper |
+| A09 | Logging/monitoring | PII in logs, missing audit trail, silent failures |
+| A10 | SSRF | server-side requests to attacker-controlled targets, URL validation |
+
+## Authn/Authz patterns
+
+- Authn ≠ authz: identity is not permission. Verify both, server-side only; client-side-only checks are findings, not controls.
+- Sessions/tokens: validate server-side, enforce expiry and revocation, rotate on privilege change, never in URL or logs.
+- Least privilege: smallest scope that works; a widened scope is a finding.
+- Fail closed: deny on any absent/ambiguous permission. Fail-open authz is Critical.
+
+## Secrets management
+
+- Never in code: no hardcoded keys/tokens/passwords, no committed .env, no secrets in logs or dumps.
+- Source from env or a vault (AWS Secrets Manager, Vault, etc.); inject at runtime, never inline.
+- Rotate on a schedule; a key that ever hit a repo is revoked, not "cleaned up". Scan diff and history for secret shapes — a pushed secret is exposed regardless of later removal.
+
+## Dependency auditing
+
+- Lockfiles are the truth: audit the lock, not the manifest; commit lockfiles.
+- Run the project's own audit tooling (npm audit, pip-audit, cargo audit, govulncheck, osv-scanner). A skipped audit is a finding.
+- Fail on CVEs reachable from the diff; a new dependency gets a vuln + maintenance review before merge. Pin versions, verify provenance, inspect postinstall scripts.
+
+## Boundary system
+
+- Every external interface is hostile: HTTP bodies/headers, query strings, uploads, CLI args, config, env, upstream responses, rendered HTML.
+- Validate at the trust boundary, allowlist-first: shape, type, length, charset. A boundary with no validation is a finding even when input "looks safe"; a value is never trusted past its origin.
 
 ## Security-regression check
 

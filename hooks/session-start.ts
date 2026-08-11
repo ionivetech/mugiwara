@@ -3,6 +3,6 @@
 console.log(
   JSON.stringify({
     additionalContext:
-      "Mugiwara crew available. Run the crew inline in the main conversation — start by invoking `using-mugiwara` (embodied inline) which routes to the right crew member; embody ONE crew role at a time using its skill. Never Task-dispatch a crew member: Luffy delegates to Usopp or Nami, then the pipeline flows usopp -> nami -> zoro -> chopper -> sanji -> franky -> review -> healing -> closure. Subagents only for [PARALLEL] task batches (Zoro workers), concurrent review/security (Robin || Jinbe), and independent re-run checks. See skills/mugiwara-workflow."
+      "Mugiwara crew available. The workflow auto-activates for non-trivial requests (no need to call `/using-mugiwara` at session start; it is optional and routes to the right crew member). The crew runs inline in the main thread — Never Task-dispatch a crew member. Subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Checkpoint reports at wave/stage boundaries. Mode: guided / semi / auto (see .mugiwara/config). See skills/mugiwara-workflow."
   })
 );

@@ -15,8 +15,6 @@ Classify the mission by size first — after Luffy's route — then write the pl
 | **Standard** | 1 wave, 2-8 tasks, light dependency | Goals, Architecture overview, Context scan, Implementation graph, Wave table, Detail task, Anti-pattern, Acceptance |
 | **Full** | multi-wave, parallel, risk involved | All of Standard + Flow detail, Key decisions, Project structure, Risk & rollback, Definition of Done |
 
-Pick the smallest level that fits. Oversized plan wastes effort; undersized plan hides risk.
-
 ## Interview-first
 
 Batch ALL blocking ambiguities into ONE question round before writing. If a major decision appears mid-plan, stop and ask then — never assume silently. Unanswered question goes back to Luffy, never forward to Zoro.
@@ -59,33 +57,33 @@ Before the detail blocks, add two markdown tables so Zoro can read the shape at 
 |---|------|-------|------|------------|------------|
 | T1 | <title> | <paths> | S | — | <one-line check> |
 
-`[PARALLEL]`/`[SEQUENTIAL, depends-on]` markers stay in the wave header AND in the task detail blocks; the index table mirrors the same dependency edges.
-
 ## Unified task template
 
 ```
-**Task N: <title>** `[PARALLEL]` | `[SEQUENTIAL, depends-on: Task M]`
+**Task N: <title>** `[PARALLEL]` | `[SEQUENTIAL, depends-on: Task M (file: <path>)]`
 - Files: create/modify <exact paths>
-- Interfaces: consumes → produces
+- Interfaces: consumes <file> from Task M → produces <file> for Task N
 - Size: XS | S | M | L | XL  (XL = 8+ files → split)
+- Break: none | <split condition when this task may exceed 8 files or diverge>
 - Steps: [ ] <TDD: failing test → run → implement → run → commit>
 - Acceptance: <command-verifiable>
 - Risk: none | <rollback plan>
 ```
 
-Every task uses this template at every level — zero-question standard: exact file paths (never "the component"), exact TDD commands, and an acceptance criterion that is a literal command or file check ("works correctly" is banned). A task touching deploy, data migration, secrets, or public API carries a `Risk` line; high-risk tasks get a rollback plan before execution. XL (8+ files) splits into smaller tasks first.
-
 **Task size = commit granularity.** Zoro commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task should be folded into its neighboring logical task, never standalone. If the plan is full of XS tasks, merge them up before writing: a plan sliced into a dozen one-line commits is a plan that will litter the history. Few, well-sized tasks → few, meaningful commits.
 
 ## Waves
 
-Group tasks into waves; each wave ends in a verified, reviewable state. Build the dependency graph from each task's Interfaces: X consumes what Y produces → X depends on Y.
+Group tasks into waves; each wave ends in a verified, reviewable state.
 
-- `[PARALLEL]` ONLY when tasks share no file AND no interface dependency.
-- State the proof in the wave header: disjoint files + no common consumed/produced interface.
-- Otherwise `[SEQUENTIAL, depends-on: Task M]`. Never mark parallel on assumption.
+- `[PARALLEL]` ONLY when tasks share no file AND no interface dependency; state the proof (disjoint files + no shared interface) in the wave header.
+- Otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption.
 
 Per-wave gate: acceptance checks run, evidence captured; a wave starts only when its dependencies are proven done.
+
+## Implementation graph
+
+Every edge names its file: `consumes <file> from Task M → produces <file> for Task N`; flag cross-file risk edges (two tasks reading the same file — never parallel). Tasks carrying `Break:` split mid-execution when files exceed 8 or concerns diverge — re-index the tail.
 
 ## Acceptance vs Definition of Done
 
@@ -98,7 +96,7 @@ Per-wave gate: acceptance checks run, evidence captured; a wave starts only when
 - No Files paths, or an Acceptance like "works correctly" (uncheckable).
 - Assumed tooling not confirmed in the context scan, or silent reordering/dropping tasks.
 - `[PARALLEL]` without file- AND interface-disjoint proof.
-- Missing dependency edges between tasks touching each other's outputs.
+- Missing file-level dependency edges (no `(file: path)`), or a task with no Break point spanning 8+ files.
 - Gold-plating (speculative features) or a high-risk task with no rollback plan.
 
 Any anti-pattern fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole. "Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → fiction; "trust me, they're parallel" → race; "rollback is someone else's problem" → data loss.
@@ -110,9 +108,9 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 ## Key decisions       (why this way)
 ## Architecture overview
 ## Project structure
-## Implementation graph  (consumes → produces)
 ## Waves               (table: wave | focus | tasks | gate; parallel proof in header)
-## Task index          (table: # | task | files | size | depends-on | acceptance)
+## Implementation graph  (consumes <file> from Task M → produces <file> for Task N; cross-file risk edges)
+## Task index          (table: # | task | files | size | depends-on <file> | acceptance)
 ## Detail tasks        (unified template, one block per task)
 ## Risk & rollback
 ```

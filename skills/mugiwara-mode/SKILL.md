@@ -15,17 +15,18 @@ The crew's autonomy level. Read once per wave at dispatch; a flip takes effect f
 | semi | present plan for user GO | auto | self-answer + log | log, no pause |
 | auto | gated auto-GO | auto | self-answer + log | log, no pause |
 
-Consent is an invariant in ALL levels — see below. Every level ends at push + ready PR + verdict; the crew never merges or deploys.
+Consent is an invariant in ALL levels — see below. Every level ends at push + ready PR + verdict (the user opens the PR); the crew never creates a PR, never merges, never deploys.
 
 ## Config
 
-Two files, three keys, `key=value` lines, optional `#` comments:
+Two files, four keys, `key=value` lines, optional `#` comments:
 
 ```
 # .mugiwara/config (project) overrides ~/.mugiwara/config (global)
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
+base=main
 ```
 
 | Key | Values | Default (no mugiwara branding) |
@@ -33,6 +34,14 @@ commit=conventional
 | mode | guided / semi / auto | guided |
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
+| base | PR summary target branch | main |
+
+**Mode owns autonomy; config owns writing standards.** The mode key alone
+decides whether branch/commit run automatically. The remaining keys shape HOW
+artifacts are written — the `branch` naming pattern, the `commit` message
+style, and `base` (the PR target named in the prepared PR summary per
+`mugiwara-pr`). There is no autonomy key in config; a mode flip is the only
+lever that changes behavior.
 
 The `branch` value is a naming pattern, never executed: its placeholders (`{type}`/`{issue}`/`{slug}`) are filled from mission metadata and validated against a safe charset (alphanumerics, `-`, `_`) before any git command.
 
@@ -52,7 +61,7 @@ The plan proceeds past approval in `auto` ONLY with zero blocking ambiguities AN
 
 ## Terminal invariant
 
-Every mode ends at: push the mission branch (per the `branch` key) → write the PR verdict file per `mugiwara-pr` → hand the branch + verdict to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. PR review is the terminal gate.
+Every mode ends at: push the mission branch (per the `branch` key) → write the PR verdict file per `mugiwara-pr` (includes a ready PR summary; target per `base`) → hand the branch + verdict to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. PR review is the terminal gate.
 
 ## Rules
 
@@ -60,4 +69,4 @@ Every mode ends at: push the mission branch (per the `branch` key) → write the
 2. Missing config on read = guided; the file is created only on a write.
 3. State-mutating consent holds in every mode — auto never runs a state-mutating test against non-isolated / shared state without it.
 4. Auto plan-GO is gated, never assumed.
-5. The terminal is push + ready PR + verdict in every mode.
+5. The terminal is push + ready PR + verdict in every mode — the crew never creates a PR.

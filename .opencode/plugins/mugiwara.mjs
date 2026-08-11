@@ -48,7 +48,7 @@ const skillsDir = join(contentDir, 'skills');
 const agentsDir = join(contentDir, 'agents');
 
 const ANNOUNCE =
-  "Mugiwara crew available. Start non-trivial missions by invoking `using-mugiwara` (or ask 'how do I use mugiwara?') - it routes you to the right crew member. The workflow auto-activates for any non-trivial request - no need to ask. Run the crew pipeline inline: embody ONE crew role at a time in the main conversation using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member - the crew runs in the main thread; Luffy delegates to Usopp or Nami, then the pipeline flows usopp -> nami -> zoro -> chopper -> sanji -> franky -> review -> healing -> closure. Subagents only for [PARALLEL] task batches (Zoro workers), concurrent review/security (Robin || Jinbe), and independent re-run checks. Crew members never dispatch each other. See skills/mugiwara-workflow.";
+  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it remains an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara-mode` (guided|semi|auto). See skills/mugiwara-workflow.";
 
 // OpenCode per-agent tuning. Content stays portable markdown; these knobs
 // (color, temperature, permission, steps) are opencode-only.

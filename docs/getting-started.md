@@ -32,7 +32,10 @@ Requires **Node.js >= 20.11**. Bun is optional (build-from-source only).
 
 ## 2. Start a mission
 
-Once installed, just ask. No agent names to remember — say what you want built:
+The workflow **auto-activates**: at session start the crew is announced, and
+when you give a non-trivial request the pipeline runs by itself — no need to
+call `/using-mugiwara`. It remains an optional explicit router if you want to
+hand-route a mission. Just ask, no agent names to remember:
 
 ```
 > add dark mode to the settings page
@@ -40,7 +43,9 @@ Once installed, just ask. No agent names to remember — say what you want built
 
 `using-mugiwara` (the front door) routes your request, Luffy classifies it, and
 the wave pipeline runs. Because the crew runs **inline** in your main
-conversation, you watch every wave as it happens:
+conversation, you watch every wave as it happens — as compact **checkpoint
+reports** (a wave banner, one report per crew member at each stage boundary,
+and a pause when something fails):
 
 ```
   Wave 0  Luffy   triage → route: plan (requirements mostly clear)
@@ -51,6 +56,11 @@ conversation, you watch every wave as it happens:
   Wave 9  Luffy   closure→ report appended to plan, intermediate files cleaned
 ```
 
+Prefer to drive the stages yourself? Every stage has a slash command that loads
+the skill, runs the crew role inline, and bridges state from `.mugiwara/`:
+`/mugiwara-plan`, `/mugiwara-execute`, `/mugiwara-review`, `/mugiwara-security`,
+`/mugiwara-heal`, `/mugiwara-ship`. You can jump into any stage.
+
 ## 3. What you do during a mission
 
 Almost nothing, in the default mode:
@@ -58,8 +68,9 @@ Almost nothing, in the default mode:
 - Answer Nami's clarifying questions (one batched round before planning).
 - Give the plan an explicit GO when presented (or switch to `semi`/`auto`).
 - Review Brook's rollback note if a risky fix is proposed.
-- Open the PR at the end — the crew pushes the branch and hands you the verdict
-  file; the crew never merges or deploys.
+- In every mode, open the PR at the end — the crew pushes the branch and hands
+  you the verdict file with a ready PR summary block. The crew never merges,
+  deploys, or creates a PR itself.
 
 ## 4. The `.mugiwara/` workspace
 
@@ -81,4 +92,5 @@ Every mission writes to `.mugiwara/` at the repo root:
 - Learn the [execution model](execution-model.md) — why everything is visible.
 - Set your [mode](modes.md) — `guided` asks at every gate, `semi`/`auto`
   self-answer.
+- Read the [config reference](config.md) — branch/commit/PR writing standards.
 - Meet the [crew](agents.md).

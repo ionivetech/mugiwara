@@ -13,9 +13,11 @@ Or via the CLI:
 npx @ionivetech/mugiwara@latest --project ./my-app --target codex --yes
 ```
 
+**Update** — `codex plugin update mugiwara`. **Uninstall** — `codex plugin remove mugiwara`.
+
 ## What you get
 
-- 25 skills as markdown rules in `.codex/mugiwara/`.
+- 32 skills as markdown rules in `.codex/mugiwara/`.
 - An `AGENTS.md` bootstrap pointer (created if missing).
 
 ## Notes

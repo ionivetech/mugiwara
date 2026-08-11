@@ -3,29 +3,51 @@
 [![npm version](https://img.shields.io/npm/v/@ionivetech%2fmugiwara)](https://www.npmjs.com/package/@ionivetech/mugiwara)
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
-The Straw Hat crew of AI agents and skills.
+The Straw Hat crew of AI agents and skills — a complete software development
+workflow for your coding agent.
+
+Skills encode the workflows, quality gates, and best practices a senior
+engineering team applies to software, packaged so your agent follows them
+consistently across every phase of development. The crew **auto-activates**:
+give a non-trivial request and the pipeline runs inline in your main
+conversation — with checkpoint reports at every stage, nothing hidden behind a
+subagent click.
+
+```
+   TRIAGE            PLAN             BUILD            VERIFY            REVIEW            SHIP
+ ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+ │ Luffy    │ ──▶ │ Nami     │ ──▶ │ Zoro     │ ──▶ │ Chopper  │ ──▶ │ Robin +  │ ──▶ │ push +   │
+ │ 5-way    │     │ waves +  │     │ TDD per  │     │ Sanji +  │     │ Jinbe    │     │ ready PR │
+ │ triage   │     │ tasks    │     │ task     │     │ Franky   │     │ review+  │     │ summary  │
+ └──────────┘     └──────────┘     └──────────┘     └──────────┘     └──────────┘     └──────────┘
+```
 
 Zero runtime: pure markdown your existing AI agent runs with its own subagent
-machinery — no daemons, no plugins to keep updated, nothing to host.
+machinery — no daemons, no plugins to keep updated, nothing to host. 32 skills,
+15 agents, and per-stage commands, ready for Claude Code, opencode, Gemini CLI,
+Codex, Cursor, Copilot, Kimi, pi, Windsurf, Cline, Kilo Code, and Antigravity.
 
-## Why Mugiwara
+## Philosophy
 
-- 🧭 **A named crew.** Ten specialist agents — Luffy orchestrates, Nami plans,
-  Zoro executes, Chopper audits, Brook heals — each with a narrow job.
+- 🧭 **Skills are the product, agents are the engine.** Skills are the
+  user-facing surface — they auto-activate, they ship to any harness, and you
+  never need to learn an agent name. The named agents are opencode-native
+  enforcement underneath: permission isolation, role lenses, parallel review.
+  Pick mugiwara up the same way you'd pick up a skills pack.
+- 🧑‍🚀 **The crew runs in the main thread.** No crew member is dispatched as a
+  hidden subagent. You watch the pipeline happen, you can interrupt any time,
+  and every wave shows a checkpoint report — never a narration of every tool call.
+- ⚖️ **Mode owns autonomy, config owns writing standards.** Whether branch,
+  commit, and PR run automatically is decided by one lever: the mode
+  (guided / semi / auto). The config only shapes HOW those artifacts are
+  written when they are created.
+- 🛡 **Evidence over claims.** No wave passes on assertion — the owning agent
+  shows output. No evidence, not complete.
 - 📦 **No runtime.** Ships markdown only: native skills and agents for
   Claude Code, opencode, Copilot, Gemini CLI, Codex, Cursor, Kimi, pi,
   Windsurf, Cline, Kilo Code, and Antigravity.
-- 🔁 **Wave pipeline.** brainstorm → plan → execute → audit → quality → gates
-  → review → security → heal → closure. Failure loops back through healing
-  (max 3 cycles), never ships broken.
-- 🛡 **Evidence over claims.** No wave passes on assertion — the owning agent
-  shows output. No evidence, not complete.
-- ⚡ **One-command install.** `npx`, `npm -g`, curl, or PowerShell — interactive
-  wizard or fully scriptable with flags.
-- 🧪 **Everything validated.** Coverage gates, build gates, OWASP security
-  review, doubt-driven diff review, Definition of Done.
 
-### The crew — 15 agents
+## The crew — 15 agents
 
 Each agent is a focused specialist. The main thread embodies each crew role
 inline using its skill; agents may also be summoned directly by your AI tool's
@@ -33,44 +55,43 @@ agent machinery and may call the crew's shared skills.
 
 | Agent | Crew member | Role |
 |-------|-------------|------|
-| `using-mugiwara` | Front Door | Start here: routes any request to the right crew member — no agent names to remember |
-| `luffy-orchestrator` | Luffy | Main gateway: 5-way triage, background check-ins, work splitting, decision log, closure |
+| `using-mugiwara` | Front Door | Optional router: explains the crew, routes any request to the right crew member — no agent names to remember |
+| `luffy-orchestrator` | Luffy | Captain: 5-way triage, check-ins, work splitting, decision log, detailed closure |
 | `usopp-brainstorm` | Usopp | Critical brainstorming friend: facts over hype, options + trade-offs, no over-engineering |
-| `nami-planner` | Nami | Interview-first planner: full-context scan, wave structure, anti-patterns, parallel-safe plans |
+| `nami-planner` | Nami | Interview-first planner: full-context scan, waves-first plans, file-level dependency edges, break points |
 | `zoro-execution` | Zoro | Execute plans inline: todo list first, sequential tasks in the main thread, parallel batches via worker subagents, evidence per task |
-| `chopper-checkpoint` | Chopper | Verify-everything audit of wave results (deduped + scoped re-runs); writes the failure ledger (never fixes code) |
-| `sanji-quality` | Sanji | Discover the stack, then format/lint/test; integration tests only with consent |
+| `chopper-checkpoint` | Chopper | Verify-everything audit of wave results; writes the failure ledger (never fixes code) |
+| `sanji-quality` | Sanji | Discover the stack, then format/lint/test; integration and optional e2e tests only with consent |
 | `franky-gates` | Franky | Binary gates: coverage ≥90/80, build exit 0, Definition of Done |
 | `robin-reviewer` | Robin | Doubt-driven diff review: breaking-change first, five-axis, severity-tagged findings |
-| `jinbe-security` | Jinbe | Security review: OWASP, secrets, injection, auth, dependencies, untrusted-data doctrine |
-| `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, ≤3 heal cycles |
+| `jinbe-security` | Jinbe | Security review: STRIDE first, OWASP, secrets, injection, auth, dependencies, untrusted-data doctrine |
+| `brook-healing` | Brook | Reads the blocker ledger, Stop-the-Line root-cause fixes, worker subagents for fast re-verification, ≤3 heal cycles |
 | `skeptic-verifier` | Skeptic | Adversarial verification: doubt every output/plan/verdict, find what's wrong, do NOT validate |
-| `eval-runner` | Eval Runner | Test engineer for the harness itself: task suites, judge-agent rubric comparison, fix the skill not the eval |
+| `eval-runner` | Eval Runner | Test engineer for the harness itself: task suites, judge-agent rubric comparison |
 | `resume-coordinator` | Resume Coordinator | Rebuild the picture from `.mugiwara/` state after context loss; continue, never restart |
 | `memory-keeper` | Memory Keeper | Institutional memory: surface past lessons at mission start, capture new ones at closure |
 
-### The techniques — 25 skills
+## The techniques — 32 skills
 
 | Skill | Purpose |
 |-------|---------|
-| `mugiwara-workflow` | The harness entry point: inline execution model, gateway triage, wave pipeline, workspace layout, blocker protocol, cleanup |
-| `mugiwara-orchestration` | Luffy's captain behavior: 5-way classifier, check-ins, work splitting, decision log, closure |
-| `mugiwara-mode` | Runtime levels guided / semi / auto via `.mugiwara/config`: branch + commit style, consent invariants, gated auto-GO, push + ready-PR terminal |
+| `mugiwara-workflow` | The harness entry point: inline execution model, gateway triage, wave pipeline, checkpoint reports, workspace layout, blocker protocol |
+| `mugiwara-orchestration` | Luffy's captain behavior: 5-way classifier, check-ins, work splitting, decision log, detailed closure |
+| `mugiwara-mode` | Runtime levels guided / semi / auto via `.mugiwara/config`: mode owns autonomy, config owns writing standards, consent invariants, gated auto-GO, push + ready-PR terminal |
 | `mugiwara-brainstorm` | Usopp's critical sparring: interrogate, research facts, cut over-engineering, recommend |
-| `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers + anti-patterns |
-| `mugiwara-execution` | Todo list, sequential tasks inline + parallel worker batches, 6-field delegation for parallel work, one commit per logical task |
-| `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion — deduped and scoped to the wave's diff; failure rows to the blocker ledger |
-| `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit tests, declared user suites under the consent matrix |
-| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done; user-AC verdict overrides thresholds |
+| `mugiwara-planning` | Interview-first, waves-first plans with file-level dependency edges, break points, parallel-safe waves + anti-patterns |
+| `mugiwara-execution` | Todo list, sequential tasks inline + parallel worker batches, one commit per logical task, checkpoint-report batching |
+| `mugiwara-checkpoint` | Verify-everything audit of every acceptance criterion — deduped and scoped to the wave's diff |
+| `mugiwara-quality` | Discover the project's real tooling; formatter, linter, unit tests, optional e2e gate (only when the repo has e2e AND changes touch e2e) |
+| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified files, build validation, Definition of Done; optional e2e position after quality |
 | `mugiwara-testcases` | User-test intake (ATDD): accepted formats, immutable-gold rule, declarative-AC routing, consent, failure adjudication |
 | `mugiwara-review` | Doubt-driven review: breaking-change analysis, five-axis, severity-tagged findings |
-| `mugiwara-security` | OWASP-driven security review, untrusted-data doctrine, severity by exploitability × impact |
-| `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |
+| `mugiwara-security` | STRIDE-first security review, OWASP Top 10 mapping, authn/authz, secrets, dependency audit, boundary system, untrusted-data doctrine |
+| `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, worker subagents (reviewer/security/re-run), rollback prep |
 | `mugiwara-deprecation` | Sunset & migration discipline: keep-or-retire gate, cutover playbooks, safe schema changes |
-| `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction, slop list |
+| `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, component architecture, design systems, state, responsive, WCAG 2.1 AA |
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
-| `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
-| `mugiwara-pr` | CI/CD loop terminal: one verdict file + one comment + one check-run on the ready PR via `gh`, stop-at-PR invariant |
+| `mugiwara-pr` | Terminal: push + verdict file with a ready PR summary block; never creates a PR, stop-at-PR invariant |
 | `mugiwara-dynamic-workflow` | Runtime workflow patterns: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, adversarial verification |
 | `mugiwara-agent-security` | Secure the agent layer: prompt injection, memory poisoning, excessive agency, secret handling, sandboxing |
 | `mugiwara-backend` | Backend/server code: repo standards first, API design, data integrity, error handling, correctness, performance, server-side security |
@@ -78,29 +99,34 @@ agent machinery and may call the crew's shared skills.
 | `mugiwara-observability` | Trace the crew: structured logs, OTel-compatible spans, session correlation, end-of-mission summary |
 | `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/` after compaction/loss; never restart |
 | `mugiwara-lessons` | Cross-mission memory: actionable lessons ledger, read at triage, written at closure |
+| `mugiwara-writing-skills` | Meta-skill: how mugiwara authors skills — anatomy, ≤120-line rule, progressive disclosure, anti-rationalization |
+| `mugiwara-systematic-debugging` | 4-phase root-cause discipline: reproduce → localize → reduce → fix + guard; stop-the-line, prove-it first |
+| `mugiwara-test-driven-development` | RED-GREEN-REFACTOR, proof-of-when, test pyramid, one test = one behavior |
+| `mugiwara-api-and-interface-design` | Contract-first design, error semantics, boundary validation, backward compatibility, versioning |
+| `mugiwara-doubt-driven-development` | Adversarial fresh-context verification of in-flight decisions: claim → extract → doubt → reconcile → stop |
+| `mugiwara-git-worktrees` | Isolated parallel branches via `git worktree`, branch hygiene, safe cleanup |
+| `mugiwara-context-engineering` | Token/context management: feed selectively, trust-sort sources, progressive disclosure, rules files |
 
 ### Every capability, always
 
-Every install ships the full crew — all 25 skills and 15 agents, including
+Every install ships the full crew — all 32 skills and 15 agents, including
 the anti-slop `mugiwara-frontend`, `mugiwara-backend`, and `mugiwara-agent-security`
 skills. No project-type selection: you get every capability, and the harness
 routes each task to the right skill.
 
 ## How it works
 
-Every mission starts with `using-mugiwara` — the easy-to-remember front door
-that routes you to the right crew member (no agent names to memorize). It
-feeds the **Luffy gateway**, which classifies the request (trivial / explicit /
-exploratory / open-ended / ambiguous) and routes it: exploratory ideas go to
-Usopp's brainstorm, clear work goes straight to Nami's planning. You can also
-summon any crew member directly. From there the mission runs as a **wave
-pipeline** owned by one crew member per wave, executed inline in your main
-conversation.
+**The workflow auto-activates.** At session start the crew is announced; when
+you give a non-trivial request, the pipeline runs by itself — you do not need
+to call `/using-mugiwara`. It remains an optional explicit router if you want
+to hand-route a mission.
+
+From there the mission runs as a **wave pipeline** owned by one crew member
+per wave, executed inline in your main conversation.
 
 ```mermaid
 flowchart TD
-    U[User request] --> FD[using-mugiwara]
-    FD --> G{Luffy triage}
+    U[User request] --> G{Luffy triage}
     G -- exploratory --> B[Usopp brainstorm]
     G -- clear work --> N[Nami plan]
     B --> N
@@ -112,25 +138,49 @@ flowchart TD
     RJ -- pass --> LC[Luffy closure]
     RJ -- fail --> BH[Brook heal]
     BH --> CP
-    LC --> CL[cleanup]
+    LC --> CL[push + ready PR summary]
 ```
-
-The same pipeline as a portable table (renders anywhere markdown does):
 
 | Wave | Owner | Skill | Output |
 |------|-------|-------|--------|
 | 0 Triage | Luffy | `mugiwara-orchestration` | 5-way route decision + reason |
 | 1 Brainstorm | Usopp | `mugiwara-brainstorm` | refined direction, options, recommendation |
-| 2 Planning | Nami | `mugiwara-planning` | plan doc: waves, tasks, acceptance criteria |
+| 2 Planning | Nami | `mugiwara-planning` | plan doc: waves, tasks, file-level dependency edges, acceptance |
 | 3 Execution | Zoro | `mugiwara-execution` | implemented tasks with evidence |
 | 4 Checkpoint | Chopper | `mugiwara-checkpoint` | audit report + failure ledger |
-| 5 Quality | Sanji | `mugiwara-quality` | formatter/linter/test results |
+| 5 Quality | Sanji | `mugiwara-quality` | formatter/linter/test results (+ optional e2e) |
 | 6 Gates | Franky | `mugiwara-gates` | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | `mugiwara-review` + `mugiwara-security` | severity-tagged findings (parallel) |
-| 8 Healing | Brook | `mugiwara-healing` | fixes; loops back to Wave 4, max 3 cycles |
-| 9 Closure | Luffy | `mugiwara-orchestration` | push + ready PR, verdict comment + check-run via `mugiwara-pr`, closure report in `.mugiwara/results/` + cleanup |
+| 8 Healing | Brook | `mugiwara-healing` | fixes via worker subagents; loops to Wave 4, max 3 cycles |
+| 9 Closure | Luffy | `mugiwara-orchestration` | detailed summary + push + ready PR summary (see Modes) |
 
-### Modes
+### Checkpoint reports
+
+You see progress as **checkpoint reports**, not a firehose: a wave banner
+(`## Wave N — <crew> (<skill>)`), one compact report per crew member at each
+stage boundary (what ran / result / evidence pointer), a progress summary per
+wave, and a pause when something fails or gets risky. Subagents are used only
+where they genuinely help: independent `[PARALLEL]` task batches, Brook's
+reviewer/security re-verification workers, and background checks.
+
+## Manual stages
+
+Want to drive the stages yourself? Every stage has a slash command that loads
+the skill, runs the crew role inline, and bridges state from `.mugiwara/`:
+
+| Command | Runs | Reads state from |
+|---------|------|------------------|
+| `/mugiwara-plan` | Nami | `.mugiwara/spec/` |
+| `/mugiwara-execute` | Zoro | `.mugiwara/plans/` |
+| `/mugiwara-review` | Robin | `.mugiwara/results/` + diff |
+| `/mugiwara-security` | Jinbe | `.mugiwara/results/` + diff |
+| `/mugiwara-heal` | Brook | `.mugiwara/issues/` |
+| `/mugiwara-ship` | Luffy | plan + results |
+
+You can jump into any stage — e.g. run `/mugiwara-plan` first, then
+`/mugiwara-execute` later when you're ready.
+
+## Modes
 
 The crew runs at one of three autonomy levels, set in `.mugiwara/config`
 (project, overrides global `~/.mugiwara/config`):
@@ -139,54 +189,83 @@ The crew runs at one of three autonomy levels, set in `.mugiwara/config`
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
+base=main
 ```
 
-| Level | Plan GO | Branch / commits | Ambiguities | Check-ins |
-|-------|---------|------------------|-------------|-----------|
+| Level | Plan GO | Branch/commit | Ambiguities | Check-ins |
+|-------|---------|---------------|-------------|-----------|
 | **guided** | ask the user | ask the user | ask the user | ask the user |
 | **semi** | present plan for user GO | auto | self-answer + log | log, no pause |
 | **auto** | gated auto-GO | auto | self-answer + log | log, no pause |
 
-- **guided** — the default, for when you want to steer everything. You approve
-  the plan, decide branch and commit style, answer ambiguities, and get asked at
-  every gate.
+- **guided** — the default. You approve the plan, decide branch and commit,
+  answer ambiguities, and open the PR yourself.
 - **semi** — the crew self-manages branch, commits, and ambiguities (logging
   each decision), but you still give the plan an explicit GO.
 - **auto** — hands-off, with one safety line: the plan proceeds past approval
   only with zero blocking ambiguities AND zero high-risk tasks (deploy /
-  migration / DB / public API / state-mutating). Otherwise it stops for you.
+  migration / DB / public API / state-mutating).
 
 Two invariants hold in **every** mode:
 
 - **Consent.** State-mutating tests against non-isolated/shared state (real DB
   writes, network, browsers) always require your explicit consent. Provably
   isolated mutation (in-memory / temp / testcontainer-backed) is auto-safe.
-- **Terminal.** Every mode ends at push + ready PR + verdict file handed to
-  you — the crew never merges, never deploys, never auto-reacts to review
-  comments or CI.
+- **Terminal.** Every mode ends at push + ready PR summary + verdict file (you
+  open the PR). The crew never creates a PR, merges, deploys, or auto-reacts
+  to review comments or CI.
 
-Flip mid-mission with the in-session phrase `mugiwara mode <guided|semi|auto>` —
-the change applies from the next wave, never mid-wave. Missing config on read =
-`guided`. See `mugiwara-mode` for the full contract.
+The PR description is prepared for you — see [docs/pr-summary.md](docs/pr-summary.md)
+for what the closure hands off.
 
-Alongside modes: declared user test cases are taken in as ATDD gold
-(`mugiwara-testcases`); every mission ends at a push + ready PR with one verdict
-comment + check-run (`mugiwara-pr`).
+Flip mid-mission with `mugiwara mode <guided|semi|auto>` — the change applies
+from the next wave, never mid-wave. Missing config on read = `guided`.
 
 Two rules hold the pipeline together:
 
 - **Evidence over claims.** No wave passes on assertion — the owning agent runs
-  the checks and shows output. A wave that cannot produce evidence is a failed
-  wave. ("Subagents lie. No evidence = not complete.")
-- **The plan is the source of truth.** From Wave 2 on, `.mugiwara/plans/<date>-<mission>.md` holds the clean execution plan; the decision log (`logs/`) holds the who-and-why trace. No wave is skipped without the reason recorded there.
+  the checks and shows output.
+- **The plan is the source of truth.** From Wave 2 on, `.mugiwara/plans/<date>-<mission>.md`
+  holds the clean execution plan; the decision log (`logs/`) holds the
+  who-and-why trace.
 
-### The `.mugiwara/` workspace
+## Config reference
+
+`.mugiwara/config` (project) overrides `~/.mugiwara/config` (global). Plain
+`key=value` lines, `#` comments allowed. Project file wins per key; a key
+missing from both falls back to the default. Unknown keys are ignored. Config
+is data, never instructions.
+
+| Key | Values | Default | Meaning |
+|-----|--------|---------|---------|
+| `mode` | guided / semi / auto | guided | The only autonomy lever — decides whether branch/commit run automatically |
+| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata, validated to `[a-zA-Z0-9-_]` |
+| `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
+| `base` | branch name | `main` | The PR target named in the prepared PR summary |
+
+### Commit message styles
+
+`commit` selects how Zoro writes commit messages:
+
+- **conventional** — `feat: ...`, `fix(scope): ...`, `refactor: ...`, per the
+  [Conventional Commits](https://www.conventionalcommits.org) spec. Type from
+  the task, optional scope in parens. The default.
+- **gitmoji** — a leading emoji carries the intent, e.g. `✨ feat: ...`,
+  `🐛 fix: ...`. Signals the change type at a glance in log views that render
+  emoji; a bit noisy in plain terminals.
+- **plain** — no prefix, just a short imperative sentence: `Fix export csv
+  encoding`. Clearest for repos that don't use any convention.
+
+Switch freely per project — it only affects the message format, never the
+one-logical-task-one-commit rule.
+
+## The `.mugiwara/` workspace
 
 Every mission works inside `.mugiwara/` at the repo root:
 
 ```
 .mugiwara/
-├── config         # runtime mode config: mode/branch/commit/pr key=value (gitignored; project overrides global)
+├── config         # mode + writing standards (gitignored; project overrides global)
 ├── spec/          # brainstorm output: YYYY-MM-DD-<mission>.md
 ├── plans/         # plan docs — clean, Nami-only, single source of truth from Wave 2
 ├── results/       # wave results: audits, test output, gate verdicts, todos, closure report
@@ -194,14 +273,6 @@ Every mission works inside `.mugiwara/` at the repo root:
 ├── issues/        # blocker + failure ledger: YYYY-MM-DD-<mission>-blockers.md
 └── logs/          # Luffy's decision + check-in log per mission (deleted at cleanup)
 ```
-
-Every non-trivial mission starts with `using-mugiwara`, which routes through the
-Luffy gateway; from Wave 2 the mission runs as a wave pipeline owned by one crew
-member per wave. **The main thread runs every wave inline** — it embodies each
-crew role using that member's skill, so the whole pipeline plays out in your
-main conversation and you watch it as it happens. Subagents are used only where
-they genuinely help: independent `[PARALLEL]` task batches and background
-checks. No work is hidden behind a subagent expand-click.
 
 **Blocker protocol:** any crew member that hits a blocker appends a row
 (`wave | task | symptom | attempted | help-needed`) to
@@ -212,31 +283,29 @@ workaround. Brook reads the ledger in Wave 8 and heals what it lists.
 files (consumed results, review, issues, and per-mission decision logs). The
 plan doc and the closure report stay.
 
-The owning agent creates the folder it needs on first write. Mission artifacts
-never land outside `.mugiwara/`.
-
 ## Install
 
 ### Via your AI agent
 
-Install the crew straight from your agent's own plugin system — no CLI needed.
-Pick your harness:
+<details>
+<summary><strong>Claude Code</strong> — agents + skills + SessionStart hook</summary>
 
-**Claude Code** (fully supported — agents + skills + SessionStart hook)
+**Install**
 
 ```bash
 /plugin marketplace add ionivetech/mugiwara
 /plugin install mugiwara
 ```
 
-**GitHub Copilot CLI** (same marketplace)
+**Update** — re-install from the marketplace (or `mugiwara update` via CLI).
 
-```bash
-copilot plugin marketplace add ionivetech/mugiwara
-copilot plugin install mugiwara
-```
+**Uninstall** — `/plugin uninstall mugiwara`, or `mugiwara uninstall` via CLI.
+</details>
 
-**opencode** (native skills + agents via the opencode plugin)
+<details>
+<summary><strong>opencode</strong> — native skills + agents via plugin</summary>
+
+**Install** — add to `opencode.json`:
 
 ```json
 { "plugin": ["@ionivetech/mugiwara"] }
@@ -248,68 +317,99 @@ Or from the git repo directly:
 { "plugin": ["mugiwara@git+https://github.com/ionivetech/mugiwara.git"] }
 ```
 
-**Codex**
+**Update** — bump the package version in the `plugin` array (or `mugiwara update`).
+
+**Uninstall** — remove the entry from the array.
+</details>
+
+<details>
+<summary><strong>GitHub Copilot CLI</strong> — same marketplace</summary>
+
+**Install**
+
+```bash
+copilot plugin marketplace add ionivetech/mugiwara
+copilot plugin install mugiwara
+```
+
+> Copilot caveat: skills install and function; the agents are Claude-native
+> `.md` files and are best consumed via the CLI install path, which writes
+> Copilot-native `.instructions.md` skills.
+
+**Update** — `copilot plugin update mugiwara`. **Uninstall** — `copilot plugin uninstall mugiwara`.
+</details>
+
+<details>
+<summary><strong>Gemini CLI</strong> — extension</summary>
+
+**Install**
+
+```bash
+gemini extensions install https://github.com/ionivetech/mugiwara
+```
+
+**Update** — `gemini extensions update mugiwara`.
+**Uninstall** — `gemini extensions remove mugiwara`.
+</details>
+
+<details>
+<summary><strong>Codex</strong> — plugin</summary>
+
+**Install**
 
 ```bash
 codex plugin marketplace add ionivetech/mugiwara
 codex plugin add mugiwara@mugiwara
 ```
 
-**Cursor**
+**Update** — `codex plugin update mugiwara`. **Uninstall** — `codex plugin remove mugiwara`.
+</details>
+
+<details>
+<summary><strong>Cursor</strong> — plugin</summary>
+
+**Install**
 
 ```
 /add-plugin mugiwara
 ```
 
-**Gemini CLI**
+**Update** — re-run `/add-plugin mugiwara`. **Uninstall** — `/remove-plugin mugiwara`.
+</details>
 
-```bash
-gemini extensions install https://github.com/ionivetech/mugiwara
-```
+<details>
+<summary><strong>Kimi Code</strong> — plugin</summary>
 
-**Kimi Code**
+**Install**
 
 ```
 /plugins install https://github.com/ionivetech/mugiwara
 ```
 
-**pi**
+**Update** — `/plugins update mugiwara`. **Uninstall** — `/plugins remove mugiwara`.
+</details>
+
+<details>
+<summary><strong>pi</strong> — package</summary>
+
+**Install**
 
 ```bash
 pi install git:github.com/ionivetech/mugiwara
 ```
 
-Agent installs register the 25 skills; the agents (Luffy, Nami, Zoro, …) come
-natively with the harnesses that support them (Claude Code, opencode). On
-harnesses that install skills only (Gemini, Codex, Cursor, Kimi, pi), the
-agents are available via the CLI below.
+**Update** — `pi update mugiwara`. **Uninstall** — `pi remove mugiwara`.
+</details>
 
-### How the crew runs (all platforms)
+<details>
+<summary><strong>npx / npm / curl / PowerShell</strong> — the mugiwara CLI</summary>
 
-The crew runs **inline in the main conversation** on every harness. The main
-thread embodies ONE crew role at a time using that member's skill, so you see
-every wave as it happens — no hidden subagent jumps. Wave transitions are
-announced (`## Wave N — <crew>` → `→ Wave N+1 — <crew>`). Subagents are used
-only for real parallel work: Zoro's `[PARALLEL]` worker batches, Robin ∥ Jinbe
-concurrent review + security, and independent re-run checks.
+Requires **Node.js >= 20.11**. Bun is optional — only needed to build from source.
 
-- **Claude Code + opencode**: the 15 agents register as main-thread (mode `all`),
-  so they appear in your agent's tab/mode switcher and can be embodied inline.
-- **Generic platforms** (Gemini, Codex, Cursor, Kimi, pi, Windsurf, Cline,
-  Kilo, Antigravity): skills + workflow rules install as markdown; the same
-  pipeline runs inline in the main conversation.
-- **Mode switching**: default `guided`. Switch anytime with `/mugiwara-mode
-  guided|semi|auto` (or "mugiwara mode <level>"); the flip applies from the
-  next wave. Never run the crew as background subagents — dispatch subagents
-  only for parallel batches.
-
-### Via script / CLI
-
-Requires **Node.js >= 20.11**. Bun is optional — only needed to build from
-source.
+**Install**
 
 ```bash
-# npx — run without installing
+# run without installing (wizard)
 npx @ionivetech/mugiwara@latest
 
 # non-interactive: global Claude Code install, no prompts
@@ -332,10 +432,12 @@ curl -fsSL https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/in
 irm https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.ps1 | iex
 ```
 
-The `install.sh` / `install.ps1` scripts check your Node version, then run the
-same CLI (`npx -y @ionivetech/mugiwara@latest`), forwarding any flags you pass.
+**Update** — `mugiwara update` (or `npm update -g @ionivetech/mugiwara`).
 
-**Skills only, any agent** — the 25 skills also ship in the standard
+**Uninstall** — `mugiwara uninstall` (removes exactly what the manifest recorded; or `npm uninstall -g @ionivetech/mugiwara`).
+</details>
+
+**Skills only, any agent** — all 32 skills ship in the standard
 [agentskills.io](https://agentskills.io) layout (`skills/<name>/SKILL.md`), so
 you can install just the skills into Claude Code, opencode, Copilot, Cursor,
 Codex, Gemini CLI, and 70+ other agents via [skills.sh](https://skills.sh):
@@ -344,48 +446,14 @@ Codex, Gemini CLI, and 70+ other agents via [skills.sh](https://skills.sh):
 npx skills add ionivetech/mugiwara
 ```
 
-Skills only — agents (Luffy, Nami, Zoro, …) are harness-specific and install
-via the agent-native methods above or the mugiwara CLI. `mugiwara skills`
-lists the installable set.
-
-### Requirements
-
-| Dependency | Required for | Version |
-|------------|--------------|---------|
-| Node.js | running the CLI and the built artifact | >= 20.11 |
-| Bun | building from source, running tests | optional |
-
-## Quickstart
-
-```console
-$ npx @ionivetech/mugiwara@latest --global --target claude --yes
-mugiwara — installing crew for: claude
-  ✓ claude    15 agents, 25 skills → ~/.claude/skills + ~/.claude/agents
-  ✓ manifest  wrote ~/.mugiwara/manifest.json
-  ✓ done      24 files written
-
-$ # now just ask your Claude Code session
-> add dark mode to the settings page
-
-  Wave 0  Luffy   triage → route: plan (requirements mostly clear)
-  Wave 2  Nami    plan   → .mugiwara/plans/2026-08-10-dark-mode.md (3 waves)
-  Wave 3  Zoro    execute→ 3 tasks, evidence shown per task
-  Wave 4  Chopper audit  → FAIL: toggle does not persist (ledger written)
-  Wave 8  Brook   heal   → fixed persistence + tests, looped back → PASS
-  Wave 9  Luffy   closure→ report appended to plan, intermediate files cleaned
-```
-
-You never drive the sequence — you answer Nami's clarifying questions up front
-and review Brook's rollback note if a fix is risky.
-
-## Commands and flags
+## CLI commands and flags
 
 ### Commands
 
 | Command | Effect |
 |---------|--------|
 | `mugiwara install` | Install the crew (default; wizard when flags are missing) |
-| `mugiwara update` | Replace installed files, backing up differences to `.mugiwara/backup/<timestamp>/` first (project root, or `~` for global) |
+| `mugiwara update` | Replace installed files, backing up differences to `.mugiwara/backup/<timestamp>/` first |
 | `mugiwara uninstall` | Remove exactly what the install manifest recorded |
 | `mugiwara list` | Show installations (project + global manifests) |
 | `mugiwara skills` | List the installable skills (agentskills.io) + skills.sh install command |
@@ -403,36 +471,17 @@ and review Brook's rollback note if a fix is risky.
 | `--force` | Overwrite files that differ (conflicting files are backed up first) |
 | `--dry-run` | Print the actions without writing anything |
 
-```bash
-# non-interactive install requires scope + target, or it errors out
-npx @ionivetech/mugiwara@latest --project ./app --target claude --yes
-
-# preview what an install would write, without touching the disk
-npx @ionivetech/mugiwara@latest --global --target all --yes --dry-run
-
-# global installs skip targets that only support project scope (with a note)
-npx @ionivetech/mugiwara@latest --global --target all --yes
-```
-
-### Install manifest
-
-Every install writes `.mugiwara/manifest.json` (in the project dir, or `~` for
-global). The manifest records the version, scope, targets, and the exact
-list of written files — which is what `update` and `uninstall` use to operate
-safely.
+Every install writes `.mugiwara/manifest.json` recording the version, scope,
+targets, and the exact written files — which is what `update` and `uninstall`
+use to operate safely.
 
 ## Targets
 
-All nine supported targets. **Native** targets get first-class skills and
-agents; the rest get markdown rule files the tool picks up from a conventions
-directory. Targets marked *project only* are skipped (with a note) when you
-install with `--global`.
-
 | Target | Scope | Installs as |
 |--------|-------|-------------|
-| Claude Code | global + project | Native skills (`SKILL.md`) + agents in `.claude/skills` / `.claude/agents` (`~/.claude` globally) |
-| opencode | global + project | Native skills + agents in `.opencode/skills` / `.opencode/agents` (`~/.config/opencode` globally) |
-| GitHub Copilot | global + project | Skills as `.instructions.md` files + agents in `instructions/` / `agents/` (`.github` project, `~/.copilot` global) |
+| Claude Code | global + project | Native skills (`SKILL.md`) + agents in `.claude/skills` / `.claude/agents` |
+| opencode | global + project | Native skills + agents in `.opencode/skills` / `.opencode/agents` |
+| GitHub Copilot | global + project | Skills as `.instructions.md` files + agents in `instructions/` / `agents/` |
 | Gemini CLI | project only | Markdown rules in `.gemini/mugiwara/` + `GEMINI.md` pointer |
 | Codex | project only | Markdown rules in `.codex/mugiwara/` + `AGENTS.md` pointer |
 | Windsurf | project only | Rules files in `.devin/rules` |
@@ -440,36 +489,15 @@ install with `--global`.
 | Kilo Code | project only | Rules files in `.kilo/rules` + `kilo.jsonc` pointer |
 | Antigravity | project only | Rules files in `.agents/rules` |
 
-For rule-based targets, skills land as `mugiwara-*.md` and agents as
-`agent-<name>.md`. Targets with a bootstrap file (`Gemini`, `Codex`, `Kilo`)
-create it if it doesn't exist and otherwise tell you the line to add, so your
-tool points at the crew.
-
 ## Plugin manifests
 
-Beyond the Claude Code marketplace, mugiwara ships native plugin manifests at
-the repo root so each harness's own installer can pick it up:
-
-| Manifest | Harness |
-|----------|---------|
-| `.claude-plugin/` | Claude Code + GitHub Copilot CLI (marketplace) |
-| `.opencode/plugins/mugiwara.mjs` | opencode (`plugin` array in `opencode.json`) |
-| `gemini-extension.json` + `GEMINI.md` | Gemini CLI |
-| `.codex-plugin/plugin.json` | Codex |
-| `.cursor-plugin/plugin.json` | Cursor |
-| `.kimi-plugin/plugin.json` | Kimi Code |
-| `package.json` `"pi"` | pi |
-
-All manifests are skills-only and mirror `content/` as the source of truth —
-no hooks, no runtime. The opencode plugin also registers the 15 agents as
-subagents. Version numbers in the manifests sync from `package.json` via
-`bun run sync-version` (runs automatically on publish).
-
-> **Copilot caveat.** Copilot CLI reads the Claude marketplace for skills, but
-> the agents are **Claude-native `.md` files** — they do not auto-discover in
-> Copilot. Skills install and function; agents are best consumed through the
-> regular CLI install path (which writes Copilot-native `.instructions.md`
-> skills and `.md` agents).
+Mugiwara ships native plugin manifests at the repo root so each harness's own
+installer can pick it up: `.claude-plugin/`, `.opencode/plugins/mugiwara.mjs`,
+`gemini-extension.json` + `GEMINI.md`, `.codex-plugin/plugin.json`,
+`.cursor-plugin/plugin.json`, `.kimi-plugin/plugin.json`, and the `"pi"` entry
+in `package.json`. All manifests are skills-only and mirror `content/` as the
+source of truth. The opencode plugin also registers the 15 agents. Versions
+sync from `package.json` via `bun run sync-version`.
 
 ## Contributing
 

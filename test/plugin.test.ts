@@ -78,7 +78,7 @@ test('announce string carries inline doctrine and flow contract', async () => {
   await transform({}, output);
   expect(output.system[0]).toContain('Mugiwara crew available');
   expect(output.system[0]).toContain('Never Task-dispatch a crew member');
-  expect(output.system[0]).toContain('Luffy delegates');
+  expect(output.system[0]).toContain('auto-activates');
 });
 
 test('system.transform appends the announce string once (dedupes on repeat)', async () => {

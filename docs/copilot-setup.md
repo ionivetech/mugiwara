@@ -13,9 +13,11 @@ copilot plugin install mugiwara
 npx @ionivetech/mugiwara@latest --project ./my-app --target copilot --yes
 ```
 
+**Update** — `copilot plugin update mugiwara`. **Uninstall** — `copilot plugin uninstall mugiwara`.
+
 ## What you get
 
-- 25 skills as `.instructions.md` files in `.github/` (project) or
+- 32 skills as `.instructions.md` files in `.github/` (project) or
   `~/.copilot/` (global).
 - Agents as markdown files in `instructions/` / `agents/`.
 

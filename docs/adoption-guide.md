@@ -16,7 +16,7 @@ markdown rule files everywhere else.
 
 Native targets (Claude Code, opencode, Copilot) register the 15 agents directly.
 Rule-based targets (Gemini, Codex, Cursor, Windsurf, Cline, Kilo, Antigravity)
-get the same 25 skills as markdown rules plus a bootstrap pointer, so the crew
+get the same 32 skills as markdown rules plus a bootstrap pointer, so the crew
 is still steered even where subagents don't exist.
 
 ## Pick your mode

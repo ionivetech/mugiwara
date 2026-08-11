@@ -50,6 +50,18 @@ Before fixing a bug: write the failing test that reproduces it, watch it fail, t
 4. After healing: update the ledger — mark each healed row with evidence; keep unfixed rows for escalation.
 5. Cycle counter: after this wave the flow returns to Wave 4 (Chopper) for re-audit. Same failure surviving 3 heal cycles → stop, escalate with full history.
 
+## Worker subagents
+
+Brook runs inline; the only dispatches are disposable WORKER subagents for genuinely parallel work. Three named workers:
+
+- **reviewer-worker** — adversarial diff review of Brook's fixes from a fresh context (per `mugiwara-review`).
+- **security-worker** — security pass over the fixes (per `mugiwara-security`).
+- **re-run-check worker** — independently re-runs the failed checks and returns raw evidence (command output, exit codes), so the re-verify is not Brook re-confirming its own fix.
+
+Flow: Brook aggregates worker findings → applies minimal root-cause fixes (triage matrix + Rules above) → dispatches a re-run-check worker to re-verify.
+
+Workers are NOT crew members — disposable subagents, one narrow job, results return as a report. The crew itself always runs inline in the main thread, never Task-dispatched.
+
 ## Output
 
 Fixed list (finding → commit → evidence), escalated list (finding → plan → owner), updated ledger → back to Wave 4 (Chopper).

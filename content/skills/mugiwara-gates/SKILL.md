@@ -21,6 +21,10 @@ When user acceptance criteria are declared, the coverage thresholds (90/80) appl
 
 Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capture the tail of output.
 
+## Optional e2e gate (per `mugiwara-quality`)
+
+Position: after quality checks, before the final gates below. Optional — it runs only when the quality wave triggered it (repo e2e setup AND changed-file e2e patterns, with consent by mode). Its outcome is recorded with evidence but never blocks PASS: a skipped or unrun e2e gate is logged, not a failure. The final verdict is still coverage + build + DoD.
+
 ## Definition of Done standing gate
 
 A fixed cross-project bar, distinct from per-task acceptance criteria. Verdict PASS only when all hold:

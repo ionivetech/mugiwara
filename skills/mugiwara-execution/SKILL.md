@@ -33,6 +33,10 @@ Before touching code:
 5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence pointers before starting the next batch.
 6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
 
+## Task batching
+
+Run task work tightly: do the steps without narrating each command or micro-step. Surface ONE per-task result + evidence per task (or per batch) — status, evidence pointer, deviations — in a compact line or table. The checkpoint audits evidence, not commentary; save the blow-by-blow.
+
 ## Delegation format (parallel workers only)
 
 Sequential work runs inline — no delegation. For every `[PARALLEL]` worker you dispatch, the prompt includes all six fields:

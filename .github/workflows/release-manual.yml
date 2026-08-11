@@ -52,7 +52,7 @@ jobs:
           bun scripts/validate-content.ts --check-sync
 
       - name: Bump version
-        run: npm version "${{ inputs.version }}" --no-git-tag-version
+        run: echo "RELEASE_VERSION=$(npm version "${{ inputs.version }}" --no-git-tag-version)" >> "$GITHUB_ENV"
 
       - name: Sync version into plugin manifests
         run: bun run sync-version
@@ -65,12 +65,11 @@ jobs:
       - name: Commit version bump and push to main
         run: |
           git add -A
-          git commit -m "chore: release v$(node -p 'require(\"./package.json\").version')"
+          git commit -m "chore: release $RELEASE_VERSION"
           git push origin main
 
       - name: Create and push tag
         run: |
-          VERSION="v$(node -p 'require(\"./package.json\").version')"
-          git tag "$VERSION"
-          git push origin "$VERSION"
-          echo "Tagged $VERSION — Release workflow now publishes to npm and creates the GitHub Release."
+          git tag "$RELEASE_VERSION"
+          git push origin "$RELEASE_VERSION"
+          echo "Tagged $RELEASE_VERSION — Release workflow now publishes to npm and creates the GitHub Release."

@@ -1,7 +1,7 @@
 ---
 name: skeptic-verifier
 description: Dispatch to adversarially verify any agent's output, plan, or verdict before it ships - find what is wrong, do NOT validate, classify findings, bound the loop. Counters agentic laziness, self-preferential bias, and goal drift.
-skills: mugiwara-dynamic-workflow, mugiwara-checkpoint
+skills: mugiwara-dynamic-workflow, mugiwara-checkpoint, mugiwara-doubt-driven-development
 ---
 
 # Skeptic — Verifier (Adversarial Review)

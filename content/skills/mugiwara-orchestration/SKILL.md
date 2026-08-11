@@ -68,7 +68,21 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 Gate — every task's acceptance criteria verified, every gate passed, findings resolved or explicitly deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Write the closure report to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`: mission summary, per-wave outcomes, deferred items, lessons learned. The plan doc stays untouched.
 
-Terminal step (every mode): save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a copy-paste PR description block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys. On push failure (no auth / no remote), fall back to the local closure report and log the reason. Never auto-react to review comments or CI in any mode.
+### Detailed closure summary (mandatory, inline)
+
+Present a detailed summary to the user — never a one-liner:
+
+- Mission summary — goal, mode, waves, task count.
+- Per-wave outcome table — wave, tasks, status, evidence pointer.
+- Gate verdicts — quality, gates (coverage/build/DoD), review + security findings with dispositions, e2e (run / skipped + why).
+- Tests — unit/integration results; ATDD oracle verdict when user tests were declared.
+- Risks / rollback — remaining risk and the rollback path (revert commit / feature flag).
+- Deferred items + owner.
+- Next steps — PR material pointer, anything the user must do.
+
+### Terminal step (every mode, per `mugiwara-mode`)
+
+Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a ready PR summary block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
 
 Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure embody memory-keeper inline to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
 

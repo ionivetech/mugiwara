@@ -27,9 +27,13 @@ npx @ionivetech/mugiwara@latest --global --target opencode --yes
 npx @ionivetech/mugiwara@latest --project ./my-app --target opencode --yes
 ```
 
+**Update** — bump the package version in the `plugin` array (or `mugiwara update`).
+
+**Uninstall** — remove the entry from the array.
+
 ## What you get
 
-- 25 skills in `.opencode/skills/` (project) or `~/.config/opencode/skills/`
+- 32 skills in `.opencode/skills/` (project) or `~/.config/opencode/skills/`
   (global).
 - 15 agents registered as subagents via the plugin.
 - The plugin announces the crew at session start and injects the inline
@@ -37,8 +41,11 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target opencode --yes
 
 ## Use it
 
+The workflow **auto-activates** — at session start the crew is announced, and a
+non-trivial request runs the pipeline by itself. `/using-mugiwara` is an
+optional explicit router if you want to hand-route a mission:
+
 ```
-> use mugiwara
 > add dark mode to the settings page
 ```
 
