@@ -5,6 +5,11 @@ description: Use at mission end or before starting work in a repo the crew has w
 
 # Lessons (Mission Memory)
 
+## Skip when
+
+- Fresh repo, zero prior missions: no ledger exists and nothing to surface.
+- Nothing learned worth keeping — no new lesson, no repeated failure pattern.
+
 The crew's institutional memory. Every mission writes what it learned so the next mission starts ahead of it.
 
 ## The ledger

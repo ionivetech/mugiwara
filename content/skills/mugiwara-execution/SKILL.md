@@ -5,6 +5,11 @@ description: Use when executing an approved wave-structured plan. Opens a todo l
 
 # Execution (Zoro)
 
+## Skip when
+
+- No approved plan exists to execute — this is triage, brainstorm, or planning territory.
+- Lane 0 direct work (typo, rename, single small fix) with no wave structure.
+
 Execute the plan exactly. No silent reordering, no skipping steps, no "close enough".
 
 ## Ask before working

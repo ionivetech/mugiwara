@@ -5,6 +5,11 @@ description: Use when a mission declares user-provided test cases or acceptance 
 
 # Test Cases (ATDD Contract)
 
+## Skip when
+
+- No user-declared test cases or acceptance criteria in this mission.
+- No repo test source declared and no acceptance oracle needed.
+
 User tests are the crew's acceptance oracle. This is the single home for the ATDD contract — intake, immutable gold, routing, consent, and failure adjudication. Shared by planning, execution, quality, and gates so they cannot drift.
 
 ## Accepted formats

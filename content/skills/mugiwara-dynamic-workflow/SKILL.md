@@ -5,6 +5,11 @@ description: Use when a mission or subproblem has many independent subtasks, nee
 
 # Dynamic Workflow Patterns (Luffy)
 
+## Skip when
+
+- One linear pass suffices: <3 independent subtasks, no comparison, no known agent bias.
+- Standard wave pipeline already covers the work without pattern selection.
+
 Six primitives for missions too big or too biased for one linear pass. Choose the pattern BEFORE executing; record the choice in the decision log (.mugiwara/logs/). A mission may chain patterns (e.g. classify, then fan out, then tournament the outputs).
 
 ## Classify-and-act

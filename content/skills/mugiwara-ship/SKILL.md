@@ -5,6 +5,11 @@ description: Use at mission end or before any release to run the ship gate - pre
 
 # Ship Gate (Luffy, Franky)
 
+## Skip when
+
+- Not releasing: no deploy, rollout, feature-flag flip, or user-facing change.
+- Internal-only change with zero production exposure.
+
 The last gate before anything reaches a user. Binary GO or NO-GO, each backed by evidence. Default is NO-GO until every item is proven.
 
 ## Pre-launch checklist

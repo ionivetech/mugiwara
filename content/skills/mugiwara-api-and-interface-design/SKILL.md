@@ -5,6 +5,11 @@ description: Use when designing or reviewing an API, function signature, library
 
 # API and Interface Design
 
+## Skip when
+
+- No public/exported surface changes: no new endpoint, function, type, config key, or contract.
+- Internal-only implementation with private symbols that no other module imports.
+
 Design the contract before the code. The interface is the promise; the implementation is just how it keeps it.
 
 ## When to use

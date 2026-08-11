@@ -17,6 +17,16 @@ function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Rec
   if (kind === 'skill' && (d.length < 20 || d.length > 500)) errors.push(`skill ${file}: description must be 20-500 chars (got ${d.length})`);
   if (kind === 'agent' && d.length < 20) errors.push(`agent ${file}: description too short`);
   if (kind === 'skill' && body.replace(/\r?\n$/, '').split(/\r?\n/).length > 120) errors.push(`skill ${file}: body exceeds 120 lines`);
+  if (kind === 'skill' && !body.includes('## Skip when')) errors.push(`skill ${file}: missing required "## Skip when" block (≤4 lines, numeric threshold)`);
+  if (kind === 'skill' && body.includes('## Skip when')) {
+    const lines = body.split(/\r?\n/);
+    const idx = lines.findIndex(l => l.startsWith('## Skip when'));
+    const gateLines = lines.slice(idx + 1).findIndex(l => l.startsWith('## '));
+    const end = gateLines === -1 ? lines.length : idx + 1 + gateLines;
+    const bullets = lines.slice(idx + 1, end).filter(l => l.trim().startsWith('-'));
+    if (bullets.length === 0) errors.push(`skill ${file}: "## Skip when" needs ≥1 bullet`);
+    if (bullets.length > 4) errors.push(`skill ${file}: "## Skip when" block exceeds 4 bullets`);
+  }
   return data;
 }
 

@@ -5,6 +5,11 @@ description: Use when a mission is interrupted, context is lost or compacted, or
 
 # Session Resume (Never Start Over)
 
+## Skip when
+
+- Fresh mission: no `.mugiwara/` state exists to rebuild from.
+- No interruption, compaction, or new-session-mid-mission happened.
+
 The host AI can lose context — compaction, a new session, a crash. Disk state under `.mugiwara/` is the single source of truth. Rebuild the picture from disk, continue from the exact point, never restart.
 
 ## The state contract

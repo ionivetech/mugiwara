@@ -5,6 +5,11 @@ description: Use at closure to push the mission branch and prepare the PR materi
 
 # PR Handoff (CI/CD Loop)
 
+## Skip when
+
+- Not at closure: PR material is terminal-step-only, never per-wave.
+- User handles the PR themselves and declined the verdict file.
+
 Mugiwara's evidence lands where the team reviews. At terminal, push the mission branch with plain `git` and write one structured verdict file. No PR is created by the crew — the user opens the PR and pastes the ready PR summary. Never per-wave.
 
 ## Verdict file

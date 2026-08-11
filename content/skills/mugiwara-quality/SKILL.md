@@ -5,6 +5,11 @@ description: Use after checkpoint passes to run code quality checks - formatter,
 
 # Quality (Sanji)
 
+## Skip when
+
+- No code changed: docs-only or config-only diff with no lint/test surface.
+- Repo has no detectable tooling (no test/lint/format commands) — record the skip.
+
 Cook the checks properly; never cut corners to make them pass.
 
 ## Discover the stack first

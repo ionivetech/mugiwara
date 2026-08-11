@@ -5,6 +5,11 @@ description: Use after quality checks to enforce the quality gates - coverage (n
 
 # Gates (Franky)
 
+## Skip when
+
+- No code changed: docs-only or README-only diff with zero production surface.
+- Repo has no coverage tooling AND no test suite detected — record the skip, don't fake a verdict.
+
 Gates are binary: pass or fail, with evidence. No negotiation.
 
 ## Coverage gate

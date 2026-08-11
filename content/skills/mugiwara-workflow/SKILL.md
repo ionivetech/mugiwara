@@ -5,6 +5,11 @@ description: Use at the start of any non-trivial mission to run the Mugiwara cre
 
 # Mugiwara Workflow
 
+## Skip when
+
+- Lane 0 direct work: typo, rename, or single-file fix under 20 LOC.
+- User explicitly declined the harness for this request.
+
 The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial pass at Wave 4.5. Waves are phases of the mission, not files — Nami writes them into the plan doc, Zoro executes them. The main thread runs the harness and embodies each crew role inline (Execution model below); the harness always starts through Luffy unless the user summons a crew member directly.
 
 ## Execution model (every harness)
@@ -51,7 +56,7 @@ At session start, after context loss, or on any "where were we?" — embody `res
 
 ## Wave 0 — Luffy Triage (always first)
 
-Front door: embody `using-mugiwara` inline (the router) — it routes to the right crew member and records the route. For a full triage embody `luffy-orchestrator` inline. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. The user may summon any crew member directly — Luffy still records the route.
+Front door: embody `using-mugiwara` inline (the router) — it routes to the right crew member and records the route. For a full triage embody `luffy-orchestrator` inline. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. Alongside the class, Luffy sizes the mission and picks a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike) — small work skips the pipeline, sensitive work never sneaks through the lean path. The user may summon any crew member directly — Luffy still records the route.
 
 Alongside triage, read the mode config per `mugiwara-mode`: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Lazy-create the project config on first WRITE only, never auto-create on read.
 

@@ -5,6 +5,11 @@ description: Use when reviewing the agent layer itself - prompt injection, memor
 
 # Agent Security (Jinbe)
 
+## Skip when
+
+- Diff touches zero agent surface (no untrusted input, memory, tool scope, or permissions).
+- App-code-only change with no file/web/tool input crossing a trust boundary.
+
 Secure the agent layer itself: the harness, its memory, its tools, its permissions. Assume the context is hostile until proven safe.
 
 ## When to use

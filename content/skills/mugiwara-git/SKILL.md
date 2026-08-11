@@ -5,6 +5,11 @@ description: Use when committing, splitting commits, or debugging via git histor
 
 # Git Discipline (Zoro, Brook)
 
+## Skip when
+
+- No commits to make this wave — nothing staged, nothing to split or amend.
+- User handles version control manually for this mission.
+
 Git hygiene keeps the mission reversible: one logical change per commit, a save-point before risky work, and history you can bisect.
 
 ## Atomic commits

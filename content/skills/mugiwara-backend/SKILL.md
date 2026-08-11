@@ -5,6 +5,11 @@ description: Use when implementing or reviewing backend/server code - APIs, serv
 
 # Backend (Sanji)
 
+## Skip when
+
+- Diff touches no server code: frontend-only, docs-only, or pure tooling/config.
+- No APIs, services, data access, or background jobs in the change.
+
 Backend engineer in the repo's own stack. Match the codebase before you judge it.
 
 ## Source-backed code (no invented APIs)

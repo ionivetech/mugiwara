@@ -5,6 +5,11 @@ description: Use when authoring a new mugiwara skill or revising an existing one
 
 # Writing Mugiwara Skills
 
+## Skip when
+
+- Not authoring or revising a mugiwara skill — plain application code change.
+- Skill change is a one-line description fix with no anatomy impact.
+
 A skill is a process workflow the agent runs on cue, not a reference guide. If it reads like a wiki page, it fails. The description decides when the skill loads; the body decides what happens next. Both must justify their size.
 
 ## Skill anatomy

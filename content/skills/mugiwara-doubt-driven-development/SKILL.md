@@ -5,6 +5,11 @@ description: Use when an in-flight decision (implementation choice, plan step, e
 
 # Doubt-driven development
 
+## Skip when
+
+- The decision is cheap to reverse: no money, security, data, or public contract at stake.
+- The choice was already independently verified (fresh review, real test run, external check).
+
 Verify decisions while they are still in-flight — when a wrong call costs minutes to catch and hours to reverse. The default disposition of the person who made the call is self-preferential: it is biased toward its own conclusion. Doubt is the counterweight, and it works best in a fresh context. Never validate. Find what is wrong.
 
 ## When to use
