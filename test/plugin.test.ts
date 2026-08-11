@@ -18,7 +18,7 @@ test('config hook registers skills path (absolute, deduped)', async () => {
   expect(cfg.skills.paths).toContain('/fake/pre-existing');
 });
 
-test('config hook registers all 15 agents as subagents', async () => {
+test('config hook registers all 15 agents with mode all (main-thread tabs)', async () => {
   const { config } = await plugin();
   const cfg = { agent: {} };
   await config(cfg);
@@ -28,9 +28,22 @@ test('config hook registers all 15 agents as subagents', async () => {
   expect(names).toContain('luffy-orchestrator');
   for (const a of Object.values(cfg.agent)) {
     expect(typeof a).toBe('object');
-    expect((a as { mode?: string }).mode).toBe('subagent');
+    expect((a as { mode?: string }).mode).toBe('all');
     expect(typeof (a as { description?: string }).description).toBe('string');
     expect(typeof (a as { prompt?: string }).prompt).toBe('string');
+  }
+});
+
+test('audit/deny permission fields preserved with mode all', async () => {
+  const { config } = await plugin();
+  const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
+  await config(cfg);
+  const denySet = ['chopper-checkpoint', 'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'skeptic-verifier'];
+  for (const name of denySet) {
+    const a = cfg.agent[name];
+    expect(a).toBeDefined();
+    expect((a as { permission?: unknown }).permission).toEqual({ edit: 'deny' });
+    expect((a as { mode?: string }).mode).toBe('all');
   }
 });
 
@@ -52,6 +65,17 @@ test('config hook never clobbers a user-defined agent', async () => {
   const cfg = { agent: { 'using-mugiwara': mine } };
   await config(cfg);
   expect(cfg.agent['using-mugiwara']).toBe(mine);
+  expect((mine as { mode?: string }).mode).toBe('subagent');
+});
+
+test('announce string carries inline doctrine and flow contract', async () => {
+  const hooks = await plugin();
+  const transform = hooks['experimental.chat.system.transform'];
+  const output = { system: ['existing prompt'] };
+  await transform({}, output);
+  expect(output.system[0]).toContain('Mugiwara crew available');
+  expect(output.system[0]).toContain('Never Task-dispatch a crew member');
+  expect(output.system[0]).toContain('Luffy delegates');
 });
 
 test('system.transform appends the announce string', async () => {
