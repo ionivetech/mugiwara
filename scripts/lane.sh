@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# scripts/lane.sh — compute lane from git diff, deterministic.
+# Usage: lane.sh [base-ref] [--json]
+set -u
+
+BASE="${1:-main}"
+JSON_OUT=0
+[ "${2:-}" = "--json" ] && JSON_OUT=1
+
+[ -d .git ] || { echo "lane: not a git repository" >&2; exit 1; }
+
+# resolve base
+if ! git rev-parse "$BASE" >/dev/null 2>&1; then
+  ALT=$(git branch --list main master --format='%(refname:short)' 2>/dev/null | head -1 || true)
+  [ -n "$ALT" ] && BASE="$ALT" || BASE="HEAD~1"
+fi
+
+CHANGED=$(git diff --name-only "$BASE"..HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true)
+FILE_COUNT=0
+[ -n "$CHANGED" ] && FILE_COUNT=$(echo "$CHANGED" | wc -l | tr -d ' ')
+
+SENSITIVE_PATS="auth/|payment/|billing/|crypto/|secrets/|\.env$|config/.*key|migration/|\.sql$|schema\.|\.prisma$|\.terraform|\.tf$"
+SENSITIVE=$(echo "$CHANGED" | grep -E "$SENSITIVE_PATS" 2>/dev/null | head -5 | tr '\n' ',' | sed 's/,$//' || true)
+HAS_SENSITIVE=0
+[ -n "$SENSITIVE" ] && HAS_SENSITIVE=1
+
+# lane logic
+LANE="direct"
+REASON=""
+
+if [ "$FILE_COUNT" -eq 0 ] 2>/dev/null; then
+  LANE="direct"
+  REASON="no changed files"
+elif [ "$FILE_COUNT" -le 1 ] 2>/dev/null; then
+  ADDED=$(git diff --numstat "$BASE"..HEAD 2>/dev/null | awk '{s+=$1} END {print s+0}' || echo 0)
+  if [ "$ADDED" -lt 20 ] 2>/dev/null; then
+    LANE="direct"
+    REASON="1 file, <20 LOC"
+  else
+    LANE="lean"
+    REASON="1 file, $ADDED LOC"
+  fi
+elif [ "$FILE_COUNT" -eq 2 ] 2>/dev/null; then
+  LANE="lean"
+  REASON="2 files"
+elif [ "$FILE_COUNT" -le 8 ] 2>/dev/null; then
+  LANE="standard"
+  REASON="$FILE_COUNT files"
+else
+  LANE="full"
+  REASON="$FILE_COUNT files"
+fi
+
+if [ "$HAS_SENSITIVE" -eq 1 ] && [ "$LANE" != "full" ]; then
+  PREV="$LANE"
+  LANE="full"
+  REASON="sensitive paths ($SENSITIVE) — escalated from $PREV"
+fi
+
+if [ "$JSON_OUT" -eq 1 ]; then
+  SENS_ARR=""
+  [ -n "$SENSITIVE" ] && SENS_ARR=$(echo "$SENSITIVE" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$//')
+  cat <<JSON
+{
+  "lane": "$LANE",
+  "reason": "$REASON",
+  "files_touched": $FILE_COUNT,
+  "sensitive_paths": [${SENS_ARR}],
+  "base": "$BASE"
+}
+JSON
+else
+  echo "$LANE"
+fi
