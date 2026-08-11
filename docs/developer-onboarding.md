@@ -43,7 +43,7 @@ copies drift.
 ## Validation
 
 ```bash
-bun run validate                # 25 skills + 15 agents: names, descriptions, line limits
+bun run validate                # 32 skills + 15 agents: names, descriptions, line limits
 bun run validate --check-sync   # plugin copies match content/
 bun run typecheck               # tsc --noEmit
 bun run test                    # vitest (43 tests)

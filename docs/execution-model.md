@@ -3,6 +3,13 @@
 Why the crew runs in your main conversation — and when subagents are actually
 used.
 
+## Auto-activation
+
+The workflow **auto-activates.** At session start the crew is announced; when
+you give a non-trivial request, the pipeline runs by itself — you do not need
+to call `/using-mugiwara`. It remains an optional explicit router if you want
+to hand-route a mission.
+
 ## Inline by default
 
 The crew runs **inline**. The main thread embodies each crew role using that
@@ -49,6 +56,32 @@ linear.
 - Escalation = "blocked" + ledger row returned to the main thread.
 - Sequential work never takes a subagent round-trip — no skipping, no hidden
   reordering, plan order is plan order.
+
+## Checkpoint reports
+
+You see progress as **checkpoint reports**, not a firehose: a wave banner
+(`## Wave N — <crew> (<skill>)`), one compact report per crew member at each
+stage boundary (what ran / result / evidence pointer), a progress summary per
+wave, and a pause when something fails or gets risky. Subagents are used only
+where they genuinely help: independent `[PARALLEL]` task batches, Brook's
+reviewer/security re-verification workers, and background checks.
+
+## Manual stages
+
+Prefer to drive the stages yourself? Every stage has a slash command that loads
+the skill, runs the crew role inline, and bridges state from `.mugiwara/`:
+
+| Command | Runs | Reads state from |
+|---------|------|------------------|
+| `/mugiwara-plan` | Nami | `.mugiwara/spec/` |
+| `/mugiwara-execute` | Zoro | `.mugiwara/plans/` |
+| `/mugiwara-review` | Robin | `.mugiwara/results/` + diff |
+| `/mugiwara-security` | Jinbe | `.mugiwara/results/` + diff |
+| `/mugiwara-heal` | Brook | `.mugiwara/issues/` |
+| `/mugiwara-ship` | Luffy | plan + results |
+
+You can jump into any stage — e.g. run `/mugiwara-plan` first, then
+`/mugiwara-execute` later when you're ready.
 
 ## Trade-off
 

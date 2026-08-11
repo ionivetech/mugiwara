@@ -12,9 +12,12 @@ Or via the CLI:
 npx @ionivetech/mugiwara@latest --project ./my-app --target gemini --yes
 ```
 
+**Update** — `gemini extensions update mugiwara`.
+**Uninstall** — `gemini extensions remove mugiwara`.
+
 ## What you get
 
-- 25 skills as markdown rules in `.gemini/mugiwara/`.
+- 32 skills as markdown rules in `.gemini/mugiwara/`.
 - A `GEMINI.md` bootstrap pointer (created if missing).
 
 ## Notes

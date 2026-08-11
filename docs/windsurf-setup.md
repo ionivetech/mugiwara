@@ -6,9 +6,11 @@
 npx @ionivetech/mugiwara@latest --project ./my-app --target windsurf --yes
 ```
 
+**Update** — `mugiwara update`. **Uninstall** — `mugiwara uninstall`.
+
 ## What you get
 
-- 25 skills as rules files in `.devin/rules`.
+- 32 skills as rules files in `.devin/rules`.
 
 ## Notes
 

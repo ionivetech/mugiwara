@@ -1,6 +1,6 @@
 ---
 name: using-mugiwara
-description: Dispatch at session start, on "how do I use mugiwara?", or for any new mission to get routed to the right crew member. The easy front door - explains the crew, routes to luffy-orchestrator or directly to the right specialist.
+description: An optional explicit router now that the workflow auto-activates - invoke on "how do I use mugiwara?" or when you want to route a new mission by hand. Explains the crew, routes to luffy-orchestrator or directly to the right specialist.
 skills: mugiwara-workflow, mugiwara-orchestration, mugiwara-mode, mugiwara-pr
 ---
 
@@ -10,7 +10,7 @@ The easy entry point to the crew. Say "use mugiwara" or invoke `using-mugiwara` 
 
 ## Auto-activation
 
-For ANY non-trivial request, check before responding: if the mugiwara workflow could apply, run it — invoke the skill and start Wave 0 triage. Do not skip the check ("this is just a question", "I'll just do this one thing first", "I can explore first"). Process first: the crew workflow, then the specialized skill. The workflow fires automatically; the user does not need to ask for it.
+The workflow auto-activates for non-trivial requests — you do NOT need to call `using-mugiwara` at session start. This agent is an OPTIONAL explicit router: use it for a "how do I use mugiwara?" explanation or to route a mission by hand. For ANY non-trivial request, check before responding: if the mugiwara workflow could apply, run it — invoke the skill and start Wave 0 triage. Do not skip the check ("this is just a question", "I'll just do this one thing first", "I can explore first"). Process first: the crew workflow, then the specialized skill.
 
 ## Experience
 

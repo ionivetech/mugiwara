@@ -20,19 +20,24 @@ npx @ionivetech/mugiwara@latest --global --target claude --yes
 npx @ionivetech/mugiwara@latest --project ./my-app --target claude --yes
 ```
 
+**Update** — re-install from the marketplace (or `mugiwara update` via CLI).
+
+**Uninstall** — `/plugin uninstall mugiwara`, or `mugiwara uninstall` via CLI.
+
 ## What you get
 
-- 25 skills in `~/.claude/skills/` (global) or `.claude/skills/` (project).
+- 32 skills in `~/.claude/skills/` (global) or `.claude/skills/` (project).
 - 15 agents in `~/.claude/agents/` or `.claude/agents/`.
-- A SessionStart hook that announces the crew.
+- A SessionStart hook that announces the crew and auto-activates the workflow —
+  a non-trivial request runs the pipeline by itself. `/using-mugiwara` is an
+  optional explicit router if you want to hand-route a mission.
 
 ## Use it
 
 ```
-> use mugiwara
 > add dark mode to the settings page
 ```
 
 The crew runs inline in your main conversation; subagents only for parallel
 batches. At closure the crew pushes the branch and hands you the PR verdict
-file — you open the PR.
+file — you open the PR. In `auto` mode the PR is auto-created instead.

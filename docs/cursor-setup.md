@@ -12,9 +12,11 @@ Or via the CLI:
 npx @ionivetech/mugiwara@latest --project ./my-app --target cursor --yes
 ```
 
+**Update** — re-run `/add-plugin mugiwara`. **Uninstall** — `/remove-plugin mugiwara`.
+
 ## What you get
 
-- 25 skills as markdown rule files.
+- 32 skills as markdown rule files.
 - The `.cursor-plugin/plugin.json` manifest.
 
 ## Notes

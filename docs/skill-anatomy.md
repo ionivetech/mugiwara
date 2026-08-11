@@ -9,6 +9,7 @@ via the agentskills.io layout.
 
 ```
 skills/<skill-name>/SKILL.md
+skills/<skill-name>/references/<topic>.md   # optional: overflow detail, linked from the body
 ```
 
 ```markdown
@@ -53,6 +54,10 @@ style:
 - **Boundaries are explicit.** Auditor skills say "never edit code"; executor
   skills say "never report done without command output."
 - **≤120 lines.** Skills that grow past that get split, not stretched.
+- **Progressive disclosure.** Keep the trigger-scannable description and the
+  decision tree in the body; when a section exceeds roughly 15–20 lines, move
+  the detail to a `references/<topic>.md` file and drop a one-line pointer in
+  the body saying what to read and why.
 
 ## How skills reference each other
 
