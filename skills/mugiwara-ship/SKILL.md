@@ -43,9 +43,32 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 3. A critical finding at any stage → NO-GO. Non-critical findings → list them, decide ship-with-tracking or fix-first, and record which.
 4. Write the verdict and evidence to `.mugiwara/results/`.
 
+## Cleanup (after the terminal step)
+
+Once the branch is pushed and the PR material is written, clean `.mugiwara/` of
+consumed intermediates. Never touch anything outside `.mugiwara/`.
+
+**KEEP** (they are the audit trail and PR material):
+
+- `config`
+- `plans/YYYY-MM-DD-<mission>.md` — the clean plan doc
+- `results/YYYY-MM-DD-<mission>-closure.md` — closure report
+- `results/YYYY-MM-DD-<mission>-pr-verdict.md` — PR material
+- `logs/lessons.md` and any cross-mission state (`backup/`, `manifest.json`)
+
+**DELETE** (consumed or superseded):
+
+- `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
+- `results/` wave reports — todos, audits, quality/gate/healing reports
+- `review/` and `issues/` per-mission findings
+- `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs
+
+Procedure: list the candidates first (dry-run), delete them, then report what
+was removed and what stays. A mission is only closed after cleanup runs.
+
 ## Iron Law
 
-NO-GO UNTIL PROVEN. Missing evidence is a NO-GO. A release that cannot be rolled back is a NO-GO.
+NO-GO UNTIL PROVEN. Missing evidence is a NO-GO. A release that cannot be rolled back is a NO-GO. A mission that ships without cleanup leaves a rotting `.mugiwara/`.
 
 ## Red flags
 

@@ -83,7 +83,7 @@ Never silently work around a blocker. Brook reads this ledger at Wave 8 to decid
 
 ## Cleanup
 
-At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` — superseded results, review, issues reports, and the per-mission decision log in `logs/`. Keep the plan doc and the closure report.
+At closure (Wave 9), after the terminal step, run the cleanup procedure in `mugiwara-ship`: delete consumed intermediates — superseded results, review, issues reports, the per-mission decision log in `logs/`, and the consumed spec. Keep the plan doc, the closure report, the PR verdict, `config`, and cross-mission state (`logs/lessons.md`, `backup/`, `manifest.json`). List candidates before deleting.
 
 ## Rules
 
