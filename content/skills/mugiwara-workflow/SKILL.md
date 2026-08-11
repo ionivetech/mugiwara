@@ -11,6 +11,8 @@ The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial p
 
 **Inline by default.** The main/primary agent runs the pipeline and plays each crew role itself using that member's skill. Every wave's work is performed in the main conversation so the user sees the process live — no hidden subagent jumps, no click-to-expand. The crew members are personas + skills the main thread embodies, not mandatory dispatch targets.
 
+**Visible wave transitions.** Every wave opens with a main-thread banner `## Wave N — <crew> (<skill>)` and closes with the handoff line `→ Wave N+1 — <crew>` (Wave 9: `→ closure`). No wave starts without its banner; the conversation names who runs now and who takes over next so the user always sees the chain live.
+
 1. For each wave, the main thread loads the owning crew member's skill (e.g. `mugiwara-checkpoint` for Wave 4) and performs that role inline: triage, planning, execution, audit, quality, gates, review, closure — all in the main thread.
 2. Dispatch a subagent ONLY when the work is genuinely parallel or background: an independent `[PARALLEL]` task batch (Zoro's WORKER subagents, Wave 3), parallel fixes (Brook, Wave 8), or a long-running check that would stall the conversation. Subagent results return to the main thread as a report; the main thread summarizes the outcome inline with evidence pointers.
 3. Crew members NEVER dispatch another crew member. A crew role that must split work returns the split plan to the main thread, which spawns the workers.
@@ -82,7 +84,7 @@ At closure (Wave 9), delete unused intermediate markdown files in `.mugiwara/` �
 ## Rules
 
 1. Evidence over claims: no wave passes on assertion. The owning agent runs the checks and shows output.
-2. No wave skipped without the reason recorded in the decision log (`.mugiwara/logs/`).
+2. No wave skipped without the reason recorded in the decision log (`.mugiwara/logs/`) — name the wave, owner, and reason at the moment of omission.
 3. Heal loop is bounded: Wave 8 → Wave 4, max 3 cycles. After that, escalate to the human with full history.
 4. Any agent may consult Luffy mid-flight (embody `luffy-orchestrator` inline) for decisions and escalations.
 5. Wave 7 runs Robin and Jinbe review passes in parallel — both are inline passes over the same diff, or parallel review subagents for large diffs.
