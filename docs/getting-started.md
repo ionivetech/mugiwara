@@ -68,10 +68,9 @@ Almost nothing, in the default mode:
 - Answer Nami's clarifying questions (one batched round before planning).
 - Give the plan an explicit GO when presented (or switch to `semi`/`auto`).
 - Review Brook's rollback note if a risky fix is proposed.
-- In `guided`/`semi`, open the PR at the end — the crew pushes the branch and
-  hands you the verdict file. In `auto`, the PR is auto-created at the terminal
-  (forge-detect → `gh`/`glab`/Bitbucket REST → URL fallback). The crew never
-  merges or deploys.
+- In every mode, open the PR at the end — the crew pushes the branch and hands
+  you the verdict file with a ready PR summary block. The crew never merges,
+  deploys, or creates a PR itself.
 
 ## 4. The `.mugiwara/` workspace
 

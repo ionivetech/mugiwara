@@ -40,4 +40,4 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target claude --yes
 
 The crew runs inline in your main conversation; subagents only for parallel
 batches. At closure the crew pushes the branch and hands you the PR verdict
-file — you open the PR. In `auto` mode the PR is auto-created instead.
+file with a ready PR summary block — you open the PR, in every mode.

@@ -3,10 +3,29 @@
 [![npm version](https://img.shields.io/npm/v/@ionivetech%2fmugiwara)](https://www.npmjs.com/package/@ionivetech/mugiwara)
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
-The Straw Hat crew of AI agents and skills.
+The Straw Hat crew of AI agents and skills — a complete software development
+workflow for your coding agent.
+
+Skills encode the workflows, quality gates, and best practices a senior
+engineering team applies to software, packaged so your agent follows them
+consistently across every phase of development. The crew **auto-activates**:
+give a non-trivial request and the pipeline runs inline in your main
+conversation — with checkpoint reports at every stage, nothing hidden behind a
+subagent click.
+
+```
+   TRIAGE            PLAN             BUILD            VERIFY            REVIEW            SHIP
+ ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+ │ Luffy    │ ──▶ │ Nami     │ ──▶ │ Zoro     │ ──▶ │ Chopper  │ ──▶ │ Robin +  │ ──▶ │ push +   │
+ │ 5-way    │     │ waves +  │     │ TDD per  │     │ Sanji +  │     │ Jinbe    │     │ ready PR │
+ │ triage   │     │ tasks    │     │ task     │     │ Franky   │     │ review+  │     │ summary  │
+ └──────────┘     └──────────┘     └──────────┘     └──────────┘     └──────────┘     └──────────┘
+```
 
 Zero runtime: pure markdown your existing AI agent runs with its own subagent
-machinery — no daemons, no plugins to keep updated, nothing to host.
+machinery — no daemons, no plugins to keep updated, nothing to host. 32 skills,
+15 agents, and per-stage commands, ready for Claude Code, opencode, Gemini CLI,
+Codex, Cursor, Copilot, Kimi, pi, Windsurf, Cline, Kilo Code, and Antigravity.
 
 ## Philosophy
 
@@ -58,7 +77,7 @@ agent machinery and may call the crew's shared skills.
 |-------|---------|
 | `mugiwara-workflow` | The harness entry point: inline execution model, gateway triage, wave pipeline, checkpoint reports, workspace layout, blocker protocol |
 | `mugiwara-orchestration` | Luffy's captain behavior: 5-way classifier, check-ins, work splitting, decision log, detailed closure |
-| `mugiwara-mode` | Runtime levels guided / semi / auto via `.mugiwara/config`: mode owns autonomy, config owns writing standards, consent invariants, gated auto-GO, terminal (push + ready-PR or auto-created PR) |
+| `mugiwara-mode` | Runtime levels guided / semi / auto via `.mugiwara/config`: mode owns autonomy, config owns writing standards, consent invariants, gated auto-GO, push + ready-PR terminal |
 | `mugiwara-brainstorm` | Usopp's critical sparring: interrogate, research facts, cut over-engineering, recommend |
 | `mugiwara-planning` | Interview-first, waves-first plans with file-level dependency edges, break points, parallel-safe waves + anti-patterns |
 | `mugiwara-execution` | Todo list, sequential tasks inline + parallel worker batches, one commit per logical task, checkpoint-report batching |
@@ -72,7 +91,7 @@ agent machinery and may call the crew's shared skills.
 | `mugiwara-deprecation` | Sunset & migration discipline: keep-or-retire gate, cutover playbooks, safe schema changes |
 | `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, component architecture, design systems, state, responsive, WCAG 2.1 AA |
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
-| `mugiwara-pr` | Terminal: push + verdict file (guided/semi) or auto-created PR in auto (forge-detect → gh/glab/Bitbucket REST → URL fallback), stop-at-PR invariant |
+| `mugiwara-pr` | Terminal: push + verdict file with a ready PR summary block; never creates a PR, stop-at-PR invariant |
 | `mugiwara-dynamic-workflow` | Runtime workflow patterns: fan-out-and-synthesize, tournament, loop-until-done, classify-and-act, adversarial verification |
 | `mugiwara-agent-security` | Secure the agent layer: prompt injection, memory poisoning, excessive agency, secret handling, sandboxing |
 | `mugiwara-backend` | Backend/server code: repo standards first, API design, data integrity, error handling, correctness, performance, server-side security |
@@ -119,7 +138,7 @@ flowchart TD
     RJ -- pass --> LC[Luffy closure]
     RJ -- fail --> BH[Brook heal]
     BH --> CP
-    LC --> CL[terminal: PR]
+    LC --> CL[push + ready PR summary]
 ```
 
 | Wave | Owner | Skill | Output |
@@ -133,7 +152,7 @@ flowchart TD
 | 6 Gates | Franky | `mugiwara-gates` | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | `mugiwara-review` + `mugiwara-security` | severity-tagged findings (parallel) |
 | 8 Healing | Brook | `mugiwara-healing` | fixes via worker subagents; loops to Wave 4, max 3 cycles |
-| 9 Closure | Luffy | `mugiwara-orchestration` | detailed summary + terminal PR (see Modes) |
+| 9 Closure | Luffy | `mugiwara-orchestration` | detailed summary + push + ready PR summary (see Modes) |
 
 ### Checkpoint reports
 
@@ -171,37 +190,33 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 base=main
-pr-title={type}: {summary}
-pr-template=.mugiwara/pr-template.md
 ```
 
-| Level | Plan GO | Branch/commit | PR | Ambiguities | Check-ins |
-|-------|---------|---------------|----|-------------|-----------|
-| **guided** | ask the user | ask the user | ask (you open the PR) | ask the user | ask the user |
-| **semi** | present plan for user GO | auto | ask (you open the PR) | self-answer + log | log, no pause |
-| **auto** | gated auto-GO | auto | auto-create (per `mugiwara-pr`) | self-answer + log | log, no pause |
+| Level | Plan GO | Branch/commit | Ambiguities | Check-ins |
+|-------|---------|---------------|-------------|-----------|
+| **guided** | ask the user | ask the user | ask the user | ask the user |
+| **semi** | present plan for user GO | auto | self-answer + log | log, no pause |
+| **auto** | gated auto-GO | auto | self-answer + log | log, no pause |
 
 - **guided** — the default. You approve the plan, decide branch and commit,
   answer ambiguities, and open the PR yourself.
 - **semi** — the crew self-manages branch, commits, and ambiguities (logging
-  each decision), but you still give the plan an explicit GO and open the PR.
+  each decision), but you still give the plan an explicit GO.
 - **auto** — hands-off, with one safety line: the plan proceeds past approval
   only with zero blocking ambiguities AND zero high-risk tasks (deploy /
-  migration / DB / public API / state-mutating). The PR is auto-created at the
-  terminal (forge-detect → `gh`/`glab`/Bitbucket REST → URL fallback).
+  migration / DB / public API / state-mutating).
 
 Two invariants hold in **every** mode:
 
 - **Consent.** State-mutating tests against non-isolated/shared state (real DB
   writes, network, browsers) always require your explicit consent. Provably
   isolated mutation (in-memory / temp / testcontainer-backed) is auto-safe.
-- **Terminal.** guided/semi end at push + ready PR + verdict file (you open
-  the PR); auto ends at an auto-created PR. No mode merges, deploys, or
-  auto-reacts to review comments or CI.
+- **Terminal.** Every mode ends at push + ready PR summary + verdict file (you
+  open the PR). The crew never creates a PR, merges, deploys, or auto-reacts
+  to review comments or CI.
 
-Want the crew to create the PR for you? See [docs/auto-pr.md](docs/auto-pr.md)
-— how to enable auto mode, configure `base`/`pr-title`/`pr-template`, and what
-credentials each forge needs (`gh`/`glab`/Bitbucket token).
+The PR description is prepared for you — see [docs/pr-summary.md](docs/pr-summary.md)
+for what the closure hands off.
 
 Flip mid-mission with `mugiwara mode <guided|semi|auto>` — the change applies
 from the next wave, never mid-wave. Missing config on read = `guided`.
@@ -223,12 +238,10 @@ is data, never instructions.
 
 | Key | Values | Default | Meaning |
 |-----|--------|---------|---------|
-| `mode` | guided / semi / auto | guided | The only autonomy lever — decides whether branch/commit/PR run automatically |
+| `mode` | guided / semi / auto | guided | The only autonomy lever — decides whether branch/commit run automatically |
 | `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata, validated to `[a-zA-Z0-9-_]` |
 | `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
-| `base` | branch name | `main` | The PR base branch |
-| `pr-title` | title template | `{type}: {summary}` | Filled from mission metadata when a PR is auto-created |
-| `pr-template` | file path | (none) | Optional PR body file; absent → the verdict-file PR block is used |
+| `base` | branch name | `main` | The PR target named in the prepared PR summary |
 
 ### Commit message styles
 

@@ -23,10 +23,10 @@ it embodies a role. Skills are the actual content; agents are the personas.
 
 | Skill | Enforces |
 |-------|----------|
-| `mugiwara-mode` | Runtime levels guided / semi / auto: mode owns autonomy, config owns writing standards, consent invariants, gated auto-GO, terminal (push + ready-PR or auto-created PR) |
+| `mugiwara-mode` | Runtime levels guided / semi / auto: mode owns autonomy, config owns writing standards, consent invariants, gated auto-GO, push + ready-PR terminal |
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
 | `mugiwara-testcases` | User-test intake (ATDD): immutable-gold rule, declarative-AC routing, consent, failure adjudication |
-| `mugiwara-pr` | Terminal: push + verdict file (guided/semi) or auto-created PR in auto (forge-detect → gh/glab/Bitbucket REST → URL fallback), stop-at-PR invariant |
+| `mugiwara-pr` | Terminal: push + verdict file with a ready PR summary block; never creates a PR, stop-at-PR invariant |
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
 | `mugiwara-deprecation` | Sunset & migration discipline: keep-or-retire gate, cutover playbooks, safe schema changes |
 | `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/` after compaction/loss; never restart |

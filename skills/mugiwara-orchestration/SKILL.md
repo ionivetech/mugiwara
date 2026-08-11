@@ -80,9 +80,9 @@ Present a detailed summary to the user — never a one-liner:
 - Deferred items + owner.
 - Next steps — PR material pointer, anything the user must do.
 
-### Terminal step (per mode, per `mugiwara-mode`)
+### Terminal step (every mode, per `mugiwara-mode`)
 
-Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a copy-paste PR description block). guided/semi: hand the branch + verdict file to the user, who opens the PR. auto: delegate to the `mugiwara-pr` auto path (forge-detect → `gh`/`glab`/Bitbucket REST → URL fallback) and report the PR URL. The crew never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
+Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a ready PR summary block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
 
 Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure embody memory-keeper inline to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
 

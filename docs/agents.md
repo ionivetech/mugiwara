@@ -47,5 +47,5 @@ check-ins. The harness stays coherent either way.
 Every install gets all 15 agents and all 32 skills. No project-type selection —
 the harness routes each task to the right specialist.
 
-See [skills.md](skills.md) for the 25 techniques, or
+See [skills.md](skills.md) for the 32 techniques, or
 [workflow.md](workflow.md) for the pipeline.
