@@ -1,6 +1,6 @@
 {
   "name": "mugiwara",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, healing.",
   "contextFileName": "GEMINI.md"
 }
