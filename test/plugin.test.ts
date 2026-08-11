@@ -1,9 +1,9 @@
 // test/plugin.test.ts
 import { test, expect } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import plugin, { readMode } from '../.opencode/plugins/mugiwara.mjs';
+import plugin, { readMode, parseModeChange, applyModeChange } from '../.opencode/plugins/mugiwara.mjs';
 import { CONTENT_DIR } from '../src/installer.ts';
 
 const contentDir = CONTENT_DIR.replace(/[\\/]+$/, '');
@@ -122,3 +122,31 @@ function writeConfig(dir: string, line: string) {
   mkdirSync(d, { recursive: true });
   writeFileSync(join(d, 'config'), line + '\n');
 }
+
+test('parseModeChange: /mugiwara-mode semi expands and parses', () => {
+  expect(parseModeChange('/mugiwara-mode semi')).toBe('semi');
+  expect(parseModeChange('Set mugiwara mode: auto\nValid levels...')).toBe('auto');
+});
+
+test('parseModeChange: invalid level no-op, no command no-op', () => {
+  expect(parseModeChange('/mugiwara-mode chaos')).toBe(null);
+  expect(parseModeChange('hello world')).toBe(null);
+  expect(parseModeChange('')).toBe(null);
+});
+
+test('applyModeChange writes project config and flips readMode', () => {
+  const proj = makeCfg(); const home = makeCfg();
+  applyModeChange('semi', { projectDir: proj, home });
+  expect(readMode({ projectDir: proj, home })).toBe('semi');
+  applyModeChange('auto', { projectDir: proj, home });
+  expect(readMode({ projectDir: proj, home })).toBe('auto');
+});
+
+test('applyModeChange preserves other config keys', () => {
+  const proj = makeCfg();
+  writeConfig(proj, 'branch=feature/{type}-{issue}-{slug}');
+  applyModeChange('auto', { projectDir: proj, home: makeCfg() });
+  const config = readFileSync(join(proj, '.mugiwara', 'config'), 'utf8');
+  expect(config).toContain('mode=auto');
+  expect(config).toContain('branch=feature/{type}-{issue}-{slug}');
+});

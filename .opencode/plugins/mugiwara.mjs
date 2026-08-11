@@ -9,7 +9,7 @@
 // or from the git repo:
 //   { "plugin": ["mugiwara@git+https://github.com/ionivetech/mugiwara.git"] }
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, mkdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -106,6 +106,45 @@ function readAgents() {
   return agents;
 }
 
+// Parse a user prompt for a mugiwara mode change. Returns the new mode or null.
+// Mirrors the caveman plugin pattern: opencode expands `/mugiwara-mode <level>`
+// into the command file's body ("Set mugiwara mode: <level>...") before
+// chat.message fires, so parse the template's first line too.
+export function parseModeChange(promptRaw) {
+  let prompt = (promptRaw || '').trim();
+  const wrapped = /^(["'`])([\s\S]*)\1$/.exec(prompt);
+  if (wrapped) prompt = wrapped[2].trim();
+  prompt = prompt.toLowerCase();
+  if (!prompt) return null;
+
+  const tpl = /^set mugiwara mode:[ \t]*(\S*)/.exec(prompt);
+  const args = prompt.split(/\s+/);
+  const idx = args.indexOf('/mugiwara-mode');
+  const arg = tpl ? tpl[1] : idx !== -1 ? args[idx + 1] || '' : '';
+  if (!arg) return null;
+  return VALID_MODES.has(arg) ? arg : null;
+}
+
+// Write `.mugiwara/config` (project) and append a decision-log row.
+export function applyModeChange(mode, { projectDir = process.cwd(), home = homedir() } = {}) {
+  if (!VALID_MODES.has(mode)) return;
+  const file = join(projectDir, '.mugiwara', 'config');
+  mkdirSync(dirname(file), { recursive: true });
+  const lines = [];
+  if (existsSync(file)) {
+    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const t = line.trim();
+      if (t.startsWith('mode=')) continue;
+      lines.push(line);
+    }
+  }
+  lines.push(`mode=${mode}`);
+  writeFileSync(file, lines.filter((l, i) => !(l === '' && (i === lines.length - 1 || i === 0))).join('\n') + '\n');
+  const log = join(projectDir, '.mugiwara', 'logs', `${new Date().toISOString().slice(0, 10)}-mode-flip.md`);
+  mkdirSync(dirname(log), { recursive: true });
+  appendFileSync(log, `| ${new Date().toISOString()} | mode flip | guided/semi/auto -> ${mode} | user |\n`);
+}
+
 export default async () => ({
   config: (config) => {
     config.skills = config.skills || {};
@@ -116,6 +155,18 @@ export default async () => ({
     for (const [name, agent] of Object.entries(readAgents())) {
       if (config.agent[name]) continue;
       config.agent[name] = agent;
+    }
+  },
+
+  // Intercept user messages to detect `/mugiwara-mode` and natural-language
+  // mode toggles; write `.mugiwara/config` so the next wave reads the new level.
+  'chat.message': async (_input, output) => {
+    if (!output || !output.parts) return;
+    for (const part of output.parts) {
+      if (part && part.type === 'text' && part.text) {
+        const change = parseModeChange(part.text);
+        if (change) applyModeChange(change);
+      }
     }
   },
 
