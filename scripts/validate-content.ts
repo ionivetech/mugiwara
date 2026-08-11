@@ -110,5 +110,117 @@ for (const dir of skillDirs) {
   if (dir !== 'mugiwara-workflow' && !usedSkills.has(dir)) errors.push(`skill ${dir}: not referenced by any agent`);
 }
 
+// --- manifest-sync check: .claude-plugin/plugin.json must set-equal content/ ---
+const manifestArg = process.argv.indexOf('--check-manifest');
+if (manifestArg !== -1) {
+  const manifests = ['.claude-plugin/plugin.json'];
+  let manifestErrors = 0;
+
+  for (const mp of manifests) {
+    const mpath = join(import.meta.dirname, '..', mp);
+    if (!existsSync(mpath)) { errors.push(`manifest ${mp}: file not found`); continue; }
+    let mdata;
+    try { mdata = JSON.parse(readFileSync(mpath, 'utf8')); }
+    catch (e) { errors.push(`manifest ${mp}: invalid JSON`); continue; }
+
+    const mSkills = mdata?.metadata?.skills;
+    const mAgents = mdata?.metadata?.agents;
+    if (!Array.isArray(mSkills)) { errors.push(`manifest ${mp}: missing metadata.skills array`); }
+    if (!Array.isArray(mAgents)) { errors.push(`manifest ${mp}: missing metadata.agents array`); }
+    if (!mSkills || !mAgents) continue;
+
+    const mSkillSet = new Set(mSkills);
+    const mAgentSet = new Set(mAgents);
+
+    // every skill in content/ must be in manifest
+    for (const dir of skillDirs) {
+      if (!mSkillSet.has(dir)) {
+        errors.push(`manifest ${mp}: missing skill "${dir}"`);
+        manifestErrors++;
+      }
+    }
+    // no stale entries in manifest
+    for (const s of mSkills) {
+      if (!skillDirs.includes(s)) {
+        errors.push(`manifest ${mp}: stale skill "${s}" (not in content/skills/)`);
+        manifestErrors++;
+      }
+    }
+    // every agent in content/ must be in manifest
+    for (const f of agentFiles) {
+      const name = f.replace(/\.md$/, '');
+      if (!mAgentSet.has(name)) {
+        errors.push(`manifest ${mp}: missing agent "${name}"`);
+        manifestErrors++;
+      }
+    }
+    for (const a of mAgents) {
+      if (!agentFiles.includes(`${a}.md`)) {
+        errors.push(`manifest ${mp}: stale agent "${a}" (not in content/agents/)`);
+        manifestErrors++;
+      }
+    }
+  }
+
+  if (manifestErrors === 0) console.log('✓ manifest in sync with content/');
+}
+
+// --- index budget gate ---
+const INDEX_BUDGET = 5500; // chars, all skill + agent descriptions combined
+let totalDescChars = 0;
+for (const dir of skillDirs) {
+  const file = join(root, 'skills', dir, 'SKILL.md');
+  if (!existsSync(file)) continue;
+  const parsed = parseFrontmatter(readFileSync(file, 'utf8'));
+  totalDescChars += (parsed.data.description ?? '').length;
+}
+for (const f of agentFiles) {
+  const parsed = parseFrontmatter(readFileSync(join(agentDir, f), 'utf8'));
+  totalDescChars += (parsed.data.description ?? '').length;
+}
+if (totalDescChars > INDEX_BUDGET) {
+  errors.push(`index budget exceeded: ${totalDescChars}/${INDEX_BUDGET} chars (skill + agent descriptions)`);
+} else {
+  console.log(`✓ index budget: ${totalDescChars}/${INDEX_BUDGET} chars`);
+}
+
+// --- docs-drift check: docs/skills.md and docs/agents.md must reference all content/ entries ---
+const docsArg = process.argv.indexOf('--check-docs');
+if (docsArg !== -1) {
+  const docsDir = join(import.meta.dirname, '..', 'docs');
+  const skillsDoc = join(docsDir, 'skills.md');
+  const agentsDoc = join(docsDir, 'agents.md');
+  let docErrors = 0;
+
+  if (existsSync(skillsDoc)) {
+    const content = readFileSync(skillsDoc, 'utf8');
+    for (const dir of skillDirs) {
+      if (!content.includes(dir)) {
+        errors.push(`docs/skills.md: missing skill "${dir}"`);
+        docErrors++;
+      }
+    }
+  } else {
+    errors.push('docs/skills.md: file not found');
+    docErrors++;
+  }
+
+  if (existsSync(agentsDoc)) {
+    const content = readFileSync(agentsDoc, 'utf8');
+    for (const f of agentFiles) {
+      const name = f.replace(/\.md$/, '');
+      if (!content.includes(name)) {
+        errors.push(`docs/agents.md: missing agent "${name}"`);
+        docErrors++;
+      }
+    }
+  } else {
+    errors.push('docs/agents.md: file not found');
+    docErrors++;
+  }
+
+  if (docErrors === 0) console.log('✓ docs in sync with content/');
+}
+
 if (errors.length) { console.error(errors.map(e => `✗ ${e}`).join('\n')); process.exit(1); }
 console.log(`✓ content valid: ${skillDirs.length} skills, ${agentFiles.length} agents`);

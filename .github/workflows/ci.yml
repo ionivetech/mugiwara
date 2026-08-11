@@ -45,10 +45,13 @@ jobs:
         run: bun run build
 
       - name: Validate content
-        run: bun scripts/validate-content.ts
+        run: bun scripts/validate-content.ts --check-manifest --check-docs
 
       - name: Validate eval cases
         run: bun scripts/run-evals.ts
+
+      - name: Retrieval ranking eval
+        run: bun scripts/retrieval-eval.ts --json
 
       - name: Validate plugin sync
         run: bun scripts/validate-content.ts --check-sync
