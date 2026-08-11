@@ -1,8 +1,10 @@
 // test/installer.test.ts
 import { test, expect } from 'vitest';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parseFrontmatter } from '../src/frontmatter.ts';
+import { resetMission } from '../src/mission.ts';
 import { collectContent, installTo, removeInstalled, type Target, type InstallOptions } from '../src/installer.ts';
 import { targets } from '../src/targets/index.ts';
 
@@ -141,4 +143,224 @@ test('claude target postInstall wires the SessionStart hook', () => {
   expect(existsSync(hook)).toBe(true);
   expect(readFileSync(hook, 'utf8')).toContain('Never Task-dispatch a crew member');
   expect(r.written).toContain(hook);
+});
+
+test('claude postInstall dryRun does not write hook', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cldry-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-chdry-'));
+  const r = installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: true, force: false });
+  const hook = join(dir, '.claude', 'hooks', 'session-start.ts');
+  expect(existsSync(hook)).toBe(false);
+  expect(r.written).not.toContain(hook);
+});
+
+test('copilot install writes .instructions.md skills and agent .md files', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-copilot-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-cphome-'));
+  const r = installTo(targets['copilot'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const skillFile = join(dir, '.github', 'instructions', 'mugiwara-workflow.instructions.md');
+  expect(existsSync(skillFile)).toBe(true);
+  expect(readFileSync(skillFile, 'utf8')).toContain('Inline by default');
+  expect(readFileSync(skillFile, 'utf8')).toContain('applyTo: **/*');
+  const agentFile = join(dir, '.github', 'agents', 'luffy-orchestrator.md');
+  expect(existsSync(agentFile)).toBe(true);
+  expect(r.written.length).toBeGreaterThanOrEqual(35);
+});
+
+test('copilot transformSkill wraps with applyTo glob', () => {
+  const { skills } = collectContent();
+  const wf = skills.find(s => s.name === 'mugiwara-workflow')!;
+  const out = targets['copilot'].transformSkill(wf.data, wf.body);
+  expect(out!.relPath).toContain('.instructions.md');
+  expect(out!.text).toMatch(/^description: /m);
+  expect(out!.text).toMatch(/applyTo: \*\*\/\*/);
+});
+
+test('codex tier-2 writes full body skills and bootstrap AGENTS.md', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-codex-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-cxhome-'));
+  const r = installTo(targets['codex'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const skill = join(dir, '.codex', 'mugiwara', 'mugiwara-workflow.md');
+  expect(existsSync(skill)).toBe(true);
+  expect(readFileSync(skill, 'utf8')).toContain('Inline by default');
+  const bootstrap = join(dir, 'AGENTS.md');
+  expect(existsSync(bootstrap)).toBe(true);
+  expect(readFileSync(bootstrap, 'utf8')).toContain('Mugiwara crew installed');
+  expect(r.written).toContain(bootstrap);
+});
+
+test('codex bootstrap does not overwrite existing AGENTS.md', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cxexist-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-cxeh-'));
+  writeFileSync(join(dir, 'AGENTS.md'), 'EXISTING');
+  const r = installTo(targets['codex'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toBe('EXISTING');
+  expect(r.notes.some(n => n.includes('AGENTS.md'))).toBe(true);
+});
+
+test('claude postInstall skips hook if already exists', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-clexist-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-clexh-'));
+  // first install creates hook, second install skips it
+  installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const hook = join(dir, '.claude', 'hooks', 'session-start.ts');
+  expect(existsSync(hook)).toBe(true);
+  const original = readFileSync(hook, 'utf8');
+  const r2 = installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  expect(r2.written).not.toContain(hook);
+  expect(readFileSync(hook, 'utf8')).toBe(original);
+});
+
+test('gemini tier-2 writes full body + bootstrap GEMINI.md', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-gem-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-gemh-'));
+  const r = installTo(targets['gemini'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const skill = join(dir, '.gemini', 'mugiwara', 'mugiwara-workflow.md');
+  expect(existsSync(skill)).toBe(true);
+  expect(readFileSync(skill, 'utf8')).toContain('Inline by default');
+  const bootstrap = join(dir, 'GEMINI.md');
+  expect(existsSync(bootstrap)).toBe(true);
+  expect(readFileSync(bootstrap, 'utf8')).toContain('Mugiwara crew installed');
+});
+
+test('windsurf tier-3 writes stubs only, full body in .mugiwara/refs/', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-wind-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-wh-'));
+  const r = installTo(targets['windsurf'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const stub = join(dir, '.devin', 'rules', 'mugiwara-workflow.md');
+  expect(existsSync(stub)).toBe(true);
+  const stubText = readFileSync(stub, 'utf8');
+  expect(stubText).toContain('Skip when');
+  expect(stubText).toContain('.mugiwara/refs/mugiwara-workflow.md');
+  expect(stubText).not.toContain('Inline by default');
+  const full = join(dir, '.mugiwara', 'refs', 'mugiwara-workflow.md');
+  expect(existsSync(full)).toBe(true);
+  expect(readFileSync(full, 'utf8')).toContain('Inline by default');
+});
+
+test('cline tier-3 writes stubs into .clinerules/', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cline-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-clh-'));
+  installTo(targets['cline'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const stub = join(dir, '.clinerules', 'mugiwara-workflow.md');
+  expect(existsSync(stub)).toBe(true);
+  expect(readFileSync(stub, 'utf8')).toContain('Skip when');
+});
+
+test('kilo tier-3 writes stubs + kilo.jsonc bootstrap', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-kilo-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-kh-'));
+  const r = installTo(targets['kilo'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const stub = join(dir, '.kilo', 'rules', 'mugiwara-workflow.md');
+  expect(existsSync(stub)).toBe(true);
+  expect(readFileSync(stub, 'utf8')).toContain('Skip when');
+  const cfg = join(dir, 'kilo.jsonc');
+  expect(existsSync(cfg)).toBe(true);
+  expect(readFileSync(cfg, 'utf8')).toContain('.kilo/rules/*.md');
+  expect(r.written).toContain(cfg);
+});
+
+test('antigravity tier-3 writes stubs into .agents/rules/', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-ag-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-agh-'));
+  installTo(targets['antigravity'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const stub = join(dir, '.agents', 'rules', 'mugiwara-workflow.md');
+  expect(existsSync(stub)).toBe(true);
+  expect(readFileSync(stub, 'utf8')).toContain('Skip when');
+});
+
+test('generic target globalscope throws for non-native targets', () => {
+  for (const id of ['codex', 'gemini', 'windsurf', 'cline', 'kilo', 'antigravity']) {
+    expect(() => targets[id].paths({ scope: 'global', projectDir: '/tmp', home: '/home' }))
+      .toThrow(/project scope only/);
+  }
+});
+
+test('all plugin manifests exist at expected paths', () => {
+  const root = join(import.meta.dirname, '..');
+  const manifests = [
+    ['.claude-plugin/plugin.json', 'metadata'],
+    ['.claude-plugin/marketplace.json', 'plugins'],
+    ['.codex-plugin/plugin.json', 'skills'],
+    ['.cursor-plugin/plugin.json', 'skills'],
+    ['.kimi-plugin/plugin.json', 'skills'],
+    ['.agents/plugins/marketplace.json', 'plugins'],
+    ['gemini-extension.json', 'contextFileName'],
+    ['plugin.json', 'name'],
+  ];
+  for (const [path, key] of manifests) {
+    const file = join(root, path);
+    expect(existsSync(file), `${path} must exist`).toBe(true);
+    const raw = readFileSync(file, 'utf8');
+    const obj = JSON.parse(raw);
+    expect(obj, `${path} must be valid JSON with ${key}`).toHaveProperty(key);
+  }
+});
+
+test('gemini-extension.json points to GEMINI.md', () => {
+  const root = join(import.meta.dirname, '..');
+  const ext = JSON.parse(readFileSync(join(root, 'gemini-extension.json'), 'utf8'));
+  expect(ext.contextFileName).toBe('GEMINI.md');
+  expect(existsSync(join(root, 'GEMINI.md'))).toBe(true);
+});
+
+test('npm package list matches files array (no stale entries, no missing manifests)', () => {
+  const root = join(import.meta.dirname, '..');
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  const files: string[] = pkg.files;
+  expect(files).toContain('dist');
+  expect(files).toContain('content');
+  expect(files).toContain('.opencode');
+  expect(files).toContain('.claude-plugin');
+  expect(files).toContain('.codex-plugin');
+  expect(files).toContain('.cursor-plugin');
+  expect(files).toContain('.kimi-plugin');
+  expect(files).toContain('.agents');
+  expect(files).toContain('gemini-extension.json');
+  expect(files).toContain('GEMINI.md');
+  expect(files).toContain('AGENTS.md');
+  expect(files).toContain('plugin.json');
+});
+
+test('parseFrontmatter rejects missing fence', () => {
+  expect(() => parseFrontmatter('no frontmatter here')).toThrow('Missing frontmatter fence');
+});
+
+test('parseFrontmatter rejects bad line', () => {
+  expect(() => parseFrontmatter('---\nbadline\n---\nbody')).toThrow('Bad frontmatter line');
+});
+
+test('resetMission blocks when active actor exists without force', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-mission-'));
+  mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'state.json'), JSON.stringify({ actor: 'testuser' }));
+  const result = resetMission(dir, false);
+  expect(result.blocked).toContain('testuser');
+  expect(result.removed).toHaveLength(0);
+});
+
+test('resetMission with force bypasses actor guard', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-missionf-'));
+  mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'plans', 'dummy.md'), 'plan');
+  writeFileSync(join(dir, '.mugiwara', 'state.json'), JSON.stringify({ actor: 'testuser' }));
+  const result = resetMission(dir, false, true);
+  expect(result.blocked).toBeUndefined();
+  expect(result.removed).toContain('plans');
+});
+
+test('resetMission on missing .mugiwara returns empty', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-nomugi-'));
+  const result = resetMission(dir, false);
+  expect(result.removed).toHaveLength(0);
+  expect(result.kept).toHaveLength(0);
+});
+
+test('resetMission preserve keeps logs when keepLogs is true', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-missionk-'));
+  mkdirSync(join(dir, '.mugiwara', 'logs'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'logs', 'lessons.md'), 'learned');
+  const result = resetMission(dir, true, true);
+  expect(result.kept).toContain('logs');
+  expect(result.removed).not.toContain('logs');
 });
