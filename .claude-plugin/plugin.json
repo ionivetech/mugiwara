@@ -7,52 +7,12 @@
     "name": "ionive"
   },
   "license": "MIT",
+  "homepage": "https://github.com/ionivetech/mugiwara",
   "repository": "https://github.com/ionivetech/mugiwara",
-  "metadata": {
-    "agents": [
-      "using-mugiwara",
-      "luffy-orchestrator",
-      "usopp-brainstorm",
-      "nami-planner",
-      "zoro-execution",
-      "chopper-checkpoint",
-      "sanji-quality",
-      "franky-gates",
-      "robin-reviewer",
-      "jinbe-security",
-      "brook-healing",
-      "skeptic-verifier",
-      "eval-runner",
-      "resume-coordinator",
-      "memory-keeper"
-    ],
-    "skills": [
-      "mugiwara-agent-security",
-      "mugiwara-backend",
-      "mugiwara-brainstorm",
-      "mugiwara-checkpoint",
-      "mugiwara-claim-audit",
-      "mugiwara-context-budget",
-      "mugiwara-contract-first",
-      "mugiwara-execution",
-      "mugiwara-frontend",
-      "mugiwara-gates",
-      "mugiwara-git",
-      "mugiwara-healing",
-      "mugiwara-lessons",
-      "mugiwara-orchestration",
-      "mugiwara-planning",
-      "mugiwara-pr",
-      "mugiwara-proof-order",
-      "mugiwara-quality",
-      "mugiwara-resume",
-      "mugiwara-review",
-      "mugiwara-root-cause",
-      "mugiwara-security",
-      "mugiwara-ship",
-      "mugiwara-sunset",
-      "mugiwara-testcases",
-      "mugiwara-workflow"
-    ]
-  }
+  "keywords": [
+    "agents",
+    "skills",
+    "workflow",
+    "multi-agent"
+  ]
 }

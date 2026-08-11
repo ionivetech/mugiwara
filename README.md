@@ -11,13 +11,16 @@ and a process that sizes itself to your work. Pure markdown, zero runtime.
 
 ```bash
 # Claude Code
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
 
 # opencode — add to opencode.json
 { "plugin": ["@ionivetech/mugiwara"] }
 
-# CLI for any target
-npx @ionivetech/mugiwara@latest --project . --target all --yes
+# Gemini CLI
+gemini extensions install https://github.com/ionivetech/mugiwara
+
+# Any platform via npm
+npx @ionivetech/mugiwara@latest install --project . --target all --yes
 ```
 
 Then just ask. The crew auto-activates — no agent names to remember.
@@ -149,89 +152,100 @@ See [all 15 agents](docs/agents.md) and [all 26 skills](docs/skills.md).
 
 ## Install
 
+Install differs per platform. Pick the one you use.
+
 ### Claude Code
 
-<details>
-<summary><b>Install / Update / Uninstall</b></summary>
-
 ```bash
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara   # install
-/plugin update mugiwara                                                    # update
-/plugin uninstall mugiwara                                                 # uninstall
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
 ```
-</details>
 
-### opencode
+Update: `/plugin update mugiwara`
+Uninstall: `/plugin uninstall mugiwara`
 
-<details>
-<summary><b>Install / Update / Uninstall</b></summary>
+### OpenCode
+
+Add to `opencode.json`:
 
 ```json
-{ "plugin": ["@ionivetech/mugiwara"] }   // add to opencode.json
+{ "plugin": ["@ionivetech/mugiwara"] }
 ```
 
-```bash
-mugiwara update    # update
-# remove the plugin entry from opencode.json to uninstall
-```
+Update: replace the plugin entry version, or `npm update @ionivetech/mugiwara`
+Uninstall: remove the plugin entry from `opencode.json`.
 
 Restart opencode after install.
-</details>
 
-### GitHub Copilot
-
-<details>
-<summary><b>Install / Update / Uninstall</b></summary>
-
-```bash
-copilot plugin marketplace add ionivetech/mugiwara && copilot plugin install mugiwara
-copilot plugin update mugiwara
-copilot plugin uninstall mugiwara
-```
-</details>
-
-### Gemini CLI · Codex · Cursor
-
-<details>
-<summary><b>Gemini</b></summary>
+### Gemini CLI
 
 ```bash
 gemini extensions install https://github.com/ionivetech/mugiwara
-gemini extensions update mugiwara
-gemini extensions remove mugiwara
 ```
-</details>
 
-<details>
-<summary><b>Codex</b></summary>
+Update: `gemini extensions update mugiwara`
+Uninstall: `gemini extensions remove mugiwara`
+
+### Codex
 
 ```bash
 codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
-codex plugin update mugiwara
-codex plugin remove mugiwara
 ```
-</details>
 
-<details>
-<summary><b>Cursor</b></summary>
+Update: `codex plugin update mugiwara`
+Uninstall: `codex plugin remove mugiwara`
 
-```
-/add-plugin mugiwara       # install & update
-/remove-plugin mugiwara    # uninstall
-```
-</details>
-
-### Kimi · pi · Windsurf · Cline · Kilo · Antigravity
-
-<details>
-<summary><b>All other harnesses</b></summary>
+### GitHub Copilot
 
 ```bash
-npx @ionivetech/mugiwara@latest --project . --target all --yes   # install
-mugiwara update                                                    # update
-mugiwara uninstall                                                 # uninstall
+copilot plugin install https://github.com/ionivetech/mugiwara
 ```
-</details>
+
+Update: reinstall with the same command.
+Uninstall: `copilot plugin uninstall mugiwara`
+
+### Cursor
+
+```
+/add-plugin mugiwara
+```
+
+Update: re-run `/add-plugin mugiwara`.
+Uninstall: `/remove-plugin mugiwara`
+
+### Antigravity
+
+```bash
+agy plugin install https://github.com/ionivetech/mugiwara
+```
+
+Update: reinstall with the same command.
+Uninstall: `agy plugin uninstall mugiwara`
+
+### Kimi
+
+```
+/plugins install https://github.com/ionivetech/mugiwara
+```
+
+Update: reinstall.
+Uninstall: `/plugins remove mugiwara`
+
+### Pi
+
+```bash
+pi install git:github.com/ionivetech/mugiwara
+```
+
+### Windsurf · Cline · Kilo · Codex CLI
+
+```bash
+npx @ionivetech/mugiwara@latest install --project . --target all --yes
+```
+
+Substitute `all` with a specific target: `windsurf`, `cline`, `kilo`, `codex`, etc.
+
+Update: `mugiwara update`
+Uninstall: `mugiwara uninstall`
 
 ### Any agent (skills only)
 
