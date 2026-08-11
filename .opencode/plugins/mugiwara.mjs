@@ -9,11 +9,39 @@
 // or from the git repo:
 //   { "plugin": ["mugiwara@git+https://github.com/ionivetech/mugiwara.git"] }
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const VALID_MODES = new Set(['guided', 'semi', 'auto']);
+
+// Read the runtime mode: `.mugiwara/config` (project) wins over
+// `~/.mugiwara/config` (global) per key; a missing key or a value outside the
+// enum falls back to `guided`. Never creates files on read.
+export function readMode({ projectDir = process.cwd(), home = homedir() } = {}) {
+  const readValue = (dir) => {
+    const file = join(dir, '.mugiwara', 'config');
+    if (!existsSync(file)) return undefined;
+    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const [k, v] = t.split('=').map((s) => s.trim());
+      if (k !== 'mode') continue;
+      return VALID_MODES.has(v) ? v : 'INVALID';
+    }
+    return undefined;
+  };
+  const proj = readValue(projectDir);
+  if (proj === 'INVALID') return 'guided';
+  if (proj) return proj;
+  const glob = readValue(home);
+  if (glob === 'INVALID') return 'guided';
+  if (glob) return glob;
+  return 'guided';
+}
 
 const contentDir = join(__dirname, '..', '..', 'content');
 const skillsDir = join(contentDir, 'skills');
@@ -98,5 +126,6 @@ export default async () => ({
     } else {
       output.system.push(ANNOUNCE);
     }
+    output.system.push(`Active mode: ${readMode()} (guided|semi|auto; flip applies next wave).`);
   },
 });
