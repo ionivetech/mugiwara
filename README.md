@@ -152,7 +152,22 @@ See [all 15 agents](docs/agents.md) and [all 26 skills](docs/skills.md).
 
 ## Install
 
-Install differs per platform. Pick the one you use.
+Mugiwara installs as a native plugin on every platform. Full details in the per-platform guides.
+
+| Platform | Guide |
+|----------|-------|
+| **Claude Code** | [`/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara`](docs/install-claude.md) |
+| **OpenCode** | [`{ "plugin": ["@ionivetech/mugiwara"] }`](docs/install-opencode.md) |
+| **Gemini CLI** | [`gemini extensions install https://github.com/ionivetech/mugiwara`](docs/install-gemini.md) |
+| **Codex** | [`codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara`](docs/install-codex.md) |
+| **Copilot** | [`copilot plugin install https://github.com/ionivetech/mugiwara`](docs/install-copilot.md) |
+| **Cursor** | [`/add-plugin mugiwara`](docs/install-cursor.md) |
+| **Antigravity** | [`agy plugin install https://github.com/ionivetech/mugiwara`](docs/install-antigravity.md) |
+| **Kimi** | [`/plugins install https://github.com/ionivetech/mugiwara`](docs/install-kimi.md) |
+| **Pi** | [`pi install git:github.com/ionivetech/mugiwara`](docs/install-pi.md) |
+| **Windsurf / Cline / Kilo** | [`npx @ionivetech/mugiwara install --target <id> --yes`](docs/install-cli.md) |
+
+→ **[Full install guide with troubleshooting](docs/install.md)**
 
 ### Claude Code
 
@@ -306,6 +321,7 @@ matter to you, this is the wrong tool.
 | Doc | What it covers |
 |-----|---------------|
 | [Getting started](docs/getting-started.md) | First mission, lane 0-3 examples, setup walkthrough |
+| [Install](docs/install.md) | Per-platform guides: Claude Code, OpenCode, Gemini, Codex, Copilot, Cursor, Antigravity, Kimi, Pi, CLI |
 | [Workflow](docs/workflow.md) | Full 9-wave pipeline with heal loop detail |
 | [Agents](docs/agents.md) | 15 crew members, roles, permissions, how to summon |
 | [Skills](docs/skills.md) | 26 techniques, 3-layer disclosure model |
