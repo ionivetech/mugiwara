@@ -65,7 +65,7 @@ function score(index: Index, prompt: string): { skill: string; score: number }[]
     results.push({ skill: doc, score: total });
   }
 
-  return results.sort((a, b) => b.score - a.score);
+  return results.sort((a, b) => b.score - a.score || a.skill.localeCompare(b.skill));
 }
 
 // --- case schema ---
@@ -139,17 +139,20 @@ for (const p of positives) {
   const rank = ranked.findIndex(r => r.skill === p.skill) + 1;
   const key = `${p.skill}: ${p.prompt}`;
   const entryScore = rank > 0 ? ranked[rank - 1].score : 0;
-  results[key] = { rank, score: entryScore, top_k: p.topK, passed: rank > 0 && rank <= p.topK };
-  if (rank === 1) rank1++;
-  if (rank > 0 && rank <= p.topK) inTopK++;
+  const topScore = ranked[0]?.score ?? 0;
+  const passed = entryScore > 0 && rank > 0 && rank <= p.topK;
+  results[key] = { rank, score: entryScore, top_k: p.topK, passed };
+  if (passed && rank === 1) rank1++;
+  if (passed) inTopK++;
   else failures.push(`positive "${p.prompt}" → ${p.skill} ranked ${rank || 'unranked'} (want <=${p.topK}), got ${ranked[0]?.skill ?? 'none'}`);
 }
 
 for (const p of negatives) {
   const ranked = score(index, p.prompt);
-  const pass = ranked[0]?.skill !== p.skill;
+  const top = ranked[0];
+  const pass = (top?.score ?? 0) === 0 || top?.skill !== p.skill;
   const key = `!${p.skill}: ${p.prompt}`;
-  results[key] = { rank: 0, score: ranked[0]?.score ?? 0, top_k: 3, passed: pass };
+  results[key] = { rank: 0, score: top?.score ?? 0, top_k: 3, passed: pass };
   if (pass) negPass++;
   else failures.push(`negative "${p.prompt}" wrongly ranked ${p.skill} first`);
 }
