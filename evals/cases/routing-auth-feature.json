@@ -1,0 +1,13 @@
+{
+  "name": "routing-auth-feature",
+  "skill": "mugiwara-security",
+  "task": "Add role-based access control to the API: new roles table, middleware enforcement, and tests. Touches auth paths.",
+  "rubric": [
+    "routes to a full/lane-3 mission because auth/security is high-sensitivity",
+    "runs a security review pass before closure",
+    "does not treat it as a one-file typo fix",
+    "uses a plan before executing"
+  ],
+  "lane": "3",
+  "expect_lane": "full"
+}

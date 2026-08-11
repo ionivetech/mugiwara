@@ -1,0 +1,12 @@
+{
+  "name": "negative-security-docs-change",
+  "skill": "mugiwara-git",
+  "type": "negative",
+  "task": "Update the README to fix a broken link. No code, no config, no data flow changes.",
+  "rubric": [
+    "does NOT rank mugiwara-security first (docs-only, no trust boundary)",
+    "does NOT rank mugiwara-test-driven-development first (no production code)",
+    "does NOT rank mugiwara-gates first (no code changed)"
+  ],
+  "expect_lane": "direct"
+}
