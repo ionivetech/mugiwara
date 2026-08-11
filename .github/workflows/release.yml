@@ -56,13 +56,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Generate release notes
+        run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
+
       - name: Pack tarball
         run: npm pack --pack-destination "$RUNNER_TEMP"
 
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "${{ github.ref_name }}" --generate-notes --latest "$RUNNER_TEMP"/*.tgz
+        run: gh release create "${{ github.ref_name }}" --notes-file "$RUNNER_TEMP/release-notes.md" --latest "$RUNNER_TEMP"/*.tgz
 
 # Release flow: create a tag with `npm version <patch|minor|major>` (bumps
 # package.json version and pushes the tag), or manually with `git tag vX.Y.Z

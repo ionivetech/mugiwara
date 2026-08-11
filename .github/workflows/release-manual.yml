@@ -85,10 +85,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Generate release notes
+        run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
+
       - name: Pack tarball
         run: npm pack --pack-destination "$RUNNER_TEMP"
 
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$RELEASE_VERSION" --generate-notes --latest "$RUNNER_TEMP"/*.tgz
+        run: gh release create "$RELEASE_VERSION" --notes-file "$RUNNER_TEMP/release-notes.md" --latest "$RUNNER_TEMP"/*.tgz
