@@ -2,9 +2,12 @@ name: Manual Release
 
 # Manual release from GitHub UI: after PRs merge into main, run this workflow,
 # pick patch/minor/major (or an exact version), and it bumps the version,
-# syncs the plugin manifests, commits + tags main, then the existing Release
-# workflow (triggered by the `v*` tag) publishes to npm and creates the GitHub
-# Release.
+# syncs the plugin manifests, commits + tags main, then publishes to npm and
+# creates the GitHub Release — all in this one run.
+#
+# Why not trigger the Release workflow via the tag push? Pushes made with the
+# GITHUB_TOKEN do not fire other workflows (GitHub limitation). So this
+# workflow publishes directly instead of relying on the `v*` tag trigger.
 #
 # Usage: Actions tab -> "Manual Release" -> "Run workflow" -> choose version.
 
@@ -72,4 +75,20 @@ jobs:
         run: |
           git tag "$RELEASE_VERSION"
           git push origin "$RELEASE_VERSION"
-          echo "Tagged $RELEASE_VERSION — Release workflow now publishes to npm and creates the GitHub Release."
+          echo "Tagged $RELEASE_VERSION"
+
+      - name: Authenticate with npm
+        run: npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Pack tarball
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$RELEASE_VERSION" --generate-notes --latest "$RUNNER_TEMP"/*.tgz

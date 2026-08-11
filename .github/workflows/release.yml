@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - "v*"
+  # Manual fallback: a tag pushed by another workflow's GITHUB_TOKEN does NOT
+  # trigger the push event (GitHub limitation). Use "Run workflow" on this
+  # workflow, pick the tag ref (e.g. v0.3.0), and it publishes that tag.
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
@@ -63,4 +67,6 @@ jobs:
 # Release flow: create a tag with `npm version <patch|minor|major>` (bumps
 # package.json version and pushes the tag), or manually with `git tag vX.Y.Z
 # && git push origin vX.Y.Z`. The `v*` tag trigger publishes to npm and creates
-# the GitHub Release with auto-generated notes.
+# the GitHub Release with auto-generated notes. Note: a tag pushed by the
+# Manual Release workflow (GITHUB_TOKEN) does not fire this workflow — trigger
+# it via workflow_dispatch on that tag instead.
