@@ -199,6 +199,10 @@ Two invariants hold in **every** mode:
   the PR); auto ends at an auto-created PR. No mode merges, deploys, or
   auto-reacts to review comments or CI.
 
+Want the crew to create the PR for you? See [docs/auto-pr.md](docs/auto-pr.md)
+— how to enable auto mode, configure `base`/`pr-title`/`pr-template`, and what
+credentials each forge needs (`gh`/`glab`/Bitbucket token).
+
 Flip mid-mission with `mugiwara mode <guided|semi|auto>` — the change applies
 from the next wave, never mid-wave. Missing config on read = `guided`.
 

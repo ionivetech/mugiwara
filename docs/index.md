@@ -15,6 +15,7 @@ explicit router.
 | [Adoption guide](adoption-guide.md) | Pick the harness, pick the mode, fit the crew to your workflow |
 | [Modes](modes.md) | guided / semi / auto — the autonomy levels, what each asks you |
 | [Config](config.md) | Full reference for `.mugiwara/config` keys and commit styles |
+| [Auto-PR](auto-pr.md) | Enable the crew to create the PR in auto mode (`gh`/`glab`/Bitbucket credentials) |
 | [The crew](agents.md) | All 15 agents and when to summon each |
 | [The techniques](skills.md) | All 32 skills and what each enforces |
 | [The wave pipeline](workflow.md) | How a mission flows Wave 0 → Wave 9 |
