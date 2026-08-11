@@ -94,7 +94,7 @@ test('system.transform appends the announce string once (dedupes on repeat)', as
   expect(output.system).toHaveLength(2);
 });
 
-const makeCfg = (mode?: string) => mkdtempSync(join(tmpdir(), 'mugi-mode-'));
+const makeCfg = () => mkdtempSync(join(tmpdir(), 'mugi-mode-'));
 
 test('mode reader: no config files -> guided', () => {
   expect(readMode({ projectDir: makeCfg(), home: makeCfg() })).toBe('guided');
