@@ -1,38 +1,35 @@
 # Enforcement
 
 A markdown harness cannot force a model to comply with prose — that is the
-ceiling of every skills pack, mugiwara included. Mugiwara is a skills pack, not
-a plugin with hooks: it ships markdown the agent reads and follows. What keeps
-the pipeline honest is the skills themselves, not a CLI.
+ceiling of every skills pack, mugiwara included. What keeps the pipeline honest
+is a mix of mechanism and discipline.
 
-## Skip gates
+## Mechanisms (computed, no model)
 
-Every skill carries a `## Skip when` block: ≤4 bullets, numeric thresholds,
-telling the agent when the skill does not apply. The content validator
-(`bun run validate`) fails the build when a skill lacks the block, so the gate
-cannot rot. A skipped skill is recorded in the decision log, never silent.
+| Rule | Mechanism |
+|------|-----------|
+| Lane sizing | `scripts/lane.sh` computes lane from `git diff --name-only` |
+| State persistence | `scripts/savepoint.sh` writes `state.json` at every wave boundary |
+| Evidence capture | `scripts/evidence.sh <label> -- <cmd>` writes stdout/stderr to `.mugiwara/results/<hash>.log` |
+| Index budget | validator enforces 12k char ceiling on skill + agent descriptions |
+| Manifest sync | validator asserts manifest set-equals `content/`; CI blocks drift |
+| Skill format | validator checks name, description length, body ≤120 lines, skip gate, duplicate names |
 
-## Evidence over claims
+## Discipline (prose the model follows)
 
-Every skill enforces the iron law: a wave passes only on command output or a
-file the agent can point at. "Subagents lie. No evidence = not complete." This
-is prose the agent follows, checked by no tool — the honest limit.
+| Rule | Enforced by |
+|------|------------|
+| Skip gates | Every skill declares `## Skip when` (1-4 bullets, numeric threshold). Validator fails build without it. |
+| Evidence over claims | Iron law in every skill: no wave passes on assertion. Checked by Chopper's re-verification. |
+| Wave boundaries | Every wave opens with `## Wave N — <crew>` banner, closes with checkpoint report. |
+| Heal loop bound | Max 3 cycles (Wave 8 → Wave 4). After 3, escalate to human. |
+| DoD canonical | `references/definition-of-done.md` — one bar, linked from checkpoint + gates. |
 
-## Capability tiers
+## Honest limits
 
-How skills load differs per harness:
+Mugiwara cannot force an agent to follow a skill on any tier. Models can skip
+a skill, rush a wave, or pass on a claim. Mechanisms (savepoint, lane, evidence)
+leave a trace regardless of model cooperation. Discipline rules rely on the
+model reading and choosing to follow them.
 
-| Tier | Harnesses | Skill loading |
-|------|-----------|---------------|
-| 1 | Claude Code, opencode | progressive — read by trigger, not all at once |
-| 2 | Copilot, Gemini, Codex | bootstrap pointer → the model chooses what to read |
-| 3 | Windsurf, Cline, Kilo, Antigravity | rules dirs glob-load — skills ship as stubs, full bodies in `.mugiwara/refs/` |
-
-On tier 3, skills ship as small stubs (routing + pointer) so glob-loading
-harnesses stop eating ~40k tokens; the full body lives in `.mugiwara/refs/`,
-read on demand. Tier 3 also uses **wave-boundary state flush**: the full
-mission state is written to `.mugiwara/` at each wave so the next wave resumes
-without the previous context — the portable substitute for subagent isolation.
-
-**Honest limit.** Mugiwara cannot force an agent to follow a skill. That is
-true on every tier and every harness. It is a skills pack, not a supervisor.
+That is true on every tier and every harness. Mugiwara is a skills pack, not a supervisor.

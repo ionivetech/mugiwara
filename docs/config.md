@@ -24,10 +24,12 @@ base=main
 
 | Key | Values | Default | Meaning |
 |-----|--------|---------|---------|
-| `mode` | guided / semi / auto | guided | The only autonomy lever — decides whether branch/commit run automatically |
-| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata, validated to `[a-zA-Z0-9-_]` |
+| `mode` | guided / semi / auto | guided | How much the crew does without asking |
+| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata |
 | `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
 | `base` | branch name | `main` | The PR target named in the prepared PR summary |
+| `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
+| `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
 
 The mission **lane** (how many waves run) is decided by Luffy at triage — see
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.
