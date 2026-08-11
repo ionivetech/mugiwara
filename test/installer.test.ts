@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { collectContent, installTo, removeInstalled, type Target, type InstallOptions } from '../src/installer.ts';
+import { targets } from '../src/targets/index.ts';
 
 const fakeTarget: Target = {
   id: 'fake', label: 'Fake', native: true,
@@ -62,4 +63,33 @@ test('removeInstalled deletes exactly manifest files + prunes empty dirs', () =>
   removeInstalled({ files: r.written }, {});
   expect(existsSync(join(dir, 'sk'))).toBe(false);
   expect(existsSync(join(dir, 'ag'))).toBe(false);
+});
+
+test('session-start hook carries inline doctrine, no "dispatch crew" language', () => {
+  const hook = readFileSync(join(import.meta.dirname, '..', 'hooks', 'session-start.ts'), 'utf8');
+  expect(hook).toContain('inline');
+  expect(hook).toContain('Never Task-dispatch a crew member');
+  expect(hook).not.toMatch(/dispatch.*using-mugiwara/);
+});
+
+test('CLI install targets never force background mode on agents', () => {
+  const { agents } = collectContent();
+  const luffy = agents.find(a => a.name === 'luffy-orchestrator')!;
+  for (const id of ['claude', 'opencode', 'copilot']) {
+    const out = targets[id].transformAgent(luffy.data, luffy.body);
+    expect(out, `${id} transformAgent output`).not.toBeNull();
+    expect(out!.text).not.toMatch(/^mode:/m);
+  }
+});
+
+test('generic target installs workflow skill with inline doctrine', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-gen-'));
+  const { skills, agents } = collectContent();
+  const workflow = skills.find(s => s.name === 'mugiwara-workflow')!;
+  const out = targets['gemini'].transformSkill(workflow.data, workflow.body);
+  expect(out).not.toBeNull();
+  expect(out!.text).toContain('Inline by default');
+  const luffy = agents.find(a => a.name === 'luffy-orchestrator')!;
+  const agentOut = targets['gemini'].transformAgent(luffy.data, luffy.body);
+  expect(agentOut!.text).toContain('Agent: luffy-orchestrator');
 });

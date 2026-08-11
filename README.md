@@ -284,6 +284,25 @@ natively with the harnesses that support them (Claude Code, opencode). On
 harnesses that install skills only (Gemini, Codex, Cursor, Kimi, pi), the
 agents are available via the CLI below.
 
+### How the crew runs (all platforms)
+
+The crew runs **inline in the main conversation** on every harness. The main
+thread embodies ONE crew role at a time using that member's skill, so you see
+every wave as it happens — no hidden subagent jumps. Wave transitions are
+announced (`## Wave N — <crew>` → `→ Wave N+1 — <crew>`). Subagents are used
+only for real parallel work: Zoro's `[PARALLEL]` worker batches, Robin ∥ Jinbe
+concurrent review + security, and independent re-run checks.
+
+- **Claude Code + opencode**: the 15 agents register as main-thread (mode `all`),
+  so they appear in your agent's tab/mode switcher and can be embodied inline.
+- **Generic platforms** (Gemini, Codex, Cursor, Kimi, pi, Windsurf, Cline,
+  Kilo, Antigravity): skills + workflow rules install as markdown; the same
+  pipeline runs inline in the main conversation.
+- **Mode switching**: default `guided`. Switch anytime with `/mugiwara-mode
+  guided|semi|auto` (or "mugiwara mode <level>"); the flip applies from the
+  next wave. Never run the crew as background subagents — dispatch subagents
+  only for parallel batches.
+
 ### Via script / CLI
 
 Requires **Node.js >= 20.11**. Bun is optional — only needed to build from
