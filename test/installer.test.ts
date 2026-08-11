@@ -110,6 +110,22 @@ test('session-start hook carries inline doctrine, no "dispatch crew" language', 
   expect(hook).not.toMatch(/dispatch.*using-mugiwara/);
 });
 
+test('mode-tracker hook can parse /mugiwara guided|semi|auto via regex', () => {
+  const hook = readFileSync(join(import.meta.dirname, '..', 'hooks', 'mugiwara-mode-tracker.ts'), 'utf8');
+  expect(hook).toContain('parseModeChange');
+  expect(hook).toContain('/mugiwara');
+  expect(hook).toContain('VALID_MODES');
+  expect(hook).toContain('applyModeChange');
+});
+
+test('hooks.json has SessionStart and UserPromptSubmit', () => {
+  const raw = readFileSync(join(import.meta.dirname, '..', 'hooks', 'hooks.json'), 'utf8');
+  const hooks = JSON.parse(raw);
+  expect(hooks.hooks.SessionStart).toBeDefined();
+  expect(hooks.hooks.UserPromptSubmit).toBeDefined();
+  expect(hooks.hooks.UserPromptSubmit[0].hooks[0].command).toContain('mugiwara-mode-tracker');
+});
+
 test('CLI install targets never force background mode on agents (opencode agents get mode: all for native config)', () => {
   const { agents } = collectContent();
   const luffy = agents.find(a => a.name === 'luffy-orchestrator')!;
