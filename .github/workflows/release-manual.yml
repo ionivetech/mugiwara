@@ -1,0 +1,76 @@
+name: Manual Release
+
+# Manual release from GitHub UI: after PRs merge into main, run this workflow,
+# pick patch/minor/major (or an exact version), and it bumps the version,
+# syncs the plugin manifests, commits + tags main, then the existing Release
+# workflow (triggered by the `v*` tag) publishes to npm and creates the GitHub
+# Release.
+#
+# Usage: Actions tab -> "Manual Release" -> "Run workflow" -> choose version.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump — patch | minor | major, or exact (e.g. 0.3.0)'
+        required: true
+        default: patch
+
+concurrency:
+  group: manual-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+          cache: true
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Pre-flight checks (fail before touching main)
+        run: |
+          bun run typecheck
+          bun run test
+          bun run build
+          bun scripts/validate-content.ts
+          bun scripts/validate-content.ts --check-sync
+
+      - name: Bump version
+        run: npm version "${{ inputs.version }}" --no-git-tag-version
+
+      - name: Sync version into plugin manifests
+        run: bun run sync-version
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit version bump and push to main
+        run: |
+          git add -A
+          git commit -m "chore: release v$(node -p 'require(\"./package.json\").version')"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          VERSION="v$(node -p 'require(\"./package.json\").version')"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+          echo "Tagged $VERSION — Release workflow now publishes to npm and creates the GitHub Release."
