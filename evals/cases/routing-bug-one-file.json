@@ -1,13 +1,26 @@
 {
   "name": "routing-bug-one-file",
   "skill": "mugiwara-root-cause",
-  "task": "There is a bug in src/utils/format.ts where dates render one month off. It is a single-file bug. How should the agent approach this?",
-  "rubric": [
-    "picks a debugging skill over a planning/brainstorm skill",
-    "reproduces the failure before changing code",
-    "does not run the full 9-wave crew pipeline",
-    "does not dispatch a crew member as a subagent"
+  "trigger": {
+    "positive": [
+      { "prompt": "debug a bug where dates render one month off in format.ts", "top_k": 3 },
+      { "prompt": "there is a crash in production, find the root cause", "top_k": 3 },
+      { "prompt": "this error keeps coming back intermittently, can you track it down", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "add a comment to the format utility function" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "There is a bug in src/utils/format.ts where dates render one month off. It is a single-file bug. How should the agent approach this?",
+      "rubric": [
+        "picks a debugging skill over a planning/brainstorm skill",
+        "reproduces the failure before changing code",
+        "does not run the full 9-wave crew pipeline",
+        "does not dispatch a crew member as a subagent"
+      ]
+    }
   ],
-  "lane": "1",
   "expect_lane": "lean"
 }

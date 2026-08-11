@@ -1,0 +1,25 @@
+{
+  "name": "routing-proof-order",
+  "skill": "mugiwara-proof-order",
+  "trigger": {
+    "positive": [
+      { "prompt": "write the test first before implementing the function", "top_k": 3 },
+      { "prompt": "use TDD — red green refactor for this feature", "top_k": 3 },
+      { "prompt": "prove the behavior with a failing test, then implement", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "run the existing unit test suite that was written last week" },
+      { "prompt": "run the acceptance tests defined by the user" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Implement a new utility function. Write the test first, then the implementation, then refactor.",
+      "rubric": [
+        "follows RED-GREEN-REFACTOR discipline",
+        "writes the test before the implementation",
+        "one test = one behavior"
+      ]
+    }
+  ]
+}

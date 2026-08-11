@@ -35,7 +35,7 @@ fi
 [ -d .git ] || die "not a git repository"
 
 # --- computed fields ---
-BASE_SHA=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "unknown")
+BASE_SHA=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || git merge-base HEAD "$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "unknown")
 HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
 CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true)
@@ -43,11 +43,12 @@ FILES_TOUCHED=$( [ -n "$CHANGED_FILES" ] && echo "$CHANGED_FILES" | wc -l | tr -
 
 LOC_DELTA=0
 if [ "$BASE_SHA" != "unknown" ]; then
-  LOC_DELTA=$(git diff --shortstat "$BASE_SHA"..HEAD 2>/dev/null | \
-    awk '{ins=0; del=0; for(i=1;i<=NF;i++){if($i=="insertion") ins=$(i-1); if($i=="deletion") del=$(i-1)} print ins-del}' || echo 0)
+  STAT=$(git diff --shortstat "$BASE_SHA"..HEAD 2>/dev/null || echo "")
+  INS=$(echo "$STAT" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+  DEL=$(echo "$STAT" | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
+  LOC_DELTA=$(( ${INS:-0} - ${DEL:-0} ))
 fi
 [ -z "$LOC_DELTA" ] && LOC_DELTA=0
-[ "$LOC_DELTA" = "0" ] || LOC_DELTA=${LOC_DELTA//[^0-9-]/}
 
 SENSITIVE_PATTERNS="auth/|payment/|billing/|crypto/|secrets/|\.env|config/|migration/|\.sql$|schema\.|\.prisma$"
 SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATTERNS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)

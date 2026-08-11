@@ -1,13 +1,26 @@
 {
   "name": "routing-auth-feature",
   "skill": "mugiwara-security",
-  "task": "Add role-based access control to the API: new roles table, middleware enforcement, and tests. Touches auth paths.",
-  "rubric": [
-    "routes to a full/lane-3 mission because auth/security is high-sensitivity",
-    "runs a security review pass before closure",
-    "does not treat it as a one-file typo fix",
-    "uses a plan before executing"
+  "trigger": {
+    "positive": [
+      { "prompt": "add role-based access control to the API, admin editor viewer permissions", "top_k": 3 },
+      { "prompt": "implement authorization middleware with role checking", "top_k": 3 },
+      { "prompt": "add RBAC with a roles table and middleware enforcement", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "update the admin dashboard CSS styling" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Add role-based access control to the API: new roles table, middleware enforcement, and tests. Touches auth paths.",
+      "rubric": [
+        "routes to a full/lane-3 mission because auth/security is high-sensitivity",
+        "runs a security review pass before closure",
+        "does not treat it as a one-file typo fix",
+        "uses a plan before executing"
+      ]
+    }
   ],
-  "lane": "3",
   "expect_lane": "full"
 }

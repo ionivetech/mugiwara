@@ -1,0 +1,26 @@
+{
+  "name": "routing-planning",
+  "skill": "mugiwara-planning",
+  "trigger": {
+    "positive": [
+      { "prompt": "turn this spec into an execution plan with parallel waves", "top_k": 3 },
+      { "prompt": "plan the implementation approach before writing any code", "top_k": 3 },
+      { "prompt": "break down the feature into tasks and estimate the effort", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "just write the code for this simple bug fix" },
+      { "prompt": "brainstorm different architecture options" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Turn the approved feature spec into a detailed execution plan with parallel-proof waves and context scan.",
+      "rubric": [
+        "interviews before planning",
+        "performs a full context scan",
+        "produces parallel-proof waves",
+        "scales the plan to the request scope"
+      ]
+    }
+  ]
+}

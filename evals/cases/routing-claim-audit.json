@@ -1,0 +1,25 @@
+{
+  "name": "routing-claim-audit",
+  "skill": "mugiwara-claim-audit",
+  "trigger": {
+    "positive": [
+      { "prompt": "verify this claim before we proceed, it could be wrong", "top_k": 3 },
+      { "prompt": "the agent says the fix is done but I want to double-check", "top_k": 3 },
+      { "prompt": "audit this in-flight decision before we commit to it", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "run the test suite to make sure nothing is broken" },
+      { "prompt": "review the diff for breaking changes" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The agent claims the migration is complete and all data is intact. Verify this before proceeding.",
+      "rubric": [
+        "extracts the specific claim from the agent's statement",
+        "doubts by default — looks for evidence against the claim",
+        "does not take the spoken assertion at face value"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "routing-execution",
+  "skill": "mugiwara-execution",
+  "trigger": {
+    "positive": [
+      { "prompt": "execute the approved plan step by step", "top_k": 3 },
+      { "prompt": "implement the todo list from the plan", "top_k": 3 },
+      { "prompt": "carry out the tasks in parallel batches and commit each one", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "let's brainstorm the architecture first" },
+      { "prompt": "review the plan for gaps before we start" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Execute the approved plan: 3 parallel tasks covering auth middleware, database migration, and API handlers.",
+      "rubric": [
+        "processes the todo list sequentially",
+        "runs independent tasks in parallel batches",
+        "commits per logical task with evidence"
+      ]
+    }
+  ]
+}

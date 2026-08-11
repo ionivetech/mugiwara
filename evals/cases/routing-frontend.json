@@ -1,0 +1,26 @@
+{
+  "name": "routing-frontend",
+  "skill": "mugiwara-frontend",
+  "trigger": {
+    "positive": [
+      { "prompt": "redesign the dashboard page with responsive layout", "top_k": 3 },
+      { "prompt": "make this form accessible with proper ARIA labels", "top_k": 3 },
+      { "prompt": "create a reusable button component from the design tokens", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "add a REST endpoint for the user dashboard data" },
+      { "prompt": "design the database schema for user settings" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Redesign the settings page component with responsive breakpoints and WCAG 2.1 AA compliance.",
+      "rubric": [
+        "matches existing repo component patterns",
+        "extracts design tokens from the existing system",
+        "implements responsive behavior",
+        "meets WCAG 2.1 AA accessibility standards"
+      ]
+    }
+  ]
+}

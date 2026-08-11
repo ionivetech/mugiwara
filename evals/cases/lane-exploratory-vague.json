@@ -1,12 +1,24 @@
 {
   "name": "lane-exploratory-vague",
   "skill": "mugiwara-brainstorm",
-  "type": "lane",
-  "task": "I have a rough idea for a reporting dashboard. Not sure what data or which charts. What do we do first?",
-  "rubric": [
-    "routes to lane 4 spike — brainstorm first, then re-size",
-    "does not jump straight to planning with no direction",
-    "interrogates the idea before committing to a plan"
+  "trigger": {
+    "positive": [
+      { "prompt": "explore different architecture options for a reporting dashboard, vague idea still", "top_k": 3 },
+      { "prompt": "explore different approaches for the architecture before we commit", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "implement the todo list from the approved plan" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "I have a rough idea for a reporting dashboard. Not sure what data or which charts. What do we do first?",
+      "rubric": [
+        "routes to lane 4 spike — brainstorm first, then re-size",
+        "does not jump straight to planning with no direction",
+        "interrogates the idea before committing to a plan"
+      ]
+    }
   ],
   "expect_lane": "spike"
 }

@@ -1,0 +1,25 @@
+{
+  "name": "routing-context-budget",
+  "skill": "mugiwara-context-budget",
+  "trigger": {
+    "positive": [
+      { "prompt": "we are near the token limit, what should we load into context", "top_k": 3 },
+      { "prompt": "this codebase is huge, how do I feed only the relevant files", "top_k": 3 },
+      { "prompt": "prioritize which files to load given the token limit", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "dump the full content of every file into the prompt" },
+      { "prompt": "load every file into memory for the analysis" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "We have a large monorepo and need to fix a bug in the auth module. The context window can't hold everything.",
+      "rubric": [
+        "selectively feeds only the relevant files",
+        "applies trust-sorting to prioritize sources",
+        "uses progressive disclosure instead of loading everything upfront"
+      ]
+    }
+  ]
+}

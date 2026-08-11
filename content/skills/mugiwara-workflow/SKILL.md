@@ -1,6 +1,6 @@
 ---
 name: mugiwara-workflow
-description: Use at start of any non-trivial mission — Luffy triage gateway, then brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure waves.
+description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure waves.
 ---
 
 # Mugiwara Workflow

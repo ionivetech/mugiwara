@@ -1,0 +1,25 @@
+{
+  "name": "routing-workflow",
+  "skill": "mugiwara-workflow",
+  "trigger": {
+    "positive": [
+      { "prompt": "start a new mission for this feature — run the full pipeline", "top_k": 3 },
+      { "prompt": "run the complete workflow from triage to closure", "top_k": 3 },
+      { "prompt": "we have a non-trivial task, kick off the 9-wave pipeline", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "fix this one-line typo in the README" },
+      { "prompt": "just run the tests and close the mission" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A new non-trivial feature request arrived. Run the full mugiwara pipeline from triage to closure.",
+      "rubric": [
+        "starts with Luffy triage gateway",
+        "sequences through brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure waves",
+        "does not skip waves for non-trivial missions"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "routing-ship",
+  "skill": "mugiwara-ship",
+  "trigger": {
+    "positive": [
+      { "prompt": "run the pre-launch checklist and give a go no-go decision", "top_k": 3 },
+      { "prompt": "prepare the staged rollout plan with a rollback strategy", "top_k": 3 },
+      { "prompt": "verify feature flags and ship checklist before deployment", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "push the branch to GitHub" },
+      { "prompt": "deploy the build artifact to the server" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The mission is complete and all gates passed. Run the pre-launch checklist and give a GO/NO-GO.",
+      "rubric": [
+        "runs the pre-launch checklist",
+        "checks feature flags and staged rollout plan",
+        "requires a mandatory rollback plan",
+        "gives a binary GO/NO-GO verdict"
+      ]
+    }
+  ]
+}

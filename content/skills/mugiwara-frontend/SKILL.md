@@ -1,6 +1,6 @@
 ---
 name: mugiwara-frontend
-description: Use for frontend implementation or redesign — matching repo standards, design-system extraction, responsive behavior, WCAG 2.1 AA. Bans AI-slop patterns.
+description: Use for frontend UI component, CSS styling, responsive layout, a11y/accessible — matching repo standards, design-system extraction, WCAG 2.1 AA. Bans AI-slop patterns.
 ---
 
 # Frontend (Anti-Slop)

@@ -1,6 +1,6 @@
 ---
 name: mugiwara-quality
-description: Use after checkpoint passes — formatter, linter, unit tests. Discovers project tooling, never weakens configs. User tests under consent matrix.
+description: Use after checkpoint passes — formatter, linter, eslint, prettier, lint, format, unit tests, test suite. Discovers project tooling, never weakens configs.
 ---
 
 # Quality (Sanji)

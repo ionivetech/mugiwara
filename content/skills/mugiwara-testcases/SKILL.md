@@ -1,6 +1,6 @@
 ---
 name: mugiwara-testcases
-description: Use when mission declares user test cases — intake formats, immutable-gold rule, declarative-AC routing, consent, failure adjudication. ATDD home.
+description: Use when mission declares user test cases, e2e, playwright, cypress, integration tests — intake formats, immutable-gold rule, consent, failure adjudication.
 ---
 
 # Test Cases (ATDD Contract)

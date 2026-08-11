@@ -1,6 +1,6 @@
 ---
 name: mugiwara-proof-order
-description: Use when writing code — RED-GREEN-REFACTOR. Proof value from WHEN the test runs, not that it exists. One test = one behavior.
+description: Use when writing code — TDD, RED-GREEN-REFACTOR, test-driven. Proof value from WHEN the test runs, not that it exists. One test = one behavior.
 ---
 
 # Test-Driven Development
