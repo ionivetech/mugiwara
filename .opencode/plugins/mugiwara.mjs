@@ -111,7 +111,8 @@ function readAgents() {
 // into the command file's body ("Set mugiwara mode: <level>...") before
 // chat.message fires, so parse the template's first line too.
 export function parseModeChange(promptRaw) {
-  let prompt = (promptRaw || '').trim();
+  if (typeof promptRaw !== 'string') return null;
+  let prompt = promptRaw.trim();
   const wrapped = /^(["'`])([\s\S]*)\1$/.exec(prompt);
   if (wrapped) prompt = wrapped[2].trim();
   prompt = prompt.toLowerCase();
@@ -161,9 +162,16 @@ export default async () => ({
   // Intercept user messages to detect `/mugiwara-mode` and natural-language
   // mode toggles; write `.mugiwara/config` so the next wave reads the new level.
   'chat.message': async (_input, output) => {
-    if (!output || !output.parts) return;
-    for (const part of output.parts) {
-      if (part && part.type === 'text' && part.text) {
+    if (!output) return;
+    if (typeof output === 'string') {
+      const change = parseModeChange(output);
+      if (change) applyModeChange(change);
+      return;
+    }
+    const parts = output.parts ?? output.messages ?? output;
+    if (!Array.isArray(parts)) return;
+    for (const part of parts) {
+      if (part && typeof part.text === 'string') {
         const change = parseModeChange(part.text);
         if (change) applyModeChange(change);
       }
