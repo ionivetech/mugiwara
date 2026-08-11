@@ -19,7 +19,7 @@ session-start hook.
 Claude Code clones the repo and reads from:
 
 - `skills/` and `agents/` — symlinks to `content/skills/` and
-  `content/agents/`. Claude Code auto-discovers all 26 skills and 15 agents.
+  `content/agents/`. Claude Code auto-discovers all 26 skills and 14 agents.
 - `hooks/hooks.json` — defines a SessionStart hook that runs
   `hooks/session-start.ts`, injecting the crew announce header at every
   session start.

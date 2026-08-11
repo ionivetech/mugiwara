@@ -10,7 +10,7 @@ description: Use at session start or on any task — explains how the crew works
 - Lane 0 direct work: typo, rename, or single-file fix under 20 LOC.
 - User explicitly declined the crew for this request.
 
-Mugiwara is a governed engineering team in your coding agent. 15 specialists — triage, brainstorm, plan, execute, audit, quality, gates, review, security, heal — with evidence at every step and cost tracking. Runs inline in the main conversation.
+Mugiwara is a governed engineering team in your coding agent. 14 specialists — triage, brainstorm, plan, execute, audit, quality, gates, review, security, heal — with evidence at every step and cost tracking. Runs inline in the main conversation.
 
 ## How it works
 

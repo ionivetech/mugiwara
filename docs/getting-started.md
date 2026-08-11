@@ -150,7 +150,7 @@ six. See [audit-trail.md](audit-trail.md) for the full artifact map.
 
 ## 6. Next steps
 
-- Meet the [crew](agents.md) — 15 agents with permission boundaries.
+- Meet the [crew](agents.md) — 14 agents with permission boundaries.
 - Browse the [skills](skills.md) — 26 skills with the 3-layer disclosure model.
 - Understand the [lanes](lanes.md) — how work is sized before it runs.
 - Set your [mode](modes.md) — guided/semi/auto.

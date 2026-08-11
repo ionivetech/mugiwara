@@ -27,7 +27,7 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target claude --yes
 ## What you get
 
 - 32 skills in `~/.claude/skills/` (global) or `.claude/skills/` (project).
-- 15 agents in `~/.claude/agents/` or `.claude/agents/`.
+- 14 agents in `~/.claude/agents/` or `.claude/agents/`.
 - A SessionStart hook that announces the crew and auto-activates the workflow —
   a non-trivial request runs the pipeline by itself. `/using-mugiwara` is an
   optional explicit router if you want to hand-route a mission.

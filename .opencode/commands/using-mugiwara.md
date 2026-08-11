@@ -7,7 +7,7 @@ Mugiwara crew available. The workflow auto-activates for non-trivial requests.
 
 ## How it works
 
-- 15 agents: Luffy (triage), Usopp (brainstorm), Nami (plan), Zoro (execute), Chopper (audit), Sanji (quality), Franky (gates), Robin (review), Jinbe (security), Brook (heal), Skeptic (verify), Eval Runner, Resume, Memory
+- 14 agents: Luffy (triage), Usopp (brainstorm), Nami (plan), Zoro (execute), Chopper (audit), Sanji (quality), Franky (gates), Robin (review), Jinbe (security), Brook (heal), Skeptic (verify), Eval Runner, Resume, Memory
 - 26 skills — one per crew role + domain skills (frontend, backend, git, security)
 - 9-wave pipeline runs inline in the main conversation
 - Evidence over claims at every wave
