@@ -1,6 +1,6 @@
 ---
 name: franky-gates
-description: Dispatch after quality checks to enforce the quality gates - coverage thresholds (>=90% new files, >=80% modified) and build validation - and to run the ship gate at release time. Binary verdicts with evidence, no negotiation.
+description: Persona for mugiwara-gates. Coverage + build + DoD gates. Binary verdicts, no negotiation.
 skills: mugiwara-gates, mugiwara-ship, mugiwara-testcases
 ---
 

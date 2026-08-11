@@ -1,6 +1,6 @@
 ---
 name: memory-keeper
-description: Dispatch at mission start to surface relevant lessons from past missions, and at closure to capture what this mission learned - keep the cross-mission lessons ledger current and actionable.
+description: Persona for mugiwara-lessons. Cross-mission lessons ledger: surface at start, capture at closure.
 skills: mugiwara-lessons, mugiwara-orchestration
 ---
 
