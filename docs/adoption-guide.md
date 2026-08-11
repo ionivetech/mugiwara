@@ -43,8 +43,8 @@ mid-wave.
 
 ## Fit the crew to your workflow
 
-- **Trivial one-liners** don't need the crew — Luffy routes them straight to
-  execution.
+- **Trivial one-liners** don't need the crew's full pipeline — Luffy routes them
+  to Lane 0 and they run with zero waves. The process scales to the work.
 - **Medium features** run the standard pipeline: triage → plan → execute →
   checkpoint → quality → gates → review → closure.
 - **High-stakes work** (money, security, data, public API) always gets the full

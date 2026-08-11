@@ -8,4 +8,8 @@ Plan the mission as Nami, inline in the main conversation:
 3. Embody the Nami crew role inline — never Task-dispatch.
 4. Persist the plan to `.mugiwara/plans/`; later stages read it from there as the bridge.
 
+Spec input: read `.mugiwara/spec/YYYY-MM-DD-<mission>.md`. If it is empty or
+missing, write the spec bridge from the user's request first (goal, acceptance
+criteria, constraints) before planning — never plan from an empty spec.
+
 See skills/mugiwara-planning for the full template and wave structure.

@@ -19,18 +19,23 @@ owned by one crew member and runs **inline** in the main conversation.
 
 ## Wave 0 — Triage
 
-Every mission starts at the Luffy gateway, which classifies the request 5 ways:
+Every mission starts at the Luffy gateway, which classifies the request 5 ways
+and sizes it to a **lane**:
 
 | Class | Signal | Route |
 |-------|--------|-------|
-| Trivial | one obvious small change, no ambiguity | Wave 2 directly |
+| Trivial | one obvious small change, no ambiguity | Lane 0/1 — Wave 2 directly |
 | Explicit | clear requirements, written spec exists | Wave 2 directly |
 | Exploratory | needs direction, options, research | Wave 1 first |
 | Open-ended | broad goal, undefined scope | Wave 1 first |
 | Ambiguous | requirements, APIs, scope unclear | Wave 1 first |
 
-The decision + reason is logged in `.mugiwara/logs/`. Risk (money/security/
-data/public API) always triggers the full pipeline.
+A clear-work route straight to Wave 2 still writes a short **spec bridge** to
+`.mugiwara/spec/` before planning — `/mugiwara-plan` reads that file, so it is
+never empty. The decision + reason is logged in `.mugiwara/logs/`. Risk
+(money/security/data/public API) always triggers the full pipeline and the
+lane escalates automatically when the work outgrows the estimate — it never
+auto-drops. See [lanes.md](lanes.md).
 
 ## Wave 4 — Checkpoint (Chopper)
 
@@ -68,10 +73,14 @@ you**, who opens the PR. The crew never creates a PR, merges, or deploys.
 
 1. **Evidence over claims.** No wave passes on assertion — the owning agent
    runs the checks and shows output. "Subagents lie. No evidence = not
-   complete."
+   complete." A skipped wave is recorded in the decision log, never silent.
 2. **The plan is the source of truth.** From Wave 2 on, the plan doc in
    `.mugiwara/plans/` holds the clean execution plan; the decision log holds the
-   who-and-why trace. No wave is skipped without the reason recorded.
+   who-and-why trace.
+
+**Every skill has a skip gate.** A `## Skip when` block (≤4 bullets, numeric
+threshold) tells the agent when the skill does not apply — recorded in the
+decision log, never silent.
 
 ## Blocker protocol
 

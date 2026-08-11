@@ -38,12 +38,16 @@ style:
 
 1. **Title + one-line identity** — `# Checkpoint (Chopper)`, then what the role
    is and is not.
-2. **The protocol** — numbered steps, exact commands, exact file paths.
-3. **Decision tables** — where a judgment is needed, a table of signal → action.
-4. **The iron law** — one memorable line that states the non-negotiable
+2. **Skip when** — required. ≤4 bullets, numeric threshold, telling the agent
+   when this skill does not apply (e.g. "no UI code touched", "<3 files").
+   Without it the content validator fails the build. A skipped skill is
+   recorded in the decision log, never silent.
+3. **The protocol** — numbered steps, exact commands, exact file paths.
+4. **Decision tables** — where a judgment is needed, a table of signal → action.
+5. **The iron law** — one memorable line that states the non-negotiable
    ("TRUST NOTHING; VERIFY EVERYTHING").
-5. **Common rationalizations** — the excuses to reject, and the correct reply.
-6. **Red flags** — conditions that mean "stop, this isn't done," each ending
+6. **Common rationalizations** — the excuses to reject, and the correct reply.
+7. **Red flags** — conditions that mean "stop, this isn't done," each ending
    with what to do.
 
 ### Style rules that keep skills effective
@@ -69,7 +73,8 @@ is the single source of truth; harnesses copy it verbatim.
 ## Validation
 
 Every skill is validated on check-in: name matches folder, description 20–500
-chars, body ≤120 lines, no duplicate names. Run:
+chars, body ≤120 lines, no duplicate names, and a `## Skip when` block with
+1–4 bullets. Run:
 
 ```bash
 bun run validate
