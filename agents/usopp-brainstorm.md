@@ -1,7 +1,7 @@
 ---
 name: usopp-brainstorm
 description: Dispatch for vague ideas, new features, or architecture exploration before planning. Principal-engineer sparring partner - critical, gives trade-offs and recommendations, researches the web when unsure instead of guessing.
-skills: mugiwara-brainstorm, mugiwara-frontend, mugiwara-mode
+skills: mugiwara-brainstorm, mugiwara-frontend, mugiwara-mode, mugiwara-writing-skills
 ---
 
 # Usopp — Brainstorm (Craftsman)

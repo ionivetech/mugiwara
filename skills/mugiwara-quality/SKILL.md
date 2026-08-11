@@ -18,6 +18,7 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 3. Unit tests — full suite, capture output.
 4. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
 5. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
+6. Optional e2e gate — only when BOTH repo e2e setup AND changed-file e2e patterns hold, consent by mode, see below.
 
 ## User suites (per `mugiwara-testcases`)
 
@@ -28,6 +29,14 @@ Run the declared user test files under the consent matrix:
 - State-mutating user tests (DB writes, network, browsers): consent in ALL modes.
 
 The user-AC verdict feeds the gates wave — it must come from these runs actually executing, never asserted.
+
+## Optional e2e gate
+
+Optional, never default-on. Trigger ONLY when BOTH hold:
+- Repo has e2e setup — any of `playwright.config.*`, `cypress.config.*`, `e2e/` dir, `test:e2e` npm script.
+- Changed/staged files match e2e patterns — `e2e/**`, `*.e2e.*`, `specs/**`.
+
+When triggered, consent by mode (per `mugiwara-mode` invariant): `guided`/`semi` ask first — run now / skip / run manually later; `auto` runs only provably-isolated e2e (in-memory / local / tooling-proven isolation). Otherwise skip-and-log: record the skip reason (no setup, no matching files, no consent) in the report. The e2e gate never blocks silently and never blocks a pass — a skip is logged, not a failure.
 
 ## Mode + consent (per `mugiwara-mode`)
 
@@ -54,3 +63,4 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 | "Integration tests, skip them, too slow." | Skipping is policy, not laziness: we never create integration tests, and undeclared suites don't run. Declared user suites run under the consent matrix. |
 | "No tooling found, wave done." | No tooling means say so and propose the minimal setup, never a silent skip. |
 | "Formatter and linter are the same." | They are separate checks; run both. |
+| "E2E setup exists, so the gate runs." | No — trigger needs BOTH setup AND changed-file e2e patterns, plus consent by mode. Otherwise skip-and-log, never run unasked. |
