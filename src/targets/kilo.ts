@@ -7,4 +7,5 @@ export const target = makeGeneric({
   rulesDir: '.kilo/rules',
   bootstrapFile: 'kilo.jsonc',
   bootstrapPointer: '{\n  "instructions": [\n    ".kilo/rules/*.md"\n  ]\n}',
+  tier: 3,
 });

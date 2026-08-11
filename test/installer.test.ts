@@ -14,6 +14,7 @@ const fakeTarget: Target = {
   }),
   transformSkill: (d, b) => ({ relPath: join(d.name, 'SKILL.md'), text: `S:${d.name}\n${b}` }),
   transformAgent: (d, b) => ({ relPath: `${d.name}.md`, text: `A:${d.name}\n${b}` }),
+  refsDir: ({ projectDir }) => join(projectDir, 'refs'),
 };
 
 const projectDir = mkdtempSync(join(tmpdir(), 'mugi-t-'));
@@ -27,6 +28,41 @@ test('collectContent includes all skills and agents', () => {
   expect(agents.some(a => a.name === 'luffy-orchestrator')).toBe(true);
   expect(skills.length).toBeGreaterThanOrEqual(20);
   expect(agents.length).toBeGreaterThanOrEqual(14);
+});
+
+test('references/ files are collected from content', () => {
+  const { skills } = collectContent();
+  const frontend = skills.find(s => s.name === 'mugiwara-frontend')!;
+  expect(frontend.refs.some(r => r.relPath === 'checklist.md')).toBe(true);
+  expect(frontend.refs.some(r => r.text.includes('WCAG'))).toBe(true);
+});
+
+test('installTo writes references/ into the target refs dir', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-refs-'));
+  const r = installTo(fakeTarget, { ...opts, projectDir: dir });
+  const checklist = join(dir, 'refs', 'checklist.md');
+  expect(existsSync(checklist)).toBe(true);
+  expect(readFileSync(checklist, 'utf8')).toContain('WCAG');
+  expect(r.written).toContain(checklist);
+});
+
+test('claude install writes references under the skill dir', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-refclaude-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-refchome-'));
+  installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const checklist = join(dir, '.claude', 'skills', 'mugiwara-frontend', 'references', 'checklist.md');
+  expect(existsSync(checklist)).toBe(true);
+  expect(readFileSync(checklist, 'utf8')).toContain('WCAG');
+});
+
+test('generic install keeps references outside the rules glob', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-refgen-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-refghome-'));
+  installTo(targets['gemini'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const rulesDir = join(dir, '.gemini', 'mugiwara');
+  expect(existsSync(join(rulesDir, 'mugiwara-frontend.md'))).toBe(true);
+  expect(existsSync(join(dir, '.mugiwara', 'refs', 'checklist.md'))).toBe(true);
+  expect(existsSync(join(rulesDir, 'mugiwara-frontend', 'references', 'checklist.md'))).toBe(false);
 });
 
 test('installTo writes skills and agents, rerun skips identical', () => {

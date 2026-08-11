@@ -27,6 +27,10 @@ export const target: Target = {
     if (data.tools) fm.tools = data.tools;
     return { relPath: `${data.name}.md`, text: stringifyFrontmatter(fm, body) };
   },
+  refsDir({ scope, projectDir, home }, skillName: string) {
+    const root = scope === 'global' ? join(home, '.claude') : join(projectDir, '.claude');
+    return join(root, 'skills', skillName, 'references');
+  },
   postInstall({ scope, projectDir, home, dryRun }) {
     // Wire the SessionStart hook (inline doctrine) into the installed .claude dir.
     const root = scope === 'global' ? join(home, '.claude') : join(projectDir, '.claude');
