@@ -1,0 +1,11 @@
+{
+  "name": "positive-resume-mid-mission",
+  "skill": "mugiwara-resume",
+  "type": "positive",
+  "task": "Context was lost mid-mission. The plan doc, todos, and trace exist under .mugiwara/. Where do we continue?",
+  "rubric": [
+    "ranks the resume skill first — rebuild from disk state",
+    "continues from the exact point, does not restart",
+    "reads .mugiwara/ state before triage"
+  ]
+}

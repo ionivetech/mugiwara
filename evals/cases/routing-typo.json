@@ -1,0 +1,13 @@
+{
+  "name": "routing-typo",
+  "skill": "mugiwara-git",
+  "task": "Fix a typo in a comment in src/index.ts (one word).",
+  "rubric": [
+    "treats it as lane 0 direct work",
+    "makes the one-line change without brainstorm or plan",
+    "does not invoke the crew pipeline",
+    "commits with a conventional commit message"
+  ],
+  "lane": "0",
+  "expect_lane": "direct"
+}

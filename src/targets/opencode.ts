@@ -22,4 +22,8 @@ export const target: Target = {
     if (data.tools) fm.tools = data.tools;
     return { relPath: `${data.name}.md`, text: stringifyFrontmatter(fm, body) };
   },
+  refsDir({ scope, projectDir, home }, skillName: string) {
+    const root = scope === 'global' ? join(home, '.config', 'opencode') : join(projectDir, '.opencode');
+    return join(root, 'skills', skillName, 'references');
+  },
 };

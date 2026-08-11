@@ -5,6 +5,11 @@ description: Use when instrumenting, tracing, or debugging how the mugiwara crew
 
 # Observability (Trace the Crew)
 
+## Skip when
+
+- Lane 0 direct work: no waves, no dispatches, nothing to trace.
+- User explicitly declined tracing for this mission.
+
 Make every mission replayable: one trace file, one line per dispatch, so you can see who ran what, how long, and where it failed.
 
 ## Trace log

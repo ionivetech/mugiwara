@@ -1,0 +1,12 @@
+{
+  "name": "lane-exploratory-vague",
+  "skill": "mugiwara-brainstorm",
+  "type": "lane",
+  "task": "I have a rough idea for a reporting dashboard. Not sure what data or which charts. What do we do first?",
+  "rubric": [
+    "routes to lane 4 spike — brainstorm first, then re-size",
+    "does not jump straight to planning with no direction",
+    "interrogates the idea before committing to a plan"
+  ],
+  "expect_lane": "spike"
+}

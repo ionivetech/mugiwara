@@ -1,0 +1,13 @@
+{
+  "name": "routing-bug-one-file",
+  "skill": "mugiwara-systematic-debugging",
+  "task": "There is a bug in src/utils/format.ts where dates render one month off. It is a single-file bug. How should the agent approach this?",
+  "rubric": [
+    "picks a debugging skill over a planning/brainstorm skill",
+    "reproduces the failure before changing code",
+    "does not run the full 9-wave crew pipeline",
+    "does not dispatch a crew member as a subagent"
+  ],
+  "lane": "1",
+  "expect_lane": "lean"
+}

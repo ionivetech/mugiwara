@@ -1,6 +1,7 @@
 // src/targets/copilot.ts
 import { join } from 'node:path';
 import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
+import type { Scope } from '../manifest.ts';
 import type { Target } from '../installer.ts';
 
 export const target: Target = {
@@ -22,5 +23,8 @@ export const target: Target = {
       relPath: `${data.name}.md`,
       text: stringifyFrontmatter({ name: data.name, description: data.description }, body),
     };
+  },
+  refsDir(_opts: { scope: Scope; projectDir: string; home: string }, skillName: string) {
+    return join(_opts.projectDir, '.mugiwara', 'refs', skillName);
   },
 };

@@ -5,6 +5,11 @@ description: Use for any frontend implementation or redesign task - converting F
 
 # Frontend (Anti-Slop)
 
+## Skip when
+
+- Diff touches no UI code: backend, docs, config, or CLI-only change.
+- No visual change, markup, styling, or frontend behavior in the mission.
+
 Interfaces built under this skill must not look templated.
 
 ## Existing repo standard first
@@ -34,13 +39,12 @@ Compose, don't inherit. Small, single-purpose components; the tree mirrors the p
 
 Minimal state, local first; lift only what is shared.
 - Server vs client state: never store a per-screen copy of API data; cache/refetch at a data layer; derive on render.
-- Single source of truth per state; no duplicate mirrors.
-- Lift only when siblings share; context/store for app-wide state, not one screen.
+- Single source of truth per state, no duplicate mirrors; lift only when siblings share — context/store for app-wide state, not one screen.
 - Loading, error, empty, success states designed, not an afterthought.
 
 ## From Figma / image references
 
-Extract tokens first, then reproduce structure faithfully: hierarchy, alignment, whitespace ratios. Do not "improve" the layout unasked. One-off components still follow the design system — a one-off is not a license for a second system.
+Extract tokens first, then reproduce structure faithfully: hierarchy, alignment, whitespace ratios. Do not "improve" the layout unasked. A one-off is not a license for a second system.
 
 ## Taste: positive design judgment
 
@@ -51,7 +55,7 @@ Extract tokens first, then reproduce structure faithfully: hierarchy, alignment,
 - Consistency: the same thing looks the same everywhere; no three ways to render a button.
 - Intentionality: every element earns its place; if you cannot say why, remove it.
 - State design: hover, focus, active, disabled, loading, error, empty — designed, not forgotten.
-- Craft: deliberate spacing grids; subtle motion respecting `prefers-reduced-motion`; verified at mobile/tablet/desktop.
+- Craft: deliberate spacing grids; subtle motion respecting `prefers-reduced-motion`; verified at all breakpoints.
 
 ## Responsive behavior
 
@@ -91,8 +95,7 @@ Add stable `data-testid` to interactive elements per the repo's testing conventi
 ## Frontend security
 
 - Never render user content via `dangerouslySetInnerHTML`/`v-html` unless sanitized.
-- Escape user input in every template; no secrets in client code.
-- Validate anything from URL params, storage, or APIs before use.
+- Escape user input in every template; no secrets in client code; validate URL params/storage/API input.
 - `rel="noopener"` on `target="_blank"`; validate URLs before navigating.
 
 ## Red flags
@@ -110,15 +113,12 @@ Add stable `data-testid` to interactive elements per the repo's testing conventi
 | Excuse | Reality |
 |--------|---------|
 | "The brief calls for a hero trio." | A brief calling for slop is a constraint, not a license — the default stays don't. |
-| "It's just a landing page." | Still verified for responsive and a11y — small is not exempt. |
-| "It's a one-off component." | A one-off still follows the design system's tokens and patterns. |
-| "Good enough." | Not done until compared against the reference with deltas listed. |
-| "It looks right." | Verified at every breakpoint or it is not verified. |
+| "It's just a landing page." / "It's a one-off component." | Still verified for responsive and a11y; still follows the design system's tokens and patterns. |
+| "Good enough." / "It looks right." | Not done until compared against the reference with deltas listed, at every breakpoint. |
 | "Everyone ships this card row." | Popularity is not design; if it's on the slop list, it stays banned. |
 | "Tokens later." | Tokens extracted before markup, or the layout gets rebuilt. |
 | "Our repo is messy, I'll use my own style." | Match the repo standard first, then propose raising it. |
-| "The user won't use a keyboard." | Every interaction must be keyboard-operable; "users won't" is not a design decision. |
-| "Context for everything." | Server state belongs at a data layer, not a global store. |
+| "The user won't use a keyboard." / "Context for everything." | Every interaction keyboard-operable; server state belongs at a data layer, not a global store. |
 | "It's a quick prop, no new component." | 3+ boolean props is the boundary — split the component. |
 
 If the rationalization wins, name it in the report as a known delta — not as silence.

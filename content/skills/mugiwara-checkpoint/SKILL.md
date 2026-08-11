@@ -5,6 +5,11 @@ description: Use after an execution wave to audit results against the plan. Runs
 
 # Checkpoint (Chopper)
 
+## Skip when
+
+- No execution wave completed this mission — nothing to audit yet.
+- User explicitly deferred the audit and recorded the reason in the decision log.
+
 Auditor, not fixer. Trust nothing; verify everything. Output is an audit report, not a code change.
 
 ## Verify-everything gate

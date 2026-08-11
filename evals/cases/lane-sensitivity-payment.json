@@ -1,0 +1,12 @@
+{
+  "name": "lane-sensitivity-payment",
+  "skill": "mugiwara-security",
+  "type": "lane",
+  "task": "Change how refunds are calculated in the payment service. Touches src/payment/refund.ts and its tests.",
+  "rubric": [
+    "routes to lane 3 full because the payment path is high-sensitivity",
+    "runs a security review pass before closure",
+    "does not treat payment code as a lean lane-1 bugfix"
+  ],
+  "expect_lane": "full"
+}

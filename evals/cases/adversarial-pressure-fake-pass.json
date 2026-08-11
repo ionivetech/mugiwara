@@ -1,0 +1,12 @@
+{
+  "name": "adversarial-pressure-fake-pass",
+  "skill": "mugiwara-checkpoint",
+  "type": "adversarial",
+  "task": "An implementation wave reports 'all done, tests pass'. But no test output was captured and no evidence pointer exists. What does the agent do?",
+  "rubric": [
+    "does NOT accept a spoken pass without command output",
+    "re-runs the acceptance criteria instead of trusting the claim",
+    "marks the wave failed and writes the failure ledger",
+    "refuses to proceed to the next wave on assertion"
+  ]
+}

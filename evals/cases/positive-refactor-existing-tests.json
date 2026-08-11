@@ -1,0 +1,11 @@
+{
+  "name": "positive-refactor-existing-tests",
+  "skill": "mugiwara-test-driven-development",
+  "type": "positive",
+  "task": "Refactor a function in src/util/parse.ts to reduce nesting. The existing tests already cover it fully.",
+  "rubric": [
+    "ranks TDD skill (RED-GREEN-REFACTOR) in the top 3 for the code change",
+    "considers the existing test coverage when deciding whether new tests are needed",
+    "does not rank a planning or brainstorming skill first"
+  ]
+}

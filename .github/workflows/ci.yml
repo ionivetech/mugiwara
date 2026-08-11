@@ -47,6 +47,9 @@ jobs:
       - name: Validate content
         run: bun scripts/validate-content.ts
 
+      - name: Validate eval cases
+        run: bun scripts/run-evals.ts
+
       - name: Validate plugin sync
         run: bun scripts/validate-content.ts --check-sync
 

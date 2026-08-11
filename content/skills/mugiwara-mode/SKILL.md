@@ -5,6 +5,11 @@ description: Use when reading or changing the runtime mode (guided / semi / auto
 
 # Mode (guided / semi / auto)
 
+## Skip when
+
+- Mode unchanged this session: no config read or flip requested.
+- Lane 0 direct work where autonomy level is irrelevant to the change.
+
 The crew's autonomy level. Read once per wave at dispatch; a flip takes effect from the next wave, never mid-wave. Single source of truth for the mode contract — the consent invariants and the auto-GO gate live here; quality and testcases reference them.
 
 ## Levels

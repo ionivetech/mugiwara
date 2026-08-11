@@ -5,6 +5,11 @@ description: Use when any agent or worker hits a failure and must debug it - a b
 
 # Systematic Debugging
 
+## Skip when
+
+- Cause already known and reproduced, fix obvious, failure not intermittent.
+- One-line revert or rollback resolves it with no investigation needed.
+
 A failure is a stopping event, not a speed bump. Do not guess, do not patch. Walk the four phases in order; each gates the next.
 
 ## When to use

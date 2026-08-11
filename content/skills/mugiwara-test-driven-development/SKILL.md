@@ -5,6 +5,11 @@ description: Use when writing code during execution - RED-GREEN-REFACTOR discipl
 
 # Test-Driven Development
 
+## Skip when
+
+- No production code written: docs, config, or pure dependency bump.
+- Refactor already fully covered by existing passing tests (record the reason).
+
 A test proves nothing by existing. It proves nothing by passing. Its entire value lives in WHEN it runs and HOW it fails. TDD is the discipline that makes that proof real.
 
 ## When to use

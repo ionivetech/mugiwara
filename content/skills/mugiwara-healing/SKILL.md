@@ -5,6 +5,11 @@ description: Use when earlier waves produced failures - test failures, gate fail
 
 # Healing (Brook)
 
+## Skip when
+
+- No failures recorded: blocker ledger empty, all gates and reviews passed.
+- User explicitly accepts a failure as-is and recorded the decision.
+
 Fix what failed, minimally, and prove it. One clean retry per cycle.
 
 ## Read the ledger first

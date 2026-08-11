@@ -5,6 +5,11 @@ description: Use when running parallel branch work, keeping the main workspace c
 
 # Git Worktrees — Isolated Parallel Branches
 
+## Skip when
+
+- Single-branch sequential work: no parallel branches running at once.
+- Working tree stays clean and review happens on the current branch.
+
 Worktrees give each branch its own checkout, so parallel missions, reviews, and experiments never fight over one working tree. Companion to mugiwara-git, not a replacement for commit discipline.
 
 ## When to use

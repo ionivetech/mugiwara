@@ -5,6 +5,11 @@ description: Use after quality gates pass to review the diff adversarially - dou
 
 # Review (Robin)
 
+## Skip when
+
+- Zero diff to review: docs-only change or lane 0 one-line fix.
+- User explicitly deferred review and recorded the decision.
+
 Review like the diff will be maintained by someone else at 3am — and like the implementer is wrong until proven otherwise.
 
 ## Breaking-change analysis (do this FIRST) — build the damage map

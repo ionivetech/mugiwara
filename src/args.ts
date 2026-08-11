@@ -9,7 +9,8 @@ export type Args = {
 const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target' };
 const BOOL_FLAGS: Record<string, string> = {
   '--global': 'global', '--yes': 'yes', '-y': 'yes', '--force': 'force',
-  '--dry-run': 'dryRun', '--help': 'help', '-h': 'help', '--version': 'version', '-v': 'version',
+  '--dry-run': 'dryRun', '--keep-logs': 'keepLogs',
+  '--help': 'help', '-h': 'help', '--version': 'version', '-v': 'version',
 };
 
 export function parseArgs(argv: string[]): Args {

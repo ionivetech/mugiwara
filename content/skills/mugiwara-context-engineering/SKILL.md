@@ -5,6 +5,11 @@ description: Use when a mission or agent works in a large codebase, long session
 
 # Context Engineering
 
+## Skip when
+
+- Work fits one short conversation: <3 files touched, context window <50% used.
+- Single small fix where reading two files already covers the change.
+
 The context window is a budget, not a bin. An agent that reads everything sees less of what matters; an agent that trusts everything obeys what it should ignore. Both fail at the end of a long mission. Feed only what the next decision needs, load detail only when a decision demands it, and let source trust decide how loud each input gets.
 
 ## When to use

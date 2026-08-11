@@ -5,6 +5,11 @@ description: Use when retiring code, APIs, or features that no longer justify th
 
 # Deprecation & Migration (Brook)
 
+## Skip when
+
+- No code, API, or feature is being retired or replaced.
+- Purely additive change — nothing removed, no migration path needed.
+
 Keeping old code alive is a tax, not a virtue: it keeps costing tests, patches, security reviews, and the attention of everyone who walks past it. Retirement is a craft — the removal itself must be as disciplined as the build.
 
 ## Sunset or keep

@@ -29,6 +29,9 @@ base=main
 | `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
 | `base` | branch name | `main` | The PR target named in the prepared PR summary |
 
+The mission **lane** (how many waves run) is decided by Luffy at triage — see
+[lanes.md](lanes.md). Config holds autonomy and writing standards only.
+
 Missing config on read = `guided`. Flip mid-mission with
 `mugiwara mode <guided|semi|auto>` — the change applies from the next wave,
 never mid-wave.

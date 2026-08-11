@@ -1,11 +1,14 @@
 # Mugiwara Docs
 
 The Straw Hat crew of AI agents and skills. These docs cover what the crew is,
-how to adopt it, and how each harness installs it. The crew is pure markdown —
-no runtime, no daemons, nothing to host. It ships **15 agents** and **32
-skills**, and the workflow **auto-activates** at session start — a non-trivial
-request runs the pipeline by itself, with `/using-mugiwara` as an optional
-explicit router.
+how to adopt it, and how each harness installs it. The crew is markdown plus a
+small Node CLI (`mugiwara`) — no daemons, nothing to host. It ships **15
+agents** and **32 skills**, and the workflow **auto-activates** at session
+start — a non-trivial request runs the pipeline by itself, with
+`/using-mugiwara` as an optional explicit router. Work is **sized to a lane**
+before it runs: small fixes skip the pipeline, sensitive changes run the full
+nine waves, and every wave passes only on **evidence**, never on a spoken
+claim.
 
 ## Start here
 
@@ -20,6 +23,8 @@ explicit router.
 | [The techniques](skills.md) | All 32 skills and what each enforces |
 | [The wave pipeline](workflow.md) | How a mission flows Wave 0 → Wave 9 |
 | [Execution model](execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
+| [Lanes & sizing](lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
+| [Enforcement](enforcement.md) | Skip gates, evidence over claims, and capability tiers |
 | [Git discipline](git-strategy.md) | Commits, branches, save-points — and why the executor commits |
 
 ## Install by harness
@@ -41,6 +46,7 @@ explicit router.
 |-----|----------------|
 | [Skill anatomy](skill-anatomy.md) | How a mugiwara skill file is structured |
 | [Agent anatomy](agent-anatomy.md) | How a mugiwara agent file is structured |
+| [Troubleshooting](troubleshooting.md) | Common problems and how to fix them |
 | [Developer onboarding](developer-onboarding.md) | Repo layout, validation, tests, contributing |
 
 ## Resources

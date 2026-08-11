@@ -5,7 +5,12 @@ import { homedir } from 'node:os';
 import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
 import type { Scope } from './manifest.ts';
 
-export type ContentItem = { name: string; data: FrontmatterData; body: string };
+export type ContentItem = {
+  name: string;
+  data: FrontmatterData;
+  body: string;
+  refs: { relPath: string; text: string }[];
+};
 
 export type InstallOptions = {
   scope: Scope;
@@ -28,9 +33,13 @@ export interface Target {
   id: string;
   label: string;
   native: boolean;
+  tier?: 1 | 2 | 3;
   paths(opts: { scope: Scope; projectDir: string; home: string }): { skillsDir: string; agentsDir: string };
   transformSkill(data: FrontmatterData, body: string): TransformOut;
   transformAgent(data: FrontmatterData, body: string): TransformOut;
+  refsDir?(opts: { scope: Scope; projectDir: string; home: string }, skillName: string): string;
+  transformSkillFull?(data: FrontmatterData, body: string): TransformOut | null;
+  transformAgentFull?(data: FrontmatterData, body: string): TransformOut | null;
   postInstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean; files: string[] }): { written: string[]; notes: string[] };
 }
 
@@ -43,15 +52,22 @@ export function collectContent(): { skills: ContentItem[]; agents: ContentItem[]
     .filter(e => e.isDirectory()).map(e => e.name);
   const skills = skillNames.map(name => {
     const { data, body } = parseFrontmatter(readFileSync(join(CONTENT_DIR, 'skills', name, 'SKILL.md'), 'utf8'));
-    return { name, data, body };
+    return { name, data, body, refs: collectRefs(join(CONTENT_DIR, 'skills', name)) };
   });
   const agents = readdirSync(join(CONTENT_DIR, 'agents'))
     .filter(f => f.endsWith('.md'))
     .map(f => {
       const { data, body } = parseFrontmatter(readFileSync(join(CONTENT_DIR, 'agents', f), 'utf8'));
-      return { name: f.replace(/\.md$/, ''), data, body };
+      return { name: f.replace(/\.md$/, ''), data, body, refs: [] as { relPath: string; text: string }[] };
     });
   return { skills, agents };
+}
+
+function collectRefs(skillDir: string): { relPath: string; text: string }[] {
+  const refsDir = join(skillDir, 'references');
+  if (!existsSync(refsDir)) return [];
+  return readdirSync(refsDir, { recursive: true }).map(f => String(f)).filter(f => f.endsWith('.md'))
+    .map(rel => ({ relPath: rel, text: readFileSync(join(refsDir, rel), 'utf8') }));
 }
 
 export function installTo(target: Target, opts: InstallOptions): InstallResult {
@@ -82,10 +98,22 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   for (const s of skills) {
     const out = target.transformSkill(s.data, s.body);
     if (out) writeOne(join(dirs.skillsDir, out.relPath), out.text);
+    if (target.transformSkillFull) {
+      const full = target.transformSkillFull(s.data, s.body);
+      if (full && target.refsDir) writeOne(join(target.refsDir({ scope, projectDir, home }, s.name), full.relPath), full.text);
+    }
+    if (s.refs.length && target.refsDir) {
+      const refsRoot = target.refsDir({ scope, projectDir, home }, s.name);
+      for (const r of s.refs) writeOne(join(refsRoot, r.relPath), r.text);
+    }
   }
   for (const a of agents) {
     const out = target.transformAgent(a.data, a.body);
     if (out) writeOne(join(dirs.agentsDir, out.relPath), out.text);
+    if (target.transformAgentFull) {
+      const full = target.transformAgentFull(a.data, a.body);
+      if (full && target.refsDir) writeOne(join(target.refsDir({ scope, projectDir, home }, a.name), full.relPath), full.text);
+    }
   }
 
   if (target.postInstall) {

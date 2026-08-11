@@ -18,6 +18,7 @@
     "src",
     "content",
     "docs",
+    "evals",
     ".opencode",
     "hooks",
     "scripts/install.sh",

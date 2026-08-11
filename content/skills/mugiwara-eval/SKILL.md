@@ -5,6 +5,11 @@ description: Use when verifying that a mugiwara skill, agent, or the whole crew 
 
 # Eval (Self-Test)
 
+## Skip when
+
+- No skill, agent, or crew behavior changed — pure docs, installer, or packaging.
+- Change is a version bump or manifest edit with zero behavioral delta.
+
 Skills rot silently. A skill that was never tested is a claim, not a capability. This is the harness's own test harness: write a task suite, run each case, score with a fresh judge against a rubric, report pass/fail.
 
 ## Why

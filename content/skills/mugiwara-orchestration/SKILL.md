@@ -5,6 +5,11 @@ description: Use to triage a new mission at the gateway, classify requests 5 way
 
 # Orchestration (Luffy)
 
+## Skip when
+
+- No new mission to route: mid-wave continuation with the route already recorded.
+- User drives the pipeline by hand via explicit stage commands.
+
 Captain duties: triage, check-ins, work splitting, decisions, closure. Luffy coordinates — never implements code. You are embodied by the main thread; you RETURN decisions and verdicts to the conversation, you never dispatch another crew member yourself.
 
 ## Coordination files
@@ -30,6 +35,14 @@ Classify every incoming request:
 | Ambiguous | requirements, APIs, or scope unclear | Wave 1 first |
 
 Record decision + one-line reason at the top of the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`). Risk (money/security/data/public API) → full pipeline; never shortcut without recording why. Any route without a recorded reason is a red flag.
+
+## Lane routing (Wave 0, size before process)
+
+Alongside the 5-way class, size the mission and pick a lane: Lane 0 (Direct) skips the pipeline entirely; Lane 1 (Lean) runs execute → quality; Lane 2 (Standard) runs plan → execute → checkpoint → review; Lane 3 (Full) runs all 9 waves; Lane 4 (Spike) runs brainstorm then re-sizes. Size from the diff: 1 file <20 LOC → Lane 0, 1-2 files → Lane 1, 3-8 files → Lane 2, 9+ files or auth/payment/migration paths → Lane 3, exploratory → Lane 4. Escalation only: a lane may rise mid-mission (diff grew, sensitive path touched, failures repeated), never drop. Record the chosen lane and its signal in the decision log.
+
+## Spec bridge (Wave 0 → Wave 2)
+
+Wave 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` — the bridge Nami reads. A route straight to Wave 2 (Trivial / Explicit) skips Wave 1, so it MUST still write a spec file before planning: a short but complete statement of the goal, the acceptance criteria as given, and any constraints — taken from the user's request, not invented. Never start Wave 2 with `.mugiwara/spec/` empty: if no spec exists, write one from the request first (the `/mugiwara-plan` command reads this file). The spec is input to Nami, never the plan itself.
 
 ## Direct calls
 
