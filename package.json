@@ -52,7 +52,8 @@
     "evals": "bun scripts/run-evals.ts",
     "retrieval-eval": "bun scripts/retrieval-eval.ts",
     "sync-version": "bun scripts/sync-version.ts",
-    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts",
+    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts",
+    "verify-pack": "npm pack --dry-run 2>&1 | grep -q 'ionivetech-mugiwara' && echo '✓ npm package clean' || (echo '✗ npm pack failed' && exit 1)",
     "prepack": "bun run build && bun run sync-version"
   },
   "keywords": [

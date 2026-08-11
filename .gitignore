@@ -7,3 +7,4 @@ dist/
 .opencode/package.json
 .opencode/package-lock.json
 coverage/
+.tsbuildinfo
