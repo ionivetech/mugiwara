@@ -1,6 +1,6 @@
 ---
-name: mugiwara-api-and-interface-design
-description: Use when designing or reviewing an API, function signature, library interface, or inter-service contract - contract-first design, error semantics as contract, boundary validation, backward compatibility, and versioning discipline. Interface shape before implementation.
+name: mugiwara-contract-first
+description: Use for API, interface, or contract design — contract-first, error semantics, boundary validation, backward compatibility, versioning discipline.
 ---
 
 # API and Interface Design
@@ -20,6 +20,8 @@ Design the contract before the code. The interface is the promise; the implement
 - Any change a caller outside the current code would observe.
 
 Not for: pure internals no one else touches — those still get reviewed by the other skills, just not on contract terms.
+
+Framework APIs from docs, not memory: `references/source-grounding.md`.
 
 ## Process
 

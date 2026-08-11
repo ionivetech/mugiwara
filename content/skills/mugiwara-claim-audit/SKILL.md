@@ -1,6 +1,6 @@
 ---
-name: mugiwara-doubt-driven-development
-description: Use when an in-flight decision (implementation choice, plan step, estimate, or verdict) is cheap to verify now but costly to reverse later - verify it adversarially in a fresh context before it ships: CLAIM, EXTRACT, DOUBT, RECONCILE, STOP. Find what is wrong, do NOT validate. Bounded rounds, then escalate.
+name: mugiwara-claim-audit
+description: Use for in-flight decisions cheap to verify now, costly later — CLAIM, EXTRACT, DOUBT, RECONCILE, STOP. Find what is wrong, do NOT validate.
 ---
 
 # Doubt-driven development

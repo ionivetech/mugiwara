@@ -1,6 +1,6 @@
 ---
-name: mugiwara-test-driven-development
-description: Use when writing code during execution - RED-GREEN-REFACTOR discipline, proof-of-when over proof-of-exists, test pyramid shape, one test = one behavior, assert real behavior over mocks, refactor while green. Referenced by zoro-execution; complements mugiwara-testcases (user AC intake) - this is the executor's TDD contract.
+name: mugiwara-proof-order
+description: Use when writing code — RED-GREEN-REFACTOR. Proof value from WHEN the test runs, not that it exists. One test = one behavior.
 ---
 
 # Test-Driven Development

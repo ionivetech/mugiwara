@@ -1,6 +1,6 @@
 ---
-name: mugiwara-systematic-debugging
-description: Use when any agent or worker hits a failure and must debug it - a bug, a test that fails for an unknown reason, a crash, a wrong result, or an unexplained regression. A standalone 4-phase discipline - reproduce, localize, reduce, fix + guard. Stop-the-line on failures, prove-it before fixing, rollback prep before a risky fix.
+name: mugiwara-root-cause
+description: Use for debugging bugs, crashes, regressions — 4-phase: reproduce, localize, reduce, fix+guard. Stop-the-line on failures.
 ---
 
 # Systematic Debugging
@@ -15,6 +15,8 @@ A failure is a stopping event, not a speed bump. Do not guess, do not patch. Wal
 ## When to use
 
 Any bug, unexplained failure, crash, or regression in code, tests, or config. When the cause is unknown, the fix is not obvious, or the failure is intermittent. Standalone discipline — use it before any fix ships, and escalate when a phase cannot complete.
+
+Framework code from docs, not memory: `references/source-grounding.md`.
 
 ## Process
 

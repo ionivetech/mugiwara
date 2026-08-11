@@ -1,6 +1,6 @@
 ---
-name: mugiwara-deprecation
-description: Use when retiring code, APIs, or features that no longer justify their upkeep, or when steering users off one implementation onto another. Sunset criteria, safe DB migrations, phased cutovers, orphaned code. Every removal needs a plan and a tested way back.
+name: mugiwara-sunset
+description: Use when retiring code or APIs — keep-or-retire gate, safe DB migrations, phased cutovers. Every removal needs a plan and tested way back.
 ---
 
 # Deprecation & Migration (Brook)

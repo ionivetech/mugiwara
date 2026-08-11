@@ -1,6 +1,6 @@
 ---
-name: mugiwara-context-engineering
-description: Use when a mission or agent works in a large codebase, long session, or a context window approaching its limit. Feeds the agent selectively instead of wholesale, discloses detail progressively, and sorts every source by how much it may be trusted. Not for one-file fixes with plenty of headroom.
+name: mugiwara-context-budget
+description: Use in large codebase, long session, or near context limit — feed selectively, trust-sort sources, progressive disclosure. The window is a budget, not a bin.
 ---
 
 # Context Engineering
