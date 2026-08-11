@@ -28,6 +28,7 @@ permissions:
 
 jobs:
   release:
+    name: "Release ${{ inputs.version }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +44,10 @@ jobs:
           bun-version: latest
           cache: true
 
-      - name: Install dependencies
+      - name: "Install dependencies"
         run: bun install --frozen-lockfile
 
-      - name: Pre-flight checks (fail before touching main)
+      - name: "Pre-flight checks"
         run: |
           bun run typecheck
           bun run test
@@ -55,44 +56,44 @@ jobs:
           bun scripts/run-evals.ts
           bun scripts/retrieval-eval.ts
 
-      - name: Bump version
+      - name: "Bump version"
         run: echo "RELEASE_VERSION=$(npm version "${{ inputs.version }}" --no-git-tag-version)" >> "$GITHUB_ENV"
 
-      - name: Sync version into plugin manifests
+      - name: "Sync manifests"
         run: bun run sync-version
 
-      - name: Configure git
+      - name: "Configure git"
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Commit version bump and push to main
+      - name: "Commit version bump + push"
         run: |
           git add -A
           git commit -m "chore: release $RELEASE_VERSION"
           git push origin main
 
-      - name: Create and push tag
+      - name: "Create and push tag"
         run: |
           git tag "$RELEASE_VERSION"
           git push origin "$RELEASE_VERSION"
           echo "Tagged $RELEASE_VERSION"
 
-      - name: Authenticate with npm
+      - name: "Authenticate with npm"
         run: npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
 
-      - name: Publish to npm
+      - name: "Publish to npm"
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Generate release notes
+      - name: "Generate release notes"
         run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
 
-      - name: Pack tarball
+      - name: "Pack tarball"
         run: npm pack --pack-destination "$RUNNER_TEMP"
 
-      - name: Create GitHub Release
+      - name: "Create GitHub Release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "$RELEASE_VERSION" --notes-file "$RUNNER_TEMP/release-notes.md" --latest "$RUNNER_TEMP"/*.tgz
