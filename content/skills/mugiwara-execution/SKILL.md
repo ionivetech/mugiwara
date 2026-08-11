@@ -1,6 +1,6 @@
 ---
 name: mugiwara-execution
-description: Use when executing an approved wave-structured plan. Opens a todo list first, runs sequential tasks inline in the main thread, dispatches independent [PARALLEL] batches to worker subagents, commits per logical task, and verifies every acceptance criterion with evidence before reporting done.
+description: Use when executing an approved plan — todo list first, sequential inline + parallel worker batches, commit per logical task, evidence per task.
 ---
 
 # Execution (Zoro)
@@ -14,10 +14,12 @@ Execute the plan exactly. No silent reordering, no skipping steps, no "close eno
 
 ## Ask before working
 
-By mode (per `mugiwara-mode`):
+By mode (per mode config):
 
 - `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints.
 - `semi`/`auto`: auto-create the mission branch per the config `branch` key (default `feature/{type}-{issue}-{slug}`) and auto-commit per task using the config `commit` style (default conventional). No branch/commit ask. Record mode + branch + commit style in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>-todos.md`.
+
+Code to the installed version's docs, not memory: `references/source-grounding.md`.
 
 The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode. One-task-one-commit, save-points, and atomic-commit rules hold unchanged in every mode.
 

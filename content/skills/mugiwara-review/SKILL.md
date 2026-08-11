@@ -1,6 +1,6 @@
 ---
 name: mugiwara-review
-description: Use after quality gates pass to review the diff adversarially - doubt-driven review, breaking-change damage map via repo-wide caller mapping first, five-axis review with regression emphasis, sonar smells, severity criteria, dispute hierarchy, docs gaps. Findings to .mugiwara/review/. Max 3 cycles then escalate.
+description: Use after gates pass to review the diff — breaking-change map via caller mapping, five-axis review, severity-tagged findings. Max 3 cycles.
 ---
 
 # Review (Robin)

@@ -1,6 +1,6 @@
 ---
 name: mugiwara-ship
-description: Use at mission end or before any release to run the ship gate - pre-launch checklist, feature flags, staged rollout, mandatory rollback plan. Binary GO/NO-GO verdict with evidence.
+description: Use at mission end — pre-launch checklist, feature flags, staged rollout, mandatory rollback plan. Binary GO/NO-GO.
 ---
 
 # Ship Gate (Luffy, Franky)

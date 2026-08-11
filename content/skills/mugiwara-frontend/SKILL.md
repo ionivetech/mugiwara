@@ -1,6 +1,6 @@
 ---
 name: mugiwara-frontend
-description: Use for any frontend implementation or redesign task - converting Figma/images to code or restyling UI. Match the repo's existing standard first, audit-first for redesigns, design-system extraction before markup, component architecture, state management, responsive behavior, and WCAG 2.1 AA baked in; bans generic AI-slop patterns and rationalizations. Framework-agnostic.
+description: Use for frontend implementation or redesign — matching repo standards, design-system extraction, responsive behavior, WCAG 2.1 AA. Bans AI-slop patterns.
 ---
 
 # Frontend (Anti-Slop)
@@ -11,6 +11,10 @@ description: Use for any frontend implementation or redesign task - converting F
 - No visual change, markup, styling, or frontend behavior in the mission.
 
 Interfaces built under this skill must not look templated.
+
+## Source-backed code
+
+Framework code from docs, not memory — `references/source-grounding.md`.
 
 ## Existing repo standard first
 
@@ -100,25 +104,20 @@ Add stable `data-testid` to interactive elements per the repo's testing conventi
 
 ## Red flags
 
-- "I'll match the repo later" — the repo standard is the first step, not cleanup.
-- "It's accessible enough" — the a11y checklist is all-or-nothing.
-- "Tests can find it" — no data-testid means the UI is not testable.
 - "Optimize when it's slow" — perf regressions ship measured later, rarely.
-- "It's client-side, so no security review" — the client is public by definition.
-- "New screen, new components" — primitives are the default; bespoke is the exception.
-- "Global store for everything" — local state first; lift only what is shared.
+- "It's client-side, so no security review" — client is public by definition.
+- "New screen, new components" — primitives are default; bespoke is exception.
+- "Global store for everything" — local state first; lift only what's shared.
 
 ## Common Rationalizations
 
 | Excuse | Reality |
 |--------|---------|
-| "The brief calls for a hero trio." | A brief calling for slop is a constraint, not a license — the default stays don't. |
-| "It's just a landing page." / "It's a one-off component." | Still verified for responsive and a11y; still follows the design system's tokens and patterns. |
-| "Good enough." / "It looks right." | Not done until compared against the reference with deltas listed, at every breakpoint. |
-| "Everyone ships this card row." | Popularity is not design; if it's on the slop list, it stays banned. |
+| "The brief calls for a hero trio." | A brief calling for slop is a constraint, not a license. |
+| "It's just a landing page." | Still verified for responsive and a11y at every breakpoint. |
+| "Good enough." | Not done until compared against the reference with deltas listed. |
+| "Everyone ships this card row." | Popularity is not design; banned stays banned. |
 | "Tokens later." | Tokens extracted before markup, or the layout gets rebuilt. |
 | "Our repo is messy, I'll use my own style." | Match the repo standard first, then propose raising it. |
-| "The user won't use a keyboard." / "Context for everything." | Every interaction keyboard-operable; server state belongs at a data layer, not a global store. |
-| "It's a quick prop, no new component." | 3+ boolean props is the boundary — split the component. |
 
-If the rationalization wins, name it in the report as a known delta — not as silence.
+If a rationalization wins, name it in the report as a known delta — not as silence.

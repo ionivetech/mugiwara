@@ -1,6 +1,6 @@
 ---
 name: mugiwara-planning
-description: Use when turning an approved idea or spec into an execution plan. Classifies mission size, interviews first, scans full context, writes scaled Quick/Standard/Full plans with the unified task template, parallel-proof waves, per-task acceptance, and risk/rollback.
+description: Use for turning an approved spec into an execution plan — interview-first, full context scan, scaled Quick/Standard/Full plans, parallel-proof waves.
 ---
 
 # Planning (Nami)
@@ -24,7 +24,7 @@ Classify the mission by size first — after Luffy's route — then write the pl
 
 Batch ALL blocking ambiguities into ONE question round before writing. If a major decision appears mid-plan, stop and ask then — never assume silently. Unanswered question goes back to Luffy, never forward to Zoro. Read the mission spec at `.mugiwara/spec/YYYY-MM-DD-<mission>.md` (the Wave 0/1 bridge); if none exists, return to Luffy for the spec bridge or brainstorm — never plan from an empty spec, that is fiction.
 
-## Mode (per `mugiwara-mode`)
+## Mode (per mode config)
 
 - `guided`: batch ONE question round, wait for answers, then present the plan for an explicit user GO — current behavior.
 - `semi`: self-answer non-blocking ambiguities + log them in the decision log; still present the plan for user GO.

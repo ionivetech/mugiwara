@@ -1,6 +1,6 @@
 ---
 name: mugiwara-orchestration
-description: Use to triage a new mission at the gateway, classify requests 5 ways, coordinate wave transitions, answer inter-agent escalations, split work, and close a mission. Captain behavior - triage, check-ins, decisions, closure. Never implements code.
+description: Use to triage a new mission — 5-way classification, lane sizing, wave coordination, check-ins, closure. Captain; never implements code.
 ---
 
 # Orchestration (Luffy)
@@ -18,7 +18,7 @@ The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean executi
 
 ## Mode read (Wave 0)
 
-Read the runtime mode via `mugiwara-mode` at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave.
+Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave.
 
 Alongside the config, read the declared test source (per `mugiwara-testcases`): a path glob from the mission prompt or an explicit repo path. Record it in the decision log like the mode config. No source declared → no user tests for the mission.
 
@@ -57,7 +57,7 @@ After every wave AND at the end of each execution batch, verify:
 3. Heal-loop counters within bounds (max 3 cycles).
 4. Blocker ledger `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` reviewed; every row has an owner or a path forward.
 
-By mode (per `mugiwara-mode`): `guided` checks in with the user as today; `semi`/`auto` write the check-in verdicts to the decision log without pausing the pipeline.
+By mode (per mode config): `guided` checks in with the user as today; `semi`/`auto` write the check-in verdicts to the decision log without pausing the pipeline.
 
 On drift: stop, diagnose with Chopper's ledger, decide continue / retry / escalate to human.
 
@@ -79,7 +79,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Wave 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or explicitly deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Write the closure report to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`: mission summary, per-wave outcomes, deferred items, lessons learned. The plan doc stays untouched.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or explicitly deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the mission report at `.mugiwara/reports/<mission>.md`. Write the closure summary to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`. The plan doc stays untouched.
 
 ### Detailed closure summary (mandatory, inline)
 
@@ -93,7 +93,7 @@ Present a detailed summary to the user — never a one-liner:
 - Deferred items + owner.
 - Next steps — PR material pointer, anything the user must do.
 
-### Terminal step (every mode, per `mugiwara-mode`)
+### Terminal step (every mode, per mode config)
 
 Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a ready PR summary block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
 

@@ -1,6 +1,6 @@
 ---
 name: mugiwara-brainstorm
-description: Use when exploring a vague idea, feature direction, or architecture choice before planning. Critical friend - interrogates the idea, researches current facts with web tools, gives options plus trade-offs and a recommendation, never rubber-stamps.
+description: Use for vague ideas or architecture exploration before planning — interrogates, researches with web, gives options + trade-offs, never rubber-stamps.
 ---
 
 # Brainstorm (Usopp)
@@ -31,7 +31,7 @@ Never collapse to a single pass. Run at least THREE interrogation rounds before 
 
 If the user or the flow tries to push you to planning after Round 1 or 2, resist: an unvalidated direction is a rework. One extra sharp round is cheaper than a wrong plan.
 
-## Mode (per `mugiwara-mode`)
+## Mode (per mode config)
 
 - `guided`: ask the user as today — one sharp question at a time.
 - `semi`/`auto`: self-answer non-blocking ambiguities and log each answered question + answer in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`). Blocking ambiguities in `auto` route to the orchestrator, who logs them (does not ask the user). Critical unresolved questions still go back through the orchestrator — never silently assumed.

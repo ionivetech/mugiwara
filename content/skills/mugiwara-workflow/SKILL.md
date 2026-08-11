@@ -1,6 +1,6 @@
 ---
 name: mugiwara-workflow
-description: Use at the start of any non-trivial mission to run the Mugiwara crew harness - Luffy triage gateway first, then brainstorm, planning, execution, checkpoint, quality, gates, review, healing, and closure waves.
+description: Use at start of any non-trivial mission — Luffy triage gateway, then brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure waves.
 ---
 
 # Mugiwara Workflow
@@ -36,9 +36,11 @@ Every mission creates and works inside `.mugiwara/` at the repo root:
 ```
 .mugiwara/
 ├── config         # runtime mode config: mode/branch/commit/pr key=value (gitignored; project overrides global)
+├── state.json     # computed mission state at every wave boundary (scripts/savepoint.sh)
 ├── spec/          # brainstorm output: YYYY-MM-DD-<mission>.md
-├── plans/         # plan doc: YYYY-MM-DD-<mission>.md — CLEAN, Nami-only, source of truth from Wave 2. No agent names, no log, no closure.
+├── plans/         # plan doc: YYYY-MM-DD-<mission>.md — CLEAN, Nami-only, source of truth from Wave 2
 ├── results/       # wave results: audit/quality/gate reports, todos, closure report
+├── reports/       # human-readable mission reports: YYYY-MM-DD-<mission>.md
 ├── review/        # review + security findings
 ├── issues/        # blocker log: YYYY-MM-DD-<mission>-blockers.md
 └── logs/          # Luffy's decision + check-in log: YYYY-MM-DD-<mission>.md (deleted at cleanup)
@@ -58,7 +60,7 @@ At session start, after context loss, or on any "where were we?" — embody `res
 
 Front door: embody `using-mugiwara` inline (the router) — it routes to the right crew member and records the route. For a full triage embody `luffy-orchestrator` inline. NEVER start directly with brainstorming or planning. Luffy classifies every request 5 ways (Trivial / Explicit / Exploratory / Open-ended / Ambiguous) and routes: Trivial and Explicit → Wave 2 directly; Exploratory, Open-ended, and Ambiguous → Wave 1 brainstorm first. Alongside the class, Luffy sizes the mission and picks a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike) — small work skips the pipeline, sensitive work never sneaks through the lean path. The user may summon any crew member directly — Luffy still records the route.
 
-Alongside triage, read the mode config per `mugiwara-mode`: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Lazy-create the project config on first WRITE only, never auto-create on read.
+Alongside triage, read the mode config per mode config: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Lazy-create the project config on first WRITE only, never auto-create on read.
 
 ## Waves
 
@@ -69,7 +71,7 @@ Alongside triage, read the mode config per `mugiwara-mode`: `.mugiwara/config` (
 | 2 Planning | Nami | mugiwara-planning | plan doc: waves/tasks/criteria, parallel markers |
 | 3 Execution | Zoro | mugiwara-execution | implemented tasks with evidence |
 | 4 Checkpoint | Chopper | mugiwara-checkpoint | audit report + failure ledger |
-| 4.5 Adversarial | Skeptic | mugiwara-dynamic-workflow | findings report + failure ledger |
+| 4.5 Adversarial | Skeptic | mugiwara-claim-audit | findings report + failure ledger |
 | 5 Quality | Sanji | mugiwara-quality | formatter/linter/test results |
 | 6 Gates | Franky | mugiwara-gates | coverage + build verdict |
 | 7 Review | Robin ∥ Jinbe | mugiwara-review + mugiwara-security | severity-tagged findings |
@@ -88,7 +90,7 @@ Never silently work around a blocker. Brook reads this ledger at Wave 8 to decid
 
 ## Cleanup
 
-At closure (Wave 9), after the terminal step, run the cleanup procedure in `mugiwara-ship`: delete consumed intermediates — superseded results, review, issues reports, the per-mission decision log in `logs/`, and the consumed spec. Keep the plan doc, the closure report, the PR verdict, `config`, and cross-mission state (`logs/lessons.md`, `backup/`, `manifest.json`). List candidates before deleting.
+At closure (Wave 9), after the terminal step, run cleanup per `mugiwara-ship`: delete consumed intermediates — superseded results, review, issues, the decision log in `logs/`, and consumed spec. Keep the plan doc, closure report, PR verdict, mission report, `config`, `state.json`, and cross-mission state (`logs/lessons.md`, `backup/`, `manifest.json`). List candidates before deleting.
 
 ## Rules
 
@@ -96,29 +98,24 @@ At closure (Wave 9), after the terminal step, run the cleanup procedure in `mugi
 2. No wave skipped without the reason recorded in the decision log (`.mugiwara/logs/`) — name the wave, owner, and reason at the moment of omission.
 3. Heal loop is bounded: Wave 8 → Wave 4, max 3 cycles. After that, escalate to the human with full history.
 4. Any agent may consult Luffy mid-flight (embody `luffy-orchestrator` inline) for decisions and escalations.
-5. Wave 7 runs Robin and Jinbe review passes in parallel — both are inline passes over the same diff, or parallel review subagents for large diffs.
-6. The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is the single source of truth from Wave 2 onward.
-7. Frontend-touching tasks in Wave 3 must apply `mugiwara-frontend` in the same pass.
-8. One crew member may hold many skills (e.g. Usopp holds `mugiwara-brainstorm` + `mugiwara-frontend`; the crew is 15 members); load the member's skills, embody the role inline.
-9. On session start, context loss, or "where were we?" — resume before any wave via `resume-coordinator` (mugiwara-resume); never start over.
-10. The crew never merges and never deploys — push the branch + hand the verdict file to the user, who opens the PR; PR review is the terminal gate in every mode.
+5. Wave 7 runs Robin and Jinbe in parallel over the same diff.
+6. The plan doc is the single source of truth from Wave 2 onward.
+7. Frontend tasks in Wave 3 must apply `mugiwara-frontend`.
+8. On session start or context loss — resume via `resume-coordinator` before any wave; never start over.
+9. Push branch + hand verdict file to the user, who opens the PR; crew never merges, never deploys.
 
 ## Iron Law
 
-EVIDENCE OVER CLAIMS. No wave passes on assertion — the owning agent runs the checks and shows output. A wave that cannot produce evidence is a failed wave.
-
-## Verification gate (every completion claim)
-
-A claim is only as strong as the evidence produced in the same turn that made it. "Done", "passes", and "fixed" each name a command that would prove them — run that command, read its full output, then speak. A result from an earlier run, a guess, or a worker's word for it is not proof; re-run it and diff the work against the tree before reporting. Trust is not a substitute for verification.
+EVIDENCE OVER CLAIMS. No wave passes on assertion — the owning agent runs the checks and shows output. "Done", "passes", and "fixed" must be proved by running the check command in the same turn; no stale results, no guesses, no worker's word for it.
 
 ## Red flags
 
-- A wave "passes" on a spoken claim with no command output or file to point at.
+- A wave passes on a spoken claim with no command output.
 - Heal loop beyond 3 cycles with the same failure still open.
-- A wave skipped with no reason recorded in the decision log.
-- Execution starts before triage (Wave 0), or planning before brainstorm when triage routed to Wave 1.
-- Mission artifacts landing outside `.mugiwara/`.
-- Wave order drifts from the table (e.g. quality before checkpoint).
-- A blocker worked around silently with no ledger row.
+- Wave skipped with no reason recorded in the decision log.
+- Execution before triage (Wave 0).
+- Mission artifacts outside `.mugiwara/`.
+- Wave order drifts (e.g. quality before checkpoint).
+- Blocker worked around silently with no ledger row.
 
-All mean: stop the pipeline, diagnose with Chopper's ledger, decide continue / retry / escalate.
+All mean: stop, diagnose with Chopper's ledger, decide continue/retry/escalate.
