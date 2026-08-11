@@ -1,0 +1,25 @@
+{
+  "name": "routing-backend",
+  "skill": "mugiwara-backend",
+  "trigger": {
+    "positive": [
+      { "prompt": "add a new REST API endpoint for user profiles", "top_k": 3 },
+      { "prompt": "design the database schema for the orders table", "top_k": 3 },
+      { "prompt": "refactor the server error handling to return proper status codes", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "style the login page with the new design tokens" },
+      { "prompt": "add a state management layer in the frontend" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Add a new API endpoint for fetching user profiles with proper error handling and validation.",
+      "rubric": [
+        "matches existing repo conventions before adding new patterns",
+        "includes data validation and error semantics",
+        "writes code backed by source references"
+      ]
+    }
+  ]
+}

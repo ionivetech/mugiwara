@@ -1,6 +1,6 @@
 ---
 name: mugiwara-context-budget
-description: Use in large codebase, long session, or near context limit — feed selectively, trust-sort sources, progressive disclosure. The window is a budget, not a bin.
+description: Use in large codebase, long session, or near token limit — prioritize relevant files, trust-sort, progressive disclosure. Window is budget, not bin.
 ---
 
 # Context Engineering

@@ -43,6 +43,7 @@
     "evals": "bun scripts/run-evals.ts",
     "retrieval-eval": "bun scripts/retrieval-eval.ts",
     "sync-version": "bun scripts/sync-version.ts",
+    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts",
     "prepack": "bun run build && bun run sync-version"
   },
   "keywords": [

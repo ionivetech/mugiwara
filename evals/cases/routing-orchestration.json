@@ -1,0 +1,25 @@
+{
+  "name": "routing-orchestration",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "triage this new feature request and decide the lane size", "top_k": 3 },
+      { "prompt": "classify this mission and coordinate the execution waves", "top_k": 3 },
+      { "prompt": "captain a new mission — classify, size, dispatch, check in", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "implement the feature described in the ticket" },
+      { "prompt": "write code for the database migration" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A new mission request arrived. Classify it, size the lane, and dispatch the appropriate waves.",
+      "rubric": [
+        "performs 5-way classification before any action",
+        "sizes the lane based on sensitivity and scope",
+        "coordinates waves without implementing code"
+      ]
+    }
+  ]
+}

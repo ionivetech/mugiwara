@@ -1,0 +1,25 @@
+{
+  "name": "routing-quality",
+  "skill": "mugiwara-quality",
+  "trigger": {
+    "positive": [
+      { "prompt": "run eslint and prettier on the changed files", "top_k": 3 },
+      { "prompt": "format the code and run the linter before committing", "top_k": 3 },
+      { "prompt": "run the project test suite and check for lint errors", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "check if the coverage threshold is met" },
+      { "prompt": "review the diff for breaking changes" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "After the checkpoint passes, run the formatter, linter, and unit tests for the project.",
+      "rubric": [
+        "discovers the project's lint and format tooling",
+        "runs the unit test suite",
+        "never weakens or changes existing configs"
+      ]
+    }
+  ]
+}

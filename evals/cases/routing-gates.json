@@ -1,0 +1,25 @@
+{
+  "name": "routing-gates",
+  "skill": "mugiwara-gates",
+  "trigger": {
+    "positive": [
+      { "prompt": "check if the coverage threshold is met before we merge", "top_k": 3 },
+      { "prompt": "verify the definition of done — build, lint, tests all pass", "top_k": 3 },
+      { "prompt": "verify coverage thresholds, build exit code, and definition of done", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "run the formatter and linter on the changed files" },
+      { "prompt": "review the diff for stylistic issues" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The quality checks finished. Now verify if the coverage thresholds are met and the build passes.",
+      "rubric": [
+        "checks coverage thresholds with binary verdicts",
+        "verifies build exit code is zero",
+        "does not negotiate or weaken thresholds"
+      ]
+    }
+  ]
+}

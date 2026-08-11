@@ -1,0 +1,25 @@
+{
+  "name": "routing-lessons",
+  "skill": "mugiwara-lessons",
+  "trigger": {
+    "positive": [
+      { "prompt": "capture what we learned from this mission", "top_k": 3 },
+      { "prompt": "read past lessons before starting the new mission", "top_k": 3 },
+      { "prompt": "update the cross-mission lessons ledger with new insights", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "log this error in the application monitoring system" },
+      { "prompt": "write a retrospective document for the team" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The mission is complete. Capture lessons learned and append them to the cross-mission ledger.",
+      "rubric": [
+        "reads past lessons at triage",
+        "captures new lessons at closure",
+        "appends to the append-only ledger"
+      ]
+    }
+  ]
+}

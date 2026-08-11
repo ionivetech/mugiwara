@@ -1,6 +1,6 @@
 ---
 name: mugiwara-review
-description: Use after gates pass to review the diff — breaking-change map via caller mapping, five-axis review, severity-tagged findings. Max 3 cycles.
+description: Use after gates pass to review PR diff, code review — breaking-change map via caller mapping, five-axis review, severity-tagged findings. Max 3 cycles.
 ---
 
 # Review (Robin)

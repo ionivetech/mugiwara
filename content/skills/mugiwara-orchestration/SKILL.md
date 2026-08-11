@@ -1,6 +1,6 @@
 ---
 name: mugiwara-orchestration
-description: Use to triage a new mission — 5-way classification, lane sizing, wave coordination, check-ins, closure. Captain; never implements code.
+description: Use to triage a new mission — 5-way classify, coordinate waves, lane sizing, check-ins, closure. Captain; never implements code.
 ---
 
 # Orchestration (Luffy)

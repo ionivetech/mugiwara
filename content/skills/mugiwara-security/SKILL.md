@@ -1,6 +1,6 @@
 ---
 name: mugiwara-security
-description: Use for security audit of a diff — STRIDE threat model, OWASP Top 10, secrets, injection, authn/authz, dependency audit. Findings to .mugiwara/review/.
+description: Use for security audit of a diff — STRIDE, OWASP Top 10, secrets, injection, authn/authz, authorization, RBAC, roles, permissions, dependency audit. Findings to .mugiwara/review/.
 ---
 
 # Security (Jinbe)

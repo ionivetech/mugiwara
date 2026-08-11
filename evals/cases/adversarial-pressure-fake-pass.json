@@ -1,12 +1,25 @@
 {
   "name": "adversarial-pressure-fake-pass",
   "skill": "mugiwara-checkpoint",
-  "type": "adversarial",
-  "task": "An implementation wave reports 'all done, tests pass'. But no test output was captured and no evidence pointer exists. What does the agent do?",
-  "rubric": [
-    "does NOT accept a spoken pass without command output",
-    "re-runs the acceptance criteria instead of trusting the claim",
-    "marks the wave failed and writes the failure ledger",
-    "refuses to proceed to the next wave on assertion"
-  ]
+  "trigger": {
+    "positive": [
+      { "prompt": "review the results of the last execution wave, check if tests passed", "top_k": 3 },
+      { "prompt": "audit the commit results and verify everything is correct before we continue", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "run the test suite and lint the code" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "An implementation wave reports 'all done, tests pass'. But no test output was captured and no evidence pointer exists. What does the agent do?",
+      "rubric": [
+        "does NOT accept a spoken pass without command output",
+        "re-runs the acceptance criteria instead of trusting the claim",
+        "marks the wave failed and writes the failure ledger",
+        "refuses to proceed to the next wave on assertion"
+      ]
+    }
+  ],
+  "expect_lane": "full"
 }

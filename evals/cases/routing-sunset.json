@@ -1,0 +1,25 @@
+{
+  "name": "routing-sunset",
+  "skill": "mugiwara-sunset",
+  "trigger": {
+    "positive": [
+      { "prompt": "remove the old v1 API endpoints and retire them safely", "top_k": 3 },
+      { "prompt": "delete the legacy payment module and migrate to v2", "top_k": 3 },
+      { "prompt": "deprecate this old endpoint and phase it out over two releases", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "add a new version of the payment API" },
+      { "prompt": "refactor the v2 endpoint handler for performance" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Retire the legacy v1 payment endpoints. They have been replaced by v2 for 6 months.",
+      "rubric": [
+        "runs the keep-or-retire gate before any removal",
+        "plans a phased cutover with safe DB migrations",
+        "every removal has a tested way back"
+      ]
+    }
+  ]
+}

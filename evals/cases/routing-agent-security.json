@@ -1,0 +1,25 @@
+{
+  "name": "routing-agent-security",
+  "skill": "mugiwara-agent-security",
+  "trigger": {
+    "positive": [
+      { "prompt": "audit this MCP server for tool access vulnerabilities", "top_k": 3 },
+      { "prompt": "check if this agent has excessive permissions or prompt injection risk", "top_k": 3 },
+      { "prompt": "review this tool configuration for sandboxing gaps", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "audit the API endpoints for CORS misconfiguration" },
+      { "prompt": "write tests for the auth middleware" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Audit the agent configuration for prompt injection vulnerabilities and excessive tool scope.",
+      "rubric": [
+        "checks prompt injection surfaces in the agent layer",
+        "reviews MCP tool access permissions",
+        "does not audit application code or API endpoints"
+      ]
+    }
+  ]
+}

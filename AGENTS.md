@@ -50,17 +50,51 @@ All version bumps via the Manual Release workflow — never manually edited.
 
 ## Validation before commit (CI gates)
 
-All must pass on every PR. CI runs automatically:
+All must pass on every PR. Run locally with:
+
+```bash
+bun run gate     # everything CI runs on a PR
+```
+
+### Per-PR gates
 
 ```bash
 bun run typecheck                                              # TypeScript
 bun run test                                                   # 70 tests
 bun run build                                                  # dist/
-bun scripts/validate-content.ts --check-manifest --check-docs  # content + manifest + docs drift
+bun scripts/validate-content.ts --check-manifest --check-docs  # content + manifest + docs drift + budget + section length + description hygiene
 bun scripts/run-evals.ts                                       # behavioral evals
-bun scripts/retrieval-eval.ts                                  # retrieval ranking
-echo "✓ all checks passed"
+bun scripts/retrieval-eval.ts                                  # retrieval ranking + floor ratchet
+bun scripts/verify-install.ts                                  # G1: resolve all references/*.md pointers after install
 ```
+
+### Pre-release / weekly gates
+
+| Gate | Script | Purpose |
+|------|--------|---------|
+| G3 meta-eval | `bun scripts/gate-selftest.ts` | Prove every gate can fail — catch rotted gates |
+
+### Where each gate runs
+
+| Gate | Pre-commit | Every PR | Pre-release | Weekly |
+|------|:---:|:---:|:---:|:---:|
+| typecheck, test, build | ✅ | ✅ | ✅ | |
+| validate-content (+manifest, docs, sections, descriptions) | ✅ | ✅ | ✅ | |
+| run-evals | | ✅ | ✅ | |
+| retrieval-eval + ratchet | | ✅ | ✅ | |
+| **G1 verify-install** | | ✅ | ✅ | |
+| **G2 computed fixtures** | ✅ | ✅ | ✅ | |
+| **G3 gate-selftest** | | | ✅ | ✅ |
+
+### Gate design
+
+**A gate that cannot fail is not a gate.** Every gate must have a corresponding
+mutation in `scripts/gate-selftest.ts` proving it goes red. Adding a gate
+without adding its mutation is an incomplete change.
+
+**Every production defect adds a gate before the fix merges.** Record the defect
+class, not just the instance. The fix closes one instance — the gate closes the
+class.
 
 No PR merges without all green CI.
 
@@ -71,12 +105,12 @@ Every skill is `content/skills/<name>/SKILL.md`:
 | Rule | Limit | Validated |
 |------|-------|:---:|
 | Frontmatter `name` matches directory | exact match | ✅ |
-| `description` length | 20–500 chars | ✅ |
-| `description` content | trigger keywords + disambiguators only, no procedure | — |
+| `description` length | 20–220 chars | ✅ |
+| `description` content | trigger keywords + disambiguators only, no procedure | ✅ |
 | Body lines | ≤120 | ✅ |
 | `## Skip when` block | 1–4 bullets, numeric threshold | ✅ |
-| Sections >15–20 lines | move to `references/<topic>.md`, one-line pointer in body | — |
-| Language | **English only** | — |
+| Sections >15–20 lines | move to `references/<topic>.md`, one-line pointer in body | ✅ |
+| Language | **English only** | ✅ |
 
 ## Agent standards
 
@@ -93,11 +127,22 @@ Every agent is `content/agents/<name>.md`:
 ## Reference files
 
 Two locations:
-- `references/` — shared, linked from multiple skills
+- `references/` — shared, linked from multiple skills. Installed to `_shared/references/` (tier 1) or `.mugiwara/refs/_shared/` (tier 2/3).
 - `content/skills/<name>/references/` — skill-specific
+
+Any `references/*.md` pointer in a skill body must resolve **after install**,
+verified by `scripts/verify-install.ts`. A pointer correct in the repo but
+broken after install is a defect, not a docs nit.
 
 Body → one-line pointer: "Full checklist: `references/checklist.md` — 37 items;
 unchecked boxes are not done." Never just a bare filename.
+
+## State fields
+
+`state.json` is the audit trail. Every field in `state.json` is computed, never
+model-supplied. Every field has a fixture assertion in `test/savepoint.test.ts`
+with a non-trivial expected value. A field that can silently read `0` is worse
+than an absent field — absence is visible, a wrong zero is not.
 
 ## Index budget
 

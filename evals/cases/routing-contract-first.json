@@ -1,0 +1,25 @@
+{
+  "name": "routing-contract-first",
+  "skill": "mugiwara-contract-first",
+  "trigger": {
+    "positive": [
+      { "prompt": "design the API contract for the new payment service", "top_k": 3 },
+      { "prompt": "define the interface and error semantics before implementing", "top_k": 3 },
+      { "prompt": "make sure this API change is backward compatible", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "write the implementation for the payment handler" },
+      { "prompt": "add a database migration for the new field" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Design the API contract for a new service before any implementation starts.",
+      "rubric": [
+        "defines the contract before any implementation",
+        "specifies error semantics and boundary validation",
+        "checks backward compatibility with existing consumers"
+      ]
+    }
+  ]
+}

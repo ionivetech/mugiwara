@@ -1,6 +1,6 @@
 ---
 name: mugiwara-root-cause
-description: Use for debugging bugs, crashes, regressions — 4-phase: reproduce, localize, reduce, fix+guard. Stop-the-line on failures.
+description: Use for debugging bugs — debug, bug, crash, error, recurring, intermittent, track it down. 4-phase: reproduce, localize, reduce, fix+guard. Root cause hunt.
 ---
 
 # Systematic Debugging

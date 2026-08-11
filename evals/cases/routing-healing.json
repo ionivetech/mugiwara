@@ -1,0 +1,25 @@
+{
+  "name": "routing-healing",
+  "skill": "mugiwara-healing",
+  "trigger": {
+    "positive": [
+      { "prompt": "the previous execution wave failed, fix what is broken", "top_k": 3 },
+      { "prompt": "there are blockers in the ledger, triage and fix them", "top_k": 3 },
+      { "prompt": "the blocker ledger has entries, stop the line and fix them", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "execute the next wave in the plan" },
+      { "prompt": "add a new feature to the backlog" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The test suite failed after the last wave. The blocker ledger has 3 entries. Fix the failures.",
+      "rubric": [
+        "reads the blocker ledger before taking action",
+        "applies stop-the-line triage",
+        "proves the fix before moving to next wave"
+      ]
+    }
+  ]
+}

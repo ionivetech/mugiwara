@@ -1,11 +1,24 @@
 {
   "name": "positive-resume-mid-mission",
   "skill": "mugiwara-resume",
-  "type": "positive",
-  "task": "Context was lost mid-mission. The plan doc, todos, and trace exist under .mugiwara/. Where do we continue?",
-  "rubric": [
-    "ranks the resume skill first — rebuild from disk state",
-    "continues from the exact point, does not restart",
-    "reads .mugiwara/ state before triage"
-  ]
+  "trigger": {
+    "positive": [
+      { "prompt": "we lost context mid-mission, we need to pick up where we left off", "top_k": 3 },
+      { "prompt": "rebuild state from the checkpoint and continue the mission", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "start a new mission from scratch" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Context was lost mid-mission. The plan doc, todos, and trace exist under .mugiwara/. Where do we continue?",
+      "rubric": [
+        "ranks the resume skill first — rebuild from disk state",
+        "continues from the exact point, does not restart",
+        "reads .mugiwara/ state before triage"
+      ]
+    }
+  ],
+  "expect_lane": "full"
 }

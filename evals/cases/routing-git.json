@@ -1,0 +1,25 @@
+{
+  "name": "routing-git",
+  "skill": "mugiwara-git",
+  "trigger": {
+    "positive": [
+      { "prompt": "commit these changes with atomic commits per logical unit", "top_k": 3 },
+      { "prompt": "split this diff into separate commits by topic", "top_k": 3 },
+      { "prompt": "find which commit introduced this bug using bisect", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "push the branch and open a pull request" },
+      { "prompt": "deploy the release to production" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Split the staged changes into atomic commits: one for the refactor, one for the new feature, one for the tests.",
+      "rubric": [
+        "creates atomic commits per logical change",
+        "detects the repo's commit style",
+        "does not push or open a PR"
+      ]
+    }
+  ]
+}

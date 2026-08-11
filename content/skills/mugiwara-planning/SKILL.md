@@ -1,6 +1,6 @@
 ---
 name: mugiwara-planning
-description: Use for turning an approved spec into an execution plan — interview-first, full context scan, scaled Quick/Standard/Full plans, parallel-proof waves.
+description: Use for turning an approved spec into an implementation plan — interview-first, full context scan, scaled Quick/Standard/Full plans, parallel-proof waves.
 ---
 
 # Planning (Nami)
