@@ -43,19 +43,18 @@ What actually differs per harness tier. Every skill and agent file ships to ever
 ## Write-boundary enforcement (honest limits)
 
 The path-scoped write boundary (`write-scope: artifacts` vs `source` in agent
-frontmatter) is **not expressible as a permission rule on any harness**. `edit:
-deny` on opencode is global — it blocks legitimate `.mugiwara/**` writes
-(results, plans, logs) exactly as hard as source edits. Where a harness cannot
-express path-scoped writes, the constraint is carried as the agent's first Rule
+frontmatter) is enforced per-harness from a single source. Where the harness
+can express path-scoped rules, the frontmatter is generated into a real rule;
+where it cannot, the constraint is carried as the agent's first Rule
 (`## Before you start`), mirrored in Red flags, and enforced by the validator
 gate (`scripts/validate-content.ts`: every agent declares `write-scope`, only
-`zoro-execution`/`brook-healing` may be `source`, handoff targets must be Luffy)
-plus the tier-3 stub lines in `src/targets/generic.ts`.
+`zoro-execution`/`brook-healing` may be `source`, handoff targets must be
+Luffy) plus the tier-3 stub lines in `src/targets/generic.ts`.
 
 | Harness | `write-scope` expression | Status |
 |---------|--------------------------|--------|
+| opencode | `permission.edit` glob map — artifacts: `{ '*': 'deny', '.mugiwara/**': 'allow' }`; source: `edit: allow` (last-match-wins) | **ENFORCED at runtime** (generated in `src/targets/opencode.ts` + `.opencode/plugins/mugiwara.mjs`) |
 | Claude Code | `tools:` frontmatter (plumbed in `claude.ts`, unused — no path-scope support) | **unenforced**, prose + validator |
-| opencode | permission map (hand-maintained `edit: deny` removed — wrong axis) | **unenforced**, prose + validator |
 | Copilot / tier 2 / tier 3 | prose Rule + Red flag + stub lines | **unenforced**, prose + validator |
 
 The validator is the floor everywhere; CI blocks drift. This does not make

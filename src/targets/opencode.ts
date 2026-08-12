@@ -33,24 +33,32 @@ const CREW: Record<string, CrewConfig> = {
 };
 
 // write-scope is the single source of truth (content/agents/*.md frontmatter).
-// The path boundary (artifacts vs source) cannot be expressed as opencode
-// permission rules — `edit: deny` is global and would block legit .mugiwara
-// writes. Boundary enforcement: prose first Rule (## Before you start) +
-// validator gate (scripts/validate-content.ts) + harness-matrix note.
-// Permission field intentionally omitted for every agent.
-function permissionFromScope(_scope: string | undefined): undefined {
+// The path boundary (artifacts vs source) IS expressible in opencode:
+// permission.edit accepts glob/pattern -> action, last match wins. Artifacts
+// agents get deny-all-edit except .mugiwara/**; source agents (zoro, brook)
+// get full edit allow. Derived at install time from the frontmatter field.
+function permissionFromScope(scope: string | undefined): Record<string, string | Record<string, string>> | undefined {
+  if (scope === 'source') return { edit: 'allow' };
+  if (scope === 'artifacts') return { edit: { '*': 'deny', '.mugiwara/**': 'allow' } };
   return undefined;
 }
 
-function agentFrontmatter(name: string, description: string) {
+function agentFrontmatter(name: string, description: string, writeScope?: string) {
   const crew = CREW[name];
   const lines = [`description: ${description}`, `mode: all`];
   if (crew) {
     lines.push(`color: '${crew.color}'`, `temperature: ${crew.temperature}`, `steps: ${crew.steps}`);
-    const perm = permissionFromScope(undefined);
+    const perm = permissionFromScope(writeScope);
     if (perm) {
       lines.push('permission:');
-      for (const [k, v] of Object.entries(perm)) lines.push(`  ${k}: ${v}`);
+      for (const [k, v] of Object.entries(perm)) {
+        if (typeof v === 'string') {
+          lines.push(`  ${k}: ${v}`);
+        } else {
+          lines.push(`  ${k}:`);
+          for (const [pk, pv] of Object.entries(v)) lines.push(`    "${pk}": ${pv}`);
+        }
+      }
     }
   }
   return lines.join('\n');
@@ -73,7 +81,7 @@ export const target: Target = {
   },
   transformAgent(data: FrontmatterData, body: string) {
     const desc = data['internal-agent'] === 'true' ? `[INTERNAL] ${data.description}` : data.description;
-    const fm = agentFrontmatter(data.name, desc);
+    const fm = agentFrontmatter(data.name, desc, data['write-scope']);
     return { relPath: `${data.name}.md`, text: `---\n${fm}\n---\n${body}` };
   },
   refsDir({ scope, projectDir, home }, skillName: string) {

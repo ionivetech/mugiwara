@@ -55,6 +55,16 @@ function parseFrontmatter(text) {
   return { data, body: text.slice(m[0].length) };
 }
 
+// write-scope is the single source of truth (content/agents/*.md frontmatter).
+// opencode permission.edit accepts glob/pattern -> action, last match wins, so
+// the path boundary IS runtime-enforceable: artifacts agents get deny-all-edit
+// except .mugiwara/**, source agents (zoro, brook) get full edit allow.
+function permissionFromScope(scope) {
+  if (scope === 'source') return { edit: 'allow' };
+  if (scope === 'artifacts') return { edit: { '*': 'deny', '.mugiwara/**': 'allow' } };
+  return undefined;
+}
+
 function readAgents() {
   const agents = {};
   let files;
@@ -74,6 +84,8 @@ function readAgents() {
     if (!parsed.data.description || !parsed.body) continue;
     agents[name] = { description: parsed.data.description, mode: 'all', prompt: parsed.body };
     if (CREW[name]) agents[name] = { ...agents[name], ...CREW[name] };
+    const perm = permissionFromScope(parsed.data['write-scope']);
+    if (perm) agents[name].permission = perm;
   }
   return agents;
 }
