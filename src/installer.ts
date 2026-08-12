@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
 import type { Scope } from './manifest.ts';
 
@@ -43,8 +44,8 @@ export interface Target {
   postInstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean; files: string[] }): { written: string[]; notes: string[] };
 }
 
-export const CONTENT_DIR = join(import.meta.dirname, '..', 'content');
-const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')) as { version: string };
+export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'content');
+const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')) as { version: string };
 export const VERSION = pkg.version;
 
 export function collectContent(): { skills: ContentItem[]; agents: ContentItem[] } {

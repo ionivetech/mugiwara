@@ -92,9 +92,10 @@ then restart OpenCode.
 
 ### Server error on startup
 
-Fixed in v0.5.3. Ensure you're on the latest:
+Clear stale plugin cache and reinstall:
 
 ```bash
+rm -rf ~/.cache/opencode/packages/@ionivetech
 npm update @ionivetech/mugiwara
 ```
 

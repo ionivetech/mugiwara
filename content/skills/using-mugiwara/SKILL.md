@@ -1,6 +1,6 @@
 ---
 name: using-mugiwara
-description: How mugiwara works. Crew overview, classify task, triage request, route to specialist. Which agent to call, what lane size. Trigger: new session, "which agent?", "pick crew member", pipeline, workflow entry.
+description: How mugiwara works. Crew overview, where to start, which agent to summon for each task, what each specialist does. Front-door router. Trigger: "which agent for", "pick crew", "mugiwara how", new session overview.
 ---
 
 # Using Mugiwara (Front Door)

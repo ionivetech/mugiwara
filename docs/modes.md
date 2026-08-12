@@ -1,8 +1,7 @@
 # Modes
 
 The crew's autonomy level. Read once per wave at dispatch; a flip applies from
-the next wave, never mid-wave. Single source of truth: the `mugiwara-mode`
-skill.
+the next wave, never mid-wave.
 
 **Mode owns autonomy, config owns writing standards.** Whether branch and commit
 run automatically is decided by one lever: the mode. The config only shapes HOW
