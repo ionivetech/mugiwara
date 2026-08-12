@@ -94,7 +94,7 @@ if (fs.existsSync(reviewDir)) {
   reviewFiles = fs.readdirSync(reviewDir).filter(f => f.includes(mission) && f.endsWith('.md'));
   for (const f of reviewFiles) {
     const text = fs.readFileSync(path.join(reviewDir, f), 'utf8');
-    reviewFindings += (text.match(/^(?:🔴|🟠|🟡|⚪)\s+.*/gm) || []).length;
+    reviewFindings += (text.match(/^\s*(?:#+\s*)?(?:🔴|🟠|🟡|⚪)\s+.*/gm) || []).length;
   }
 }
 
