@@ -49,6 +49,7 @@ export const target: Target = {
   id: 'opencode',
   label: 'opencode',
   native: true,
+  refPointerPrefix: '../',
   paths({ scope, projectDir, home }) {
     const root = scope === 'global' ? join(home, '.config', 'opencode') : join(projectDir, '.opencode');
     return { skillsDir: join(root, 'skills'), agentsDir: join(root, 'agents') };

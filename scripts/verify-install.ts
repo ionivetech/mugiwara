@@ -49,9 +49,8 @@ for (const tt of tierTargets) {
         total++;
         const pointer = m[1];
         const localResolve = join(dirname(file), pointer);
-        const sharedResolve = join(skillsDir, pointer);
         const mugiwaraResolve = join(mugiwaraRefsDir, pointer.replace(/^(?:_shared\/)?references\//, ''));
-        const resolved = [localResolve, sharedResolve, mugiwaraResolve].find(p => existsSync(p));
+        const resolved = [localResolve, mugiwaraResolve].find(p => existsSync(p));
 
         if (!resolved) {
           broken++;

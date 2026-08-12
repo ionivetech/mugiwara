@@ -119,4 +119,6 @@ The plan doc contains ONLY this. Route reasons, check-in verdicts, and closure g
 
 ## Handoff
 
-STOP after writing. The plan is written to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). Present a 2-3 line summary (waves, task count, key risks) and ASK the user: approve now, revise, or continue in a new session (resume-coordinator rebuilds from the plan doc). Never hand to Zoro without an explicit user GO — except the gated auto-GO (zero blocking ambiguities AND zero high-risk tasks, per the Mode section).
+STOP after writing. The plan is written to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to Luffy.** Present a 2-3 line summary (waves, task count, key risks) and hand off to Luffy for the GO decision. Luffy decides: approve → Zoro, revise → back to you, or escalate.
+
+Never hand to Zoro without Luffy's GO. In `guided` mode, Luffy asks the user before delegating to Zoro. In `semi`/`auto`, Luffy may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, Luffy routes.

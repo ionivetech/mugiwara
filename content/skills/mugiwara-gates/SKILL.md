@@ -44,8 +44,10 @@ A fixed cross-project bar, distinct from per-task acceptance criteria. Full defi
 
 PASS only when coverage AND build AND DoD all pass with evidence. Write the verdict to `.mugiwara/results/` listing thresholds measured, build exit, and each DoD item.
 
-- PASS → Robin/Jinbe (Wave 7).
-- Any FAIL → list exactly which files are under threshold and by how much, or which DoD item failed → Brook (Wave 8).
+- PASS → **return to Luffy** (Luffy routes to Robin/Jinbe).
+- Any FAIL → list exactly which files are under threshold and by how much, or which DoD item failed → **return to Luffy** (Luffy routes to Brook).
+
+Never dispatch the next wave yourself. Luffy is the hub.
 
 ## Iron Law
 

@@ -12,6 +12,7 @@ export const target: Target = {
   id: 'claude',
   label: 'Claude Code',
   native: true,
+  refPointerPrefix: '../',
   paths({ scope, projectDir, home }) {
     const root = scope === 'global' ? join(home, '.claude') : join(projectDir, '.claude');
     return { skillsDir: join(root, 'skills'), agentsDir: join(root, 'agents') };

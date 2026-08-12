@@ -36,6 +36,7 @@ export interface Target {
   label: string;
   native: boolean;
   tier?: 1 | 2 | 3;
+  refPointerPrefix?: string;
   paths(opts: { scope: Scope; projectDir: string; home: string }): { skillsDir: string; agentsDir: string };
   transformSkill(data: FrontmatterData, body: string): TransformOut;
   transformAgent(data: FrontmatterData, body: string): TransformOut;
@@ -109,10 +110,22 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
 
   for (const s of skills) {
     const out = target.transformSkill(s.data, s.body);
-    if (out) writeOne(join(dirs.skillsDir, out.relPath), out.text);
+    if (out) {
+      let text = out.text;
+      if (target.refPointerPrefix !== undefined && target.refPointerPrefix !== '') {
+        text = text.replace(/`_shared\/references\//g, '`' + target.refPointerPrefix + '_shared/references/');
+      }
+      writeOne(join(dirs.skillsDir, out.relPath), text);
+    }
     if (target.transformSkillFull) {
       const full = target.transformSkillFull(s.data, s.body);
-      if (full && target.refsDir) writeOne(join(target.refsDir({ scope, projectDir, home }, s.name), full.relPath), full.text);
+      if (full && target.refsDir) {
+        let text = full.text;
+        if (target.refPointerPrefix !== undefined && target.refPointerPrefix !== '') {
+          text = text.replace(/`_shared\/references\//g, '`' + target.refPointerPrefix + '_shared/references/');
+        }
+        writeOne(join(target.refsDir({ scope, projectDir, home }, s.name), full.relPath), text);
+      }
     }
     if (s.refs.length && target.refsDir) {
       const refsRoot = target.refsDir({ scope, projectDir, home }, s.name);

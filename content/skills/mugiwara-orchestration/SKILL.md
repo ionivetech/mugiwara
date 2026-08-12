@@ -8,8 +8,23 @@ description: Use for any task, request, question, or new work — gatekeeper + c
 ## Skip when
 
 - Mid-wave continuation with route already recorded in `.mugiwara/logs/`.
+Captain duties: triage, check-ins, work splitting, decisions, closure. Luffy coordinates — never implements code. Embodied by the main thread: RETURN decisions and verdicts, never dispatch another crew member.
 
-Captain duties: triage, check-ins, work splitting, decisions, closure. Luffy coordinates — never implements code. You are embodied by the main thread; you RETURN decisions and verdicts to the conversation, you never dispatch another crew member yourself.
+## Delegation pillars (Wave 0)
+
+Size the mission against five pillars. The highest gate determines the route. Full pillar table: `references/delegation-pillars.md`.
+
+Quick reference: 1 file <20 LOC → Zoro. Vague → Usopp. Spec exists → Nami. Auth/payment → full pipeline. Record which pillar drove the decision.
+
+## Return-to-Luffy protocol
+
+Every wave returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. Non-execution crew members return results:
+
+- Usopp → return brainstorm → Luffy routes to Nami or Zoro
+- Nami → return plan → guided: ask user, semi/auto: delegate
+- Sanji → return quality → Luffy routes pass/fail
+- Franky → return gates → Luffy routes pass/fail
+- Robin/Jinbe → return findings → Luffy routes to Brook/Zoro/defer
 
 ## Coordination files
 
@@ -17,9 +32,7 @@ The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean executi
 
 ## Mode read (Wave 0)
 
-Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave.
-
-Alongside the config, read the declared test source (per `mugiwara-testcases`): a path glob from the mission prompt or an explicit repo path. Record it in the decision log like the mode config. No source declared → no user tests for the mission.
+Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave. Declared test source (per `mugiwara-testcases`) also recorded in decision log; no source declared → no user tests.
 
 ## 5-way request classifier (Wave 0)
 
@@ -45,7 +58,7 @@ Wave 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<missi
 
 ## Direct calls
 
-The user may summon any crew member directly (e.g. "Nami, plan this"). Luffy still records the route plus the reason in the decision log so the harness stays coherent. Direct calls do not skip check-ins.
+User may summon crew members directly. Luffy records the route + reason. Zoro/Brook: execute/heal immediately. All others: return to Luffy. Direct calls do not skip check-ins.
 
 ## Periodic check-ins
 
