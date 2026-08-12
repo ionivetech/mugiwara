@@ -105,14 +105,14 @@ fi
 # "heal" anywhere (heal workers/healing text would inflate the counter and
 # cause a premature halt)
 HEAL_CYCLE=1
-TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}-trace.md" 2>/dev/null || true)
+TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}/"*trace*.md 2>/dev/null | head -1 || true)
 if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE" ]; then
   HEAL_COUNT=$(grep -ci '^.*Wave 8.*\|wave 8' "$TRACE_FILE" 2>/dev/null || echo 0)
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 
-# evidence paths
-EVIDENCE=$(ls "$MUGIWARA_DIR/results/" 2>/dev/null | grep "$MISSION" | sed 's|^|.mugiwara/results/|' | tr '\n' ',' | sed 's/,$//' || true)
+# evidence paths — per-mission results folder
+EVIDENCE=$(ls "$MUGIWARA_DIR/results/${MISSION}/" 2>/dev/null | sed "s|^|.mugiwara/results/${MISSION}/|" | tr '\n' ',' | sed 's/,$//' || true)
 
 # skill version from package.json (argv-passing — never interpolate paths into node -e)
 SKILL_VERSION="1"
