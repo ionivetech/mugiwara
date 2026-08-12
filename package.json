@@ -51,8 +51,9 @@
     "validate": "bun scripts/validate-content.ts --check-manifest --check-docs",
     "evals": "bun scripts/run-evals.ts",
     "retrieval-eval": "bun scripts/retrieval-eval.ts",
+    "verify-install": "bun scripts/verify-install.ts",
     "sync-version": "bun scripts/sync-version.ts",
-    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts",
+    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts && bun scripts/verify-install.ts",
     "verify-pack": "npm pack --dry-run 2>&1 | node -e \"let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{if(!s.includes('ionivetech-mugiwara')){console.error('npm pack failed');process.exit(1)};console.log('npm package clean')})\"",
     "prepack": "bun run build && bun run sync-version"
   },
