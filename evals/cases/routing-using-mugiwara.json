@@ -1,11 +1,11 @@
 {
   "name": "routing-using-mugiwara",
-  "skill": "using-mugiwara",
+  "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "how do I use mugiwara to accomplish a task?", "top_k": 3 },
-      { "prompt": "what crew members are available?", "top_k": 3 },
-      { "prompt": "route this task to the right specialist", "top_k": 3 }
+      { "prompt": "route this task to the right specialist", "top_k": 3 },
+      { "prompt": "classify this task and decide which crew member handles it", "top_k": 3 },
+      { "prompt": "i need someone to triage, check in, and close this mission", "top_k": 3 }
     ],
     "negative": [
       { "prompt": "what does git status do?" },
@@ -14,10 +14,10 @@
   },
   "behavioral": [
     {
-      "task": "Explain how mugiwara works and route a simple task.",
+      "task": "Classify a task and route it to the right specialist.",
       "rubric": [
-        "explains the crew structure",
-        "classifies the task correctly",
+        "classifies the task 5-way",
+        "picks the correct lane",
         "routes to the right specialist"
       ]
     }

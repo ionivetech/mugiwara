@@ -128,9 +128,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   }
 
   if (sharedRefs.length) {
-    const sharedRoot = target.tier && target.tier >= 2
-      ? join(target.refsDir!({ scope, projectDir, home }, skills[0]?.name ?? ''), '_shared')
-      : join(dirs.skillsDir, '_shared', 'references');
+    const sharedRoot = join(dirs.skillsDir, '_shared', 'references');
     for (const r of sharedRefs) writeOne(join(sharedRoot, r.relPath), r.text);
   }
 
