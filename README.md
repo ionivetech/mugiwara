@@ -31,6 +31,7 @@ every agent, every skill, every rule is static markdown.
 │ Triage │ ──→ │Brainstm│ ──→ │  Plan  │ ──→ │Execute │ ──→ │ Audit  │
 └────────┘     └────────┘     └────────┘     └────────┘     └───┬────┘
                                                                 │
+                                                                │
 ┌────────┐     ┌────────┐     ┌────────────┐     ┌────────┐     ┌───┴────┐
 │ Luffy  │     │ Brook  │     │Robin+Jinbe │     │ Franky │     │  Sanji │
 │Closure │ ←── │  Heal  │ ←── │  Review +  │ ←── │ Gates  │ ←── │Quality │
@@ -197,6 +198,8 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 /plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
 ```
 
+Uninstall: `/plugin uninstall mugiwara`
+
 </details>
 
 <details>
@@ -207,6 +210,8 @@ Add to `opencode.json`:
 { "plugin": ["@ionivetech/mugiwara"] }
 ```
 
+Uninstall: remove `"@ionivetech/mugiwara"` from `opencode.json` plugins array
+
 </details>
 
 <details>
@@ -215,6 +220,8 @@ Add to `opencode.json`:
 ```bash
 gemini extensions install https://github.com/ionivetech/mugiwara
 ```
+
+Uninstall: `gemini extensions uninstall mugiwara`
 
 </details>
 
@@ -225,6 +232,8 @@ gemini extensions install https://github.com/ionivetech/mugiwara
 codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
 ```
 
+Uninstall: `codex plugin remove mugiwara@mugiwara`
+
 </details>
 
 <details>
@@ -233,6 +242,8 @@ codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mu
 ```bash
 copilot plugin install https://github.com/ionivetech/mugiwara
 ```
+
+Uninstall: `copilot plugin uninstall mugiwara`
 
 </details>
 
@@ -243,6 +254,8 @@ copilot plugin install https://github.com/ionivetech/mugiwara
 /add-plugin mugiwara
 ```
 
+Uninstall: `/remove-plugin mugiwara`
+
 </details>
 
 <details>
@@ -251,6 +264,8 @@ copilot plugin install https://github.com/ionivetech/mugiwara
 ```bash
 agy plugin install https://github.com/ionivetech/mugiwara
 ```
+
+Uninstall: `agy plugin uninstall mugiwara`
 
 </details>
 
@@ -261,6 +276,8 @@ agy plugin install https://github.com/ionivetech/mugiwara
 /plugins install https://github.com/ionivetech/mugiwara
 ```
 
+Uninstall: `/plugins uninstall mugiwara`
+
 </details>
 
 <details>
@@ -270,6 +287,8 @@ agy plugin install https://github.com/ionivetech/mugiwara
 pi install git:github.com/ionivetech/mugiwara
 ```
 
+Uninstall: `pi uninstall mugiwara`
+
 </details>
 
 <details>
@@ -277,8 +296,9 @@ pi install git:github.com/ionivetech/mugiwara
 
 ```bash
 npx @ionivetech/mugiwara@latest install --target <id> --yes
-npx @ionivetech/mugiwara@latest install --target all --yes
 ```
+
+Uninstall: `npx @ionivetech/mugiwara@latest uninstall`
 
 Targets: `windsurf`, `cline`, `kilo`, `codex`.
 
@@ -290,9 +310,9 @@ Targets: `windsurf`, `cline`, `kilo`, `codex`.
 ```bash
 npm i -g @ionivetech/mugiwara
 mugiwara install --target all --yes
-mugiwara update --target all --yes
-mugiwara uninstall
 ```
+
+Uninstall: `mugiwara uninstall`
 
 </details>
 
