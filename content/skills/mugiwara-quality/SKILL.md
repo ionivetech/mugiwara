@@ -1,6 +1,6 @@
 ---
 name: mugiwara-quality
-description: Use after checkpoint passes — formatter, linter, eslint, prettier, lint, format, unit tests, test suite. Discovers project tooling, never weakens configs.
+description: Use after checkpoint passes — formatter, linter, duplication, complexity, maintainability, code attributes, eslint, prettier, lint, format, unit tests, test suite. Never weakens configs.
 ---
 
 # Quality (Sanji)
@@ -20,10 +20,14 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 
 1. Formatter — the project's formatter.
 2. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass.
-3. Unit tests — full suite, capture output.
-4. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
-5. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
-6. Optional e2e gate — only when BOTH repo e2e setup AND changed-file e2e patterns hold, consent by mode, see below.
+3. Duplication — scan changed files for near-identical blocks ≥10 lines. Compute `duplicated_lines_density` %. Flag files above 3%. # ponytail: AI heuristic, not AST-level. For precision use SonarScanner or jscpd.
+4. Complexity — estimate cyclomatic (branch count: if/for/while/case/&&/||/?) and cognitive (nesting depth) per changed function. Flag functions above language-typical thresholds. # ponytail: estimated from code reading. For production precision use ESLint complexity rule or SonarScanner.
+5. Maintainability rating — compute technical debt from remediation effort of all issues above. Calculate ratio against code size. Map to A-E per Sonar scale: A≤5%, B<10%, C<20%, D<50%, E≥50%.
+6. Code attributes (quantitative) — consistency (formatting drift count, naming convention violations), intentionality (dead code %, unreachable branches count), adaptability (files with >1 responsibility). Metrics only — Robin does qualitative deep review in Wave 7.
+7. Unit tests — full suite, capture output.
+8. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
+9. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
+10. Optional e2e gate — only when BOTH repo e2e setup AND changed-file e2e patterns hold, consent by mode, see below.
 
 ## User suites (per `mugiwara-testcases`)
 
