@@ -13,6 +13,7 @@ claim.
 
 | Doc | What it covers |
 |-----|----------------|
+| [Feature inventory](concepts/features.md) | Every mugiwara feature with how to use it and a scenario for each |
 | [Getting started](getting-started.md) | Install, first mission, what you see in the chat |
 | [Adoption guide](reference/adoption-guide.md) | Pick the harness, pick the mode, fit the crew to your workflow |
 | [Modes](concepts/modes.md) | guided / semi / auto — the autonomy levels, what each asks you |

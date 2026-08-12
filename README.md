@@ -26,7 +26,7 @@ every agent, every skill, every rule is static markdown.
 ### 9-wave pipeline
 
 ```mermaid
-flowchart LR
+flowchart TB
   L0[Luffy<br>Triage] --> L1[Usopp<br>Brainstorm] --> L2[Nami<br>Plan] --> L3[Zoro<br>Execute] --> L4[Chopper<br>Audit]
   L4 --> L5[Sanji<br>Quality] --> L6[Franky<br>Gates]
   L6 --> L7R[Robin<br>Review]
@@ -41,23 +41,23 @@ flowchart LR
 
 ### All features
 
-| Feature | What you get |
-|---------|-------------|
-| **Lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline. |
-| **Team initiatives** | Sub-missions with assignee + branch, shared plan doc, status tracking per sub-mission. |
-| **Sonar-style quality** | Duplication %, complexity, maintainability rating (A–E), code attributes, per-condition gate. |
-| **STRIDE + OWASP security** | Threat modeling, secret scan, injection check, SCA license, hotspot review. |
-| **Self-healing** | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles. |
-| **3 autonomy modes** | guided (ask) / semi (auto branch+commit) / auto (hands-off). Flip mid-session. |
-| **Configurable depth** | `review_depth` + `quality_depth`: full / standard / quick. Set per project. |
-| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts. |
-| **Onboarding wizard** | 10 questions — project type, team size, mode, depth. `/mugiwara onboard`. |
-| **Evidence trail** | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
-| **12 platforms** | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI. |
-| **Cost tracking** | Token budget per lane. Warn at 1.5×, pause at 3×. Surfaced in mission reports. |
-| **Multi-actor safe** | Branch-scoped state. Two engineers, one repo. Reset refuses without `--force`. |
+| Feature                     | What you get                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Lane sizing**             | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
+| **Team initiatives**        | Sub-missions with assignee + branch, shared plan doc, status tracking per sub-mission.          |
+| **Sonar-style quality**     | Duplication %, complexity, maintainability rating (A–E), code attributes, per-condition gate.   |
+| **STRIDE + OWASP security** | Threat modeling, secret scan, injection check, SCA license, hotspot review.                     |
+| **Self-healing**            | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
+| **3 autonomy modes**        | guided (ask) / semi (auto branch+commit) / auto (hands-off). Flip mid-session.                  |
+| **Configurable depth**      | `review_depth` + `quality_depth`: full / standard / quick. Set per project.                     |
+| **Resume from anywhere**    | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.                  |
+| **Onboarding wizard**       | 10 questions — project type, team size, mode, depth. `/mugiwara onboard`.                       |
+| **Evidence trail**          | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **12 platforms**            | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
+| **Cost tracking**           | Token budget per lane. Warn at 1.5×, pause at 3×. Surfaced in mission reports.                  |
+| **Multi-actor safe**        | Branch-scoped state. Two engineers, one repo. Reset refuses without `--force`.                  |
 
-→ [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+→ [Every feature, explained with how-to-use + scenarios](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## 30-second try
 
@@ -92,13 +92,13 @@ at every step in your chat.
 You ask. The crew routes automatically. **No agent names to memorize, no
 pipeline config to write.**
 
-| You say | What happens |
-|---------|-------------|
-| `add search bar to products page` | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs quality → Franky gates → Robin reviews → code pushed, PR summary ready |
+| You say                                        | What happens                                                                                                                                                                             |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `add search bar to products page`              | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs quality → Franky gates → Robin reviews → code pushed, PR summary ready                              |
 | `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
-| `Brook, fix the failing login test` | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles |
-| `Jinbe, audit auth middleware` | STRIDE + OWASP + dependency audit. Read-only — never touches code |
-| `/mugiwara auto` | Switches to full autonomy from the next wave |
+| `Brook, fix the failing login test`            | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles                                                                                                                      |
+| `Jinbe, audit auth middleware`                 | STRIDE + OWASP + dependency audit. Read-only — never touches code                                                                                                                        |
+| `/mugiwara auto`                               | Switches to full autonomy from the next wave                                                                                                                                             |
 
 - **Full pipeline** when the task is big or direction is unclear
 - **Direct agent** when you know exactly what you need — say the name
@@ -111,28 +111,28 @@ pipeline config to write.**
 12 user-facing specialists (+3 internal). Each has role boundaries — auditors
 and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
-| Agent | Role | Permission |
-|-------|------|:---:|
-| `luffy-orchestrator` | Captain — triage, check-ins, closure | — |
-| `usopp-brainstorm` | Critical friend — interrogates, researches, recommends | — |
-| `nami-planner` | Planner — interviews, full scan, scaled plans, team initiatives | — |
-| `zoro-execution` | Executor — TDD per task, evidence per commit | — |
-| `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger | **read-only** |
-| `sanji-quality` | Quality — format, lint, test, duplication, complexity, maintainability, code attributes | — |
-| `franky-gates` | Gates — coverage, build, DoD, per-condition sonar gate | — |
-| `robin-reviewer` | Reviewer — breaking-change map, reliability rating, code attribute deep review | **read-only** |
-| `jinbe-security` | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility | **read-only** |
-| `brook-healing` | Healer — reads ledger, root-cause fixes ≤3 cycles | — |
-| `onboarding-guide` | Onboarding wizard — 10Q guided setup, writes config | — |
-| `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | — |
+| Agent                | Role                                                                                    |  Permission   |
+| -------------------- | --------------------------------------------------------------------------------------- | :-----------: |
+| `luffy-orchestrator` | Captain — triage, check-ins, closure                                                    |       —       |
+| `usopp-brainstorm`   | Critical friend — interrogates, researches, recommends                                  |       —       |
+| `nami-planner`       | Planner — interviews, full scan, scaled plans, team initiatives                         |       —       |
+| `zoro-execution`     | Executor — TDD per task, evidence per commit                                            |       —       |
+| `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger                                              | **read-only** |
+| `sanji-quality`      | Quality — format, lint, test, duplication, complexity, maintainability, code attributes |       —       |
+| `franky-gates`       | Gates — coverage, build, DoD, per-condition sonar gate                                  |       —       |
+| `robin-reviewer`     | Reviewer — breaking-change map, reliability rating, code attribute deep review          | **read-only** |
+| `jinbe-security`     | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility            | **read-only** |
+| `brook-healing`      | Healer — reads ledger, root-cause fixes ≤3 cycles                                       |       —       |
+| `onboarding-guide`   | Onboarding wizard — 10Q guided setup, writes config                                     |       —       |
+| `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts                    |       —       |
 
 **Internal agents** (dispatch-only):
 
-| Agent | Role | Used by |
-|-------|------|---------|
-| `skeptic-verifier` | Adversarial verifier — doubts every claim | Wave 4.5, high-stakes missions |
-| `eval-runner` | Harness tester — task suites, judge rubric | `bun scripts/run-evals.ts` |
-| `memory-keeper` | Lessons ledger — surface at start, capture at closure | Wave 0 (read), Wave 9 (write) |
+| Agent              | Role                                                  | Used by                        |
+| ------------------ | ----------------------------------------------------- | ------------------------------ |
+| `skeptic-verifier` | Adversarial verifier — doubts every claim             | Wave 4.5, high-stakes missions |
+| `eval-runner`      | Harness tester — task suites, judge rubric            | `bun scripts/run-evals.ts`     |
+| `memory-keeper`    | Lessons ledger — surface at start, capture at closure | Wave 0 (read), Wave 9 (write)  |
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
@@ -140,12 +140,12 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 Mugiwara itself is free. Token usage depends on mission lane:
 
-| Lane | Waves | Typical tokens |
-|------|:-----:|:--------------:|
-| Direct (typo) | 0 | ~0 |
-| Lean (small bug) | 2 | ~4k |
-| Standard (feature) | 5–7 | ~10k |
-| Full (architecture) | 9–11 | ~20k |
+| Lane                | Waves | Typical tokens |
+| ------------------- | :---: | :------------: |
+| Direct (typo)       |   0   |       ~0       |
+| Lean (small bug)    |   2   |      ~4k       |
+| Standard (feature)  |  5–7  |      ~10k      |
+| Full (architecture) | 9–11  |      ~20k      |
 
 Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
 pauses at 3×.
@@ -156,16 +156,16 @@ pauses at 3×.
 
 Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
 
-| Key | Default | What |
-|-----|---------|------|
-| `mode` | guided | guided / semi / auto |
-| `branch` | `feature/{type}-{issue}-{slug}` | Branch naming |
-| `commit` | conventional | conventional / gitmoji / plain |
-| `base` | main | PR target branch |
-| `coverage_new` | 90 | Coverage threshold for new files (%) |
-| `coverage_modified` | 80 | Coverage threshold for modified files (%) |
-| `review_depth` | full | full / standard / quick — Robin's review depth |
-| `quality_depth` | full | full / standard / quick — Sanji's check depth |
+| Key                 | Default                         | What                                           |
+| ------------------- | ------------------------------- | ---------------------------------------------- |
+| `mode`              | guided                          | guided / semi / auto                           |
+| `branch`            | `feature/{type}-{issue}-{slug}` | Branch naming                                  |
+| `commit`            | conventional                    | conventional / gitmoji / plain                 |
+| `base`              | main                            | PR target branch                               |
+| `coverage_new`      | 90                              | Coverage threshold for new files (%)           |
+| `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
+| `review_depth`      | full                            | full / standard / quick — Robin's review depth |
+| `quality_depth`     | full                            | full / standard / quick — Sanji's check depth  |
 
 Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
 config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
@@ -174,18 +174,18 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 
 ## Quick reference
 
-| Need | Command / Doc |
-|------|---------------|
-| First-time setup | `/mugiwara onboard` |
-| Plan a feature | `/mugiwara-plan` or just describe it |
-| Review a PR diff | `/mugiwara-review` or "review this PR" |
-| Security audit | `/mugiwara-security` or "Jinbe, audit X" |
-| Ship gate check | `/mugiwara-ship` |
-| See initiative progress | `mugiwara initiative status <plan>` |
-| Resume a mission | `/mugiwara resume plan <name>` |
-| Switch mode | `/mugiwara guided\|semi\|auto` |
-| Check gate locally | `bun run gate` |
-| All docs | [docs/](docs/) |
+| Need                    | Command / Doc                            |
+| ----------------------- | ---------------------------------------- |
+| First-time setup        | `/mugiwara onboard`                      |
+| Plan a feature          | `/mugiwara-plan` or just describe it     |
+| Review a PR diff        | `/mugiwara-review` or "review this PR"   |
+| Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
+| Ship gate check         | `/mugiwara-ship`                         |
+| See initiative progress | `mugiwara initiative status <plan>`      |
+| Resume a mission        | `/mugiwara resume plan <name>`           |
+| Switch mode             | `/mugiwara guided\|semi\|auto`           |
+| Check gate locally      | `bun run gate`                           |
+| All docs                | [docs/](docs/)                           |
 
 ## Install
 
@@ -204,6 +204,7 @@ Uninstall: `/plugin uninstall mugiwara`
 <summary><b>OpenCode</b></summary>
 
 Add to `opencode.json`:
+
 ```json
 { "plugin": ["@ionivetech/mugiwara"] }
 ```
