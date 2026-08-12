@@ -14,7 +14,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readMode, parseModeChange, applyModeChange } from './mugiwara-helpers.mjs';
+import { readMode, parseModeChange, applyModeChange } from '../mugiwara-helpers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -111,6 +111,7 @@ export default async () => ({
   },
 
   'experimental.chat.system.transform': async (_input, output) => {
+    if (!output?.system || !Array.isArray(output.system)) return;
     if (!output.system.some((s) => s.includes('Mugiwara crew available'))) {
       if (output.system.length > 0) {
         output.system[output.system.length - 1] += '\n\n' + ANNOUNCE;

@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import plugin from '../.opencode/plugins/mugiwara.mjs';
-import { readMode, parseModeChange, applyModeChange } from '../.opencode/plugins/mugiwara-helpers.mjs';
+import { readMode, parseModeChange, applyModeChange } from '../.opencode/mugiwara-helpers.mjs';
 import { CONTENT_DIR } from '../src/installer.ts';
 
 const contentDir = CONTENT_DIR.replace(/[\\/]+$/, '');
