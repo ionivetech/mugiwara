@@ -1,6 +1,6 @@
 // src/mission.ts
 // Mission-state helpers for the mugiwara CLI (installer + reset only).
-import { existsSync, rmSync, readFileSync } from 'node:fs';
+import { existsSync, rmSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 function activeActor(projectDir: string): string | null {
@@ -30,10 +30,12 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
     const p = join(root, dir);
     if (existsSync(p)) { rmSync(p, { recursive: true, force: true }); removed.push(dir); }
   }
-  // mission state files
-  for (const f of ['state.json']) {
-    const p = join(root, f);
-    if (existsSync(p)) { rmSync(p); removed.push(f); }
+  // mission state files — state.json + branch-specific state-*.json
+  for (const f of readdirSync(root)) {
+    if (/^state(-.+)?\.json$/.test(f)) {
+      const p = join(root, f);
+      if (existsSync(p)) { rmSync(p); removed.push(f); }
+    }
   }
   if (!keepLogs) {
     const p = join(root, 'logs');

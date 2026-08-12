@@ -39,3 +39,21 @@ test('resetMission is a no-op without .mugiwara/', () => {
   expect(removed).toEqual([]);
   expect(kept).toEqual([]);
 });
+
+test('resetMission removes branch-specific state-*.json files', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-resetbr-'));
+  const root = join(dir, '.mugiwara');
+  mkdirSync(join(root, 'logs'), { recursive: true });
+  writeFileSync(join(root, 'state.json'), '{"actor":"test"}');
+  writeFileSync(join(root, 'state-feat-fix.json'), '{"actor":"other"}');
+  writeFileSync(join(root, 'state-other-branch.json'), '{"actor":"third"}');
+  writeFileSync(join(root, 'config'), 'mode=guided');
+  const { removed } = resetMission(dir, false, true);
+  expect(removed).toContain('state.json');
+  expect(removed).toContain('state-feat-fix.json');
+  expect(removed).toContain('state-other-branch.json');
+  expect(existsSync(join(root, 'state.json'))).toBe(false);
+  expect(existsSync(join(root, 'state-feat-fix.json'))).toBe(false);
+  expect(existsSync(join(root, 'state-other-branch.json'))).toBe(false);
+  expect(existsSync(join(root, 'config'))).toBe(true);
+});
