@@ -44,7 +44,7 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 
 ## Output
 
-Per-wave execution report in `.mugiwara/results/<mission>-execution.md`: task table with status + evidence + deviations, summarized inline in the conversation (routes to Chopper).
+Per-wave execution report in `.mugiwara/results/<mission>/01-execution.md`: task table with status + evidence + deviations, summarized inline in the conversation (routes to Chopper).
 
 ## Return to Luffy
 
