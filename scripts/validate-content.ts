@@ -164,10 +164,12 @@ for (const f of agentFiles) {
 // --- handoff-target gate (F4): a body naming another crew member as a handoff
 // target without Luffy in the same line fails CI ---
 const HANDOFF_CREW = ['usopp', 'nami', 'zoro', 'chopper', 'sanji', 'franky', 'robin', 'jinbe', 'brook', 'skeptic', 'memory-keeper', 'resume-coordinator', 'eval-runner'];
-const handoffRe = new RegExp(`\\b(hand to|hand off to|dispatch)\\s+(?:a\\s+|another\\s+|the\\s+)?(?:crew members?|${HANDOFF_CREW.join('|')})`, 'i');
+// Verb class covers direct handoff language plus synonyms (route/send/pass/
+// escalate/delegate/transfer) so the F4 gate does not leak through paraphrase.
+const handoffRe = new RegExp(`\\b(hand to|hand off to|dispatch|route to|send to|pass to|escalate to|delegate to|transfer to)\\s+(?:a\\s+|another\\s+|the\\s+)?(?:crew members?|${HANDOFF_CREW.join('|')})`, 'i');
 // Negation must DIRECTLY precede the handoff verb, not sit anywhere in the
 // line ("do not hand off" later in the same line is a different clause).
-const NEGATION_VERB = /\b(never|not|no|don't|do not)\s+(hand|dispatch)\b/i;
+const NEGATION_VERB = /\b(never|not|no|don't|do not)\s+(hand|dispatch|route|send|pass|escalate|delegate|transfer)\b/i;
 for (const f of [...agentFiles, ...skillDirs.map(d => join(root, 'skills', d, 'SKILL.md'))]) {
   if (!existsSync(f)) continue;
   const text = readFileSync(f, 'utf8');

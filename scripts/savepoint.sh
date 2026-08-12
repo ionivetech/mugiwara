@@ -72,6 +72,19 @@ else
   LANE_REASON="$FILES_TOUCHED file(s) under 20 LOC"
 fi
 
+# path-weighted sizing (mirrors lane.sh): docs-only changes outside the product
+# surface never escalate to full from file count alone; sensitive-path
+# escalation above still wins.
+PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
+if [ "$LANE" = "full" ] && [ -n "$CHANGED_FILES" ]; then
+  CODE_COUNT=$(echo "$CHANGED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+  if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
+    PREV="$LANE"
+    LANE="standard"
+    LANE_REASON="$FILES_TOUCHED files, docs-only — path-weighted down from $PREV"
+  fi
+fi
+
 # task counts from plan doc
 PLAN_FILE=$(ls "$MUGIWARA_DIR/plans/${MISSION}.md" 2>/dev/null || true)
 TASKS_DONE=0
@@ -88,22 +101,24 @@ if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
   BLOCKERS_OPEN=$(grep -c '|' "$BLOCKERS_FILE" 2>/dev/null || echo 0)
 fi
 
-# heal cycle
+# heal cycle — count WAVE-8 banner occurrences in the trace, not the word
+# "heal" anywhere (heal workers/healing text would inflate the counter and
+# cause a premature halt)
 HEAL_CYCLE=1
 TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}-trace.md" 2>/dev/null || true)
 if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE" ]; then
-  HEAL_COUNT=$(grep -ci 'Wave 8\|wave 8\|heal' "$TRACE_FILE" 2>/dev/null || echo 0)
+  HEAL_COUNT=$(grep -ci '^.*Wave 8.*\|wave 8' "$TRACE_FILE" 2>/dev/null || echo 0)
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 
 # evidence paths
 EVIDENCE=$(ls "$MUGIWARA_DIR/results/" 2>/dev/null | grep "$MISSION" | sed 's|^|.mugiwara/results/|' | tr '\n' ',' | sed 's/,$//' || true)
 
-# skill version from package.json
+# skill version from package.json (argv-passing — never interpolate paths into node -e)
 SKILL_VERSION="1"
 if [ -f package.json ]; then
   PKG_JSON="$MUGIWARA_DIR/../package.json"
-  [ -f "$PKG_JSON" ] && SKILL_VERSION=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync('$PKG_JSON','utf8')).version.split('.')[0])}catch(e){console.log('1')}" 2>/dev/null || echo "1")
+  [ -f "$PKG_JSON" ] && SKILL_VERSION=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version.split('.')[0])}catch(e){console.log('1')}" "$PKG_JSON" 2>/dev/null || echo "1")
 fi
 
 # tokens from env var (harness exports estimated tokens consumed)

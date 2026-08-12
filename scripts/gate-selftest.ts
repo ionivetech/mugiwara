@@ -225,6 +225,23 @@ if (!existsSync(hubAgent)) {
   }
 }
 
+// --- F3: hub-skill gate — every agent must list mugiwara-orchestration; strip it, prove red ---
+console.log('\nF3 — hub-skill gate');
+const hubSkillAgent = join(root, 'content', 'agents', 'sanji-quality.md');
+if (!existsSync(hubSkillAgent)) {
+  console.log('  ⚠  sanji-quality.md not found, skipping');
+} else {
+  const original = readFileSync(hubSkillAgent, 'utf8');
+  try {
+    const broken = original.replace('mugiwara-orchestration, ', '').replace(', mugiwara-orchestration', '');
+    writeFileSync(hubSkillAgent, broken);
+    assert('orchestration skill stripped → exit 1', false, () => run('F3-skill', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(hubSkillAgent, original);
+    assert('restored → exit 0', true, () => run('F3-skill', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
 // --- F4: reintroduce handoff leak — prove red ---
 console.log('\nF4 — handoff-target gate');
 const brainstormSkill = join(root, 'content', 'skills', 'mugiwara-brainstorm', 'SKILL.md');
