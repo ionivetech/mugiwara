@@ -123,7 +123,7 @@ Every mission writes to `.mugiwara/` at the repo root:
 ├── state.json      # computed at every wave boundary by scripts/savepoint.sh
 ├── spec/           # brainstorm output
 ├── plans/          # clean execution plan (source of truth from Wave 2)
-├── results/        # audit, quality, gate, closure reports + evidence logs
+├── results/        # per-mission folders: results/<mission>/ (01-execution … 07-pr-verdict + todos)
 ├── reports/        # human-readable mission reports
 ├── review/         # review + security findings
 ├── issues/         # blocker ledger

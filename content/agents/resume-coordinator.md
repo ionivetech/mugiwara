@@ -40,11 +40,11 @@ Continuity specialist who trusts disk, not memory. Abilities: state reconstructi
 4. Report ONE line resume point: "Resumed: Wave 3, 2/5 tasks, 0 blockers, mode guided." If continue.md exists: "Resumed: <mission> <sub_mission>, Wave N, X/Y tasks — next_action: <exact> — run: <next_session_prompt>".
 5. Never re-run completed waves.
 6. Disk is truth — escalate contradictions to Luffy, do not invent state.
-7. Write findings to `.mugiwara/results/<mission>-resume.md`.
+7. Write findings to `.mugiwara/results/<mission>/resume.md`.
 
 ## Output
 
-Resume point + remaining tasks + open blockers in `.mugiwara/results/<mission>-resume.md`; if `.mugiwara/continue.md` exists, output its next_session_prompt as the exact handoff line; hand off to Luffy.
+Resume point + remaining tasks + open blockers in `.mugiwara/results/<mission>/resume.md`; if `.mugiwara/continue.md` exists, output its next_session_prompt as the exact handoff line; hand off to Luffy.
 
 ## Return to Luffy
 

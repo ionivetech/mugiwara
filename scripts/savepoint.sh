@@ -26,6 +26,12 @@ else
   MODE="${5:-${STATE_MODE:-guided}}"
 fi
 
+# mission allowlist — MISSION feeds paths + sed + node argv; traversal or
+# sed metacharacters must not reach filesystem operations
+case "$MISSION" in
+  ""|*[!a-zA-Z0-9._-]*) die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" ;;
+esac
+
 # per-branch state file when --branch used
 BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-')
 if [ "$BRANCH_MODE" -eq 1 ]; then
@@ -105,14 +111,19 @@ fi
 # "heal" anywhere (heal workers/healing text would inflate the counter and
 # cause a premature halt)
 HEAL_CYCLE=1
-TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}-trace.md" 2>/dev/null || true)
+TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}/"*trace*.md 2>/dev/null | head -1 || true)
 if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE" ]; then
   HEAL_COUNT=$(grep -ci '^.*Wave 8.*\|wave 8' "$TRACE_FILE" 2>/dev/null || echo 0)
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 
-# evidence paths
-EVIDENCE=$(ls "$MUGIWARA_DIR/results/" 2>/dev/null | grep "$MISSION" | sed 's|^|.mugiwara/results/|' | tr '\n' ',' | sed 's/,$//' || true)
+# evidence paths — per-mission results folder (quoted printf, no sed — mission
+# name is allowlisted above, but avoid sed metacharacter semantics entirely)
+EVIDENCE=""
+for evf in "$MUGIWARA_DIR/results/${MISSION}/"*.md; do
+  [ -f "$evf" ] || continue
+  EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/results/${MISSION}/$(basename "$evf")"
+done
 
 # skill version from package.json (argv-passing — never interpolate paths into node -e)
 SKILL_VERSION="1"

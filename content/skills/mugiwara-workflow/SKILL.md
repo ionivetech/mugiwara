@@ -50,7 +50,7 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 
-**Compact output.** Do not stream tool calls. After each batch: one status table. Full logs → `.mugiwara/results/<mission>-execution-log.md`.
+**Compact output.** Do not stream tool calls. After each batch: one status table. Full logs → `.mugiwara/results/<mission>/01-execution.md`.
 
 **Mode flips.** `/mugiwara mode <guided|semi|auto>` applies from the next wave, never mid-wave. If a flip arrives mid-wave, say so — "recorded, applies from Wave N+1" — never apply silently, never ignore.
 
@@ -91,7 +91,7 @@ Brook reads this at Wave 8. Never silently work around a blocker.
 
 ## Cleanup (Wave 9)
 
-Delete consumed: `logs/`, `spec/`, `review/`, `issues/`. Keep: `plans/`, `results/closure`, `results/pr-verdict`, `reports/`, `config`, `state.json`, `lessons.md`.
+Delete consumed: `results/<mission>/01-execution.md`…`05-healing.md` + `todos.md`, `logs/` (except `logs/lessons.md`), `spec/`, `review/`, `issues/`. Keep: `results/<mission>/06-closure.md`, `results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
 
 ## Rules
 

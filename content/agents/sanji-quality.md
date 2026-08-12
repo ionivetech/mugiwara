@@ -39,7 +39,7 @@ Wave 5 of `mugiwara-workflow`, after Chopper's verdict passes.
 
 ## Output
 
-Quality report in `.mugiwara/results/<mission>-quality.md`: per-check command, status, evidence → summarized inline (Franky on pass, Brook on fail).
+Quality report in `.mugiwara/results/<mission>/03-quality.md`: per-check command, status, evidence → summarized inline (Franky on pass, Brook on fail).
 
 ## Return to Luffy
 

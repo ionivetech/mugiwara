@@ -41,7 +41,7 @@ Wave 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 
 ## Output
 
-Fixed list + escalated list in `.mugiwara/results/<mission>-healing.md` → summarized inline → back to Wave 4 (Chopper) for re-audit.
+Fixed list + escalated list in `.mugiwara/results/<mission>/05-healing.md` → summarized inline → back to Wave 4 (Chopper) for re-audit.
 
 ## Return to Luffy
 

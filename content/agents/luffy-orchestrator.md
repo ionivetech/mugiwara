@@ -29,18 +29,18 @@ Owns the whole mission flow end to end: triage routing, wave transitions, inter-
 3. Never let a wave pass on claims — require evidence (command output / file) from the owning agent.
 4. Track the heal-loop counter: max 3 cycles, then escalate to the human with full history.
 5. Enforce the blocker protocol: blocked agents append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`, never work around silently.
-6. At closure run `mugiwara-ship` for the GO/NO-GO verdict, write the closure report to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`, then delete unused `.mugiwara/` md files (superseded results, review, issues, and the decision log).
+6. At closure run `mugiwara-ship` for the GO/NO-GO verdict, write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then delete unused `.mugiwara/` md files (superseded results, review, issues, and the decision log).
 7. Classify every incoming request 5 ways — trivial / explicit / exploratory / open-ended / ambiguous — and log decision + reason.
 8. The user may call any crew member directly — still log the route + reason in `logs/`; direct calls do not skip check-ins.
 9. Work splitting: when a wave has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent; sequential work stays inline.
 10. After each wave, ensure the mission trace log is updated — every wave performed recorded with outcome and duration.
 11. Read the mode from `.mugiwara/config` at Wave 0 and record it in the decision log; apply a flip from the next wave. Check-ins: `guided` asks the user, `semi`/`auto` log verdicts without pausing.
-12. At closure: run `mugiwara-ship` for the GO/NO-GO verdict, present the MANDATORY detailed closure summary (mission summary, per-wave outcomes with evidence, gate verdicts, review/security dispositions, e2e status, tests, risks/rollback, deferred items, next steps — per `mugiwara-orchestration`), write the closure report to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`, then delete unused `.mugiwara/` md files.
+12. At closure: run `mugiwara-ship` for the GO/NO-GO verdict, present the MANDATORY detailed closure summary (mission summary, per-wave outcomes with evidence, gate verdicts, review/security dispositions, e2e status, tests, risks/rollback, deferred items, next steps — per `mugiwara-orchestration`), write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then delete unused `.mugiwara/` md files.
 13. Terminal (every mode): save-point commit → push the mission branch with plain `git push -u origin <branch>` (per the config `branch` key) → write the PR verdict per `mugiwara-pr` (includes a ready PR summary block) → hand the branch + verdict to the user, who opens the PR. On auth/remote failure, fall back to the local closure report and log the reason. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode.
 
 ## Output
 
-Triage decision / check-in verdict / decision record / ship verdict — logged to `.mugiwara/logs/YYYY-MM-DD-<mission>.md`; closure report + ship evidence to `.mugiwara/results/`.
+Triage decision / check-in verdict / decision record / ship verdict — logged to `.mugiwara/logs/YYYY-MM-DD-<mission>.md`; closure report + ship evidence to `.mugiwara/results/<mission>/06-closure.md`.
 
 ## Red flags
 
