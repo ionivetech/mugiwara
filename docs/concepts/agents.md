@@ -1,11 +1,7 @@
-# The Crew — 14 Agents
+# The Crew — 11 Agents (+3 Internal)
 
 Every agent is a focused specialist. The main thread embodies each role inline
-using its skill; you can also summon any member directly. "Dispatch" below
-means "route the mission to this role."
-
-The front door is the `using-mugiwara` skill — load it for crew overview.
-Slash command: `/using-mugiwara`.
+using its skill; you can also summon any member directly.
 
 | Agent | Crew member | Role | Summon for |
 |-------|-------------|------|------------|
@@ -15,14 +11,19 @@ Slash command: `/using-mugiwara`.
 | `zoro-execution` | Zoro | Executor — inline sequential tasks, parallel worker batches, evidence per task | executing an approved plan |
 | `chopper-checkpoint` | Chopper | Auditor — verify-everything, deduped re-runs, failure ledger | auditing a wave's results |
 | `sanji-quality` | Sanji | Quality — discover real tooling, format/lint/test | after checkpoint passes |
-| `franky-gates` | Franky | Gates — coverage, build, Definition of Done, binary verdicts | after quality checks |
-| `robin-reviewer` | Robin | Reviewer — doubt-driven diff review, breaking-change map first | after gates pass |
-| `jinbe-security` | Jinbe | Security — STRIDE, OWASP, secrets, injection, dependencies | security audit of a diff |
+| `franky-gates` | Franky | Gates — coverage, build, DoD, binary verdicts | after quality checks |
+| `robin-reviewer` | Robin | Reviewer — doubt-driven diff review, breaking-change map | after gates pass |
+| `jinbe-security` | Jinbe | Security — STRIDE, OWASP, secrets, injection | security audit of a diff |
 | `brook-healing` | Brook | Healer — reads the ledger, root-cause fixes, ≤3 cycles | any wave produced failures |
-| `skeptic-verifier` | Skeptic | Adversarial verifier — doubts every output, does NOT validate | high-stakes verdicts, plans, reviews |
-| `eval-runner` | Eval Runner | Harness tester — task suites, judge-agent comparison | verifying mugiwara itself works |
-| `resume-coordinator` | Resume Coordinator | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | context loss, new session mid-mission |
-| `memory-keeper` | Memory Keeper | Institutional memory — surfaces past lessons, captures new ones | mission start + closure |
+| `resume-coordinator` | Resume | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | context loss, new session mid-mission |
+
+**Internal agents** (dispatch-only, not user-facing):
+
+| Agent | Role | Used by |
+|-------|------|---------|
+| `skeptic-verifier` | Adversarial verifier — doubts every claim | Wave 4.5, high-stakes missions |
+| `eval-runner` | Harness tester — task suites, judge rubric | `bun scripts/run-evals.ts` |
+| `memory-keeper` | Lessons ledger — surface + capture | Wave 0 (read), Wave 9 (write) |
 
 ## How to summon
 
@@ -40,13 +41,12 @@ check-ins. The harness stays coherent either way.
 
 - **Luffy** never implements code.
 - **Chopper** never fixes findings — reports them.
-- **Skeptic** never validates — doubts.
 - **Robin/Jinbe** never implement — findings to Brook.
 - Crew members never dispatch each other. Workers are subagents, never crew.
 
 ## The crew ships whole
 
-Every install gets all 14 agents and all 26 skills. No project-type selection —
+Every install gets all 11 agents (+3 internal) and all 26 skills. No project-type selection —
 the harness routes each task to the right specialist.
 
 See [skills.md](skills.md) for the 26 techniques, or

@@ -1,105 +1,301 @@
 # Roadmap
 
-The governance foundation (Phases 1-3) is complete. What follows
-strengthens the thesis: governance that is enforced, not optional.
+Mugiwara is the governance layer for AI-assisted engineering work: every change
+the crew makes carries a human-reviewable trail — which wave, what evidence,
+approved by whom — and the cost of the process scales to the size of the work.
 
-## Phase 4 — CI/CD: governance enforced
-
-Today mugiwara runs in your chat window. Tomorrow it gates your PRs.
-
-| Feature | Description |
-|---------|------------|
-| **CI check mode** | `mugiwara ci --pr <url>` — Luffy triages PR diff, Chopper audits, Sanji runs quality, Franky gates coverage, Robin reviews, Jinbe runs security, Brook heals. Posts findings as PR comments. |
-| **Required check** | Mugiwara as a required CI step. Coverage + DoD + security must PASS before merge. Governance becomes a merge gate, not a suggestion. |
-| **Robin PR review** | Severity-tagged review comments posted on PR. Developer can reply "fixed" or "won't fix" → Robin re-evaluates. Conversation trail becomes part of the audit. |
-| **Gate status badge** | `![gates](https://img.shields.io/.../gates-passing)` in README. Shows last mission gate status. Team sees governance health at a glance. |
-| **Per-repo compliance score** | From `state.json` history. Gate pass rate, heal cycles/mission, evidence completeness. A single number: "Compliance: 94/100." |
-
-Why this matters: the thesis says mugiwara is a governance layer. Governance
-that is optional is not governance. CI integration makes it enforced.
-
-## Phase 5 — agent isolation: personas with teeth
-
-Today agents are embodied inline by the main thread. This works but the model
-can forget its role. Isolation makes boundaries real.
-
-| Feature | Description |
-|---------|------------|
-| **Real subagent dispatch** | On Tier 1 harnesses, crew members dispatch as actual subagents with isolated context. Chopper spawns with read-only file scope — system-enforced, not prose. Zoro spawns per task with no-network. |
-| **Scoped tool sets** | Each agent gets only the tools it needs. Chopper: file-read + shell-run. No file-write. Robin: file-read + grep. No shell. Brook: file-read + file-write. No network. |
-| **Agent-to-agent handoff** | Zoro completes Wave 3 → hands state.json to Chopper subagent → Chopper audits → hands to Sanji. No main-thread bottleneck. Clean context per wave. |
-| **Subagent token tracking** | Tokens per subagent tracked separately. Mission report shows breakdown: "Zoro 8.2k, Chopper 3.1k, Brook 1.5k." |
-
-Why this matters: an auditor that can edit code is not an auditor. System-level
-permission boundaries are stronger than prose rules.
-
-## Phase 6 — memory: governance that learns
-
-Today lessons are appended to a flat markdown file. Tomorrow they become
-searchable knowledge that makes every mission smarter than the last.
-
-| Feature | Description |
-|---------|------------|
-| **RAG lessons** | Semantic search over `logs/lessons.md`. At Wave 0: "have we done auth middleware before?" → retrieves relevant past missions, their outcomes, and what went wrong. |
-| **Pattern extraction** | Heal cycles that repeat become patterns. "3 of the last 5 heals were race conditions in token checks" → Nami auto-adds concurrency tests to the plan. |
-| **Source-grounding cache** | Framework docs cached per version. Express 4.21 API reference fetched once, reused across missions. Reduces repeat fetches 70%. Version-aware — caches invalidate on dep bump. |
-| **Repo convention primer** | At session start, inject 200 tokens: last mission outcome, active branch, most-used patterns in this repo. Not a full scan — a primer. |
-
-Why this matters: a governance layer that makes the same mistakes twice is not
-governing. Memory turns every mission into training data for the next.
-
-## Phase 7 — multi-model: governance that adapts
-
-Different models behave differently. Mugiwara should know this and adjust —
-then publish the differences so users can choose.
-
-| Feature | Description |
-|---------|------------|
-| **Model-aware skill tuning** | Gemini tier 2 skips evidence checks 35% of the time. Skill body auto-injects: "YOU MUST RUN THE COMMAND NOW. DO NOT SKIP." Claude tier 1 doesn't need this. |
-| **Evidence enforcement level** | Configurable per model: `evidence_strict=claude` (trust model) / `evidence_strict=gemini` (double-check). Skill body adapts. |
-| **Compliance matrix auto-update** | Every mission writes model behavior to state.json. Matrix becomes data-driven — "Gemini heal loop holds 62% this month, down from 65%." |
-| **Model recommendation** | Based on compliance data: "Lane 3 missions: Claude passes gates 94%, Gemini 71%. Consider switching for this mission." |
-
-Why this matters: the compliance matrix already publishes failures. Making it
-data-driven and actionable turns transparency into a decision tool.
-
-## Phase 8 — MCP: trust surface governance
-
-MCP servers are the fastest-growing attack surface. Mugiwara's agent-security
-skill already covers this — this phase makes it systematic.
-
-| Feature | Description |
-|---------|------------|
-| **Pre-mission MCP audit** | Before Wave 0, scan all connected MCP servers. Report: provenance, tool list, capability drift since last session, risk score per server. |
-| **Tool-scope compute** | Based on mission scope, compute minimum required tool set. Warn on over-scoped context: "This mission needs file-read + shell. You have 12 MCP tools connected." |
-| **MCP-context quarantine** | A tool that returned untrusted content → its output is quarantined. Agent cannot route based on that output until sanitized. |
-| **MCP audit trail** | Every MCP tool invocation logged: timestamp, server, tool, input hash, output hash. Part of the mission evidence trail. |
-
-Why this matters: MCP is growing faster than its security model. Governance that
-doesn't cover the tool surface is incomplete governance.
-
-## Phase 9 — dashboard: governance visible
-
-The mission report exists but lives in `.mugiwara/reports/`. A team lead should
-see governance health without opening hidden files.
-
-| Feature | Description |
-|---------|------------|
-| **Web dashboard** | `.mugiwara/reports/` → HTML timeline. Filter by engineer, lane, date, repo. Gate pass rate over time. Evidence completeness score. |
-| **Engineer insights** | Per-engineer: lane distribution, heal cycle frequency, token/week trend. "Farid uses Lane 3 60% of the time. Average heal cycles: 1.2." |
-| **Team governance score** | Single number: "Team governance: 87/100." Gate pass rate + evidence score + heal efficiency + compliance matrix stats. |
-| **Alerting** | "Brook healed the same failure 3 times this week." "Coverage dropped below threshold for 2 consecutive missions." |
-
-Why this matters: governance nobody can see is not governance. The dashboard
-makes the thesis visible to the people who approve the budget.
+This roadmap projects forward from that sentence. Ten features, each named for
+what it does rather than when it lands.
 
 ---
 
-## Explicitly not planned
+## The bet
 
-- **Runtime / daemon.** Orchestration stays in the harness.
-- **Auto-merge / auto-deploy.** Human review at the PR is the terminal gate.
-- **Skill count growth.** 26 is the ceiling. A new skill replaces an old one.
-- **Unattended-marathon mode.** Visibility over autonomy.
-- **MCP server exposure.** Mugiwara does not become an MCP server — stays pure markdown.
-- **Head-to-head scorecards.** Compliance matrix replaces them.
+The constraint in AI-assisted engineering is shifting.
+
+| Then                      | Now                                     | Next                                 |
+| ------------------------- | --------------------------------------- | ------------------------------------ |
+| _Can the agent write it?_ | _Can the agent finish it unsupervised?_ | _**Can anyone verify what it did?**_ |
+
+Model capability keeps rising, and every increase makes the third question
+harder, not easier. More code is produced per hour than any team can read. Work
+spans sessions, models, and people. Tool surfaces grow faster than anyone audits
+them. Internal AI policies and external regulation are arriving, and both ask the
+same thing: _show me what the machine changed and why you trusted it._
+
+**Mugiwara's value scales with model capability rather than against it.** A pack
+that helps an agent write code competes with the next model release. A layer that
+proves what the agent did becomes more necessary with each one.
+
+Every feature below is chosen against that bet, and against three limits that do
+not move: no runtime, 26 skills, twelve harnesses of uneven capability.
+
+### Current state
+
+Verified by execution at v0.5.5:
+
+```
+26 skills · 11 agents (+3 internal) · 18 skill-local references · 12 harness targets
+cold-load index      1.3k tokens, budget-gated
+retrieval accuracy   rank-1 88.2% · top-3 100% · negatives 100%
+determinism          lane · savepoint · evidence · mission-report
+install coverage     91.6% across 9 targets
+```
+
+Outstanding defects are tracked separately in the fix list, not here. A roadmap
+that contains bug fixes hides how much of it is actually new.
+
+---
+
+## Near — make the trail worth trusting
+
+### 1. Provenance ledger
+
+**Line-level attribution for AI-written code.**
+
+For every mission, record which lines were agent-authored, under which lane, by
+which model, verified by which evidence — then attach it to the commit as a git
+note. `git blame` answers _who_; this answers _what verified it_.
+
+```
+$ mugiwara blame src/auth/invitation.ts:42
+  agent   zoro-execution · claude-sonnet-4.6 · lane full
+  gate    coverage 94% · security STRIDE clean · DoD 5/5
+  report  .mugiwara/reports/2026-08-11-invitation-accepted.md
+  human   reviewed by farid, PR #412
+```
+
+**Why now.** Internal AI-usage policies are landing at most engineering orgs, and
+the near-universal first question is _which of this was AI-written?_ Today the
+honest answer is nobody knows. Mugiwara already holds every input — mission,
+lane, model, gates, evidence paths — and throws the linkage away at closure.
+
+**Feasible.** Git notes on `refs/notes/mugiwara`, written by `savepoint.sh`. No
+runtime, no history rewrite, survives rebase via `notes.rewriteRef`.
+
+_Pillar 1 · the highest-value item on this list._
+
+### 2. Review routing
+
+**Tell the reviewer where to look.**
+
+The bottleneck is no longer writing code; it is reading it. A 2,000-line
+agent-authored diff gets rubber-stamped, and a rubber-stamped review is worse
+than none, because it launders the change through a human name.
+
+Instead of a flat diff, emit a ranked reading order: hunks weighted by lane,
+sensitive-path hits, gate margin, heal history on those files, and absence of
+evidence. _"Read these 40 lines first. Skip these 900 — test scaffolding,
+covered, never healed."_
+
+**Why now.** Agent output volume is growing faster than review capacity, and that
+gap is where governance quietly fails.
+
+**Feasible.** Every input already sits in `state.json` and the ledger. Output is a
+section of the mission report, and a PR comment once CI lands.
+
+_Pillar 1 · the highest-leverage thing you can hand a human._
+
+### 3. Policy as code
+
+**Org rules that override crew judgement.**
+
+A `mugiwara.policy.yml` at repo root, read by `lane.sh` and the gates:
+
+```yaml
+lanes:
+  force_full: ["src/auth/**", "src/payments/**", "**/migrations/**"]
+gates:
+  coverage: { new: 90, modified: 85 }
+  require_human_approval: ["src/payments/**"]
+evidence:
+  required: [test, lint, security]
+model:
+  min_tier_for_lane_3: tier-1
+```
+
+Policy wins over inferred lane — always upward, never downward.
+
+**Why now.** Every team adopting this has rules that are currently tribal
+knowledge. Encoding them is what turns a personal tool into something a team
+standardises on, and what makes governance auditable at the org level rather than
+the session level.
+
+**Feasible.** One YAML file read by two existing scripts. Optional; absent means
+today's behavior.
+
+_Pillar 3, 5 · the adoption unlock._
+
+### 4. Cross-model verification
+
+**A second model checks the first one's claim.**
+
+For high-stakes assertions — "tests pass", "no breaking change", "STRIDE clean" —
+a second, cheaper model re-reads the evidence artifact and returns agree/disagree
+with a reason. Disagreement escalates rather than blocks.
+
+**Why now.** Teams already run several models. Self-assessment is the weakest link
+in every agent pipeline, and `docs/reference/compliance-matrix.md` exists
+precisely because models differ in how reliably they follow a rule. Verification
+is the natural use of that variance.
+
+**Feasible, with a stated limit.** Needs a second model CLI, so it works on tier 1
+and part of tier 2. Opt-in, degrades to today's behavior elsewhere, and the
+mission report records which verification path ran. Uneven capability gets
+documented, never implied.
+
+_Pillar 1._
+
+---
+
+## Mid — governance that holds when nobody is watching
+
+### 5. Enforced merge gate
+
+**Mugiwara as a required CI check.**
+
+`mugiwara ci --pr <url>` runs the wave audit, quality, gates, review, and security
+against the PR diff and posts severity-tagged findings. Replies of "fixed" or
+"won't fix" are re-evaluated, and the conversation joins the audit trail instead
+of disappearing into PR history.
+
+**Constraint.** A CI run must produce the same `mission-report.md` as a local run.
+If CI needs its own reporting path, the artifact is not canonical and Pillar 1 is
+weaker than claimed.
+
+**Depends on feature 10.** Do not make this a required check before there are
+numbers from repos nobody here controls. Blocking someone's PR on routing measured
+only in its own repo is the wrong first impression for a governance tool.
+
+_Pillar 1 · governance that is optional is not governance._
+
+### 6. Permission boundaries
+
+**Personas with teeth.**
+
+Scoped tool sets per crew member: Chopper read plus shell, no write. Robin read
+plus grep, no shell. Brook read and write, no network. Enforced by the harness
+where the harness supports it.
+
+**The tension, resolved in writing.** `README.md` says _"Nothing hides behind a
+subagent click."_ Dispatching crew members as subagents looks like a
+contradiction. The distinction is real and must be stated: **isolation for
+permission, never for autonomy.** A subagent enforcing read-only scope still
+reports its findings inline. A subagent hiding hours of unattended work does not,
+and mugiwara does not do that.
+
+**The asymmetry, also in writing.** Enforcement is tier-1 only; tier 2 and 3
+receive agents as markdown. A tier-3 user must not believe they have boundaries
+they do not have.
+
+_Pillar 1, 4 · an auditor that can edit code is not an auditor._
+
+### 7. Tool-surface governance
+
+**Audit what the agent can reach, not only what it wrote.**
+
+Pre-mission MCP audit: provenance per server, tool inventory, capability drift
+since last session. Minimum tool set computed from mission scope, with a warning
+on over-scoped context. Output from a server that returned untrusted content is
+quarantined and cannot drive routing until sanitised. Every invocation logged —
+server, tool, input and output hash — into the evidence trail.
+
+**Why now.** Tool surfaces are the fastest-growing attack path in agentic systems,
+and `mugiwara-agent-security` already maps the Agentic OWASP Top 10. This makes it
+systematic rather than advisory.
+
+_Pillar 1, 4 · governance that stops at the code is incomplete._
+
+### 8. Long-running missions
+
+**Work that outlives a session, a model, or a person.**
+
+Missions spanning days and handing off between engineers: resumable across model
+switches with the switch recorded, `mugiwara handoff` producing a report the next
+person can act on, and staleness detection when the base branch has moved under a
+paused mission.
+
+**Why now.** Agent work is lengthening, and the failure mode is not a crash — it
+is a mission resumed against a base that changed three days ago, silently. The
+savepoint architecture already solves the state half; this closes the time half.
+
+**Feasible.** Extends `state.json` and the existing multi-actor branch
+namespacing. No new machinery.
+
+_Pillar 2, 5._
+
+---
+
+## Far — make the evidence worth something
+
+### 9. Signed attestation
+
+**Evidence that cannot be fabricated after the fact.**
+
+Sign the mission report and its evidence hashes at closure. `mugiwara verify`
+confirms a report matches the commits and artifacts it claims, and detects
+post-hoc editing.
+
+**Why this matters.** Every claim in this roadmap assumes the audit trail is
+honest. An unsigned trail is one anyone can rewrite — for a governance layer, the
+difference between evidence and decoration. This is what makes mugiwara's output
+something an auditor outside the team can rely on.
+
+**Feasible, optional.** Detached signatures via minisign or sigstore, with
+user-supplied keys. No keys means today's behavior. Never a hard dependency.
+
+_Pillar 1 · the logical endpoint of the thesis._
+
+### 10. Outcome validation
+
+**Prove the thesis outside this repo.**
+
+Ten external repositories, at least one harness per tier. Record lane accuracy
+against human judgement, gate pass rate, tokens, wall-clock, heal cycles. Fill
+`docs/reference/compliance-matrix.md` with measurements instead of design intent.
+
+**Then publish the failures.** _"On Gemini tier 2, evidence checks hold 65% — use
+guided mode there."_ Every pack claims success; none publishes where it breaks.
+The first that states plainly where it fails becomes the most trusted, precisely
+because it admitted it. For a governance layer that is not a marketing choice —
+it is the product.
+
+**Cannot be accelerated.** Listed last by sequence, not by importance. Everything
+above is structural; this is the only item that speaks to outcome, and features 5
+and 9 both depend on it being credible.
+
+_Pillar 1._
+
+---
+
+## Standing constraints
+
+- **No runtime, no daemon.** Orchestration stays in the harness. Anything needing
+  a persistent process ships as a separate optional package, and core keeps
+  working without it.
+- **26 skills is the ceiling.** A new skill replaces an old one.
+- **No auto-merge, no auto-deploy.** Human review at the PR is the terminal gate.
+- **Not an unattended-marathon runner.** Hidden subagent work buys autonomy;
+  watching the work pays for it. Opposite ends of one axis, and mugiwara chose
+  visibility.
+- **Not an MCP server.** Mugiwara governs tool surfaces; it does not become one.
+- **No per-engineer metrics visible to anyone but that engineer.** Aggregate by
+  team and repo. The moment a developer tool emits per-person statistics a manager
+  can read, developers stop using it or start gaming it — and either outcome
+  destroys the audit trail this entire roadmap exists to produce. A product
+  boundary, not a preference.
+- **No head-to-head scorecards.** The compliance matrix reports behavior, which is
+  a stronger document than a feature count.
+
+## The standing rule
+
+> **Every defect found in production adds a gate before the fix merges.**
+
+The fix closes one instance; the gate closes the class. Two defects in this
+project survived several releases — a fabricated eval score and a reference file
+that never installed — and both survived for the same reason: every gate
+validated the repo, while users run the install output.
+
+`docs/enforcement.md` tells users that prose cannot compel a model. The project
+holds itself to that standard too. Mugiwara's own invariants belong in gates, not
+in prose.
