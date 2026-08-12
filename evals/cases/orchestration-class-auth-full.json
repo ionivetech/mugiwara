@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "add auth to the app touching src/auth", "top_k": 3 },
-      { "prompt": "change src/auth/ login flow", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: refuse key rotation at wave 0",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: classify and pick a lane",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "tweak a typo in the README" }
+      {
+        "prompt": "tweak a typo in the README"
+      }
     ]
   },
   "behavioral": [

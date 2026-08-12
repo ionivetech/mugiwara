@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "rotate this API key for me", "top_k": 3 },
-      { "prompt": "rotate the production secret now", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: direct call, lane escalation, check-in",
+        "top_k": 3
+      },
+      {
+        "prompt": "gatekeeper: hotfix route for production",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "show me which keys are in the config file" }
+      {
+        "prompt": "show me which keys are in the config file"
+      }
     ]
   },
   "behavioral": [

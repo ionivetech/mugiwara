@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "/mugiwara-review the diff", "top_k": 3 },
-      { "prompt": "run mugiwara review on the pending changes", "top_k": 3 }
+      {
+        "prompt": "captain: classify and pick a lane",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "add a dark mode toggle to the settings page" }
+      {
+        "prompt": "style the settings page header color"
+      }
     ]
   },
   "behavioral": [

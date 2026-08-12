@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "here is a spec for 40 files, execute it", "top_k": 3 },
-      { "prompt": "execute this pasted 40-file spec", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: refuse key rotation at wave 0",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "execute this one-line config change" }
+      {
+        "prompt": "execute this one-line config change"
+      }
     ]
   },
   "behavioral": [

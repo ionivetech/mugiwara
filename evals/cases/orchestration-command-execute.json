@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "/mugiwara-execute", "top_k": 3 },
-      { "prompt": "run mugiwara execute on the current plan", "top_k": 3 }
+      {
+        "prompt": "captain: classify and pick a lane",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "explain how the CLI parses JSON config files" }
+      {
+        "prompt": "explain how the CLI parses JSON config files"
+      }
     ]
   },
   "behavioral": [

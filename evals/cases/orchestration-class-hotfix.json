@@ -3,10 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "prod is down, revert the last commit", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: hotfix route for production",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: route hotfix with deferred gates",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "explain the deployment topology in prod" }
+      {
+        "prompt": "explain the deployment topology in prod"
+      }
     ]
   },
   "behavioral": [

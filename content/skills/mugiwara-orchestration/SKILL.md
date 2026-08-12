@@ -1,6 +1,6 @@
 ---
 name: mugiwara-orchestration
-description: Use for any task, request, question, or new work — gatekeeper + captain: triage, classify, route, check-in, close. Always loads first.
+description: Gatekeeper + captain for any task: triage, classify, route, refuse deploy/migration/key rotation, hotfix, direct calls, mode flips, opt-out, lane escalation, heal cycles, check-in, close. Always loads first.
 ---
 
 # Orchestration (Luffy)

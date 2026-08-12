@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "robin, review this diff, then jinbe, your take", "top_k": 3 },
-      { "prompt": "robin review the changes, and jinbe sanity-check the plan", "top_k": 3 }
+      {
+        "prompt": "captain: direct call needs triage first",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "review the diff and fix whatever you find" }
+      {
+        "prompt": "review the diff and fix whatever you find"
+      }
     ]
   },
   "behavioral": [

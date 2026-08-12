@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "nami, plan this feature", "top_k": 3 },
-      { "prompt": "nami, there's no spec yet — write me a plan for the payments feature", "top_k": 3 }
+      {
+        "prompt": "captain: direct call needs triage first",
+        "top_k": 3
+      },
+      {
+        "prompt": "gatekeeper: refuse key rotation at wave 0",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "execute the payments plan step by step" }
+      {
+        "prompt": "execute the payments plan step by step"
+      }
     ]
   },
   "behavioral": [

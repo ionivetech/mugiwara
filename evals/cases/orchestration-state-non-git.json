@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "run in a directory that is not a git repository", "top_k": 3 },
-      { "prompt": "agent operating outside any git repository", "top_k": 3 }
+      {
+        "prompt": "captain: direct call needs triage first",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "show the current branch name" }
+      {
+        "prompt": "show the current branch name"
+      }
     ]
   },
   "behavioral": [

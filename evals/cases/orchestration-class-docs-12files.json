@@ -3,11 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "update documentation across 12 markdown files", "top_k": 3 },
-      { "prompt": "rewrite the docs and config files, no code logic", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: refuse key rotation at wave 0",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "ship a 12-file feature behind a feature flag" }
+      {
+        "prompt": "ship a 12-file feature behind a feature flag"
+      }
     ]
   },
   "behavioral": [

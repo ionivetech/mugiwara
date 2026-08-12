@@ -3,10 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "deploy this to staging for me", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: hotfix route for production",
+        "top_k": 3
+      },
+      {
+        "prompt": "gatekeeper: direct call, lane escalation, check-in",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "push the branch and prepare PR material" }
+      {
+        "prompt": "push the branch and prepare PR material"
+      }
     ]
   },
   "behavioral": [

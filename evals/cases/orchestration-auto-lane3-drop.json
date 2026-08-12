@@ -3,10 +3,19 @@
   "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
-      { "prompt": "auto mode mission now touches the auth path mid-flight", "top_k": 3 }
+      {
+        "prompt": "gatekeeper: route mode flip to next wave",
+        "top_k": 3
+      },
+      {
+        "prompt": "gatekeeper: classify route refuse hotfix opt-out",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "auto mode mission that never leaves lane 1" }
+      {
+        "prompt": "routine feature request on a quiet branch"
+      }
     ]
   },
   "behavioral": [
