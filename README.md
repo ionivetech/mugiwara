@@ -57,10 +57,9 @@ Then ask something non-trivial. The crew auto-activates:
 > add role-based access control: admin, editor, viewer
 ```
 
-A ~$0.03 mission (Standard lane, ~10k tokens) produces a branch with test-first
+A Standard lane mission (~10k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
-at every step in your chat. Costs scale with your model (prices shown for
-Claude Sonnet as reference). See it work: [docs/getting-started.md](docs/getting-started.md).
+at every step in your chat. See it work: [docs/getting-started.md](docs/getting-started.md).
 
 ## How it works
 
@@ -112,17 +111,17 @@ temperature, and a step limit. Call them by name or let the pipeline auto-route.
 
 ## How much it costs
 
-Mugiwara itself is free. The token cost depends on your mission lane:
+Mugiwara itself is free. Token usage depends on mission lane:
 
-| Lane | Waves | Typical tokens | ~Cost (ref. Claude) |
-|------|:-----:|:--------------:|:-------------------:|
-| Direct (typo) | 0 | ~0 | $0 |
-| Lean (small bug) | 2 | ~4k | ~$0.01 |
-| Standard (feature) | 5–7 | ~10k | ~$0.03 |
-| Full (architecture) | 9–11 | ~20k | ~$0.06 |
+| Lane | Waves | Typical tokens |
+|------|:-----:|:--------------:|
+| Direct (typo) | 0 | ~0 |
+| Lean (small bug) | 2 | ~4k |
+| Standard (feature) | 5–7 | ~10k |
+| Full (architecture) | 9–11 | ~20k |
 
-Cost is tracked in `.mugiwara/state.json` and surfaced in every mission report.
-Pipeline never costs more than the work it verifies.
+Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
+pauses at 3×. See [cost model](docs/concepts/cost.md) for per-model pricing reference.
 
 → [Full cost model and token budget](docs/concepts/cost.md)
 
