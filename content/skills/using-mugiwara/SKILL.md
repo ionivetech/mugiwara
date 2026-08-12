@@ -1,6 +1,6 @@
 ---
 name: using-mugiwara
-description: Use at session start or on any task — explains how the crew works, classifies missions, routes to the right specialist. Front door to the Straw Hat crew.
+description: How mugiwara works. Crew overview, where to start, which agent to summon for each task, what each specialist does. Front-door router. Trigger: "which agent for", "pick crew", "mugiwara how", new session overview.
 ---
 
 # Using Mugiwara (Front Door)

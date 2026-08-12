@@ -56,7 +56,7 @@ mid-wave.
 
 The crew runs **inline in your main conversation**; subagents are used only for
 independent `[PARALLEL]` task batches and background checks. You see every wave
-as it happens. See [execution-model.md](execution-model.md).
+as it happens. See [execution-model.md](../concepts/execution-model.md).
 
 ## What the crew will never do
 
@@ -69,4 +69,4 @@ as it happens. See [execution-model.md](execution-model.md).
 ## Going further
 
 - [Developer onboarding](developer-onboarding.md) if you want to contribute.
-- [Comparison](comparison.md) if you're weighing mugiwara against alternatives.
+- [Comparison](../concepts/comparison.md) if you're weighing mugiwara against alternatives.

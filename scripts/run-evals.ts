@@ -9,6 +9,7 @@
 // keyword match, then reports pass/fail per case and a rank-1 style score.
 // The command defaults to "claude -p" — override with MUGIWARA_EVAL_CMD.
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
 const root = join(import.meta.dirname, '..');
@@ -136,7 +137,6 @@ async function runCases(env: { execFileSync: typeof import('node:child_process')
 
 const runArg = process.argv.indexOf('--run');
 if (runArg !== -1) {
-  const { execFileSync } = require('node:child_process');
   const cmd = process.env.MUGIWARA_EVAL_CMD ?? 'claude -p';
   const [bin, ...pre] = cmd.split(' ');
   runCases({ execFileSync, bin, pre });

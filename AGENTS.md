@@ -158,7 +158,7 @@ manifest.
 
 ## Docs drift
 
-`docs/skills.md` must mention every skill directory. `docs/agents.md` must
+`docs/concepts/skills.md` must mention every skill directory. `docs/concepts/agents.md` must
 mention every agent file. Enforced by `--check-docs`.
 
 ## Skill count

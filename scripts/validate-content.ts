@@ -14,7 +14,7 @@ function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Rec
   const { data, body } = parsed;
   if (data.name !== wantName) errors.push(`${kind} ${file}: name "${data.name}" != "${wantName}"`);
   const d = data.description ?? '';
-  if (kind === 'skill' && (d.length < 20 || d.length > 500)) errors.push(`skill ${file}: description must be 20-500 chars (got ${d.length})`);
+  if (kind === 'skill' && (d.length < 20 || d.length > 220)) errors.push(`skill ${file}: description must be 20-220 chars (got ${d.length})`);
   if (kind === 'agent' && d.length < 20) errors.push(`agent ${file}: description too short`);
   if (kind === 'skill' && body.replace(/\r?\n$/, '').split(/\r?\n/).length > 120) errors.push(`skill ${file}: body exceeds 120 lines`);
   if (kind === 'skill' && !body.includes('## Skip when')) errors.push(`skill ${file}: missing required "## Skip when" block (≤4 lines, numeric threshold)`);
@@ -188,20 +188,20 @@ if (totalDescChars > INDEX_BUDGET) {
 const docsArg = process.argv.indexOf('--check-docs');
 if (docsArg !== -1) {
   const docsDir = join(import.meta.dirname, '..', 'docs');
-  const skillsDoc = join(docsDir, 'skills.md');
-  const agentsDoc = join(docsDir, 'agents.md');
+const skillsDoc = join(docsDir, 'concepts', 'skills.md');
+const agentsDoc = join(docsDir, 'concepts', 'agents.md');
   let docErrors = 0;
 
   if (existsSync(skillsDoc)) {
     const content = readFileSync(skillsDoc, 'utf8');
     for (const dir of skillDirs) {
       if (!content.includes(dir)) {
-        errors.push(`docs/skills.md: missing skill "${dir}"`);
+        errors.push(`docs/concepts/skills.md: missing skill "${dir}"`);
         docErrors++;
       }
     }
   } else {
-    errors.push('docs/skills.md: file not found');
+    errors.push('docs/concepts/skills.md: file not found');
     docErrors++;
   }
 
@@ -210,12 +210,12 @@ if (docsArg !== -1) {
     for (const f of agentFiles) {
       const name = f.replace(/\.md$/, '');
       if (!content.includes(name)) {
-        errors.push(`docs/agents.md: missing agent "${name}"`);
+        errors.push(`docs/concepts/agents.md: missing agent "${name}"`);
         docErrors++;
       }
     }
   } else {
-    errors.push('docs/agents.md: file not found');
+    errors.push('docs/concepts/agents.md: file not found');
     docErrors++;
   }
 

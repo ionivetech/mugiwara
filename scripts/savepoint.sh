@@ -100,7 +100,7 @@ EVIDENCE=$(ls "$MUGIWARA_DIR/results/" 2>/dev/null | grep "$MISSION" | sed 's|^|
 SKILL_VERSION="1"
 if [ -f package.json ]; then
   PKG_JSON="$MUGIWARA_DIR/../package.json"
-  [ -f "$PKG_JSON" ] && SKILL_VERSION=$(python3 -c "import json; v=json.load(open('$PKG_JSON')).get('version','1'); print(v.split('.')[0])" 2>/dev/null || echo "1")
+  [ -f "$PKG_JSON" ] && SKILL_VERSION=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync('$PKG_JSON','utf8')).version.split('.')[0])}catch(e){console.log('1')}" 2>/dev/null || echo "1")
 fi
 
 # tokens from env var (harness exports estimated tokens consumed)

@@ -111,7 +111,7 @@ Almost nothing in `guided` mode:
   PR, merges, or deploys.
 
 Switch to `semi` or `auto` if you want the crew to self-manage branch, commits,
-and ambiguities. See [modes](modes.md).
+and ambiguities. See [modes](concepts/modes.md).
 
 ## 4. The `.mugiwara/` workspace
 
@@ -133,7 +133,7 @@ Every mission writes to `.mugiwara/` at the repo root:
 
 **Savepoint** runs at every wave boundary — `state.json` carries lane, wave,
 files, blockers, heal cycle, and token budget. Resume reads one file instead of
-six. See [audit-trail.md](audit-trail.md) for the full artifact map.
+six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 
 ## 5. Configuration
 
@@ -150,9 +150,9 @@ six. See [audit-trail.md](audit-trail.md) for the full artifact map.
 
 ## 6. Next steps
 
-- Meet the [crew](agents.md) — 14 agents with permission boundaries.
-- Browse the [skills](skills.md) — 26 skills with the 3-layer disclosure model.
-- Understand the [lanes](lanes.md) — how work is sized before it runs.
-- Set your [mode](modes.md) — guided/semi/auto.
-- Read the [audit trail](audit-trail.md) — every artifact and how to review it.
-- See the [compliance matrix](compliance-matrix.md) — rule compliance per model.
+- Meet the [crew](concepts/agents.md) — 14 agents with permission boundaries.
+- Browse the [skills](concepts/skills.md) — 26 skills with the 3-layer disclosure model.
+- Understand the [lanes](concepts/lanes.md) — how work is sized before it runs.
+- Set your [mode](concepts/modes.md) — guided/semi/auto.
+- Read the [audit trail](concepts/audit-trail.md) — every artifact and how to review it.
+- See the [compliance matrix](reference/compliance-matrix.md) — rule compliance per model.

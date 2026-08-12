@@ -2,6 +2,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
 import type { Scope } from './manifest.ts';
 
@@ -43,8 +44,8 @@ export interface Target {
   postInstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean; files: string[] }): { written: string[]; notes: string[] };
 }
 
-export const CONTENT_DIR = join(import.meta.dirname, '..', 'content');
-const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8')) as { version: string };
+export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'content');
+const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')) as { version: string };
 export const VERSION = pkg.version;
 
 export function collectContent(): { skills: ContentItem[]; agents: ContentItem[] } {
@@ -87,8 +88,10 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
         return;
       }
       const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupFile = join(backupRoot, 'backup', ts, absPath.replace(/[^a-zA-Z0-9]+/g, '_'));
-      if (!dryRun) { mkdirSync(dirname(backupFile), { recursive: true }); copyFileSync(absPath, backupFile); }
+      const fileName = absPath.replace(/[^a-zA-Z0-9]+/g, '_');
+      const backupDir = join(backupRoot, 'backup', `${ts}-${target.id}`);
+      const backupFile = join(backupDir, fileName);
+      if (!dryRun) { mkdirSync(backupDir, { recursive: true }); copyFileSync(absPath, backupFile); }
       result.backedUp.push(absPath);
     }
     if (!dryRun) { mkdirSync(dirname(absPath), { recursive: true }); writeFileSync(absPath, text); }
@@ -133,10 +136,9 @@ export function removeInstalled(manifest: { files: string[] }, { dryRun = false 
     for (const f of manifest.files) {
       let d = dirname(f);
       while (existsSync(d) && readdirSync(d).length === 0) {
-        rmSync(d, { recursive: true });
-        const parent = dirname(d);
-        if (parent === d) break;
-        d = parent;
+        if (d.endsWith('/.mugiwara') || d === dirname(d)) break;
+        rmSync(d, { recursive: true, force: true });
+        d = dirname(d);
       }
     }
   }

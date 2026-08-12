@@ -101,29 +101,6 @@ test('system.transform appends the announce string once (dedupes on repeat)', as
   expect(output.system).toHaveLength(2);
 });
 
-test('announce string carries inline doctrine and flow contract', async () => {
-  const hooks = await plugin();
-  const transform = hooks['experimental.chat.system.transform'];
-  const output = { system: ['existing prompt'] };
-  await transform({}, output);
-  expect(output.system[0]).toContain('Mugiwara crew available');
-  expect(output.system[0]).toContain('Never Task-dispatch a crew member');
-  expect(output.system[0]).toContain('auto-activates');
-});
-
-test('system.transform appends the announce string once (dedupes on repeat)', async () => {
-  const hooks = await plugin();
-  const transform = hooks['experimental.chat.system.transform'];
-  expect(typeof transform).toBe('function');
-  const output = { system: ['existing prompt'] };
-  await transform({}, output);
-  expect(output.system).toHaveLength(2);
-  expect(output.system[0]).toContain('Mugiwara crew available');
-  expect(output.system[1]).toContain('Active mode:');
-  await transform({}, output);
-  expect(output.system).toHaveLength(2);
-});
-
 const makeCfg = () => mkdtempSync(join(tmpdir(), 'mugi-mode-'));
 
 test('mode reader: no config files -> guided', () => {

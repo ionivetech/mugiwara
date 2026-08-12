@@ -15,7 +15,7 @@ RESULTS_DIR="$MUGIWARA_DIR/results"
 mkdir -p "$RESULTS_DIR"
 
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-HASH=$(echo "${LABEL}-${TIMESTAMP}-$$-${RANDOM}" | shasum -a 256 | cut -c1-12 2>/dev/null || echo "${TIMESTAMP}")
+HASH=$(echo "${LABEL}-${TIMESTAMP}-$$-${RANDOM}" | (sha256sum 2>/dev/null || shasum -a 256 2>/dev/null || openssl sha256) | cut -c1-12 2>/dev/null || echo "${TIMESTAMP}")
 EVIDENCE_FILE="$RESULTS_DIR/${LABEL}-${HASH}.log"
 
 {
