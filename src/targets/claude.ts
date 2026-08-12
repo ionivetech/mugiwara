@@ -1,5 +1,5 @@
 // src/targets/claude.ts
-import { existsSync, readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync, copyFileSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
@@ -39,6 +39,7 @@ export const target: Target = {
     if (existsSync(HOOK_SRC) && !existsSync(hookFile)) {
       mkdirSync(dirname(hookFile), { recursive: true });
       copyFileSync(HOOK_SRC, hookFile);
+      chmodSync(hookFile, 0o755);
       return { written: [hookFile], notes: [] };
     }
     return { written: [], notes: [] };
