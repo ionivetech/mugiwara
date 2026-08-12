@@ -33,7 +33,7 @@ Before touching code:
 
 ## Wave execution
 
-Before starting: if `.mugiwara/continue.md` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md`.
+Before starting: if `.mugiwara/continue.md` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
 
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
@@ -75,7 +75,7 @@ A delegation prompt shorter than ~30 lines is too short — beef it up. Thin pro
 
 ## TDD discipline & user tests
 
-Full protocol: `references/resume-batching.md` — TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule.
+Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule.
 
 ## One logical task, one commit
 

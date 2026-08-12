@@ -6,7 +6,7 @@ the batch-resume protocol.
 ## TDD discipline
 
 Full TDD discipline: `references/tdd.md` — RED-GREEN-REFACTOR, test pyramid,
-rationalizations, red flags — 89 lines.
+rationalizations, red flags.
 
 The test's proof value comes from WHEN it runs, not that it exists. A test
 that passes on first run has proven nothing.

@@ -100,11 +100,11 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 ## Implementation graph (consumes <file> from Task M → produces <file> for Task N; cross-file risk edges)
 ## Task index (table: # | task | files | size | depends-on <file> | acceptance)
 ## Detail tasks (unified template, one block per task) · ## Risk & rollback
-## Mission split (very large only)
+## Mission split (very large) — Lane 3
 ```
 The plan doc contains ONLY this. Route reasons, check-in verdicts, and closure go to `logs/` and `results/` — never here.
 
-## Mission split (very large)
+## Mission split (very large) — Lane 3
 
 Very-large missions (>2 days, multi-PR scope) split into sub-missions, never one giant plan. Each sub-mission: its own PR, done-criteria (checkbox list), and a continuation pointer; every sub-mission ends in a mergeable state. Continuation flows through `.mugiwara/continue.md` — the next sub-mission resumes from the pointer, never restarts. Every sub-mission needs its own wave table; Nami writes the split before any task detail.
 

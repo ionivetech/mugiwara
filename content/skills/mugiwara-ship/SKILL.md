@@ -64,7 +64,7 @@ consumed intermediates. Never touch anything outside `.mugiwara/`.
 **DELETE** (consumed or superseded):
 
 - `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
-- `.mugiwara/continue.md` and handoff files (`.mugiwara/handoff*`) — consumed once the mission is closed
+- `.mugiwara/continue.md` — consumed once the mission is closed (delete by exact name, never a `handoff*` glob)
 - `results/` wave reports — todos, audits, quality/gate/healing reports
 - `review/` and `issues/` per-mission findings
 - `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs

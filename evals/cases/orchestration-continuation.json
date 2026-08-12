@@ -27,6 +27,7 @@
       "task": "New session mid-mission. .mugiwara/continue.md exists with next_action.",
       "rubric": [
         "reads continue.md and states exact resume point",
+        "verifies next_action against state.json/todos before executing",
         "does not restart from Wave 0",
         "executes next_action"
       ]

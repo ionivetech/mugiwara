@@ -79,7 +79,7 @@ Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+
 
 ## Session handoff
 
-At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/continue.md` before the final text response: mission, sub_mission, wave, tasks, next_action (exact files + commands), next_session_prompt. Next session starts with `/mugiwara continue` — no re-explanation. `auto` mode continues across sessions via continue.md: one command per session, no re-explanation. state.json proves what is done; continue.md says what is next.
+At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/continue.md` before the final text response: mission, sub_mission, wave, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the wave. Next session starts with `/mugiwara continue` — no re-explanation. `auto` mode continues across sessions via continue.md: one command per session, no re-explanation. state.json proves what is done; continue.md says what is next — verify next_action against state.json, escalate contradictions.
 
 ## Blocker protocol
 
