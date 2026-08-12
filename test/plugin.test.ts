@@ -44,20 +44,22 @@ test('config hook registers all 14 agents with mode all', async () => {
   }
 });
 
-test('audit/deny permission fields preserved with mode all', async () => {
+test('path-boundary agents carry no global permission (write-scope is the gate)', async () => {
   const { config } = await plugin();
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
   await config(cfg);
-  const denySet = ['chopper-checkpoint', 'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'skeptic-verifier'];
-  for (const name of denySet) {
+  const auditSet = ['chopper-checkpoint', 'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'skeptic-verifier'];
+  for (const name of auditSet) {
     const a = cfg.agent[name];
     expect(a).toBeDefined();
-    expect((a as { permission?: unknown }).permission).toEqual({ edit: 'deny' });
+    // edit: 'deny' is global and would block legit .mugiwara writes — the
+    // path boundary (write-scope) is prose + validator, never a blanket deny.
+    expect((a as { permission?: unknown }).permission).toBeUndefined();
     expect((a as { mode?: string }).mode).toBe('all');
   }
 });
 
-test('config hook applies per-agent opencode tuning (color/temp/permission/steps)', async () => {
+test('config hook applies per-agent opencode tuning (color/temp/steps, no permission)', async () => {
   const { config } = await plugin();
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
   await config(cfg);
@@ -65,7 +67,7 @@ test('config hook applies per-agent opencode tuning (color/temp/permission/steps
   expect(luffy.color).toBe('#ef4444');
   expect(luffy.temperature).toBe(0.2);
   const chopper = cfg.agent['chopper-checkpoint'];
-  expect(chopper.permission).toEqual({ edit: 'deny' });
+  expect((chopper as { permission?: unknown }).permission).toBeUndefined();
   expect(typeof chopper.steps).toBe('number');
 });
 

@@ -134,6 +134,57 @@ for (const dir of skillDirs) {
   if (dir !== 'mugiwara-workflow' && !usedSkills.has(dir)) errors.push(`skill ${dir}: not referenced by any agent`);
 }
 
+// --- write-scope gate (F2): every agent declares a scope; only executors may write source ---
+const SOURCE_SCOPED = new Set(['zoro-execution', 'brook-healing']);
+for (const f of agentFiles) {
+  const name = f.replace(/\.md$/, '');
+  const parsed = parseFrontmatter(readFileSync(join(agentDir, f), 'utf8'));
+  const scope = parsed.data['write-scope'];
+  if (!scope) { errors.push(`agent ${f}: missing write-scope (artifacts | source)`); continue; }
+  if (scope !== 'artifacts' && scope !== 'source') errors.push(`agent ${f}: write-scope must be artifacts | source (got "${scope}")`);
+  if (scope === 'source' && !SOURCE_SCOPED.has(name)) errors.push(`agent ${f}: only zoro-execution and brook-healing may declare write-scope: source`);
+}
+
+// --- hub-rule gate (F3): every non-Luffy agent carries both hub sections ---
+for (const f of agentFiles) {
+  const name = f.replace(/\.md$/, '');
+  if (name === 'luffy-orchestrator') continue;
+  const text = readFileSync(join(agentDir, f), 'utf8');
+  if (!text.includes('## Before you start')) errors.push(`agent ${f}: missing "## Before you start" entry protocol`);
+  if (!text.includes('## Return to Luffy')) errors.push(`agent ${f}: missing "## Return to Luffy" hub rule`);
+}
+
+// --- hub-skill gate (F3): every agent lists mugiwara-orchestration (the hub rule's home) ---
+for (const f of agentFiles) {
+  const parsed = parseFrontmatter(readFileSync(join(agentDir, f), 'utf8'));
+  const skills = (parsed.data.skills ?? '').split(',').map(s => s.trim());
+  if (!skills.includes('mugiwara-orchestration')) errors.push(`agent ${f}: missing mugiwara-orchestration in skills (hub rule lives there)`);
+}
+
+// --- handoff-target gate (F4): a body naming another crew member as a handoff
+// target without Luffy in the same line fails CI ---
+const HANDOFF_CREW = ['usopp', 'nami', 'zoro', 'chopper', 'sanji', 'franky', 'robin', 'jinbe', 'brook', 'skeptic', 'memory-keeper', 'resume-coordinator', 'eval-runner'];
+const handoffRe = new RegExp(`\\b(hand to|hand off to|dispatch)\\s+(?:a\\s+|another\\s+|the\\s+)?(?:crew members?|${HANDOFF_CREW.join('|')})`, 'i');
+// Negation must DIRECTLY precede the handoff verb, not sit anywhere in the
+// line ("do not hand off" later in the same line is a different clause).
+const NEGATION_VERB = /\b(never|not|no|don't|do not)\s+(hand|dispatch)\b/i;
+for (const f of [...agentFiles, ...skillDirs.map(d => join(root, 'skills', d, 'SKILL.md'))]) {
+  if (!existsSync(f)) continue;
+  const text = readFileSync(f, 'utf8');
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const m = handoffRe.exec(line);
+    if (!m) continue;
+    // clause boundary: only the clause containing the handoff verb counts
+    const clauseStart = line.lastIndexOf('.', m.index) + 1;
+    const clause = line.slice(clauseStart, m.index + m[0].length);
+    if (NEGATION_VERB.test(clause)) continue;      // "never dispatch X" — constraint
+    if (/\bLuffy\b|to Luffy\b/.test(line)) continue; // hub named in same line ("main thread" is NOT the hub — Luffy is)
+    errors.push(`handoff leak ${f.replace(root + '/', '')}:${i + 1}: "${line.trim()}" — handoff target must be Luffy or name Luffy in the same line`);
+  }
+}
+
 // --- manifest-sync check: .claude-plugin/plugin.json must set-equal content/ ---
 const manifestArg = process.argv.indexOf('--check-manifest');
 if (manifestArg !== -1) {

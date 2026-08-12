@@ -174,5 +174,76 @@ if (!existsSync(evalDir)) {
   assert('eval cases present → run-evals exits 0', true, () => run('evals', 'bun scripts/run-evals.ts'));
 }
 
+// --- F2: write-scope gate — remove write-scope from one agent, prove red ---
+console.log('\nF2 — write-scope gate');
+const scopeAgent = join(root, 'content', 'agents', 'nami-planner.md');
+if (!existsSync(scopeAgent)) {
+  console.log('  ⚠  nami-planner.md not found, skipping');
+} else {
+  const original = readFileSync(scopeAgent, 'utf8');
+  try {
+    const broken = original.replace(/\nwrite-scope: artifacts/, '');
+    writeFileSync(scopeAgent, broken);
+    assert('missing write-scope → exit 1', false, () => run('F2-scope', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(scopeAgent, original);
+    assert('restored → exit 0', true, () => run('F2-scope', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
+// --- F2: source-scope on non-executor agent — prove red ---
+console.log('\nF2 — source-scope restriction');
+const plannerAgent = join(root, 'content', 'agents', 'nami-planner.md');
+if (!existsSync(plannerAgent)) {
+  console.log('  ⚠  nami-planner.md not found, skipping');
+} else {
+  const original = readFileSync(plannerAgent, 'utf8');
+  try {
+    const broken = original.replace('write-scope: artifacts', 'write-scope: source');
+    writeFileSync(plannerAgent, broken);
+    assert('source on non-executor → exit 1', false, () => run('F2-source', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(plannerAgent, original);
+    assert('restored → exit 0', true, () => run('F2-source', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
+// --- F3: remove Return-to-Luffy from one agent — prove red ---
+console.log('\nF3 — hub rule gate');
+const hubAgent = join(root, 'content', 'agents', 'robin-reviewer.md');
+if (!existsSync(hubAgent)) {
+  console.log('  ⚠  robin-reviewer.md not found, skipping');
+} else {
+  const original = readFileSync(hubAgent, 'utf8');
+  try {
+    const broken = original.replace(/## Return to Luffy\n\n[\s\S]*?(?=\n## )/, '\n');
+    writeFileSync(hubAgent, broken);
+    assert('missing Return-to-Luffy → exit 1', false, () => run('F3-hub', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(hubAgent, original);
+    assert('restored → exit 0', true, () => run('F3-hub', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
+// --- F4: reintroduce handoff leak — prove red ---
+console.log('\nF4 — handoff-target gate');
+const brainstormSkill = join(root, 'content', 'skills', 'mugiwara-brainstorm', 'SKILL.md');
+if (!existsSync(brainstormSkill)) {
+  console.log('  ⚠  mugiwara-brainstorm/SKILL.md not found, skipping');
+} else {
+  const original = readFileSync(brainstormSkill, 'utf8');
+  try {
+    const broken = original.replace(
+      'and return to Luffy, who routes to Nami or Zoro.',
+      'and hand to Nami (mugiwara-planning) via the main thread.'
+    );
+    writeFileSync(brainstormSkill, broken);
+    assert('handoff leak → exit 1', false, () => run('F4-handoff', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(brainstormSkill, original);
+    assert('restored → exit 0', true, () => run('F4-handoff', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

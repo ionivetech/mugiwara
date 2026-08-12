@@ -39,3 +39,24 @@ What actually differs per harness tier. Every skill and agent file ships to ever
 - All 14 agent markdown files ship to every harness.
 - `references/` files are always copied.
 - The workflow, lane sizing, and evidence discipline are identical — the difference is in how the model loads them.
+
+## Write-boundary enforcement (honest limits)
+
+The path-scoped write boundary (`write-scope: artifacts` vs `source` in agent
+frontmatter) is **not expressible as a permission rule on any harness**. `edit:
+deny` on opencode is global — it blocks legitimate `.mugiwara/**` writes
+(results, plans, logs) exactly as hard as source edits. Where a harness cannot
+express path-scoped writes, the constraint is carried as the agent's first Rule
+(`## Before you start`), mirrored in Red flags, and enforced by the validator
+gate (`scripts/validate-content.ts`: every agent declares `write-scope`, only
+`zoro-execution`/`brook-healing` may be `source`, handoff targets must be Luffy)
+plus the tier-3 stub lines in `src/targets/generic.ts`.
+
+| Harness | `write-scope` expression | Status |
+|---------|--------------------------|--------|
+| Claude Code | `tools:` frontmatter (plumbed in `claude.ts`, unused — no path-scope support) | **unenforced**, prose + validator |
+| opencode | permission map (hand-maintained `edit: deny` removed — wrong axis) | **unenforced**, prose + validator |
+| Copilot / tier 2 / tier 3 | prose Rule + Red flag + stub lines | **unenforced**, prose + validator |
+
+The validator is the floor everywhere; CI blocks drift. This does not make
+mugiwara a runtime — see `enforcement.md`.
