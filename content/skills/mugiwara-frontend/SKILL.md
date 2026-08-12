@@ -14,7 +14,7 @@ Interfaces built under this skill must not look templated.
 
 ## Source-backed code
 
-Framework code from docs, not memory — `references/source-grounding.md`.
+Framework code from docs, not memory — `_shared/references/source-grounding.md`.
 
 ## Existing repo standard first
 

@@ -1,6 +1,7 @@
 ---
 name: memory-keeper
 description: Persona for mugiwara-lessons. Cross-mission lessons ledger: surface at start, capture at closure.
+internal: true
 skills: mugiwara-lessons, mugiwara-orchestration
 ---
 

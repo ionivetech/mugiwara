@@ -2,3 +2,14 @@
 .opencode/package.json
 .opencode/package-lock.json
 .opencode/.gitignore
+.opencode/.git
+.agents/.git
+.claude-plugin/.git
+.codex-plugin/.git
+.cursor-plugin/.git
+.kimi-plugin/.git
+test/
+coverage/
+.mugiwara/
+.git/
+*.tgz

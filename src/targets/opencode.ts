@@ -49,6 +49,7 @@ export const target: Target = {
   id: 'opencode',
   label: 'opencode',
   native: true,
+  refPointerPrefix: '../',
   paths({ scope, projectDir, home }) {
     const root = scope === 'global' ? join(home, '.config', 'opencode') : join(projectDir, '.opencode');
     return { skillsDir: join(root, 'skills'), agentsDir: join(root, 'agents') };
@@ -60,7 +61,8 @@ export const target: Target = {
     };
   },
   transformAgent(data: FrontmatterData, body: string) {
-    const fm = agentFrontmatter(data.name, data.description);
+    const desc = data['internal-agent'] === 'true' ? `[INTERNAL] ${data.description}` : data.description;
+    const fm = agentFrontmatter(data.name, desc);
     return { relPath: `${data.name}.md`, text: `---\n${fm}\n---\n${body}` };
   },
   refsDir({ scope, projectDir, home }, skillName: string) {

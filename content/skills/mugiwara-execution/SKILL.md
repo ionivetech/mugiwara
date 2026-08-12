@@ -19,7 +19,7 @@ By mode (per mode config):
 - `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints.
 - `semi`/`auto`: auto-create the mission branch per the config `branch` key (default `feature/{type}-{issue}-{slug}`) and auto-commit per task using the config `commit` style (default conventional). No branch/commit ask. Record mode + branch + commit style in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>-todos.md`.
 
-Code to the installed version's docs, not memory: `references/source-grounding.md`.
+Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`.
 
 The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode. One-task-one-commit, save-points, and atomic-commit rules hold unchanged in every mode.
 
@@ -43,6 +43,16 @@ Before touching code:
 ## Task batching
 
 Run task work tightly: do the steps without narrating each command or micro-step. Surface ONE per-task result + evidence per task (or per batch) — status, evidence pointer, deviations — in a compact line or table. The checkpoint audits evidence, not commentary; save the blow-by-blow.
+
+**Output rule.** Do NOT stream every tool call to the main thread. After each task batch, emit ONLY:
+
+```
+T1: ✅ | built + tested | bun run test -- installer
+T2: ✅ | 7 pointers rewritten | grep refs/ → clean
+T3: ✅ | 38/38 tests | bun run test
+```
+
+Full logs go to `.mugiwara/results/<mission>-execution-log.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output.
 
 ## Delegation format (parallel workers only)
 
@@ -90,7 +100,15 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 ## Report
 
-After each wave: task table (status, evidence pointer, deviations) shown inline in the conversation → the main thread hands off to Chopper (Wave 4). You never dispatch another crew member.
+After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format:
+
+```
+| # | Task | Status | Evidence |
+|---|------|--------|----------|
+| T1 | <title> | ✅/❌ | <command or file> |
+```
+
+Then hand off to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>-execution-log.md`. Never dispatch another crew member.
 
 ## Red flags
 

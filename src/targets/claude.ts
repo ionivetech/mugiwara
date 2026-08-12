@@ -1,5 +1,5 @@
 // src/targets/claude.ts
-import { existsSync, readFileSync, mkdirSync, copyFileSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync, copyFileSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
@@ -12,6 +12,7 @@ export const target: Target = {
   id: 'claude',
   label: 'Claude Code',
   native: true,
+  refPointerPrefix: '../',
   paths({ scope, projectDir, home }) {
     const root = scope === 'global' ? join(home, '.claude') : join(projectDir, '.claude');
     return { skillsDir: join(root, 'skills'), agentsDir: join(root, 'agents') };
@@ -39,6 +40,7 @@ export const target: Target = {
     if (existsSync(HOOK_SRC) && !existsSync(hookFile)) {
       mkdirSync(dirname(hookFile), { recursive: true });
       copyFileSync(HOOK_SRC, hookFile);
+      chmodSync(hookFile, 0o755);
       return { written: [hookFile], notes: [] };
     }
     return { written: [], notes: [] };

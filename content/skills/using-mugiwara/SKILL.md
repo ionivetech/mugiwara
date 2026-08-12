@@ -1,20 +1,18 @@
 ---
 name: using-mugiwara
-description: How mugiwara works. Crew overview, where to start, which agent to summon for each task, what each specialist does. Front-door router. Trigger: "which agent for", "pick crew", "mugiwara how", new session overview.
+description: How Mugiwara works — crew overview, pipeline summary. Documentation reference. Trigger: "how does mugiwara work", "what is mugiwara", "which crew member", "crew overview", "mugiwara how".
 ---
-
-# Using Mugiwara (Front Door)
+# Using Mugiwara (Reference)
 
 ## Skip when
 
-- Lane 0 direct work: typo, rename, or single-file fix under 20 LOC.
-- User explicitly declined the crew for this request.
+- `mugiwara-orchestration` is the gatekeeper — it auto-loads for task routing and classification. This skill is a documentation reference only.
 
-Mugiwara is a governed engineering team in your coding agent. 14 specialists — triage, brainstorm, plan, execute, audit, quality, gates, review, security, heal — with evidence at every step and cost tracking. Runs inline in the main conversation.
+Mugiwara is a governed engineering team in your coding agent. 11 specialists — triage, brainstorm, plan, execute, audit, quality, gates, review, security, heal — with evidence at every step and cost tracking. Runs inline in the main conversation.
 
 ## How it works
 
-1. The crew auto-activates for non-trivial requests. You do NOT need to call `using-mugiwara` at session start — it's an optional router.
+1. `mugiwara-orchestration` auto-loads as gatekeeper for every task — classify, route, check-in, close.
 2. The pipeline: Luffy triage → Usopp brainstorm → Nami plan → Zoro execute → Chopper audit → Sanji quality → Franky gates → Robin/Jinbe review → Brook heal → Luffy closure.
 3. Every wave runs inline in the main thread. Subagents only for [PARALLEL] task batches.
 4. Evidence over claims — no wave passes on assertion. Checks must be re-run.
@@ -35,18 +33,8 @@ Mugiwara is a governed engineering team in your coding agent. 14 specialists —
 | Robin | Reviewer — breaking-change map (read-only) |
 | Jinbe | Security — STRIDE, OWASP, secret scan (read-only) |
 | Brook | Healer — reads ledger, fixes failures |
-| Skeptic | Adversarial verifier (read-only) |
 | Resume | Continuity — rebuild from state.json |
 
-## What to do
-
-1. If the user asks how mugiwara works — summarize in 3 lines.
-2. If the user gives a task — classify: Trivial / Explicit / Exploratory / Open-ended / Ambiguous.
-3. Route:
-   - Clear, small → Nami (plan) or Zoro (execute).
-   - Vague, needs direction → Usopp (brainstorm).
-   - Anything else → Luffy (full triage + check-ins).
-   - Review → Robin. Security → Jinbe. Audit → Chopper. Heal → Brook.
-4. Record the route in `.mugiwara/logs/`.
-
+For task routing and classification, `mugiwara-orchestration` auto-loads as gatekeeper.
+This skill is documentation — load manually with `/using-mugiwara` or similar trigger phrases.
 Full pipeline: see skills/mugiwara-workflow.

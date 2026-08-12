@@ -14,4 +14,4 @@ Run the crew pipeline inline. To switch autonomy mode:
 
 The flip applies from the next wave. Valid modes: guided, semi, auto.
 
-For workflow: embody `using-mugiwara` inline to classify and route. See skills/mugiwara-workflow for the full pipeline.
+For workflow: `mugiwara-orchestration` auto-loads as gatekeeper — classify, route, check-in, close. See skills/mugiwara-workflow for the full pipeline.

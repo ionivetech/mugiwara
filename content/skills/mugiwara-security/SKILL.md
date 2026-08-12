@@ -100,7 +100,7 @@ Each finding: location + one-line attack scenario + severity + concrete fix.
 
 ## Verdict
 
-PASS (no Critical/High) → closure. FAIL → Brook. Never defer a security finding to review; it either fixes now or it is Brook's problem.
+PASS (no Critical/High) → **return to Luffy** (Luffy routes to closure). FAIL → **return to Luffy** (Luffy routes to Brook). Never defer a security finding to review; it either fixes now or it is Brook's problem. Never dispatch Brook yourself.
 ## Common rationalizations
 
 | Rationalization | Reality |

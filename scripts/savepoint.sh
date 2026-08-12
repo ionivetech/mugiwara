@@ -8,19 +8,22 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
 # --- parse mission args ---
-MISSION="${1:-${STATE_MISSION:-}}"
-ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
-BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-WAVE="${4:-${STATE_WAVE:-1}}"
-MODE="${5:-${STATE_MODE:-guided}}"
-
-# --branch flag for per-branch state
+# --branch flag must parse FIRST — it shifts positionals
 BRANCH_MODE=0
 if [ "${1:-}" = "--branch" ]; then
   BRANCH_MODE=1
-  MISSION="${2:-${STATE_MISSION:-}}"
+  shift
+  MISSION="${1:-${STATE_MISSION:-}}"
+  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
   BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-  shift 2 2>/dev/null || true
+  WAVE="${4:-${STATE_WAVE:-1}}"
+  MODE="${5:-${STATE_MODE:-guided}}"
+else
+  MISSION="${1:-${STATE_MISSION:-}}"
+  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
+  BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
+  WAVE="${4:-${STATE_WAVE:-1}}"
+  MODE="${5:-${STATE_MODE:-guided}}"
 fi
 
 # per-branch state file when --branch used
@@ -126,41 +129,40 @@ elif [ "$BUDGET" -gt 0 ] && [ "$TOKENS_EST" -ge "$WARN_AT" ] 2>/dev/null; then
   STATUS="warn"
 fi
 
-SENSITIVE_ARR=""
-if [ -n "$SENSITIVE_PATHS" ]; then
-  SENSITIVE_ARR=$(echo "$SENSITIVE_PATHS" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$//')
-fi
-EVIDENCE_ARR=""
-if [ -n "$EVIDENCE" ]; then
-  EVIDENCE_ARR=$(echo "$EVIDENCE" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$//')
-fi
-
 mkdir -p "$MUGIWARA_DIR"
 
-cat > "$STATE_FILE" <<JSON
-{
-  "mission": "$MISSION",
-  "actor": "$ACTOR",
-  "branch": "$BRANCH",
-  "lane": "$LANE",
-  "lane_reason": "$LANE_REASON",
-  "wave": $WAVE,
-  "mode": "$MODE",
-  "base_sha": "$BASE_SHA",
-  "head_sha": "$HEAD_SHA",
-  "files_touched": $FILES_TOUCHED,
-  "loc_delta": $LOC_DELTA,
-  "sensitive_paths": [${SENSITIVE_ARR}],
-  "tasks": { "done": $TASKS_DONE, "total": $TASKS_TOTAL },
-  "blockers_open": $BLOCKERS_OPEN,
-  "heal_cycle": $HEAL_CYCLE,
-  "tokens_est": $TOKENS_EST,
-  "budget": $BUDGET,
-  "budget_status": "$STATUS",
-  "skill_version": "$SKILL_VERSION",
-  "evidence": [${EVIDENCE_ARR}],
-  "updated_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-}
-JSON
+node -e "
+const data = {
+  mission: process.argv[1],
+  actor: process.argv[2],
+  branch: process.argv[3],
+  lane: process.argv[4],
+  lane_reason: process.argv[5],
+  wave: parseInt(process.argv[6], 10),
+  mode: process.argv[7],
+  base_sha: process.argv[8],
+  head_sha: process.argv[9],
+  files_touched: parseInt(process.argv[10], 10),
+  loc_delta: parseInt(process.argv[11], 10),
+  sensitive_paths: process.argv[12] ? process.argv[12].split(',').filter(Boolean) : [],
+  tasks: { done: parseInt(process.argv[13], 10), total: parseInt(process.argv[14], 10) },
+  blockers_open: parseInt(process.argv[15], 10),
+  heal_cycle: parseInt(process.argv[16], 10),
+  tokens_est: parseInt(process.argv[17], 10) || 0,
+  budget: parseInt(process.argv[18], 10) || 0,
+  budget_status: process.argv[19],
+  skill_version: process.argv[20],
+  evidence: process.argv[21] ? process.argv[21].split(',').filter(Boolean) : [],
+  updated_at: process.argv[22]
+};
+require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\n');
+" \
+  "$MISSION" "$ACTOR" "$BRANCH" "$LANE" "$LANE_REASON" \
+  "$WAVE" "$MODE" "$BASE_SHA" "$HEAD_SHA" "$FILES_TOUCHED" \
+  "$LOC_DELTA" "$SENSITIVE_PATHS" "$TASKS_DONE" "$TASKS_TOTAL" \
+  "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
+  "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
+  "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  "$STATE_FILE"
 
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"

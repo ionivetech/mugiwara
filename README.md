@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
 **Ship quality code, not just fast code.** Mugiwara gives your AI agent a
-governed engineering team — 14 specialists who plan, build, audit, review, and
+governed engineering team — 11 specialists who plan, build, audit, review, and
 heal — with evidence at every step. No runtime, no API keys, no servers. Just
 markdown your agent already knows how to read.
 
@@ -26,7 +26,7 @@ every agent, every skill, every rule is static markdown.
 | Feature | What you get |
 |---------|-------------|
 | **Zero runtime** | Pure markdown. No servers, no API keys, no dependencies beyond your agent. |
-| **14 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. |
+| **11 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. +3 internal agents for eval/lessons/verification. |
 | **26 skills** | Portable playbooks: TDD execution, STRIDE security, 4-phase debugging, contract-first API design |
 | **Deterministic lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full 9-wave pipeline. |
 | **9-wave gated pipeline** | Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure |
@@ -82,7 +82,7 @@ fix; auth migration = full 9-wave pipeline).
 
 ## The crew
 
-14 specialists. Each has a role boundary (read-only for auditors/reviewers), a
+11 specialists. Each has a role boundary (read-only for auditors/reviewers), a
 temperature, and a step limit. Call them by name or let the pipeline auto-route.
 
 | Agent | Role | Permission |
@@ -169,7 +169,7 @@ mugiwara uninstall
 
 </details>
 
-All platforms get the full crew — 14 agents, 26 skills. No per-platform feature gaps.
+All platforms get the full crew — 11 agents, 26 skills (+3 internal agents). No per-platform feature gaps.
 
 → [Per-platform guides with update/verify/troubleshooting](docs/install/index.md)
 

@@ -2,6 +2,14 @@
   "name": "@ionivetech/mugiwara",
   "version": "0.5.5",
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, self-healing. Installs into Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, pi, Windsurf, Cline, Kilo, Antigravity.",
+  "homepage": "https://github.com/ionivetech/mugiwara#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ionivetech/mugiwara.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ionivetech/mugiwara/issues"
+  },
   "type": "module",
   "license": "MIT",
   "main": "./.opencode/plugins/mugiwara.mjs",
@@ -17,9 +25,7 @@
     "dist",
     "src",
     "content",
-    "docs",
     "references",
-    "evals",
     "scripts",
     ".opencode",
     ".claude-plugin",
@@ -51,8 +57,9 @@
     "validate": "bun scripts/validate-content.ts --check-manifest --check-docs",
     "evals": "bun scripts/run-evals.ts",
     "retrieval-eval": "bun scripts/retrieval-eval.ts",
+    "verify-install": "bun scripts/verify-install.ts",
     "sync-version": "bun scripts/sync-version.ts",
-    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts",
+    "gate": "bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts && bun scripts/verify-install.ts",
     "verify-pack": "npm pack --dry-run 2>&1 | node -e \"let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{if(!s.includes('ionivetech-mugiwara')){console.error('npm pack failed');process.exit(1)};console.log('npm package clean')})\"",
     "prepack": "bun run build && bun run sync-version"
   },

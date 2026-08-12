@@ -35,7 +35,7 @@ it embodies a role.
 
 | Skill | Teaches |
 |-------|---------|
-| `using-mugiwara` | Front-door router — explains the crew, classifies missions, routes to specialist |
+| `using-mugiwara` | Crew overview — explains the crew, pipeline summary. Documentation reference; `mugiwara-orchestration` is the gatekeeper for task routing. |
 | `mugiwara-root-cause` | 4-phase: reproduce → localize → reduce → fix + guard; stop-the-line |
 | `mugiwara-contract-first` | Contract-first design, error semantics, boundary validation, backward compatibility |
 | `mugiwara-claim-audit` | Adversarial verification: CLAIM → EXTRACT → DOUBT → RECONCILE → STOP |
