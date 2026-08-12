@@ -57,6 +57,21 @@ if [ "$HAS_SENSITIVE" -eq 1 ] && [ "$LANE" != "full" ]; then
   REASON="sensitive paths ($SENSITIVE) — escalated from $PREV"
 fi
 
+# path-weighted sizing: docs-only changes (markdown/config/docs outside the
+# product surface) never escalate to full from file count alone — size by the
+# code surface actually touched. Sensitive-path escalation above still wins.
+# Product surface for mugiwara: content/, src/, scripts/, test/, hooks/,
+# .opencode/, .claude/, evals/ — everything else is docs/config/asset.
+PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
+if [ "$LANE" = "full" ] && [ -n "$CHANGED" ]; then
+  CODE_COUNT=$(echo "$CHANGED" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+  if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
+    PREV="$LANE"
+    LANE="standard"
+    REASON="$FILE_COUNT files, docs-only — path-weighted down from $PREV"
+  fi
+fi
+
 if [ "$JSON_OUT" -eq 1 ]; then
   SENS_ARR=""
   [ -n "$SENSITIVE" ] && SENS_ARR=$(echo "$SENSITIVE" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$//')

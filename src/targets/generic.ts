@@ -44,7 +44,7 @@ export function makeGeneric(opts: {
       if (stubOnly) {
         return {
           relPath: `agent-${data.name}.md`,
-          text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills: ${data.skills ?? ''}. Read \`.mugiwara/refs/${data.name}.md\` when embodying this role.`,
+          text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills: ${data.skills ?? ''}. Read \`.mugiwara/refs/${data.name}.md\` when embodying this role.\n\nOnly zoro-execution and brook-healing may modify source code.\nReturn your output to luffy-orchestrator; do not choose the next step.`,
         };
       }
       return { relPath: `agent-${data.name}.md`, text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills used: ${data.skills ?? ''}\n\n${body}` };

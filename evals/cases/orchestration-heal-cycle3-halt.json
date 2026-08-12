@@ -1,0 +1,33 @@
+{
+  "name": "orchestration-heal-cycle3-halt",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "gatekeeper: route mode flip to next wave",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: check-in close and route",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "fresh failure never seen before"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Heal cycle has reached 3 with the same failure still open.",
+      "rubric": [
+        "halts — a stop, not a red flag",
+        "escalates to the user with full history",
+        "does not re-run Wave 8 past 3 cycles",
+        "reads heal_cycle from state.json"
+      ]
+    }
+  ],
+  "expect_lane": "full"
+}

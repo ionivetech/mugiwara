@@ -108,7 +108,7 @@ After each wave: compact task table (status, evidence pointer, deviations) shown
 | T1 | <title> | ✅/❌ | <command or file> |
 ```
 
-Then hand off to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>-execution-log.md`. Never dispatch another crew member.
+Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>-execution-log.md`. Never dispatch another crew member.
 
 ## Red flags
 

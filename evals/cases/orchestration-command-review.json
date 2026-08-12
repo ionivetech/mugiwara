@@ -1,0 +1,32 @@
+{
+  "name": "orchestration-command-review",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "captain: classify and pick a lane",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "style the settings page header color"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user runs /mugiwara-review and Robin finds blockers.",
+      "rubric": [
+        "findings written to .mugiwara/review/",
+        "returns the findings to Luffy",
+        "does not choose the next wave or dispatch Brook itself"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

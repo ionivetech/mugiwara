@@ -1,0 +1,31 @@
+{
+  "name": "orchestration-direct-usopp-build",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "captain: direct call needs triage first",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: classify and pick a lane",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "start the build wave for the approved caching plan"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "After the brainstorm, the user says 'ok just build it' to Usopp.",
+      "rubric": [
+        "refuses to execute as Usopp",
+        "returns to Luffy for routing instead of building",
+        "does not open an execution skill"
+      ]
+    }
+  ]
+}

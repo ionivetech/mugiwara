@@ -1,0 +1,33 @@
+{
+  "name": "orchestration-class-hotfix",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "gatekeeper: hotfix route for production",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: route hotfix with deferred gates",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "explain the deployment topology in prod"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user says: 'prod is down, revert the last commit.'",
+      "rubric": [
+        "classifies as Hotfix",
+        "routes to lane 1",
+        "defers gates with a named owner, never skips them",
+        "acts fast but records the deferral"
+      ]
+    }
+  ],
+  "expect_lane": "lean"
+}

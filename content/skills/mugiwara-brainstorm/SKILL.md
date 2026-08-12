@@ -67,7 +67,9 @@ Hand off ONLY when the validation checklist passes — all of:
 - [ ] MVP separated from nice-to-haves, with what-to-cut stated.
 - [ ] Spec written with the open questions that Nami still needs answered.
 
-When direction is locked, write a short brief (problem, chosen option + reasoning, risks, open questions) to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` and hand to Nami (`mugiwara-planning`) via the main thread. If the checklist fails, keep interrogating — do not hand off.
+When direction is locked, write a short brief (problem, chosen option + reasoning, risks, open questions) to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` and return to Luffy, who routes to Nami or Zoro. If the checklist fails, keep interrogating — do not hand off.
+
+For UI directions, name slop risks (generic card grids, unmotivated gradients, template-shaped layouts) as a risk in the brief. Do not open the frontend skill — that is Zoro's, under Nami's plan.
 
 ## Rationalizations
 

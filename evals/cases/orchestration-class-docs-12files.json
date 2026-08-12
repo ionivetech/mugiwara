@@ -1,0 +1,32 @@
+{
+  "name": "orchestration-class-docs-12files",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "gatekeeper: refuse key rotation at wave 0",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "ship a 12-file feature behind a feature flag"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A 12-file documentation-only change (markdown + config, no code logic).",
+      "rubric": [
+        "not lane 3 — path-weighted sizing (docs are low sensitivity)",
+        "sizes lower than a code change of the same file count",
+        "records the lane + reason"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

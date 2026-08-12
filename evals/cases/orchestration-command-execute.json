@@ -1,0 +1,33 @@
+{
+  "name": "orchestration-command-execute",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "captain: classify and pick a lane",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: triage, classify, route, check-in",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "explain how the CLI parses JSON config files"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user runs /mugiwara-execute but no approved plan exists in .mugiwara/plans/.",
+      "rubric": [
+        "stops instead of executing nothing",
+        "runs Wave 0 triage",
+        "routes to Nami for planning",
+        "does not fabricate a plan"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

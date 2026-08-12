@@ -1,0 +1,32 @@
+{
+  "name": "orchestration-state-foreign-mission",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "captain: direct call needs triage first",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: route hotfix with deferred gates",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "summarize the recent git log on this branch"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A direct call arrives while another actor owns an active mission on this branch (state.json shows a different actor).",
+      "rubric": [
+        "stops and reports the owner",
+        "does not proceed with the work",
+        "asks before continuing"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

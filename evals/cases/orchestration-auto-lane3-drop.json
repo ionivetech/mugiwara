@@ -1,0 +1,33 @@
+{
+  "name": "orchestration-auto-lane3-drop",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "gatekeeper: route mode flip to next wave",
+        "top_k": 3
+      },
+      {
+        "prompt": "gatekeeper: classify route refuse hotfix opt-out",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "routine feature request on a quiet branch"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Mode is auto. Mid-mission the lane escalates to 3 (auth path touched).",
+      "rubric": [
+        "auto drops to guided",
+        "announces the drop",
+        "asks the user",
+        "does not continue hands-off"
+      ]
+    }
+  ],
+  "expect_lane": "full"
+}

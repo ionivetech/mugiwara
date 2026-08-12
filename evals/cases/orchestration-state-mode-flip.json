@@ -1,0 +1,33 @@
+{
+  "name": "orchestration-state-mode-flip",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "gatekeeper: classify route refuse hotfix opt-out",
+        "top_k": 3
+      },
+      {
+        "prompt": "gatekeeper: route mode flip to next wave",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "list the available mugiwara lanes"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user types /mugiwara mode auto during a 30-minute execution wave.",
+      "rubric": [
+        "acknowledges the flip",
+        "states it applies from the next wave",
+        "does not apply it mid-wave silently",
+        "does not ignore it"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

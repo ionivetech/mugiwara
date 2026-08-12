@@ -30,13 +30,13 @@ const CREW = {
   'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 15 },
   'nami-planner': { color: '#f97316', temperature: 0.2, steps: 15 },
   'zoro-execution': { color: '#22c55e', temperature: 0.1, steps: 30 },
-  'chopper-checkpoint': { color: '#3b82f6', temperature: 0.1, permission: { edit: 'deny' }, steps: 15 },
-  'sanji-quality': { color: '#a855f7', temperature: 0.1, permission: { edit: 'deny' }, steps: 10 },
-  'franky-gates': { color: '#06b6d4', temperature: 0.1, permission: { edit: 'deny' }, steps: 10 },
-  'robin-reviewer': { color: '#8b5cf6', temperature: 0.2, permission: { edit: 'deny' }, steps: 15 },
-  'jinbe-security': { color: '#6366f1', temperature: 0.2, permission: { edit: 'deny' }, steps: 15 },
+  'chopper-checkpoint': { color: '#3b82f6', temperature: 0.1, steps: 15 },
+  'sanji-quality': { color: '#a855f7', temperature: 0.1, steps: 10 },
+  'franky-gates': { color: '#06b6d4', temperature: 0.1, steps: 10 },
+  'robin-reviewer': { color: '#8b5cf6', temperature: 0.2, steps: 15 },
+  'jinbe-security': { color: '#6366f1', temperature: 0.2, steps: 15 },
   'brook-healing': { color: '#ec4899', temperature: 0.1, steps: 20 },
-  'skeptic-verifier': { color: '#64748b', temperature: 0.1, permission: { edit: 'deny' }, steps: 12 },
+  'skeptic-verifier': { color: '#64748b', temperature: 0.1, steps: 12 },
   'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 15 },
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 10 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 8 },
@@ -53,6 +53,16 @@ function parseFrontmatter(text) {
     data[line.slice(0, i).trim()] = line.slice(i + 1).trim();
   }
   return { data, body: text.slice(m[0].length) };
+}
+
+// write-scope is the single source of truth (content/agents/*.md frontmatter).
+// opencode permission.edit accepts glob/pattern -> action, last match wins, so
+// the path boundary IS runtime-enforceable: artifacts agents get deny-all-edit
+// except .mugiwara/**, source agents (zoro, brook) get full edit allow.
+function permissionFromScope(scope) {
+  if (scope === 'source') return { edit: 'allow' };
+  if (scope === 'artifacts') return { edit: { '*': 'deny', '.mugiwara/**': 'allow' } };
+  return undefined;
 }
 
 function readAgents() {
@@ -74,6 +84,8 @@ function readAgents() {
     if (!parsed.data.description || !parsed.body) continue;
     agents[name] = { description: parsed.data.description, mode: 'all', prompt: parsed.body };
     if (CREW[name]) agents[name] = { ...agents[name], ...CREW[name] };
+    const perm = permissionFromScope(parsed.data['write-scope']);
+    if (perm) agents[name].permission = perm;
   }
   return agents;
 }

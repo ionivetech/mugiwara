@@ -1,0 +1,32 @@
+{
+  "name": "orchestration-optout",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "captain: lane escalation, heal cycles, check-in",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: check-in close and route",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "run the full crew pipeline on this task"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user says: 'mugiwara off for this one.'",
+      "rubric": [
+        "acknowledges and records it in the decision log",
+        "crew stands down",
+        "no triage or pipeline forced"
+      ]
+    }
+  ],
+  "expect_lane": "direct"
+}

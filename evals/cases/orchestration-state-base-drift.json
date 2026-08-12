@@ -1,0 +1,32 @@
+{
+  "name": "orchestration-state-base-drift",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "captain: direct call needs triage first",
+        "top_k": 3
+      },
+      {
+        "prompt": "captain: route hotfix with deferred gates",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "what lane does a docs rewrite usually take"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Resuming a mission where the base moved 3 days ago (base_sha is no longer an ancestor of HEAD).",
+      "rubric": [
+        "detects the drift",
+        "asks before continuing",
+        "does not silently rebase or redo"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

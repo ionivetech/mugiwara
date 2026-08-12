@@ -2,15 +2,13 @@
 name: mugiwara-workflow
 description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure waves.
 ---
-name: mugiwara-workflow
-description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure waves.
----
+
 # Mugiwara Workflow
 
 ## Skip when
 
 - Lane 0 direct work: typo, rename, or single-file fix under 20 LOC.
-- User explicitly declined the harness for this request.
+- User explicitly declined the harness for this request (`mugiwara off` — Luffy acknowledges, records it in the decision log, and the crew stands down).
 
 ## Pipeline
 
@@ -46,38 +44,36 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 
 **Inline by default.** Main thread embodies each crew role using that crew's skill. Every wave runs in the main conversation.
 
+**One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
+
 **Banners.** Waves open with `==================== WAVE N - CREW (SKILL) ====================` and close with `→ Wave N+1 — Crew`.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 
 **Compact output.** Do not stream tool calls. After each batch: one status table. Full logs → `.mugiwara/results/<mission>-execution-log.md`.
 
+**Mode flips.** `/mugiwara mode <guided|semi|auto>` applies from the next wave, never mid-wave. If a flip arrives mid-wave, say so — "recorded, applies from Wave N+1" — never apply silently, never ignore.
+
 ## Workspace
 
-```
-.mugiwara/
-├── config              → runtime settings (gitignored)
-├── state.json          → computed wave state
-├── spec/               → brainstorm input
-├── plans/              → Nami's plan (clean, source of truth)
-├── results/            → audit/gate/todo/closure/pr-verdict
-├── reports/            → human-readable reports
-├── review/             → review + security findings
-├── issues/             → blocker ledger
-└── logs/               → decisions + lessons (cleaned at closure)
-```
+Full layout: `references/workspace-layout.md`.
 
 ## Wave 0 — Triage (always first)
 
-Luffy classifies every request 5 ways:
+Luffy classifies every request 8 ways:
 
 | Class | Signal | Route |
 |-------|--------|-------|
 | Trivial | obvious, single file | → Wave 2 |
-| Explicit | clear spec exists | → Wave 2 |
+| Explicit | clear spec exists | → Wave 2 (still sizes the lane from the spec's file list) |
 | Exploratory | needs research | → Wave 1 |
 | Open-ended | broad, undefined | → Wave 1 |
 | Ambiguous | unclear scope | → Wave 1 |
+| Answer | question, no file change | answer directly, no mission |
+| Refuse | deploy / migration / key rotation / merge | decline at Wave 0, offer branch handoff |
+| Hotfix | production broken | Lane 1, gates deferred with owner |
+
+Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
 
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/logs/`.
 
