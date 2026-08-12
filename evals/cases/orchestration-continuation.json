@@ -1,0 +1,37 @@
+{
+  "name": "orchestration-continuation",
+  "skill": "mugiwara-resume",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "new session mid-mission: rebuild from state.json, continue never restart",
+        "top_k": 3
+      },
+      {
+        "prompt": "context lost after compaction: resume exact next action",
+        "top_k": 3
+      },
+      {
+        "prompt": "continue.md exists: resume from next_action, never re-run completed tasks",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "tweak a typo in the README"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "New session mid-mission. .mugiwara/continue.md exists with next_action.",
+      "rubric": [
+        "reads continue.md and states exact resume point",
+        "verifies next_action against state.json/todos before executing",
+        "does not restart from Wave 0",
+        "executes next_action"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

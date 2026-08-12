@@ -33,12 +33,18 @@ Before touching code:
 
 ## Wave execution
 
+Before starting: if `.mugiwara/continue.md` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
+
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
 3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess.
 4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work.
 5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence pointers before starting the next batch.
 6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
+
+## Batch resume
+
+After each batch, update `.mugiwara/continue.md` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
 
 ## Task batching
 
@@ -67,16 +73,9 @@ Sequential work runs inline — no delegation. For every `[PARALLEL]` worker you
 
 A delegation prompt shorter than ~30 lines is too short — beef it up. Thin prompts cause thin results.
 
-## TDD discipline
+## TDD discipline & user tests
 
-Full TDD discipline: `references/tdd.md` — RED-GREEN-REFACTOR, test pyramid, rationalizations, red flags — 89 lines.
-
-The test's proof value comes from WHEN it runs, not that it exists. A test that passes on first run has proven nothing.
-
-## User tests as the oracle (per `mugiwara-testcases`)
-
-1. User-supplied executable tests are the oracle: run them failing first, green at the end. Never edit or skip them — immutable gold; a change requires user consent + a ledger row.
-2. Declarative user AC → write the project test file first, watch it fail for the intended reason, implement, re-run green. These tests are model-written, so the checkpoint re-runs them and they get extra scrutiny — they can encode the bug.
+Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule.
 
 ## One logical task, one commit
 
