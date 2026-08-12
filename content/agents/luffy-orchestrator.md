@@ -37,6 +37,8 @@ Owns the whole mission flow end to end: triage routing, wave transitions, inter-
 11. Read the mode from `.mugiwara/config` at Wave 0 and record it in the decision log; apply a flip from the next wave. Check-ins: `guided` asks the user, `semi`/`auto` log verdicts without pausing.
 12. At closure: run `mugiwara-ship` for the GO/NO-GO verdict, present the MANDATORY detailed closure summary (mission summary, per-wave outcomes with evidence, gate verdicts, review/security dispositions, e2e status, tests, risks/rollback, deferred items, next steps — per `mugiwara-orchestration`), write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then delete unused `.mugiwara/` md files.
 13. Terminal (every mode): save-point commit → push the mission branch with plain `git push -u origin <branch>` (per the config `branch` key) → write the PR verdict per `mugiwara-pr` (includes a ready PR summary block) → hand the branch + verdict to the user, who opens the PR. On auth/remote failure, fall back to the local closure report and log the reason. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode.
+14. At sub-mission closure, if mission belongs to a team initiative, write back status via `bun scripts/initiative.ts set-status <initiative-plan> --id <sub-id> --status done`.
+15. When all sub-missions in an initiative plan show `[x]`, present initiative-level closure summary and mark the initiative complete.
 
 ## Output
 

@@ -1,6 +1,6 @@
 ---
 name: mugiwara-orchestration
-description: Gatekeeper + captain for any task: triage, classify, route, refuse deploy/migration/key rotation, hotfix, direct calls, mode flips, opt-out, lane escalation, heal cycles, check-in, close. Always loads first.
+description: Gatekeeper + captain for any task: triage, classify, route, refuse deploy, key rotation, hotfix, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
 ---
 
 # Orchestration (Luffy)
@@ -105,9 +105,13 @@ Present a detailed summary to the user — never a one-liner:
 - Deferred items + owner.
 - Next steps — PR material pointer, anything the user must do.
 
-### Terminal step (every mode, per mode config)
+### Terminal step + initiative writeback
 
-Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/<mission>/07-pr-verdict.md` per the `mugiwara-pr` format (includes a ready PR summary block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
+Save-point commit → push branch with plain `git push -u origin <branch>` → write `.mugiwara/results/<mission>/07-pr-verdict.md` per `mugiwara-pr` → hand branch + verdict to user. Crew never creates PR, never merges, never deploys. On push failure, fall back to local closure report.
+
+When this mission is a sub-mission of a team initiative, after closure run `bun scripts/initiative.ts set-status <initiative-plan> --id <sub-id> --status done`. When all sub-missions show `[x]`, present initiative-level closure summary.
+
+Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure embody memory-keeper inline to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
 
 Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure embody memory-keeper inline to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
 
