@@ -23,72 +23,99 @@ every agent, every skill, every rule is static markdown.
 
 ## What Mugiwara does
 
-### Pipeline that scales to the work
+### Automatic triage & lane sizing — Luffy (Captain)
 
-Every request is triaged and sized automatically from `git diff`. A typo skips
-the pipeline. An auth migration runs all 9 waves. No config, no flags — the
-crew decides.
+Every request is classified and sized from `git diff`. A typo gets instant fix.
+An auth migration gets the full 9-wave pipeline. No config needed — **Luffy**
+routes the work to the right specialist at the right depth.
 
 ```
 Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure
 ```
 
-→ [Wave pipeline details](docs/concepts/workflow.md) · [Lane sizing](docs/concepts/lanes.md)
+→ [Wave pipeline](docs/concepts/workflow.md) · [Lane sizing](docs/concepts/lanes.md)
 
-### Sonar-style code analysis
+### Critical brainstorming — Usopp (Craftsman)
 
-Sanji runs duplication detection, cyclomatic/cognitive complexity scoring, and
-maintainability rating (A–E). Robin adds qualitative code attribute review
-(consistency, intentionality, adaptability). Franky enforces per-condition
-quality gates: vulnerabilities=0, bugs=0, duplications<3%, coverage≥threshold.
+Vague idea? **Usopp** interrogates the problem, researches facts, gives options
+with trade-offs, and never rubber-stamps. Minimum 3 rounds before handing a
+validated direction to the planner.
 
-### Security audit (STRIDE + OWASP + SCA)
+### Structured planning — Nami (Navigator)
 
-Jinbe runs STRIDE threat modeling first, then OWASP Top 10 mapping, secret
-scanning, injection checks, dependency auditing, security hotspot review, and
-SCA license compliance. Read-only — findings go to the healer, never touched
-silently.
+**Nami** interviews you once, scans the whole codebase, writes a plan doc with
+exact file paths, task dependencies, and command-verifiable acceptance criteria.
+For teams: sub-mission breakdown with assignee + branch per person. One shared
+plan doc, status tracked per sub-mission.
 
-→ [Security skill details](docs/concepts/skills.md)
+### Test-first execution — Zoro (Swordsman)
 
-### Team collaboration on large initiatives
+**Zoro** runs TDD per task: write the failing test, implement, watch it pass,
+commit. Evidence captured per task. Parallel batches for independent work.
+Commit per logical unit — clean git history.
 
-Nami plans initiatives with sub-mission breakdown — assignee, branch,
-dependencies. One shared plan doc tracks status per sub-mission:
-`[ ]` pending → `[~]` in-progress → `[x]` done. Run `mugiwara initiative status`
-to see the dashboard. When all sub-missions are done, the initiative closes.
+→ [Planning + execution details](docs/concepts/skills.md)
 
-→ [Planning skill details](docs/concepts/skills.md)
+### Evidence-first audit — Chopper (Doctor)
 
-### Autonomy modes — you decide how much to hand off
+No wave passes on claims. **Chopper** re-runs acceptance criteria against the
+diff, verifies commit hygiene, writes failures to the blocker ledger. Read-only
+— never fixes, only reports.
+
+### Quality checks — Sanji (Cook) · Gates — Franky (Shipwright)
+
+**Sanji** discovers your project's actual tooling — formatter, linter, tests,
+duplication detection, complexity scoring — and runs them in order. **Franky**
+guards the gate: coverage thresholds, build exit 0, Definition of Done. Binary
+verdicts, no negotiation.
+
+### Code review — Robin (Archaeologist) · Security — Jinbe (Helmsman)
+
+**Robin** maps every changed symbol to its callers before reviewing — catches
+breaking changes a surface diff misses. **Jinbe** runs STRIDE threat modeling,
+OWASP Top 10, secret scanning, and dependency audit. Both read-only — findings
+go to the healer, code stays untouched.
+
+→ [Review details](docs/concepts/skills.md) · [Security details](docs/concepts/skills.md)
+
+### Self-healing — Brook (Musician)
+
+Any wave produces failures? **Brook** reads the entire blocker ledger at once,
+finds root causes, fixes them, re-runs verification. Max 3 cycles — then
+escalates to you with full history. No silent workarounds.
+
+### Resume from anywhere — Resume Coordinator
+
+Session lost? Context gone? New session mid-mission? **Resume Coordinator**
+rebuilds everything from `.mugiwara/state.json` and the plan doc. Continues,
+never restarts.
+
+### Autonomy modes — you decide how much
 
 | Mode | What the crew does without asking |
 |------|-----------------------------------|
 | **guided** | Nothing. Every decision comes to you. |
 | **semi** | Auto branch + commit + push. Plans still need your GO. |
-| **auto** | Hands-off. Plans auto-GO when safe. Flip mid-session: `/mugiwara auto`. |
+| **auto** | Hands-off. Flips mid-session: `/mugiwara auto`. |
 
-You set review and quality depth independently: `review_depth=full|standard|quick`,
-`quality_depth=full|standard|quick`. Full = everything. Quick = just the essentials.
-Skip a wave entirely via Luffy decision, not config.
+Set check depth independently: `review_depth=full|standard|quick`,
+`quality_depth=full|standard|quick`.
 
 → [Mode details](docs/concepts/modes.md) · [Config reference](docs/concepts/config.md)
 
 ### Onboarding in 10 questions
 
-First time? Run `/mugiwara onboard`. 10 questions — project type, language,
-team size, git workflow, autonomy mode, review depth, coverage threshold. No
-network. Answers write `.mugiwara/config` and `.mugiwara/onboard.json`.
-Re-onboard any time with the same command.
+First time? `/mugiwara onboard`. 10 questions: project type, language, team
+size, git workflow, autonomy mode, review depth, coverage threshold. No
+network. Writes `.mugiwara/config` and `.mugiwara/onboard.json`.
 
 ### Evidence trail on disk
 
-Every mission leaves a `.mugiwara/` workspace at the repo root — plans, audit
-reports, quality reports, review findings, blocker ledger, mission reports. A
-reviewer can read 30 seconds of markdown and know exactly what changed, who
-checked it, and why it was trusted.
+Every mission leaves `.mugiwara/` at the repo root — plans, audit reports,
+quality reports, review findings, blocker ledger, mission reports. 30 seconds
+of markdown tells a reviewer exactly what changed and why it was trusted.
 
-→ [Audit trail details](docs/concepts/audit-trail.md)
+→ [Audit trail](docs/concepts/audit-trail.md) · [Cost model](docs/concepts/cost.md)
 
 ## 30-second try
 
@@ -109,7 +136,7 @@ First run: `/mugiwara onboard` for guided setup. Then ask something non-trivial:
 > add role-based access control: admin, editor, viewer
 > audit the auth middleware for security gaps
 > review the last PR for breaking changes
-> split this feature across the team: payment gateway, ledger, fraud detection
+> split this feature across the team: payment gateway, ledger, fraud
 ```
 
 A Standard lane mission (~10k tokens) produces a branch with test-first
@@ -125,10 +152,10 @@ pipeline config to write.**
 
 | You say | What happens |
 |---------|-------------|
-| `add search bar to products page` | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs format+lint+test+duplication+complexity → Franky gates all conditions → Robin reviews → code pushed, PR summary ready |
+| `add search bar to products page` | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs quality → Franky gates → Robin reviews → code pushed, PR summary ready |
 | `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
 | `Brook, fix the failing login test` | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles |
-| `Jinbe, audit auth middleware` | STRIDE + OWASP + hotspot review. Read-only — never touches code |
+| `Jinbe, audit auth middleware` | STRIDE + OWASP + dependency audit. Read-only — never touches code |
 | `/mugiwara auto` | Switches to full autonomy from the next wave |
 
 - **Full pipeline** when the task is big or direction is unclear
@@ -220,25 +247,90 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 
 ## Install
 
-<details open>
-<summary><b>Native plugins</b> — one-command install</summary>
+<details>
+<summary><b>Claude Code</b></summary>
 
-| Platform | Command |
-|----------|---------|
-| **Claude Code** | `/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara` |
-| **OpenCode** | Add `{ "plugin": ["@ionivetech/mugiwara"] }` to `opencode.json` |
-| **Gemini CLI** | `gemini extensions install https://github.com/ionivetech/mugiwara` |
-| **Codex** | `codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara` |
-| **Copilot** | `copilot plugin install https://github.com/ionivetech/mugiwara` |
-| **Cursor** | `/add-plugin mugiwara` |
-| **Antigravity** | `agy plugin install https://github.com/ionivetech/mugiwara` |
-| **Kimi** | `/plugins install https://github.com/ionivetech/mugiwara` |
-| **Pi** | `pi install git:github.com/ionivetech/mugiwara` |
+```bash
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
+```
 
 </details>
 
 <details>
-<summary><b>CLI install</b> — Windsurf, Cline, Kilo, and more</summary>
+<summary><b>OpenCode</b></summary>
+
+Add to `opencode.json`:
+```json
+{ "plugin": ["@ionivetech/mugiwara"] }
+```
+
+</details>
+
+<details>
+<summary><b>Gemini CLI</b></summary>
+
+```bash
+gemini extensions install https://github.com/ionivetech/mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b></summary>
+
+```bash
+codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>GitHub Copilot</b></summary>
+
+```bash
+copilot plugin install https://github.com/ionivetech/mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+```bash
+/add-plugin mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>Antigravity</b></summary>
+
+```bash
+agy plugin install https://github.com/ionivetech/mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>Kimi</b></summary>
+
+```bash
+/plugins install https://github.com/ionivetech/mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>Pi</b></summary>
+
+```bash
+pi install git:github.com/ionivetech/mugiwara
+```
+
+</details>
+
+<details>
+<summary><b>Windsurf / Cline / Kilo</b> — CLI install</summary>
 
 ```bash
 npx @ionivetech/mugiwara@latest install --target <id> --yes

@@ -149,6 +149,8 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 | `base` | main | PR target branch |
 | `coverage_new` | 90 | Coverage % for new files |
 | `coverage_modified` | 80 | Coverage % for modified files |
+| `review_depth` | full | Robin's review depth: full/standard/quick |
+| `quality_depth` | full | Sanji's quality depth: full/standard/quick |
 
 ## 6. Next steps
 
