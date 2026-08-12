@@ -6,9 +6,9 @@ used.
 ## Auto-activation
 
 The workflow **auto-activates.** At session start the crew is announced; when
-you give a non-trivial request, the pipeline runs by itself — you do not need
-to call `/using-mugiwara`. It remains an optional explicit router if you want
-to hand-route a mission.
+you give any request, `mugiwara-orchestration` loads as gatekeeper — you do not
+need to call any command. Lane 0 (single-file/<20 LOC) skips the pipeline and
+executes directly.
 
 ## Inline by default
 
