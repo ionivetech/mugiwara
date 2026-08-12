@@ -23,51 +23,50 @@ every agent, every skill, every rule is static markdown.
 
 ## What Mugiwara does
 
-### Automatic pipeline — scales to the work
-
-Every request is triaged and sized from `git diff`. A typo skips the pipeline.
-An auth migration runs all 9 waves. No config needed.
+### Pipeline with the crew
 
 ```
-Triage (Luffy) → Brainstorm (Usopp) → Plan (Nami) → Execute (Zoro) → Audit (Chopper) → Quality (Sanji) → Gates (Franky) → Review (Robin) + Security (Jinbe) → Heal (Brook) → Closure (Luffy)
+┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+│  Luffy   │  │  Usopp   │  │   Nami   │  │   Zoro   │  │ Chopper  │
+│ Captain  │→│Brainstorm│→│ Planner  │→│ Executor │→│ Auditor  │
+│  Triage  │  │ Research │  │Team plans│  │   TDD    │  │Read-only │
+└──────────┘  └──────────┘  └──────────┘  └──────────┘  └────┬─────┘
+                                                               │
+┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───▼──────┐
+│  Luffy   │  │  Brook   │  │  Jinbe   │  │  Robin   │  │  Franky  │
+│ Captain  │←│ Healer   │←│ Security │←│ Reviewer │←│  Gates   │
+│ Closure  │  │ ≤3 cycles│  │Read-only │  │Read-only │  │  Binary  │
+└──────────┘  └──────────┘  └──────────┘  └──────────┘  └────┬─────┘
+                                                               │
+                                                               ▼
+                                                          ┌──────────┐
+                                                          │  Sanji   │
+                                                          │ Quality  │
+                                                          │Lint+Test │
+                                                          └──────────┘
 ```
 
-→ [Wave pipeline](docs/concepts/workflow.md) · [Lane sizing](docs/concepts/lanes.md)
+→ [Full pipeline details](docs/concepts/workflow.md)
 
-### Team collaboration
+### All features
 
-**Nami** plans initiatives with sub-missions: assignee, branch, dependencies.
-One shared plan doc tracks status per sub-mission (`[ ]` pending → `[~]`
-in-progress → `[x]` done). `mugiwara initiative status` shows progress. When
-all sub-missions are done, the initiative closes.
+| Feature | What you get |
+|---------|-------------|
+| **Lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline. |
+| **Team initiatives** | Sub-missions with assignee + branch, shared plan doc, status tracking per sub-mission. |
+| **Sonar-style quality** | Duplication %, complexity, maintainability rating (A–E), code attributes, per-condition gate. |
+| **STRIDE + OWASP security** | Threat modeling, secret scan, injection check, SCA license, hotspot review. |
+| **Self-healing** | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles. |
+| **3 autonomy modes** | guided (ask) / semi (auto branch+commit) / auto (hands-off). Flip mid-session. |
+| **Configurable depth** | `review_depth` + `quality_depth`: full / standard / quick. Set per project. |
+| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts. |
+| **Onboarding wizard** | 10 questions — project type, team size, mode, depth. `/mugiwara onboard`. |
+| **Evidence trail** | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **12 platforms** | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI. |
+| **Cost tracking** | Token budget per lane. Warn at 1.5×, pause at 3×. Surfaced in mission reports. |
+| **Multi-actor safe** | Branch-scoped state. Two engineers, one repo. Reset refuses without `--force`. |
 
-### Autonomy modes — you decide how much
-
-| Mode | What the crew does without asking |
-|------|-----------------------------------|
-| **guided** | Nothing. Every decision comes to you. |
-| **semi** | Auto branch + commit + push. Plans still need your GO. |
-| **auto** | Hands-off. Flips mid-session: `/mugiwara auto`. |
-
-Set check depth independently: `review_depth=full|standard|quick`,
-`quality_depth=full|standard|quick`.
-
-→ [Mode details](docs/concepts/modes.md) · [Config reference](docs/concepts/config.md)
-
-### Onboarding in 10 questions
-
-First time? `/mugiwara onboard`. 10 questions — project type, language, team
-size, git workflow, autonomy mode, review depth, coverage threshold. No
-network. Writes `.mugiwara/config`.
-
-### Evidence trail on disk
-
-Every mission leaves `.mugiwara/` at the repo root — plans, audit reports,
-quality reports, review findings, blocker ledger, mission reports. A reviewer
-can read 30 seconds of markdown and know exactly what changed and why it was
-trusted.
-
-→ [Audit trail](docs/concepts/audit-trail.md) · [Cost model](docs/concepts/cost.md)
+→ [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## 30-second try
 
