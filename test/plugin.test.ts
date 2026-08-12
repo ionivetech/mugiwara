@@ -29,13 +29,12 @@ test('config hook registers skills path (absolute, deduped)', async () => {
   expect(cfg.skills.paths).toContain('/fake/pre-existing');
 });
 
-test('config hook registers all 15 agents with mode all (main-thread tabs)', async () => {
+test('config hook registers all 14 agents with mode all', async () => {
   const { config } = await plugin();
   const cfg = { agent: {} };
   await config(cfg);
   const names = Object.keys(cfg.agent);
-  expect(names).toHaveLength(15);
-  expect(names).toContain('using-mugiwara');
+  expect(names).toHaveLength(14);
   expect(names).toContain('luffy-orchestrator');
   for (const a of Object.values(cfg.agent)) {
     expect(typeof a).toBe('object');
@@ -73,9 +72,9 @@ test('config hook applies per-agent opencode tuning (color/temp/permission/steps
 test('config hook never clobbers a user-defined agent', async () => {
   const { config } = await plugin();
   const mine = { description: 'mine', mode: 'subagent', prompt: 'keep me' };
-  const cfg = { agent: { 'using-mugiwara': mine } };
+  const cfg = { agent: { 'luffy-orchestrator': mine } };
   await config(cfg);
-  expect(cfg.agent['using-mugiwara']).toBe(mine);
+  expect(cfg.agent['luffy-orchestrator']).toBe(mine);
   expect((mine as { mode?: string }).mode).toBe('subagent');
 });
 

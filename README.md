@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@ionivetech%2fmugiwara)](https://www.npmjs.com/package/@ionivetech/mugiwara)
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
-Your coding agent becomes a governed engineering team. 15 specialists — triage,
+Your coding agent becomes a governed engineering team. 14 specialists — triage,
 plan, build, audit, review, heal — with evidence at every step, cost tracking,
 and a process that sizes itself to your work. Pure markdown, zero runtime.
 
@@ -11,13 +11,16 @@ and a process that sizes itself to your work. Pure markdown, zero runtime.
 
 ```bash
 # Claude Code
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
 
 # opencode — add to opencode.json
 { "plugin": ["@ionivetech/mugiwara"] }
 
-# CLI for any target
-npx @ionivetech/mugiwara@latest --project . --target all --yes
+# Gemini CLI
+gemini extensions install https://github.com/ionivetech/mugiwara
+
+# Any platform via npm
+npx @ionivetech/mugiwara@latest install --project . --target all --yes
 ```
 
 Then just ask. The crew auto-activates — no agent names to remember.
@@ -99,7 +102,7 @@ One file. Any reviewer reads it in 30 seconds. That's the governance trail.
 
 | Capability | What it does |
 |-----------|-------------|
-| **15 specialist agents** | Luffy triages, Nami plans, Zoro builds TDD, Chopper audits, Sanji checks quality, Franky enforces gates, Robin maps breaking changes, Jinbe runs STRIDE, Brook heals failures. Each with role boundaries: auditors read-only, executor no-network. |
+| **14 specialist agents** | Luffy triages, Nami plans, Zoro builds TDD, Chopper audits, Sanji checks quality, Franky enforces gates, Robin maps breaking changes, Jinbe runs STRIDE, Brook heals failures. Each with role boundaries: auditors read-only, executor no-network. |
 | **Lane sizing** | Process scaled to work size — computed from `git diff` by `scripts/lane.sh`. Typo = 0 waves. Auth migration = full 9-wave pipeline. Sensitive paths auto-escalate. |
 | **9-wave gated pipeline** | Triage → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure. Each wave gated by evidence. Pipeline runs inline — you watch everything. |
 | **Evidence trail** | No wave passes on a claim. `scripts/evidence.sh` captures command output. Chopper re-runs criteria. Mission report at closure — one file any reviewer reads in 30 seconds. |
@@ -127,7 +130,7 @@ team — in your chat window, running inline, visible at every step.
 
 ## The crew
 
-15 personas, 26 skills. Each with a permission boundary.
+14 agents, 26 skills. The front door is the `using-mugiwara` skill — type `/using-mugiwara` or load it from any platform. Each agent has a permission boundary.
 
 | Agent | Role | Permission |
 |-------|------|------------|
@@ -145,93 +148,119 @@ team — in your chat window, running inline, visible at every step.
 | Resume | Continuity — rebuilds from state.json, never restarts | — |
 | Memory | Cross-mission lessons — read at start, write at closure | — |
 
-See [all 15 agents](docs/agents.md) and [all 26 skills](docs/skills.md).
+See [all 14 agents](docs/agents.md) and [all 26 skills](docs/skills.md).
 
 ## Install
 
+Mugiwara installs as a native plugin on every platform. Full details in the per-platform guides.
+
+| Platform | Guide |
+|----------|-------|
+| **Claude Code** | [`/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara`](docs/install-claude.md) |
+| **OpenCode** | [`{ "plugin": ["@ionivetech/mugiwara"] }`](docs/install-opencode.md) |
+| **Gemini CLI** | [`gemini extensions install https://github.com/ionivetech/mugiwara`](docs/install-gemini.md) |
+| **Codex** | [`codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara`](docs/install-codex.md) |
+| **Copilot** | [`copilot plugin install https://github.com/ionivetech/mugiwara`](docs/install-copilot.md) |
+| **Cursor** | [`/add-plugin mugiwara`](docs/install-cursor.md) |
+| **Antigravity** | [`agy plugin install https://github.com/ionivetech/mugiwara`](docs/install-antigravity.md) |
+| **Kimi** | [`/plugins install https://github.com/ionivetech/mugiwara`](docs/install-kimi.md) |
+| **Pi** | [`pi install git:github.com/ionivetech/mugiwara`](docs/install-pi.md) |
+| **Windsurf / Cline / Kilo** | [`npx @ionivetech/mugiwara install --target <id> --yes`](docs/install-cli.md) |
+
+→ **[Full install guide with troubleshooting](docs/install.md)**
+
 ### Claude Code
 
-<details>
-<summary><b>Install / Update / Uninstall</b></summary>
-
 ```bash
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara   # install
-/plugin update mugiwara                                                    # update
-/plugin uninstall mugiwara                                                 # uninstall
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
 ```
-</details>
 
-### opencode
+Update: `/plugin update mugiwara`
+Uninstall: `/plugin uninstall mugiwara`
 
-<details>
-<summary><b>Install / Update / Uninstall</b></summary>
+### OpenCode
+
+Add to `opencode.json`:
 
 ```json
-{ "plugin": ["@ionivetech/mugiwara"] }   // add to opencode.json
+{ "plugin": ["@ionivetech/mugiwara"] }
 ```
 
-```bash
-mugiwara update    # update
-# remove the plugin entry from opencode.json to uninstall
-```
+Update: replace the plugin entry version, or `npm update @ionivetech/mugiwara`
+Uninstall: remove the plugin entry from `opencode.json`.
 
 Restart opencode after install.
-</details>
 
-### GitHub Copilot
-
-<details>
-<summary><b>Install / Update / Uninstall</b></summary>
-
-```bash
-copilot plugin marketplace add ionivetech/mugiwara && copilot plugin install mugiwara
-copilot plugin update mugiwara
-copilot plugin uninstall mugiwara
-```
-</details>
-
-### Gemini CLI · Codex · Cursor
-
-<details>
-<summary><b>Gemini</b></summary>
+### Gemini CLI
 
 ```bash
 gemini extensions install https://github.com/ionivetech/mugiwara
-gemini extensions update mugiwara
-gemini extensions remove mugiwara
 ```
-</details>
 
-<details>
-<summary><b>Codex</b></summary>
+Update: `gemini extensions update mugiwara`
+Uninstall: `gemini extensions remove mugiwara`
+
+### Codex
 
 ```bash
 codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
-codex plugin update mugiwara
-codex plugin remove mugiwara
 ```
-</details>
 
-<details>
-<summary><b>Cursor</b></summary>
+Update: `codex plugin update mugiwara`
+Uninstall: `codex plugin remove mugiwara`
 
-```
-/add-plugin mugiwara       # install & update
-/remove-plugin mugiwara    # uninstall
-```
-</details>
-
-### Kimi · pi · Windsurf · Cline · Kilo · Antigravity
-
-<details>
-<summary><b>All other harnesses</b></summary>
+### GitHub Copilot
 
 ```bash
-npx @ionivetech/mugiwara@latest --project . --target all --yes   # install
-mugiwara update                                                    # update
-mugiwara uninstall                                                 # uninstall
+copilot plugin install https://github.com/ionivetech/mugiwara
 ```
-</details>
+
+Update: reinstall with the same command.
+Uninstall: `copilot plugin uninstall mugiwara`
+
+### Cursor
+
+```
+/add-plugin mugiwara
+```
+
+Update: re-run `/add-plugin mugiwara`.
+Uninstall: `/remove-plugin mugiwara`
+
+### Antigravity
+
+```bash
+agy plugin install https://github.com/ionivetech/mugiwara
+```
+
+Update: reinstall with the same command.
+Uninstall: `agy plugin uninstall mugiwara`
+
+### Kimi
+
+```
+/plugins install https://github.com/ionivetech/mugiwara
+```
+
+Update: reinstall.
+Uninstall: `/plugins remove mugiwara`
+
+### Pi
+
+```bash
+pi install git:github.com/ionivetech/mugiwara
+```
+
+### Windsurf · Cline · Kilo · Codex CLI
+
+```bash
+npx @ionivetech/mugiwara@latest install --project . --target all --yes
+```
+
+Substitute `all` with a specific target: `windsurf`, `cline`, `kilo`, `codex`, etc.
+
+Update: `mugiwara update`
+Uninstall: `mugiwara uninstall`
 
 ### Any agent (skills only)
 
@@ -292,8 +321,9 @@ matter to you, this is the wrong tool.
 | Doc | What it covers |
 |-----|---------------|
 | [Getting started](docs/getting-started.md) | First mission, lane 0-3 examples, setup walkthrough |
+| [Install](docs/install.md) | Per-platform guides: Claude Code, OpenCode, Gemini, Codex, Copilot, Cursor, Antigravity, Kimi, Pi, CLI |
 | [Workflow](docs/workflow.md) | Full 9-wave pipeline with heal loop detail |
-| [Agents](docs/agents.md) | 15 crew members, roles, permissions, how to summon |
+| [Agents](docs/agents.md) | 14 crew members, roles, permissions, how to summon |
 | [Skills](docs/skills.md) | 26 techniques, 3-layer disclosure model |
 | [Lanes](docs/lanes.md) | Deterministic lane sizing — computed from git diff |
 | [Audit trail](docs/audit-trail.md) | 15 artifact types, how to read as reviewer |

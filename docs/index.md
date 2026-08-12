@@ -19,7 +19,7 @@ claim.
 | [Modes](modes.md) | guided / semi / auto — the autonomy levels, what each asks you |
 | [Config](config.md) | Full reference for `.mugiwara/config` keys and commit styles |
 | [Auto-PR](pr-summary.md) | What the crew hands off at closure: push + a ready-to-paste PR summary (it never creates a PR) |
-| [The crew](agents.md) | All 15 agents and when to summon each |
+| [The crew](agents.md) | All 14 agents and when to summon each |
 | [The techniques](skills.md) | All 32 skills and what each enforces |
 | [The wave pipeline](workflow.md) | How a mission flows Wave 0 → Wave 9 |
 | [Execution model](execution-model.md) | Inline-by-default: why the crew runs in your main conversation |

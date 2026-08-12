@@ -35,7 +35,7 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target opencode --yes
 
 - 32 skills in `.opencode/skills/` (project) or `~/.config/opencode/skills/`
   (global).
-- 15 agents registered as subagents via the plugin.
+- 14 agents registered as subagents via the plugin.
 - The plugin announces the crew at session start and injects the inline
   execution model into the system prompt.
 

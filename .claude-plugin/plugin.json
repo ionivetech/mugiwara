@@ -7,10 +7,16 @@
     "name": "ionive"
   },
   "license": "MIT",
+  "homepage": "https://github.com/ionivetech/mugiwara",
   "repository": "https://github.com/ionivetech/mugiwara",
+  "keywords": [
+    "agents",
+    "skills",
+    "workflow",
+    "multi-agent"
+  ],
   "metadata": {
     "agents": [
-      "using-mugiwara",
       "luffy-orchestrator",
       "usopp-brainstorm",
       "nami-planner",
@@ -43,7 +49,6 @@
       "mugiwara-orchestration",
       "mugiwara-planning",
       "mugiwara-pr",
-      "mugiwara-proof-order",
       "mugiwara-quality",
       "mugiwara-resume",
       "mugiwara-review",
@@ -52,7 +57,8 @@
       "mugiwara-ship",
       "mugiwara-sunset",
       "mugiwara-testcases",
-      "mugiwara-workflow"
+      "mugiwara-workflow",
+      "using-mugiwara"
     ]
   }
 }

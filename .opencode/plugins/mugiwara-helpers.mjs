@@ -39,11 +39,14 @@ export function parseModeChange(promptRaw) {
   prompt = prompt.toLowerCase();
   if (!prompt) return null;
 
-  const tpl = /^set mugiwara mode:[ \t]*(\S*)/.exec(prompt);
-  if (tpl && VALID_MODES.has(tpl[1])) return tpl[1];
+  const tplSet = /^(?:set |)mugiwara mode:[ \t]*(\S*)/.exec(prompt);
+  if (tplSet && VALID_MODES.has(tplSet[1])) return tplSet[1];
 
-  const slash = /^\/(mugiwara[-\s]?)mode[ \t]+(\S*)/.exec(prompt);
-  if (slash && VALID_MODES.has(slash[2])) return slash[2];
+  const slash = /^\/(?:mugiwara[-\s]?)?mode[ \t]+(\S*)/.exec(prompt);
+  if (slash && VALID_MODES.has(slash[1])) return slash[1];
+
+  const slashMain = /^\/mugiwara[ \t]+(\S*)/.exec(prompt);
+  if (slashMain && VALID_MODES.has(slashMain[1])) return slashMain[1];
 
   const natural = /^mugiwara mode[ \t]+(\S*)/.exec(prompt);
   if (natural && VALID_MODES.has(natural[1])) return natural[1];
