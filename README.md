@@ -23,72 +23,23 @@ every agent, every skill, every rule is static markdown.
 
 ## What Mugiwara does
 
-### Automatic triage & lane sizing — Luffy (Captain)
+### Automatic pipeline — scales to the work
 
-Every request is classified and sized from `git diff`. A typo gets instant fix.
-An auth migration gets the full 9-wave pipeline. No config needed — **Luffy**
-routes the work to the right specialist at the right depth.
+Every request is triaged and sized from `git diff`. A typo skips the pipeline.
+An auth migration runs all 9 waves. No config needed.
 
 ```
-Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure
+Triage (Luffy) → Brainstorm (Usopp) → Plan (Nami) → Execute (Zoro) → Audit (Chopper) → Quality (Sanji) → Gates (Franky) → Review (Robin) + Security (Jinbe) → Heal (Brook) → Closure (Luffy)
 ```
 
 → [Wave pipeline](docs/concepts/workflow.md) · [Lane sizing](docs/concepts/lanes.md)
 
-### Critical brainstorming — Usopp (Craftsman)
+### Team collaboration
 
-Vague idea? **Usopp** interrogates the problem, researches facts, gives options
-with trade-offs, and never rubber-stamps. Minimum 3 rounds before handing a
-validated direction to the planner.
-
-### Structured planning — Nami (Navigator)
-
-**Nami** interviews you once, scans the whole codebase, writes a plan doc with
-exact file paths, task dependencies, and command-verifiable acceptance criteria.
-For teams: sub-mission breakdown with assignee + branch per person. One shared
-plan doc, status tracked per sub-mission.
-
-### Test-first execution — Zoro (Swordsman)
-
-**Zoro** runs TDD per task: write the failing test, implement, watch it pass,
-commit. Evidence captured per task. Parallel batches for independent work.
-Commit per logical unit — clean git history.
-
-→ [Planning + execution details](docs/concepts/skills.md)
-
-### Evidence-first audit — Chopper (Doctor)
-
-No wave passes on claims. **Chopper** re-runs acceptance criteria against the
-diff, verifies commit hygiene, writes failures to the blocker ledger. Read-only
-— never fixes, only reports.
-
-### Quality checks — Sanji (Cook) · Gates — Franky (Shipwright)
-
-**Sanji** discovers your project's actual tooling — formatter, linter, tests,
-duplication detection, complexity scoring — and runs them in order. **Franky**
-guards the gate: coverage thresholds, build exit 0, Definition of Done. Binary
-verdicts, no negotiation.
-
-### Code review — Robin (Archaeologist) · Security — Jinbe (Helmsman)
-
-**Robin** maps every changed symbol to its callers before reviewing — catches
-breaking changes a surface diff misses. **Jinbe** runs STRIDE threat modeling,
-OWASP Top 10, secret scanning, and dependency audit. Both read-only — findings
-go to the healer, code stays untouched.
-
-→ [Review details](docs/concepts/skills.md) · [Security details](docs/concepts/skills.md)
-
-### Self-healing — Brook (Musician)
-
-Any wave produces failures? **Brook** reads the entire blocker ledger at once,
-finds root causes, fixes them, re-runs verification. Max 3 cycles — then
-escalates to you with full history. No silent workarounds.
-
-### Resume from anywhere — Resume Coordinator
-
-Session lost? Context gone? New session mid-mission? **Resume Coordinator**
-rebuilds everything from `.mugiwara/state.json` and the plan doc. Continues,
-never restarts.
+**Nami** plans initiatives with sub-missions: assignee, branch, dependencies.
+One shared plan doc tracks status per sub-mission (`[ ]` pending → `[~]`
+in-progress → `[x]` done). `mugiwara initiative status` shows progress. When
+all sub-missions are done, the initiative closes.
 
 ### Autonomy modes — you decide how much
 
@@ -105,15 +56,16 @@ Set check depth independently: `review_depth=full|standard|quick`,
 
 ### Onboarding in 10 questions
 
-First time? `/mugiwara onboard`. 10 questions: project type, language, team
+First time? `/mugiwara onboard`. 10 questions — project type, language, team
 size, git workflow, autonomy mode, review depth, coverage threshold. No
-network. Writes `.mugiwara/config` and `.mugiwara/onboard.json`.
+network. Writes `.mugiwara/config`.
 
 ### Evidence trail on disk
 
 Every mission leaves `.mugiwara/` at the repo root — plans, audit reports,
-quality reports, review findings, blocker ledger, mission reports. 30 seconds
-of markdown tells a reviewer exactly what changed and why it was trusted.
+quality reports, review findings, blocker ledger, mission reports. A reviewer
+can read 30 seconds of markdown and know exactly what changed and why it was
+trusted.
 
 → [Audit trail](docs/concepts/audit-trail.md) · [Cost model](docs/concepts/cost.md)
 
