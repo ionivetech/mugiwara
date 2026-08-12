@@ -45,7 +45,8 @@ Resume reads one file: `.mugiwara/state.json`. All position data is computed at 
 2. Derive position from fields: wave N, tasks done/total, blockers open, heal cycle, mode.
 3. If `state.json` is stale or corrupted, fall back to legacy files: plan doc → todos → trace → blocker ledger → config. Then write a fresh `state.json`.
 4. State it: "Resumed: Wave 5, 7/12 tasks, 1 blocker, heal cycle 1, mode guided."
-5. Continue — do not re-verify completed waves.
+5. Read `.mugiwara/continue.md` if present. If it exists, state it: `"Resumed: <mission> <sub_mission>, Wave N, X/Y tasks — next_action: <exact> — run: <next_session_prompt>"`.
+6. Continue — do not re-verify completed waves.
 
 ## Rules
 
@@ -53,6 +54,8 @@ Resume reads one file: `.mugiwara/state.json`. All position data is computed at 
 2. Never re-run completed work — state.json proves it.
 3. Never skip the resume read — guessing position = drift.
 4. If state.json is absent and no legacy files exist → fresh mission, escalate to Luffy.
+5. continue.md overrides state.json for next_action — state.json proves what is done, continue.md says what is next.
+6. Output the handoff line: if continue.md exists, its next_session_prompt is the resume output line.
 
 ## Rationalizations
 
