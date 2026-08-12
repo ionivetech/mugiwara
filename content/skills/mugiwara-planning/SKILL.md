@@ -25,6 +25,8 @@ Classify the mission by size first — after Luffy's route — then write the pl
 
 Batch blocking ambiguities into ONE question round; never assume silently. Mode gates per config. Full detail: `references/plan-template.md`.
 
+For team initiatives, add to batch: "Solo or team?" In guided/semi: asked. In auto: solo unless user requests team split. If team: collect assignee + branch per sub-mission.
+
 ## Full context scan
 
 Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. If the mission needs it, scan everything — a plan written without the real code is fiction. Ground every file path and step in what exists; confirm tooling, do not assume. Trust-sort sources (high/medium/low): `references/plan-template.md`.
@@ -93,16 +95,17 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 
 ## Full-level skeleton
 
-```
-# <mission> — <goal>                                 → .mugiwara/plans/YYYY-MM-DD-<mission>.md
-## Key decisions (why this way) · ## Architecture overview · ## Project structure
-## Waves (table: wave | focus | tasks | gate; parallel proof in header)
-## Implementation graph (consumes <file> from Task M → produces <file> for Task N; cross-file risk edges)
-## Task index (table: # | task | files | size | depends-on <file> | acceptance)
-## Detail tasks (unified template, one block per task) · ## Risk & rollback
-## Mission split (very large) — Lane 3
-```
-The plan doc contains ONLY this. Route reasons, check-in verdicts, and closure go to `logs/` and `results/` — never here.
+Full plan at `.mugiwara/plans/YYYY-MM-DD-<mission>.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## Implementation graph`, `## Task index`, `## Sub-missions` (team only), `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
+
+## Sub-missions (team initiatives)
+
+Team plans add `## Sub-missions` table after task index. Solo missions skip. Status markers: `[ ]` pending, `[~]` in-progress, `[x]` done, `[!]` blocked.
+
+| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |
+|----|------|----------|--------|--------|------------|---------------|
+| sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [ ] | — | src/payment/ |
+
+Plan doc is single source of truth. Update status via `scripts/initiative.ts set-status`.
 
 ## Mission split (very large) — Lane 3
 
