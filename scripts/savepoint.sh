@@ -26,6 +26,12 @@ else
   MODE="${5:-${STATE_MODE:-guided}}"
 fi
 
+# mission allowlist — MISSION feeds paths + sed + node argv; traversal or
+# sed metacharacters must not reach filesystem operations
+case "$MISSION" in
+  ""|*[!a-zA-Z0-9._-]*) die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" ;;
+esac
+
 # per-branch state file when --branch used
 BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-')
 if [ "$BRANCH_MODE" -eq 1 ]; then
@@ -111,8 +117,13 @@ if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE" ]; then
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 
-# evidence paths — per-mission results folder
-EVIDENCE=$(ls "$MUGIWARA_DIR/results/${MISSION}/" 2>/dev/null | sed "s|^|.mugiwara/results/${MISSION}/|" | tr '\n' ',' | sed 's/,$//' || true)
+# evidence paths — per-mission results folder (quoted printf, no sed — mission
+# name is allowlisted above, but avoid sed metacharacter semantics entirely)
+EVIDENCE=""
+for evf in "$MUGIWARA_DIR/results/${MISSION}/"*.md; do
+  [ -f "$evf" ] || continue
+  EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/results/${MISSION}/$(basename "$evf")"
+done
 
 # skill version from package.json (argv-passing — never interpolate paths into node -e)
 SKILL_VERSION="1"

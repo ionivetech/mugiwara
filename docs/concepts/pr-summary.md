@@ -11,7 +11,7 @@ addition is that the PR description is already written.
 ## What happens at the terminal
 
 1. Save-point commit → push the mission branch with plain `git push -u origin <branch>`.
-2. Write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per `mugiwara-pr` —
+2. Write `.mugiwara/results/<mission>/07-pr-verdict.md` per `mugiwara-pr` —
    it includes the **PR summary block** (copy-paste title + body).
 3. Hand the branch + verdict file to you. You open the PR and paste the block.
 

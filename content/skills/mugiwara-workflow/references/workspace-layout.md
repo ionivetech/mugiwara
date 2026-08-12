@@ -26,7 +26,9 @@ Every mission creates and works inside `.mugiwara/` at the repo root.
 
 Naming rule: every artifact inside `results/<mission>/` uses the SAME mission
 name, no date prefix — the folder is the grouping, numbered by wave order
-(`01-`, `02-`, …). `reports/` and `logs/` and `plans/` files carry the
+(`01-`, `02-`, …). Unnumbered support files may sit alongside the numbered
+ones (`todos.md`, `resume.md`, `eval.md`, evidence logs) and are not part of
+the waves table. `reports/` and `logs/` and `plans/` files carry the
 `YYYY-MM-DD-` date prefix because they are cross-mission folders; `results/`
 does not, because each mission owns its folder.
 

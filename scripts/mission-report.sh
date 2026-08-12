@@ -6,6 +6,9 @@ set -u
 
 MISSION="${1:-}"
 [ -z "$MISSION" ] && { echo "usage: mission-report.sh <mission>" >&2; exit 1; }
+case "$MISSION" in
+  *[!a-zA-Z0-9._-]*) echo "mission-report: invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" >&2; exit 1 ;;
+esac
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 STATE_FILE="$MUGIWARA_DIR/state.json"
@@ -63,14 +66,15 @@ const WAVE_LABEL = {
   "05-healing": "Healing (Wave 8)",
   "06-closure": "Closure (Wave 9)",
   "07-pr-verdict": "PR material",
-  "todos": "Todos",
 };
+
+const WAVE_FILES = new Set(Object.keys(WAVE_LABEL));
 
 function sniffVerdict(file) {
   const text = fs.readFileSync(file, 'utf8');
-  const lines = text.split(/\r?\n/).filter(l => /pass|fail|✅|❌|verdict/i.test(l));
-  for (const l of lines.slice(0, 12)) {
-    const m = l.match(/(PASS|FAIL|✅|❌)/i);
+  const lines = text.split(/\r?\n/).filter(l => /pass|fail|✅|❌|verdict|go|no-go/i.test(l));
+  for (const l of lines) {
+    const m = l.match(/(NO-GO|GO|PASS|FAIL|✅|❌)/i);
     if (m) return m[1].toUpperCase();
   }
   return "?";
@@ -81,7 +85,8 @@ if (fs.existsSync(resultsDir)) {
   const files = fs.readdirSync(resultsDir).filter(f => f.endsWith('.md')).sort();
   for (const f of files) {
     const base = f.replace(/\.md$/, '');
-    const label = WAVE_LABEL[base] || base;
+    if (!WAVE_FILES.has(base)) continue; // support files (todos.md, resume.md, eval.md, evidence logs) not in waves table
+    const label = WAVE_LABEL[base];
     const verdict = sniffVerdict(path.join(resultsDir, f));
     waveRows.push({ label, file: f, verdict });
   }
@@ -91,22 +96,22 @@ if (fs.existsSync(resultsDir)) {
 let reviewFiles = [];
 let reviewFindings = 0;
 if (fs.existsSync(reviewDir)) {
-  reviewFiles = fs.readdirSync(reviewDir).filter(f => f.includes(mission) && f.endsWith('.md'));
+  reviewFiles = fs.readdirSync(reviewDir).filter(f => (f.startsWith(mission + "-") || f.startsWith(mission + "/")) && f.endsWith('.md'));
   for (const f of reviewFiles) {
     const text = fs.readFileSync(path.join(reviewDir, f), 'utf8');
-    reviewFindings += (text.match(/^\s*(?:#+\s*)?(?:🔴|🟠|🟡|⚪)\s+.*/gm) || []).length;
+    reviewFindings += (text.match(/^\s*(?:#+\s*)?(?:🔴|🟠|🟡|⚪)(?:\s*\/\s*(?:🔴|🟠|🟡|⚪))?\s+.*/gm) || []).length;
   }
 }
 
 let issueRows = [];
 if (fs.existsSync(issuesDir)) {
-  const issueFiles = fs.readdirSync(issuesDir).filter(f => f.includes(mission) && f.endsWith('.md'));
+  const issueFiles = fs.readdirSync(issuesDir).filter(f => (f.startsWith(mission + "-") || f.startsWith(mission + "/")) && f.endsWith('.md'));
   for (const f of issueFiles) {
     const text = fs.readFileSync(path.join(issuesDir, f), 'utf8');
     for (const line of text.split(/\r?\n/)) {
       if (line.trim().startsWith('|') && line.includes('|') && !line.includes('---')) {
         const cells = line.split('|').map(c => c.trim()).filter(Boolean);
-        if (cells.length >= 5) issueRows.push(cells.join(" | "));
+        if (cells.length >= 5 && !/^wave$/i.test(cells[0])) issueRows.push(cells.join(" | "));
       }
     }
   }
@@ -127,7 +132,7 @@ if (waveRows.length) {
 }
 
 report += "\n\n## Review & blockers\n\n";
-report += "Review files: " + (reviewFiles.length ? reviewFiles.join(", ") : "none") + "\n";
+report += "Review + security files: " + (reviewFiles.length ? reviewFiles.join(", ") : "none") + "\n";
 report += "Findings: " + reviewFindings + "\n";
 report += "Blocker ledger rows: " + issueRows.length + (issueRows.length ? "\n" + issueRows.map(r => "- " + r).join("\n") : "");
 

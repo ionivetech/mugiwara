@@ -40,7 +40,7 @@ Owns the whole mission flow end to end: triage routing, wave transitions, inter-
 
 ## Output
 
-Triage decision / check-in verdict / decision record / ship verdict — logged to `.mugiwara/logs/YYYY-MM-DD-<mission>.md`; closure report + ship evidence to `.mugiwara/results/`.
+Triage decision / check-in verdict / decision record / ship verdict — logged to `.mugiwara/logs/YYYY-MM-DD-<mission>.md`; closure report + ship evidence to `.mugiwara/results/<mission>/06-closure.md`.
 
 ## Red flags
 

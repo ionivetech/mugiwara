@@ -46,7 +46,7 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 1. Verdict is GO or NO-GO. No "GO with caveats", no "almost".
 2. Every checklist item cites evidence: command output, file, or commit.
 3. A critical finding at any stage → NO-GO. Non-critical findings → list them, decide ship-with-tracking or fix-first, and record which.
-4. Write the verdict and evidence to `.mugiwara/results/`.
+4. Write the verdict and evidence to `.mugiwara/results/<mission>/06-closure.md`.
 
 ## Cleanup (after the terminal step)
 
