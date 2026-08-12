@@ -1,7 +1,7 @@
 {
   "name": "mugiwara",
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, healing.",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "author": {
     "name": "ionive"
   },
