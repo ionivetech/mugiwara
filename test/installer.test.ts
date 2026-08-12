@@ -126,9 +126,9 @@ test('removeInstalled deletes exactly manifest files + prunes empty dirs', () =>
   expect(existsSync(join(dir, 'ag'))).toBe(false);
 });
 
-test('session-start hook carries IRON LAW, directs to mugiwara-orchestration', () => {
+test('session-start hook carries default-on doctrine, directs to mugiwara-orchestration', () => {
   const hook = readFileSync(join(import.meta.dirname, '..', 'hooks', 'session-start.ts'), 'utf8');
-  expect(hook).toContain('IRON LAW');
+  expect(hook).toContain('mugiwara off');
   expect(hook).toContain('mugiwara-orchestration');
   expect(hook).toContain('Wave 0 triage');
   expect(hook).toContain('Lane 0');
@@ -181,7 +181,7 @@ test('claude target postInstall wires the SessionStart hook', () => {
   const r = installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
   const hook = join(dir, '.claude', 'hooks', 'session-start.ts');
   expect(existsSync(hook)).toBe(true);
-  expect(readFileSync(hook, 'utf8')).toContain('IRON LAW');
+  expect(readFileSync(hook, 'utf8')).toContain('mugiwara off');
   expect(r.written).toContain(hook);
   const mode = statSync(hook).mode;
   expect(mode & 0o111).not.toBe(0);
