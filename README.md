@@ -26,11 +26,16 @@ every agent, every skill, every rule is static markdown.
 ### 9-wave pipeline
 
 ```
-┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐
-│ Luffy │  │ Usopp │  │ Nami  │  │ Zoro  │  │Chopper│  │ Sanji │  │Franky │  │ Robin │  │ Brook │  │ Luffy │
-│Triage │→│Brainst│→│ Plan  │→│Execut │→│ Audit │→│Quality│→│ Gates │→│+Jinbe │→│ Heal  │→│Close  │
-│   0   │  │   1   │  │   2   │  │   3   │  │   4   │  │   5   │  │   6   │  │   7   │  │   8   │  │   9   │
-└───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘
+┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐     ┌────────┐
+│ Luffy  │     │ Usopp  │     │  Nami  │     │  Zoro  │     │Chopper │
+│ Triage │ ──→ │Brainstm│ ──→ │  Plan  │ ──→ │Execute │ ──→ │ Audit  │
+└────────┘     └────────┘     └────────┘     └────────┘     └───┬────┘
+                                                                 │
+┌────────┐     ┌────────┐     ┌────────────┐     ┌────────┐     ┌───┴────┐
+│ Luffy  │     │ Brook  │     │Robin+Jinbe │     │ Franky │     │  Sanji │
+│Closure │ ←── │  Heal  │ ←── │  Review +  │ ←── │ Gates  │ ←── │Quality │
+└────────┘     └────────┘     │  Security  │     └────────┘     └────────┘
+                              └────────────┘
 ```
 
 → [Full pipeline details](docs/concepts/workflow.md)
