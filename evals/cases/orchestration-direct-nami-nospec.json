@@ -1,0 +1,25 @@
+{
+  "name": "orchestration-direct-nami-nospec",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "nami, plan this feature", "top_k": 3 },
+      { "prompt": "nami, there's no spec yet — write me a plan for the payments feature", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "execute the payments plan step by step" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user summons Nami directly with no spec file present: 'plan this feature.'",
+      "rubric": [
+        "runs triage first",
+        "writes the spec bridge from the request",
+        "plans to .mugiwara/plans/",
+        "returns to Luffy",
+        "makes no code edits"
+      ]
+    }
+  ]
+}

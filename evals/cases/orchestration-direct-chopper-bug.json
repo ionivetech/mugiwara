@@ -1,0 +1,23 @@
+{
+  "name": "orchestration-direct-chopper-bug",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "chopper, audit the mission for bugs", "top_k": 3 },
+      { "prompt": "chopper, something's off — find the bug", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "patch the bug you find in the checkout flow" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Chopper is summoned and finds a bug during audit.",
+      "rubric": [
+        "appends a ledger row to .mugiwara/issues/",
+        "returns to Luffy",
+        "does not fix the bug"
+      ]
+    }
+  ]
+}

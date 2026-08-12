@@ -1,0 +1,25 @@
+{
+  "name": "orchestration-direct-usopp-brainstorm",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "usopp, brainstorm a caching layer", "top_k": 3 },
+      { "prompt": "hey usopp, help me think through a caching design", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "build the caching layer and commit it" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user summons Usopp directly: 'brainstorm a caching layer.'",
+      "rubric": [
+        "announces Wave 0 triage banner before anything",
+        "runs 3 interrogation rounds",
+        "writes brief to .mugiwara/spec/",
+        "returns to Luffy for routing",
+        "makes zero source code edits"
+      ]
+    }
+  ]
+}

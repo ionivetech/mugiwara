@@ -1,0 +1,24 @@
+{
+  "name": "orchestration-command-review",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "/mugiwara-review the diff", "top_k": 3 },
+      { "prompt": "run mugiwara review on the pending changes", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "add a dark mode toggle to the settings page" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user runs /mugiwara-review and Robin finds blockers.",
+      "rubric": [
+        "findings written to .mugiwara/review/",
+        "returns the findings to Luffy",
+        "does not choose the next wave or dispatch Brook itself"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

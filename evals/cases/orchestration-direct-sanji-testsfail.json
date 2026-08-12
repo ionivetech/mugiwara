@@ -1,0 +1,23 @@
+{
+  "name": "orchestration-direct-sanji-testsfail",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "sanji, run quality checks on the mission", "top_k": 3 },
+      { "prompt": "sanji, the tests should pass — verify", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "fix the failing tests and push a patch" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Sanji is summoned; quality checks find failing tests.",
+      "rubric": [
+        "reports the failure with evidence",
+        "returns to Luffy",
+        "does not fix the code itself"
+      ]
+    }
+  ]
+}

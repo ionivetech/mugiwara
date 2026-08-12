@@ -1,0 +1,25 @@
+{
+  "name": "orchestration-state-non-git",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "run in a directory that is not a git repository", "top_k": 3 },
+      { "prompt": "agent operating outside any git repository", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "show the current branch name" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Any agent runs in a directory that is not a git repository.",
+      "rubric": [
+        "degrades to lane standard",
+        "says so once",
+        "state stays in-memory",
+        "continues the work"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}

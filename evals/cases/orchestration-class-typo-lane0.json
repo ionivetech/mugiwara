@@ -1,0 +1,23 @@
+{
+  "name": "orchestration-class-typo-lane0",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "fix this one-line typo", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "migrate the database to the new schema" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A one-line typo fix, full entry through the pipeline.",
+      "rubric": [
+        "lane 0, no pipeline",
+        "answers/routes directly",
+        "no ceremony for trivial work"
+      ]
+    }
+  ],
+  "expect_lane": "direct"
+}

@@ -1,0 +1,24 @@
+{
+  "name": "orchestration-class-pasted-spec-40files",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "here is a spec for 40 files, execute it", "top_k": 3 },
+      { "prompt": "execute this pasted 40-file spec", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "execute this one-line config change" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The user pastes a 40-file spec and says 'execute it.'",
+      "rubric": [
+        "Explicit class still sizes the lane from the spec's file list",
+        "routes to lane 3 for 40 files",
+        "does not skip planning on faith in the spec"
+      ]
+    }
+  ],
+  "expect_lane": "full"
+}

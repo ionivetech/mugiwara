@@ -1,0 +1,24 @@
+{
+  "name": "orchestration-class-auth-full",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "add auth to the app touching src/auth", "top_k": 3 },
+      { "prompt": "change src/auth/ login flow", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "tweak a typo in the README" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A request touching src/auth/ with full entry through the pipeline.",
+      "rubric": [
+        "lane 3, all nine waves",
+        "no shortcut",
+        "sensitive path overrides lean route"
+      ]
+    }
+  ],
+  "expect_lane": "full"
+}

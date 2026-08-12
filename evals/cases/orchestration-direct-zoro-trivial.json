@@ -1,0 +1,23 @@
+{
+  "name": "orchestration-direct-zoro-trivial",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "zoro, fix the typo in the welcome message", "top_k": 3 },
+      { "prompt": "zoro, one-line fix: the config path is wrong", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "zoro, refactor the whole auth module" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Zoro is summoned for a one-line typo fix.",
+      "rubric": [
+        "executes immediately — the documented exception for executors",
+        "still records the route for Luffy"
+      ]
+    }
+  ],
+  "expect_lane": "direct"
+}

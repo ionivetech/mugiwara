@@ -1,0 +1,22 @@
+{
+  "name": "orchestration-direct-robin-jinbe-nobleed",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      { "prompt": "robin, review this diff, then jinbe, your take", "top_k": 3 },
+      { "prompt": "robin review the changes, and jinbe sanity-check the plan", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "review the diff and fix whatever you find" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Robin is summoned for review, then Jinbe is summoned in the same conversation.",
+      "rubric": [
+        "two distinct roles performed, no role bleed",
+        "both return their findings to Luffy"
+      ]
+    }
+  ]
+}
