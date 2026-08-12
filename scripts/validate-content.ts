@@ -27,6 +27,30 @@ function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Rec
     if (bullets.length === 0) errors.push(`skill ${file}: "## Skip when" needs ≥1 bullet`);
     if (bullets.length > 4) errors.push(`skill ${file}: "## Skip when" block exceeds 4 bullets`);
   }
+  if (kind === 'skill') {
+    const lines = body.split(/\r?\n/);
+    const headingRe = /^## /;
+    const sections: { heading: string; start: number; end: number }[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (headingRe.test(lines[i])) sections.push({ heading: lines[i].replace(/^## /, ''), start: i, end: 0 });
+    }
+    for (let si = 0; si < sections.length; si++) {
+      sections[si].end = si + 1 < sections.length ? sections[si + 1].start : lines.length;
+      // count non-empty, non-table, non-code-fence content lines
+      let inFence = false;
+      let contentLines = 0;
+      for (let li = sections[si].start; li < sections[si].end; li++) {
+        const l = lines[li].trim();
+        if (!l) continue;
+        if (l.startsWith('```')) { inFence = !inFence; continue; }
+        if (inFence) continue;
+        if (l.startsWith('|') || l.startsWith('- |')) continue;
+        contentLines++;
+      }
+      if (contentLines >= 20) errors.push(`skill ${file}: section "${sections[si].heading}" is ${contentLines} content lines (≥20) — move to references/`);
+      else if (contentLines >= 15) console.warn(`⚠  skill ${file}: section "${sections[si].heading}" is ${contentLines} content lines (≥15, consider moving to references/)`);
+    }
+  }
   return data;
 }
 
