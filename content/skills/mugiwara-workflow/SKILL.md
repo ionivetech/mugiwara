@@ -16,7 +16,7 @@ The Straw Hat harness: Wave 0 triage + Waves 1-9, with an optional adversarial p
 
 **Inline by default.** The main/primary agent runs the pipeline and plays each crew role itself using that member's skill. Every wave's work is performed in the main conversation so the user sees the process live — no hidden subagent jumps, no click-to-expand. The crew members are personas + skills the main thread embodies, not mandatory dispatch targets.
 
-**Visible wave transitions.** Every wave opens with a main-thread banner `## Wave N — <crew> (<skill>)` and closes with the handoff line `→ Wave N+1 — <crew>` (Wave 9: `→ closure`). No wave starts without its banner; the conversation names who runs now and who takes over next so the user always sees the chain live.
+**Visible wave transitions.** Every wave opens with a prominent main-thread banner `==================== WAVE N - CREW (SKILL) ====================` and closes with the handoff line `→ Wave N+1 — <crew>` (Wave 9: `→ closure`). No wave starts without its banner; the conversation names who runs now and who takes over next so the user always sees the chain live.
 
 **Checkpoint-report presentation.** The banner marks a stage boundary; no wave passes silently. At each boundary the owning crew reports inline — one compact per-crew report: what ran, the result, the evidence pointer. No narration of every tool call. Each wave closes with a short progress summary (done / in-flight / blocked + next handoff). On failure or risk, PAUSE: report the problem and get a continue / retry / escalate decision before proceeding.
 
