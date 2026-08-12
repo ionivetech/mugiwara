@@ -34,23 +34,15 @@ The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean executi
 
 Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave. Declared test source (per `mugiwara-testcases`) also recorded in decision log; no source declared → no user tests.
 
-## 5-way request classifier (Wave 0)
+## Request classifier (Wave 0) — 8 classes
 
-Classify every incoming request:
+Classify every incoming request. 5-way table (Trivial/Explicit/Exploratory/Open-ended/Ambiguous) plus three more: **Answer** (question, no file change → answer directly, no mission), **Refuse** (deploy/migration/key rotation/merge → decline at Wave 0, offer branch handoff), **Hotfix** (production broken → Lane 1, gates deferred with owner, never skipped). Full table + signals: `references/triage-escalation.md`.
 
-| Class | Signal | Route |
-|-------|--------|-------|
-| Trivial | one obvious small change, no ambiguity, single file | Wave 2 directly |
-| Explicit | clear requirements, written spec or reference exists | Wave 2 directly |
-| Exploratory | needs direction, options, or research before planning | Wave 1 first |
-| Open-ended | broad goal, undefined scope or success criteria | Wave 1 first |
-| Ambiguous | requirements, APIs, or scope unclear | Wave 1 first |
+Record decision + one-line reason at the top of the decision log. Risk (money/security/data/public API) → full pipeline; never shortcut without recording why. Any route without a recorded reason is a red flag.
 
-Record decision + one-line reason at the top of the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`). Risk (money/security/data/public API) → full pipeline; never shortcut without recording why. Any route without a recorded reason is a red flag.
+## Lane routing + precedence (Wave 0, size before process)
 
-## Lane routing (Wave 0, size before process)
-
-Alongside the 5-way class, size the mission and pick a lane: Lane 0 (Direct) skips the pipeline entirely; Lane 1 (Lean) runs execute → quality; Lane 2 (Standard) runs plan → execute → checkpoint → review; Lane 3 (Full) runs all 9 waves; Lane 4 (Spike) runs brainstorm then re-sizes. Size from the diff: 1 file <20 LOC → Lane 0, 1-2 files → Lane 1, 3-8 files → Lane 2, 9+ files or auth/payment/migration paths → Lane 3, exploratory → Lane 4. Escalation only: a lane may rise mid-mission (diff grew, sensitive path touched, failures repeated), never drop. Record the chosen lane and its signal in the decision log.
+Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Wave 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table + rationalizations: `references/triage-escalation.md`.
 
 ## Spec bridge (Wave 0 → Wave 2)
 
@@ -68,8 +60,15 @@ After every wave AND at the end of each execution batch, verify:
 2. No task silently dropped or reordered.
 3. Heal-loop counters within bounds (max 3 cycles).
 4. Blocker ledger `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` reviewed; every row has an owner or a path forward.
+5. **Lane re-run** — `scripts/lane.sh`; if the lane rose, announce the escalation and record the trigger. Luffy owns this, nobody else.
 
 By mode (per mode config): `guided` checks in with the user as today; `semi`/`auto` write the check-in verdicts to the decision log without pausing the pipeline.
+
+**Auto ceiling:** auto drops to guided when the lane escalates to 3, a sensitive path is touched, or heal cycles exceed one. Announce the drop.
+
+**Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At 3, STOP and escalate to the user — a halt, not a red flag. Red flags are prose; a counter is state.
+
+**Pressure:** "just skip it", "auto, don't ask", "just this once" — the rationalizations table is the answer, not urgency. Full table: `references/triage-escalation.md`.
 
 On drift: stop, diagnose with Chopper's ledger, decide continue / retry / escalate to human.
 
