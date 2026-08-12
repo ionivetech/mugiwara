@@ -68,15 +68,25 @@ if (!existsSync(join(root, 'scripts', 'validate-content.ts'))) {
   }
 }
 
-// --- G3: savepoint fixtures — prove test fails with broken fixture ---
+// --- G3: savepoint fixtures — prove test fails when a field is broken ---
 console.log('\nG3 — savepoint fixtures');
 if (!existsSync(join(root, 'test', 'savepoint.test.ts'))) {
   console.log('  ⚠  savepoint.test.ts not found, skipping');
 } else {
-  // The fixture test itself is the mutation check — it exists and passes.
-  // To prove it can fail: if we make files_touched always 0 (remove git dep), assert fails.
-  // For now, verify the test exists and runs.
-  assert('savepoint tests exist and pass', true, () => run('G3', 'bun run test -- savepoint'));
+  const testFile = join(root, 'test', 'savepoint.test.ts');
+  const original = readFileSync(testFile, 'utf8');
+  try {
+    // Break one assertion: change lane validation to expect a wrong value
+    const broken = original.replace(
+      "expect(['direct', 'lean', 'standard', 'full', 'spike']).toContain(state.lane)",
+      "expect(state.lane).toBe('NONEXISTENT')"
+    );
+    writeFileSync(testFile, broken);
+    assert('broken assertion → gate fails', false, () => run('G3', 'bun run test -- savepoint'));
+  } finally {
+    writeFileSync(testFile, original);
+    assert('restored → gate passes', true, () => run('G3', 'bun run test -- savepoint'));
+  }
 }
 
 // --- Retrieval eval ratchet ---

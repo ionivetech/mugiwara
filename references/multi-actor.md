@@ -37,7 +37,7 @@ All actors read and write to the same file. Append-only, never overwrite.
 `scripts/savepoint.sh` accepts `--branch <name>` to write per-branch state:
 
 ```bash
-scripts/savepoint.sh "2026-08-11-dark-mode" --branch "feature/dark-mode"
+scripts/savepoint.sh --branch "2026-08-11-dark-mode" "" "feature/dark-mode"
 # writes .mugiwara/state-feature-dark-mode.json
 ```
 
