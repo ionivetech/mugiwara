@@ -140,6 +140,13 @@ async function uninstall(flags: Args['flags']): Promise<void> {
     if (existsSync(mugiDir) && readdirSync(mugiDir).length === 0) {
       rmSync(mugiDir, { recursive: true, force: true });
     }
+    if (manifest.targets.includes('opencode')) {
+      const opencodeCache = join(home, '.cache', 'opencode', 'packages', '@ionivetech');
+      if (existsSync(opencodeCache)) {
+        rmSync(opencodeCache, { recursive: true, force: true });
+        console.log('   cleared opencode npm cache (stale plugin versions)');
+      }
+    }
   }
   console.log(`OK removed ${removed.length} files`);
 }
