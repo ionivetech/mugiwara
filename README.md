@@ -30,7 +30,7 @@ every agent, every skill, every rule is static markdown.
 │ Luffy  │     │ Usopp  │     │  Nami  │     │  Zoro  │     │Chopper │
 │ Triage │ ──→ │Brainstm│ ──→ │  Plan  │ ──→ │Execute │ ──→ │ Audit  │
 └────────┘     └────────┘     └────────┘     └────────┘     └───┬────┘
-                                                                 │
+                                                                │
 ┌────────┐     ┌────────┐     ┌────────────┐     ┌────────┐     ┌───┴────┐
 │ Luffy  │     │ Brook  │     │Robin+Jinbe │     │ Franky │     │  Sanji │
 │Closure │ ←── │  Heal  │ ←── │  Review +  │ ←── │ Gates  │ ←── │Quality │
