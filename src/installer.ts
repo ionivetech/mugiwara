@@ -11,6 +11,7 @@ export type ContentItem = {
   data: FrontmatterData;
   body: string;
   refs: { relPath: string; text: string }[];
+  internal?: boolean;
 };
 
 export type InstallOptions = {
@@ -59,7 +60,7 @@ export function collectContent(): { skills: ContentItem[]; agents: ContentItem[]
     .filter(f => f.endsWith('.md'))
     .map(f => {
       const { data, body } = parseFrontmatter(readFileSync(join(CONTENT_DIR, 'agents', f), 'utf8'));
-      return { name: f.replace(/\.md$/, ''), data, body, refs: [] as { relPath: string; text: string }[] };
+      return { name: f.replace(/\.md$/, ''), data, body, refs: [] as { relPath: string; text: string }[], internal: data.internal === 'true' };
     });
   const sharedRefsDir = join(dirname(CONTENT_DIR), 'references');
   const sharedRefs: { relPath: string; text: string }[] = [];
@@ -119,7 +120,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
     }
   }
   for (const a of agents) {
-    const out = target.transformAgent(a.data, a.body);
+    const out = target.transformAgent({ ...a.data, ...(a.internal ? { 'internal-agent': 'true' } : {}) }, a.body);
     if (out) writeOne(join(dirs.agentsDir, out.relPath), out.text);
     if (target.transformAgentFull) {
       const full = target.transformAgentFull(a.data, a.body);

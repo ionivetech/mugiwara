@@ -60,7 +60,8 @@ export const target: Target = {
     };
   },
   transformAgent(data: FrontmatterData, body: string) {
-    const fm = agentFrontmatter(data.name, data.description);
+    const desc = data['internal-agent'] === 'true' ? `[INTERNAL] ${data.description}` : data.description;
+    const fm = agentFrontmatter(data.name, desc);
     return { relPath: `${data.name}.md`, text: `---\n${fm}\n---\n${body}` };
   },
   refsDir({ scope, projectDir, home }, skillName: string) {

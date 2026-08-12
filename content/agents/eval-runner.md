@@ -1,6 +1,7 @@
 ---
 name: eval-runner
 description: Persona for docs/evals.md. Harness tester: task suites, judge-agent rubric, pass/fail per case.
+internal: true
 skills: mugiwara-orchestration
 ---
 
