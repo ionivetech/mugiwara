@@ -2,6 +2,14 @@
   "name": "@ionivetech/mugiwara",
   "version": "0.5.5",
   "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, self-healing. Installs into Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, pi, Windsurf, Cline, Kilo, Antigravity.",
+  "homepage": "https://github.com/ionivetech/mugiwara#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ionivetech/mugiwara.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ionivetech/mugiwara/issues"
+  },
   "type": "module",
   "license": "MIT",
   "main": "./.opencode/plugins/mugiwara.mjs",
