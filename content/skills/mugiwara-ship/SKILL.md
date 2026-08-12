@@ -57,15 +57,15 @@ consumed intermediates. Never touch anything outside `.mugiwara/`.
 
 - `config`
 - `plans/YYYY-MM-DD-<mission>.md` — the clean plan doc
-- `results/YYYY-MM-DD-<mission>-closure.md` — closure report
-- `results/YYYY-MM-DD-<mission>-pr-verdict.md` — PR material
+- `results/<mission>/06-closure.md` — closure report
+- `results/<mission>/07-pr-verdict.md` — PR material
 - `logs/lessons.md` and any cross-mission state (`backup/`, `manifest.json`)
 
 **DELETE** (consumed or superseded):
 
+- `results/<mission>/01-execution.md` … `05-healing.md`, `todos.md` — wave artifacts, consumed after closure
 - `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
 - `.mugiwara/continue.md` — consumed once the mission is closed (delete by exact name, never a `handoff*` glob)
-- `results/` wave reports — todos, audits, quality/gate/healing reports
 - `review/` and `issues/` per-mission findings
 - `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs
 

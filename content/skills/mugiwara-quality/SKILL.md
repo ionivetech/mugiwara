@@ -55,7 +55,7 @@ Say so explicitly, propose the minimal standard setup for the stack, and continu
 
 ## Report
 
-Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/results/`. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next wave, fail → Brook (healing) or Zoro (trivial fix).
+Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/results/<mission>/03-quality.md`. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next wave, fail → Brook (healing) or Zoro (trivial fix).
 
 ## Rationalizations
 

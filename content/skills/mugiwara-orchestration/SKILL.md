@@ -28,7 +28,7 @@ Every wave returns to Luffy — no crew member hands off directly to another. Ex
 
 ## Coordination files
 
-The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`.
+The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/results/<mission>/06-closure.md`.
 
 ## Mode read (Wave 0)
 
@@ -91,7 +91,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Wave 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or explicitly deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the mission report at `.mugiwara/reports/<mission>.md`. Write the closure summary to `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`. The plan doc stays untouched.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or explicitly deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched.
 
 ### Detailed closure summary (mandatory, inline)
 
@@ -107,7 +107,7 @@ Present a detailed summary to the user — never a one-liner:
 
 ### Terminal step (every mode, per mode config)
 
-Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md` per the `mugiwara-pr` format (includes a ready PR summary block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
+Save-point commit → push the mission branch (per the config `branch` key, default `feature/{type}-{issue}-{slug}`) with plain `git push -u origin <branch>` → write `.mugiwara/results/<mission>/07-pr-verdict.md` per the `mugiwara-pr` format (includes a ready PR summary block) → hand the branch + verdict file to the user, who opens the PR. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode. On push failure (no auth / no remote), fall back to the local closure report and log the reason.
 
 Lessons: at Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to the owning agent. At closure embody memory-keeper inline to append this mission's lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only, never overwrite.
 

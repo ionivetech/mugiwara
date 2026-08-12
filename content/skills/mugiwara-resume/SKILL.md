@@ -34,7 +34,7 @@ Resume reads one file: `.mugiwara/state.json`. All position data is computed at 
   "heal_cycle": 1,
   "tokens_est": 14200,
   "budget": 20000,
-  "evidence": [".mugiwara/results/wave4-audit.md"],
+  "evidence": [".mugiwara/results/2026-08-11-invitation-accepted/02-audit.md"],
   "updated_at": "2026-08-11T12:40:00Z"
 }
 ```

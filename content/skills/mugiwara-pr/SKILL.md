@@ -14,13 +14,13 @@ Mugiwara's evidence lands where the team reviews. At terminal, push the mission 
 
 ## Verdict file
 
-Write `.mugiwara/results/YYYY-MM-DD-<mission>-pr-verdict.md`:
+Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
 
 - Mission summary — goal, waves, task count.
 - Per-wave evidence table — wave, task, status, evidence pointer.
 - Gate verdicts — quality (per-check status), gates (coverage/build/DoD), review (Robin/Jinbe findings).
 - User-test verdict — when user tests were declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
-- Closure-report link — `.mugiwara/results/YYYY-MM-DD-<mission>-closure.md`.
+- Closure-report link — `.mugiwara/results/<mission>/06-closure.md`.
 - Final verdict line — PASS / FAIL with the single blocking reason, if any.
 - **PR summary block** — copy-paste title + body ready for the user's PR.
 
