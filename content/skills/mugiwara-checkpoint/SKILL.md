@@ -37,7 +37,7 @@ Category goes in `symptom` or `help-needed` as context. Categories: `test-fail` 
 
 ## Definition of Done check
 
-Per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one wave verdict. Full definitions: `references/definition-of-done.md`. Any FAIL axis → wave verdict FAIL.
+Per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one wave verdict. Full definitions: `_shared/references/definition-of-done.md`. Any FAIL axis → wave verdict FAIL.
 
 ## Auditor only
 

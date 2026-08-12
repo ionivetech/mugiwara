@@ -32,7 +32,7 @@ Position: after quality checks, before the final gates below. Optional — it ru
 
 ## Definition of Done standing gate
 
-A fixed cross-project bar, distinct from per-task acceptance criteria. Full definitions: `references/definition-of-done.md`. Verdict PASS only when all hold:
+A fixed cross-project bar, distinct from per-task acceptance criteria. Full definitions: `_shared/references/definition-of-done.md`. Verdict PASS only when all hold:
 
 - Correctness — the work does what the plan specifies.
 - Quality — lint/format/unit checks clean, configs unweakened.

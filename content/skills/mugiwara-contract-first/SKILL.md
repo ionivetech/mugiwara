@@ -21,7 +21,7 @@ Design the contract before the code. The interface is the promise; the implement
 
 Not for: pure internals no one else touches — those still get reviewed by the other skills, just not on contract terms.
 
-Framework APIs from docs, not memory: `references/source-grounding.md`.
+Framework APIs from docs, not memory: `_shared/references/source-grounding.md`.
 
 ## Process
 

@@ -48,7 +48,7 @@ export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '
 const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')) as { version: string };
 export const VERSION = pkg.version;
 
-export function collectContent(): { skills: ContentItem[]; agents: ContentItem[] } {
+export function collectContent(): { skills: ContentItem[]; agents: ContentItem[]; sharedRefs: { relPath: string; text: string }[] } {
   const skillNames = readdirSync(join(CONTENT_DIR, 'skills'), { withFileTypes: true })
     .filter(e => e.isDirectory()).map(e => e.name);
   const skills = skillNames.map(name => {
@@ -61,7 +61,15 @@ export function collectContent(): { skills: ContentItem[]; agents: ContentItem[]
       const { data, body } = parseFrontmatter(readFileSync(join(CONTENT_DIR, 'agents', f), 'utf8'));
       return { name: f.replace(/\.md$/, ''), data, body, refs: [] as { relPath: string; text: string }[] };
     });
-  return { skills, agents };
+  const sharedRefsDir = join(dirname(CONTENT_DIR), 'references');
+  const sharedRefs: { relPath: string; text: string }[] = [];
+  if (existsSync(sharedRefsDir)) {
+    for (const f of readdirSync(sharedRefsDir)) {
+      if (!f.endsWith('.md')) continue;
+      sharedRefs.push({ relPath: f, text: readFileSync(join(sharedRefsDir, f), 'utf8') });
+    }
+  }
+  return { skills, agents, sharedRefs };
 }
 
 function collectRefs(skillDir: string): { relPath: string; text: string }[] {
@@ -74,7 +82,7 @@ function collectRefs(skillDir: string): { relPath: string; text: string }[] {
 export function installTo(target: Target, opts: InstallOptions): InstallResult {
   const { scope, projectDir, dryRun = false, force = false } = opts;
   const home = opts.home ?? homedir();
-  const { skills, agents } = collectContent();
+  const { skills, agents, sharedRefs } = collectContent();
   const dirs = target.paths({ scope, projectDir, home });
   const backupRoot = join(scope === 'global' ? home : projectDir, '.mugiwara');
   const result: InstallResult = { written: [], skipped: [], backedUp: [], notes: [] };
@@ -117,6 +125,13 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
       const full = target.transformAgentFull(a.data, a.body);
       if (full && target.refsDir) writeOne(join(target.refsDir({ scope, projectDir, home }, a.name), full.relPath), full.text);
     }
+  }
+
+  if (sharedRefs.length) {
+    const sharedRoot = target.tier && target.tier >= 2
+      ? join(target.refsDir!({ scope, projectDir, home }, skills[0]?.name ?? ''), '_shared')
+      : join(dirs.skillsDir, '_shared', 'references');
+    for (const r of sharedRefs) writeOne(join(sharedRoot, r.relPath), r.text);
   }
 
   if (target.postInstall) {

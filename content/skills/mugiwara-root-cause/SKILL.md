@@ -16,7 +16,7 @@ A failure is a stopping event, not a speed bump. Do not guess, do not patch. Wal
 
 Any bug, unexplained failure, crash, or regression in code, tests, or config. When the cause is unknown, the fix is not obvious, or the failure is intermittent. Standalone discipline — use it before any fix ships, and escalate when a phase cannot complete.
 
-Framework code from docs, not memory: `references/source-grounding.md`.
+Framework code from docs, not memory: `_shared/references/source-grounding.md`.
 
 ## Process
 

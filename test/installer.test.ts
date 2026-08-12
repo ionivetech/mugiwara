@@ -39,6 +39,29 @@ test('references/ files are collected from content', () => {
   expect(frontend.refs.some(r => r.text.includes('WCAG'))).toBe(true);
 });
 
+test('collectContent includes shared references from root references/', () => {
+  const { sharedRefs } = collectContent();
+  expect(sharedRefs.length).toBeGreaterThanOrEqual(5);
+  const names = sharedRefs.map(r => r.relPath).sort();
+  expect(names).toContain('source-grounding.md');
+  expect(names).toContain('definition-of-done.md');
+  expect(names).toContain('skill-versioning.md');
+  expect(names).toContain('token-budget.md');
+  expect(names).toContain('multi-actor.md');
+});
+
+test('installTo writes shared references to _shared/references/ (tier 1)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-shared-'));
+  // fakeTarget has no tier, defaults to tier 1 path
+  const r = installTo(fakeTarget, { ...opts, projectDir: dir });
+  const sourceGrounding = join(dir, 'sk', '_shared', 'references', 'source-grounding.md');
+  const dod = join(dir, 'sk', '_shared', 'references', 'definition-of-done.md');
+  expect(existsSync(sourceGrounding)).toBe(true);
+  expect(existsSync(dod)).toBe(true);
+  expect(readFileSync(sourceGrounding, 'utf8')).toContain('source');
+  expect(r.written).toContain(sourceGrounding);
+});
+
 test('installTo writes references/ into the target refs dir', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-refs-'));
   const r = installTo(fakeTarget, { ...opts, projectDir: dir });
