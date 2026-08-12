@@ -135,7 +135,7 @@ mkdir -p "$MUGIWARA_DIR"
 LANE_PREV=""
 LANE_ROSE=false
 if [ -f "$STATE_FILE" ]; then
-  LANE_PREV=$(node -e "try{const s=require('$STATE_FILE');process.stdout.write(s.lane||'')}catch(e){process.stdout.write('')}" 2>/dev/null || true)
+  LANE_PREV=$(node -e "try{const s=require(process.argv[1]);process.stdout.write(s.lane||'')}catch(e){process.stdout.write('')}" "$STATE_FILE" 2>/dev/null || true)
   if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
     # lane order: direct < lean < standard < full < spike (spike resizes, not a rise)
     case "$LANE_PREV:$LANE" in

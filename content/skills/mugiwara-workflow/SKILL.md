@@ -60,15 +60,20 @@ Full layout: `references/workspace-layout.md`.
 
 ## Wave 0 — Triage (always first)
 
-Luffy classifies every request 5 ways:
+Luffy classifies every request 8 ways:
 
 | Class | Signal | Route |
 |-------|--------|-------|
 | Trivial | obvious, single file | → Wave 2 |
-| Explicit | clear spec exists | → Wave 2 |
+| Explicit | clear spec exists | → Wave 2 (still sizes the lane from the spec's file list) |
 | Exploratory | needs research | → Wave 1 |
 | Open-ended | broad, undefined | → Wave 1 |
 | Ambiguous | unclear scope | → Wave 1 |
+| Answer | question, no file change | answer directly, no mission |
+| Refuse | deploy / migration / key rotation / merge | decline at Wave 0, offer branch handoff |
+| Hotfix | production broken | Lane 1, gates deferred with owner |
+
+Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
 
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/logs/`.
 
