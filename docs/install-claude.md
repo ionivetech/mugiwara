@@ -11,7 +11,7 @@ session-start hook.
 ## Install
 
 ```bash
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
 ```
 
 ## How it works
@@ -55,6 +55,8 @@ After install, configure mugiwara in `.mugiwara/config` (project) or
 `~/.mugiwara/config` (global). See [docs/config.md](config.md).
 
 Switch autonomy mode with `/mugiwara-mode guided|semi|auto`.
+
+Or set permanently in `.mugiwara/config`: `mode=guided`.
 
 ## Troubleshooting
 

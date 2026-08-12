@@ -1,7 +1,12 @@
 // src/targets/opencode.ts
-import { join } from 'node:path';
+import { existsSync, readdirSync, copyFileSync, mkdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
 import type { Target } from '../installer.ts';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const COMMANDS_SRC = join(here, '..', '..', '.opencode', 'commands');
 
 type CrewConfig = {
   color: string;
@@ -61,5 +66,21 @@ export const target: Target = {
   refsDir({ scope, projectDir, home }, skillName: string) {
     const root = scope === 'global' ? join(home, '.config', 'opencode') : join(projectDir, '.opencode');
     return join(root, 'skills', skillName, 'references');
+  },
+  postInstall({ scope, projectDir, home, dryRun }) {
+    const root = scope === 'global' ? join(home, '.config', 'opencode') : join(projectDir, '.opencode');
+    const dstDir = join(root, 'commands');
+    if (dryRun) return { written: [], notes: [] };
+    if (!existsSync(COMMANDS_SRC)) return { written: [], notes: [] };
+    mkdirSync(dstDir, { recursive: true });
+    const written: string[] = [];
+    for (const f of readdirSync(COMMANDS_SRC)) {
+      if (!f.endsWith('.md')) continue;
+      const src = join(COMMANDS_SRC, f);
+      const dst = join(dstDir, f);
+      copyFileSync(src, dst);
+      written.push(dst);
+    }
+    return { written, notes: [] };
   },
 };

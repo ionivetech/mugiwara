@@ -29,7 +29,7 @@ Restart OpenCode.
 
 ## How it works
 
-The plugin (`mugiwara.mjs`) does three things:
+The plugin (`mugiwara.mjs`) does four things:
 
 1. **Config hook** — registers `content/skills/` as a skills path and
    `content/agents/` as agents so OpenCode discovers the full crew
@@ -38,11 +38,26 @@ The plugin (`mugiwara.mjs`) does three things:
 2. **System transform hook** — injects the crew announce header and active
    autonomy mode into every session's system prompt.
 
-3. **Chat message hook** — intercepts `/mugiwara-mode` commands and
+3. **Chat message hook** — intercepts `/mugiwara` commands and
    natural-language mode switches, writing `.mugiwara/config`.
+
+4. **Commands** — the file-based installer copies slash commands
+   (`/mugiwara`, `/using-mugiwara`, `/mugiwara-plan`, etc.) to
+   `.opencode/commands/`.
 
 Skills are loaded on-demand via OpenCode's native `skill` tool. Agents appear
 as subagents with full config (color, temperature, permissions, step limits).
+
+## Mode switching
+
+Switch autonomy mode at runtime:
+
+```
+/mugiwara guided    # human decides every GO
+/mugiwara semi      # auto branch + commit, plan needs GO
+/mugiwara auto      # hands-off except high-risk
+/mugiwara           # show current mode
+```
 
 ## Verify
 
@@ -125,5 +140,3 @@ Mugiwara skills reference general actions. On OpenCode these map to:
 
 After install, configure mugiwara in `.mugiwara/config` (project) or
 `~/.mugiwara/config` (global). See [docs/config.md](config.md).
-
-Switch autonomy mode at runtime: `/mugiwara-mode guided|semi|auto`

@@ -11,7 +11,7 @@ and a process that sizes itself to your work. Pure markdown, zero runtime.
 
 ```bash
 # Claude Code
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
 
 # opencode — add to opencode.json
 { "plugin": ["@ionivetech/mugiwara"] }
@@ -172,7 +172,7 @@ Mugiwara installs as a native plugin on every platform. Full details in the per-
 ### Claude Code
 
 ```bash
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara@mugiwara
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
 ```
 
 Update: `/plugin update mugiwara`
