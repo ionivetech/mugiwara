@@ -259,8 +259,17 @@ npx @ionivetech/mugiwara@latest install --project . --target all --yes
 
 Substitute `all` with a specific target: `windsurf`, `cline`, `kilo`, `codex`, etc.
 
-Update: `mugiwara update`
-Uninstall: `mugiwara uninstall`
+Update: `npx @ionivetech/mugiwara@latest update --project . --target <id> --yes`
+Uninstall: `npx @ionivetech/mugiwara@latest uninstall --project .`
+
+Or install globally first for shorter commands:
+
+```bash
+npm i -g @ionivetech/mugiwara
+mugiwara install --project . --target <id> --yes
+mugiwara update --project . --target <id> --yes
+mugiwara uninstall --project .
+```
 
 ### Any agent (skills only)
 
@@ -298,10 +307,11 @@ Requires **Node.js >= 20.11**.
 
 ```bash
 mugiwara install                                  # wizard (interactive)
-mugiwara install --project . --target all --yes   # non-interactive
-mugiwara update                                   # replace existing files
-mugiwara uninstall                                # remove what manifest recorded
+npx @ionivetech/mugiwara@latest install --yes     # non-interactive (project + all)
+mugiwara update --project . --target <id> --yes   # replace existing files
+mugiwara uninstall --project .                    # remove what manifest recorded
 mugiwara list                                     # show installations
+mugiwara list --check                             # health check (missing files)
 mugiwara reset --keep-logs                        # wipe mission state, keep lessons
 mugiwara reset --force                            # override multi-actor guard
 ```

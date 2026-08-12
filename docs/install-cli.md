@@ -66,14 +66,25 @@ what mugiwara crew members are available?
 ## Update
 
 ```bash
-mugiwara update
-# or: npx @ionivetech/mugiwara@latest update
+npx @ionivetech/mugiwara@latest update --project . --target <id> --yes
+```
+
+Or with global CLI:
+
+```bash
+mugiwara update --project . --target <id> --yes
 ```
 
 ## Uninstall
 
 ```bash
-mugiwara uninstall
+npx @ionivetech/mugiwara@latest uninstall --project .
+```
+
+Or with global CLI:
+
+```bash
+mugiwara uninstall --project .
 ```
 
 ## Global install
@@ -94,10 +105,11 @@ After install, configure mugiwara in `.mugiwara/config` (project) or
 
 ```bash
 mugiwara install                                  # wizard (interactive)
-mugiwara install --project . --target all --yes   # non-interactive
-mugiwara update                                   # replace existing files
-mugiwara uninstall                                # remove what manifest recorded
+npx @ionivetech/mugiwara@latest install --yes     # non-interactive (project + all)
+mugiwara update --project . --target <id> --yes   # replace existing files
+mugiwara uninstall --project .                    # remove what manifest recorded
 mugiwara list                                     # show installations
+mugiwara list --check                             # health check (missing files)
 mugiwara reset --keep-logs                        # wipe mission state, keep lessons
 mugiwara reset --force                            # override multi-actor guard
 ```

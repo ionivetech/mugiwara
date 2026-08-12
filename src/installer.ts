@@ -87,8 +87,10 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
         return;
       }
       const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupFile = join(backupRoot, 'backup', ts, absPath.replace(/[^a-zA-Z0-9]+/g, '_'));
-      if (!dryRun) { mkdirSync(dirname(backupFile), { recursive: true }); copyFileSync(absPath, backupFile); }
+      const fileName = absPath.replace(/[^a-zA-Z0-9]+/g, '_');
+      const backupDir = join(backupRoot, 'backup', `${ts}-${target.id}`);
+      const backupFile = join(backupDir, fileName);
+      if (!dryRun) { mkdirSync(backupDir, { recursive: true }); copyFileSync(absPath, backupFile); }
       result.backedUp.push(absPath);
     }
     if (!dryRun) { mkdirSync(dirname(absPath), { recursive: true }); writeFileSync(absPath, text); }
