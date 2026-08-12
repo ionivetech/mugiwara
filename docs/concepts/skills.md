@@ -52,4 +52,4 @@ it embodies a role.
 ## Anatomy
 
 Every skill is a `SKILL.md` with frontmatter + playbook body. See
-[skill-anatomy.md](skill-anatomy.md).
+[skill-anatomy.md](../reference/skill-anatomy.md).

@@ -52,7 +52,7 @@ Or start any task — the crew auto-activates at session start.
 ## Configuration
 
 After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [docs/config.md](config.md).
+`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
 
 Switch autonomy mode with `/mugiwara-mode guided|semi|auto`.
 

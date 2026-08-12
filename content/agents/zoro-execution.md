@@ -1,7 +1,6 @@
 ---
 name: zoro-execution
-description: Persona for mugiwara-execution. Executes plan: sequential inline + parallel worker batches. No network: code only, no remote calls.
-permissions: read-write code, no-network
+description: Persona for mugiwara-execution. Executes plan: sequential inline + parallel worker batches.
 skills: mugiwara-execution, mugiwara-backend, mugiwara-git, mugiwara-contract-first, mugiwara-testcases
 ---
 

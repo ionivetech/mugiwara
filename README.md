@@ -19,7 +19,24 @@ structure with role boundaries, evidence gates, and cost tracking — the same
 discipline you'd expect from a senior engineering team. Zero runtime overhead:
 every agent, every skill, every rule is static markdown.
 
-→ [Full pitch: why mugiwara vs just asking your agent](docs/comparison.md)
+→ [Full pitch: why mugiwara vs just asking your agent](docs/concepts/comparison.md)
+
+## Capabilities
+
+| Feature | What you get |
+|---------|-------------|
+| **Zero runtime** | Pure markdown. No servers, no API keys, no dependencies beyond your agent. |
+| **14 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. |
+| **26 skills** | Portable playbooks: TDD execution, STRIDE security, 4-phase debugging, contract-first API design |
+| **Deterministic lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full 9-wave pipeline. |
+| **9-wave gated pipeline** | Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure |
+| **Evidence trail** | `.mugiwara/` workspace on disk: plans, audit reports, blocker ledger, mission reports. Reviewer reads in 30s. |
+| **Self-healing** | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles. |
+| **3 autonomy modes** | Guided (human steers) / Semi (auto branch+commit) / Auto (hands-off). Switch mid-session. |
+| **12 platforms** | Native plugins for Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity. CLI for Windsurf, Cline, Kilo. |
+| **Cost aware** | Token budget per lane. Warn at 1.5×, pause at 3×. Cost surfaced in every mission report. |
+| **Multi-actor safe** | Two engineers, one repo. Reset refuses without `--force`. Branch-scoped state. |
+| **Compliance matrix** | Rule compliance per model published with failures. Gemini tier 2 ≠ Claude tier 1. Documented, not hidden. |
 
 ## 30-second try
 
@@ -42,7 +59,8 @@ Then ask something non-trivial. The crew auto-activates:
 
 A ~$0.03 mission (Standard lane, ~10k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
-at every step in your chat. See it work: [docs/getting-started.md](docs/getting-started.md).
+at every step in your chat. Costs scale with your model (prices shown for
+Claude Sonnet as reference). See it work: [docs/getting-started.md](docs/getting-started.md).
 
 ## How it works
 
@@ -61,18 +79,18 @@ fix; auth migration = full 9-wave pipeline).
 - **Direct agent** when you know exactly what you need — just say the name
 - **Slash commands** when you want to drive:`/mugiwara-plan`, `/mugiwara-review`, `/mugiwara-security`, `/mugiwara-ship`
 
-[Full workflow walkthrough →](docs/workflow.md)
+[Full workflow walkthrough →](docs/concepts/workflow.md)
 
 ## The crew
 
-14 specialists. Each has a role boundary (read-only, no-network), a temperature,
-and a step limit. Call them by name or let the pipeline auto-route.
+14 specialists. Each has a role boundary (read-only for auditors/reviewers), a
+temperature, and a step limit. Call them by name or let the pipeline auto-route.
 
 | Agent | Role | Permission |
 |-------|------|:---:|
 | `luffy-orchestrator` | Captain — triage, check-ins, closure | — |
 | `nami-planner` | Planner — interviews, full scan, scaled plans | — |
-| `zoro-execution` | Executor — TDD per task, evidence per commit | **no-network** |
+| `zoro-execution` | Executor — TDD per task, evidence per commit | — |
 | `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger | **read-only** |
 | `sanji-quality` | Quality — format, lint, test | — |
 | `franky-gates` | Gates — coverage, build, DoD verdict | — |
@@ -90,14 +108,14 @@ and a step limit. Call them by name or let the pipeline auto-route.
 > not by their theme. The theme makes them memorable; the boundaries make them
 > safe.
 
-→ [Agent details: summoning, boundaries, parameters](docs/agents.md)
+→ [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
 ## How much it costs
 
 Mugiwara itself is free. The token cost depends on your mission lane:
 
-| Lane | Waves | Typical tokens | ~Cost (Claude Sonnet) |
-|------|:-----:|:--------------:|:---------------------:|
+| Lane | Waves | Typical tokens | ~Cost (ref. Claude) |
+|------|:-----:|:--------------:|:-------------------:|
 | Direct (typo) | 0 | ~0 | $0 |
 | Lean (small bug) | 2 | ~4k | ~$0.01 |
 | Standard (feature) | 5–7 | ~10k | ~$0.03 |
@@ -106,11 +124,12 @@ Mugiwara itself is free. The token cost depends on your mission lane:
 Cost is tracked in `.mugiwara/state.json` and surfaced in every mission report.
 Pipeline never costs more than the work it verifies.
 
-→ [Full cost model and token budget](docs/cost.md)
+→ [Full cost model and token budget](docs/concepts/cost.md)
 
 ## Install
 
-**10-second native plugins** — zero dependency install:
+<details open>
+<summary><b>Native plugins</b> — one-command install</summary>
 
 | Platform | Command |
 |----------|---------|
@@ -120,14 +139,40 @@ Pipeline never costs more than the work it verifies.
 | **Codex** | `codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara` |
 | **Copilot** | `copilot plugin install https://github.com/ionivetech/mugiwara` |
 | **Cursor** | `/add-plugin mugiwara` |
-| **Windsurf / Cline / Kilo** | `npx @ionivetech/mugiwara@latest install --target <id> --yes` |
 | **Antigravity** | `agy plugin install https://github.com/ionivetech/mugiwara` |
 | **Kimi** | `/plugins install https://github.com/ionivetech/mugiwara` |
 | **Pi** | `pi install git:github.com/ionivetech/mugiwara` |
 
+</details>
+
+<details>
+<summary><b>CLI install</b> — Windsurf, Cline, Kilo, and more</summary>
+
+```bash
+npx @ionivetech/mugiwara@latest install --target <id> --yes
+# or all targets
+npx @ionivetech/mugiwara@latest install --target all --yes
+```
+
+Targets: `windsurf`, `cline`, `kilo`, `codex`. See [install/cli](docs/install/cli.md) for interactive wizard.
+
+</details>
+
+<details>
+<summary><b>Global CLI</b> — shorter commands after first install</summary>
+
+```bash
+npm i -g @ionivetech/mugiwara
+mugiwara install --target all --yes
+mugiwara update --target all --yes
+mugiwara uninstall
+```
+
+</details>
+
 All platforms get the full crew — 14 agents, 26 skills. No per-platform feature gaps.
 
-→ [Per-platform guides with update/verify/troubleshooting](docs/install.md)
+→ [Per-platform guides with update/verify/troubleshooting](docs/install/index.md)
 
 ## Update
 
@@ -142,7 +187,7 @@ npm update @ionivetech/mugiwara
 # Reinstall with the same install command — pulls latest release
 ```
 
-→ [Full update reference per platform](docs/install.md)
+→ [Full update reference per platform](docs/install/index.md)
 
 ## CLI
 
@@ -167,19 +212,19 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `commit` | conventional | conventional / gitmoji / plain |
 | `base` | main | PR target branch |
 
-→ [All config keys](docs/config.md) · [Mode details](docs/modes.md)
+→ [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
 
 ## Docs
 
-Getting started & concepts: **[Getting started](docs/getting-started.md)** · [What mugiwara replaces](docs/comparison.md) · [Execution model](docs/execution-model.md) · [Git strategy](docs/git-strategy.md)
+Getting started & concepts: **[Getting started](docs/getting-started.md)** · [What mugiwara replaces](docs/concepts/comparison.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md)
 
-Crew & techniques: **[Agents](docs/agents.md)** · [Skills](docs/skills.md) · [Workflow](docs/workflow.md) · [Lanes](docs/lanes.md) · [Modes](docs/modes.md)
+Crew & techniques: **[Agents](docs/concepts/agents.md)** · [Skills](docs/concepts/skills.md) · [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md)
 
-Operations: [Config](docs/config.md) · [Audit trail](docs/audit-trail.md) · [Cost](docs/cost.md) · [Harness matrix](docs/harness-matrix.md) · [Compliance](docs/compliance-matrix.md) · [Troubleshooting](docs/troubleshooting.md)
+Operations: [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance](docs/reference/compliance-matrix.md) · [Troubleshooting](docs/troubleshooting.md)
 
-Deep dives: [Agent anatomy](docs/agent-anatomy.md) · [Skill anatomy](docs/skill-anatomy.md) · [Developer onboarding](docs/developer-onboarding.md)
+Deep dives: [Agent anatomy](docs/reference/agent-anatomy.md) · [Skill anatomy](docs/reference/skill-anatomy.md) · [Developer onboarding](docs/reference/developer-onboarding.md)
 
-Install per platform: **[Install overview](docs/install.md)** · [Claude](docs/install-claude.md) · [opencode](docs/install-opencode.md) · [Gemini](docs/install-gemini.md) · [Codex](docs/install-codex.md) · [Copilot](docs/install-copilot.md) · [CLI targets](docs/install-cli.md)
+Install per platform: **[Install overview](docs/install/index.md)** · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
 
 Roadmap: [ROADMAP.md](ROADMAP.md)
 

@@ -9,16 +9,16 @@ Requires **Node.js >= 20.11** on the host machine.
 
 | Platform | Install doc | Native plugin? |
 |----------|-------------|:---:|
-| Claude Code | [install-claude](install-claude.md) | ✅ |
-| OpenCode | [install-opencode](install-opencode.md) | ✅ |
-| Gemini CLI | [install-gemini](install-gemini.md) | ✅ |
-| Codex | [install-codex](install-codex.md) | ✅ |
-| GitHub Copilot | [install-copilot](install-copilot.md) | ✅ |
-| Cursor | [install-cursor](install-cursor.md) | ✅ |
-| Antigravity | [install-antigravity](install-antigravity.md) | ✅ |
-| Kimi Code | [install-kimi](install-kimi.md) | ✅ |
-| Pi | [install-pi](install-pi.md) | ✅ |
-| Windsurf / Cline / Kilo | [install-cli](install-cli.md) | CLI-based |
+| Claude Code | [claude](claude.md) | ✅ |
+| OpenCode | [opencode](opencode.md) | ✅ |
+| Gemini CLI | [gemini](gemini.md) | ✅ |
+| Codex | [codex](codex.md) | ✅ |
+| GitHub Copilot | [copilot](copilot.md) | ✅ |
+| Cursor | [cursor](cursor.md) | ✅ |
+| Antigravity | [antigravity](antigravity.md) | ✅ |
+| Kimi Code | [kimi](kimi.md) | ✅ |
+| Pi | [pi](pi.md) | ✅ |
+| Windsurf / Cline / Kilo | [cli](cli.md) | CLI-based |
 
 ## One-liner
 
@@ -46,7 +46,7 @@ what mugiwara crew members are available?
 
 ## Configuration
 
-See [docs/config.md](config.md) for all `.mugiwara/config` options.
+See [config.md](../concepts/config.md) for all `.mugiwara/config` options.
 
 ## Report issues
 

@@ -15,39 +15,39 @@ claim.
 | Doc | What it covers |
 |-----|----------------|
 | [Getting started](getting-started.md) | Install, first mission, what you see in the chat |
-| [Adoption guide](adoption-guide.md) | Pick the harness, pick the mode, fit the crew to your workflow |
-| [Modes](modes.md) | guided / semi / auto — the autonomy levels, what each asks you |
-| [Config](config.md) | Full reference for `.mugiwara/config` keys and commit styles |
-| [Auto-PR](pr-summary.md) | What the crew hands off at closure: push + a ready-to-paste PR summary (it never creates a PR) |
-| [The crew](agents.md) | All 14 agents and when to summon each |
-| [The techniques](skills.md) | All 32 skills and what each enforces |
-| [The wave pipeline](workflow.md) | How a mission flows Wave 0 → Wave 9 |
-| [Execution model](execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
-| [Lanes & sizing](lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
-| [Enforcement](enforcement.md) | Skip gates, evidence over claims, and capability tiers |
-| [Git discipline](git-strategy.md) | Commits, branches, save-points — and why the executor commits |
+| [Adoption guide](reference/adoption-guide.md) | Pick the harness, pick the mode, fit the crew to your workflow |
+| [Modes](concepts/modes.md) | guided / semi / auto — the autonomy levels, what each asks you |
+| [Config](concepts/config.md) | Full reference for `.mugiwara/config` keys and commit styles |
+| [Auto-PR](concepts/pr-summary.md) | What the crew hands off at closure: push + a ready-to-paste PR summary (it never creates a PR) |
+| [The crew](concepts/agents.md) | All 14 agents and when to summon each |
+| [The techniques](concepts/skills.md) | All 32 skills and what each enforces |
+| [The wave pipeline](concepts/workflow.md) | How a mission flows Wave 0 → Wave 9 |
+| [Execution model](concepts/execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
+| [Lanes & sizing](concepts/lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
+| [Enforcement](reference/enforcement.md) | Skip gates, evidence over claims, and capability tiers |
+| [Git discipline](concepts/git-strategy.md) | Commits, branches, save-points — and why the executor commits |
 
 ## Install by harness
 
 | Harness | Guide |
 |---------|-------|
-| Claude Code | [claude-setup.md](claude-setup.md) |
-| opencode | [opencode-setup.md](opencode-setup.md) |
-| GitHub Copilot | [copilot-setup.md](copilot-setup.md) |
-| Gemini CLI | [gemini-setup.md](gemini-setup.md) |
-| Codex | [codex-setup.md](codex-setup.md) |
-| Cursor | [cursor-setup.md](cursor-setup.md) |
-| Windsurf | [windsurf-setup.md](windsurf-setup.md) |
-| Cline / Kilo / Antigravity | [rule-based-setup.md](rule-based-setup.md) |
+| Claude Code | [install/claude.md](install/claude.md) |
+| opencode | [install/opencode.md](install/opencode.md) |
+| GitHub Copilot | [install/copilot.md](install/copilot.md) |
+| Gemini CLI | [install/gemini.md](install/gemini.md) |
+| Codex | [install/codex.md](install/codex.md) |
+| Cursor | [install/cursor.md](install/cursor.md) |
+| Windsurf | [install/cli.md](install/cli.md) |
+| Cline / Kilo / Antigravity | [install/cli.md](install/cli.md) |
 
 ## Reference
 
 | Doc | What it covers |
 |-----|----------------|
-| [Skill anatomy](skill-anatomy.md) | How a mugiwara skill file is structured |
-| [Agent anatomy](agent-anatomy.md) | How a mugiwara agent file is structured |
+| [Skill anatomy](reference/skill-anatomy.md) | How a mugiwara skill file is structured |
+| [Agent anatomy](reference/agent-anatomy.md) | How a mugiwara agent file is structured |
 | [Troubleshooting](troubleshooting.md) | Common problems and how to fix them |
-| [Developer onboarding](developer-onboarding.md) | Repo layout, validation, tests, contributing |
+| [Developer onboarding](reference/developer-onboarding.md) | Repo layout, validation, tests, contributing |
 
 ## Resources
 

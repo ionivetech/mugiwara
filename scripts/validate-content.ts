@@ -188,20 +188,20 @@ if (totalDescChars > INDEX_BUDGET) {
 const docsArg = process.argv.indexOf('--check-docs');
 if (docsArg !== -1) {
   const docsDir = join(import.meta.dirname, '..', 'docs');
-  const skillsDoc = join(docsDir, 'skills.md');
-  const agentsDoc = join(docsDir, 'agents.md');
+const skillsDoc = join(docsDir, 'concepts', 'skills.md');
+const agentsDoc = join(docsDir, 'concepts', 'agents.md');
   let docErrors = 0;
 
   if (existsSync(skillsDoc)) {
     const content = readFileSync(skillsDoc, 'utf8');
     for (const dir of skillDirs) {
       if (!content.includes(dir)) {
-        errors.push(`docs/skills.md: missing skill "${dir}"`);
+        errors.push(`docs/concepts/skills.md: missing skill "${dir}"`);
         docErrors++;
       }
     }
   } else {
-    errors.push('docs/skills.md: file not found');
+    errors.push('docs/concepts/skills.md: file not found');
     docErrors++;
   }
 
@@ -210,12 +210,12 @@ if (docsArg !== -1) {
     for (const f of agentFiles) {
       const name = f.replace(/\.md$/, '');
       if (!content.includes(name)) {
-        errors.push(`docs/agents.md: missing agent "${name}"`);
+        errors.push(`docs/concepts/agents.md: missing agent "${name}"`);
         docErrors++;
       }
     }
   } else {
-    errors.push('docs/agents.md: file not found');
+    errors.push('docs/concepts/agents.md: file not found');
     docErrors++;
   }
 

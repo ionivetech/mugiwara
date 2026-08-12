@@ -99,7 +99,7 @@ Installs to `~/.devin/rules/` (Windsurf), `~/.clinerules/` (Cline), or
 ## Configuration
 
 After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [docs/config.md](config.md).
+`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
 
 ## CLI reference
 
