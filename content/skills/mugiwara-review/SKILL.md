@@ -28,6 +28,21 @@ One verdict + evidence per axis: correctness / readability / architecture / secu
 
 Correctness always asks: does this change BREAK anything that currently works? Run the suite, exercise the feature tests for the touched areas, and verify no silent regression.
 
+## Reliability/bug rating
+
+After five-axis review, classify all bugs found by severity and compute an overall rating:
+
+| Rating | Criteria |
+|--------|----------|
+| **A** | Zero bugs of any severity |
+| **B** | ≥1 minor, zero major/critical/blocker |
+| **C** | ≥1 major, zero critical/blocker |
+| **D** | ≥1 critical, zero blocker |
+| **E** | ≥1 blocker |
+
+Each finding includes a remediation effort estimate: hours, days, or weeks.
+Rating E = won't merge. Rating D = review with caution + mitigation plan required.
+
 ## Regression emphasis
 
 "No damage elsewhere" is claimed, not assumed. Re-run the tests covering ALL callers of the changed code, not just the changed files. Flag any behavior change outside the task's declared scope as major — scope creep that changes behavior is a regression in disguise.
@@ -39,6 +54,10 @@ Correctness always asks: does this change BREAK anything that currently works? R
 - Complexity: functions doing several jobs, deep nesting, long parameter lists.
 - Naming: names that lie about behavior, deviation from repo conventions.
 - Comments: commented-out code, stale comments contradicting the code.
+
+## Code attribute deep review
+
+Sanji produces metrics (quantitative), Robin interprets context (qualitative). Sanji's quality report is input to this review. Full worksheet: `references/code-attributes.md` — consistency, intentionality, adaptability per attribute.
 
 ## Severity
 

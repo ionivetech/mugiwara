@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
 **Ship quality code, not just fast code.** Mugiwara gives your AI agent a
-governed engineering team — 11 specialists who plan, build, audit, review, and
+governed engineering team — 12 specialists who plan, build, audit, review, and
 heal — with evidence at every step. No runtime, no API keys, no servers. Just
 markdown your agent already knows how to read.
 
@@ -21,22 +21,43 @@ every agent, every skill, every rule is static markdown.
 
 → [Full pitch: why mugiwara vs just asking your agent](docs/concepts/comparison.md)
 
-## Capabilities
+## What Mugiwara does
 
-| Feature | What you get |
-|---------|-------------|
-| **Zero runtime** | Pure markdown. No servers, no API keys, no dependencies beyond your agent. |
-| **11 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. +3 internal agents for eval/lessons/verification. |
-| **26 skills** | Portable playbooks: TDD execution, STRIDE security, 4-phase debugging, contract-first API design |
-| **Deterministic lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full 9-wave pipeline. |
-| **9-wave gated pipeline** | Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure |
-| **Evidence trail** | `.mugiwara/` workspace on disk: plans, audit reports, blocker ledger, mission reports. Reviewer reads in 30s. |
-| **Self-healing** | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles. |
-| **3 autonomy modes** | Guided (human steers) / Semi (auto branch+commit) / Auto (hands-off). Switch mid-session. |
-| **12 platforms** | Native plugins for Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity. CLI for Windsurf, Cline, Kilo. |
-| **Cost aware** | Token budget per lane. Warn at 1.5×, pause at 3×. Cost surfaced in every mission report. |
-| **Multi-actor safe** | Two engineers, one repo. Reset refuses without `--force`. Branch-scoped state. |
-| **Compliance matrix** | Rule compliance per model published with failures. Gemini tier 2 ≠ Claude tier 1. Documented, not hidden. |
+### 9-wave pipeline
+
+```mermaid
+flowchart TB
+  L0[Luffy<br>Triage] --> L1[Usopp<br>Brainstorm] --> L2[Nami<br>Plan] --> L3[Zoro<br>Execute] --> L4[Chopper<br>Audit]
+  L4 --> L5[Sanji<br>Quality] --> L6[Franky<br>Gates]
+  L6 --> L7R[Robin<br>Review]
+  L6 --> L7J[Jinbe<br>Security]
+  L7R --> L8[Brook<br>Heal]
+  L7J --> L8
+  L8 --> L9[Luffy<br>Closure]
+  L8 -. "heal ≤3 cycles" .-> L4
+```
+
+→ [Full pipeline details](docs/concepts/workflow.md)
+
+### All features
+
+| Feature                     | What you get                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------------- |
+| **Lane sizing**             | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
+| **Team initiatives**        | Sub-missions with assignee + branch, shared plan doc, status tracking per sub-mission.          |
+| **Sonar-style quality**     | Duplication %, complexity, maintainability rating (A–E), code attributes, per-condition gate.   |
+| **STRIDE + OWASP security** | Threat modeling, secret scan, injection check, SCA license, hotspot review.                     |
+| **Self-healing**            | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
+| **3 autonomy modes**        | guided (ask) / semi (auto branch+commit) / auto (hands-off). Flip mid-session.                  |
+| **Configurable depth**      | `review_depth` + `quality_depth`: full / standard / quick. Set per project.                     |
+| **Resume from anywhere**    | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.                  |
+| **Onboarding wizard**       | 10 questions — project type, team size, mode, depth. `/mugiwara onboard`.                       |
+| **Evidence trail**          | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **12 platforms**            | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
+| **Cost tracking**           | Token budget per lane. Warn at 1.5×, pause at 3×. Surfaced in mission reports.                  |
+| **Multi-actor safe**        | Branch-scoped state. Two engineers, one repo. Reset refuses without `--force`.                  |
+
+→ [Every feature, explained with how-to-use + scenarios](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## 30-second try
 
@@ -51,61 +72,67 @@ every agent, every skill, every rule is static markdown.
 npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-Then ask something non-trivial. The crew auto-activates:
+First run: `/mugiwara onboard` for guided setup. Then ask something non-trivial:
 
 ```
 > add role-based access control: admin, editor, viewer
+> audit the auth middleware for security gaps
+> review the last PR for breaking changes
+> split this feature across the team: payment gateway, ledger, fraud
 ```
 
 A Standard lane mission (~10k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
-at every step in your chat. See it work: [docs/getting-started.md](docs/getting-started.md).
+at every step in your chat.
+
+→ [Full walkthrough](docs/getting-started.md)
 
 ## How it works
 
 You ask. The crew routes automatically. **No agent names to memorize, no
-pipeline config to write.** The work is sized from your git diff (typo = instant
-fix; auth migration = full 9-wave pipeline).
+pipeline config to write.**
 
-| You say | What happens |
-|---------|-------------|
-| `add search bar to products page` | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs tests → Franky gates coverage → Robin reviews → code pushed, PR summary ready |
-| `Brook, fix the failing login test` | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles. No pipeline overhead |
-| `Jinbe, audit auth middleware` | Security specialist runs STRIDE + OWASP. Read-only — never touches code |
-| `/mugiwara semi` | Switches to semi-autonomous mode: auto branch + commit, plan still needs your GO |
+| You say                                        | What happens                                                                                                                                                                             |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `add search bar to products page`              | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs quality → Franky gates → Robin reviews → code pushed, PR summary ready                              |
+| `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
+| `Brook, fix the failing login test`            | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles                                                                                                                      |
+| `Jinbe, audit auth middleware`                 | STRIDE + OWASP + dependency audit. Read-only — never touches code                                                                                                                        |
+| `/mugiwara auto`                               | Switches to full autonomy from the next wave                                                                                                                                             |
 
-- **Full pipeline** when the task is big or direction is unclear — Luffy figures it out
-- **Direct agent** when you know exactly what you need — just say the name
-- **Slash commands** when you want to drive:`/mugiwara-plan`, `/mugiwara-review`, `/mugiwara-security`, `/mugiwara-ship`
+- **Full pipeline** when the task is big or direction is unclear
+- **Direct agent** when you know exactly what you need — say the name
+- **Slash commands** when you want to drive: `/mugiwara-plan`, `/mugiwara-review`, `/mugiwara-security`, `/mugiwara-ship`, `/mugiwara onboard`
 
-[Full workflow walkthrough →](docs/concepts/workflow.md)
+→ [Full workflow walkthrough](docs/concepts/workflow.md)
 
 ## The crew
 
-11 specialists. Each has a role boundary (read-only for auditors/reviewers), a
-temperature, and a step limit. Call them by name or let the pipeline auto-route.
+12 user-facing specialists (+3 internal). Each has role boundaries — auditors
+and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
-| Agent | Role | Permission |
-|-------|------|:---:|
-| `luffy-orchestrator` | Captain — triage, check-ins, closure | — |
-| `nami-planner` | Planner — interviews, full scan, scaled plans | — |
-| `zoro-execution` | Executor — TDD per task, evidence per commit | — |
-| `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger | **read-only** |
-| `sanji-quality` | Quality — format, lint, test | — |
-| `franky-gates` | Gates — coverage, build, DoD verdict | — |
-| `robin-reviewer` | Reviewer — breaking-change map | **read-only** |
-| `jinbe-security` | Security — STRIDE, OWASP, secret scan | **read-only** |
-| `brook-healing` | Healer — reads ledger, root-cause fixes ≤3 cycles | — |
-| `usopp-brainstorm` | Critical friend — interrogates, researches | — |
-| `skeptic-verifier` | Adversarial verifier — doubts, never validates | **read-only** |
-| `eval-runner` | Harness tester — task suites | — |
-| `resume-coordinator` | Resumer — rebuilds from state.json | — |
-| `memory-keeper` | Institutional memory — past lessons | — |
+| Agent                | Role                                                                                    |  Permission   |
+| -------------------- | --------------------------------------------------------------------------------------- | :-----------: |
+| `luffy-orchestrator` | Captain — triage, check-ins, closure                                                    |       —       |
+| `usopp-brainstorm`   | Critical friend — interrogates, researches, recommends                                  |       —       |
+| `nami-planner`       | Planner — interviews, full scan, scaled plans, team initiatives                         |       —       |
+| `zoro-execution`     | Executor — TDD per task, evidence per commit                                            |       —       |
+| `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger                                              | **read-only** |
+| `sanji-quality`      | Quality — format, lint, test, duplication, complexity, maintainability, code attributes |       —       |
+| `franky-gates`       | Gates — coverage, build, DoD, per-condition sonar gate                                  |       —       |
+| `robin-reviewer`     | Reviewer — breaking-change map, reliability rating, code attribute deep review          | **read-only** |
+| `jinbe-security`     | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility            | **read-only** |
+| `brook-healing`      | Healer — reads ledger, root-cause fixes ≤3 cycles                                       |       —       |
+| `onboarding-guide`   | Onboarding wizard — 10Q guided setup, writes config                                     |       —       |
+| `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts                    |       —       |
 
-> The names are One Piece characters — just code names for specialist roles.
-> Agents are identified by their function (Orchestrator, Planner, Auditor, etc.),
-> not by their theme. The theme makes them memorable; the boundaries make them
-> safe.
+**Internal agents** (dispatch-only):
+
+| Agent              | Role                                                  | Used by                        |
+| ------------------ | ----------------------------------------------------- | ------------------------------ |
+| `skeptic-verifier` | Adversarial verifier — doubts every claim             | Wave 4.5, high-stakes missions |
+| `eval-runner`      | Harness tester — task suites, judge rubric            | `bun scripts/run-evals.ts`     |
+| `memory-keeper`    | Lessons ledger — surface at start, capture at closure | Wave 0 (read), Wave 9 (write)  |
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
@@ -113,47 +140,166 @@ temperature, and a step limit. Call them by name or let the pipeline auto-route.
 
 Mugiwara itself is free. Token usage depends on mission lane:
 
-| Lane | Waves | Typical tokens |
-|------|:-----:|:--------------:|
-| Direct (typo) | 0 | ~0 |
-| Lean (small bug) | 2 | ~4k |
-| Standard (feature) | 5–7 | ~10k |
-| Full (architecture) | 9–11 | ~20k |
+| Lane                | Waves | Typical tokens |
+| ------------------- | :---: | :------------: |
+| Direct (typo)       |   0   |       ~0       |
+| Lean (small bug)    |   2   |      ~4k       |
+| Standard (feature)  |  5–7  |      ~10k      |
+| Full (architecture) | 9–11  |      ~20k      |
 
 Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
-pauses at 3×. See [cost model](docs/concepts/cost.md) for per-model pricing reference.
+pauses at 3×.
 
-→ [Full cost model and token budget](docs/concepts/cost.md)
+→ [Full cost model](docs/concepts/cost.md)
+
+## Configuration
+
+Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
+
+| Key                 | Default                         | What                                           |
+| ------------------- | ------------------------------- | ---------------------------------------------- |
+| `mode`              | guided                          | guided / semi / auto                           |
+| `branch`            | `feature/{type}-{issue}-{slug}` | Branch naming                                  |
+| `commit`            | conventional                    | conventional / gitmoji / plain                 |
+| `base`              | main                            | PR target branch                               |
+| `coverage_new`      | 90                              | Coverage threshold for new files (%)           |
+| `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
+| `review_depth`      | full                            | full / standard / quick — Robin's review depth |
+| `quality_depth`     | full                            | full / standard / quick — Sanji's check depth  |
+
+Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
+config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
+
+→ [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
+
+## Quick reference
+
+| Need                    | Command / Doc                            |
+| ----------------------- | ---------------------------------------- |
+| First-time setup        | `/mugiwara onboard`                      |
+| Plan a feature          | `/mugiwara-plan` or just describe it     |
+| Review a PR diff        | `/mugiwara-review` or "review this PR"   |
+| Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
+| Ship gate check         | `/mugiwara-ship`                         |
+| See initiative progress | `mugiwara initiative status <plan>`      |
+| Resume a mission        | `/mugiwara resume plan <name>`           |
+| Switch mode             | `/mugiwara guided\|semi\|auto`           |
+| Check gate locally      | `bun run gate`                           |
+| All docs                | [docs/](docs/)                           |
 
 ## Install
 
-<details open>
-<summary><b>Native plugins</b> — one-command install</summary>
+<details>
+<summary><b>Claude Code</b></summary>
 
-| Platform | Command |
-|----------|---------|
-| **Claude Code** | `/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara` |
-| **OpenCode** | Add `{ "plugin": ["@ionivetech/mugiwara"] }` to `opencode.json` |
-| **Gemini CLI** | `gemini extensions install https://github.com/ionivetech/mugiwara` |
-| **Codex** | `codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara` |
-| **Copilot** | `copilot plugin install https://github.com/ionivetech/mugiwara` |
-| **Cursor** | `/add-plugin mugiwara` |
-| **Antigravity** | `agy plugin install https://github.com/ionivetech/mugiwara` |
-| **Kimi** | `/plugins install https://github.com/ionivetech/mugiwara` |
-| **Pi** | `pi install git:github.com/ionivetech/mugiwara` |
+```bash
+/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
+```
+
+Uninstall: `/plugin uninstall mugiwara`
 
 </details>
 
 <details>
-<summary><b>CLI install</b> — Windsurf, Cline, Kilo, and more</summary>
+<summary><b>OpenCode</b></summary>
+
+Add to `opencode.json`:
+
+```json
+{ "plugin": ["@ionivetech/mugiwara"] }
+```
+
+Uninstall: remove `"@ionivetech/mugiwara"` from `opencode.json` plugins array
+
+</details>
+
+<details>
+<summary><b>Gemini CLI</b></summary>
+
+```bash
+gemini extensions install https://github.com/ionivetech/mugiwara
+```
+
+Uninstall: `gemini extensions uninstall mugiwara`
+
+</details>
+
+<details>
+<summary><b>Codex</b></summary>
+
+```bash
+codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
+```
+
+Uninstall: `codex plugin remove mugiwara@mugiwara`
+
+</details>
+
+<details>
+<summary><b>GitHub Copilot</b></summary>
+
+```bash
+copilot plugin install https://github.com/ionivetech/mugiwara
+```
+
+Uninstall: `copilot plugin uninstall mugiwara`
+
+</details>
+
+<details>
+<summary><b>Cursor</b></summary>
+
+```bash
+/add-plugin mugiwara
+```
+
+Uninstall: `/remove-plugin mugiwara`
+
+</details>
+
+<details>
+<summary><b>Antigravity</b></summary>
+
+```bash
+agy plugin install https://github.com/ionivetech/mugiwara
+```
+
+Uninstall: `agy plugin uninstall mugiwara`
+
+</details>
+
+<details>
+<summary><b>Kimi</b></summary>
+
+```bash
+/plugins install https://github.com/ionivetech/mugiwara
+```
+
+Uninstall: `/plugins uninstall mugiwara`
+
+</details>
+
+<details>
+<summary><b>Pi</b></summary>
+
+```bash
+pi install git:github.com/ionivetech/mugiwara
+```
+
+Uninstall: `pi uninstall mugiwara`
+
+</details>
+
+<details>
+<summary><b>Windsurf / Cline / Kilo</b> — CLI install</summary>
 
 ```bash
 npx @ionivetech/mugiwara@latest install --target <id> --yes
-# or all targets
-npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-Targets: `windsurf`, `cline`, `kilo`, `codex`. See [install/cli](docs/install/cli.md) for interactive wizard.
+Uninstall: `npx @ionivetech/mugiwara@latest uninstall`
+
+Targets: `windsurf`, `cline`, `kilo`, `codex`.
 
 </details>
 
@@ -163,69 +309,54 @@ Targets: `windsurf`, `cline`, `kilo`, `codex`. See [install/cli](docs/install/cl
 ```bash
 npm i -g @ionivetech/mugiwara
 mugiwara install --target all --yes
-mugiwara update --target all --yes
-mugiwara uninstall
 ```
+
+Uninstall: `mugiwara uninstall`
 
 </details>
 
-All platforms get the full crew — 11 agents, 26 skills (+3 internal agents). No per-platform feature gaps.
+All platforms get the full crew — 12 agents, 26 skills (+3 internal agents).
+No per-platform feature gaps.
 
-→ [Per-platform guides with update/verify/troubleshooting](docs/install/index.md)
+→ [Per-platform guides](docs/install/index.md)
 
 ## Update
 
 ```bash
-# npm-based (opencode, CLI targets)
-npm update @ionivetech/mugiwara
-
-# marketplace-based (Claude, Codex)
-/plugin update mugiwara
-
-# GitHub-based (Copilot, Gemini, Cursor, Antigravity, Kimi)
-# Reinstall with the same install command — pulls latest release
+npm update @ionivetech/mugiwara                           # npm-based
+/plugin update mugiwara                                   # marketplace-based
+# Reinstall with same install command                     # GitHub-based
 ```
 
-→ [Full update reference per platform](docs/install/index.md)
+→ [Full update reference](docs/install/index.md)
 
 ## CLI
 
 ```bash
-mugiwara install                                  # wizard (interactive)
-npx @ionivetech/mugiwara@latest install --yes     # non-interactive (project + all)
-mugiwara update --target <id> --yes               # overwrite to latest
-mugiwara uninstall                                # remove installed files
-mugiwara list                                     # show installations
-mugiwara list --check                             # health check (missing files)
-mugiwara reset --keep-logs                        # wipe state, keep lessons
+mugiwara install                              # wizard (interactive)
+mugiwara install --target all --yes           # non-interactive
+mugiwara update --target <id> --yes           # overwrite to latest
+mugiwara uninstall                            # remove installed files
+mugiwara list                                 # show installations
+mugiwara list --check                         # health check
+mugiwara reset --keep-logs                    # wipe state, keep lessons
 ```
-
-## Configuration
-
-Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
-
-| Key | Default | What |
-|-----|---------|------|
-| `mode` | guided | guided / semi / auto |
-| `branch` | `feature/{type}-{issue}-{slug}` | Branch naming |
-| `commit` | conventional | conventional / gitmoji / plain |
-| `base` | main | PR target branch |
-
-→ [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
 
 ## Docs
 
-Getting started & concepts: **[Getting started](docs/getting-started.md)** · [What mugiwara replaces](docs/concepts/comparison.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md)
+**Start here:** [Getting started](docs/getting-started.md) · [What mugiwara replaces](docs/concepts/comparison.md)
 
-Crew & techniques: **[Agents](docs/concepts/agents.md)** · [Skills](docs/concepts/skills.md) · [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md)
+**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md)
 
-Operations: [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance](docs/reference/compliance-matrix.md) · [Troubleshooting](docs/troubleshooting.md)
+**Crew:** [Agents](docs/concepts/agents.md) · [Skills](docs/concepts/skills.md)
 
-Deep dives: [Agent anatomy](docs/reference/agent-anatomy.md) · [Skill anatomy](docs/reference/skill-anatomy.md) · [Developer onboarding](docs/reference/developer-onboarding.md)
+**Reference:** [Agent anatomy](docs/reference/agent-anatomy.md) · [Skill anatomy](docs/reference/skill-anatomy.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance matrix](docs/reference/compliance-matrix.md) · [Developer onboarding](docs/reference/developer-onboarding.md)
 
-Install per platform: **[Install overview](docs/install/index.md)** · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
+**Install per platform:** [Overview](docs/install/index.md) · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
 
-Roadmap: [ROADMAP.md](ROADMAP.md)
+**Troubleshooting:** [Common problems](docs/troubleshooting.md)
+
+**Roadmap:** [ROADMAP.md](ROADMAP.md)
 
 ## License
 

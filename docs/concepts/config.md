@@ -18,6 +18,8 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 base=main
+review_depth=full
+quality_depth=full
 ```
 
 ## Keys
@@ -30,6 +32,8 @@ base=main
 | `base` | branch name | `main` | The PR target named in the prepared PR summary |
 | `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
+| `review_depth` | full / standard / quick | full | Code review depth for Robin (Wave 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |
+| `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Wave 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only) |
 
 The mission **lane** (how many waves run) is decided by Luffy at triage — see
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.

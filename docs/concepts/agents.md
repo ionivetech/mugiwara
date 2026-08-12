@@ -1,4 +1,4 @@
-# The Crew — 11 Agents (+3 Internal)
+# The Crew — 12 Agents (+3 Internal)
 
 Every agent is a focused specialist. The main thread embodies each role inline
 using its skill; you can also summon any member directly.
@@ -7,14 +7,15 @@ using its skill; you can also summon any member directly.
 |-------|-------------|------|------------|
 | `luffy-orchestrator` | Luffy | Captain — 5-way triage, check-ins, decisions, closure | mission start, wave boundaries, escalations |
 | `usopp-brainstorm` | Usopp | Critical friend — interrogates, researches, no rubber-stamps | vague ideas, direction, options |
-| `nami-planner` | Nami | Planner — interview-first, full-context scan, scaled plans | turning an idea into an execution plan |
+| `nami-planner` | Nami | Planner — interview-first, full-context scan, scaled plans, team initiatives | turning an idea into an execution plan |
 | `zoro-execution` | Zoro | Executor — inline sequential tasks, parallel worker batches, evidence per task | executing an approved plan |
 | `chopper-checkpoint` | Chopper | Auditor — verify-everything, deduped re-runs, failure ledger | auditing a wave's results |
-| `sanji-quality` | Sanji | Quality — discover real tooling, format/lint/test | after checkpoint passes |
-| `franky-gates` | Franky | Gates — coverage, build, DoD, binary verdicts | after quality checks |
-| `robin-reviewer` | Robin | Reviewer — doubt-driven diff review, breaking-change map | after gates pass |
-| `jinbe-security` | Jinbe | Security — STRIDE, OWASP, secrets, injection | security audit of a diff |
+| `sanji-quality` | Sanji | Quality — discover real tooling, format/lint/test/duplication/complexity/attributes | after checkpoint passes |
+| `franky-gates` | Franky | Gates — coverage, build, DoD, granular quality gate with per-condition thresholds | after quality checks |
+| `robin-reviewer` | Robin | Reviewer — doubt-driven diff review, breaking-change map, reliability rating, code attribute deep review | after gates pass |
+| `jinbe-security` | Jinbe | Security — STRIDE, OWASP, secrets, injection, hotspots, SCA license | security audit of a diff |
 | `brook-healing` | Brook | Healer — reads the ledger, root-cause fixes, ≤3 cycles | any wave produced failures |
+| `onboarding-guide` | Guide | Onboarding wizard — 10Q guided setup, writes config | `/mugiwara onboard`, first run |
 | `resume-coordinator` | Resume | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | context loss, new session mid-mission |
 
 **Internal agents** (dispatch-only, not user-facing):
@@ -46,7 +47,7 @@ check-ins. The harness stays coherent either way.
 
 ## The crew ships whole
 
-Every install gets all 11 agents (+3 internal) and all 26 skills. No project-type selection —
+Every install gets all 12 agents (+3 internal) and all 26 skills. No project-type selection —
 the harness routes each task to the right specialist.
 
 See [skills.md](skills.md) for the 26 techniques, or

@@ -35,12 +35,18 @@ not move: no runtime, 26 skills, twelve harnesses of uneven capability.
 Verified by execution at v0.5.5:
 
 ```
-26 skills · 11 agents (+3 internal) · 18 skill-local references · 12 harness targets
+26 skills · 12 agents (+3 internal) · 18 skill-local references · 12 harness targets
 cold-load index      1.3k tokens, budget-gated
 retrieval accuracy   rank-1 88.2% · top-3 100% · negatives 100%
 determinism          lane · savepoint · evidence · mission-report
 install coverage     91.6% across 9 targets
 ```
+
+**Newly shipped (v0.6.0):**
+- **Sonar-style metrics** — duplication %, complexity scoring, maintainability rating (A–E), code attribute checks per wave
+- **Security hotspots + SCA** — STRIDE-pointed hotspot review, license compliance, dependency audit
+- **Team initiatives** — sub-mission planning, shared plan, status tracking for multi-engineer collaboration
+- **Onboarding wizard** — `/mugiwara onboard`: 10-question guided setup for mode, agents, review depth, quality checks
 
 Outstanding defects are tracked separately in the fix list, not here. A roadmap
 that contains bug fixes hides how much of it is actually new.

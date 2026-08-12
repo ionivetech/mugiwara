@@ -10,13 +10,13 @@ it embodies a role.
 | `mugiwara-workflow` | Harness entry: inline execution, gateway triage, wave pipeline, workspace, blocker protocol, cleanup |
 | `mugiwara-orchestration` | Captain: 5-way classifier, check-ins, work splitting, decision log, closure |
 | `mugiwara-brainstorm` | Critical sparring: interrogate, research facts, cut over-engineering, recommend |
-| `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers |
+| `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers, team sub-mission planning |
 | `mugiwara-execution` | Todo list, sequential inline + parallel worker batches, 6-field delegation, one commit per task |
 | `mugiwara-checkpoint` | Verify-everything audit — deduped re-runs scoped to wave diff; failure rows to blocker ledger |
-| `mugiwara-quality` | Discover project tooling; formatter, linter, unit tests under consent matrix |
-| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified, build, Definition of Done |
-| `mugiwara-review` | Doubt-driven review: breaking-change map, five-axis, severity-tagged findings |
-| `mugiwara-security` | STRIDE-first security review, OWASP Top 10, authn/authz, secrets, untrusted-data |
+| `mugiwara-quality` | Discover project tooling; formatter, linter, duplication detection, complexity scoring, maintainability rating (A–E), code attribute checks, unit tests |
+| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified, build, DoD, granular sonar gate: vulnerabilities, bugs, code smells, duplications — per-condition thresholds |
+| `mugiwara-review` | Doubt-driven review: breaking-change map, five-axis, reliability rating (A–E), code attribute deep review, severity-tagged findings |
+| `mugiwara-security` | STRIDE-first security review, OWASP Top 10, security hotspots, SCA license, authn/authz, secrets, responsibility attribute |
 | `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |
 
 ## Mission control
@@ -35,7 +35,7 @@ it embodies a role.
 
 | Skill | Teaches |
 |-------|---------|
-| `using-mugiwara` | Crew overview — explains the crew, pipeline summary. Documentation reference; `mugiwara-orchestration` is the gatekeeper for task routing. |
+| `using-mugiwara` | Crew overview, pipeline summary, onboarding reference. Documentation reference; `mugiwara-orchestration` is the gatekeeper. |
 | `mugiwara-root-cause` | 4-phase: reproduce → localize → reduce → fix + guard; stop-the-line |
 | `mugiwara-contract-first` | Contract-first design, error semantics, boundary validation, backward compatibility |
 | `mugiwara-claim-audit` | Adversarial verification: CLAIM → EXTRACT → DOUBT → RECONCILE → STOP |

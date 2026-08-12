@@ -29,12 +29,12 @@ test('config hook registers skills path (absolute, deduped)', async () => {
   expect(cfg.skills.paths).toContain('/fake/pre-existing');
 });
 
-test('config hook registers all 14 agents with mode all', async () => {
+test('config hook registers all 15 agents with mode all', async () => {
   const { config } = await plugin();
   const cfg = { agent: {} };
   await config(cfg);
   const names = Object.keys(cfg.agent);
-  expect(names).toHaveLength(14);
+  expect(names).toHaveLength(15);
   expect(names).toContain('luffy-orchestrator');
   for (const a of Object.values(cfg.agent)) {
     expect(typeof a).toBe('object');
