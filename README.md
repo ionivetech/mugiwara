@@ -21,26 +21,74 @@ every agent, every skill, every rule is static markdown.
 
 → [Full pitch: why mugiwara vs just asking your agent](docs/concepts/comparison.md)
 
-## Capabilities
+## What Mugiwara does
 
-| Feature | What you get |
-|---------|-------------|
-| **Zero runtime** | Pure markdown. No servers, no API keys, no dependencies beyond your agent. |
-| **12 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. +3 internal agents for eval/lessons/verification. |
-| **26 skills** | Portable playbooks: TDD execution, STRIDE security, 4-phase debugging, contract-first API design |
-| **Deterministic lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full 9-wave pipeline. |
-| **9-wave gated pipeline** | Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure |
-| **Evidence trail** | `.mugiwara/` workspace on disk: plans, audit reports, blocker ledger, mission reports. Reviewer reads in 30s. |
-| **Self-healing** | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles. |
-| **3 autonomy modes** | Guided (human steers) / Semi (auto branch+commit) / Auto (hands-off). Switch mid-session. |
-| **12 platforms** | Native plugins for Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity. CLI for Windsurf, Cline, Kilo. |
-| **Cost aware** | Token budget per lane. Warn at 1.5×, pause at 3×. Cost surfaced in every mission report. |
-| **Multi-actor safe** | Two engineers, one repo. Reset refuses without `--force`. Branch-scoped state. |
-| **Sonar-style metrics** | Duplication %, complexity scoring, maintainability rating (A–E), code attribute checks across every wave. |
-| **Security hotspots + SCA** | Hotspot review (STRIDE-pointed), license compliance, dependency audit, responsibility attribute. |
-| **Team initiatives** | Sub-missions, shared plan, status tracking — multi-engineer collaboration on one feature. |
-| **Onboarding wizard** | 10-question guided setup: mode, agents, review depth, quality checks. `/mugiwara onboard`. |
-| **Compliance matrix** | Rule compliance per model published with failures. Gemini tier 2 ≠ Claude tier 1. Documented, not hidden. |
+### Pipeline that scales to the work
+
+Every request is triaged and sized automatically from `git diff`. A typo skips
+the pipeline. An auth migration runs all 9 waves. No config, no flags — the
+crew decides.
+
+```
+Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure
+```
+
+→ [Wave pipeline details](docs/concepts/workflow.md) · [Lane sizing](docs/concepts/lanes.md)
+
+### Sonar-style code analysis
+
+Sanji runs duplication detection, cyclomatic/cognitive complexity scoring, and
+maintainability rating (A–E). Robin adds qualitative code attribute review
+(consistency, intentionality, adaptability). Franky enforces per-condition
+quality gates: vulnerabilities=0, bugs=0, duplications<3%, coverage≥threshold.
+
+### Security audit (STRIDE + OWASP + SCA)
+
+Jinbe runs STRIDE threat modeling first, then OWASP Top 10 mapping, secret
+scanning, injection checks, dependency auditing, security hotspot review, and
+SCA license compliance. Read-only — findings go to the healer, never touched
+silently.
+
+→ [Security skill details](docs/concepts/skills.md)
+
+### Team collaboration on large initiatives
+
+Nami plans initiatives with sub-mission breakdown — assignee, branch,
+dependencies. One shared plan doc tracks status per sub-mission:
+`[ ]` pending → `[~]` in-progress → `[x]` done. Run `mugiwara initiative status`
+to see the dashboard. When all sub-missions are done, the initiative closes.
+
+→ [Planning skill details](docs/concepts/skills.md)
+
+### Autonomy modes — you decide how much to hand off
+
+| Mode | What the crew does without asking |
+|------|-----------------------------------|
+| **guided** | Nothing. Every decision comes to you. |
+| **semi** | Auto branch + commit + push. Plans still need your GO. |
+| **auto** | Hands-off. Plans auto-GO when safe. Flip mid-session: `/mugiwara auto`. |
+
+You set review and quality depth independently: `review_depth=full|standard|quick`,
+`quality_depth=full|standard|quick`. Full = everything. Quick = just the essentials.
+Skip a wave entirely via Luffy decision, not config.
+
+→ [Mode details](docs/concepts/modes.md) · [Config reference](docs/concepts/config.md)
+
+### Onboarding in 10 questions
+
+First time? Run `/mugiwara onboard`. 10 questions — project type, language,
+team size, git workflow, autonomy mode, review depth, coverage threshold. No
+network. Answers write `.mugiwara/config` and `.mugiwara/onboard.json`.
+Re-onboard any time with the same command.
+
+### Evidence trail on disk
+
+Every mission leaves a `.mugiwara/` workspace at the repo root — plans, audit
+reports, quality reports, review findings, blocker ledger, mission reports. A
+reviewer can read 30 seconds of markdown and know exactly what changed, who
+checked it, and why it was trusted.
+
+→ [Audit trail details](docs/concepts/audit-trail.md)
 
 ## 30-second try
 
@@ -55,62 +103,67 @@ every agent, every skill, every rule is static markdown.
 npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-Then ask something non-trivial. The crew auto-activates:
+First run: `/mugiwara onboard` for guided setup. Then ask something non-trivial:
 
 ```
 > add role-based access control: admin, editor, viewer
+> audit the auth middleware for security gaps
+> review the last PR for breaking changes
+> split this feature across the team: payment gateway, ledger, fraud detection
 ```
 
 A Standard lane mission (~10k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
-at every step in your chat. See it work: [docs/getting-started.md](docs/getting-started.md).
+at every step in your chat.
+
+→ [Full walkthrough](docs/getting-started.md)
 
 ## How it works
 
 You ask. The crew routes automatically. **No agent names to memorize, no
-pipeline config to write.** The work is sized from your git diff (typo = instant
-fix; auth migration = full 9-wave pipeline).
+pipeline config to write.**
 
 | You say | What happens |
 |---------|-------------|
-| `add search bar to products page` | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs tests → Franky gates coverage → Robin reviews → code pushed, PR summary ready |
-| `Brook, fix the failing login test` | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles. No pipeline overhead |
-| `Jinbe, audit auth middleware` | Security specialist runs STRIDE + OWASP. Read-only — never touches code |
-| `/mugiwara semi` | Switches to semi-autonomous mode: auto branch + commit, plan still needs your GO |
+| `add search bar to products page` | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs format+lint+test+duplication+complexity → Franky gates all conditions → Robin reviews → code pushed, PR summary ready |
+| `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
+| `Brook, fix the failing login test` | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles |
+| `Jinbe, audit auth middleware` | STRIDE + OWASP + hotspot review. Read-only — never touches code |
+| `/mugiwara auto` | Switches to full autonomy from the next wave |
 
-- **Full pipeline** when the task is big or direction is unclear — Luffy figures it out
-- **Direct agent** when you know exactly what you need — just say the name
-- **Slash commands** when you want to drive:`/mugiwara-plan`, `/mugiwara-review`, `/mugiwara-security`, `/mugiwara-ship`
+- **Full pipeline** when the task is big or direction is unclear
+- **Direct agent** when you know exactly what you need — say the name
+- **Slash commands** when you want to drive: `/mugiwara-plan`, `/mugiwara-review`, `/mugiwara-security`, `/mugiwara-ship`, `/mugiwara onboard`
 
-[Full workflow walkthrough →](docs/concepts/workflow.md)
+→ [Full workflow walkthrough](docs/concepts/workflow.md)
 
 ## The crew
 
-12 specialists. Each has a role boundary (read-only for auditors/reviewers), a
-temperature, and a step limit. Call them by name or let the pipeline auto-route.
+12 user-facing specialists (+3 internal). Each has role boundaries — auditors
+and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 | Agent | Role | Permission |
 |-------|------|:---:|
 | `luffy-orchestrator` | Captain — triage, check-ins, closure | — |
+| `usopp-brainstorm` | Critical friend — interrogates, researches, recommends | — |
 | `nami-planner` | Planner — interviews, full scan, scaled plans, team initiatives | — |
 | `zoro-execution` | Executor — TDD per task, evidence per commit | — |
 | `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger | **read-only** |
-| `sanji-quality` | Quality — format, lint, test, duplication, complexity, maintainability | — |
+| `sanji-quality` | Quality — format, lint, test, duplication, complexity, maintainability, code attributes | — |
 | `franky-gates` | Gates — coverage, build, DoD, per-condition sonar gate | — |
-| `robin-reviewer` | Reviewer — breaking-change map, reliability rating, code attributes | **read-only** |
-| `jinbe-security` | Security — STRIDE, OWASP, hotspots, SCA, secret scan | **read-only** |
+| `robin-reviewer` | Reviewer — breaking-change map, reliability rating, code attribute deep review | **read-only** |
+| `jinbe-security` | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility | **read-only** |
 | `brook-healing` | Healer — reads ledger, root-cause fixes ≤3 cycles | — |
-| `usopp-brainstorm` | Critical friend — interrogates, researches | — |
 | `onboarding-guide` | Onboarding wizard — 10Q guided setup, writes config | — |
-| `skeptic-verifier` | Adversarial verifier — doubts, never validates | **read-only** |
-| `eval-runner` | Harness tester — task suites | — |
-| `resume-coordinator` | Resumer — rebuilds from state.json | — |
-| `memory-keeper` | Institutional memory — past lessons | — |
+| `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | — |
 
-> The names are One Piece characters — just code names for specialist roles.
-> Agents are identified by their function (Orchestrator, Planner, Auditor, etc.),
-> not by their theme. The theme makes them memorable; the boundaries make them
-> safe.
+**Internal agents** (dispatch-only):
+
+| Agent | Role | Used by |
+|-------|------|---------|
+| `skeptic-verifier` | Adversarial verifier — doubts every claim | Wave 4.5, high-stakes missions |
+| `eval-runner` | Harness tester — task suites, judge rubric | `bun scripts/run-evals.ts` |
+| `memory-keeper` | Lessons ledger — surface at start, capture at closure | Wave 0 (read), Wave 9 (write) |
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
@@ -126,9 +179,44 @@ Mugiwara itself is free. Token usage depends on mission lane:
 | Full (architecture) | 9–11 | ~20k |
 
 Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
-pauses at 3×. See [cost model](docs/concepts/cost.md) for per-model pricing reference.
+pauses at 3×.
 
-→ [Full cost model and token budget](docs/concepts/cost.md)
+→ [Full cost model](docs/concepts/cost.md)
+
+## Configuration
+
+Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
+
+| Key | Default | What |
+|-----|---------|------|
+| `mode` | guided | guided / semi / auto |
+| `branch` | `feature/{type}-{issue}-{slug}` | Branch naming |
+| `commit` | conventional | conventional / gitmoji / plain |
+| `base` | main | PR target branch |
+| `coverage_new` | 90 | Coverage threshold for new files (%) |
+| `coverage_modified` | 80 | Coverage threshold for modified files (%) |
+| `review_depth` | full | full / standard / quick — Robin's review depth |
+| `quality_depth` | full | full / standard / quick — Sanji's check depth |
+
+Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
+config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
+
+→ [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
+
+## Quick reference
+
+| Need | Command / Doc |
+|------|---------------|
+| First-time setup | `/mugiwara onboard` |
+| Plan a feature | `/mugiwara-plan` or just describe it |
+| Review a PR diff | `/mugiwara-review` or "review this PR" |
+| Security audit | `/mugiwara-security` or "Jinbe, audit X" |
+| Ship gate check | `/mugiwara-ship` |
+| See initiative progress | `mugiwara initiative status <plan>` |
+| Resume a mission | `/mugiwara resume plan <name>` |
+| Switch mode | `/mugiwara guided\|semi\|auto` |
+| Check gate locally | `bun run gate` |
+| All docs | [docs/](docs/) |
 
 ## Install
 
@@ -154,11 +242,10 @@ pauses at 3×. See [cost model](docs/concepts/cost.md) for per-model pricing ref
 
 ```bash
 npx @ionivetech/mugiwara@latest install --target <id> --yes
-# or all targets
 npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-Targets: `windsurf`, `cline`, `kilo`, `codex`. See [install/cli](docs/install/cli.md) for interactive wizard.
+Targets: `windsurf`, `cline`, `kilo`, `codex`.
 
 </details>
 
@@ -174,65 +261,48 @@ mugiwara uninstall
 
 </details>
 
-All platforms get the full crew — 12 agents, 26 skills (+3 internal agents). No per-platform feature gaps.
+All platforms get the full crew — 12 agents, 26 skills (+3 internal agents).
+No per-platform feature gaps.
 
-→ [Per-platform guides with update/verify/troubleshooting](docs/install/index.md)
+→ [Per-platform guides](docs/install/index.md)
 
 ## Update
 
 ```bash
-# npm-based (opencode, CLI targets)
-npm update @ionivetech/mugiwara
-
-# marketplace-based (Claude, Codex)
-/plugin update mugiwara
-
-# GitHub-based (Copilot, Gemini, Cursor, Antigravity, Kimi)
-# Reinstall with the same install command — pulls latest release
+npm update @ionivetech/mugiwara                           # npm-based
+/plugin update mugiwara                                   # marketplace-based
+# Reinstall with same install command                     # GitHub-based
 ```
 
-→ [Full update reference per platform](docs/install/index.md)
+→ [Full update reference](docs/install/index.md)
 
 ## CLI
 
 ```bash
-mugiwara install                                  # wizard (interactive)
-npx @ionivetech/mugiwara@latest install --yes     # non-interactive (project + all)
-mugiwara update --target <id> --yes               # overwrite to latest
-mugiwara uninstall                                # remove installed files
-mugiwara list                                     # show installations
-mugiwara list --check                             # health check (missing files)
-mugiwara reset --keep-logs                        # wipe state, keep lessons
+mugiwara install                              # wizard (interactive)
+mugiwara install --target all --yes           # non-interactive
+mugiwara update --target <id> --yes           # overwrite to latest
+mugiwara uninstall                            # remove installed files
+mugiwara list                                 # show installations
+mugiwara list --check                         # health check
+mugiwara reset --keep-logs                    # wipe state, keep lessons
 ```
-
-## Configuration
-
-Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
-
-| Key | Default | What |
-|-----|---------|------|
-| `mode` | guided | guided / semi / auto |
-| `branch` | `feature/{type}-{issue}-{slug}` | Branch naming |
-| `commit` | conventional | conventional / gitmoji / plain |
-| `base` | main | PR target branch |
-| `review_depth` | full | full / standard / quick — review depth: full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |
-| `quality_depth` | full | full / standard / quick — quality depth: full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only) |
-
-→ [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
 
 ## Docs
 
-Getting started & concepts: **[Getting started](docs/getting-started.md)** · [What mugiwara replaces](docs/concepts/comparison.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md)
+**Start here:** [Getting started](docs/getting-started.md) · [What mugiwara replaces](docs/concepts/comparison.md)
 
-Crew & techniques: **[Agents](docs/concepts/agents.md)** · [Skills](docs/concepts/skills.md) · [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md)
+**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md)
 
-Operations: [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance](docs/reference/compliance-matrix.md) · [Troubleshooting](docs/troubleshooting.md)
+**Crew:** [Agents](docs/concepts/agents.md) · [Skills](docs/concepts/skills.md)
 
-Deep dives: [Agent anatomy](docs/reference/agent-anatomy.md) · [Skill anatomy](docs/reference/skill-anatomy.md) · [Developer onboarding](docs/reference/developer-onboarding.md)
+**Reference:** [Agent anatomy](docs/reference/agent-anatomy.md) · [Skill anatomy](docs/reference/skill-anatomy.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance matrix](docs/reference/compliance-matrix.md) · [Developer onboarding](docs/reference/developer-onboarding.md)
 
-Install per platform: **[Install overview](docs/install/index.md)** · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
+**Install per platform:** [Overview](docs/install/index.md) · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
 
-Roadmap: [ROADMAP.md](ROADMAP.md)
+**Troubleshooting:** [Common problems](docs/troubleshooting.md)
+
+**Roadmap:** [ROADMAP.md](ROADMAP.md)
 
 ## License
 
