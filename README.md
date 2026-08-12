@@ -27,14 +27,14 @@ every agent, every skill, every rule is static markdown.
 
 ```mermaid
 flowchart TB
-  L0[Luffy<br>Triage] --> L1[Usopp<br>Brainstorm] --> L2[Nami<br>Plan] --> L3[Zoro<br>Execute] --> L4[Chopper<br>Audit]
-  L4 --> L5[Sanji<br>Quality] --> L6[Franky<br>Gates]
-  L6 --> L7R[Robin<br>Review]
-  L6 --> L7J[Jinbe<br>Security]
-  L7R --> L8[Brook<br>Heal]
-  L7J --> L8
-  L8 --> L9[Luffy<br>Closure]
-  L8 -. "heal ≤3 cycles" .-> L4
+    L0["Luffy<br>Triage"] --> L1["Usopp<br>Brainstorm"] --> L2["Nami<br>Plan"] --> L3["Zoro<br>Execute"] --> L4["Chopper<br>Audit"]
+    L4 --> L5["Sanji<br>Quality"] --> L6["Franky<br>Gates"]
+    L6 --> L7R["Robin<br>Review"]
+    L6 --> L7J["Jinbe<br>Security"]
+    L7R --> L8["Brook<br>Heal"]
+    L7J --> L8
+    L8 --> L9["Luffy<br>Closure"]
+    L8 -. "heal ≤3 cycles" .-> L4
 ```
 
 → [Full pipeline details](docs/concepts/workflow.md)
