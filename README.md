@@ -23,27 +23,14 @@ every agent, every skill, every rule is static markdown.
 
 ## What Mugiwara does
 
-### Pipeline with the crew
+### 9-wave pipeline
 
 ```
-┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-│  Luffy   │  │  Usopp   │  │   Nami   │  │   Zoro   │  │ Chopper  │
-│ Captain  │→│Brainstorm│→│ Planner  │→│ Executor │→│ Auditor  │
-│  Triage  │  │ Research │  │Team plans│  │   TDD    │  │Read-only │
-└──────────┘  └──────────┘  └──────────┘  └──────────┘  └────┬─────┘
-                                                               │
-┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───▼──────┐
-│  Luffy   │  │  Brook   │  │  Jinbe   │  │  Robin   │  │  Franky  │
-│ Captain  │←│ Healer   │←│ Security │←│ Reviewer │←│  Gates   │
-│ Closure  │  │ ≤3 cycles│  │Read-only │  │Read-only │  │  Binary  │
-└──────────┘  └──────────┘  └──────────┘  └──────────┘  └────┬─────┘
-                                                               │
-                                                               ▼
-                                                          ┌──────────┐
-                                                          │  Sanji   │
-                                                          │ Quality  │
-                                                          │Lint+Test │
-                                                          └──────────┘
+┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐  ┌───────┐
+│ Luffy │  │ Usopp │  │ Nami  │  │ Zoro  │  │Chopper│  │ Sanji │  │Franky │  │ Robin │  │ Brook │  │ Luffy │
+│Triage │→│Brainst│→│ Plan  │→│Execut │→│ Audit │→│Quality│→│ Gates │→│+Jinbe │→│ Heal  │→│Close  │
+│   0   │  │   1   │  │   2   │  │   3   │  │   4   │  │   5   │  │   6   │  │   7   │  │   8   │  │   9   │
+└───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘  └───────┘
 ```
 
 → [Full pipeline details](docs/concepts/workflow.md)
