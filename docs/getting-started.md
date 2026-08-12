@@ -40,6 +40,8 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target all --yes
 
 Requires **Node.js >= 20.11**. Bun is optional (build-from-source only).
 
+**First time?** Run `/mugiwara onboard` for a 10-question guided setup that configures mode, agents, review depth, and quality checks.
+
 ## 2. Start a mission
 
 The workflow **auto-activates** at session start. The crew announces itself,
@@ -150,7 +152,7 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 
 ## 6. Next steps
 
-- Meet the [crew](concepts/agents.md) — 11 agents with permission boundaries (+3 internal agents for eval/lessons/verification).
+- Meet the [crew](concepts/agents.md) — 12 agents with permission boundaries (+3 internal agents for eval/lessons/verification).
 - Browse the [skills](concepts/skills.md) — 26 skills with the 3-layer disclosure model.
 - Understand the [lanes](concepts/lanes.md) — how work is sized before it runs.
 - Set your [mode](concepts/modes.md) — guided/semi/auto.

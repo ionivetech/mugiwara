@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
 **Ship quality code, not just fast code.** Mugiwara gives your AI agent a
-governed engineering team — 11 specialists who plan, build, audit, review, and
+governed engineering team — 12 specialists who plan, build, audit, review, and
 heal — with evidence at every step. No runtime, no API keys, no servers. Just
 markdown your agent already knows how to read.
 
@@ -26,7 +26,7 @@ every agent, every skill, every rule is static markdown.
 | Feature | What you get |
 |---------|-------------|
 | **Zero runtime** | Pure markdown. No servers, no API keys, no dependencies beyond your agent. |
-| **11 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. +3 internal agents for eval/lessons/verification. |
+| **12 specialist agents** | Each with tuned temperature, step limits, and role boundaries. Read-only auditors. +3 internal agents for eval/lessons/verification. |
 | **26 skills** | Portable playbooks: TDD execution, STRIDE security, 4-phase debugging, contract-first API design |
 | **Deterministic lane sizing** | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full 9-wave pipeline. |
 | **9-wave gated pipeline** | Triage → Brainstorm → Plan → Execute → Audit → Quality → Gates → Review+Security → Heal → Closure |
@@ -36,6 +36,10 @@ every agent, every skill, every rule is static markdown.
 | **12 platforms** | Native plugins for Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity. CLI for Windsurf, Cline, Kilo. |
 | **Cost aware** | Token budget per lane. Warn at 1.5×, pause at 3×. Cost surfaced in every mission report. |
 | **Multi-actor safe** | Two engineers, one repo. Reset refuses without `--force`. Branch-scoped state. |
+| **Sonar-style metrics** | Duplication %, complexity scoring, maintainability rating (A–E), code attribute checks across every wave. |
+| **Security hotspots + SCA** | Hotspot review (STRIDE-pointed), license compliance, dependency audit, responsibility attribute. |
+| **Team initiatives** | Sub-missions, shared plan, status tracking — multi-engineer collaboration on one feature. |
+| **Onboarding wizard** | 10-question guided setup: mode, agents, review depth, quality checks. `/mugiwara onboard`. |
 | **Compliance matrix** | Rule compliance per model published with failures. Gemini tier 2 ≠ Claude tier 1. Documented, not hidden. |
 
 ## 30-second try
@@ -82,21 +86,22 @@ fix; auth migration = full 9-wave pipeline).
 
 ## The crew
 
-11 specialists. Each has a role boundary (read-only for auditors/reviewers), a
+12 specialists. Each has a role boundary (read-only for auditors/reviewers), a
 temperature, and a step limit. Call them by name or let the pipeline auto-route.
 
 | Agent | Role | Permission |
 |-------|------|:---:|
 | `luffy-orchestrator` | Captain — triage, check-ins, closure | — |
-| `nami-planner` | Planner — interviews, full scan, scaled plans | — |
+| `nami-planner` | Planner — interviews, full scan, scaled plans, team initiatives | — |
 | `zoro-execution` | Executor — TDD per task, evidence per commit | — |
 | `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger | **read-only** |
-| `sanji-quality` | Quality — format, lint, test | — |
-| `franky-gates` | Gates — coverage, build, DoD verdict | — |
-| `robin-reviewer` | Reviewer — breaking-change map | **read-only** |
-| `jinbe-security` | Security — STRIDE, OWASP, secret scan | **read-only** |
+| `sanji-quality` | Quality — format, lint, test, duplication, complexity, maintainability | — |
+| `franky-gates` | Gates — coverage, build, DoD, per-condition sonar gate | — |
+| `robin-reviewer` | Reviewer — breaking-change map, reliability rating, code attributes | **read-only** |
+| `jinbe-security` | Security — STRIDE, OWASP, hotspots, SCA, secret scan | **read-only** |
 | `brook-healing` | Healer — reads ledger, root-cause fixes ≤3 cycles | — |
 | `usopp-brainstorm` | Critical friend — interrogates, researches | — |
+| `onboarding-guide` | Onboarding wizard — 10Q guided setup, writes config | — |
 | `skeptic-verifier` | Adversarial verifier — doubts, never validates | **read-only** |
 | `eval-runner` | Harness tester — task suites | — |
 | `resume-coordinator` | Resumer — rebuilds from state.json | — |
@@ -169,7 +174,7 @@ mugiwara uninstall
 
 </details>
 
-All platforms get the full crew — 11 agents, 26 skills (+3 internal agents). No per-platform feature gaps.
+All platforms get the full crew — 12 agents, 26 skills (+3 internal agents). No per-platform feature gaps.
 
 → [Per-platform guides with update/verify/troubleshooting](docs/install/index.md)
 
@@ -210,6 +215,8 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming |
 | `commit` | conventional | conventional / gitmoji / plain |
 | `base` | main | PR target branch |
+| `review_depth` | full | full / standard / quick — review depth: full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |
+| `quality_depth` | full | full / standard / quick — quality depth: full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only) |
 
 → [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
 

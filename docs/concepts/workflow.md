@@ -10,9 +10,9 @@ owned by one crew member and runs **inline** in the main conversation.
 | 2 Planning | Nami | `mugiwara-planning` | plan doc: waves, tasks, acceptance criteria |
 | 3 Execution | Zoro | `mugiwara-execution` | implemented tasks with evidence |
 | 4 Checkpoint | Chopper | `mugiwara-checkpoint` | audit report + failure ledger |
-| 4.5 Adversarial | Skeptic | `mugiwara-dynamic-workflow` | findings report (optional) |
-| 5 Quality | Sanji | `mugiwara-quality` | formatter/linter/test results |
-| 6 Gates | Franky | `mugiwara-gates` | coverage + build verdict |
+| 4.5 Adversarial | Skeptic | `mugiwara-claim-audit` | findings report (optional) |
+| 5 Quality | Sanji | `mugiwara-quality` | format/lint/test/duplication/complexity/maintainability results |
+| 6 Gates | Franky | `mugiwara-gates` | coverage + build + DoD + per-condition sonar gate |
 | 7 Review | Robin ∥ Jinbe | `mugiwara-review` + `mugiwara-security` | severity-tagged findings |
 | 8 Healing | Brook | `mugiwara-healing` | fixes; loops back to Wave 4, max 3 cycles |
 | 9 Closure | Luffy | `mugiwara-orchestration` | closure report + push + PR verdict handed to you |
@@ -53,8 +53,9 @@ criterion — but efficiently:
 ## Wave 7 — Review
 
 Robin (doubt-driven review) and Jinbe (security) run in parallel. Robin maps
-breaking changes to callers before reading the diff; Jinbe runs STRIDE + OWASP.
-Findings are severity-tagged with path:line.
+breaking changes to callers before reading the diff, scores reliability rating
+(A–E), and deep-reviews code attributes; Jinbe runs STRIDE + OWASP + hotspot
+review + SCA license. Findings are severity-tagged with path:line.
 
 ## Wave 8 — Healing
 
