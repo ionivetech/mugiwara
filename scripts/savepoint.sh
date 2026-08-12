@@ -8,19 +8,22 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
 # --- parse mission args ---
-MISSION="${1:-${STATE_MISSION:-}}"
-ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
-BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-WAVE="${4:-${STATE_WAVE:-1}}"
-MODE="${5:-${STATE_MODE:-guided}}"
-
-# --branch flag for per-branch state
+# --branch flag must parse FIRST — it shifts positionals
 BRANCH_MODE=0
 if [ "${1:-}" = "--branch" ]; then
   BRANCH_MODE=1
-  MISSION="${2:-${STATE_MISSION:-}}"
+  shift
+  MISSION="${1:-${STATE_MISSION:-}}"
+  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
   BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-  shift 2 2>/dev/null || true
+  WAVE="${4:-${STATE_WAVE:-1}}"
+  MODE="${5:-${STATE_MODE:-guided}}"
+else
+  MISSION="${1:-${STATE_MISSION:-}}"
+  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
+  BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
+  WAVE="${4:-${STATE_WAVE:-1}}"
+  MODE="${5:-${STATE_MODE:-guided}}"
 fi
 
 # per-branch state file when --branch used
