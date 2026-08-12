@@ -1,6 +1,6 @@
 # Roadmap
 
-The governance foundation is built (see `plan.md` for Phase 1-3). What follows
+The governance foundation (Phases 1-3) is complete. What follows
 strengthens the thesis: governance that is enforced, not optional.
 
 ## Phase 4 — CI/CD: governance enforced
