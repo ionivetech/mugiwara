@@ -136,10 +136,9 @@ export function removeInstalled(manifest: { files: string[] }, { dryRun = false 
     for (const f of manifest.files) {
       let d = dirname(f);
       while (existsSync(d) && readdirSync(d).length === 0) {
-        rmSync(d, { recursive: true });
-        const parent = dirname(d);
-        if (parent === d) break;
-        d = parent;
+        if (d.endsWith('/.mugiwara') || d === dirname(d)) break;
+        rmSync(d, { recursive: true, force: true });
+        d = dirname(d);
       }
     }
   }

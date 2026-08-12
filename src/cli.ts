@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
 import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
@@ -196,15 +196,7 @@ Flags:
   --keep-logs            with reset: keep .mugiwara/logs (lessons ledger survives)`);
 }
 
-let entry = process.argv[1] !== undefined ? resolve(process.argv[1]) : undefined;
-if (entry !== undefined) {
-  try {
-    entry = realpathSync(entry);
-  } catch {
-    // ponytail: realpath can throw on a missing/odd path — fall back to the raw resolve
-  }
-}
-const isMain = entry !== undefined && import.meta.url === pathToFileURL(entry).href;
+const isMain = process.argv[1] !== undefined && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 if (isMain) {
   run(process.argv.slice(2)).catch(err => {
     console.error(`mugiwara: ${err.message}`);

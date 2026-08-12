@@ -3,7 +3,7 @@
 // Builds TF-IDF index over skill descriptions, scores prompts, reports rank-1 + top_k.
 // No model needed — pure string matching. Outputs JSON.
 
-import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
 
@@ -256,6 +256,5 @@ if (ciArg !== -1) {
 }
 
 function writeJson(path: string, obj: object) {
-  const { writeFileSync } = require('node:fs');
   writeFileSync(path, JSON.stringify(obj, null, 2) + '\n');
 }

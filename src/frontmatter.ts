@@ -7,9 +7,9 @@ export function parseFrontmatter(text: string): { data: FrontmatterData; body: s
   const data: FrontmatterData = {};
   for (const line of m[1].split(/\r?\n/)) {
     if (!line.trim()) continue;
-    const i = line.indexOf(':');
-    if (i === -1) throw new Error(`Bad frontmatter line: ${line}`);
-    data[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+    const i = line.indexOf(': ');
+    if (i === -1) throw new Error(`Bad frontmatter line (missing ': ' separator): ${line}`);
+    data[line.slice(0, i).trim()] = line.slice(i + 2).trim();
   }
   return { data, body: text.slice(m[0].length) };
 }
