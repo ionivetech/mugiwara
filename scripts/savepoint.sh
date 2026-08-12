@@ -131,6 +131,20 @@ fi
 
 mkdir -p "$MUGIWARA_DIR"
 
+# --- lane-rise compare (F9): read previous state, flag escalation ---
+LANE_PREV=""
+LANE_ROSE=false
+if [ -f "$STATE_FILE" ]; then
+  LANE_PREV=$(node -e "try{const s=require('$STATE_FILE');process.stdout.write(s.lane||'')}catch(e){process.stdout.write('')}" 2>/dev/null || true)
+  if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
+    # lane order: direct < lean < standard < full < spike (spike resizes, not a rise)
+    case "$LANE_PREV:$LANE" in
+      direct:lean|direct:standard|direct:full|lean:standard|lean:full|standard:full) LANE_ROSE=true ;;
+      *) LANE_ROSE=false ;;
+    esac
+  fi
+fi
+
 node -e "
 const data = {
   mission: process.argv[1],
@@ -138,6 +152,8 @@ const data = {
   branch: process.argv[3],
   lane: process.argv[4],
   lane_reason: process.argv[5],
+  lane_prev: process.argv[24] || null,
+  lane_rose: process.argv[25] === 'true',
   wave: parseInt(process.argv[6], 10),
   mode: process.argv[7],
   base_sha: process.argv[8],
@@ -163,6 +179,9 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  "$STATE_FILE"
+  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE"
 
+if [ "$LANE_ROSE" = true ]; then
+  echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
+fi
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"

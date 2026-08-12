@@ -34,6 +34,8 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(typeof state.actor).toBe('string');
     expect(['direct', 'lean', 'standard', 'full', 'spike']).toContain(state.lane);
     expect(typeof state.lane_reason).toBe('string');
+    expect(state.lane_prev).toBeNull();
+    expect(state.lane_rose).toBe(false);
     expect(state.wave).toBe(3);
     expect(state.mode).toBe('guided');
     expect(typeof state.files_touched).toBe('number');
