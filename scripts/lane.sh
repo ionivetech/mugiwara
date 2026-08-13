@@ -3,6 +3,10 @@
 # Usage: lane.sh [base-ref] [--json]
 set -u
 
+# shared path patterns — single source of truth (D3)
+# shellcheck source=scripts/lib/patterns.sh
+source "$(dirname "$0")/lib/patterns.sh"
+
 BASE="${1:-main}"
 JSON_OUT=0
 [ "${2:-}" = "--json" ] && JSON_OUT=1
@@ -19,7 +23,6 @@ CHANGED=$(git diff --name-only "$BASE"..HEAD 2>/dev/null || git diff --name-only
 FILE_COUNT=0
 [ -n "$CHANGED" ] && FILE_COUNT=$(echo "$CHANGED" | wc -l | tr -d ' ')
 
-SENSITIVE_PATS="auth/|payment/|billing/|crypto/|secrets/|\.env$|config/.*key|migration/|\.sql$|schema\.|\.prisma$|\.terraform|\.tf$"
 SENSITIVE=$(echo "$CHANGED" | grep -E "$SENSITIVE_PATS" 2>/dev/null | head -5 | tr '\n' ',' | sed 's/,$//' || true)
 HAS_SENSITIVE=0
 [ -n "$SENSITIVE" ] && HAS_SENSITIVE=1
@@ -64,7 +67,6 @@ fi
 # code surface actually touched. Sensitive-path escalation above still wins.
 # Product surface for mugiwara: content/, src/, scripts/, test/, hooks/,
 # .opencode/, .claude/, evals/ — everything else is docs/config/asset.
-PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
 if [ "$LANE" = "full" ] && [ "$HAS_SENSITIVE" -eq 0 ] && [ -n "$CHANGED" ]; then
   CODE_COUNT=$(echo "$CHANGED" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then

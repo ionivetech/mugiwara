@@ -7,6 +7,10 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
+# shared path patterns — single source of truth (D3)
+# shellcheck source=scripts/lib/patterns.sh
+source "$(dirname "$0")/lib/patterns.sh"
+
 # lane ordering: direct < lean < standard < full < spike (spike resizes, not a rise)
 lane_rank() {
   case "$1" in
@@ -84,8 +88,7 @@ if [ "$BASE_SHA" != "unknown" ]; then
 fi
 [ -z "$LOC_DELTA" ] && LOC_DELTA=0
 
-SENSITIVE_PATTERNS="auth/|payment/|billing/|crypto/|secrets/|\.env$|config/.*key|migration/|\.sql$|schema\.|\.prisma$|\.terraform|\.tf$"
-SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATTERNS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
+SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 
 LANE="direct"
 LANE_REASON=""
@@ -121,7 +124,6 @@ fi
 # path-weighted sizing (mirrors lane.sh): docs-only changes outside the product
 # surface never escalate to full from file count alone; sensitive-path
 # escalation above still wins.
-PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
 if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ]; then
   CODE_COUNT=$(echo "$CHANGED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
