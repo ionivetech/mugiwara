@@ -27,16 +27,25 @@ it happen:
 Subagents exist to parallelize, never to hide work:
 
 1. **`[PARALLEL]` task batches** — independent tasks that touch no shared files
-   or interfaces run concurrently, one per worker subagent. This is the only
+   or interfaces run concurrently, one per worker subagent. This is the primary
    place Zoro delegates.
 2. **Parallel fixes** — Brook spawns workers for independent heal fixes.
 3. **Background / long-running checks** — work that would stall the
    conversation.
 4. **Check subagents** — Chopper, Robin, and Jinbe may spawn subagents for
    independent re-runs or diff passes.
+5. **Context pressure** — when `tokens_est` exceeds 60% of `budget`
+   mid-execution, remaining sequential tasks dispatch to workers one at a time,
+   in plan order. Order is preserved; only the context resets.
 
 Worker results return as reports; the main thread summarizes them inline with
 evidence pointers.
+
+> **Delegated work is not hidden work.** A worker may run out of view; its
+> result may not. Every worker returns a wave banner, a one-line verdict, and an
+> evidence path into the main thread. The user never clicks into a subagent to
+> know what happened. Isolation is for context and permission, never for
+> autonomy.
 
 ## Why not dispatch every wave to a subagent?
 

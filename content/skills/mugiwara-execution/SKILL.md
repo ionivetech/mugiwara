@@ -38,9 +38,22 @@ Before starting: if `.mugiwara/continue.md` exists, resume from its next_action 
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
 3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess.
-4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work.
+4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work. — UNLESS context pressure triggers (see Worker dispatch triggers).
 5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence pointers before starting the next batch.
 6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
+
+## Worker dispatch triggers
+
+1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
+2. **Context pressure** — when `tokens_est` exceeds 60% of `budget`
+   mid-execution, remaining SEQUENTIAL tasks dispatch to workers — one at a
+   time, in plan order. Order is preserved; only the context resets.
+
+Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
+
+The threshold stays relative, never absolute: `tokens_est > 60% × budget`
+(survives model generations), never `tokens_est > 80,000` (obsolete in six
+months). A bigger window raises the threshold; it does not remove it.
 
 ## Batch resume
 
@@ -48,30 +61,20 @@ After each batch, update `.mugiwara/continue.md` next_action to the next task; `
 
 ## Task batching
 
-Run task work tightly: do the steps without narrating each command or micro-step. Surface ONE per-task result + evidence per task (or per batch) — status, evidence pointer, deviations — in a compact line or table. The checkpoint audits evidence, not commentary; save the blow-by-blow.
-
-**Output rule.** Do NOT stream every tool call to the main thread. After each task batch, emit ONLY:
-
-```
-T1: ✅ | built + tested | bun run test -- installer
-T2: ✅ | 7 pointers rewritten | grep refs/ → clean
-T3: ✅ | 38/38 tests | bun run test
-```
-
-Full logs go to `.mugiwara/results/<mission>/01-execution.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output.
+Full protocol: `references/dispatch.md` — output rule, batch report format.
 
 ## Delegation format (parallel workers only)
 
-Sequential work runs inline — no delegation. For every `[PARALLEL]` worker you dispatch, the prompt includes all six fields:
+Full protocol: `references/dispatch.md` — six-field worker prompt. Thin prompts cause thin results.
 
-- TASK — the task body, verbatim from the plan.
-- EXPECTED OUTCOME — what "done" looks like, concrete and checkable.
-- REQUIRED TOOLS — commands and files the subagent will need.
-- MUST DO — the steps in order, including the TDD failing-test-first step.
-- MUST NOT DO — boundaries: files not to touch, configs not to weaken, no silent workarounds.
-- CONTEXT — interfaces consumed/produced, related tasks, mission workspace paths.
+## Surfacing rule
 
-A delegation prompt shorter than ~30 lines is too short — beef it up. Thin prompts cause thin results.
+> **Delegated work is not hidden work.** A worker may run out of view; its
+> result may not. Every worker returns a wave banner, a one-line verdict, and an
+> evidence path into the main thread. The user never clicks into a subagent to
+> know what happened.
+>
+> Isolation is for context and permission, never for autonomy.
 
 ## TDD discipline & user tests
 
@@ -99,13 +102,7 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 ## Report
 
-After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format:
-
-```
-| # | Task | Status | Evidence |
-|---|------|--------|----------|
-| T1 | <title> | ✅/❌ | <command or file> |
-```
+After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table.
 
 Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
 
@@ -119,5 +116,6 @@ Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution l
 - The task's TDD order inverted (implementation before the failing test).
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
 - A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.
+- Dispatching a worker whose result is not summarized inline with an evidence path.
 
 All mean: stop, realign to the plan, or escalate to Luffy.
