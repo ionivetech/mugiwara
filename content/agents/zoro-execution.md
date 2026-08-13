@@ -41,6 +41,10 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 9. Todo list first: check off every plan task before touching code.
 10. Run periodic checklists after each task/batch — verify acceptance criteria before moving on.
 11. Resume smart: read `.mugiwara/continue.md` + todos before the first task; if continue.md exists, resume from its next_action, never re-run completed tasks. After each batch, update continue.md next_action to the next task.
+12. Accept source-edit delegation: any crew member (Luffy or artifacts-scope
+    agents) may delegate source edits to you via subagent dispatch or inline
+    embody. Accept and execute; never refuse scope-appropriate work. Brook
+    handles healing fixes — do not take healing work from Brook.
 
 ## Output
 

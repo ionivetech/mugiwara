@@ -10,8 +10,10 @@ const HOOKS_SRC = join(here, '..', '..', 'hooks');
 const COMMANDS_SRC = join(here, '..', '..', '.claude', 'commands');
 
 // Claude Code has no path-scoped permission. write-scope maps to a partial
-// `tools:` list: artifacts agents lose Edit (cannot modify existing source)
-// but keep Write (must create .mugiwara/**); source agents get the default set.
+// `tools:` list — applied to internal subagent-only agents only: artifacts
+// agents lose Edit (cannot modify existing source) but keep Write (must create
+// .mugiwara/**). User-facing crew run inline in the main thread and keep the
+// default toolset (incl. Edit); discipline is enforced by rules, not tools.
 function toolsFromScope(scope?: string): string | undefined {
   if (scope === 'artifacts') return 'Read, Grep, Glob, Write, Bash, WebFetch, WebSearch';
   return undefined;
@@ -35,7 +37,7 @@ export const target: Target = {
   transformAgent(data: FrontmatterData, body: string) {
     const fm: FrontmatterData = { name: data.name, description: data.description };
     if (data.tools) fm.tools = data.tools;
-    else {
+    else if (data['internal-agent'] === 'true') {
       const generated = toolsFromScope(data['write-scope']);
       if (generated) fm.tools = generated;
     }

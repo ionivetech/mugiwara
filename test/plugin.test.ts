@@ -63,22 +63,27 @@ test('internal flag: eval-runner is subagent + [INTERNAL] prefix, zoro-execution
   expect(userFacing.description).not.toMatch(/^\[INTERNAL\] /);
 });
 
-test('path-boundary agents get glob-scoped edit permission (write-scope is the gate)', async () => {
+test('runtime edit permission applies only to internal subagent agents (write-scope is the gate)', async () => {
   const { config } = await plugin();
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
   await config(cfg);
-  const auditSet = ['chopper-checkpoint', 'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'skeptic-verifier'];
-  for (const name of auditSet) {
+  // internal subagent-only agents keep runtime write-scope enforcement
+  const internal = ['skeptic-verifier', 'eval-runner', 'memory-keeper'];
+  for (const name of internal) {
     const a = cfg.agent[name];
     expect(a).toBeDefined();
     // artifacts scope -> edit denied everywhere except .mugiwara/**
     expect((a as { permission?: unknown }).permission).toEqual({ edit: { '*': 'deny', '.mugiwara/**': 'allow' } });
+    expect((a as { mode?: string }).mode).toBe('subagent');
   }
-  // internal artifact agent is dispatch-only, never user-selectable
-  expect((cfg.agent['skeptic-verifier'] as { mode?: string }).mode).toBe('subagent');
+  // user-facing crew run inline in the main thread — write-scope stays a rule, no runtime deny
+  const userFacing = ['chopper-checkpoint', 'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'luffy-orchestrator', 'zoro-execution'];
+  for (const name of userFacing) {
+    expect((cfg.agent[name] as { permission?: unknown }).permission).toBeUndefined();
+  }
 });
 
-test('config hook applies per-agent opencode tuning (color/temp/steps + scope permission)', async () => {
+test('config hook applies per-agent opencode tuning (color/temp/steps)', async () => {
   const { config } = await plugin();
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
   await config(cfg);
@@ -86,7 +91,7 @@ test('config hook applies per-agent opencode tuning (color/temp/steps + scope pe
   expect(luffy.color).toBe('#ef4444');
   expect(luffy.temperature).toBe(0.2);
   const chopper = cfg.agent['chopper-checkpoint'];
-  expect((chopper as { permission?: unknown }).permission).toEqual({ edit: { '*': 'deny', '.mugiwara/**': 'allow' } });
+  expect((chopper as { permission?: unknown }).permission).toBeUndefined();
   expect(typeof chopper.steps).toBe('number');
 });
 

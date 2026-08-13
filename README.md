@@ -128,13 +128,13 @@ pipeline config to write.**
 
 ### All features
 
-| Feature                  | What you get                                                                           |
-| ------------------------ | -------------------------------------------------------------------------------------- |
-| **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.   |
+| Feature                  | What you get                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
-| **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.  |
-| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.         |
-| **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.    |
+| **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
+| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.                  |
+| **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
 → All 19 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
@@ -142,13 +142,13 @@ pipeline config to write.**
 
 ```mermaid
 flowchart TB
-    L0["Luffy<br>Triage"] --> L1["Usopp<br>Brainstorm"] --> L2["Nami<br>Plan"] --> L3["Zoro<br>Execute"] --> L4["Chopper<br>Audit"]
-    L4 --> L5["Sanji<br>Quality"] --> L6["Franky<br>Gates"]
-    L6 --> L7R["Robin<br>Review"]
-    L6 --> L7J["Jinbe<br>Security"]
-    L7R --> L8["Brook<br>Heal"]
+    L0["Luffy - Triage"] --> L1["Usopp - Brainstorm"] --> L2["Nami - Plan"] --> L3["Zoro - Execute"] --> L4["Chopper - Audit"]
+    L4 --> L5["Sanji - Quality"] --> L6["Franky - Gates"]
+    L6 --> L7R["Robin - Review"]
+    L6 --> L7J["Jinbe - Security"]
+    L7R --> L8["Brook - Heal"]
     L7J --> L8
-    L8 --> L9["Luffy<br>Closure"]
+    L8 --> L9["Luffy - Closure"]
     L8 -. "heal ≤3 cycles" .-> L4
 ```
 

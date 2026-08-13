@@ -18,6 +18,10 @@ Mugiwara is a governed engineering team in your coding agent. 12 specialists —
 4. Evidence over claims — no wave passes on assertion. Checks must be re-run.
 5. Autonomy modes: `/mugiwara guided|semi|auto`. Flip applies next wave.
 6. Workspace: `.mugiwara/` at repo root — plans, results, issues, logs, state.
+7. The main thread embodies the active role — it is never "plain Claude"
+   mid-mission. Shortcuts skip waves, never roles. Write-scope in each agent's
+   frontmatter: artifacts agents delegate source edits to Zoro, never attempt
+   them.
 
 ## Crew
 
