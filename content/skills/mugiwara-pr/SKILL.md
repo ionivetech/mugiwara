@@ -17,7 +17,7 @@ Mugiwara's evidence lands where the team reviews. At terminal, push the mission 
 Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
 
 - Mission summary — goal, waves, task count.
-- Per-wave evidence table — wave, task, status, evidence pointer.
+- Per-wave evidence table — wave, task, status, evidence link (`[path](relative/path)`).
 - Gate verdicts — quality (per-check status), gates (coverage/build/DoD), review (Robin/Jinbe findings).
 - User-test verdict — when user tests were declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
 - Closure-report link — `.mugiwara/results/<mission>/06-closure.md`.

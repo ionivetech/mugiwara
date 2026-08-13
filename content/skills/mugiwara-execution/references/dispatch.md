@@ -5,7 +5,7 @@ rule, the worker prompt format, and the per-wave report table.
 
 ## Task batching
 
-Run task work tightly: do the steps without narrating each command or micro-step. Surface ONE per-task result + evidence per task (or per batch) — status, evidence pointer, deviations — in a compact line or table. The checkpoint audits evidence, not commentary; save the blow-by-blow.
+Run task work tightly: do the steps without narrating each command or micro-step. Surface ONE per-task result + evidence per task (or per batch) — status, evidence link (`[path](relative/path)`), deviations — in a compact line or table. The checkpoint audits evidence, not commentary; save the blow-by-blow.
 
 **Output rule.** Do NOT stream every tool call to the main thread. After each task batch, emit ONLY:
 
@@ -35,7 +35,8 @@ A delegation prompt shorter than ~30 lines is too short — beef it up. Thin pro
 After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format:
 
 ```
-| # | Task | Status | Evidence |
-|---|------|--------|----------|
+| # | Task | Status | Evidence link |
+|---|------|--------|--------------|
 | T1 | <title> | ✅/❌ | <command or file> |
 ```
+Evidence cells are clickable markdown links `[path](relative/path)`.

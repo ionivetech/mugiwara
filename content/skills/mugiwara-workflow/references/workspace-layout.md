@@ -42,9 +42,10 @@ artifacts go outside `.mugiwara/`.
 
 ## Cleanup (Wave 9)
 
-Delete consumed: `results/<mission>/01-execution.md` through
-`05-healing.md` and `todos.md` (wave artifacts), `logs/`, `spec/`, `review/`,
-`issues/`. Keep: `results/<mission>/06-closure.md`,
-`results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`,
-`state.json`, `lessons.md` (cross-mission state: `logs/lessons.md`, `backup/`,
-`manifest.json`). List candidates before deleting.
+Step results are evidence — KEEP every file in `results/<mission>/`
+(`01-execution.md` through `05-healing.md`, `todos.md`, `06-closure.md`,
+`07-pr-verdict.md`); they feed the mission report and closure links. Delete
+only consumed cross-artifacts: `logs/`, `spec/`, `review/`, `issues/`. Keep
+`plans/`, `reports/`, `config`, `state.json`, `lessons.md` (cross-mission
+state: `logs/lessons.md`, `backup/`, `manifest.json`). List candidates before
+deleting.

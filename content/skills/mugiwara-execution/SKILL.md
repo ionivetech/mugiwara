@@ -26,7 +26,7 @@ The plan doc stays clean — never edit it during execution except through Nami.
 Before touching code:
 
 1. Create `.mugiwara/results/<mission>/todos.md` — one checkbox per task, derived from the plan.
-2. Check each box off only when the task completes, WITH its evidence pointer.
+2. Check each box off only when the task completes, WITH its evidence link (`[path](relative/path)`, clickable).
 3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
 4. Mirror every change into the host's native todo tool (`todowrite` on
    opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only).
@@ -40,7 +40,7 @@ Before starting: if `.mugiwara/continue.md` exists, resume from its next_action 
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
 3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess.
 4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work — UNLESS context pressure triggers (see Worker dispatch triggers).
-5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence pointers before starting the next batch.
+5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence links before starting the next batch.
 6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
 
 ## Worker dispatch triggers
@@ -83,7 +83,7 @@ six-field worker prompt. Thin prompts cause thin results.
 
 > **Delegated work is not hidden work.** A worker may run out of view; its
 > result may not. Every worker returns a wave banner, a one-line verdict, and an
-> evidence path into the main thread. The user never clicks into a subagent to
+> evidence link into the main thread. The user never clicks into a subagent to
 > know what happened.
 > Isolation is for context and permission, never for autonomy.
 
@@ -105,7 +105,7 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 ## Report
 
-After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
+After each wave: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
 
 ## Red flags
 
@@ -117,7 +117,7 @@ After each wave: compact task table (status, evidence pointer, deviations) shown
 - The task's TDD order inverted (implementation before the failing test).
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
 - A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.
-- Dispatching a worker whose result is not summarized inline with an evidence path.
+- Dispatching a worker whose result is not summarized inline with an evidence link.
 - Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Wave 2.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

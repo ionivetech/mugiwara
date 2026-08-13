@@ -97,7 +97,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Wave 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`.
 
 ## Spirit vs letter
 
