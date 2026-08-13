@@ -69,6 +69,11 @@ function buildArchiveFixture(dir: string): string {
   mk('logs');
   writeFileSync(join(root, 'reports', '2026-01-01-demo.md'), 'report');
   writeFileSync(join(root, 'results', 'demo', '01-execution.md'), 'exec');
+  writeFileSync(join(root, 'results', 'demo', '02-quality.md'), 'quality');
+  writeFileSync(join(root, 'results', 'demo', '03-checkpoint.md'), 'checkpoint');
+  writeFileSync(join(root, 'results', 'demo', '04-review.md'), 'review');
+  writeFileSync(join(root, 'results', 'demo', '05-healing.md'), 'healing');
+  writeFileSync(join(root, 'results', 'demo', 'todos.md'), 'todos');
   writeFileSync(join(root, 'results', 'demo', '06-closure.md'), 'closure');
   writeFileSync(join(root, 'results', 'demo', '07-pr-verdict.md'), 'verdict');
   writeFileSync(join(root, 'spec', 'demo.md'), 'spec');
@@ -84,12 +89,12 @@ function buildArchiveFixture(dir: string): string {
   return root;
 }
 
-test('archiveMission folds wave intermediates, keeps closure + PR + trail', () => {
+test('archiveMission keeps step results as evidence, removes consumed cross-artifacts', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-'));
   const root = buildArchiveFixture(dir);
   const { removed, kept, index } = archiveMission(dir, 'demo');
 
-  expect(removed).toContain(join('results', 'demo', '01-execution.md'));
+  expect(removed).not.toContain(join('results', 'demo', '01-execution.md'));
   expect(removed).toContain(join('spec', 'demo.md'));
   expect(removed).toContain(join('spec', '2026-08-13-demo.md'));
   expect(removed).toContain(join('review', 'demo-review.md'));
@@ -99,13 +104,21 @@ test('archiveMission folds wave intermediates, keeps closure + PR + trail', () =
   expect(removed).toContain(join('logs', '2026-08-13-demo.md'));
   expect(removed).toContain('continue.md');
 
+  expect(kept).toContain(join('results', 'demo', '01-execution.md'));
+  expect(kept).toContain(join('results', 'demo', '02-quality.md'));
+  expect(kept).toContain(join('results', 'demo', '03-checkpoint.md'));
+  expect(kept).toContain(join('results', 'demo', '04-review.md'));
+  expect(kept).toContain(join('results', 'demo', '05-healing.md'));
+  expect(kept).toContain(join('results', 'demo', 'todos.md'));
   expect(kept).toContain(join('results', 'demo', '06-closure.md'));
   expect(kept).toContain(join('results', 'demo', '07-pr-verdict.md'));
   expect(kept).toContain(join('reports', '2026-01-01-demo.md'));
   expect(kept).toContain(join('logs', 'lessons.md'));
   expect(kept).toContain('config');
 
-  expect(existsSync(join(root, 'results', 'demo', '01-execution.md'))).toBe(false);
+  expect(existsSync(join(root, 'results', 'demo', '01-execution.md'))).toBe(true);
+  expect(existsSync(join(root, 'results', 'demo', '05-healing.md'))).toBe(true);
+  expect(existsSync(join(root, 'results', 'demo', 'todos.md'))).toBe(true);
   expect(existsSync(join(root, 'spec', 'demo.md'))).toBe(false);
   expect(existsSync(join(root, 'spec', '2026-08-13-demo.md'))).toBe(false);
   expect(existsSync(join(root, 'review', 'demo-review.md'))).toBe(false);

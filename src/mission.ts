@@ -80,15 +80,12 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     if (f) report = join('reports', f);
   }
 
-  // remove per-mission wave intermediates from results/<mission>/, EXCEPT
-  // 06-closure.md and 07-pr-verdict.md (PR material + closure stay)
+  // step results 01..05 + todos.md are evidence — kept; archive removes
+  // only spec/review/issues/logs/continue.md
   const resultsDir = join(root, 'results', mission);
   if (existsSync(resultsDir)) {
     for (const f of readdirSync(resultsDir)) {
-      if (f === '06-closure.md' || f === '07-pr-verdict.md') { kept.push(join('results', mission, f)); continue; }
-      const p = join(resultsDir, f);
-      if (!dryRun) rmSync(p, { recursive: true, force: true });
-      removed.push(join('results', mission, f));
+      kept.push(join('results', mission, f));
     }
   }
 

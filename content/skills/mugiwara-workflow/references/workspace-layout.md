@@ -46,6 +46,6 @@ Step results are evidence — KEEP every file in `results/<mission>/`
 (`01-execution.md` through `05-healing.md`, `todos.md`, `06-closure.md`,
 `07-pr-verdict.md`); they feed the mission report and closure links. Delete
 only consumed cross-artifacts: `logs/`, `spec/`, `review/`, `issues/`. Keep
-`plans/`, `reports/`, `config`, `state.json`, `lessons.md` (cross-mission
-state: `logs/lessons.md`, `backup/`, `manifest.json`). List candidates before
-deleting.
+`plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md` (canonical
+lessons ledger; cross-mission state: `backup/`, `manifest.json`). List
+candidates before deleting.
