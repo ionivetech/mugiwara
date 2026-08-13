@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
 import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
-import { installTo, removeInstalled, VERSION } from './installer.ts';
+import { installTo, removeInstalled, VERSION, ensureProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission } from './mission.ts';
 
@@ -94,6 +94,10 @@ async function install(flags: Args['flags']): Promise<void> {
     for (const n of r.notes) console.log(`   note: ${n}`);
     allFiles.push(...r.written);
     allNotes.push(...r.notes);
+  }
+  if (scope === 'project') {
+    const gi = ensureProjectGitignore(projectDir, { dryRun: flag(flags.dryRun) });
+    allNotes.push(...gi.notes);
   }
   if (flag(flags.dryRun)) { console.log('\nDry run — nothing written.'); return; }
   const file = manifestPath({ scope, projectDir, home });
