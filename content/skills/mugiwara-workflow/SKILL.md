@@ -91,7 +91,7 @@ Brook reads this at Wave 8. Never silently work around a blocker.
 
 ## Cleanup (Wave 9)
 
-Delete consumed: `results/<mission>/01-execution.md`…`05-healing.md` + `todos.md`, `logs/` (except `logs/lessons.md`), `spec/`, `review/`, `issues/`. Keep: `results/<mission>/06-closure.md`, `results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — fold `results/<mission>/01..05` + `todos.md`, `logs/` (except `logs/lessons.md`), `spec/`, `review/`, `issues/` into the mission report, then remove the loose files. Keep: `results/<mission>/06-closure.md`, `results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
 
 ## Rules
 
