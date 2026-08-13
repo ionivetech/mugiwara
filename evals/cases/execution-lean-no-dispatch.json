@@ -4,10 +4,10 @@
   "type": "negative",
   "trigger": {
     "positive": [
-      { "prompt": "execute: lane 1 lean two tasks", "top_k": 3 }
+      { "prompt": "implement the todo list from the plan step by step", "top_k": 3 }
     ],
     "negative": [
-      { "prompt": "parallel batch of independent tasks" }
+      { "prompt": "let's brainstorm the architecture first" }
     ]
   },
   "behavioral": [

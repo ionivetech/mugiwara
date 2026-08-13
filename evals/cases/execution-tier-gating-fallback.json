@@ -4,10 +4,10 @@
   "type": "positive",
   "trigger": {
     "positive": [
-      { "prompt": "execute: no workers on this harness fallback resume", "top_k": 3 }
+      { "prompt": "carry out the tasks in parallel batches and commit each one", "top_k": 3 }
     ],
     "negative": [
-      { "prompt": "opencode native subagents available" }
+      { "prompt": "audit this diff for security issues" }
     ]
   },
   "behavioral": [
