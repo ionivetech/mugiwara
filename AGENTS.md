@@ -173,7 +173,7 @@ Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`.
 
 ```
 content/skills/    — 26 skill dirs, each with SKILL.md + optional references/
-content/agents/    — 14 agent .md files (11 user-facing + 3 internal)
+content/agents/    — 15 agent .md files (12 user-facing + 3 internal)
 references/         — shared reference files (definition-of-done, source-grounding, etc.)
 docs/               — user-facing documentation
 scripts/            — validation + tooling scripts

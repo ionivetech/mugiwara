@@ -296,5 +296,22 @@ if (!existsSync(wbSkill)) {
   }
 }
 
+// --- F14: agent-count gate — flip an internal agent to user-facing, prove red ---
+console.log('\nF14 — agent-count gate');
+const countAgent = join(root, 'content', 'agents', 'eval-runner.md');
+if (!existsSync(countAgent)) {
+  console.log('  ⚠  eval-runner.md not found, skipping');
+} else {
+  const original = readFileSync(countAgent, 'utf8');
+  try {
+    const broken = original.replace('internal: true', 'internal: false');
+    writeFileSync(countAgent, broken);
+    assert('count drift → exit 1', false, () => run('F14-count', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(countAgent, original);
+    assert('restored → exit 0', true, () => run('F14-count', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

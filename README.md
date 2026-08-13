@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
 **Ship quality code, not just fast code.** Mugiwara gives your AI agent a
-governed engineering team — 12 specialists who plan, build, audit, review, and
+governed engineering team — 12 user-facing specialists who plan, build, audit, review, and
 heal — with evidence at every step. No runtime, no API keys, no servers. Just
 markdown your agent already knows how to read.
 
@@ -108,7 +108,7 @@ pipeline config to write.**
 
 ## The crew
 
-12 user-facing specialists (+3 internal). Each has role boundaries — auditors
+12 agents (+3 internal). Each has role boundaries — auditors
 and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 | Agent                | Role                                                                                    |  Permission   |
@@ -208,6 +208,8 @@ Add to `opencode.json`:
 ```json
 { "plugin": ["@ionivetech/mugiwara"] }
 ```
+
+Update: `rm -rf ~/.cache/opencode/packages/@ionivetech/mugiwara* && opencode plugin @ionivetech/mugiwara -g` ([details](docs/install/opencode.md#update))
 
 Uninstall: remove `"@ionivetech/mugiwara"` from `opencode.json` plugins array
 
@@ -315,20 +317,29 @@ Uninstall: `mugiwara uninstall`
 
 </details>
 
-All platforms get the full crew — 12 agents, 26 skills (+3 internal agents).
-No per-platform feature gaps.
+All platforms get the full crew — 12 agents (+3 internal), 26 skills.
+Enforcement depth varies by harness; see the [harness matrix](docs/reference/harness-matrix.md).
 
 → [Per-platform guides](docs/install/index.md)
 
 ## Update
 
 ```bash
-npm update @ionivetech/mugiwara                           # npm-based
-/plugin update mugiwara                                   # marketplace-based
-# Reinstall with same install command                     # GitHub-based
+# opencode — clear the pinned cache, then reinstall (npm update alone does NOT work)
+rm -rf ~/.cache/opencode/packages/@ionivetech/mugiwara* && opencode plugin @ionivetech/mugiwara -g
+
+# Claude Code — marketplace
+/plugin update mugiwara
+
+# CLI — npm global
+npm i -g @ionivetech/mugiwara@latest
 ```
 
-→ [Full update reference](docs/install/index.md)
+OpenCode pins the resolved version in its own package cache, so `npm update`
+never touches it. Reinstall with the same command for GitHub-based plugins
+(Gemini, Codex, Copilot, Cursor, Kimi, Pi, Antigravity).
+
+→ [Per-platform guides](docs/install/index.md)
 
 ## CLI
 

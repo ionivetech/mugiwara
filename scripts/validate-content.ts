@@ -152,6 +152,19 @@ if (existsSync(hubFile) && !readFileSync(hubFile, 'utf8').includes('## Write bou
   errors.push('skill mugiwara-orchestration: missing "## Write boundary" section (non-executors refuse source writes)');
 }
 
+// --- agent-count gate (F14): user-facing/internal split derivable from content/agents/ ---
+const internalAgents = agentFiles.filter(f => {
+  const parsed = parseFrontmatter(readFileSync(join(agentDir, f), 'utf8'));
+  return parsed.data.internal === 'true';
+});
+const canonicalCount = `${agentFiles.length - internalAgents.length} agents (+${internalAgents.length} internal)`;
+for (const doc of ['README.md', 'docs/index.md', 'docs/concepts/agents.md']) {
+  const p = join(import.meta.dirname, '..', doc);
+  if (existsSync(p) && !readFileSync(p, 'utf8').includes(canonicalCount)) {
+    errors.push(`${doc}: missing canonical agent count "${canonicalCount}"`);
+  }
+}
+
 // --- hub-rule gate (F3): every non-Luffy agent carries both hub sections ---
 for (const f of agentFiles) {
   const name = f.replace(/\.md$/, '');
