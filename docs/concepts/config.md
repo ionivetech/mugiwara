@@ -20,6 +20,8 @@ commit=conventional
 base=main
 review_depth=full
 quality_depth=full
+delegate_threshold=60
+heal_max_cycles=3
 ```
 
 ## Keys
@@ -34,6 +36,8 @@ quality_depth=full
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Wave 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |
 | `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Wave 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only) |
+| `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers (execution skill) |
+| `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation (orchestration) |
 
 The mission **lane** (how many waves run) is decided by Luffy at triage — see
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.

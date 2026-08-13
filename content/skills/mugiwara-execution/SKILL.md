@@ -28,6 +28,9 @@ Before touching code:
 1. Create `.mugiwara/results/<mission>/todos.md` — one checkbox per task, derived from the plan.
 2. Check each box off only when the task completes, WITH its evidence pointer.
 3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
+4. Mirror every change into the host's native todo tool (`todowrite` on
+   opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only).
+   Per-host table: `docs/reference/harness-matrix.md`.
 
 ## Wave execution
 
@@ -43,15 +46,16 @@ Before starting: if `.mugiwara/continue.md` exists, resume from its next_action 
 ## Worker dispatch triggers
 
 1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
-2. **Context pressure** — when `tokens_est` exceeds 60% of `budget`
-   mid-execution, remaining SEQUENTIAL tasks dispatch to workers — one at a
-   time, in plan order. Order is preserved; only the context resets.
+2. **Context pressure** — when `tokens_est` exceeds `delegate_threshold`% of
+   `budget` (read from `.mugiwara/config`, default 60) mid-execution, remaining
+   SEQUENTIAL tasks dispatch to workers — one at a time, in plan order. Order is
+   preserved; only the context resets.
 
 Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
 
-The threshold stays relative, never absolute: `tokens_est > 60% × budget`
-(survives model generations), never `tokens_est > 80,000` (obsolete in six
-months). A bigger window raises the threshold; it does not remove it.
+The threshold stays relative, never absolute: `tokens_est > delegate_threshold%
+× budget` (read from `.mugiwara/config`, default 60), never `tokens_est >
+80,000` (obsolete in six months). A bigger window raises the threshold; it does not remove it.
 
 ## Tier gating & fallback
 
@@ -61,8 +65,7 @@ that capability: if the harness cannot dispatch, do not promise fresh workers.
 
 Where workers are unavailable and context pressure crosses the threshold, fall
 back to the mechanism that already exists: write a savepoint, run the
-checkpoint, and suggest a fresh session via `resume`. Announce the fallback so
-the user is not guessing:
+checkpoint, and suggest a fresh session via `resume`. Announce the fallback:
 
 `⚠ context 62% — no worker dispatch on this harness; savepoint written,
 resume in a fresh session (plan order unchanged).`
@@ -71,13 +74,10 @@ resume in a fresh session (plan order unchanged).`
 
 After each batch, update `.mugiwara/continue.md` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
 
-## Task batching
+## Task batching & delegation format (parallel workers only)
 
-Full protocol: `references/dispatch.md` — output rule, batch report format.
-
-## Delegation format (parallel workers only)
-
-Full protocol: `references/dispatch.md` — six-field worker prompt. Thin prompts cause thin results.
+Full protocol: `references/dispatch.md` — output rule, batch report format,
+six-field worker prompt. Thin prompts cause thin results.
 
 ## Surfacing rule
 
@@ -85,7 +85,6 @@ Full protocol: `references/dispatch.md` — six-field worker prompt. Thin prompt
 > result may not. Every worker returns a wave banner, a one-line verdict, and an
 > evidence path into the main thread. The user never clicks into a subagent to
 > know what happened.
->
 > Isolation is for context and permission, never for autonomy.
 
 ## TDD discipline & user tests
@@ -119,5 +118,6 @@ After each wave: compact task table (status, evidence pointer, deviations) shown
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
 - A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.
 - Dispatching a worker whose result is not summarized inline with an evidence path.
+- Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Wave 2.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

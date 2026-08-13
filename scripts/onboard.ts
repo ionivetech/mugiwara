@@ -7,7 +7,6 @@ import { createInterface } from "node:readline";
 const root = join(import.meta.dirname, "..");
 const mugiwaraDir = join(root, ".mugiwara");
 const configPath = join(mugiwaraDir, "config");
-const onboardPath = join(mugiwaraDir, "onboard.json");
 
 function ask(rl: import("node:readline").Interface, prompt: string): Promise<string> {
   return new Promise((resolve) => {
@@ -38,7 +37,7 @@ async function main() {
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
     console.log("Usage: bun scripts/onboard.ts");
     console.log("Runs the Mugiwara onboarding wizard (10 fixed questions).");
-    console.log("Writes .mugiwara/config and .mugiwara/onboard.json.");
+    console.log("Writes .mugiwara/config.");
     process.exit(0);
   }
 
@@ -64,10 +63,6 @@ async function main() {
       console.log("");
     }
 
-    const answers: Record<string, unknown> = {
-      started_at: new Date().toISOString(),
-    };
-
     // ---- Phase 1: Project Context ----
     console.log("── Phase 1: Project Context ──");
     console.log("");
@@ -80,7 +75,6 @@ async function main() {
       "Backend service / API",
       "Other",
     ]);
-    answers.project_type = q1;
     console.log("");
 
     const q2 = await pick(rl, "Q2 — Primary language:\n  [1] TypeScript\n  [2] JavaScript\n  [3] Python\n  [4] Go\n  [5] Rust\n  [6] Java\n  [7] Other\n  > ", [
@@ -92,7 +86,6 @@ async function main() {
       "Java",
       "Other",
     ]);
-    answers.primary_language = q2;
     console.log("");
 
     const q3 = await pick(rl, "Q3 — Team size:\n  [1] Solo\n  [2] 2–5\n  [3] 6–15\n  [4] 16+\n  > ", [
@@ -101,7 +94,6 @@ async function main() {
       "6–15",
       "16+",
     ]);
-    answers.team_size = q3;
     console.log("");
 
     const q4 = await pick(rl, "Q4 — Git workflow:\n  [1] Trunk-based (feature/{type}-{issue}-{slug})\n  [2] GitFlow (feature/{slug})\n  [3] GitHub Flow (feat/{slug})\n  [4] Other (feature/{slug})\n  > ", [
@@ -110,7 +102,6 @@ async function main() {
       "github-flow",
       "other",
     ]);
-    answers.git_workflow = q4;
     console.log("");
 
     const q5 = await pick(rl, "Q5 — CI/CD platform:\n  [1] GitHub Actions\n  [2] GitLab CI\n  [3] CircleCI\n  [4] Jenkins\n  [5] None / manual\n  [6] Other\n  > ", [
@@ -121,7 +112,6 @@ async function main() {
       "None / manual",
       "Other",
     ]);
-    answers.ci_cd = q5;
     console.log("");
 
     // ---- Phase 2: Mugiwara Preferences ----
@@ -133,27 +123,20 @@ async function main() {
       "semi",
       "auto",
     ]);
-    answers.autonomy_mode = q6;
     console.log("");
 
-    const q7 = await ask(rl, "Q7 — Agents to enable (comma-separated or 'all'):\n  Available: brainstorm, plan, execute, checkpoint, quality, gates, review, security, healing\n  Default: all\n  > ");
-    answers.enabled_agents = q7 || "all";
-    console.log("");
-
-    const q8a = await pick(rl, "Q8a — Code review depth:\n  [1] full — breaking-change map, five-axis review, ≤3 cycles\n  [2] standard — five-axis review, 1 cycle\n  [3] quick — diff-only, no caller-map\n  > ", [
+    const q8a = await pick(rl, "Q7 — Code review depth:\n  [1] full — breaking-change map, five-axis review, ≤3 cycles\n  [2] standard — five-axis review, 1 cycle\n  [3] quick — diff-only, no caller-map\n  > ", [
       "full",
       "standard",
       "quick",
     ]);
-    answers.review_depth = q8a;
     console.log("");
 
-    const q8b = await pick(rl, "Q8b — Quality check depth:\n  [1] full — format, lint, typecheck, test, build\n  [2] standard — lint, typecheck, test\n  [3] quick — test only\n  > ", [
+    const q8b = await pick(rl, "Q8 — Quality check depth:\n  [1] full — format, lint, typecheck, test, build\n  [2] standard — lint, typecheck, test\n  [3] quick — test only\n  > ", [
       "full",
       "standard",
       "quick",
     ]);
-    answers.quality_depth = q8b;
     console.log("");
 
     console.log("Q9 — Test coverage threshold:");
@@ -180,9 +163,6 @@ async function main() {
       coverageNew = 0;
       coverageModified = 0;
     }
-    answers.coverage_threshold = q9;
-    answers.coverage_new = coverageNew;
-    answers.coverage_modified = coverageModified;
     console.log("");
 
     const q10 = await pick(rl, "Q10 — Commit style:\n  [1] Conventional Commits (feat:, fix:, chore:, docs:)\n  [2] Semantic (type(scope): message)\n  [3] Free-form\n  > ", [
@@ -190,8 +170,6 @@ async function main() {
       "semantic",
       "free-form",
     ]);
-    answers.commit_style = q10;
-    answers.completed_at = new Date().toISOString();
     console.log("");
 
     // ---- Branch name format ----
@@ -230,11 +208,9 @@ async function main() {
       commit,
       review_depth: reviewDepth,
       quality_depth: qualityDepth,
-      enabled_agents: answers.enabled_agents,
     };
 
     writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
-    writeFileSync(onboardPath, JSON.stringify(answers, null, 2) + "\n");
 
     // ---- Summary ----
     const qLabels: Record<string, Record<number, string>> = {
@@ -275,14 +251,12 @@ async function main() {
     console.log("  Git workflow:     ", qLabels.git_workflow[q4]);
     console.log("  CI/CD:            ", qLabels.ci_cd[q5]);
     console.log("  Autonomy mode:    ", qLabels.autonomy_mode[q6]);
-    console.log("  Enabled agents:   ", answers.enabled_agents);
     console.log("  Review depth:     ", qLabels.review_depth[q8a]);
     console.log("  Quality depth:    ", qLabels.quality_depth[q8b]);
     console.log("  Coverage:         ", q9 === 3 ? `${coverageNew}/${coverageModified}` : qLabels.coverage_threshold[q9]);
     console.log("  Commit style:     ", qLabels.commit_style[q10]);
     console.log("");
     console.log(`  Config written:   ${configPath}`);
-    console.log(`  Audit trail:      ${onboardPath}`);
     console.log("");
   } finally {
     rl.close();

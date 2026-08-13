@@ -40,7 +40,7 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target all --yes
 
 Requires **Node.js >= 20.11**. Bun is optional (build-from-source only).
 
-**First time?** Run `/mugiwara onboard` for a 10-question guided setup that configures mode, agents, review depth, and quality checks.
+**First time?** Run `/mugiwara onboard` for a 9-question guided setup that configures mode, review depth, and quality checks.
 
 ## 2. Start a mission
 
@@ -151,6 +151,8 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 | `coverage_modified` | 80 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |
 | `quality_depth` | full | Sanji's quality depth: full/standard/quick |
+| `delegate_threshold` | 60 | % of budget at which sequential tasks dispatch to workers |
+| `heal_max_cycles` | 3 | Max heal-loop cycles before escalation |
 
 ## 6. Next steps
 

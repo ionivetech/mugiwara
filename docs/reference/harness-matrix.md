@@ -83,3 +83,13 @@ mugiwara a runtime — see `enforcement.md`.
 |---------|-----------------|---------------------------|
 | Claude Code, opencode, Copilot | yes (native subagents) | — |
 | Gemini, Codex, Windsurf, Cline, Kilo, Antigravity | no | savepoint + checkpoint + fresh session via `resume` |
+
+## Todo sync per host
+
+| Host | Native todo tool | Notes |
+|------|------------------|-------|
+| opencode | `todowrite` / `todoread` | Permission key `todowrite`; disabled for subagents by default |
+| Claude Code | `TaskCreate` / `TaskUpdate` / `TaskList` | `TodoWrite` deprecated since v2.1.142 |
+| Copilot / tier 2 / tier 3 | none | plan doc `todos.md` is the only mirror |
+
+The plan doc `.mugiwara/results/<mission>/todos.md` stays the source of truth on every host; host tools mirror it.

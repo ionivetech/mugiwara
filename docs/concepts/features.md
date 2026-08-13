@@ -558,10 +558,14 @@ update --force`.
 
 ## 24. Onboarding wizard
 
-**What.** `/mugiwara onboard` — 10 fixed questions in two phases (Project
-Context: type/language/team/git/CI; Preferences: mode, agents, depth,
-coverage, commit style). Writes `.mugiwara/config` and `.mugiwara/onboard.json`
-(audit trail). No network.
+**What.** `/mugiwara onboard` — 9 fixed questions in two phases (Project
+Context: type/language/team/git/CI; Preferences: mode, review depth, quality
+depth, coverage). Two paths: the conversation wizard runs through the host's
+native question tool (choices + free type, next-next until done); CLI users
+run `bun scripts/onboard.ts`. Question count differs: conversation wizard
+asks 9 (commit style defaults to `conventional`); CLI wizard asks 10 and can set
+a custom commit style. Writes `.mugiwara/config`
+only — never `.mugiwara/onboard.json`. No network.
 
 **How to use.**
 
@@ -571,11 +575,11 @@ coverage, commit style). Writes `.mugiwara/config` and `.mugiwara/onboard.json`
 
 First run or re-onboard to reset config.
 
-**Scenario.** Setting up a new repo: answer 10 questions, get a verified
+**Scenario.** Setting up a new repo: answer 9 questions, get a verified
 config summary, and the crew knows the mode, depths, and thresholds from the
 start.
 
-→ [onboard-guide agent](agents.md) · [scripts/onboard.ts](../../scripts/onboard.ts)
+→ [onboard-guide agent](agents.md) · [CLI wizard](../../scripts/onboard.ts)
 
 ---
 

@@ -15,7 +15,7 @@ using its skill; you can also summon any member directly.
 | `robin-reviewer` | Robin | Reviewer — doubt-driven diff review, breaking-change map, reliability rating, code attribute deep review | after gates pass |
 | `jinbe-security` | Jinbe | Security — STRIDE, OWASP, secrets, injection, hotspots, SCA license | security audit of a diff |
 | `brook-healing` | Brook | Healer — reads the ledger, root-cause fixes, ≤3 cycles | any wave produced failures |
-| `onboarding-guide` | Guide | Onboarding wizard — 10Q guided setup, writes config | `/mugiwara onboard`, first run |
+| `onboarding-guide` | Guide | Onboarding wizard — 9Q guided setup via host question tool, writes config | `/mugiwara onboard`, first run |
 | `resume-coordinator` | Resume | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | context loss, new session mid-mission |
 
 **Internal agents** (dispatch-only, not user-facing):
