@@ -1,6 +1,6 @@
 // test/installer.test.ts
 import { test, describe, expect } from 'vitest';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
@@ -185,6 +185,20 @@ test('claude target postInstall wires the SessionStart hook', () => {
   expect(r.written).toContain(hook);
   const mode = statSync(hook).mode;
   expect(mode & 0o111).not.toBe(0);
+});
+
+test('claude postInstall makes every installed hook executable', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-hookx-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-hookxh-'));
+  installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const hooksDir = join(dir, '.claude', 'hooks');
+  const files = readdirSync(hooksDir).filter(f => f.endsWith('.ts'));
+  expect(files).toContain('session-start.ts');
+  expect(files).toContain('mugiwara-mode-tracker.ts');
+  for (const f of files) {
+    const mode = statSync(join(hooksDir, f)).mode;
+    expect(mode & 0o111, `${f} must be executable`).not.toBe(0);
+  }
 });
 
 test('claude postInstall dryRun does not write hook', () => {

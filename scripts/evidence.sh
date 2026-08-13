@@ -8,7 +8,11 @@ die() { echo "evidence: $*" >&2; exit 1; }
 
 MISSION="${1:-}"
 LABEL="${2:-}"
-shift 2>/dev/null || true
+shift 2 2>/dev/null || true
+
+# strip an optional "--" separator between <label> and the command
+[ "${1:-}" = "--" ] && shift
+
 [ -z "$MISSION" ] && die "usage: evidence.sh <mission> <label> [-- command args...]"
 [ -z "$LABEL" ] && die "usage: evidence.sh <mission> <label> [-- command args...]"
 
@@ -16,6 +20,17 @@ shift 2>/dev/null || true
 case "$MISSION" in
   *[!a-zA-Z0-9._-]*) die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" ;;
 esac
+
+# label allowlist — LABEL feeds the output filename; traversal or shell
+# metacharacters must not reach the filesystem (same rule as MISSION)
+case "$LABEL" in
+  *[!a-zA-Z0-9._-]*) die "invalid label \"$LABEL\" (allowlist: [a-zA-Z0-9._-])" ;;
+esac
+# dot-only labels (".", "..", "...") pass the char allowlist but escape the
+# results dir — reject them before any filename is built from LABEL.
+if [[ "$LABEL" =~ ^\.+$ ]]; then
+  die "invalid label \"$LABEL\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
+fi
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 RESULTS_DIR="$MUGIWARA_DIR/results/$MISSION"

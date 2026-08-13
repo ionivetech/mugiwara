@@ -51,7 +51,9 @@ else
   REASON="$FILE_COUNT files"
 fi
 
-if [ "$HAS_SENSITIVE" -eq 1 ] && [ "$LANE" != "full" ]; then
+# Sensitive-path escalation is unconditional — it wins over any count-based
+# lane AND over the docs-only downgrade below (bug C9).
+if [ "$HAS_SENSITIVE" -eq 1 ]; then
   PREV="$LANE"
   LANE="full"
   REASON="sensitive paths ($SENSITIVE) — escalated from $PREV"
@@ -63,7 +65,7 @@ fi
 # Product surface for mugiwara: content/, src/, scripts/, test/, hooks/,
 # .opencode/, .claude/, evals/ — everything else is docs/config/asset.
 PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
-if [ "$LANE" = "full" ] && [ -n "$CHANGED" ]; then
+if [ "$LANE" = "full" ] && [ "$HAS_SENSITIVE" -eq 0 ] && [ -n "$CHANGED" ]; then
   CODE_COUNT=$(echo "$CHANGED" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"

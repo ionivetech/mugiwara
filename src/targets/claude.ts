@@ -6,7 +6,7 @@ import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
 import type { Target } from '../installer.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const HOOK_SRC = join(here, '..', '..', 'hooks', 'session-start.ts');
+const HOOKS_SRC = join(here, '..', '..', 'hooks');
 const COMMANDS_SRC = join(here, '..', '..', '.claude', 'commands');
 
 // Claude Code has no path-scoped permission. write-scope maps to a partial
@@ -46,17 +46,24 @@ export const target: Target = {
     return join(root, 'skills', skillName, 'references');
   },
   postInstall({ scope, projectDir, home, dryRun }) {
-    // Wire the SessionStart hook (inline doctrine) into the installed .claude dir.
+    // Wire hook scripts (SessionStart + UserPromptSubmit) into the installed .claude dir.
     const root = scope === 'global' ? join(home, '.claude') : join(projectDir, '.claude');
-    const hookFile = join(root, 'hooks', 'session-start.ts');
     const written: string[] = [];
     const notes: string[] = [];
     if (dryRun) return { written: [], notes: [] };
-    if (existsSync(HOOK_SRC) && !existsSync(hookFile)) {
-      mkdirSync(dirname(hookFile), { recursive: true });
-      copyFileSync(HOOK_SRC, hookFile);
-      chmodSync(hookFile, 0o755);
-      written.push(hookFile);
+    if (existsSync(HOOKS_SRC)) {
+      for (const f of readdirSync(HOOKS_SRC)) {
+        if (!f.endsWith('.ts')) continue;
+        const dst = join(root, 'hooks', f);
+        if (!existsSync(dst)) {
+          mkdirSync(dirname(dst), { recursive: true });
+          copyFileSync(join(HOOKS_SRC, f), dst);
+          // /bin/sh executes hooks via shebang — a non-executable copy is a
+          // "Permission denied" at first user prompt. chmod every hook file.
+          chmodSync(dst, 0o755);
+          written.push(dst);
+        }
+      }
     }
     // Port the /mugiwara commands into the installed .claude dir.
     if (existsSync(COMMANDS_SRC)) {

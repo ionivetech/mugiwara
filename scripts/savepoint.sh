@@ -64,20 +64,35 @@ if [ "$BASE_SHA" != "unknown" ]; then
 fi
 [ -z "$LOC_DELTA" ] && LOC_DELTA=0
 
-SENSITIVE_PATTERNS="auth/|payment/|billing/|crypto/|secrets/|\.env|config/|migration/|\.sql$|schema\.|\.prisma$"
+SENSITIVE_PATTERNS="auth/|payment/|billing/|crypto/|secrets/|\.env$|config/.*key|migration/|\.sql$|schema\.|\.prisma$|\.terraform|\.tf$"
 SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATTERNS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 
 LANE="direct"
 LANE_REASON=""
-if [ "$FILES_TOUCHED" -ge 9 ] 2>/dev/null || [ -n "$SENSITIVE_PATHS" ]; then
+# Sensitive-path escalation is unconditional — it wins over any count-based
+# lane AND over the docs-only downgrade below (bug C9).
+if [ -n "$SENSITIVE_PATHS" ]; then
   LANE="full"
-  LANE_REASON="$( [ -n "$SENSITIVE_PATHS" ] && echo "sensitive paths: $SENSITIVE_PATHS" || echo "$FILES_TOUCHED files")"
+  LANE_REASON="sensitive paths: $SENSITIVE_PATHS"
+elif [ "$FILES_TOUCHED" -ge 9 ] 2>/dev/null; then
+  LANE="full"
+  LANE_REASON="$FILES_TOUCHED files"
 elif [ "$FILES_TOUCHED" -ge 3 ] 2>/dev/null; then
   LANE="standard"
   LANE_REASON="$FILES_TOUCHED files"
 elif [ "$FILES_TOUCHED" -ge 2 ] 2>/dev/null; then
   LANE="lean"
   LANE_REASON="$FILES_TOUCHED files"
+elif [ "$FILES_TOUCHED" -eq 1 ] 2>/dev/null; then
+  # 1-file rule mirrors lane.sh: >=20 added LOC -> lean, else direct
+  ADDED=$(git diff --numstat "$BASE_SHA"..HEAD 2>/dev/null | awk '{s+=$1} END {print s+0}')
+  if [ "${ADDED:-0}" -ge 20 ] 2>/dev/null; then
+    LANE="lean"
+    LANE_REASON="1 file, $ADDED LOC"
+  else
+    LANE="direct"
+    LANE_REASON="1 file, <20 LOC"
+  fi
 else
   LANE="direct"
   LANE_REASON="$FILES_TOUCHED file(s) under 20 LOC"
@@ -87,7 +102,7 @@ fi
 # surface never escalate to full from file count alone; sensitive-path
 # escalation above still wins.
 PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
-if [ "$LANE" = "full" ] && [ -n "$CHANGED_FILES" ]; then
+if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ]; then
   CODE_COUNT=$(echo "$CHANGED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
@@ -102,15 +117,20 @@ PLAN_FILE=$(ls "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MIS
 TASKS_DONE=0
 TASKS_TOTAL=0
 if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
-  TASKS_TOTAL=$(grep -c '\[ \]' "$PLAN_FILE" 2>/dev/null || echo 0)
-  TASKS_DONE=$(grep -c '\[x\]' "$PLAN_FILE" 2>/dev/null || echo 0)
+  # total counts ALL task lines (checked + unchecked); done counts checked only.
+  # A fully-completed plan must read total=N done=N, never total=0 (the old
+  # unchecked-only grep degenerated a done plan to tasks.total=0).
+  TASKS_TOTAL=$(grep -cE '^\s*-\s*\[[ xX]\]' "$PLAN_FILE" 2>/dev/null || true)
+  TASKS_DONE=$(grep -c '\[x\]' "$PLAN_FILE" 2>/dev/null || true)
 fi
 
 # blocker count
 BLOCKERS_FILE=$(ls "$MUGIWARA_DIR/issues/${MISSION}-blockers.md" 2>/dev/null || true)
 BLOCKERS_OPEN=0
 if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
-  BLOCKERS_OPEN=$(grep -c '|' "$BLOCKERS_FILE" 2>/dev/null || echo 0)
+  # data rows start with a wave number; header "| wave |" and separator
+  # "|---|" are excluded by the ^\| ?[0-9]+ \| pattern
+  BLOCKERS_OPEN=$(grep -cE '^\| ?[0-9]+ ?\|' "$BLOCKERS_FILE" 2>/dev/null || true)
 fi
 
 # heal cycle — count WAVE-8 banner occurrences in the trace, not the word
@@ -119,7 +139,7 @@ fi
 HEAL_CYCLE=1
 TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}/"*trace*.md 2>/dev/null | head -1 || true)
 if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE" ]; then
-  HEAL_COUNT=$(grep -ci '^.*Wave 8.*\|wave 8' "$TRACE_FILE" 2>/dev/null || echo 0)
+  HEAL_COUNT=$(grep -ci '^.*Wave 8.*\|wave 8' "$TRACE_FILE" 2>/dev/null || true)
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 
