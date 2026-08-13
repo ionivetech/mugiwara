@@ -1,10 +1,10 @@
 // test/plugin.test.ts
 import { test, expect } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import plugin from '../.opencode/plugins/mugiwara.mjs';
-import { readMode, parseModeChange, applyModeChange } from '../.opencode/mugiwara-helpers.mjs';
+import { readMode, parseModeChange, applyModeChange, ensureDefaultConfig } from '../.opencode/mugiwara-helpers.mjs';
 import { CONTENT_DIR } from '../src/installer.ts';
 
 const contentDir = CONTENT_DIR.replace(/[\\/]+$/, '');
@@ -132,6 +132,44 @@ function writeConfig(dir: string, line: string) {
   mkdirSync(d, { recursive: true });
   writeFileSync(join(d, 'config'), line + '\n');
 }
+
+test('ensureDefaultConfig: writes full default config on first use, idempotent, never clobbers', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-default-'));
+  try {
+    expect(ensureDefaultConfig({ projectDir: dir })).toBe(true);
+    const file = join(dir, '.mugiwara', 'config');
+    const body = readFileSync(file, 'utf8');
+    for (const key of [
+      'mode=guided',
+      'branch=feature/{type}-{issue}-{slug}',
+      'commit=conventional',
+      'base=main',
+      'coverage_new=90',
+      'coverage_modified=80',
+      'review_depth=full',
+      'quality_depth=full',
+    ]) {
+      expect(body).toContain(key);
+    }
+    // idempotent: second call returns false, leaves file unchanged
+    expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
+    expect(readFileSync(file, 'utf8')).toBe(body);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('ensureDefaultConfig: never overwrites a pre-existing config', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-default-'));
+  try {
+    writeConfig(dir, 'mode=auto');
+    expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
+    expect(readFileSync(join(dir, '.mugiwara', 'config'), 'utf8')).toContain('mode=auto');
+    expect(readFileSync(join(dir, '.mugiwara', 'config'), 'utf8')).not.toContain('mode=guided');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test('parseModeChange: /mugiwara-mode semi expands and parses', () => {
   expect(parseModeChange('/mugiwara-mode semi')).toBe('semi');

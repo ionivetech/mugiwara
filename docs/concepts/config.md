@@ -38,7 +38,8 @@ quality_depth=full
 The mission **lane** (how many waves run) is decided by Luffy at triage — see
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.
 
-Missing config on read = `guided`. Flip mid-mission with
+Missing config on read = `guided`. On first use the plugin writes the full
+default config above, so the file exists from the start. Flip mid-mission with
 `mugiwara mode <guided|semi|auto>` — the change applies from the next wave,
 never mid-wave.
 

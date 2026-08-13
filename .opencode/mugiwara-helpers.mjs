@@ -88,3 +88,26 @@ export function applyModeChange(mode, { projectDir = process.cwd(), home = homed
   mkdirSync(dirname(log), { recursive: true });
   appendFileSync(log, `| ${new Date().toISOString()} | mode flip | guided/semi/auto -> ${mode} | user |\n`);
 }
+
+export const DEFAULT_CONFIG_LINES = [
+  'mode=guided',
+  'branch=feature/{type}-{issue}-{slug}',
+  'commit=conventional',
+  'base=main',
+  'coverage_new=90',
+  'coverage_modified=80',
+  'review_depth=full',
+  'quality_depth=full',
+];
+
+// Idempotent: writes the full default config only when .mugiwara/config is
+// absent (a fresh repo's first use). Never overwrites an existing config —
+// mode=guided is the safe default; the user's later edits win.
+export function ensureDefaultConfig({ projectDir = process.cwd() } = {}) {
+  const dir = join(projectDir, '.mugiwara');
+  const file = join(dir, 'config');
+  if (existsSync(file)) return false;
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(file, DEFAULT_CONFIG_LINES.join('\n') + '\n');
+  return true;
+}

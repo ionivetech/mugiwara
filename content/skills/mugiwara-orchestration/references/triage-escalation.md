@@ -65,10 +65,15 @@ in `SKILL.md`.
 
 ## Auto mode ceiling
 
-`auto` never covers: lane escalated to 3, a sensitive path touched, or heal
-cycles exceeding one. On any of those, auto drops to guided — announce the drop
-and ask. `auto` on an auth change behaves identically to `auto` on a typo ONLY
-through the pipeline that the lane decides; the lane escalation overrides it.
+`auto` never covers: the lane ROSE to 3 mid-mission (`lane_rose` in
+`state.json`), a sensitive path touched (auth/payment/billing/crypto/secrets/
+migration — see `scripts/lane.sh`), or heal cycles exceeding one. On any of
+those, auto drops to guided — announce the drop and ask.
+
+Sized at 3 at triage is NOT a drop: a mission that starts full (9+ files, no
+sensitive path) stays auto. Escalation and sensitivity are the triggers, not
+the lane number itself. `auto` on an auth change still drops — sensitivity
+overrides the lane number.
 
 ## Lane-escalation owner (who checks, when)
 

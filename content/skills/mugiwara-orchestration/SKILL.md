@@ -65,7 +65,9 @@ After every wave AND at the end of each execution batch, verify:
 
 By mode (per mode config): `guided` checks in with the user as today; `semi`/`auto` write the check-in verdicts to the decision log without pausing the pipeline.
 
-**Auto ceiling:** auto drops to guided when the lane escalates to 3, a sensitive path is touched, or heal cycles exceed one. Announce the drop.
+**Auto ceiling:** auto drops to guided when the lane ROSE to 3 mid-mission (`lane_rose` in `.mugiwara/state.json`), a sensitive path is touched (auth/payment/billing/crypto/secrets/migration — see `scripts/lane.sh`), or heal cycles exceed one. Sized at 3 at triage is not a drop — a mission that starts full in auto mode stays auto. Announce the drop.
+
+**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. Only a genuine blocker or an auto-ceiling drop pauses.
 
 **Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At 3, STOP and escalate to the user — a halt, not a red flag. Red flags are prose; a counter is state.
 

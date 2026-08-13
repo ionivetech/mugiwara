@@ -14,7 +14,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readMode, parseModeChange, applyModeChange } from '../mugiwara-helpers.mjs';
+import { readMode, parseModeChange, applyModeChange, ensureDefaultConfig } from '../mugiwara-helpers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -94,6 +94,7 @@ export default async () => ({
   dispose: () => {},
 
   config: (config) => {
+    ensureDefaultConfig();
     config.skills = config.skills || {};
     config.skills.paths = config.skills.paths || [];
     if (!config.skills.paths.includes(skillsDir)) config.skills.paths.push(skillsDir);
