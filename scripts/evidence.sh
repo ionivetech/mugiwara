@@ -55,5 +55,14 @@ EVIDENCE_FILE="$RESULTS_DIR/${LABEL}-${HASH}.log"
 } > "$EVIDENCE_FILE"
 EXIT_CODE=$?
 
+# trailer: exit code + verdict (D6). The verdict is PASS/FAIL derived from the
+# exit code — the check's own outcome, not the harness's opinion.
+if [ "$EXIT_CODE" -eq 0 ]; then
+  VERDICT="PASS"
+else
+  VERDICT="FAIL"
+fi
+printf '# Exit: %s\n# Verdict: %s\n' "$EXIT_CODE" "$VERDICT" >> "$EVIDENCE_FILE"
+
 echo "$EVIDENCE_FILE"
 exit $EXIT_CODE
