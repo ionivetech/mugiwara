@@ -81,3 +81,43 @@ block that splits `.mugiwara/`:
 An audit trail that does not survive the merge is not an audit trail. If your
 repo ignores `.mugiwara/` wholesale, the mission report, evidence, and decision
 log vanish when the branch merges.
+
+## What the artifacts look like
+
+The trail is real files, not promises. Three representative examples.
+
+### Mission report (`reports/YYYY-MM-DD-<mission>.md`)
+
+    # Mission: invitation-accepted-flow . 2026-08-11
+
+    **Lane** full . **Mode** guided . **Actor** farid . **Branch** feature/MKR-412
+
+    ## Waves
+
+    | Wave | Artifact | Verdict |
+    |------|----------|---------|
+    | Quality (Wave 5) | `03-quality.md` | PASS |
+    | Gates (Wave 6) | `04-gates.md` | PASS |
+
+    ## State
+
+    | Field | Value |
+    |-------|-------|
+    | Tasks | 6/6 done |
+    | Heal cycles | 1 |
+    | Tokens used | 14,200 / 20,000 |
+
+### Blocker ledger row (`issues/<mission>-blockers.md`)
+
+    | wave | task | symptom | attempted | help-needed |
+    |------|------|---------|-----------|-------------|
+    | 3 | T4 | no e2e setup in repo | searched for playwright/cypress config | user: run e2e manually? |
+
+### Review finding (`review/<mission>-review.md`)
+
+    src/auth/invitation.ts:47 — 🔴 blocker: redirect uses the unvalidated `flow`
+    param → open redirect. Validate against an allowlist before `res.redirect`.
+
+These three — report, blocker row, review finding — are what a reviewer opens to
+trust the mission. If the report is missing or the findings are gone, the trail
+did not survive, and the claim is empty.

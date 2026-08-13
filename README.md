@@ -21,6 +21,47 @@ every agent, every skill, every rule is static markdown.
 
 → [Full pitch: why mugiwara vs just asking your agent](docs/concepts/comparison.md)
 
+## See the evidence
+
+A closed mission leaves a report you can actually read. This is the exact
+format `scripts/mission-report.sh` produces:
+
+    # Mission: invitation-accepted-flow . 2026-08-11
+
+    **Lane** full . **Mode** guided . **Actor** farid . **Branch** feature/MKR-412
+
+    ## What changed
+
+    11 files, +340 LOC
+    Sensitive paths: src/auth/
+
+    ## Waves
+
+    | Wave | Artifact | Verdict |
+    |------|----------|---------|
+    | Execute (Wave 3) | `01-execution.md` | PASS |
+    | Checkpoint (Wave 4) | `02-audit.md` | PASS |
+    | Quality (Wave 5) | `03-quality.md` | PASS |
+    | Gates (Wave 6) | `04-gates.md` | PASS |
+    | Healing (Wave 8) | `05-healing.md` | PASS |
+    | Closure (Wave 9) | `06-closure.md` | GO |
+
+    ## Review & blockers
+
+    Review + security files: invitation-accepted-flow-review.md, invitation-accepted-flow-security.md
+    Findings: 3
+    Blocker ledger rows: 1
+
+    ## State
+
+    | Field | Value |
+    |-------|-------|
+    | Wave | 9 |
+    | Tasks | 6/6 done |
+    | Blockers open | 0 |
+    | Heal cycles | 1 |
+    | Tokens used | 14,200 / 20,000 |
+
 ## What Mugiwara does
 
 ### 9-wave pipeline
