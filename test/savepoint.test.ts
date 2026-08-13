@@ -147,16 +147,16 @@ test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 1500
     setupGit(dir);
     // diverge HEAD from main so the 2-file diff is non-empty (merge-base issue)
     execSync('git checkout -b feature-b', { cwd: dir });
-    // 2 files → lane lean, budget 4000 → warn at 6000, stop at 12000
+    // 2 files → lane lean, budget 12000 → warn at 18000, stop at 36000
     writeFileSync(join(dir, 'a.ts'), 'a\n');
     writeFileSync(join(dir, 'b.ts'), 'b\n');
     execSync('git add a.ts b.ts && git commit -m wip', { cwd: dir });
-    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '7000' });
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '18000' });
     let state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
     expect(state.lane).toBe('lean');
-    expect(state.tokens_est).toBe(7000);
+    expect(state.tokens_est).toBe(18000);
     expect(state.budget_status).toBe('warn');
-    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '13000' });
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '36000' });
     state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
     expect(state.budget_status).toBe('stop');
   } finally {

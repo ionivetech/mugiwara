@@ -10,6 +10,9 @@ MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 # shared path patterns — single source of truth (D3)
 # shellcheck source=scripts/lib/patterns.sh
 source "$(dirname "$0")/lib/patterns.sh"
+# shared lane budgets — single source of truth (D5), validated by lane-base.ts
+# shellcheck source=scripts/lib/lane-base.sh
+source "$(dirname "$0")/lib/lane-base.sh"
 
 # lane ordering: direct < lean < standard < full < spike (spike resizes, not a rise)
 lane_rank() {
@@ -225,14 +228,15 @@ fi
 
 # tokens proxy (F7): deterministic estimate when the harness does not report
 # real usage. Monotonic beats precise — LANE_BASE stands in for the skills
-# loaded this lane; loc_delta and written-artifact words scale with growth.
+# loaded this lane (measured from content, validated by scripts/lane-base.ts);
+# loc_churn and written-artifact words scale with growth.
 # MUGIWARA_TOKENS overrides as the reported value.
 LANE_BASE=0
 case "$LANE" in
-  lean) LANE_BASE=1500 ;;
-  standard) LANE_BASE=4000 ;;
-  full) LANE_BASE=9000 ;;
-  spike) LANE_BASE=1000 ;;
+  lean) LANE_BASE=$LANE_BASE_lean ;;
+  standard) LANE_BASE=$LANE_BASE_standard ;;
+  full) LANE_BASE=$LANE_BASE_full ;;
+  spike) LANE_BASE=$LANE_BASE_spike ;;
 esac
 DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/spec/*-${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md "$MUGIWARA_DIR"/logs/*-${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
 LOC_TOKENS=$(( LOC_CHURN * 12 ))
@@ -246,10 +250,10 @@ fi
 # budget per lane
 BUDGET=0
 case "$LANE" in
-  lean) BUDGET=4000 ;;
-  standard) BUDGET=10000 ;;
-  full) BUDGET=20000 ;;
-  spike) BUDGET=3000 ;;
+  lean) BUDGET=$BUDGET_lean ;;
+  standard) BUDGET=$BUDGET_standard ;;
+  full) BUDGET=$BUDGET_full ;;
+  spike) BUDGET=$BUDGET_spike ;;
   *) BUDGET=0 ;;
 esac
 
