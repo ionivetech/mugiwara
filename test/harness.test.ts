@@ -240,6 +240,35 @@ test('savepoint: blockers_open counts data rows, not header or separator', { tim
   }
 });
 
+// ---------- savepoint task counts ----------
+
+test('savepoint: fully-completed plan reports tasks.done=total (not 0)', { timeout: 20000 }, () => {
+  // Regression guard: TASKS_TOTAL counted unchecked-only, so a plan with all
+  // boxes checked read tasks.total=0 (done=9, total=0 — degenerate). Total
+  // must count every task line in either state.
+  const dir = newRepo('tasks');
+  try {
+    const plansDir = join(dir, '.mugiwara', 'plans');
+    mkdirSync(plansDir, { recursive: true });
+
+    // all checked, zero unchecked
+    writeFileSync(join(plansDir, 'qaplan.md'), '- [x] task 1\n- [x] task 2\n- [x] task 3\n');
+    runSavepoint(dir, 'qaplan "" "" 1 guided');
+    let state = readState(dir);
+    expect(state.tasks.done).toBe(3);
+    expect(state.tasks.total).toBe(3);
+
+    // mixed: 2 checked + 1 unchecked
+    writeFileSync(join(plansDir, 'qaplan.md'), '- [x] task 1\n- [x] task 2\n- [ ] task 3\n');
+    runSavepoint(dir, 'qaplan "" "" 1 guided');
+    state = readState(dir);
+    expect(state.tasks.done).toBe(2);
+    expect(state.tasks.total).toBe(3);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // ---------- budget warn/stop for standard + full lanes ----------
 
 test('savepoint: budget warn/stop boundaries for standard (10000) and full (20000)', { timeout: 20000 }, () => {
