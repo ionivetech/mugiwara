@@ -46,6 +46,15 @@ function resolvePlan(planFile: string): string {
   throw new Error(err);
 }
 
+// A plan is a markdown document. Garbage (no markdown structure) is not a
+// "solo mission" — it is a malformed plan. Heading check keeps the
+// no-sub-missions-but-valid-markdown case working as solo mission.
+function assertPlanContent(content: string, planFile: string): void {
+  if (!/^#{1,6}\s/m.test(content)) {
+    throw new Error(`Not a valid plan file: "${planFile}" — expected markdown (no heading found)`);
+  }
+}
+
 function parseSubMissions(content: string): SubMission[] {
   const lines = content.split('\n');
   let inTable = false;
@@ -93,6 +102,7 @@ function parseSubMissions(content: string): SubMission[] {
 
 function cmdStatus(planFile: string): void {
   const content = readFileSync(planFile, 'utf8');
+  assertPlanContent(content, planFile);
   const subs = parseSubMissions(content);
 
   if (subs.length === 0) {
@@ -122,6 +132,7 @@ function cmdStatus(planFile: string): void {
 
 function cmdConflictCheck(planFile: string): void {
   const content = readFileSync(planFile, 'utf8');
+  assertPlanContent(content, planFile);
   const subs = parseSubMissions(content);
 
   if (subs.length === 0) {
@@ -161,15 +172,13 @@ function cmdConflictCheck(planFile: string): void {
 }
 
 function cmdSetStatus(planFile: string, id: string, status: string): void {
-  if (!STATUS_MARKERS[id]) {
-    // `status` here is the status string from args — check it
-  }
   if (!STATUS_MARKERS[status]) {
     console.error(`Invalid status: "${status}". Use: pending, in-progress, done, blocked`);
     process.exit(1);
   }
 
   const content = readFileSync(planFile, 'utf8');
+  assertPlanContent(content, planFile);
   const lines = content.split('\n');
   const newMarker = STATUS_MARKERS[status];
   let inTable = false;
@@ -225,24 +234,29 @@ if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
 
 const cmd = args[0];
 
-if (cmd === 'status') {
-  if (args.length < 2) { console.error('Missing plan-file argument.'); process.exit(1); }
-  cmdStatus(resolvePlan(args[1]));
-} else if (cmd === 'conflict-check') {
-  if (args.length < 2) { console.error('Missing plan-file argument.'); process.exit(1); }
-  cmdConflictCheck(resolvePlan(args[1]));
-} else if (cmd === 'set-status') {
-  const idIdx = args.indexOf('--id');
-  const statusIdx = args.indexOf('--status');
-  if (idIdx === -1 || statusIdx === -1 || args.length < 6) {
-    console.error('set-status requires --id <id> --status <status>');
+try {
+  if (cmd === 'status') {
+    if (args.length < 2) { console.error('Missing plan-file argument.'); process.exit(1); }
+    cmdStatus(resolvePlan(args[1]));
+  } else if (cmd === 'conflict-check') {
+    if (args.length < 2) { console.error('Missing plan-file argument.'); process.exit(1); }
+    cmdConflictCheck(resolvePlan(args[1]));
+  } else if (cmd === 'set-status') {
+    const idIdx = args.indexOf('--id');
+    const statusIdx = args.indexOf('--status');
+    if (idIdx === -1 || statusIdx === -1 || args.length < 6) {
+      console.error('set-status requires --id <id> --status <status>');
+      process.exit(1);
+    }
+    const id = args[idIdx + 1];
+    const statusVal = args[statusIdx + 1];
+    cmdSetStatus(resolvePlan(args[1]), id, statusVal);
+  } else {
+    console.error(`Unknown command: "${cmd}"`);
+    console.log(USAGE);
     process.exit(1);
   }
-  const id = args[idIdx + 1];
-  const statusVal = args[statusIdx + 1];
-  cmdSetStatus(resolvePlan(args[1]), id, statusVal);
-} else {
-  console.error(`Unknown command: "${cmd}"`);
-  console.log(USAGE);
+} catch (err) {
+  console.error(err instanceof Error ? err.message : String(err));
   process.exit(1);
 }
