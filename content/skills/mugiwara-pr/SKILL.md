@@ -21,6 +21,7 @@ Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
 - Gate verdicts — quality (per-check status), gates (coverage/build/DoD), review (Robin/Jinbe findings).
 - User-test verdict — when user tests were declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
 - Closure-report link — `.mugiwara/results/<mission>/06-closure.md`.
+- Step evidence — every evidence pointer above is a clickable markdown link `[path](relative/path)`.
 - Final verdict line — PASS / FAIL with the single blocking reason, if any.
 - **PR summary block** — copy-paste title + body ready for the user's PR.
 
@@ -28,7 +29,7 @@ Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
 
 Prepare the PR description so the user can paste and submit without writing it:
 
-- Title — a concise `{type}: {summary}` line from mission metadata.
+- Title — `{type}: {Title Case summary}` — MANDATORY Title case (significant words capitalized, e.g. `Feat: Add Evidence Links To Mugiwara Reports`). Type from the branch type (feat/fix/docs/chore/refactor).
 - Body — the verdict-file PR summary block (what changed, evidence, checks).
 - Target — the `base` config (default `main`) is named in the summary.
 - Validate every interpolated value against the safe charset and quote it.
