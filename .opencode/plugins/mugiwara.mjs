@@ -82,7 +82,12 @@ function readAgents() {
       continue;
     }
     if (!parsed.data.description || !parsed.body) continue;
-    agents[name] = { description: parsed.data.description, mode: 'all', prompt: parsed.body };
+    const internal = parsed.data.internal === 'true';
+    agents[name] = {
+      description: internal ? `[INTERNAL] ${parsed.data.description}` : parsed.data.description,
+      mode: internal ? 'subagent' : 'all',
+      prompt: parsed.body,
+    };
     if (CREW[name]) agents[name] = { ...agents[name], ...CREW[name] };
     const perm = permissionFromScope(parsed.data['write-scope']);
     if (perm) agents[name].permission = perm;

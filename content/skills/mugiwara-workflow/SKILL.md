@@ -46,7 +46,7 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 
 **One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
 
-**Banners.** Waves open with `==================== WAVE N - CREW (SKILL) ====================` and close with `→ Wave N+1 — Crew`.
+**Banners.** Every wave opens with a visible main-thread heading `## Wave N — <crew> (<skill>)` and closes with the handoff line `→ Wave N+1 — <crew>`. No wave starts without its banner.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 

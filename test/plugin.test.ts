@@ -29,19 +29,38 @@ test('config hook registers skills path (absolute, deduped)', async () => {
   expect(cfg.skills.paths).toContain('/fake/pre-existing');
 });
 
-test('config hook registers all 15 agents with mode all', async () => {
+test('config hook registers all 15 agents: internal -> subagent mode, user-facing -> all mode', async () => {
   const { config } = await plugin();
   const cfg = { agent: {} };
   await config(cfg);
   const names = Object.keys(cfg.agent);
   expect(names).toHaveLength(15);
   expect(names).toContain('luffy-orchestrator');
-  for (const a of Object.values(cfg.agent)) {
+  const internal = ['skeptic-verifier', 'eval-runner', 'memory-keeper'];
+  for (const [name, a] of Object.entries(cfg.agent)) {
     expect(typeof a).toBe('object');
-    expect((a as { mode?: string }).mode).toBe('all');
     expect(typeof (a as { description?: string }).description).toBe('string');
     expect(typeof (a as { prompt?: string }).prompt).toBe('string');
+    if (internal.includes(name)) {
+      expect((a as { mode?: string }).mode).toBe('subagent');
+      expect((a as { description?: string }).description).toMatch(/^\[INTERNAL\] /);
+    } else {
+      expect((a as { mode?: string }).mode).toBe('all');
+      expect((a as { description?: string }).description).not.toMatch(/^\[INTERNAL\] /);
+    }
   }
+});
+
+test('internal flag: eval-runner is subagent + [INTERNAL] prefix, zoro-execution is all + no prefix', async () => {
+  const { config } = await plugin();
+  const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
+  await config(cfg);
+  const internal = cfg.agent['eval-runner'];
+  expect(internal.mode).toBe('subagent');
+  expect(internal.description).toMatch(/^\[INTERNAL\] /);
+  const userFacing = cfg.agent['zoro-execution'];
+  expect(userFacing.mode).toBe('all');
+  expect(userFacing.description).not.toMatch(/^\[INTERNAL\] /);
 });
 
 test('path-boundary agents get glob-scoped edit permission (write-scope is the gate)', async () => {
@@ -54,8 +73,9 @@ test('path-boundary agents get glob-scoped edit permission (write-scope is the g
     expect(a).toBeDefined();
     // artifacts scope -> edit denied everywhere except .mugiwara/**
     expect((a as { permission?: unknown }).permission).toEqual({ edit: { '*': 'deny', '.mugiwara/**': 'allow' } });
-    expect((a as { mode?: string }).mode).toBe('all');
   }
+  // internal artifact agent is dispatch-only, never user-selectable
+  expect((cfg.agent['skeptic-verifier'] as { mode?: string }).mode).toBe('subagent');
 });
 
 test('config hook applies per-agent opencode tuning (color/temp/steps + scope permission)', async () => {
