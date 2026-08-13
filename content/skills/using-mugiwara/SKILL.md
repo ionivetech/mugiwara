@@ -39,3 +39,9 @@ For task routing and classification, `mugiwara-orchestration` auto-loads as gate
 This skill is documentation — load manually with `/using-mugiwara` or similar trigger phrases.
 Full pipeline: see skills/mugiwara-workflow.
 First time? Run `/mugiwara onboard` for guided setup. See `content/agents/onboarding-guide.md`.
+
+## Red flags
+
+- Stating an agent or skill count that drifts from content/.
+- Claiming feature parity that contradicts the harness matrix.
+- Answering routing questions instead of deferring to mugiwara-orchestration.

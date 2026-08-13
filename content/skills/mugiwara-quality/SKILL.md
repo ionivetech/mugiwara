@@ -73,3 +73,10 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 | "No tooling found, wave done." | No tooling means say so and propose the minimal setup, never a silent skip. |
 | "Formatter and linter are the same." | They are separate checks; run both. |
 | "E2E setup exists, so the gate runs." | No — trigger needs BOTH setup AND changed-file e2e patterns, plus consent by mode. Otherwise skip-and-log, never run unasked. |
+
+## Red flags
+
+- Weakening configs or disabling rules to make checks pass.
+- Asserting test results without running the suite.
+- Silently skipping the wave when no tooling is found.
+- Running state-mutating user tests without consent.

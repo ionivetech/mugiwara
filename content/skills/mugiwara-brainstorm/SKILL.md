@@ -87,3 +87,10 @@ For UI directions, name slop risks (generic card grids, unmotivated gradients, t
 ## One sharp question rule
 
 If you cannot phrase the question as multiple choice with answerable options, you do not yet understand the decision — read the codebase until you can.
+
+## Red flags
+
+- Collapsing to fewer than three interrogation rounds before handoff.
+- Rubber-stamping ("yes, done") instead of options + trade-offs + recommendation.
+- Guessing a version or library capability without web research.
+- Handing off with a failing validation checklist.

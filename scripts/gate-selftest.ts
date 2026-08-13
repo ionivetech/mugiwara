@@ -54,7 +54,7 @@ if (!existsSync(join(root, 'scripts', 'validate-content.ts'))) {
     const makeBody = (sectionLines: number) => {
       let body = '---\nname: test-skill\ndescription: Test skill for section-length gate, twenty chars\n---\n\n# Test\n\n## Skip when\n\n- Test\n\n## Long Section\n\n';
       for (let i = 0; i < sectionLines; i++) body += `Line ${i + 1} of content for section length test.\n`;
-      body += '\n';
+      body += '\n## Red flags\n\n- Test flag\n';
       return body;
     };
 
@@ -259,6 +259,40 @@ if (!existsSync(brainstormSkill)) {
   } finally {
     writeFileSync(brainstormSkill, original);
     assert('restored → exit 0', true, () => run('F4-handoff', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
+// --- F2: red-flags gate — strip the heading from one skill, prove red ---
+console.log('\nF2 — red-flags gate');
+const redSkill = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+if (!existsSync(redSkill)) {
+  console.log('  ⚠  mugiwara-workflow/SKILL.md not found, skipping');
+} else {
+  const original = readFileSync(redSkill, 'utf8');
+  try {
+    const broken = original.replace('## Red flags', '## Disabled');
+    writeFileSync(redSkill, broken);
+    assert('missing Red flags → exit 1', false, () => run('F2-redflags', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(redSkill, original);
+    assert('restored → exit 0', true, () => run('F2-redflags', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
+  }
+}
+
+// --- W1: write-boundary gate — strip the section, prove red ---
+console.log('\nW1 — write-boundary gate');
+const wbSkill = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
+if (!existsSync(wbSkill)) {
+  console.log('  ⚠  mugiwara-orchestration/SKILL.md not found, skipping');
+} else {
+  const original = readFileSync(wbSkill, 'utf8');
+  try {
+    const broken = original.replace('## Write boundary', '## Boundary');
+    writeFileSync(wbSkill, broken);
+    assert('missing write boundary → exit 1', false, () => run('W1-wb', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(wbSkill, original);
+    assert('restored → exit 0', true, () => run('W1-wb', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
   }
 }
 

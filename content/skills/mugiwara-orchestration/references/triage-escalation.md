@@ -59,13 +59,9 @@ in the decision log.
 
 ## Rationalizations (pressure resistance)
 
-| Excuse | Reality |
-|--------|---------|
-| "Just skip the pipeline, it's small." | Lane 0 already exists for small. If it is not Lane 0, it is not small. |
-| "I'll review it myself, go ahead." | Self-review is not a gate. The lane decides, not urgency. |
-| "We're in auto mode, don't ask." | Auto never covers lane 3, sensitive paths, or heal cycle >1. |
-| "Just this once." | The exception is the audit trail's only failure mode. |
-| "The user is in a hurry." | Urgency is a reason to be more careful, not less. Fast ≠ skipped. |
+Moved to the SKILL.md body — pressure resistance must fire mid-argument, before
+the agent opens a reference. See `## Rationalizations (pressure resistance)`
+in `SKILL.md`.
 
 ## Auto mode ceiling
 
