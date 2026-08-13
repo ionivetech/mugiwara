@@ -1,0 +1,19 @@
+{
+  "name": "execution-tier-gating-fallback",
+  "skill": "mugiwara-execution",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "execute: no workers on this harness fallback resume", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "opencode native subagents available" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Context pressure crosses 60% on a harness without worker dispatch (e.g. Gemini).",
+      "rubric": ["no worker", "savepoint", "checkpoint", "resume", "fallback"]
+    }
+  ]
+}

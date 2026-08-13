@@ -1,0 +1,19 @@
+{
+  "name": "execution-worker-surfacing",
+  "skill": "mugiwara-execution",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "execute: worker result summarize inline evidence path", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "write a commit message" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A worker subagent returns a result.",
+      "rubric": ["banner", "verdict", "evidence", "inline", "summarize"]
+    }
+  ]
+}

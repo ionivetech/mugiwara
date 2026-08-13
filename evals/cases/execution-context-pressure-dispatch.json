@@ -1,0 +1,19 @@
+{
+  "name": "execution-context-pressure-dispatch",
+  "skill": "mugiwara-execution",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "execute: context pressure exceeded budget, dispatch workers", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "two-file lean mission, no parallel tasks" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Lane 3, 12 sequential tasks. Mid-execution tokens_est crosses 60% of budget.",
+      "rubric": ["60%", "budget", "order", "worker", "announce"]
+    }
+  ]
+}

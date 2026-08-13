@@ -157,3 +157,34 @@ test('2-16 tier-2 targets keep full bodies in the rules dir (bootstrap pointer)'
     expect(body.length, `${id} full body in rules dir`).toBeGreaterThan(2000);
   }
 });
+
+test('write-boundary: opencode artifacts agent gets deny-all-edit except .mugiwara/** (cases 2+4)', () => {
+  const out = targets.opencode.transformAgent(
+    { name: 'usopp-brainstorm', description: 'x', 'write-scope': 'artifacts' } as never,
+    'BODY\n'
+  )!;
+  expect(out.text).toContain('permission:');
+  expect(out.text).toContain('edit:');
+  expect(out.text).toContain('"*": deny');
+  expect(out.text).toContain('".mugiwara/**": allow');
+});
+
+test('write-boundary: opencode source agent gets full edit allow (case 5)', () => {
+  const out = targets.opencode.transformAgent(
+    { name: 'zoro-execution', description: 'x', 'write-scope': 'source' } as never,
+    'BODY\n'
+  )!;
+  expect(out.text).toContain('edit: allow');
+});
+
+test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {
+  // tier-3 targets (windsurf/cline/kilo/antigravity) emit agent stubs; the
+  // generic transform hardcodes the source-write refusal in the stub.
+  // tier-2 targets (gemini/codex) emit full agent bodies (not stubs), so the
+  // refusal line lives only in the tier-3 stub branch.
+  for (const id of ['windsurf', 'cline', 'kilo', 'antigravity']) {
+    const t = targets[id];
+    const out = t.transformAgent({ name: 'usopp-brainstorm', description: 'x', skills: 'mugiwara-brainstorm' } as never, 'BODY\n')!;
+    expect(out.text, `${id} refusal line`).toContain('Only zoro-execution and brook-healing may modify source code');
+  }
+});
