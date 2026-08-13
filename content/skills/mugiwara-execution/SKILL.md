@@ -14,8 +14,6 @@ Execute the plan exactly. No silent reordering, no skipping steps, no "close eno
 
 ## Ask before working
 
-By mode (per mode config):
-
 - `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints.
 - `semi`/`auto`: auto-create the mission branch per the config `branch` key (default `feature/{type}-{issue}-{slug}`) and auto-commit per task using the config `commit` style (default conventional). No branch/commit ask. Record mode + branch + commit style in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>/todos.md`.
 
@@ -38,9 +36,36 @@ Before starting: if `.mugiwara/continue.md` exists, resume from its next_action 
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
 3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess.
-4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work.
+4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work — UNLESS context pressure triggers (see Worker dispatch triggers).
 5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence pointers before starting the next batch.
 6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
+
+## Worker dispatch triggers
+
+1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
+2. **Context pressure** — when `tokens_est` exceeds 60% of `budget`
+   mid-execution, remaining SEQUENTIAL tasks dispatch to workers — one at a
+   time, in plan order. Order is preserved; only the context resets.
+
+Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
+
+The threshold stays relative, never absolute: `tokens_est > 60% × budget`
+(survives model generations), never `tokens_est > 80,000` (obsolete in six
+months). A bigger window raises the threshold; it does not remove it.
+
+## Tier gating & fallback
+
+Real worker dispatch exists only where the harness has subagents — tier 1
+(Claude Code, opencode) plus Copilot. Gate the context-pressure trigger on
+that capability: if the harness cannot dispatch, do not promise fresh workers.
+
+Where workers are unavailable and context pressure crosses the threshold, fall
+back to the mechanism that already exists: write a savepoint, run the
+checkpoint, and suggest a fresh session via `resume`. Announce the fallback so
+the user is not guessing:
+
+`⚠ context 62% — no worker dispatch on this harness; savepoint written,
+resume in a fresh session (plan order unchanged).`
 
 ## Batch resume
 
@@ -48,30 +73,20 @@ After each batch, update `.mugiwara/continue.md` next_action to the next task; `
 
 ## Task batching
 
-Run task work tightly: do the steps without narrating each command or micro-step. Surface ONE per-task result + evidence per task (or per batch) — status, evidence pointer, deviations — in a compact line or table. The checkpoint audits evidence, not commentary; save the blow-by-blow.
-
-**Output rule.** Do NOT stream every tool call to the main thread. After each task batch, emit ONLY:
-
-```
-T1: ✅ | built + tested | bun run test -- installer
-T2: ✅ | 7 pointers rewritten | grep refs/ → clean
-T3: ✅ | 38/38 tests | bun run test
-```
-
-Full logs go to `.mugiwara/results/<mission>/01-execution.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output.
+Full protocol: `references/dispatch.md` — output rule, batch report format.
 
 ## Delegation format (parallel workers only)
 
-Sequential work runs inline — no delegation. For every `[PARALLEL]` worker you dispatch, the prompt includes all six fields:
+Full protocol: `references/dispatch.md` — six-field worker prompt. Thin prompts cause thin results.
 
-- TASK — the task body, verbatim from the plan.
-- EXPECTED OUTCOME — what "done" looks like, concrete and checkable.
-- REQUIRED TOOLS — commands and files the subagent will need.
-- MUST DO — the steps in order, including the TDD failing-test-first step.
-- MUST NOT DO — boundaries: files not to touch, configs not to weaken, no silent workarounds.
-- CONTEXT — interfaces consumed/produced, related tasks, mission workspace paths.
+## Surfacing rule
 
-A delegation prompt shorter than ~30 lines is too short — beef it up. Thin prompts cause thin results.
+> **Delegated work is not hidden work.** A worker may run out of view; its
+> result may not. Every worker returns a wave banner, a one-line verdict, and an
+> evidence path into the main thread. The user never clicks into a subagent to
+> know what happened.
+>
+> Isolation is for context and permission, never for autonomy.
 
 ## TDD discipline & user tests
 
@@ -79,19 +94,11 @@ Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-R
 
 ## One logical task, one commit
 
-1. Follow the task's steps in order — TDD discipline above: failing test first (watch it fail), implement, watch it pass, refactor while green.
-2. Verify every acceptance criterion; capture command output as evidence.
-3. Commit per LOGICAL task: a task is a meaningful unit of work (a feature, a fix, a refactor) — not a micro-step. Adjacent trivial changes (typo, formatting, a one-line tweak) fold into the neighboring logical task's commit; never one commit per keystroke. If the plan slices tasks finer than a logical change, group adjacent tasks into one commit and note the grouping in the execution report.
-4. Commit only the files that task declared. No task commingles with its neighbors.
-5. Report done (with evidence) or blocked (with reason).
+Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verify every acceptance criterion, commit only the task's declared files. Report done (with evidence) or blocked (with reason).
 
 ## Blockers → issues ledger
 
-Blocked → write one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`:
-
-| wave | task | symptom | attempted | help-needed |
-
-Then escalate to Luffy. Never work around a blocker silently.
+Blocked → one row `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`, then escalate to Luffy. Never work around a blocker silently.
 
 ## Frontend tasks
 
@@ -99,15 +106,7 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 ## Report
 
-After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format:
-
-```
-| # | Task | Status | Evidence |
-|---|------|--------|----------|
-| T1 | <title> | ✅/❌ | <command or file> |
-```
-
-Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
+After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
 
 ## Red flags
 
@@ -119,5 +118,6 @@ Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution l
 - The task's TDD order inverted (implementation before the failing test).
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
 - A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.
+- Dispatching a worker whose result is not summarized inline with an evidence path.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

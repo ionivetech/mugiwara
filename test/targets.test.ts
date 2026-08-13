@@ -53,6 +53,22 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
   expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-workflow');
 });
 
+test('L1: claude transformAgent generates tools from write-scope', () => {
+  const artifacts = targets.claude.transformAgent(
+    { name: 'usopp-brainstorm', description: 'x', 'write-scope': 'artifacts' } as never,
+    'BODY\n'
+  )!;
+  const source = targets.claude.transformAgent(
+    { name: 'zoro-execution', description: 'x', 'write-scope': 'source' } as never,
+    'BODY\n'
+  )!;
+  const a = parseFrontmatter(artifacts.text).data;
+  const s = parseFrontmatter(source.text).data;
+  expect(a.tools).toBe('Read, Grep, Glob, Write, Bash, WebFetch, WebSearch');
+  expect(a.tools).not.toContain('Edit');
+  expect(s.tools).toBeUndefined();
+});
+
 test('0-8 conformance: every target install lands skills, agents, and references', () => {
   for (const id of TARGET_IDS) {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-conf-' + id + '-'));
@@ -139,5 +155,36 @@ test('2-16 tier-2 targets keep full bodies in the rules dir (bootstrap pointer)'
     const { skillsDir } = t.paths({ scope: 'project', projectDir: dir, home });
     const body = readFileSync(join(skillsDir, 'mugiwara-workflow.md'), 'utf8');
     expect(body.length, `${id} full body in rules dir`).toBeGreaterThan(2000);
+  }
+});
+
+test('write-boundary: opencode artifacts agent gets deny-all-edit except .mugiwara/** (cases 2+4)', () => {
+  const out = targets.opencode.transformAgent(
+    { name: 'usopp-brainstorm', description: 'x', 'write-scope': 'artifacts' } as never,
+    'BODY\n'
+  )!;
+  expect(out.text).toContain('permission:');
+  expect(out.text).toContain('edit:');
+  expect(out.text).toContain('"*": deny');
+  expect(out.text).toContain('".mugiwara/**": allow');
+});
+
+test('write-boundary: opencode source agent gets full edit allow (case 5)', () => {
+  const out = targets.opencode.transformAgent(
+    { name: 'zoro-execution', description: 'x', 'write-scope': 'source' } as never,
+    'BODY\n'
+  )!;
+  expect(out.text).toContain('edit: allow');
+});
+
+test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {
+  // tier-3 targets (windsurf/cline/kilo/antigravity) emit agent stubs; the
+  // generic transform hardcodes the source-write refusal in the stub.
+  // tier-2 targets (gemini/codex) emit full agent bodies (not stubs), so the
+  // refusal line lives only in the tier-3 stub branch.
+  for (const id of ['windsurf', 'cline', 'kilo', 'antigravity']) {
+    const t = targets[id];
+    const out = t.transformAgent({ name: 'usopp-brainstorm', description: 'x', skills: 'mugiwara-brainstorm' } as never, 'BODY\n')!;
+    expect(out.text, `${id} refusal line`).toContain('Only zoro-execution and brook-healing may modify source code');
   }
 });

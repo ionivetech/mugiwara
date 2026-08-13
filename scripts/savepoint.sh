@@ -31,6 +31,11 @@ fi
 case "$MISSION" in
   ""|*[!a-zA-Z0-9._-]*) die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" ;;
 esac
+# dot-only names (".", "..", "...") pass the char allowlist but resolve upward
+# through join(...,"..") — reject them before any path is built from MISSION.
+if [[ "$MISSION" =~ ^\.+$ ]]; then
+  die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
+fi
 
 # per-branch state file when --branch used
 BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-')
@@ -91,8 +96,9 @@ if [ "$LANE" = "full" ] && [ -n "$CHANGED_FILES" ]; then
   fi
 fi
 
-# task counts from plan doc
-PLAN_FILE=$(ls "$MUGIWARA_DIR/plans/${MISSION}.md" 2>/dev/null || true)
+# task counts from plan doc — plan is written date-prefixed (plans/YYYY-MM-DD-<mission>.md)
+# or bare (plans/<mission>.md); glob both, first match wins.
+PLAN_FILE=$(ls "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md 2>/dev/null | head -1 || true)
 TASKS_DONE=0
 TASKS_TOTAL=0
 if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
@@ -132,8 +138,25 @@ if [ -f package.json ]; then
   [ -f "$PKG_JSON" ] && SKILL_VERSION=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version.split('.')[0])}catch(e){console.log('1')}" "$PKG_JSON" 2>/dev/null || echo "1")
 fi
 
-# tokens from env var (harness exports estimated tokens consumed)
-TOKENS_EST=${MUGIWARA_TOKENS:-0}
+# tokens proxy (F7): deterministic estimate when the harness does not report
+# real usage. Monotonic beats precise — LANE_BASE stands in for the skills
+# loaded this lane; loc_delta and written-artifact words scale with growth.
+# MUGIWARA_TOKENS overrides as the reported value.
+LANE_BASE=0
+case "$LANE" in
+  lean) LANE_BASE=1500 ;;
+  standard) LANE_BASE=4000 ;;
+  full) LANE_BASE=9000 ;;
+  spike) LANE_BASE=1000 ;;
+esac
+DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/spec/*-${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md "$MUGIWARA_DIR"/logs/*-${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
+LOC_TOKENS=$(( LOC_DELTA > 0 ? LOC_DELTA * 12 : 0 ))
+TOKENS_SOURCE="computed"
+TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
+if [ -n "${MUGIWARA_TOKENS:-}" ]; then
+  TOKENS_EST="${MUGIWARA_TOKENS}"
+  TOKENS_SOURCE="reported"
+fi
 
 # budget per lane
 BUDGET=0
@@ -191,6 +214,7 @@ const data = {
   blockers_open: parseInt(process.argv[15], 10),
   heal_cycle: parseInt(process.argv[16], 10),
   tokens_est: parseInt(process.argv[17], 10) || 0,
+  tokens_source: process.argv[26] || 'computed',
   budget: parseInt(process.argv[18], 10) || 0,
   budget_status: process.argv[19],
   skill_version: process.argv[20],
@@ -205,7 +229,7 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE"
+  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

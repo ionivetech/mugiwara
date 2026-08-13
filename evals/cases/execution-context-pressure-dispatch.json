@@ -1,0 +1,19 @@
+{
+  "name": "execution-context-pressure-dispatch",
+  "skill": "mugiwara-execution",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "execute the approved plan and commit per logical task", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "review the plan for gaps before we start" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Lane 3, 12 sequential tasks. Mid-execution tokens_est crosses 60% of budget.",
+      "rubric": ["60%", "budget", "order", "worker", "announce"]
+    }
+  ]
+}

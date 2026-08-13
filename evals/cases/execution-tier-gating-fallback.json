@@ -1,0 +1,19 @@
+{
+  "name": "execution-tier-gating-fallback",
+  "skill": "mugiwara-execution",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "carry out the tasks in parallel batches and commit each one", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "audit this diff for security issues" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Context pressure crosses 60% on a harness without worker dispatch (e.g. Gemini).",
+      "rubric": ["no worker", "savepoint", "checkpoint", "resume", "fallback"]
+    }
+  ]
+}

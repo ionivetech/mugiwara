@@ -116,3 +116,9 @@ Very-large missions (>2 days, multi-PR scope) split into sub-missions, never one
 STOP after writing. The plan is written to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to Luffy.** Present a 2-3 line summary (waves, task count, key risks) and hand off to Luffy for the GO decision. Luffy decides: approve → Zoro, revise → back to you, or escalate.
 
 Never hand to Zoro without Luffy's GO. In `guided` mode, Luffy asks the user before delegating to Zoro. In `semi`/`auto`, Luffy may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, Luffy routes.
+
+## Red flags
+- Shipping a plan with a known anti-pattern (TBD, "works correctly", assumed tooling).
+- Marking [PARALLEL] without file- AND interface-disjoint proof.
+- Missing file-level dependency edges or a Break point on an 8+ file task.
+- Handing the plan to Zoro without Luffy's GO.

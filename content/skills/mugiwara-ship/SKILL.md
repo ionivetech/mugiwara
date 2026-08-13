@@ -53,24 +53,26 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 Once the branch is pushed and the PR material is written, clean `.mugiwara/` of
 consumed intermediates. Never touch anything outside `.mugiwara/`.
 
-**KEEP** (they are the audit trail and PR material):
+**KEEP** (the audit trail and PR material):
 
 - `config`
 - `plans/YYYY-MM-DD-<mission>.md` — the clean plan doc
 - `results/<mission>/06-closure.md` — closure report
 - `results/<mission>/07-pr-verdict.md` — PR material
+- `reports/YYYY-MM-DD-<mission>.md` — the mission report (the consolidated evidence)
 - `logs/lessons.md` and any cross-mission state (`backup/`, `manifest.json`)
 
-**DELETE** (consumed or superseded):
+**ARCHIVE, then remove** (fold into the mission report first, never delete outright):
 
-- `results/<mission>/01-execution.md` … `05-healing.md`, `todos.md` — wave artifacts, consumed after closure
+- `results/<mission>/01-execution.md` … `05-healing.md`, `todos.md` — wave artifacts, folded
 - `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
-- `.mugiwara/continue.md` — consumed once the mission is closed (delete by exact name, never a `handoff*` glob)
-- `review/` and `issues/` per-mission findings
-- `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs
+- `review/`, `issues/` per-mission findings — folded into the report
+- `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs — folded
+- `.mugiwara/continue.md` — consumed once closed (delete by exact name, never a glob)
 
-Procedure: list the candidates first (dry-run), delete them, then report what
-was removed and what stays. A mission is only closed after cleanup runs.
+Procedure: run `mugiwara archive <mission>` (dry-run first), which folds evidence
+into the report, removes the loose files, and appends a summary-index line.
+A mission is only closed after the archive runs — the trail must survive the merge.
 
 ## Iron Law
 

@@ -59,20 +59,21 @@ in the decision log.
 
 ## Rationalizations (pressure resistance)
 
-| Excuse | Reality |
-|--------|---------|
-| "Just skip the pipeline, it's small." | Lane 0 already exists for small. If it is not Lane 0, it is not small. |
-| "I'll review it myself, go ahead." | Self-review is not a gate. The lane decides, not urgency. |
-| "We're in auto mode, don't ask." | Auto never covers lane 3, sensitive paths, or heal cycle >1. |
-| "Just this once." | The exception is the audit trail's only failure mode. |
-| "The user is in a hurry." | Urgency is a reason to be more careful, not less. Fast ≠ skipped. |
+Moved to the SKILL.md body — pressure resistance must fire mid-argument, before
+the agent opens a reference. See `## Rationalizations (pressure resistance)`
+in `SKILL.md`.
 
 ## Auto mode ceiling
 
-`auto` never covers: lane escalated to 3, a sensitive path touched, or heal
-cycles exceeding one. On any of those, auto drops to guided — announce the drop
-and ask. `auto` on an auth change behaves identically to `auto` on a typo ONLY
-through the pipeline that the lane decides; the lane escalation overrides it.
+`auto` never covers: the lane ROSE to 3 mid-mission (`lane_rose` in
+`state.json`), a sensitive path touched (auth/payment/billing/crypto/secrets/
+migration — see `scripts/lane.sh`), or heal cycles exceeding one. On any of
+those, auto drops to guided — announce the drop and ask.
+
+Sized at 3 at triage is NOT a drop: a mission that starts full (9+ files, no
+sensitive path) stays auto. Escalation and sensitivity are the triggers, not
+the lane number itself. `auto` on an auth change still drops — sensitivity
+overrides the lane number.
 
 ## Lane-escalation owner (who checks, when)
 

@@ -1,7 +1,7 @@
 // test/savepoint.test.ts — G3: every state.json field has a non-trivial assertion.
 import { test, expect } from 'vitest';
 import { execSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -47,6 +47,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(state.blockers_open).toBe(0);
     expect(state.heal_cycle).toBe(1);
     expect(state.tokens_est).toBeGreaterThanOrEqual(0);
+    expect(['computed', 'reported']).toContain(state.tokens_source);
     expect(state.budget).toBeGreaterThanOrEqual(0);
     expect(['ok', 'warn', 'stop']).toContain(state.budget_status);
     expect(typeof state.skill_version).toBe('string');
@@ -75,8 +76,46 @@ test('savepoint state.json has correct structure', () => {
     expect(typeof state.blockers_open).toBe('number');
     expect(typeof state.heal_cycle).toBe('number');
     expect(typeof state.budget).toBe('number');
+    expect(['computed', 'reported']).toContain(state.tokens_source);
     expect(typeof state.skill_version).toBe('string');
     expect(typeof state.updated_at).toBe('string');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS overrides as reported', { timeout: 15000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-tokens-'));
+  try {
+    setupGit(dir);
+    // diverge HEAD from main so the diff (and thus loc_delta) is non-empty
+    execSync('git checkout -b feature-x', { cwd: dir });
+    // known loc: commit a file with exactly 10 inserted lines
+    const src = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`).join('\n') + '\n';
+    writeFileSync(join(dir, 'src.ts'), src);
+    execSync('git add src.ts && git commit -m wip', { cwd: dir });
+    // known evidence words: exactly 20 words in the mission results dir
+    const evDir = join(dir, '.mugiwara', 'results', 'test-mission');
+    mkdirSync(evDir, { recursive: true });
+    writeFileSync(join(evDir, '01-execution.md'), 'word '.repeat(20));
+
+    runSavepoint(dir, 'test-mission "" "" 3 guided');
+    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
+
+    // lane is derived from the diff. HEAD is on `feature-x`, one commit ahead
+    // of `main`, so `git merge-base HEAD main` is the base commit and the
+    // 10-insertion commit yields LOC_DELTA = 10. lane = direct (1 file, base 0).
+    // expected = 0 + floor(20*135/100) + (10*12) = 0 + 27 + 120 = 147
+    expect(state.lane).toBe('direct');
+    expect(state.loc_delta).toBe(10);
+    expect(state.tokens_est).toBe(147);
+    expect(state.tokens_source).toBe('computed');
+
+    // override → reported
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '12345' });
+    const state2 = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
+    expect(state2.tokens_est).toBe(12345);
+    expect(state2.tokens_source).toBe('reported');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -97,6 +136,29 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
     expect(state.mission).toBe('test');
     expect(state.branch).toBe('feature-fix');
     expect(state.mode).toBe('guided');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 15000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-budget-'));
+  try {
+    setupGit(dir);
+    // diverge HEAD from main so the 2-file diff is non-empty (merge-base issue)
+    execSync('git checkout -b feature-b', { cwd: dir });
+    // 2 files → lane lean, budget 4000 → warn at 6000, stop at 12000
+    writeFileSync(join(dir, 'a.ts'), 'a\n');
+    writeFileSync(join(dir, 'b.ts'), 'b\n');
+    execSync('git add a.ts b.ts && git commit -m wip', { cwd: dir });
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '7000' });
+    let state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
+    expect(state.lane).toBe('lean');
+    expect(state.tokens_est).toBe(7000);
+    expect(state.budget_status).toBe('warn');
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '13000' });
+    state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
+    expect(state.budget_status).toBe('stop');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

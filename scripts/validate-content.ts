@@ -27,6 +27,7 @@ function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Rec
     if (bullets.length === 0) errors.push(`skill ${file}: "## Skip when" needs ≥1 bullet`);
     if (bullets.length > 4) errors.push(`skill ${file}: "## Skip when" block exceeds 4 bullets`);
   }
+  if (kind === 'skill' && !body.includes('## Red flags')) errors.push(`skill ${file}: missing required "## Red flags" block`);
   if (kind === 'skill') {
     const lines = body.split(/\r?\n/);
     const headingRe = /^## /;
@@ -143,6 +144,25 @@ for (const f of agentFiles) {
   if (!scope) { errors.push(`agent ${f}: missing write-scope (artifacts | source)`); continue; }
   if (scope !== 'artifacts' && scope !== 'source') errors.push(`agent ${f}: write-scope must be artifacts | source (got "${scope}")`);
   if (scope === 'source' && !SOURCE_SCOPED.has(name)) errors.push(`agent ${f}: only zoro-execution and brook-healing may declare write-scope: source`);
+}
+
+// --- write-boundary gate (W1): the hub skill must carry the refusal rule ---
+const hubFile = join(root, 'skills', 'mugiwara-orchestration', 'SKILL.md');
+if (existsSync(hubFile) && !readFileSync(hubFile, 'utf8').includes('## Write boundary')) {
+  errors.push('skill mugiwara-orchestration: missing "## Write boundary" section (non-executors refuse source writes)');
+}
+
+// --- agent-count gate (F14): user-facing/internal split derivable from content/agents/ ---
+const internalAgents = agentFiles.filter(f => {
+  const parsed = parseFrontmatter(readFileSync(join(agentDir, f), 'utf8'));
+  return parsed.data.internal === 'true';
+});
+const canonicalCount = `${agentFiles.length - internalAgents.length} agents (+${internalAgents.length} internal)`;
+for (const doc of ['README.md', 'docs/index.md', 'docs/concepts/agents.md']) {
+  const p = join(import.meta.dirname, '..', doc);
+  if (existsSync(p) && !readFileSync(p, 'utf8').includes(canonicalCount)) {
+    errors.push(`${doc}: missing canonical agent count "${canonicalCount}"`);
+  }
 }
 
 // --- hub-rule gate (F3): every non-Luffy agent carries both hub sections ---

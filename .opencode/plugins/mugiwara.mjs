@@ -14,7 +14,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readMode, parseModeChange, applyModeChange } from '../mugiwara-helpers.mjs';
+import { readMode, parseModeChange, applyModeChange, ensureDefaultConfig } from '../mugiwara-helpers.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -82,7 +82,12 @@ function readAgents() {
       continue;
     }
     if (!parsed.data.description || !parsed.body) continue;
-    agents[name] = { description: parsed.data.description, mode: 'all', prompt: parsed.body };
+    const internal = parsed.data.internal === 'true';
+    agents[name] = {
+      description: internal ? `[INTERNAL] ${parsed.data.description}` : parsed.data.description,
+      mode: internal ? 'subagent' : 'all',
+      prompt: parsed.body,
+    };
     if (CREW[name]) agents[name] = { ...agents[name], ...CREW[name] };
     const perm = permissionFromScope(parsed.data['write-scope']);
     if (perm) agents[name].permission = perm;
@@ -94,6 +99,9 @@ export default async () => ({
   dispose: () => {},
 
   config: (config) => {
+    // only seed .mugiwara/config when the cwd looks like a project — a global
+    // install must not create .mugiwara/ in an arbitrary non-project dir.
+    if (existsSync(join(process.cwd(), '.git'))) ensureDefaultConfig();
     config.skills = config.skills || {};
     config.skills.paths = config.skills.paths || [];
     if (!config.skills.paths.includes(skillsDir)) config.skills.paths.push(skillsDir);

@@ -8,7 +8,7 @@ description: How Mugiwara works — crew overview, pipeline summary. Documentati
 
 - `mugiwara-orchestration` is the gatekeeper — it auto-loads for task routing and classification. This skill is a documentation reference only.
 
-Mugiwara is a governed engineering team in your coding agent. 11 specialists — triage, brainstorm, plan, execute, audit, quality, gates, review, security, heal — with evidence at every step and cost tracking. Runs inline in the main conversation.
+Mugiwara is a governed engineering team in your coding agent. 12 specialists — triage, brainstorm, plan, execute, audit, quality, gates, review, security, heal — with evidence at every step and cost tracking. Runs inline in the main conversation.
 
 ## How it works
 
@@ -39,3 +39,9 @@ For task routing and classification, `mugiwara-orchestration` auto-loads as gate
 This skill is documentation — load manually with `/using-mugiwara` or similar trigger phrases.
 Full pipeline: see skills/mugiwara-workflow.
 First time? Run `/mugiwara onboard` for guided setup. See `content/agents/onboarding-guide.md`.
+
+## Red flags
+
+- Stating an agent or skill count that drifts from content/.
+- Claiming feature parity that contradicts the harness matrix.
+- Answering routing questions instead of deferring to mugiwara-orchestration.

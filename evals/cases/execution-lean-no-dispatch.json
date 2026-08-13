@@ -1,0 +1,19 @@
+{
+  "name": "execution-lean-no-dispatch",
+  "skill": "mugiwara-execution",
+  "type": "negative",
+  "trigger": {
+    "positive": [
+      { "prompt": "implement the todo list from the plan step by step", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "let's brainstorm the architecture first" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Lane 1 (lean), exactly 2 sequential tasks, context well under threshold.",
+      "rubric": ["inline", "no dispatch", "worker", "sequential"]
+    }
+  ]
+}

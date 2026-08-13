@@ -7,15 +7,15 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
 import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
-import { installTo, removeInstalled, VERSION } from './installer.ts';
+import { installTo, removeInstalled, VERSION, ensureProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
-import { resetMission } from './mission.ts';
+import { resetMission, archiveMission } from './mission.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
 
 export async function run(argv: string[]): Promise<void> {
-  const { command, flags } = parseArgs(argv);
+  const { command, flags, _ } = parseArgs(argv);
   if (flag(flags.help) || command === 'help') return help();
   if (flag(flags.version)) { console.log(`mugiwara ${VERSION}`); return; }
   switch (command) {
@@ -24,6 +24,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'uninstall': return uninstall(flags);
     case 'list': return list(flags);
     case 'reset': return resetCmd(flags);
+    case 'archive': return archive(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -39,6 +40,17 @@ function resetCmd(flags: Args['flags']): void {
   if (result.removed.length) console.log(`removed: ${result.removed.join(', ')}`);
   else console.log('nothing to remove.');
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
+}
+
+function archive(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const mission = positionals[1];
+  if (!mission) { console.error('usage: mugiwara archive <mission> [--project <dir>] [--dry-run]'); process.exit(1); }
+  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun) });
+  if (result.report) console.log(`archive target: ${result.report}`);
+  if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
+  if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
+  if (result.index) console.log(`index updated: ${result.index}`);
 }
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
@@ -94,6 +106,10 @@ async function install(flags: Args['flags']): Promise<void> {
     for (const n of r.notes) console.log(`   note: ${n}`);
     allFiles.push(...r.written);
     allNotes.push(...r.notes);
+  }
+  if (scope === 'project') {
+    const gi = ensureProjectGitignore(projectDir, { dryRun: flag(flags.dryRun) });
+    allNotes.push(...gi.notes);
   }
   if (flag(flags.dryRun)) { console.log('\nDry run — nothing written.'); return; }
   const file = manifestPath({ scope, projectDir, home });
@@ -182,6 +198,7 @@ Usage:
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (spec/plans/results/review/issues[/logs])
+  mugiwara archive <m>    fold a closed mission's evidence into its report, then remove loose files
   mugiwara --help        this help
   mugiwara --version     print version
 

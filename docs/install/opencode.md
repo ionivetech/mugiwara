@@ -33,7 +33,7 @@ The plugin (`mugiwara.mjs`) does four things:
 
 1. **Config hook** — registers `content/skills/` as a skills path and
    `content/agents/` as agents so OpenCode discovers the full crew
-   (26 skills + 11 agents + 3 internal) without any file copying.
+   (26 skills + 12 agents (+3 internal)) without any file copying.
 
 2. **System transform hook** — injects the crew announce header and active
    autonomy mode into every session's system prompt.
@@ -71,11 +71,17 @@ Or type `/mugiwara` to see the crew router.
 
 ## Update
 
+OpenCode pins the resolved version in its own package cache — `npm update`
+does **not** touch it. To upgrade to a newer release:
+
 ```bash
-npm update @ionivetech/mugiwara
+# global install (most common)
+rm -rf ~/.cache/opencode/packages/@ionivetech/mugiwara@latest \
+       ~/.cache/opencode/packages/@ionivetech/mugiwara
+opencode plugin @ionivetech/mugiwara -g
 ```
 
-Or bump the version constraint in `opencode.json` and restart.
+Drop `-g` for a project-level install. Then restart OpenCode.
 
 ## Uninstall
 
@@ -92,11 +98,12 @@ then restart OpenCode.
 
 ### Server error on startup
 
-Clear stale plugin cache and reinstall:
+Clear the stale plugin cache and reinstall:
 
 ```bash
-rm -rf ~/.cache/opencode/packages/@ionivetech
-npm update @ionivetech/mugiwara
+rm -rf ~/.cache/opencode/packages/@ionivetech/mugiwara@latest \
+       ~/.cache/opencode/packages/@ionivetech/mugiwara
+opencode plugin @ionivetech/mugiwara -g
 ```
 
 If it persists, file at https://github.com/ionivetech/mugiwara/issues.

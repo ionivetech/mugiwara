@@ -46,7 +46,7 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 
 **One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
 
-**Banners.** Waves open with `==================== WAVE N - CREW (SKILL) ====================` and close with `→ Wave N+1 — Crew`.
+**Banners.** Every wave opens with a visible main-thread heading `## Wave N — <crew> (<skill>)` and closes with the handoff line `→ Wave N+1 — <crew>`. No wave starts without its banner.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 
@@ -91,7 +91,7 @@ Brook reads this at Wave 8. Never silently work around a blocker.
 
 ## Cleanup (Wave 9)
 
-Delete consumed: `results/<mission>/01-execution.md`…`05-healing.md` + `todos.md`, `logs/` (except `logs/lessons.md`), `spec/`, `review/`, `issues/`. Keep: `results/<mission>/06-closure.md`, `results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — fold `results/<mission>/01..05` + `todos.md`, `logs/` (except `logs/lessons.md`), `spec/`, `review/`, `issues/` into the mission report, then remove the loose files. Keep: `results/<mission>/06-closure.md`, `results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
 
 ## Rules
 

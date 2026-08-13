@@ -65,3 +65,10 @@ Before finalizing the verdict file, scan it for secret patterns (`.env`-style li
 4. No PR is created, no auto-reaction to review comments or CI in any mode.
 5. Auth missing → local closure fallback + logged reason.
 6. Scan the verdict file for secrets before handoff; on a match, redact and log.
+
+## Red flags
+
+- Creating a PR, merging, or deploying — the crew never does.
+- Pushing the branch before the verdict file is written.
+- Verdicts asserted instead of drawn from captured evidence.
+- Leaving a secret in the verdict file before handoff.

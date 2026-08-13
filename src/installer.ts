@@ -1,5 +1,5 @@
 // src/installer.ts
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync, lstatSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -170,4 +170,40 @@ export function removeInstalled(manifest: { files: string[] }, { dryRun = false 
     }
   }
   return removed;
+}
+
+function assertNotSymlink(file: string): void {
+  if (!existsSync(file)) return;
+  try {
+    if (lstatSync(file).isSymbolicLink()) throw new Error(`refusing to follow symlink: ${file}`);
+  } catch (e) {
+    if ((e as { code?: string }).code === 'ENOENT') return;
+    throw e;
+  }
+}
+
+const GITIGNORE_MARKER = '# mugiwara';
+const GITIGNORE_BLOCK = `# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.
+# Ignore session state and regenerated files.
+.mugiwara/state.json
+.mugiwara/state-*.json
+.mugiwara/config
+.mugiwara/continue.md
+.mugiwara/refs/
+`;
+
+export function ensureProjectGitignore(projectDir: string, opts: { dryRun?: boolean } = {}): { appended: boolean; notes: string[] } {
+  const { dryRun = false } = opts;
+  const path = join(projectDir, '.gitignore');
+  assertNotSymlink(path);
+  if (existsSync(path) && readFileSync(path, 'utf8').includes(GITIGNORE_MARKER)) {
+    return { appended: false, notes: [] };
+  }
+  const existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
+  const separator = existing.length && !existing.endsWith('\n') ? '\n' : '';
+  if (!dryRun) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, existing + separator + GITIGNORE_BLOCK);
+  }
+  return { appended: true, notes: [`.gitignore ${dryRun ? 'would append' : 'appended'} mugiwara audit-trail block`] };
 }

@@ -14,7 +14,7 @@ markdown rule files everywhere else.
 | You want skills-only, any tool | `npx skills add ionivetech/mugiwara` (agentskills.io layout) |
 | You only use one niche tool | Its per-harness guide (index → install by harness) |
 
-Native targets (Claude Code, opencode, Copilot) register the 11 agents (+3 internal) directly.
+Native targets (Claude Code, opencode, Copilot) register the 12 agents (+3 internal) directly.
 Rule-based targets (Gemini, Codex, Cursor, Windsurf, Cline, Kilo, Antigravity)
 get the same 32 skills as markdown rules plus a bootstrap pointer, so the crew
 is still steered even where subagents don't exist.

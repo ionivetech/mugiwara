@@ -9,6 +9,14 @@ const here = dirname(fileURLToPath(import.meta.url));
 const HOOK_SRC = join(here, '..', '..', 'hooks', 'session-start.ts');
 const COMMANDS_SRC = join(here, '..', '..', '.claude', 'commands');
 
+// Claude Code has no path-scoped permission. write-scope maps to a partial
+// `tools:` list: artifacts agents lose Edit (cannot modify existing source)
+// but keep Write (must create .mugiwara/**); source agents get the default set.
+function toolsFromScope(scope?: string): string | undefined {
+  if (scope === 'artifacts') return 'Read, Grep, Glob, Write, Bash, WebFetch, WebSearch';
+  return undefined;
+}
+
 export const target: Target = {
   id: 'claude',
   label: 'Claude Code',
@@ -27,6 +35,10 @@ export const target: Target = {
   transformAgent(data: FrontmatterData, body: string) {
     const fm: FrontmatterData = { name: data.name, description: data.description };
     if (data.tools) fm.tools = data.tools;
+    else {
+      const generated = toolsFromScope(data['write-scope']);
+      if (generated) fm.tools = generated;
+    }
     return { relPath: `${data.name}.md`, text: stringifyFrontmatter(fm, body) };
   },
   refsDir({ scope, projectDir, home }, skillName: string) {

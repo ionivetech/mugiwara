@@ -4,10 +4,12 @@
 [![npm downloads](https://img.shields.io/npm/dm/@ionivetech%2fmugiwara)](https://www.npmjs.com/package/@ionivetech/mugiwara)
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
-**Ship quality code, not just fast code.** Mugiwara gives your AI agent a
-governed engineering team — 12 specialists who plan, build, audit, review, and
-heal — with evidence at every step. No runtime, no API keys, no servers. Just
-markdown your agent already knows how to read.
+**Your agent writes the code. Mugiwara proves it.**
+
+A governed engineering crew for your AI agent — evidence at every step, and a
+process that sizes itself to the work. A typo costs nothing. An auth migration
+gets all nine waves. No runtime, no API keys, no servers. Just markdown your
+agent already knows how to read.
 
 Works on Claude Code, opencode, Copilot, Gemini, and 8 more platforms.
 
@@ -21,43 +23,63 @@ every agent, every skill, every rule is static markdown.
 
 → [Full pitch: why mugiwara vs just asking your agent](docs/concepts/comparison.md)
 
-## What Mugiwara does
+## See the evidence
 
-### 9-wave pipeline
+A closed mission leaves a report you can actually read. This is the exact
+format `scripts/mission-report.sh` produces:
 
-```mermaid
-flowchart TB
-    L0["Luffy<br>Triage"] --> L1["Usopp<br>Brainstorm"] --> L2["Nami<br>Plan"] --> L3["Zoro<br>Execute"] --> L4["Chopper<br>Audit"]
-    L4 --> L5["Sanji<br>Quality"] --> L6["Franky<br>Gates"]
-    L6 --> L7R["Robin<br>Review"]
-    L6 --> L7J["Jinbe<br>Security"]
-    L7R --> L8["Brook<br>Heal"]
-    L7J --> L8
-    L8 --> L9["Luffy<br>Closure"]
-    L8 -. "heal ≤3 cycles" .-> L4
-```
+    # Mission: invitation-accepted-flow . 2026-08-11
 
-→ [Full pipeline details](docs/concepts/workflow.md)
+    **Lane** full . **Mode** guided . **Actor** farid . **Branch** feature/MKR-412
 
-### All features
+    ## What changed
 
-| Feature                     | What you get                                                                                    |
-| --------------------------- | ----------------------------------------------------------------------------------------------- |
-| **Lane sizing**             | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
-| **Team initiatives**        | Sub-missions with assignee + branch, shared plan doc, status tracking per sub-mission.          |
-| **Sonar-style quality**     | Duplication %, complexity, maintainability rating (A–E), code attributes, per-condition gate.   |
-| **STRIDE + OWASP security** | Threat modeling, secret scan, injection check, SCA license, hotspot review.                     |
-| **Self-healing**            | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
-| **3 autonomy modes**        | guided (ask) / semi (auto branch+commit) / auto (hands-off). Flip mid-session.                  |
-| **Configurable depth**      | `review_depth` + `quality_depth`: full / standard / quick. Set per project.                     |
-| **Resume from anywhere**    | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.                  |
-| **Onboarding wizard**       | 10 questions — project type, team size, mode, depth. `/mugiwara onboard`.                       |
-| **Evidence trail**          | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
-| **12 platforms**            | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
-| **Cost tracking**           | Token budget per lane. Warn at 1.5×, pause at 3×. Surfaced in mission reports.                  |
-| **Multi-actor safe**        | Branch-scoped state. Two engineers, one repo. Reset refuses without `--force`.                  |
+    11 files, +340 LOC
+    Sensitive paths: src/auth/
 
-→ [Every feature, explained with how-to-use + scenarios](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+    ## Waves
+
+    | Wave | Artifact | Verdict |
+    |------|----------|---------|
+    | Execute (Wave 3) | `01-execution.md` | PASS |
+    | Checkpoint (Wave 4) | `02-audit.md` | PASS |
+    | Quality (Wave 5) | `03-quality.md` | PASS |
+    | Gates (Wave 6) | `04-gates.md` | PASS |
+    | Healing (Wave 8) | `05-healing.md` | PASS |
+    | Closure (Wave 9) | `06-closure.md` | GO |
+
+    ## Review & blockers
+
+    Review + security files: invitation-accepted-flow-review.md, invitation-accepted-flow-security.md
+    Findings: 3
+    Blocker ledger rows: 1
+
+    ## State
+
+    | Field | Value |
+    |-------|-------|
+    | Wave | 9 |
+    | Tasks | 6/6 done |
+    | Blockers open | 0 |
+    | Heal cycles | 1 |
+    | Tokens used | 14,200 / 20,000 |
+
+## Lanes
+
+Work is sized to the diff — a typo gets no pipeline, an auth migration gets
+all nine waves. Mugiwara itself is free; token usage depends on the lane:
+
+| Lane                | Waves | Typical tokens |
+| ------------------- | :---: | :------------: |
+| Direct (typo)       |   0   |       ~0       |
+| Lean (small bug)    |   2   |      ~4k       |
+| Standard (feature)  |  5–7  |      ~10k      |
+| Full (architecture) | 9–11  |      ~20k      |
+
+Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
+pauses at 3×.
+
+→ [Full cost model](docs/concepts/cost.md)
 
 ## 30-second try
 
@@ -85,10 +107,6 @@ A Standard lane mission (~10k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
 at every step in your chat.
 
-→ [Full walkthrough](docs/getting-started.md)
-
-## How it works
-
 You ask. The crew routes automatically. **No agent names to memorize, no
 pipeline config to write.**
 
@@ -104,11 +122,41 @@ pipeline config to write.**
 - **Direct agent** when you know exactly what you need — say the name
 - **Slash commands** when you want to drive: `/mugiwara-plan`, `/mugiwara-review`, `/mugiwara-security`, `/mugiwara-ship`, `/mugiwara onboard`
 
-→ [Full workflow walkthrough](docs/concepts/workflow.md)
+→ [Full walkthrough](docs/getting-started.md) · [Full workflow walkthrough](docs/concepts/workflow.md)
+
+## What Mugiwara does
+
+### All features
+
+| Feature                  | What you get                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------- |
+| **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.   |
+| **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.  |
+| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.         |
+| **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.    |
+
+→ All 19 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+
+## The pipeline
+
+```mermaid
+flowchart TB
+    L0["Luffy<br>Triage"] --> L1["Usopp<br>Brainstorm"] --> L2["Nami<br>Plan"] --> L3["Zoro<br>Execute"] --> L4["Chopper<br>Audit"]
+    L4 --> L5["Sanji<br>Quality"] --> L6["Franky<br>Gates"]
+    L6 --> L7R["Robin<br>Review"]
+    L6 --> L7J["Jinbe<br>Security"]
+    L7R --> L8["Brook<br>Heal"]
+    L7J --> L8
+    L8 --> L9["Luffy<br>Closure"]
+    L8 -. "heal ≤3 cycles" .-> L4
+```
+
+→ [Full pipeline details](docs/concepts/workflow.md)
 
 ## The crew
 
-12 user-facing specialists (+3 internal). Each has role boundaries — auditors
+12 agents (+3 internal). Each has role boundaries — auditors
 and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 | Agent                | Role                                                                                    |  Permission   |
@@ -136,21 +184,15 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
-## How much it costs
+## When not to use Mugiwara
 
-Mugiwara itself is free. Token usage depends on mission lane:
-
-| Lane                | Waves | Typical tokens |
-| ------------------- | :---: | :------------: |
-| Direct (typo)       |   0   |       ~0       |
-| Lean (small bug)    |   2   |      ~4k       |
-| Standard (feature)  |  5–7  |      ~10k      |
-| Full (architecture) | 9–11  |      ~20k      |
-
-Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
-pauses at 3×.
-
-→ [Full cost model](docs/concepts/cost.md)
+- **Prototyping or spikes** — use Lane 4, or skip mugiwara entirely.
+- **Unattended multi-hour runs** — the crew runs inline so you can interrupt it.
+  If you want to walk away, superpowers' subagent-driven-development is built
+  for that.
+- **Solo scripts with no review path** — the audit trail has no audience.
+- **Harnesses without agent dispatch** (Gemini, Codex, tier 3) — you get the
+  workflow and the trail, not enforced role boundaries.
 
 ## Configuration
 
@@ -208,6 +250,8 @@ Add to `opencode.json`:
 ```json
 { "plugin": ["@ionivetech/mugiwara"] }
 ```
+
+Update: `rm -rf ~/.cache/opencode/packages/@ionivetech/mugiwara* && opencode plugin @ionivetech/mugiwara -g` ([details](docs/install/opencode.md#update))
 
 Uninstall: remove `"@ionivetech/mugiwara"` from `opencode.json` plugins array
 
@@ -315,20 +359,29 @@ Uninstall: `mugiwara uninstall`
 
 </details>
 
-All platforms get the full crew — 12 agents, 26 skills (+3 internal agents).
-No per-platform feature gaps.
+All platforms get the full crew — 12 agents (+3 internal), 26 skills.
+Enforcement depth varies by harness; see the [harness matrix](docs/reference/harness-matrix.md).
 
 → [Per-platform guides](docs/install/index.md)
 
 ## Update
 
 ```bash
-npm update @ionivetech/mugiwara                           # npm-based
-/plugin update mugiwara                                   # marketplace-based
-# Reinstall with same install command                     # GitHub-based
+# opencode — clear the pinned cache, then reinstall (npm update alone does NOT work)
+rm -rf ~/.cache/opencode/packages/@ionivetech/mugiwara* && opencode plugin @ionivetech/mugiwara -g
+
+# Claude Code — marketplace
+/plugin update mugiwara
+
+# CLI — npm global
+npm i -g @ionivetech/mugiwara@latest
 ```
 
-→ [Full update reference](docs/install/index.md)
+OpenCode pins the resolved version in its own package cache, so `npm update`
+never touches it. Reinstall with the same command for GitHub-based plugins
+(Gemini, Codex, Copilot, Cursor, Kimi, Pi, Antigravity).
+
+→ [Per-platform guides](docs/install/index.md)
 
 ## CLI
 

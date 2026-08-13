@@ -1,11 +1,11 @@
 // test/installer.test.ts
-import { test, expect } from 'vitest';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
+import { test, describe, expect } from 'vitest';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
 import { resetMission } from '../src/mission.ts';
-import { collectContent, installTo, removeInstalled, type Target, type InstallOptions } from '../src/installer.ts';
+import { collectContent, installTo, removeInstalled, ensureProjectGitignore, type Target, type InstallOptions } from '../src/installer.ts';
 import { targets } from '../src/targets/index.ts';
 
 const fakeTarget: Target = {
@@ -396,6 +396,61 @@ test('resetMission on missing .mugiwara returns empty', () => {
   const result = resetMission(dir, false);
   expect(result.removed).toHaveLength(0);
   expect(result.kept).toHaveLength(0);
+});
+
+describe('ensureProjectGitignore', () => {
+  test('fresh dir creates .gitignore with the audit-trail block', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi-'));
+    try {
+      const r = ensureProjectGitignore(dir);
+      expect(r.appended).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).toContain('.mugiwara/refs/');
+      expect(text).toContain('.mugiwara/state.json');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('idempotent — second call appends nothing, content unchanged', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi2-'));
+    try {
+      ensureProjectGitignore(dir);
+      const first = readFileSync(join(dir, '.gitignore'), 'utf8');
+      const r2 = ensureProjectGitignore(dir);
+      expect(r2.appended).toBe(false);
+      expect(r2.notes).toHaveLength(0);
+      expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe(first);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('merges — pre-existing unrelated lines are kept and block is added', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi3-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'node_modules/\ndist/\n');
+      const r = ensureProjectGitignore(dir);
+      expect(r.appended).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).toContain('node_modules/');
+      expect(text).toContain('dist/');
+      expect(text).toContain('.mugiwara/refs/');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('dry-run reports appended but writes nothing', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi4-'));
+    try {
+      const r = ensureProjectGitignore(dir, { dryRun: true });
+      expect(r.appended).toBe(true);
+      expect(existsSync(join(dir, '.gitignore'))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 test('resetMission preserve keeps logs when keepLogs is true', () => {
