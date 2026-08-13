@@ -53,6 +53,22 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
   expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-workflow');
 });
 
+test('L1: claude transformAgent generates tools from write-scope', () => {
+  const artifacts = targets.claude.transformAgent(
+    { name: 'usopp-brainstorm', description: 'x', 'write-scope': 'artifacts' } as never,
+    'BODY\n'
+  )!;
+  const source = targets.claude.transformAgent(
+    { name: 'zoro-execution', description: 'x', 'write-scope': 'source' } as never,
+    'BODY\n'
+  )!;
+  const a = parseFrontmatter(artifacts.text).data;
+  const s = parseFrontmatter(source.text).data;
+  expect(a.tools).toBe('Read, Grep, Glob, Write, Bash');
+  expect(a.tools).not.toContain('Edit');
+  expect(s.tools).toBeUndefined();
+});
+
 test('0-8 conformance: every target install lands skills, agents, and references', () => {
   for (const id of TARGET_IDS) {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-conf-' + id + '-'));
