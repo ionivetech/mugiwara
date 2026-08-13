@@ -53,20 +53,34 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
   expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-workflow');
 });
 
-test('L1: claude transformAgent generates tools from write-scope', () => {
-  const artifacts = targets.claude.transformAgent(
+test('L1: claude transformAgent restricts tools only for internal agents', () => {
+  const userFacing = targets.claude.transformAgent(
     { name: 'usopp-brainstorm', description: 'x', 'write-scope': 'artifacts' } as never,
+    'BODY\n'
+  )!;
+  const internal = targets.claude.transformAgent(
+    { name: 'skeptic-verifier', description: 'x', 'internal-agent': 'true', 'write-scope': 'artifacts' } as never,
     'BODY\n'
   )!;
   const source = targets.claude.transformAgent(
     { name: 'zoro-execution', description: 'x', 'write-scope': 'source' } as never,
     'BODY\n'
   )!;
-  const a = parseFrontmatter(artifacts.text).data;
+  const u = parseFrontmatter(userFacing.text).data;
+  const i = parseFrontmatter(internal.text).data;
   const s = parseFrontmatter(source.text).data;
-  expect(a.tools).toBe('Read, Grep, Glob, Write, Bash, WebFetch, WebSearch');
-  expect(a.tools).not.toContain('Edit');
+  expect(u.tools).toBeUndefined(); // user-facing crew keep default toolset incl. Edit
+  expect(i.tools).toBe('Read, Grep, Glob, Write, Bash, WebFetch, WebSearch');
+  expect(i.tools).not.toContain('Edit');
   expect(s.tools).toBeUndefined();
+});
+
+test('L1: claude transformAgent keeps explicit tools frontmatter over generated', () => {
+  const out = targets.claude.transformAgent(
+    { name: 'skeptic-verifier', description: 'x', 'internal-agent': 'true', 'write-scope': 'artifacts', tools: 'Read' } as never,
+    'BODY\n'
+  )!;
+  expect(parseFrontmatter(out.text).data.tools).toBe('Read');
 });
 
 test('0-8 conformance: every target install lands skills, agents, and references', () => {
@@ -158,23 +172,42 @@ test('2-16 tier-2 targets keep full bodies in the rules dir (bootstrap pointer)'
   }
 });
 
-test('write-boundary: opencode artifacts agent gets deny-all-edit except .mugiwara/** (cases 2+4)', () => {
+test('write-boundary: opencode user-facing crew get no permission block (rules-based)', () => {
   const out = targets.opencode.transformAgent(
     { name: 'usopp-brainstorm', description: 'x', 'write-scope': 'artifacts' } as never,
     'BODY\n'
   )!;
+  expect(out.text).not.toContain('permission:');
+  expect(out.text).toContain('mode: all');
+  expect(out.text).toContain("color:");
+});
+
+test('write-boundary: opencode internal agents keep permission from write-scope (cases 2+4)', () => {
+  const out = targets.opencode.transformAgent(
+    { name: 'skeptic-verifier', description: 'x', 'internal-agent': 'true', 'write-scope': 'artifacts' } as never,
+    'BODY\n'
+  )!;
+  expect(out.text).toContain('[INTERNAL] x');
   expect(out.text).toContain('permission:');
   expect(out.text).toContain('edit:');
   expect(out.text).toContain('"*": deny');
   expect(out.text).toContain('".mugiwara/**": allow');
 });
 
-test('write-boundary: opencode source agent gets full edit allow (case 5)', () => {
+test('write-boundary: opencode internal source agent gets full edit allow (case 5)', () => {
+  const out = targets.opencode.transformAgent(
+    { name: 'skeptic-verifier', description: 'x', 'internal-agent': 'true', 'write-scope': 'source' } as never,
+    'BODY\n'
+  )!;
+  expect(out.text).toContain('edit: allow');
+});
+
+test('write-boundary: opencode user-facing source agent gets no permission block', () => {
   const out = targets.opencode.transformAgent(
     { name: 'zoro-execution', description: 'x', 'write-scope': 'source' } as never,
     'BODY\n'
   )!;
-  expect(out.text).toContain('edit: allow');
+  expect(out.text).not.toContain('permission:');
 });
 
 test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {
