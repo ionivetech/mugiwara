@@ -20,7 +20,7 @@ Subagents lie. No evidence = not complete. A "done" claim is a starting point, n
 
 For every task in the completed wave, in order:
 
-1. **Per-task audit table.** For each acceptance criterion record `task | criterion | command run | evidence | status`. Evidence is output or a file path — never a paraphrase.
+1. **Per-task audit table.** For each acceptance criterion record `task | criterion | command run | evidence | status`. Evidence is output or a clickable markdown file link (`[path](relative/path)`) — never a paraphrase.
 2. **Dedupe re-runs.** Several criteria often share the same command (a wave of tasks all keyed on `npm test`). Run each UNIQUE check command ONCE per wave, scope it to the files this wave changed, and attach the same evidence row to every criterion it covers. Do not re-run the same suite N times for N tasks.
 3. **Scope by diff.** Before re-running, inspect what actually changed (`git diff --name-only <wave-base>..HEAD`). Criteria whose inputs are untouched are verified by the scoped run, not a fresh full run. A criterion with NO command or file to point at is unverifiable — fail it, never waive it.
 4. **Commit hygiene.** Run `git log --stat <wave-base>..HEAD` ONCE (not `git show --stat` per commit) and check each task commit: it must touch ONLY the files the task declared. Undeclared files added or declared files missing = fail.

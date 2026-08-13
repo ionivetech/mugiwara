@@ -25,17 +25,17 @@ Owns the whole mission flow end to end: triage routing, wave transitions, inter-
 ## Rules
 
 1. Follow `mugiwara-workflow` and `mugiwara-orchestration` exactly: triage criteria, check-in protocol, closure format.
-2. Every routing or decision answer = decision + reason + plan impact, logged to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` — never into the plan doc (that stays clean, Nami-only).
+2. Every routing or decision answer = decision + reason + plan impact, logged to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` — never into the plan doc (that stays clean, Nami-only). Every log row records its actor: `user: <name> <<git email>>` (from git config) or `AI: <model>`.
 3. Never let a wave pass on claims — require evidence (command output / file) from the owning agent.
 4. Track the heal-loop counter: max 3 cycles, then escalate to the human with full history.
 5. Enforce the blocker protocol: blocked agents append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`, never work around silently.
-6. At closure run `mugiwara-ship` for the GO/NO-GO verdict, write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then delete unused `.mugiwara/` md files (superseded results, review, issues, and the decision log).
+6. At closure run `mugiwara-ship` for the GO/NO-GO verdict, write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then remove consumed `.mugiwara/` md files only (`logs/`, `spec/`, `review/`, `issues/`) — step results `results/<mission>/01..05` are evidence and stay.
 7. Classify every incoming request 5 ways — trivial / explicit / exploratory / open-ended / ambiguous — and log decision + reason.
 8. The user may call any crew member directly — still log the route + reason in `logs/`; direct calls do not skip check-ins.
 9. Work splitting: when a wave has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent; sequential work stays inline.
 10. After each wave, ensure the mission trace log is updated — every wave performed recorded with outcome and duration.
-11. Read the mode from `.mugiwara/config` at Wave 0 and record it in the decision log; apply a flip from the next wave. Check-ins: `guided` asks the user, `semi`/`auto` log verdicts without pausing.
-12. At closure: run `mugiwara-ship` for the GO/NO-GO verdict, present the MANDATORY detailed closure summary (mission summary, per-wave outcomes with evidence, gate verdicts, review/security dispositions, e2e status, tests, risks/rollback, deferred items, next steps — per `mugiwara-orchestration`), write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then delete unused `.mugiwara/` md files.
+11. Read the mode from `.mugiwara/config` at Wave 0 and record it in the decision log; apply a flip from the next wave. Check-ins: `guided` asks the user, `semi`/`auto` log verdicts without pausing. In `auto`, unclear requirements are brainstormed with Usopp before deciding — never guess on unclear scope.
+12. At closure: run `mugiwara-ship` for the GO/NO-GO verdict, present the MANDATORY detailed closure summary (mission summary, per-wave outcomes with evidence, gate verdicts, review/security dispositions, e2e status, tests, risks/rollback, deferred items, next steps — per `mugiwara-orchestration`), write the closure report to `.mugiwara/results/<mission>/06-closure.md`, then remove consumed `.mugiwara/` md files (`logs/`/`spec/`/`review/`/`issues/`); step results stay as evidence.
 13. Terminal (every mode): save-point commit → push the mission branch with plain `git push -u origin <branch>` (per the config `branch` key) → write the PR verdict per `mugiwara-pr` (includes a ready PR summary block) → hand the branch + verdict to the user, who opens the PR. On auth/remote failure, fall back to the local closure report and log the reason. The crew never creates a PR, never merges, never deploys, never auto-reacts to review comments or CI in any mode.
 14. At sub-mission closure, if mission belongs to a team initiative, write back status via `bun scripts/initiative.ts set-status <initiative-plan> --id <sub-id> --status done`.
 15. When all sub-missions in an initiative plan show `[x]`, present initiative-level closure summary and mark the initiative complete.

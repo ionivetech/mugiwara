@@ -44,7 +44,7 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 ## Binary verdict
 
 1. Verdict is GO or NO-GO. No "GO with caveats", no "almost".
-2. Every checklist item cites evidence: command output, file, or commit.
+2. Every checklist item cites evidence as a clickable link: `[command output](path)`, `[file](path)`, or a commit hash.
 3. A critical finding at any stage → NO-GO. Non-critical findings → list them, decide ship-with-tracking or fix-first, and record which.
 4. Write the verdict and evidence to `.mugiwara/results/<mission>/06-closure.md`.
 

@@ -13,6 +13,8 @@ agent already knows how to read.
 
 Works on Claude Code, opencode, Copilot, Gemini, and 8 more platforms.
 
+![Mugiwara banner](assets/banner.png)
+
 ## Why this exists
 
 AI agents are fast. They're also **unverified.** No audit trail. No review. No

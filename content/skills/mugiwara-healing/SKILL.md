@@ -1,6 +1,6 @@
 ---
 name: mugiwara-healing
-description: Use when earlier waves produced failures, broken things to fix — reads blocker ledger, stop-the-line triage, root-cause fixes, prove-it before fixing. Max 3 cycles.
+description: Use when an execution wave failed, earlier waves produced failures, broken things to fix — reads blocker ledger, stop-the-line triage, root-cause fixes, prove-it before fixing. Max 3 cycles.
 ---
 
 # Healing (Brook)

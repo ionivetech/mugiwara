@@ -76,6 +76,7 @@ Luffy classifies every request 8 ways:
 Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
 
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/logs/`.
+Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
 
 ## Session handoff
 
@@ -91,7 +92,7 @@ Brook reads this at Wave 8. Never silently work around a blocker.
 
 ## Cleanup (Wave 9)
 
-Archive, never delete: run `mugiwara archive <mission>` — fold `results/<mission>/01..05` + `todos.md`, `logs/` (except `logs/lessons.md`), `spec/`, `review/`, `issues/` into the mission report, then remove the loose files. Keep: `results/<mission>/06-closure.md`, `results/<mission>/07-pr-verdict.md`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — folds `logs/`, `spec/`, `review/`, `issues/` into the mission report and removes the loose files. Step results `results/<mission>/01..05` + `todos.md` are EVIDENCE — KEEP them in place; they feed `reports/` and closure links. Keep: everything under `results/<mission>/`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
 
 ## Rules
 
@@ -106,6 +107,7 @@ Archive, never delete: run `mugiwara archive <mission>` — fold `results/<missi
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh.
+Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact. Step results in results/<mission>/01..05 are EVIDENCE: never deleted at cleanup, they feed the mission report.
 
 ## Red flags
 

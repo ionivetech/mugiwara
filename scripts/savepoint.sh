@@ -7,6 +7,14 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
+# --- git identity for actor attribution ---
+# Resolve once from repo git config; used when no actor is passed explicitly.
+# GIT_AUTHOR_NAME is an env var usually unset — falling through to $USER
+# attributes the savepoint to the OS user instead of the git identity.
+GIT_NAME="$(git config user.name 2>/dev/null || true)"
+GIT_EMAIL="$(git config user.email 2>/dev/null || true)"
+if [ -n "$GIT_NAME" ] && [ -n "$GIT_EMAIL" ]; then GIT_ID="$GIT_NAME <$GIT_EMAIL>"; else GIT_ID="$GIT_NAME"; fi
+
 # --- parse mission args ---
 # --branch flag must parse FIRST — it shifts positionals
 BRANCH_MODE=0
@@ -14,13 +22,13 @@ if [ "${1:-}" = "--branch" ]; then
   BRANCH_MODE=1
   shift
   MISSION="${1:-${STATE_MISSION:-}}"
-  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
+  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"
   BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
   WAVE="${4:-${STATE_WAVE:-1}}"
   MODE="${5:-${STATE_MODE:-guided}}"
 else
   MISSION="${1:-${STATE_MISSION:-}}"
-  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${USER:-}}}}"
+  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"
   BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
   WAVE="${4:-${STATE_WAVE:-1}}"
   MODE="${5:-${STATE_MODE:-guided}}"

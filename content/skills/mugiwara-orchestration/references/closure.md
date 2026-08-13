@@ -8,7 +8,7 @@ Read after deciding to close a mission — never mid-argument.
 Present a detailed summary to the user — never a one-liner:
 
 - Mission summary — goal, mode, waves, task count.
-- Per-wave outcome table — wave, tasks, status, evidence pointer.
+- Per-wave outcome table — wave, tasks, status, evidence link (clickable `[path](relative/path)`). Step results `results/<mission>/01..05` are evidence — never deleted at cleanup.
 - Gate verdicts — quality, gates (coverage/build/DoD), review + security findings with dispositions, e2e (run / skipped + why).
 - Tests — unit/integration results; ATDD oracle verdict when user tests were declared.
 - Risks / rollback — remaining risk and the rollback path (revert commit / feature flag).

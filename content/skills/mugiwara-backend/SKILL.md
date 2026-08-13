@@ -1,6 +1,6 @@
 ---
 name: mugiwara-backend
-description: Use for backend/server code — repo standards first, API design, data integrity, error handling, source-backed code. Match the codebase before judging it.
+description: Use for backend/server code — repo standards first, API endpoint design, data integrity, error handling, source-backed code. Match the codebase before judging it.
 ---
 
 # Backend (Sanji)

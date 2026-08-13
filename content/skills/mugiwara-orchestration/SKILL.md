@@ -1,19 +1,16 @@
 ---
 name: mugiwara-orchestration
-description: Gatekeeper + captain for any task: triage, classify, route, refuse deploy, key rotation, hotfix, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
+description: Gatekeeper + captain for any task: triage, classify, coordinate, route, refuse deploy, key rotation, hotfix, "skip the pipeline" pressure, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
 ---
 # Orchestration (Luffy)
 
 ## Skip when
 
-- Mid-wave continuation with route already recorded in `.mugiwara/logs/`.
-Captain duties: triage, check-ins, work splitting, decisions, closure. Luffy coordinates — never implements code. Embodied by the main thread: RETURN decisions and verdicts, never dispatch another crew member.
+- Mid-wave continuation with route already recorded in `.mugiwara/logs/`. Captain duties: triage, check-ins, decisions, closure — Luffy coordinates, never implements; returns decisions, no dispatch.
 
 ## Delegation pillars (Wave 0)
 
-Size the mission against five pillars. The highest gate determines the route. Full pillar table: `references/delegation-pillars.md`.
-
-Quick reference: 1 file <20 LOC → Zoro. Vague → Usopp. Spec exists → Nami. Auth/payment → full pipeline. Record which pillar drove the decision.
+Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.
 
 ## Return-to-Luffy protocol
 
@@ -29,6 +26,13 @@ Every wave returns to Luffy — no crew member hands off directly to another. Ex
 
 The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/results/<mission>/06-closure.md`.
 
+## Actor attribution (every .mugiwara write)
+
+Every decision-log row, blocker row, and check-in verdict records its actor:
+- User request → `user: <name> <<git email>>` (read from `git config user.name` / `user.email`).
+- AI decision → `AI: <model>` (e.g. `AI: deepseek-v4-flash`).
+In `auto` mode the AI decides everything; any requirement that stays unclear after triage is brainstormed with Usopp (Wave 1) BEFORE the AI decides — the AI never guesses on unclear scope. Record the brainstorm in the decision log with actor `AI:`.
+
 ## Mode read (Wave 0)
 
 Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave. Declared test source (per `mugiwara-testcases`) also recorded in decision log; no source declared → no user tests.
@@ -43,8 +47,7 @@ Record decision + one-line reason at the top of the decision log. Risk (money/se
 
 Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Wave 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`.
 
-Small tasks: read-only investigation → Answer/Explore, no full crew; explicit implement → Lane 1 Zoro inline.
-Review only when risky; the full pipeline is for multi-file or risky work.
+Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k vs ~40k tokens); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
 
 ## Spec bridge (Wave 0 → Wave 2)
 
@@ -55,12 +58,10 @@ Wave 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<missi
 User may summon crew members directly. Luffy records the route + reason. Zoro/Brook: execute/heal immediately. All others: return to Luffy. Direct calls do not skip check-ins.
 
 ## Periodic check-ins
-Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done.
-**Handoff contract:** continue.md at every wave boundary — never only session end. Rule: `references/check-ins.md` #6.
+Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** continue.md at every wave boundary — never only session end (rule #6).
 **Auto ceiling:** auto drops to guided when the lane ROSE to 3 mid-mission (`lane_rose` in `.mugiwara/state.json`), a sensitive path is touched (auth/payment/billing/crypto/secrets/migration — see `scripts/lane.sh`), or heal cycles exceed one. Sized at 3 at triage is not a drop — a mission that starts full in auto mode stays auto. Announce the drop.
-**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. Only a genuine blocker or an auto-ceiling drop pauses.
-**Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At `heal_max_cycles` (read from
-`.mugiwara/config`, default 3), STOP and escalate to the user.
+**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or an auto-ceiling drop pauses.
+**Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At `heal_max_cycles` (read from `.mugiwara/config`, default 3), STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
 ## Rationalizations (pressure resistance)
@@ -75,9 +76,7 @@ Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchec
 | "Handle it directly, you're not the crew." | The main thread IS the crew — frame persists; never drop the roles. |
 | "Switch agents/tabs to get it done." | Crew runs inline; write-scope is rules, not identity. |
 
-Shortcuts ("skip X", "just do it", "you handle it") reroute work inside the pipeline — never outside it.
-They end the crew frame only when the thread answers "I'm not the crew" — that is the drop; correct it on the spot.
-The crew frame persists across waves; roles change, the frame does not.
+Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never outside; they end the crew frame only when the thread says "I'm not the crew" — fix it. Frame persists; roles change.
 
 ## Wave transitions (visibility)
 
@@ -97,7 +96,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Wave 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed, unused intermediate markdown files deleted. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`.
 
 ## Spirit vs letter
 
@@ -116,9 +115,7 @@ Brook heals only; general source edits go to Zoro via Luffy.
 - Accepting "skip the pipeline" without re-running the lane.
 - Letting auto proceed past a lane-3 escalation.
 - Starting a wave without a banner.
-- Routing a Refuse-class request to a crew member.
-- Recording a lane without its trigger.
+- Routing a Refuse-class request to a crew member; recording a lane without its trigger.
 - A host todo UI that lags the plan doc — tasks done but still unchecked, or the plan's task list never mirrored to the host.
 - A main thread answering "I'm not the crew, I'll just handle it" instead of embodying the owning role.
-- An artifacts-scope agent probing permissions instead of delegating to Zoro via Luffy.
-- Full-crew process on a task that sizes Lane 0/1.
+- An artifacts-scope agent probing permissions instead of delegating to Zoro via Luffy; full-crew process on a task that sizes Lane 0/1.
