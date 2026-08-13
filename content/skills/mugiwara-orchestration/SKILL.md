@@ -1,6 +1,6 @@
 ---
 name: mugiwara-orchestration
-description: Gatekeeper + captain for any task: triage, classify, route, refuse deploy, key rotation, hotfix, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
+description: Gatekeeper + captain for any task: triage, classify, coordinate, route, refuse deploy, key rotation, hotfix, "skip the pipeline" pressure, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
 ---
 # Orchestration (Luffy)
 

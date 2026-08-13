@@ -1,6 +1,6 @@
 ---
 name: mugiwara-claim-audit
-description: Use for in-flight decisions cheap to verify now, costly later — CLAIM, EXTRACT, DOUBT, RECONCILE, STOP. Find what is wrong, do NOT validate.
+description: Use to double-check a done claim or in-flight decisions cheap to verify now, costly later — CLAIM, EXTRACT, DOUBT, RECONCILE, STOP. Find what is wrong, do NOT validate.
 ---
 
 # Doubt-driven development

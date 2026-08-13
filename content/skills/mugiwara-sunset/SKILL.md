@@ -1,6 +1,6 @@
 ---
 name: mugiwara-sunset
-description: Use when removing, deleting, deprecating old code, legacy APIs, v1 endpoints — keep-or-retire gate, safe DB migrations, phased cutovers. Every removal needs a plan.
+description: Use when removing old code, legacy APIs, v1 endpoints — every removal needs a plan.
 ---
 
 # Deprecation & Migration (Brook)
