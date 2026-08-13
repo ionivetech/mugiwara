@@ -50,7 +50,7 @@ Record decision + one-line reason at the top of the decision log. Risk (money/se
 
 Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Wave 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`.
 
-Small tasks: read-only investigation → Answer/Explore, no full crew; explicit implement → Lane 1 Zoro inline.
+Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k vs ~40k tokens); explicit implement → Lane 1 Zoro inline.
 Review only when risky; the full pipeline is for multi-file or risky work.
 
 ## Spec bridge (Wave 0 → Wave 2)

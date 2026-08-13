@@ -76,6 +76,7 @@ Luffy classifies every request 8 ways:
 Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
 
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/logs/`.
+Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
 
 ## Session handoff
 
