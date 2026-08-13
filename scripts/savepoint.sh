@@ -7,6 +7,18 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
+# lane ordering: direct < lean < standard < full < spike (spike resizes, not a rise)
+lane_rank() {
+  case "$1" in
+    direct) echo 0 ;;
+    lean) echo 1 ;;
+    standard) echo 2 ;;
+    full) echo 3 ;;
+    spike) echo 4 ;;
+    *) echo 0 ;;
+  esac
+}
+
 # --- git identity for actor attribution ---
 # Resolve once from repo git config; used when no actor is passed explicitly.
 # GIT_AUTHOR_NAME is an env var usually unset — falling through to $USER
@@ -119,6 +131,42 @@ if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ];
   fi
 fi
 
+# --- lane-rise compare (F9) + monotonic clamp (D2): read previous state ---
+# Clamp runs here — before LANE_BASE/BUDGET — so tokens and budget follow the
+# held lane, never the raw shrunken one.
+LANE_PREV=""
+LANE_PEAK=""
+LANE_ROSE=false
+PREV_MISSION=""
+if [ -f "$STATE_FILE" ]; then
+  PREV_JSON=$(node -e "try{const fs=require('fs');const s=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(JSON.stringify({mission:s.mission||'',lane:s.lane||'',peak:s.lane_peak||''}))}catch(e){process.stdout.write('{}')}" "$STATE_FILE" 2>/dev/null || true)
+  PREV_MISSION=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).mission||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+  LANE_PREV=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).lane||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+  LANE_PEAK=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).peak||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+fi
+# fresh mission resets the clamp: a different mission in state.json is a new
+# run, not a lane drop — no carry-over of peak or prev (case 10).
+if [ -n "$PREV_MISSION" ] && [ "$PREV_MISSION" != "$MISSION" ]; then
+  LANE_PREV=""
+  LANE_PEAK=""
+fi
+# monotonic clamp: never drop below the previous peak; spike is a resize, not a rise.
+if [ -n "$LANE_PEAK" ] && [ "$LANE_PEAK" != "spike" ] && [ "$(lane_rank "$LANE")" -lt "$(lane_rank "$LANE_PEAK")" ]; then
+  LANE="$LANE_PEAK"
+  LANE_REASON="$LANE_REASON (held at peak $LANE — clamp D2)"
+fi
+if [ -z "$LANE_PEAK" ] || [ "$LANE_PEAK" = "spike" ]; then
+  LANE_PEAK="$LANE"
+elif [ "$(lane_rank "$LANE")" -gt "$(lane_rank "$LANE_PEAK")" ]; then
+  LANE_PEAK="$LANE"
+fi
+if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
+  case "$LANE_PREV:$LANE" in
+    direct:lean|direct:standard|direct:full|lean:standard|lean:full|standard:full) LANE_ROSE=true ;;
+    *) LANE_ROSE=false ;;
+  esac
+fi
+
 # task counts from plan doc — plan is written date-prefixed (plans/YYYY-MM-DD-<mission>.md)
 # or bare (plans/<mission>.md); glob both, first match wins.
 PLAN_FILE=$(ls "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md 2>/dev/null | head -1 || true)
@@ -208,20 +256,6 @@ fi
 
 mkdir -p "$MUGIWARA_DIR"
 
-# --- lane-rise compare (F9): read previous state, flag escalation ---
-LANE_PREV=""
-LANE_ROSE=false
-if [ -f "$STATE_FILE" ]; then
-  LANE_PREV=$(node -e "try{const fs=require('fs');const s=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(s.lane||'')}catch(e){process.stdout.write('')}" "$STATE_FILE" 2>/dev/null || true)
-  if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
-    # lane order: direct < lean < standard < full < spike (spike resizes, not a rise)
-    case "$LANE_PREV:$LANE" in
-      direct:lean|direct:standard|direct:full|lean:standard|lean:full|standard:full) LANE_ROSE=true ;;
-      *) LANE_ROSE=false ;;
-    esac
-  fi
-fi
-
 node -e "
 const data = {
   mission: process.argv[1],
@@ -230,6 +264,7 @@ const data = {
   lane: process.argv[4],
   lane_reason: process.argv[5],
   lane_prev: process.argv[24] || null,
+  lane_peak: process.argv[27] || null,
   lane_rose: process.argv[25] === 'true',
   wave: parseInt(process.argv[6], 10),
   mode: process.argv[7],
@@ -257,7 +292,7 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE"
+  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

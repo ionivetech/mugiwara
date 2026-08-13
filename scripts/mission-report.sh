@@ -56,6 +56,7 @@ const val = (obj, key, dflt) => {
 const now = new Date().toISOString().slice(0, 10);
 const reportFile = path.join(reportDir, now + "-" + mission + ".md");
 const lane = val(s, 'lane', 'n/a');
+const lanePeak = val(s, 'lane_peak', 'n/a');
 const laneReason = val(s, 'lane_reason', 'n/a');
 const mode = val(s, 'mode', 'n/a');
 const actor = val(s, 'actor', 'n/a');
@@ -213,6 +214,7 @@ report += "## Mission header\n\n| Field | Value |\n|-------|-------|\n";
 report += "| Mission | " + mission + " |\n";
 report += "| Branch | " + branch + " |\n";
 report += "| Lane | " + lane + " |\n";
+report += "| Lane peak | " + lanePeak + " |\n";
 report += "| Lane reason | " + laneReason + " |\n";
 report += "| Mode | " + mode + " |\n";
 report += "| Wave | " + wave + " |\n";
