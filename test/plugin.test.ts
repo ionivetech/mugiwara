@@ -1,5 +1,6 @@
 // test/plugin.test.ts
 import { test, expect } from 'vitest';
+import { execSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -92,7 +93,35 @@ test('config hook applies per-agent opencode tuning (color/temp/steps)', async (
   expect(luffy.temperature).toBe(0.2);
   const chopper = cfg.agent['chopper-checkpoint'];
   expect((chopper as { permission?: unknown }).permission).toBeUndefined();
-  expect(typeof chopper.steps).toBe('number');
+  // steps are mode-aware: the repo's .mugiwara/config is mode=auto, so the
+  // per-agent steps cap is dropped (auto relies on continue.md, not a step cap)
+  expect(chopper.steps).toBeUndefined();
+});
+
+test('config hook keeps per-agent steps in guided/semi mode', async () => {
+  // write a guided-mode config into a temp repo, then run the config hook there
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-plugin-steps-'));
+  try {
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
+    execSync('git init -q && git config user.email t@t.com && git config user.name T', { cwd: dir });
+    const { config } = await plugin();
+    const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
+    // config hook resolves projectDir from process.cwd — point cwd at the temp repo
+    const prev = process.cwd();
+    process.chdir(dir);
+    try {
+      await config(cfg);
+    } finally {
+      process.chdir(prev);
+    }
+    const chopper = cfg.agent['chopper-checkpoint'];
+    expect(chopper.steps).toBe(30);
+    const zoro = cfg.agent['zoro-execution'];
+    expect(zoro.steps).toBe(50);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('config hook never clobbers a user-defined agent', async () => {

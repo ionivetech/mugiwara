@@ -2,10 +2,14 @@
   "name": "refactor-heavy",
   "baseBranch": "main",
   "base": {
-    "src/legacy.ts": "export const f = (a: number) => a + 1;\nexport const g = (b: number) => b * 2;\nexport const h = (c: number) => c - 1;\nexport const i = (d: number) => d / 2;\n"
+    "src/legacy1.ts": "export const f1 = (a: number) => a + 1;\nexport const g1 = (b: number) => b * 2;\nexport const h1 = (c: number) => c - 1;\nexport const i1 = (d: number) => d / 2;\n",
+    "src/legacy2.ts": "export const f2 = (a: number) => a + 1;\nexport const g2 = (b: number) => b * 2;\nexport const h2 = (c: number) => c - 1;\nexport const i2 = (d: number) => d / 2;\n",
+    "src/legacy3.ts": "export const f3 = (a: number) => a + 1;\nexport const g3 = (b: number) => b * 2;\nexport const h3 = (c: number) => c - 1;\nexport const i3 = (d: number) => d / 2;\n"
   },
   "branch": {
-    "src/legacy.ts": "export const f = (a: number) => a + 10;\nexport const g = (b: number) => b * 20;\nexport const h = (c: number) => c - 10;\nexport const i = (d: number) => d / 20;\n"
+    "src/legacy1.ts": "export const f1 = (a: number) => a + 10;\nexport const g1 = (b: number) => b * 20;\nexport const h1 = (c: number) => c - 10;\nexport const i1 = (d: number) => d / 20;\n",
+    "src/legacy2.ts": "export const f2 = (a: number) => a + 10;\nexport const g2 = (b: number) => b * 20;\nexport const h2 = (c: number) => c - 10;\nexport const i2 = (d: number) => d / 20;\n",
+    "src/legacy3.ts": "export const f3 = (a: number) => a + 10;\nexport const g3 = (b: number) => b * 20;\nexport const h3 = (c: number) => c - 10;\nexport const i3 = (d: number) => d / 20;\n"
   },
-  "note": "single file, churn-heavy rewrite (30 ins + 30 del) -> churn drives tokens despite small file count"
+  "note": "3 files, every line rewritten (12 ins + 12 del each) -> churn 72, lane standard; churn drives tokens, not delta"
 }

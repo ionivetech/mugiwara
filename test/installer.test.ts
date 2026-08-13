@@ -16,7 +16,7 @@ const fakeTarget: Target = {
   }),
   transformSkill: (d, b) => ({ relPath: join(d.name, 'SKILL.md'), text: `S:${d.name}\n${b}` }),
   transformAgent: (d, b) => ({ relPath: `${d.name}.md`, text: `A:${d.name}\n${b}` }),
-  refsDir: ({ projectDir }) => join(projectDir, 'refs'),
+  refsDir: ({ projectDir }, skillName) => join(projectDir, 'refs', skillName),
 };
 
 const projectDir = mkdtempSync(join(tmpdir(), 'mugi-t-'));
@@ -65,10 +65,13 @@ test('installTo writes shared references to _shared/references/ (tier 1)', () =>
 test('installTo writes references/ into the target refs dir', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-refs-'));
   const r = installTo(fakeTarget, { ...opts, projectDir: dir });
-  const checklist = join(dir, 'refs', 'checklist.md');
+  const checklist = join(dir, 'refs', 'mugiwara-frontend', 'checklist.md');
   expect(existsSync(checklist)).toBe(true);
   expect(readFileSync(checklist, 'utf8')).toContain('WCAG');
   expect(r.written).toContain(checklist);
+  // agent-security refs land in their own skill-scoped dir (no collision)
+  const agentChecklist = join(dir, 'refs', 'mugiwara-agent-security', 'checklist.md');
+  expect(existsSync(agentChecklist)).toBe(true);
 });
 
 test('claude install writes references under the skill dir', () => {
