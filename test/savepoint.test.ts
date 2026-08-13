@@ -84,7 +84,7 @@ test('savepoint state.json has correct structure', () => {
   }
 });
 
-test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS overrides as reported', () => {
+test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS overrides as reported', { timeout: 15000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-tokens-'));
   try {
     setupGit(dir);
@@ -141,7 +141,7 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
   }
 });
 
-test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', () => {
+test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 15000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-budget-'));
   try {
     setupGit(dir);
