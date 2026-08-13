@@ -88,6 +88,8 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
   const dir = mkdtempSync(join(tmpdir(), 'mugi-tokens-'));
   try {
     setupGit(dir);
+    // diverge HEAD from main so the diff (and thus loc_delta) is non-empty
+    execSync('git checkout -b feature-x', { cwd: dir });
     // known loc: commit a file with exactly 10 inserted lines
     const src = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`).join('\n') + '\n';
     writeFileSync(join(dir, 'src.ts'), src);
@@ -100,14 +102,13 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
     runSavepoint(dir, 'test-mission "" "" 3 guided');
     const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
 
-    // lane is derived from the diff. In this temp repo HEAD sits on `main`
-    // itself (git init defaults to main), so `git merge-base HEAD main` == HEAD
-    // and the 10-insertion commit yields an empty diff: LOC_DELTA = 0,
-    // lane = direct (LANE_BASE 0). The proxy is still non-zero and
-    // deterministic — it rides the DOC_WORDS term.
-    // expected = 0 + floor(20*135/100) + (0*12) = 0 + 27 + 0 = 27
+    // lane is derived from the diff. HEAD is on `feature-x`, one commit ahead
+    // of `main`, so `git merge-base HEAD main` is the base commit and the
+    // 10-insertion commit yields LOC_DELTA = 10. lane = direct (1 file, base 0).
+    // expected = 0 + floor(20*135/100) + (10*12) = 0 + 27 + 120 = 147
     expect(state.lane).toBe('direct');
-    expect(state.tokens_est).toBe(27);
+    expect(state.loc_delta).toBe(10);
+    expect(state.tokens_est).toBe(147);
     expect(state.tokens_source).toBe('computed');
 
     // override → reported
