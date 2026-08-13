@@ -1,0 +1,11 @@
+{
+  "name": "refactor-heavy",
+  "baseBranch": "main",
+  "base": {
+    "src/legacy.ts": "export const f = (a: number) => a + 1;\nexport const g = (b: number) => b * 2;\nexport const h = (c: number) => c - 1;\nexport const i = (d: number) => d / 2;\n"
+  },
+  "branch": {
+    "src/legacy.ts": "export const f = (a: number) => a + 10;\nexport const g = (b: number) => b * 20;\nexport const h = (c: number) => c - 10;\nexport const i = (d: number) => d / 20;\n"
+  },
+  "note": "single file, churn-heavy rewrite (30 ins + 30 del) -> churn drives tokens despite small file count"
+}

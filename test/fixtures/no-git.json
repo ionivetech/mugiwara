@@ -1,0 +1,8 @@
+{
+  "name": "no-git",
+  "baseBranch": "",
+  "base": {},
+  "branch": {},
+  "gitInit": false,
+  "note": "directory with no .git -> lane.sh/savepoint.sh must error gracefully, not crash"
+}

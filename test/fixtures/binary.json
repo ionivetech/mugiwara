@@ -1,0 +1,14 @@
+{
+  "name": "binary",
+  "baseBranch": "main",
+  "base": {
+    "src/app.ts": "export const app = () => 1;\n",
+    "assets/logo.png": "base-binary-content-1"
+  },
+  "branch": {
+    "src/app.ts": "export const app = () => 1;\n",
+    "assets/logo.png": "base-binary-content-2"
+  },
+  "binary": ["assets/logo.png"],
+  "note": "binary file in diff -> git numstat reports '-' not a count; LOC math must not crash"
+}

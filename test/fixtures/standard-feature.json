@@ -1,0 +1,16 @@
+{
+  "name": "standard-feature",
+  "baseBranch": "main",
+  "base": {
+    "src/main.ts": "export const main = () => 1;\n",
+    "src/util.ts": "export const util = () => 2;\n",
+    "README.md": "# app\n"
+  },
+  "branch": {
+    "src/main.ts": "export const main = () => 1;\nexport const extra = () => 42;\n",
+    "src/util.ts": "export const util = () => 2;\nexport const util2 = () => 3;\n",
+    "src/new.ts": "export const n = () => 4;\n",
+    "README.md": "# app\nupdated\n"
+  },
+  "note": "4 files touched (3 src + 1 docs) -> standard lane"
+}
