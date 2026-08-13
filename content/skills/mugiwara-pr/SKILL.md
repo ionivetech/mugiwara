@@ -16,21 +16,23 @@ Mugiwara's evidence lands where the team reviews. At terminal, push the mission 
 
 Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
 
-- Mission summary — goal, waves, task count.
-- Per-wave evidence table — wave, task, status, evidence link (`[path](relative/path)`).
-- Gate verdicts — quality (per-check status), gates (coverage/build/DoD), review (Robin/Jinbe findings).
-- User-test verdict — when user tests were declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
-- Closure-report link — `.mugiwara/results/<mission>/06-closure.md`.
-- Step evidence — every evidence pointer above is a clickable markdown link `[path](relative/path)`.
-- Final verdict line — PASS / FAIL with the single blocking reason, if any.
-- **PR summary block** — copy-paste title + body ready for the user's PR.
+- **PR Title first** — `{type}: {Title Case summary}` — mandatory Title case (significant words capitalized), e.g. `Feat: Add Evidence Links To Mugiwara Reports`.
+- **PR Body** — everything below lives in the body, in this exact order:
+  1. Summary — goal, mode, waves, task count.
+  2. Per-wave evidence table — wave, task, status, evidence link (`[path](relative/path)`).
+  3. Gates — quality, gates, review + security dispositions, each verdict with evidence.
+  4. Review & security — findings with dispositions.
+  5. User tests — when declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
+  6. Closure report link — `[06-closure.md](.mugiwara/results/<mission>/06-closure.md)`.
+  7. Verdict — PASS / FAIL with the single blocking reason, if any.
 
 ## PR summary
 
 Prepare the PR description so the user can paste and submit without writing it:
 
-- Title — `{type}: {Title Case summary}` — MANDATORY Title case (significant words capitalized, e.g. `Feat: Add Evidence Links To Mugiwara Reports`). Type from the branch type (feat/fix/docs/chore/refactor).
+- Title — `{type}: {Title Case summary}` (mandatory Title case), FIRST in the paste block.
 - Body — the verdict-file PR summary block (what changed, evidence, checks).
+- Body order — Summary → Per-wave evidence → Gates → Review & security → User tests → Closure report link → Verdict (mirrors the verdict file).
 - Target — the `base` config (default `main`) is named in the summary.
 - Validate every interpolated value against the safe charset and quote it.
 
