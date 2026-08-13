@@ -117,7 +117,10 @@ PLAN_FILE=$(ls "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MIS
 TASKS_DONE=0
 TASKS_TOTAL=0
 if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
-  TASKS_TOTAL=$(grep -c '\[ \]' "$PLAN_FILE" 2>/dev/null || true)
+  # total counts ALL task lines (checked + unchecked); done counts checked only.
+  # A fully-completed plan must read total=N done=N, never total=0 (the old
+  # unchecked-only grep degenerated a done plan to tasks.total=0).
+  TASKS_TOTAL=$(grep -cE '^\s*-\s*\[[ xX]\]' "$PLAN_FILE" 2>/dev/null || true)
   TASKS_DONE=$(grep -c '\[x\]' "$PLAN_FILE" 2>/dev/null || true)
 fi
 
