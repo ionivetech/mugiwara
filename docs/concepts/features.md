@@ -71,7 +71,7 @@ Chopper re-runs every acceptance criterion, Sanji lint-tests, Franky checks
 coverage, Robin and Jinbe review the diff in parallel, Brook heals any
 failures, and Luffy closes with a pushed branch and ready PR summary.
 
-→ [Full pipeline](workflow.md) · [README pipeline diagram](../../README.md#9-wave-pipeline)
+→ [Full pipeline](workflow.md) · [README pipeline diagram](../../README.md#the-pipeline)
 
 ---
 
@@ -257,6 +257,10 @@ scripts/savepoint.sh --branch <mission> <actor> <branch> <wave> <mode>  # branch
 **Scenario.** After a context loss you open `state.json`: Wave 3, 5/5 tasks
 done in the first batch, 0 blockers, mode semi — a one-file picture of the
 whole mission.
+
+**Multi-actor safe.** State is branch-scoped (`--branch`), so two engineers can
+share one repo without colliding; `mugiwara reset` refuses to wipe another
+actor's live mission without `--force`.
 
 → [Audit trail](audit-trail.md) · [savepoint.test.ts](../../test/savepoint.test.ts)
 
@@ -466,7 +470,7 @@ initiative-level closure.
 sub-mission, never colliding; the initiative plan shows green across all three
 before the shared closure.
 
-→ [Initiative script](../../scripts/initiative.ts) · [README example](../../README.md#how-it-works)
+→ [Initiative script](../../scripts/initiative.ts) · [README example](../../README.md#30-second-try)
 
 ---
 
