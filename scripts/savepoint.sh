@@ -79,12 +79,19 @@ HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true)
 FILES_TOUCHED=$( [ -n "$CHANGED_FILES" ] && echo "$CHANGED_FILES" | wc -l | tr -d ' ' || echo 0 )
 
+LOC_INS=0
+LOC_DEL=0
 LOC_DELTA=0
+LOC_CHURN=0
 if [ "$BASE_SHA" != "unknown" ]; then
   STAT=$(git diff --shortstat "$BASE_SHA"..HEAD 2>/dev/null || echo "")
   INS=$(echo "$STAT" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
   DEL=$(echo "$STAT" | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
-  LOC_DELTA=$(( ${INS:-0} - ${DEL:-0} ))
+  LOC_INS=$(( ${INS:-0} + 0 ))
+  LOC_DEL=$(( ${DEL:-0} + 0 ))
+  LOC_DELTA=$(( LOC_INS - LOC_DEL ))
+  # churn is insertion+deletion — refactors and deletions are work too (D4)
+  LOC_CHURN=$(( LOC_INS + LOC_DEL ))
 fi
 [ -z "$LOC_DELTA" ] && LOC_DELTA=0
 
@@ -228,7 +235,7 @@ case "$LANE" in
   spike) LANE_BASE=1000 ;;
 esac
 DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/spec/*-${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md "$MUGIWARA_DIR"/logs/*-${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
-LOC_TOKENS=$(( LOC_DELTA > 0 ? LOC_DELTA * 12 : 0 ))
+LOC_TOKENS=$(( LOC_CHURN * 12 ))
 TOKENS_SOURCE="computed"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
 if [ -n "${MUGIWARA_TOKENS:-}" ]; then
@@ -274,6 +281,9 @@ const data = {
   head_sha: process.argv[9],
   files_touched: parseInt(process.argv[10], 10),
   loc_delta: parseInt(process.argv[11], 10),
+  loc_ins: parseInt(process.argv[28], 10) || 0,
+  loc_del: parseInt(process.argv[29], 10) || 0,
+  loc_churn: parseInt(process.argv[30], 10) || 0,
   sensitive_paths: process.argv[12] ? process.argv[12].split(',').filter(Boolean) : [],
   tasks: { done: parseInt(process.argv[13], 10), total: parseInt(process.argv[14], 10) },
   blockers_open: parseInt(process.argv[15], 10),
@@ -294,7 +304,8 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK"
+  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
+  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

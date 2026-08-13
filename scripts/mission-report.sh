@@ -64,6 +64,7 @@ const branch = val(s, 'branch', 'n/a');
 const wave = val(s, 'wave', 'n/a');
 const filesTouched = val(s, 'files_touched', 0);
 const locDelta = val(s, 'loc_delta', 0);
+const locChurn = val(s, 'loc_churn', 0);
 const sensitive = s ? (s.sensitive_paths || []) : [];
 const tasks = s ? (s.tasks || {}) : {};
 const blockers = val(s, 'blockers_open', 0);
@@ -234,7 +235,7 @@ report += "| Total | " + tasksTotal + " |\n";
 report += "| Source | " + tasksSource + " |\n\n";
 
 report += "## What changed\n\n";
-report += filesTouched + " files, +" + locDelta + " LOC";
+report += filesTouched + " files, +" + locDelta + " LOC (" + locChurn + " churn)";
 if (sensitive.length) report += "\nSensitive paths: " + sensitive.join(", ");
 report += "\n\n";
 
