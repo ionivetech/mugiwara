@@ -40,11 +40,13 @@ BRANCH_MODE=0
 if [ "${1:-}" = "--branch" ]; then
   BRANCH_MODE=1
   shift
+  # branch-mode interface (D7): <mission> <branch> [wave] [mode] — actor
+  # auto-resolves from git identity, never a positional.
   MISSION="${1:-${STATE_MISSION:-}}"
-  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"
-  BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-  WAVE="${4:-${STATE_WAVE:-1}}"
-  MODE="${5:-${STATE_MODE:-guided}}"
+  BRANCH="${2:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
+  WAVE="${3:-${STATE_WAVE:-1}}"
+  MODE="${4:-${STATE_MODE:-guided}}"
+  ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}"
 else
   MISSION="${1:-${STATE_MISSION:-}}"
   ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"

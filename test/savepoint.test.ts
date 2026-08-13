@@ -125,7 +125,7 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-br-'));
   try {
     setupGit(dir);
-    execSync(`bash "${SAVEPOINT}" --branch test "" feature-fix 1 guided`, {
+    execSync(`bash "${SAVEPOINT}" --branch test feature-fix 1 guided`, {
       cwd: dir,
       env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
@@ -136,6 +136,8 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
     expect(state.mission).toBe('test');
     expect(state.branch).toBe('feature-fix');
     expect(state.mode).toBe('guided');
+    // actor auto-resolves from git identity, never a positional (D7)
+    expect(state.actor).toBe('Test <test@test.com>');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

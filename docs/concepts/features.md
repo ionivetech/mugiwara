@@ -251,7 +251,7 @@ without opening many files. Written by the crew automatically.
 
 ```bash
 scripts/savepoint.sh <mission> <actor> <branch> <wave> <mode>
-scripts/savepoint.sh --branch <mission> <actor> <branch> <wave> <mode>  # branch-scoped
+scripts/savepoint.sh --branch <mission> <branch> [wave] [mode]  # branch-scoped, actor auto-resolved from git
 ```
 
 **Scenario.** After a context loss you open `state.json`: Wave 3, 5/5 tasks
