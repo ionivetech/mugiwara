@@ -46,7 +46,11 @@ The plugin (`mugiwara.mjs`) does four things:
    `.opencode/commands/`.
 
 Skills are loaded on-demand via OpenCode's native `skill` tool. Agents appear
-as subagents with full config (color, temperature, permissions, step limits).
+as subagents with full config (color, temperature, step limits). Runtime
+permissions are generated for internal subagent-only agents only
+(skeptic-verifier, eval-runner, memory-keeper); user-facing crew agents get
+no permission — write-scope is rules-based (see the
+[harness matrix](../reference/harness-matrix.md)).
 
 ## Mode switching
 
