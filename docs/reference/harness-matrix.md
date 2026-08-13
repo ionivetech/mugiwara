@@ -60,3 +60,10 @@ Luffy) plus the tier-3 stub lines in `src/targets/generic.ts`.
 
 The validator is the floor everywhere; CI blocks drift. This does not make
 mugiwara a runtime — see `enforcement.md`.
+
+## Worker dispatch capability
+
+| Harness | Worker dispatch | Context-pressure fallback |
+|---------|-----------------|---------------------------|
+| Claude Code, opencode, Copilot | yes (native subagents) | — |
+| Gemini, Codex, Windsurf, Cline, Kilo, Antigravity | no | savepoint + checkpoint + fresh session via `resume` |
