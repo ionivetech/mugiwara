@@ -29,6 +29,13 @@ Every wave returns to Luffy — no crew member hands off directly to another. Ex
 
 The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/results/<mission>/06-closure.md`.
 
+## Actor attribution (every .mugiwara write)
+
+Every decision-log row, blocker row, and check-in verdict records its actor:
+- User request → `user: <name> <<git email>>` (read from `git config user.name` / `user.email`).
+- AI decision → `AI: <model>` (e.g. `AI: deepseek-v4-flash`).
+In `auto` mode the AI decides everything; any requirement that stays unclear after triage is brainstormed with Usopp (Wave 1) BEFORE the AI decides — the AI never guesses on unclear scope. Record the brainstorm in the decision log with actor `AI:`.
+
 ## Mode read (Wave 0)
 
 Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave. Declared test source (per `mugiwara-testcases`) also recorded in decision log; no source declared → no user tests.
@@ -58,7 +65,7 @@ User may summon crew members directly. Luffy records the route + reason. Zoro/Br
 Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done.
 **Handoff contract:** continue.md at every wave boundary — never only session end. Rule: `references/check-ins.md` #6.
 **Auto ceiling:** auto drops to guided when the lane ROSE to 3 mid-mission (`lane_rose` in `.mugiwara/state.json`), a sensitive path is touched (auth/payment/billing/crypto/secrets/migration — see `scripts/lane.sh`), or heal cycles exceed one. Sized at 3 at triage is not a drop — a mission that starts full in auto mode stays auto. Announce the drop.
-**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. Only a genuine blocker or an auto-ceiling drop pauses.
+**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or an auto-ceiling drop pauses.
 **Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At `heal_max_cycles` (read from
 `.mugiwara/config`, default 3), STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
