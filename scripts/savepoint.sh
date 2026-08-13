@@ -31,6 +31,11 @@ fi
 case "$MISSION" in
   ""|*[!a-zA-Z0-9._-]*) die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" ;;
 esac
+# dot-only names (".", "..", "...") pass the char allowlist but resolve upward
+# through join(...,"..") — reject them before any path is built from MISSION.
+if [[ "$MISSION" =~ ^\.+$ ]]; then
+  die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
+fi
 
 # per-branch state file when --branch used
 BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-')
@@ -91,8 +96,9 @@ if [ "$LANE" = "full" ] && [ -n "$CHANGED_FILES" ]; then
   fi
 fi
 
-# task counts from plan doc
-PLAN_FILE=$(ls "$MUGIWARA_DIR/plans/${MISSION}.md" 2>/dev/null || true)
+# task counts from plan doc — plan is written date-prefixed (plans/YYYY-MM-DD-<mission>.md)
+# or bare (plans/<mission>.md); glob both, first match wins.
+PLAN_FILE=$(ls "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md 2>/dev/null | head -1 || true)
 TASKS_DONE=0
 TASKS_TOTAL=0
 if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
@@ -143,7 +149,7 @@ case "$LANE" in
   full) LANE_BASE=9000 ;;
   spike) LANE_BASE=1000 ;;
 esac
-DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
+DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/spec/*-${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md "$MUGIWARA_DIR"/logs/*-${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
 LOC_TOKENS=$(( LOC_DELTA > 0 ? LOC_DELTA * 12 : 0 ))
 TOKENS_SOURCE="computed"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))

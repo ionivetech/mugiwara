@@ -52,16 +52,31 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
 export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
   const { dryRun = false } = opts;
   const root = join(projectDir, '.mugiwara');
-  // mission allowlist — same as savepoint.sh / mission-report.sh
-  if (!mission || /[^a-zA-Z0-9._-]/.test(mission)) throw new Error(`invalid mission name "${mission}" (allowlist: [a-zA-Z0-9._-])`);
+  // mission allowlist — same as savepoint.sh / mission-report.sh. Dot-only
+  // names (".", "..") would resolve upward through join(...,"..") and let
+  // rmSync reach state.json/config outside the mission dir.
+  if (!mission || /[^a-zA-Z0-9._-]/.test(mission) || /^\.+$/.test(mission)) throw new Error(`invalid mission name "${mission}" (allowlist: [a-zA-Z0-9._-], not a dot-path)`);
   const removed: string[] = [];
   const kept: string[] = [];
 
-  // locate the report (the archive target that must survive)
+  // A file belongs to this mission when stripping the optional YYYY-MM-DD-
+  // prefix leaves `<mission>.md` or `<mission>-<suffix>.md`. Covers both the
+  // bare names and the date-prefixed names the prose writes (audit-trail.md).
+  const belongs = (f: string): boolean => {
+    const base = f.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+    return base === `${mission}.md` || base.startsWith(`${mission}-`);
+  };
+
+  // locate the report (the archive target that must survive). Reports are
+  // date-prefixed (`reports/YYYY-MM-DD-<mission>.md`); compare the stripped
+  // mission name so `bar-foo.md` is not mistaken for mission `foo`.
   let report: string | null = null;
   const reportsDir = join(root, 'reports');
   if (existsSync(reportsDir)) {
-    const f = readdirSync(reportsDir).find(n => n.endsWith(`-${mission}.md`));
+    const f = readdirSync(reportsDir).find(n => {
+      const m = n.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
+      return !!m && m[2] === mission;
+    });
     if (f) report = join('reports', f);
   }
 
@@ -72,31 +87,54 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     for (const f of readdirSync(resultsDir)) {
       if (f === '06-closure.md' || f === '07-pr-verdict.md') { kept.push(join('results', mission, f)); continue; }
       const p = join(resultsDir, f);
-      if (!dryRun) rmSync(p, { force: true });
+      if (!dryRun) rmSync(p, { recursive: true, force: true });
       removed.push(join('results', mission, f));
     }
   }
 
-  // spec, review, issues, per-mission decision log, continue.md
-  const spec = join(root, 'spec', `${mission}.md`);
-  if (existsSync(spec)) { if (!dryRun) rmSync(spec); removed.push(join('spec', `${mission}.md`)); }
+  // spec, review, issues, per-mission decision log — bare + date-prefixed
+  const specDir = join(root, 'spec');
+  if (existsSync(specDir)) {
+    for (const f of readdirSync(specDir)) {
+      if (!belongs(f)) continue;
+      const p = join(specDir, f);
+      if (!dryRun) rmSync(p);
+      removed.push(join('spec', f));
+    }
+  }
 
   for (const dir of ['review', 'issues']) {
     const d = join(root, dir);
     if (!existsSync(d)) continue;
     for (const f of readdirSync(d)) {
-      if (!f.startsWith(`${mission}-`)) continue;
+      if (!belongs(f)) continue;
       const p = join(d, f);
       if (!dryRun) rmSync(p, { force: true });
       removed.push(join(dir, f));
     }
   }
 
-  const decisionLog = join(root, 'logs', `${mission}.md`);
-  if (existsSync(decisionLog)) { if (!dryRun) rmSync(decisionLog); removed.push(join('logs', `${mission}.md`)); }
+  const logsDir = join(root, 'logs');
+  if (existsSync(logsDir)) {
+    for (const f of readdirSync(logsDir)) {
+      if (!belongs(f)) continue;
+      const p = join(logsDir, f);
+      if (!dryRun) rmSync(p);
+      removed.push(join('logs', f));
+    }
+  }
 
+  // continue.md is a session handoff — only remove it if it belongs to THIS
+  // mission (its content references the mission name); otherwise leave it.
   const cont = join(root, 'continue.md');
-  if (existsSync(cont)) { if (!dryRun) rmSync(cont); removed.push('continue.md'); }
+  if (existsSync(cont)) {
+    try {
+      if (readFileSync(cont, 'utf8').includes(mission)) {
+        if (!dryRun) rmSync(cont);
+        removed.push('continue.md');
+      }
+    } catch { /* unreadable — leave it */ }
+  }
 
   // kept: report + the audit-trail survivors
   if (report) kept.push(report);
@@ -104,14 +142,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     if (existsSync(join(root, k))) kept.push(k);
   }
 
-  // summary index: append one line per archived mission (retention aid)
+  // summary index: append one line per archived mission (retention aid),
+  // idempotently — never duplicate a line for an already-indexed mission.
   let index: string | undefined;
   const indexFile = join(root, 'reports', 'index.md');
   const line = `- ${mission} — ${new Date().toISOString().slice(0, 10)}${report ? ` → ${report}` : ''}\n`;
   if (!dryRun) {
     mkdirSync(join(root, 'reports'), { recursive: true });
-    const header = existsSync(indexFile) ? '' : '# Mission index\n\n';
-    appendFileSync(indexFile, header + line);
+    const existing = existsSync(indexFile) ? readFileSync(indexFile, 'utf8') : '';
+    if (!existing.split(/\r?\n/).some(l => l.startsWith(`- ${mission} —`))) {
+      const header = existing ? '' : '# Mission index\n\n';
+      appendFileSync(indexFile, header + line);
+    }
     index = join('reports', 'index.md');
   }
   return { report, removed, kept, index };

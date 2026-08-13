@@ -13,7 +13,7 @@ const COMMANDS_SRC = join(here, '..', '..', '.claude', 'commands');
 // `tools:` list: artifacts agents lose Edit (cannot modify existing source)
 // but keep Write (must create .mugiwara/**); source agents get the default set.
 function toolsFromScope(scope?: string): string | undefined {
-  if (scope === 'artifacts') return 'Read, Grep, Glob, Write, Bash';
+  if (scope === 'artifacts') return 'Read, Grep, Glob, Write, Bash, WebFetch, WebSearch';
   return undefined;
 }
 

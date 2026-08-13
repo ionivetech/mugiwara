@@ -107,6 +107,7 @@ export function ensureDefaultConfig({ projectDir = process.cwd() } = {}) {
   const dir = join(projectDir, '.mugiwara');
   const file = join(dir, 'config');
   if (existsSync(file)) return false;
+  assertNotSymlink(file);
   mkdirSync(dir, { recursive: true });
   writeFileSync(file, DEFAULT_CONFIG_LINES.join('\n') + '\n');
   return true;

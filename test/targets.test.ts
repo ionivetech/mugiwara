@@ -64,7 +64,7 @@ test('L1: claude transformAgent generates tools from write-scope', () => {
   )!;
   const a = parseFrontmatter(artifacts.text).data;
   const s = parseFrontmatter(source.text).data;
-  expect(a.tools).toBe('Read, Grep, Glob, Write, Bash');
+  expect(a.tools).toBe('Read, Grep, Glob, Write, Bash, WebFetch, WebSearch');
   expect(a.tools).not.toContain('Edit');
   expect(s.tools).toBeUndefined();
 });

@@ -72,11 +72,14 @@ function buildArchiveFixture(dir: string): string {
   writeFileSync(join(root, 'results', 'demo', '06-closure.md'), 'closure');
   writeFileSync(join(root, 'results', 'demo', '07-pr-verdict.md'), 'verdict');
   writeFileSync(join(root, 'spec', 'demo.md'), 'spec');
+  writeFileSync(join(root, 'spec', '2026-08-13-demo.md'), 'spec');
   writeFileSync(join(root, 'review', 'demo-review.md'), 'review');
+  writeFileSync(join(root, 'review', '2026-08-13-demo-review.md'), 'review');
   writeFileSync(join(root, 'issues', 'demo-blockers.md'), 'issues');
   writeFileSync(join(root, 'logs', 'demo.md'), 'log');
+  writeFileSync(join(root, 'logs', '2026-08-13-demo.md'), 'log');
   writeFileSync(join(root, 'logs', 'lessons.md'), 'lessons');
-  writeFileSync(join(root, 'continue.md'), 'continue');
+  writeFileSync(join(root, 'continue.md'), 'mission: demo\n');
   writeFileSync(join(root, 'config'), 'mode=guided\n');
   return root;
 }
@@ -88,9 +91,12 @@ test('archiveMission folds wave intermediates, keeps closure + PR + trail', () =
 
   expect(removed).toContain(join('results', 'demo', '01-execution.md'));
   expect(removed).toContain(join('spec', 'demo.md'));
+  expect(removed).toContain(join('spec', '2026-08-13-demo.md'));
   expect(removed).toContain(join('review', 'demo-review.md'));
+  expect(removed).toContain(join('review', '2026-08-13-demo-review.md'));
   expect(removed).toContain(join('issues', 'demo-blockers.md'));
   expect(removed).toContain(join('logs', 'demo.md'));
+  expect(removed).toContain(join('logs', '2026-08-13-demo.md'));
   expect(removed).toContain('continue.md');
 
   expect(kept).toContain(join('results', 'demo', '06-closure.md'));
@@ -100,6 +106,12 @@ test('archiveMission folds wave intermediates, keeps closure + PR + trail', () =
   expect(kept).toContain('config');
 
   expect(existsSync(join(root, 'results', 'demo', '01-execution.md'))).toBe(false);
+  expect(existsSync(join(root, 'spec', 'demo.md'))).toBe(false);
+  expect(existsSync(join(root, 'spec', '2026-08-13-demo.md'))).toBe(false);
+  expect(existsSync(join(root, 'review', 'demo-review.md'))).toBe(false);
+  expect(existsSync(join(root, 'review', '2026-08-13-demo-review.md'))).toBe(false);
+  expect(existsSync(join(root, 'logs', 'demo.md'))).toBe(false);
+  expect(existsSync(join(root, 'logs', '2026-08-13-demo.md'))).toBe(false);
   expect(existsSync(join(root, 'results', 'demo', '06-closure.md'))).toBe(true);
   expect(existsSync(join(root, 'results', 'demo', '07-pr-verdict.md'))).toBe(true);
   expect(existsSync(join(root, 'reports', '2026-01-01-demo.md'))).toBe(true);

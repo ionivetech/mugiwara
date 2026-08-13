@@ -94,7 +94,9 @@ export default async () => ({
   dispose: () => {},
 
   config: (config) => {
-    ensureDefaultConfig();
+    // only seed .mugiwara/config when the cwd looks like a project — a global
+    // install must not create .mugiwara/ in an arbitrary non-project dir.
+    if (existsSync(join(process.cwd(), '.git'))) ensureDefaultConfig();
     config.skills = config.skills || {};
     config.skills.paths = config.skills.paths || [];
     if (!config.skills.paths.includes(skillsDir)) config.skills.paths.push(skillsDir);

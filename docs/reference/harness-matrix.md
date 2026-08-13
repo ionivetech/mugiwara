@@ -55,7 +55,7 @@ Luffy) plus the tier-3 stub lines in `src/targets/generic.ts`.
 | Harness | `write-scope` expression | Status |
 |---------|--------------------------|--------|
 | opencode | `permission.edit` glob map — artifacts: `{ '*': 'deny', '.mugiwara/**': 'allow' }`; source: `edit: allow` (last-match-wins) | **ENFORCED at runtime** (generated in `src/targets/opencode.ts` + `.opencode/plugins/mugiwara.mjs`) |
-| Claude Code | `tools:` frontmatter generated from `write-scope` — artifacts: `Read, Grep, Glob, Write, Bash` (no `Edit`); source: default set | **partial** — Edit blocked, Write unscoped |
+| Claude Code | `tools:` frontmatter generated from `write-scope` — artifacts: `Read, Grep, Glob, Write, Bash, WebFetch, WebSearch` (no `Edit`); source: default set | **partial** — Edit blocked, Write unscoped, Bash can still write via redirection |
 | Copilot / tier 2 / tier 3 | prose Rule + Red flag + stub lines | **unenforced**, prose + validator |
 
 The validator is the floor everywhere; CI blocks drift. This does not make
