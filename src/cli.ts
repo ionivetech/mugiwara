@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
 import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
-import { installTo, removeInstalled, VERSION, ensureProjectGitignore } from './installer.ts';
+import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission, archiveMission } from './mission.ts';
 
@@ -151,6 +151,10 @@ async function uninstall(flags: Args['flags']): Promise<void> {
   }
   const removed = removeInstalled(manifest, { dryRun: flag(flags.dryRun) });
   if (!flag(flags.dryRun)) {
+    if (scope === 'project') {
+      const gi = removeProjectGitignore(projectDir);
+      for (const n of gi.notes) console.log(`   note: ${n}`);
+    }
     rmSync(file);
     const mugiDir = join(scope === 'global' ? home : projectDir, '.mugiwara');
     if (existsSync(mugiDir) && readdirSync(mugiDir).length === 0) {

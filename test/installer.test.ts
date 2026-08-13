@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
 import { resetMission } from '../src/mission.ts';
-import { collectContent, installTo, removeInstalled, ensureProjectGitignore, type Target, type InstallOptions } from '../src/installer.ts';
+import { collectContent, installTo, removeInstalled, ensureProjectGitignore, removeProjectGitignore, type Target, type InstallOptions } from '../src/installer.ts';
 import { targets } from '../src/targets/index.ts';
 
 const fakeTarget: Target = {
@@ -461,6 +461,69 @@ describe('ensureProjectGitignore', () => {
       const r = ensureProjectGitignore(dir, { dryRun: true });
       expect(r.appended).toBe(true);
       expect(existsSync(join(dir, '.gitignore'))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('block is delimited — delimiters bound the mugiwara block', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi5-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'userline\n');
+      ensureProjectGitignore(dir);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      const start = text.indexOf('# >>> mugiwara >>>');
+      const end = text.indexOf('# <<< mugiwara <<<');
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(end).toBeGreaterThan(start);
+      // user line survives before the block
+      expect(text.slice(0, start)).toContain('userline');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore strips the block and preserves user lines', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi6-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'node_modules/\ndist/\n');
+      ensureProjectGitignore(dir);
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).not.toContain('mugiwara');
+      expect(text).toContain('node_modules/');
+      expect(text).toContain('dist/');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore legacy block (undelimited) stripped, user lines kept', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi7-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'),
+        'keepme\n' +
+        '# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.\n' +
+        '# Ignore session state and regenerated files.\n' +
+        '.mugiwara/state.json\n.mugiwara/refs/\n');
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).toContain('keepme');
+      expect(text).not.toContain('.mugiwara/');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore no-op when no mugiwara block present', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi8-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'node_modules/\n');
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(false);
+      expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe('node_modules/\n');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
