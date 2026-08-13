@@ -46,7 +46,8 @@ install coverage     91.6% across 9 targets
 - **Sonar-style metrics** — duplication %, complexity scoring, maintainability rating (A–E), code attribute checks per wave
 - **Security hotspots + SCA** — STRIDE-pointed hotspot review, license compliance, dependency audit
 - **Team initiatives** — sub-mission planning, shared plan, status tracking for multi-engineer collaboration
-- **Onboarding wizard** — `/mugiwara onboard`: 10-question guided setup for mode, agents, review depth, quality checks
+- **Onboarding wizard** — `/mugiwara onboard`: 9-question guided setup
+  (host-native question flow, CLI fallback) for mode, review depth, quality checks
 
 Outstanding defects are tracked separately in the fix list, not here. A roadmap
 that contains bug fixes hides how much of it is actually new.

@@ -171,7 +171,7 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 | `robin-reviewer`     | Reviewer — breaking-change map, reliability rating, code attribute deep review          | **read-only** |
 | `jinbe-security`     | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility            | **read-only** |
 | `brook-healing`      | Healer — reads ledger, root-cause fixes ≤3 cycles                                       |       —       |
-| `onboarding-guide`   | Onboarding wizard — 10Q guided setup, writes config                                     |       —       |
+| `onboarding-guide`   | Onboarding wizard — 9Q guided setup via host question tool, writes config               |       —       |
 | `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts                    |       —       |
 
 **Internal agents** (dispatch-only):

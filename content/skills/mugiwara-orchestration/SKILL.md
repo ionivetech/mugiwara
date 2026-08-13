@@ -2,7 +2,6 @@
 name: mugiwara-orchestration
 description: Gatekeeper + captain for any task: triage, classify, route, refuse deploy, key rotation, hotfix, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
 ---
-
 # Orchestration (Luffy)
 
 ## Skip when
@@ -57,9 +56,11 @@ User may summon crew members directly. Luffy records the route + reason. Zoro/Br
 
 ## Periodic check-ins
 Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done.
+**Handoff contract:** continue.md at every wave boundary — never only session end. Rule: `references/check-ins.md` #6.
 **Auto ceiling:** auto drops to guided when the lane ROSE to 3 mid-mission (`lane_rose` in `.mugiwara/state.json`), a sensitive path is touched (auth/payment/billing/crypto/secrets/migration — see `scripts/lane.sh`), or heal cycles exceed one. Sized at 3 at triage is not a drop — a mission that starts full in auto mode stays auto. Announce the drop.
 **Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. Only a genuine blocker or an auto-ceiling drop pauses.
-**Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At 3, STOP and escalate to the user — a halt, not a red flag. Red flags are prose; a counter is state.
+**Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At `heal_max_cycles` (read from
+`.mugiwara/config`, default 3), STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
 ## Rationalizations (pressure resistance)
