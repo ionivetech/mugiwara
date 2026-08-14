@@ -163,6 +163,37 @@ if (!existsSync(patternsFile)) {
   }
 }
 
+// --- D3b mutation: strip the NEW pattern categories → lane-integrity red ---
+console.log('\nD3b — new category strip mutation');
+if (!existsSync(patternsFile)) {
+  console.log('  ⚠  patterns.sh not found, skipping');
+} else {
+  const original = readFileSync(patternsFile, 'utf8');
+  try {
+    // derive the broken list from the LIVE source, stripping the exact tokens
+    // of the v0.6.4 D3 families — a hard-coded baseline rots the moment a
+    // category is added (G3). New family tokens must be added here too.
+    const D3B_FAMILY_TOKENS = new Set([
+      // raw regex tokens as they appear in live SENSITIVE_PATS (backslashes included)
+      'oauth2?/', 'credential', 'sessions?/', 'tokens?/', 'rbac', 'permissions?/', 'acls?/', 'iam/',
+      '\\.p12$', '\\.key$', '\\.pem$', 'migrate/', 'Dockerfile', 'docker-compose', '\\.github/workflows/',
+      'webhooks?/', 'secret/', 'secrets?\\.ya?ml$', '\\.tfvars$', '\\.env$', '\\.env\\.',
+    ]);
+    const live = original.match(/SENSITIVE_PATS="([^"]+)"/)?.[1] ?? '';
+    const broken = live.split('|').filter(t => !D3B_FAMILY_TOKENS.has(t)).join('|');
+    const brokenLine = `SENSITIVE_PATS="${broken}"`;
+    if (broken === live || !live) {
+      console.log('  ⚠  D3b: no D3 family tokens found in live SENSITIVE_PATS — skipping');
+    } else {
+      writeFileSync(patternsFile, original.replace(/SENSITIVE_PATS="[^"]*"/, brokenLine));
+      assert('missing new categories → lane-integrity fails', false, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
+    }
+  } finally {
+    writeFileSync(patternsFile, original);
+    assert('restored → lane-integrity passes', true, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
+  }
+}
+
 // --- D4 mutation: zero LOC_TOKENS → lane-integrity red ---
 console.log('\nD4 — churn token mutation');
 if (!existsSync(savepointFile)) {

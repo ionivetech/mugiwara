@@ -190,7 +190,7 @@ test('savepoint: sensitive escalation WINS over docs-only downgrade (twin of lan
 
 // ---------- heal_cycle counting ----------
 
-test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate or error', { timeout: 20000 }, () => {
+test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate or error', { timeout: 40000 }, () => {
   const dir = newRepo('heal');
   try {
     const evDir = join(dir, '.mugiwara', 'results', 'healtest');
@@ -216,6 +216,17 @@ test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate o
     const r = runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(1);
     expect(r.stderr).not.toContain('syntax error');
+
+    // NEW banner format (wave-banners.md) must still count: the equals-line +
+    // uppercase form contains the literal "WAVE 8" the counter greps for.
+    writeFileSync(join(evDir, '01-trace.md'), '==================== WAVE 8 — BROOK (HEALING) ====================\n');
+    runSavepoint(dir, 'healtest "" 1 guided');
+    expect(readState(dir, 'healtest').heal_cycle).toBe(2);
+
+    // UI variant (emoji heading) also counts.
+    writeFileSync(join(evDir, '01-trace.md'), '## 🎻 WAVE 8 — BROOK (HEALING)\n');
+    runSavepoint(dir, 'healtest "" 1 guided');
+    expect(readState(dir, 'healtest').heal_cycle).toBe(2);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

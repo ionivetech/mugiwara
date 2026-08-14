@@ -69,7 +69,8 @@ linear.
 ## Checkpoint reports
 
 You see progress as **checkpoint reports**, not a firehose: a wave banner
-(`## Wave N — <crew> (<skill>)`), one compact report per crew member at each
+(`===== WAVE 3 — ZORO (EXECUTION) =====` in the agent's color — the emoji
+heading form in markdown UIs), one compact report per crew member at each
 stage boundary (what ran / result / evidence pointer), a progress summary per
 wave, and a pause when something fails or gets risky. Subagents are used only
 where they genuinely help: independent `[PARALLEL]` task batches, Brook's

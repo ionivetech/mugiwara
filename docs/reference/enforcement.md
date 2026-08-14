@@ -21,7 +21,7 @@ is a mix of mechanism and discipline.
 |------|------------|
 | Skip gates | Every skill declares `## Skip when` (1-4 bullets, numeric threshold). Validator fails build without it. |
 | Evidence over claims | Iron law in every skill: no wave passes on assertion. Checked by Chopper's re-verification. |
-| Wave boundaries | Every wave opens with `## Wave N — <crew>` banner, closes with checkpoint report. |
+| Wave boundaries | Every wave opens with the agent-colored banner (`===== WAVE N — <CREW> =====` terminal, `## <emoji> WAVE N — <CREW>` UI), closes with checkpoint report. |
 | Heal loop bound | Max 3 cycles (Wave 8 → Wave 4). After 3, escalate to human. |
 | DoD canonical | `references/definition-of-done.md` — one bar, linked from checkpoint + gates. |
 

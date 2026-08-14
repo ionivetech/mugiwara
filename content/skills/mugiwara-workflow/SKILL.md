@@ -46,7 +46,10 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 
 **One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
 
-**Banners.** Every wave opens with a visible main-thread heading `## Wave N — <crew> (<skill>)` and closes with the handoff line `→ Wave N+1 — <crew>`. No wave starts without its banner.
+**Banners.** Every wave opens with a banner in the owning agent's color and
+closes with a handoff line — terminal ANSI equals line, markdown-UIs emoji
+heading; handoff `→ Wave 4 — Chopper (Checkpoint)`. Keep literal `WAVE N —`
+(savepoint's heal counter greps it). Spec + colors: `_shared/references/wave-banners.md`.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 
@@ -103,6 +106,7 @@ Archive, never delete: run `mugiwara archive <mission>` — folds `logs/`, `spec
 5. Plan doc is source of truth from Wave 2.
 6. Resume via `resume-coordinator` before any wave — never restart.
 7. Push branch + hand verdict to user; crew never merges or deploys.
+8. Host todo mirrors the plan doc every task + wave — same response as evidence.
 
 ## Iron Law
 

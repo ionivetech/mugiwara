@@ -110,7 +110,9 @@ the chat carries terse verdicts and evidence pointers. Subagents exist to
 parallelize, never to hide work.
 
 **How to use.** Nothing to configure. Watch wave banners
-(`## Wave N — <crew> (<skill>)`) and checkpoint reports in the chat.
+(`## ⚔️ WAVE 3 — ZORO (EXECUTION)` in UIs; the ANSI-colored
+`===== WAVE 3 — ZORO (EXECUTION) =====` line in terminals) and checkpoint
+reports in the chat.
 
 **Detail.** Subagents are used only for genuinely parallel work:
 `[PARALLEL]` task batches (one worker per task), Brook's parallel heal fixes,

@@ -1,5 +1,5 @@
 // src/targets/opencode.ts
-import { existsSync, readdirSync, copyFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readdirSync, copyFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringifyFrontmatter, type FrontmatterData } from '../frontmatter.ts';
@@ -7,6 +7,7 @@ import type { Target } from '../installer.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const COMMANDS_SRC = join(here, '..', '..', '.opencode', 'commands');
+const BANNER_TABLE = join(here, '..', '..', 'references', 'wave-banners.md');
 
 type CrewConfig = {
   color: string;
@@ -15,6 +16,8 @@ type CrewConfig = {
   permission?: Record<string, string>;
 };
 
+// Colors are fallbacks — the wave-banners table is the source of truth.
+// Temperature/steps stay here (runtime tuning, not banner material).
 const CREW: Record<string, CrewConfig> = {
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
   'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 15 },
@@ -31,6 +34,27 @@ const CREW: Record<string, CrewConfig> = {
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 10 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 8 },
 };
+
+// Crew colors from the wave-banners table (single source of truth). Returns
+// {} on any failure — callers fall back to the CREW map. Same table shape as
+// the opencode plugin parses: | agent-id | role | hex | ansi-256 | emoji |
+function readBannerColors(): Record<string, string> {
+  try {
+    if (!existsSync(BANNER_TABLE)) return {};
+    const text = readFileSync(BANNER_TABLE, 'utf8');
+    // null-prototype + CRLF-tolerant: agent ids are trusted repo content, but
+    // a future `__proto__` id must never write the object's prototype
+    const colors: Record<string, string> = Object.create(null);
+    for (const m of text.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)) {
+      colors[m[1]] = m[2];
+    }
+    return colors;
+  } catch {
+    return {};
+  }
+}
+
+const BANNER_COLORS = readBannerColors();
 
 // write-scope is the single source of truth (content/agents/*.md frontmatter),
 // but it is a RULE for user-facing crew agents: they run inline in the main
@@ -50,8 +74,12 @@ function permissionFromScope(scope: string | undefined): Record<string, string |
 function agentFrontmatter(name: string, description: string, internal: boolean, writeScope?: string) {
   const crew = CREW[name];
   const lines = [`description: ${description}`, `mode: all`];
+  // color: wave-banners table wins; CREW fallback for agents the table lacks.
+  // temperature/steps only exist for CREW members (runtime tuning).
+  const color = BANNER_COLORS[name] ?? crew?.color;
+  if (color) lines.push(`color: '${color}'`);
   if (crew) {
-    lines.push(`color: '${crew.color}'`, `temperature: ${crew.temperature}`, `steps: ${crew.steps}`);
+    lines.push(`temperature: ${crew.temperature}`, `steps: ${crew.steps}`);
     const perm = internal ? permissionFromScope(writeScope) : undefined;
     if (perm) {
       lines.push('permission:');

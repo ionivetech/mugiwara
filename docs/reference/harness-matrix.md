@@ -92,4 +92,10 @@ mugiwara a runtime — see `enforcement.md`.
 | Claude Code | `TaskCreate` / `TaskUpdate` / `TaskList` | `TodoWrite` deprecated since v2.1.142 |
 | Copilot / tier 2 / tier 3 | none | plan doc `todos.md` is the only mirror |
 
-The plan doc `.mugiwara/results/<mission>/todos.md` stays the source of truth on every host; host tools mirror it.
+The plan doc `.mugiwara/results/<mission>/todos.md` stays the source of truth
+on every host; host tools mirror it. Mirror timing is hard: seed at Wave 2
+(tasks + wave list), update in the SAME response each task's evidence lands,
+one transition per call, never batched at wave end. Wave banners use the crew
+color table in `references/wave-banners.md`
+— the plugin and installer read the same table, so the banner color always
+matches the agent's UI chip.

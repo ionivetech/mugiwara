@@ -1,0 +1,17 @@
+{
+  "name": "sensitive-paths-negative",
+  "baseBranch": "main",
+  "base": {
+    "src/app.ts": "export const app = () => 1;\n"
+  },
+  "branch": {
+    "src/app.ts": "export const app = () => 1;\n",
+    "package.json": "{\"name\":\"x\"}\n",
+    "src/authors/index.ts": "x\n",
+    "docs/authentication.md": "x\n",
+    "src/tokenizer.ts": "x\n",
+    "src/permissionless.ts": "x\n"
+  },
+  "expect": { "lane": "standard", "sensitive_paths_max": 0 },
+  "note": "D3 exclusions + trap pins: package.json (deps policy), authors/ (contains auth but never auth/), docs/authentication.md (auth without slash), src/tokenizer.ts (token without slash), src/permissionless.ts (bare permission over-match — dir-anchored only). 6 files -> standard by count, zero sensitive."
+}
