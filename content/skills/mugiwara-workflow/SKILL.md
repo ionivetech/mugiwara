@@ -49,7 +49,7 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 **Banners.** Every wave opens with a banner in the owning agent's color and
 closes with a handoff line — terminal ANSI equals line, markdown-UIs emoji
 heading; handoff `→ Wave 4 — Chopper (Checkpoint)`. Keep literal `WAVE N —`
-(savepoint's heal counter greps it). Spec + colors: `references/wave-banners.md`.
+(savepoint's heal counter greps it). Spec + colors: `_shared/references/wave-banners.md`.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 

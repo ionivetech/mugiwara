@@ -45,12 +45,12 @@ const CREW = {
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 30 },
 };
 
-// Read the crew color table (single source of truth). Returns {} on any
-// failure — callers fall back to the CREW map. The regex anchors the exact
-// table shape: | agent-id | role | hex | ansi-256 | emoji |
+// Read the crew color table (single source of truth, shared references/).
+// Returns {} on any failure — callers fall back to the CREW map. The regex
+// anchors the exact table shape: | agent-id | role | hex | ansi-256 | emoji |
 function readBannerColors() {
   try {
-    const path = join(skillsDir, 'mugiwara-workflow', 'references', 'wave-banners.md');
+    const path = join(__dirname, '..', '..', 'references', 'wave-banners.md');
     if (!existsSync(path)) return {};
     const text = readFileSync(path, 'utf8');
     const colors = {};

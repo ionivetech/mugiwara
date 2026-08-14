@@ -7,7 +7,7 @@ import type { Target } from '../installer.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const COMMANDS_SRC = join(here, '..', '..', '.opencode', 'commands');
-const BANNER_TABLE = join(here, '..', '..', 'content', 'skills', 'mugiwara-workflow', 'references', 'wave-banners.md');
+const BANNER_TABLE = join(here, '..', '..', 'references', 'wave-banners.md');
 
 type CrewConfig = {
   color: string;

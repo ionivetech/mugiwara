@@ -87,7 +87,7 @@ test('runtime edit permission applies only to internal subagent agents (write-sc
 test('wave-banners table: crew colors are the single source (all agents, valid hex)', async () => {
   // the plugin derives agent colors from the table — the table must cover the
   // full crew with well-formed hexes or agent chips silently lose their tint
-  const table = readFileSync(join(contentDir, 'skills', 'mugiwara-workflow', 'references', 'wave-banners.md'), 'utf8');
+  const table = readFileSync(join(contentDir, '..', 'references', 'wave-banners.md'), 'utf8');
   const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|$/gm)];
   expect(rows).toHaveLength(15);
   const ids = rows.map(r => r[1]);
