@@ -2,6 +2,14 @@
 
 Operational detail for the "Periodic check-ins" and "Wave transitions" sections of `mugiwara-orchestration`'s SKILL.md. Mode-critical rules (auto never drops, auto never asks scope, heal halt, pressure) stay inline in the skill body.
 
+## Language
+
+Every artifact written into `.mugiwara/` — plans, logs, results, reports,
+spec, state, continue, issues, review — is English, one language only. The
+audit trail is read by the whole team and by future sessions; it never depends
+on the author's conversational language. A mission artifact in another language
+is a defect and is flagged at check-in.
+
 ## Periodic check-ins
 
 After every wave AND at the end of each execution batch, verify:

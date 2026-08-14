@@ -2,6 +2,12 @@
 
 Every mission creates and works inside `.mugiwara/` at the repo root.
 
+**Language:** every artifact the crew writes into `.mugiwara/` — plans, logs,
+results, reports, spec, state, continue, issues, review — is English, one
+language only. The audit trail is shared by the whole team and by future
+sessions; it must not depend on the author's conversational language. A
+mission artifact in any other language is a defect, not a style choice.
+
 ```
 .mugiwara/
 ├── config              → runtime mode config (gitignored; project overrides global)

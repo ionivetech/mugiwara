@@ -8,6 +8,13 @@ Rules for working on this repo. Follow these or validation fails.
 exceptions. Comments in source code should be English. This conversation is the
 only place Indonesian is acceptable.
 
+**`.mugiwara/` artifacts are English too.** Every file the crew writes —
+`plans/`, `logs/`, `results/`, `reports/`, `spec/`, `state/`, `continue/`,
+`issues/`, `review/` — is written in English, one language only. A mission
+artifact in any other language is a defect, not a style choice. The audit
+trail is read by the whole team and by future sessions; it must not depend on
+the author's conversational language.
+
 ## Trunk-based branching strategy
 
 `main` is always stable and releasable. No commits directly to `main`.

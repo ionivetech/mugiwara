@@ -136,11 +136,12 @@ pipeline config to write.**
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
 | **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **Team collaboration**   | One shared plan, per-(mission, member) state + resume. Any number of engineers, zero collisions. |
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
 | **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state/<mission>/` + machine-written `continue/<mission>/`. Continues, never restarts. Auto-resumes in auto mode. |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
-→ All 28 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+→ All 28 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Team collaboration](docs/concepts/collaboration.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## The pipeline
 
@@ -187,6 +188,42 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 | `memory-keeper`    | Lessons ledger — surface at start, capture at closure | Wave 0 (read), Wave 9 (write)  |
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
+
+## Team collaboration
+
+Mugiwara is built for a team sharing one repo. Identity is **(mission, member)**,
+never branch — so any number of engineers can run parallel work without
+colliding, and one engineer can juggle several missions.
+
+```
+.mugiwara/
+├── state/<mission>/state.json        # solo state
+├── state/<mission>/<member>.json     # your team member state
+├── continue/<mission>/state.json     # solo resume point
+├── continue/<mission>/<member>.json  # your resume point
+└── plans/<mission>.md                # ONE shared plan (source of truth)
+```
+
+Quick start for a team:
+
+```bash
+# Nami writes one plan with a ## Sub-missions table (assignee + branch per member)
+/mugiwara-plan                          # guided/semi asks "Solo or team?"
+
+# Each member works on their own branch, resume only their own work
+/mugiwara continue                      # list every in-flight mission for YOU
+/mugiwara continue payment-gateway      # solo → resume; team → list members
+/mugiwara continue payment-gateway sari # resume exactly sari's work
+
+# Coordination radar
+bun run scripts/initiative.ts status plans/<mission>.md          # who's where
+bun run scripts/initiative.ts conflict-check plans/<mission>.md  # shared-file overlap
+```
+
+Auto mode runs every wave autonomously — including team missions — and never
+downgrades to guided mid-mission.
+
+→ [Full collaboration guide with a worked example](docs/concepts/collaboration.md) · [Multi-actor reference](references/multi-actor.md)
 
 ## When not to use Mugiwara
 
