@@ -143,6 +143,35 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
   }
 });
 
+test('D10: savepoint writes continue.md position block at wave boundary', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cont-'));
+  try {
+    setupGit(dir);
+    // a crew-written next_session_prompt must survive across savepoints
+    const mugi = join(dir, '.mugiwara');
+    mkdirSync(join(mugi, 'plans'), { recursive: true });
+    writeFileSync(join(mugi, 'continue.md'),
+      '# Continue — test-mission\n\n- mission: test-mission\n- wave: 2\n- next_session_prompt: "Run T1-T5 then waves 4-9"\n');
+
+    runSavepoint(dir, 'test-mission "" "" 3 guided');
+    const text = readFileSync(join(dir, '.mugiwara', 'continue.md'), 'utf8');
+    expect(text).toContain('- mission: test-mission');
+    expect(text).toContain('- wave: 3');
+    expect(text).toContain('- tasks_done: 0');
+    expect(text).toContain('- mode: guided');
+    // next_session_prompt is crew-written, preserved not invented
+    expect(text).toContain('Run T1-T5 then waves 4-9');
+
+    // next wave boundary rewrites the position fields
+    runSavepoint(dir, 'test-mission "" "" 4 guided');
+    const text2 = readFileSync(join(dir, '.mugiwara', 'continue.md'), 'utf8');
+    expect(text2).toContain('- wave: 4');
+    expect(text2).toContain('- next_session_prompt: "Run T1-T5 then waves 4-9"');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 15000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-budget-'));
   try {

@@ -316,4 +316,35 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
 fi
+
+# --- continue.md (D10): machine-written resume point at every wave boundary ---
+# Written alongside state.json so an interrupted session (step-limit truncation,
+# crash, new session) can resume without human recall. Same trust as state.json:
+# computed fields, never model judgement. The resume skill treats it as data to
+# verify against the plan/todos, never verbatim instructions.
+# The crew-written next_session_prompt line is preserved across savepoints —
+# it carries the session's continuation instruction, savepoint never invents it.
+CONTINUE_FILE="$MUGIWARA_DIR/continue.md"
+if [ -n "$MISSION" ]; then
+  NEXT_SESSION_PROMPT=""
+  if [ -f "$CONTINUE_FILE" ]; then
+    NEXT_SESSION_PROMPT=$(grep -E '^-?[[:space:]]*next_session_prompt:' "$CONTINUE_FILE" 2>/dev/null | head -1 || true)
+  fi
+  {
+    echo "# Continue — $MISSION"
+    echo ""
+    echo "- mission: $MISSION"
+    echo "- branch: ${BRANCH:-unknown}"
+    echo "- wave: $WAVE"
+    echo "- mode: $MODE"
+    echo "- tasks_done: $TASKS_DONE"
+    echo "- tasks_total: $TASKS_TOTAL"
+    echo "- lane: $LANE"
+    echo "- lane_prev: ${LANE_PREV:-none}"
+    echo "- updated_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "- next_action: Wave $WAVE complete — verify then proceed to Wave $((WAVE + 1)) per plan"
+    [ -n "$NEXT_SESSION_PROMPT" ] && echo "$NEXT_SESSION_PROMPT"
+  } > "$CONTINUE_FILE"
+fi
+
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"

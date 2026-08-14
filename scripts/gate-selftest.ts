@@ -187,6 +187,30 @@ if (!existsSync(savepointFile)) {
   }
 }
 
+// --- D10 mutation: break continue.md writer → savepoint test red ---
+console.log('\nD10 — continue.md writer mutation');
+if (!existsSync(savepointFile)) {
+  console.log('  ⚠  savepoint.sh not found, skipping');
+} else {
+  const original = readFileSync(savepointFile, 'utf8');
+  try {
+    // silently drop the continue.md block (make the writer a no-op)
+    const broken = original.replace(
+      /CONTINUE_FILE="\$MUGIWARA_DIR\/continue.md"[\s\S]*?\nfi\n\n/,
+      'CONTINUE_FILE="$MUGIWARA_DIR/continue.md"\n# continue.md writer disabled\n\n'
+    );
+    if (broken === original) {
+      console.log('  ⚠  D10 mutation pattern not found — skipping');
+    } else {
+      writeFileSync(savepointFile, broken);
+      assert('broken continue.md writer → savepoint fails', false, () => run('D10', 'bun run test -- savepoint -t "D10"'));
+    }
+  } finally {
+    writeFileSync(savepointFile, original);
+    assert('restored → savepoint passes', true, () => run('D10', 'bun run test -- savepoint -t "D10"'));
+  }
+}
+
 // --- Retrieval eval ratchet ---
 console.log('\nRetrieval eval ratchet');
 if (!existsSync(join(root, 'scripts', 'retrieval-eval.ts'))) {

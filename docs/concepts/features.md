@@ -280,7 +280,16 @@ next wave without re-running completed work.
 /mugiwara continue
 ```
 
-or just say "where were we?" at session start.
+or just say "where were we?" at session start. In **auto mode** the
+`session-start` hook reads `.mugiwara/continue.md` and injects an
+`AUTO-RESUME` context line at session start — no manual command needed.
+
+**Where the resume point lives.** `scripts/savepoint.sh` writes
+`.mugiwara/continue.md` at every wave boundary with the position fields
+(mission, branch, wave, mode, tasks done/total, lane, next_action) — machine
+written, same trust as `state.json`. The `next_session_prompt` line is
+crew-written and preserved across savepoints. The resume skill verifies every
+field against the plan + todos before acting; a contradiction escalates.
 
 **Scenario.** Session dies mid-execution on Friday. Monday you open the same
 repo: the crew reads state + `continue.md`, verifies `next_action` against

@@ -133,8 +133,7 @@ test('config hook never clobbers a user-defined agent', async () => {
   expect((mine as { mode?: string }).mode).toBe('subagent');
 });
 
-test('announce string carries inline doctrine and flow contract', async () => {
-  const hooks = await plugin();
+test('announce string carries inline doctrine and flow contract', async () => {  const hooks = await plugin();
   const transform = hooks['experimental.chat.system.transform'];
   const output = { system: ['existing prompt'] };
   await transform({}, output);
@@ -391,4 +390,25 @@ test('system.transform hook handles empty system array', async () => {
   const output: { system: string[] } = { system: [] };
   await transform({}, output);
   expect(output.system.some((s) => s.includes('Mugiwara crew available'))).toBe(true);
+});
+
+test('D10: session-start hook emits AUTO-RESUME context in auto mode from continue.md', { timeout: 20000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-hookauto-'));
+  try {
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=auto\n');
+    writeFileSync(join(dir, '.mugiwara', 'continue.md'),
+      '# Continue — test-mission\n\n- mission: test-mission\n- wave: 3\n- mode: auto\n- tasks_done: 7\n- tasks_total: 12\n- next_action: Wave 3 complete — proceed to Wave 4\n- next_session_prompt: "Run T1-T5 then waves 4-9"\n');
+    writeFileSync(join(dir, '.mugiwara', 'state.json'),
+      '{"mission":"test-mission","wave":3,"tasks":{"done":7,"total":12}}');
+    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
+
+    const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
+    const json = JSON.parse(out) as { additionalContext: string };
+    expect(json.additionalContext).toContain('AUTO-RESUME: mission "test-mission"');
+    expect(json.additionalContext).toContain('wave 3, 7/12 tasks');
+    expect(json.additionalContext).toContain('Never restart the mission');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
