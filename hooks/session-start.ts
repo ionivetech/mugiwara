@@ -29,10 +29,18 @@ const mode = readMode(cwd) ?? readMode(homedir()) ?? 'guided';
 
 function gitActor(): string {
   try {
+    // Mirror savepoint.sh ACTOR resolution exactly:
+    // STATE_ACTOR → GIT_AUTHOR_NAME → GIT_ID (git config name <email>) → USER.
+    // Identity must be byte-identical to the continue writer's actor or the
+    // filter silently skips every file (Robin MAJOR).
+    const stateActor = process.env.STATE_ACTOR?.trim() ?? '';
+    if (stateActor) return stateActor;
+    const envName = process.env.GIT_AUTHOR_NAME?.trim() ?? '';
+    if (envName) return envName;
     const name = execSync('git config user.name 2>/dev/null || true', { cwd, encoding: 'utf8' }).trim();
     const email = execSync('git config user.email 2>/dev/null || true', { cwd, encoding: 'utf8' }).trim();
     if (name && email) return `${name} <${email}>`;
-    return name;
+    return name || (process.env.USER ?? '');
   } catch {
     return '';
   }
@@ -66,10 +74,12 @@ if (mode === 'auto') {
           // owns its actor field
           if (s.actor !== actor) continue;
           if (!isSafeKey(String(s.mission ?? ''))) continue;
+          const member = s.member === null || s.member === undefined ? null : String(s.member);
+          if (member !== null && !isSafeKey(member)) continue;
           if (!isNum(String(s.wave ?? '')) || !isNum(String(s.tasks_done ?? '')) || !isNum(String(s.tasks_total ?? ''))) continue;
           active.push({
             mission: String(s.mission),
-            member: s.member ? String(s.member) : null,
+            member,
             wave: String(s.wave),
             done: String(s.tasks_done),
             total: String(s.tasks_total),

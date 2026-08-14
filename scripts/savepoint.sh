@@ -356,6 +356,7 @@ if [ -n "$MISSION" ]; then
   const data = {
     mission: process.argv[1],
     member: process.argv[2] || null,
+    actor: process.argv[13] || '',
     branch: process.argv[3],
     wave: parseInt(process.argv[4], 10) || 0,
     mode: process.argv[5],
@@ -372,7 +373,7 @@ if [ -n "$MISSION" ]; then
     "$MISSION" "$MEMBER" "$CONT_BRANCH" "$CONT_WAVE" "$CONT_MODE" \
     "$TASKS_DONE" "$TASKS_TOTAL" "$LANE" "$LANE_PREV" \
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    "$CONTINUE_FILE" "$CONTINUE_FILE"
+    "$CONTINUE_FILE" "$CONTINUE_FILE" "$ACTOR"
 fi
 
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"

@@ -200,19 +200,28 @@ export function ensureProjectGitignore(projectDir: string, opts: { dryRun?: bool
   const { dryRun = false } = opts;
   const path = join(projectDir, '.gitignore');
   assertNotSymlink(path);
-  if (existsSync(path)) {
-    const current = readFileSync(path, 'utf8');
-    if (current.includes(GITIGNORE_BLOCK_START) || current.includes(GITIGNORE_MARKER)) {
+  let existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
+  if (existing) {
+    // Delimited block present with the current entries → nothing to do.
+    if (existing.includes(GITIGNORE_BLOCK_START) && existing.includes('.mugiwara/state/')) {
       return { appended: false, notes: [] };
     }
+    // Legacy (v0.6.2) or outdated delimited block → upgrade in place:
+    // strip the old mugiwara entries (both forms), then append the new block.
+    // Without this, upgraded projects keep committing per-wave state/continue
+    // JSON to git — session state must stay ignored (Robin MAJOR, Jinbe Low).
+    const hadOld = existing.includes(GITIGNORE_MARKER) || existing.includes(GITIGNORE_BLOCK_START);
+    if (hadOld) {
+      const clean = removeProjectGitignore(projectDir, { dryRun });
+      existing = clean.removed ? (existsSync(path) ? readFileSync(path, 'utf8') : '') : existing;
+    }
   }
-  const existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
   const separator = existing.length && !existing.endsWith('\n') ? '\n' : '';
   if (!dryRun) {
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, existing + separator + GITIGNORE_BLOCK);
   }
-  return { appended: true, notes: [`.gitignore ${dryRun ? 'would append' : 'appended'} mugiwara audit-trail block`] };
+  return { appended: true, notes: [`.gitignore ${dryRun ? 'would upgrade+append' : 'upgraded'} mugiwara audit-trail block`] };
 }
 
 // remove the delimited mugiwara block, preserving user lines. Handles both

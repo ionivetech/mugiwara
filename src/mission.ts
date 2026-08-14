@@ -97,7 +97,8 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   }
 
   // step results 01..05 + todos.md are evidence — kept; archive removes
-  // only spec/review/issues/logs/continue.md
+  // step results 01..05 + todos.md are evidence — kept; archive removes
+  // only spec/review/issues/logs + continue/<mission>/ + state/<mission>/
   const resultsDir = join(root, 'results', mission);
   if (existsSync(resultsDir)) {
     for (const f of readdirSync(resultsDir)) {

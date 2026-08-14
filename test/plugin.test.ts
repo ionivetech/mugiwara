@@ -86,7 +86,7 @@ test('runtime edit permission applies only to internal subagent agents (write-sc
 
 test('config hook applies per-agent opencode tuning (color/temp/steps)', async () => {
   // isolate from ambient repo mode: run in a temp repo with mode=auto so the
-  // steps-cap is dropped deterministically (auto relies on continue.md)
+  // steps-cap is dropped deterministically (auto relies on the continue JSON)
   const dir = mkdtempSync(join(tmpdir(), 'mugi-plugin-auto-'));
   try {
     mkdirSync(join(dir, '.mugiwara'), { recursive: true });
@@ -426,6 +426,26 @@ test('D10: session-start auto-resumes single in-flight mission for actor', { tim
     expect(json.additionalContext).toContain('Never restart the mission');
     // F1: free-text fields are never interpolated into the prompt
     expect(json.additionalContext).not.toContain('Run T1-T5');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: real savepoint output round-trips to session-start AUTO-RESUME', { timeout: 20000 }, () => {
+  // integration: the continue writer must emit `actor` so the hook's filter
+  // matches — hand-written fixtures hid a writer→reader gap (Robin blocker).
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-hookrt-'));
+  try {
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=auto\n');
+    execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
+
+    const SAVEPOINT = join(import.meta.dirname, '..', 'scripts', 'savepoint.sh');
+    execSync(`MUGIWARA_DIR=.mugiwara bash "${SAVEPOINT}" test-mission "" 3 auto`, { cwd: dir });
+
+    const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
+    const json = JSON.parse(out) as { additionalContext: string };
+    expect(json.additionalContext).toContain('AUTO-RESUME: mission "test-mission"');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
