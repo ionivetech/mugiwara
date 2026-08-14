@@ -37,8 +37,19 @@ function run(bin: string, args: string[], cwd: string, envExtra: Record<string, 
   return { status: r.status, stdout: `${r.stdout}\n${r.stderr}`.trim(), stderr: r.stderr };
 }
 
-function readState(dir: string, file = 'state.json') {
-  return JSON.parse(readFileSync(join(dir, '.mugiwara', file), 'utf8'));
+// run savepoint with the (mission, member) interface: <mission> [member] [wave] [mode]
+function runSavepoint(dir: string, mission: string, member = '', wave = 1, mode = 'guided', envExtra: Record<string, string> = {}) {
+  return run(SAVEPOINT, [mission, member, String(wave), mode], dir, envExtra);
+}
+
+// solo state: .mugiwara/state/<mission>/state.json
+function readState(dir: string, mission = 'm') {
+  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', mission, 'state.json'), 'utf8'));
+}
+
+// team state: .mugiwara/state/<mission>/<member>.json
+function readMemberState(dir: string, mission: string, member: string) {
+  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', mission, `${member}.json`), 'utf8'));
 }
 
 // ---------- D1: cases 1-6 — lane_prev resolve + lane_rose ----------
@@ -46,8 +57,8 @@ function readState(dir: string, file = 'state.json') {
 test('case 1: savepoint reads lane_prev from state.json (D1 fixed)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
-    run(SAVEPOINT, ['m', '', '', '2', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
+    runSavepoint(dir, 'm', '', 2, 'guided');
     const state = readState(dir);
     expect(state.lane_prev).toBe('standard'); // second run sees first run's lane
     expect(state.lane).toBe('standard');
@@ -60,18 +71,18 @@ test('case 4: relative MUGIWARA_DIR resolves lane_prev (D1 exact bug)', { timeou
     // first run with a RELATIVE MUGIWARA_DIR — the old require() choked on
     // '.mugiwara/state.json' (MODULE_NOT_FOUND, needs './' prefix), so
     // lane_prev silently read empty. readFileSync resolves it from any cwd.
-    spawnSync('bash', [SAVEPOINT, 'm', '', '', '1', 'guided'], {
+    spawnSync('bash', [SAVEPOINT, 'm', '', '1', 'guided'], {
       cwd: dir,
       encoding: 'utf8',
       env: { ...process.env, MUGIWARA_DIR: '.mugiwara' },
     });
-    const r = spawnSync('bash', [SAVEPOINT, 'm', '', '', '2', 'guided'], {
+    const r = spawnSync('bash', [SAVEPOINT, 'm', '', '2', 'guided'], {
       cwd: dir,
       encoding: 'utf8',
       env: { ...process.env, MUGIWARA_DIR: '.mugiwara' },
     });
     expect(r.status).toBe(0);
-    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
+    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', 'm', 'state.json'), 'utf8'));
     expect(state.lane_prev).toBe('standard');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -83,9 +94,9 @@ test('case 5: lane_rose true when lane rises (lean -> full via escalating fixtur
     // saving before the branch's files are counted? No — fixture is fixed.
     // Verify rise path: direct->full with two savepoints is covered by
     // escalating's earlier state. Here: write a lean state first by faking.
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     // state is full; a second savepoint on same diff stays full, no rise
-    run(SAVEPOINT, ['m', '', '', '2', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 2, 'guided');
     const state = readState(dir);
     expect(state.lane_rose).toBe(false);
     expect(state.lane).toBe('full');
@@ -99,7 +110,7 @@ test('case 6: lane_rose false on spike (spike is a resize, not a rise)', { timeo
     const mugi = join(dir, '.mugiwara');
     execSync(`mkdir -p ${mugi}`, { cwd: dir });
     writeFileSync(join(mugi, 'state.json'), JSON.stringify({ lane: 'spike', lane_peak: 'spike', mission: 'm' }));
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     expect(state.lane).toBe('standard'); // spike does not clamp forward
     expect(state.lane_rose).toBe(false);
@@ -112,14 +123,14 @@ test('case 6: lane_rose false on spike (spike is a resize, not a rise)', { timeo
 test('case 7: lane held at full after sensitive path removed (clamp D2)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     let state = readState(dir);
     expect(state.lane).toBe('full');
     expect(state.lane_peak).toBe('full');
 
     // remove sensitive paths -> diff would shrink, but clamp holds full
     execSync('git rm -q src/auth/login.ts src/payments/txn.ts && git commit -q -m shrink', { cwd: dir });
-    run(SAVEPOINT, ['m', '', '', '2', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 2, 'guided');
     state = readState(dir);
     expect(state.lane).toBe('full'); // held at peak, not dropped to lean
     expect(state.lane_peak).toBe('full');
@@ -130,7 +141,7 @@ test('case 7: lane held at full after sensitive path removed (clamp D2)', { time
 test('case 9: lane_peak recorded and rises with lane', { timeout: SLOW }, () => {
   const dir = fixtureDir('escalating');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     expect(state.lane).toBe('full');
     expect(state.lane_peak).toBe('full');
@@ -140,12 +151,12 @@ test('case 9: lane_peak recorded and rises with lane', { timeout: SLOW }, () => 
 test('case 10: fresh mission resets lane_peak (no clamp carry-over)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
-    run(SAVEPOINT, ['sensitive', '', '', '1', 'guided'], dir);
-    let state = readState(dir);
+    runSavepoint(dir, 'sensitive', '', 1, 'guided');
+    let state = readState(dir, 'sensitive');
     expect(state.lane).toBe('full');
     // different mission name on the same repo -> peak resets
-    run(SAVEPOINT, ['other', '', '', '1', 'guided'], dir);
-    state = readState(dir);
+    runSavepoint(dir, 'other', '', 1, 'guided');
+    state = readState(dir, 'other');
     expect(state.lane_prev).toBeNull();
     expect(state.lane_peak).toBe(state.lane);
   } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -200,7 +211,7 @@ test('case 15: lane.sh and savepoint.sh agree (shared patterns)', { timeout: SLO
   try {
     const r = run(LANE, ['main', '--json'], dir);
     const j = JSON.parse(r.stdout);
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     expect(state.lane).toBe(j.lane);
     expect(state.sensitive_paths.sort()).toEqual(j.sensitive_paths.sort());
@@ -225,7 +236,7 @@ test('case 16: churn 1800 -> tokens_est > 30000 (D4: churn x 12, not delta)', { 
       writeFileSync(join(dir, `src/legacy${i}.ts`), Array.from({ length: 300 }, (_, l) => `export const g${i}${l} = () => ${l + 1};`).join('\n') + '\n');
     }
     execSync('git add -A && git commit -qm rewrite', { cwd: dir });
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     expect(state.loc_ins).toBe(900);
     expect(state.loc_del).toBe(900);
@@ -240,7 +251,7 @@ test('case 16: churn 1800 -> tokens_est > 30000 (D4: churn x 12, not delta)', { 
 test('case 17: deletions -> negative delta, positive churn, tokens > 0 (D4)', { timeout: SLOW }, () => {
   const dir = fixtureDir('deletions-only');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     expect(state.loc_delta).toBeLessThan(0);
     expect(state.loc_churn).toBeGreaterThan(0);
@@ -252,7 +263,7 @@ test('case 17: deletions -> negative delta, positive churn, tokens > 0 (D4)', { 
 test('case 18: MUGIWARA_TOKENS override honored (reported source)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir, { MUGIWARA_TOKENS: '12345' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '12345' });
     const state = readState(dir);
     expect(state.tokens_est).toBe(12345);
     expect(state.tokens_source).toBe('reported');
@@ -262,11 +273,11 @@ test('case 18: MUGIWARA_TOKENS override honored (reported source)', { timeout: S
 test('case 19: warn at 1.5x new standard budget (25000 -> 37500)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir, { MUGIWARA_TOKENS: '37499' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '37499' });
     expect(readState(dir).budget_status).toBe('ok');
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir, { MUGIWARA_TOKENS: '37500' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '37500' });
     expect(readState(dir).budget_status).toBe('warn');
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir, { MUGIWARA_TOKENS: '75000' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '75000' });
     expect(readState(dir).budget_status).toBe('stop');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -274,7 +285,7 @@ test('case 19: warn at 1.5x new standard budget (25000 -> 37500)', { timeout: SL
 test('case 20: LANE_BASE matches lane-base.ts computed load (D5)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     // standard LANE_BASE is 13000 from scripts/lib/lane-base.sh
     expect(state.budget).toBe(25000);
@@ -337,19 +348,20 @@ test('case 24: evidence stdin pipeline also gets trailer', { timeout: SLOW }, ()
 
 // ---------- D7/D8: cases 25-28 — branch-mode interface + gitignore ----------
 
-test('case 25: --branch m feat/other -> state-feat-other.json, branch resolved (D7)', { timeout: SLOW }, () => {
+test('case 25: team member -> state/<mission>/<member>.json, branch from git (D7)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-br-'));
   try {
-    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
-    const r = spawnSync('bash', [SAVEPOINT, '--branch', 'm', 'feat/other', '1', 'guided'], {
+    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -qb feat/other', { cwd: dir });
+    const r = spawnSync('bash', [SAVEPOINT, 'm', 'sari', '1', 'guided'], {
       cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
     expect(r.status).toBe(0);
-    const stateFile = join(dir, '.mugiwara', 'state-feat-other.json');
+    const stateFile = join(dir, '.mugiwara', 'state', 'm', 'sari.json');
     expect(existsSync(stateFile)).toBe(true);
     const state = JSON.parse(readFileSync(stateFile, 'utf8'));
     expect(state.mission).toBe('m');
-    expect(state.branch).toBe('feat/other');
+    expect(state.member).toBe('sari');
+    expect(state.branch).toBe('feat/other'); // auto from git, no positional
     expect(state.actor).toBe('T <t@t.com>'); // auto-resolved from git, no positional
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -402,9 +414,9 @@ test('case 29: docs-only change does not escalate to full (path-weighted)', { ti
 test('case 30: deleted sources -> full via sensitive-path removal keeps clamp (D2 regression)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     execSync('git rm -q src/auth/login.ts && git commit -q -m rm-auth', { cwd: dir });
-    run(SAVEPOINT, ['m', '', '', '2', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 2, 'guided');
     const state = readState(dir);
     expect(state.lane).toBe('full'); // held, not dropped
     expect(state.lane_peak).toBe('full');
@@ -427,9 +439,9 @@ test('case 31: unicode + spaced paths do not break lane detection', { timeout: S
 test('case 32: corrupt state.json degrades gracefully, lane_prev null', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
-    writeFileSync(join(dir, '.mugiwara', 'state.json'), '{ not json');
-    run(SAVEPOINT, ['m', '', '', '2', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
+    writeFileSync(join(dir, '.mugiwara', 'state', 'm', 'state.json'), '{ not json');
+    runSavepoint(dir, 'm', '', 2, 'guided');
     const state = readState(dir);
     expect(state.lane_prev).toBeNull(); // corrupt read -> no prev
     expect(state.lane).toBe('standard'); // still writes fresh state
@@ -442,7 +454,7 @@ test('case 33: non-git dir -> both tools fail gracefully', { timeout: SLOW }, ()
     const l = run(LANE, [], dir);
     expect(l.status).not.toBe(0);
     expect(l.stdout).toMatch(/not a git repository/);
-    const s = run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    const s = runSavepoint(dir, 'm', '', 1, 'guided');
     expect(s.status).not.toBe(0);
     expect(s.stdout).toMatch(/not a git repository/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -453,7 +465,7 @@ test('case 33: non-git dir -> both tools fail gracefully', { timeout: SLOW }, ()
 test('fixture: escalating repo files_touched matches branch diff', { timeout: SLOW }, () => {
   const dir = fixtureDir('escalating');
   try {
-    run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
+    runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
     expect(state.files_touched).toBe(10);
   } finally { rmSync(dir, { recursive: true, force: true }); }
