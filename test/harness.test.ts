@@ -40,8 +40,8 @@ function runSavepoint(dir: string, args: string, envExtra: Record<string, string
   });
 }
 
-function readState(dir: string, file = 'state.json') {
-  return JSON.parse(readFileSync(join(dir, '.mugiwara', file), 'utf8'));
+function readState(dir: string, mission = 'm') {
+  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', mission, 'state.json'), 'utf8'));
 }
 
 const newRepo = (tag: string) => {
@@ -150,7 +150,7 @@ test('savepoint: mission-name allowlist rejects traversal, dots, unicode, metach
   const bad = ['bad name', '../evil', '../../etc/passwd', '.', '..', '...', 'misiün', 'a&b', 'a|b', 'a*b', 'a$b', '', 'a\nb', 'a`b', '$(rm -rf /)', 'a;b', 'a&&b'];
   try {
     for (const name of bad) {
-      const r = spawnSync('bash', [SAVEPOINT, name, '', '', '1', 'guided'], {
+      const r = spawnSync('bash', [SAVEPOINT, name, '', '1', 'guided'], {
         cwd: dir,
         encoding: 'utf8',
         env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
@@ -158,13 +158,13 @@ test('savepoint: mission-name allowlist rejects traversal, dots, unicode, metach
       expect(r.status, `mission ${JSON.stringify(name)} should be rejected`).not.toBe(0);
       expect(r.stderr, `mission ${JSON.stringify(name)}`).toContain('invalid mission name');
     }
-    const ok = spawnSync('bash', [SAVEPOINT, 'qa-mission_1.v2', '', '', '1', 'guided'], {
+    const ok = spawnSync('bash', [SAVEPOINT, 'qa-mission_1.v2', '', '1', 'guided'], {
       cwd: dir,
       encoding: 'utf8',
       env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
     expect(ok.status).toBe(0);
-    expect(existsSync(join(dir, '.mugiwara', 'state.json'))).toBe(true);
+    expect(existsSync(join(dir, '.mugiwara', 'state', 'qa-mission_1.v2', 'state.json'))).toBe(true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -178,9 +178,9 @@ test('savepoint: sensitive escalation WINS over docs-only downgrade (twin of lan
     const files: Record<string, string> = { 'prod/.env': 'KEY=1\n' };
     for (let i = 0; i < 9; i++) files[`docs/d${i}.md`] = '# doc\n';
     commitFiles(dir, files);
-    const r = runSavepoint(dir, 'sensdocs "" "" 1 guided');
+    const r = runSavepoint(dir, 'sensdocs "" 1 guided');
     expect(r.status).toBe(0);
-    const state = readState(dir);
+    const state = readState(dir, 'sensdocs');
     expect(state.lane).toBe('full');
     expect(state.lane_reason).toContain('sensitive');
   } finally {
@@ -197,24 +197,24 @@ test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate o
     mkdirSync(evDir, { recursive: true });
 
     // no trace file -> 1
-    runSavepoint(dir, 'healtest "" "" 1 guided');
-    expect(readState(dir).heal_cycle).toBe(1);
+    runSavepoint(dir, 'healtest "" 1 guided');
+    expect(readState(dir, 'healtest').heal_cycle).toBe(1);
 
     // one banner -> 2
     writeFileSync(join(evDir, '01-trace.md'), 'some text\n## Wave 8 — heal\nmore\n');
-    runSavepoint(dir, 'healtest "" "" 1 guided');
-    expect(readState(dir).heal_cycle).toBe(2);
+    runSavepoint(dir, 'healtest "" 1 guided');
+    expect(readState(dir, 'healtest').heal_cycle).toBe(2);
 
     // two banners -> 3
     writeFileSync(join(evDir, '01-trace.md'), '## Wave 8 — heal\n## Wave 8 — heal\n');
-    runSavepoint(dir, 'healtest "" "" 1 guided');
-    expect(readState(dir).heal_cycle).toBe(3);
+    runSavepoint(dir, 'healtest "" 1 guided');
+    expect(readState(dir, 'healtest').heal_cycle).toBe(3);
 
     // "heal" prose WITHOUT "Wave 8" banner: must stay 1 and emit no syntax error
     // (regression guard for bug F1: grep -c zero-match double-emit)
     writeFileSync(join(evDir, '01-trace.md'), 'heal workers healed the bug\n');
-    const r = runSavepoint(dir, 'healtest "" "" 1 guided');
-    expect(readState(dir).heal_cycle).toBe(1);
+    const r = runSavepoint(dir, 'healtest "" 1 guided');
+    expect(readState(dir, 'healtest').heal_cycle).toBe(1);
     expect(r.stderr).not.toContain('syntax error');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -233,8 +233,8 @@ test('savepoint: blockers_open counts data rows, not header or separator', { tim
       '| wave | task | symptom | attempted | help-needed |\n|---|---|---|---|---|\n' +
         '| 3 | t1 | segfault | restart | review |\n| 3 | t2 | timeout | retry | owner |\n| 4 | t3 | oom | grow | owner |\n',
     );
-    runSavepoint(dir, 'blktest "" "" 1 guided');
-    expect(readState(dir).blockers_open).toBe(3);
+    runSavepoint(dir, 'blktest "" 1 guided');
+    expect(readState(dir, 'blktest').blockers_open).toBe(3);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -253,15 +253,15 @@ test('savepoint: fully-completed plan reports tasks.done=total (not 0)', { timeo
 
     // all checked, zero unchecked
     writeFileSync(join(plansDir, 'qaplan.md'), '- [x] task 1\n- [x] task 2\n- [x] task 3\n');
-    runSavepoint(dir, 'qaplan "" "" 1 guided');
-    let state = readState(dir);
+    runSavepoint(dir, 'qaplan "" 1 guided');
+    let state = readState(dir, 'qaplan');
     expect(state.tasks.done).toBe(3);
     expect(state.tasks.total).toBe(3);
 
     // mixed: 2 checked + 1 unchecked
     writeFileSync(join(plansDir, 'qaplan.md'), '- [x] task 1\n- [x] task 2\n- [ ] task 3\n');
-    runSavepoint(dir, 'qaplan "" "" 1 guided');
-    state = readState(dir);
+    runSavepoint(dir, 'qaplan "" 1 guided');
+    state = readState(dir, 'qaplan');
     expect(state.tasks.done).toBe(2);
     expect(state.tasks.total).toBe(3);
   } finally {
@@ -276,22 +276,22 @@ test('savepoint: budget warn/stop boundaries for standard (25000) and full (5000
   try {
     // 3 files -> standard
     commitFiles(dir, { 'a.ts': 'a\n', 'b.ts': 'b\n', 'c.ts': 'c\n' });
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '37499' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '37499' });
     expect(readState(dir).budget_status).toBe('ok');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '37500' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '37500' });
     expect(readState(dir).budget_status).toBe('warn');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '75000' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '75000' });
     expect(readState(dir).budget_status).toBe('stop');
 
     // 9 files -> full
     const files: Record<string, string> = {};
     for (let i = 0; i < 9; i++) files[`src/s${i}.ts`] = 'x\n';
     commitFiles(dir, files);
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '74999' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '74999' });
     expect(readState(dir).budget_status).toBe('ok');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '75000' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '75000' });
     expect(readState(dir).budget_status).toBe('warn');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '150000' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '150000' });
     expect(readState(dir).budget_status).toBe('stop');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -309,7 +309,7 @@ test('savepoint: single 25-LOC file is lean, matching lane.sh', { timeout: 20000
     commitFiles(dir, { 'src/big.ts': Array.from({ length: 25 }, (_, i) => `line ${i}`).join('\n') + '\n' });
     const lane = runLane(dir);
     expect(JSON.parse(lane.stdout).lane).toBe('lean');
-    runSavepoint(dir, 'm "" "" 1 guided');
+    runSavepoint(dir, 'm "" 1 guided');
     expect(readState(dir).lane).toBe('lean');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -321,7 +321,7 @@ test('savepoint: single 25-LOC file is lean, matching lane.sh', { timeout: 20000
 test('savepoint: lane rise direct -> full sets lane_rose with lane_prev', { timeout: 20000 }, () => {
   const dir = newRepo('rose');
   try {
-    runSavepoint(dir, 'm "" "" 1 guided');
+    runSavepoint(dir, 'm "" 1 guided');
     let state = readState(dir);
     expect(state.lane).toBe('direct');
     expect(state.lane_rose).toBe(false);
@@ -329,7 +329,7 @@ test('savepoint: lane rise direct -> full sets lane_rose with lane_prev', { time
     const files: Record<string, string> = {};
     for (let i = 0; i < 9; i++) files[`src/s${i}.ts`] = 'x\n';
     commitFiles(dir, files);
-    runSavepoint(dir, 'm "" "" 1 guided');
+    runSavepoint(dir, 'm "" 1 guided');
     state = readState(dir);
     expect(state.lane).toBe('full');
     expect(state.lane_prev).toBe('direct');

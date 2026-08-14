@@ -25,6 +25,7 @@ claim.
 | [Execution model](concepts/execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
 | [Lanes & sizing](concepts/lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
 | [Onboarding & initiatives](concepts/workflow.md) | 9Q guided setup, team sub-missions, shared plans, status tracking |
+| [Team collaboration](concepts/collaboration.md) | One shared plan, per-(mission, member) state + resume, worked example |
 | [Enforcement](reference/enforcement.md) | Skip gates, evidence over claims, and capability tiers |
 | [Git discipline](concepts/git-strategy.md) | Commits, branches, save-points — and why the executor commits |
 

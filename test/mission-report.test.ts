@@ -67,13 +67,20 @@ const closureFixture = `# Closure Report
 
 const newMugiDir = (tag: string) => mkdtempSync(join(tmpdir(), `mugi-report-${tag}-`));
 
+// state now lives at .mugiwara/state/<mission>/state.json
+function writeFixtureState(mugi: string, state: unknown) {
+  const dir = join(mugi, 'state', 'test-mission');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'state.json'), JSON.stringify(state, null, 2) + '\n');
+}
+
 test('mission-report: full fixture writes enriched report (exit 0)', { timeout: 20000 }, () => {
   const dir = newMugiDir('full');
   try {
     const mugi = join(dir, '.mugiwara');
     const resDir = join(mugi, 'results', 'test-mission');
     mkdirSync(resDir, { recursive: true });
-    writeFileSync(join(mugi, 'state.json'), JSON.stringify(fixtureState, null, 2) + '\n');
+    writeFixtureState(mugi, fixtureState);
     writeFileSync(join(resDir, '01-execution.md'), '# Execution\n\nT1: PASS\n');
     writeFileSync(join(resDir, '06-closure.md'), closureFixture);
 
@@ -126,7 +133,7 @@ test('mission-report: no results dir → graceful degraded report (exit 0)', { t
   try {
     const mugi = join(dir, '.mugiwara');
     mkdirSync(mugi, { recursive: true });
-    writeFileSync(join(mugi, 'state.json'), JSON.stringify(fixtureState, null, 2) + '\n');
+    writeFixtureState(mugi, fixtureState);
 
     const r = runReport(mugi, 'test-mission');
     expect(r.status, `stderr: ${r.stderr}`).toBe(0);

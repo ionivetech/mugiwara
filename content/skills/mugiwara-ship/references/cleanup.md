@@ -18,7 +18,7 @@ consumed intermediates. Never touch anything outside `.mugiwara/`.
 - `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
 - `review/`, `issues/` per-mission findings — folded into the report
 - `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs — folded
-- `.mugiwara/continue.md` — consumed once closed (delete by exact name, never a glob)
+- `.mugiwara/continue/<mission>/[member].json` — consumed once closed (delete by exact name, never a glob)
 
 Procedure: run `mugiwara archive <mission>` (dry-run first), which folds evidence
 into the report, removes the loose files, and appends a summary-index line.

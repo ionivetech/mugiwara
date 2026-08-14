@@ -32,7 +32,7 @@ format `scripts/mission-report.sh` produces:
 
     # Mission: invitation-accepted-flow . 2026-08-11
 
-    **Lane** full . **Mode** guided . **Actor** farid . **Branch** feature/MKR-412
+    **Lane** full . **Mode** guided . **Actor** john . **Branch** feature/MKR-412
 
     ## What changed
 
@@ -78,7 +78,7 @@ all nine waves. Mugiwara itself is free; token usage depends on the lane:
 | Standard (feature)  |  5–7  |      ~13k      | 25k    |
 | Full (architecture) | 9–11  |      ~23k      | 50k    |
 
-Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
+Usage tracked in `.mugiwara/state/<mission>/[member].json` per mission. Budget warns at 1.5×,
 pauses at 3×. Lane bases are measured from the skills/agents loaded per lane
 by `scripts/lane-base.ts` — the constants fail CI if they drift from content
 load.
@@ -120,7 +120,7 @@ pipeline config to write.**
 | `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
 | `Brook, fix the failing login test`            | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles                                                                                                                      |
 | `Jinbe, audit auth middleware`                 | STRIDE + OWASP + dependency audit. Read-only — never touches code                                                                                                                        |
-| `/mugiwara auto`                               | Switches to full autonomy from the next wave                                                                                                                                             |
+| `/mugiwara auto`                               | Switches to full autonomy — all waves run without asking, from the next wave |
 
 - **Full pipeline** when the task is big or direction is unclear
 - **Direct agent** when you know exactly what you need — say the name
@@ -136,11 +136,12 @@ pipeline config to write.**
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
 | **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **Team collaboration**   | One shared plan, per-(mission, member) state + resume. Any number of engineers, zero collisions. |
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
-| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json` + machine-written `continue.md`. Continues, never restarts. Auto-resumes in auto mode. |
+| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state/<mission>/` + machine-written `continue/<mission>/`. Continues, never restarts. Auto surfaces in-flight work (lists when ambiguous). |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
-→ All 28 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+→ All 28 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Team collaboration](docs/concepts/collaboration.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## The pipeline
 
@@ -188,6 +189,43 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
+## Team collaboration
+
+Mugiwara is built for a team sharing one repo. Identity is **(mission, member)**,
+never branch — so any number of engineers can run parallel work without
+colliding, and one engineer can juggle several missions.
+
+```
+.mugiwara/
+├── state/<mission>/state.json        # solo state
+├── state/<mission>/<member>.json     # your team member state
+├── continue/<mission>/state.json     # solo resume point
+├── continue/<mission>/<member>.json  # your resume point
+└── plans/<mission>.md                # ONE shared plan (source of truth)
+```
+
+Quick start for a team:
+
+```bash
+# Nami writes one plan with a ## Sub-missions table (assignee + branch per member)
+/mugiwara-plan                          # guided/semi asks "Solo or team?"
+
+# Each member works on their own branch, resume only their own work
+/mugiwara continue                      # list every in-flight mission for YOU
+/mugiwara continue payment-gateway      # solo → resume; team → list members
+/mugiwara continue payment-gateway patty # resume exactly patty's work
+
+# Coordination radar
+bun run scripts/initiative.ts status plans/<mission>.md          # who's where
+bun run scripts/initiative.ts conflict-check plans/<mission>.md  # shared-file overlap
+```
+
+Auto mode runs every wave autonomously — and never downgrades to guided
+mid-mission. In a team plan, auto covers **your member scope only**: resuming
+your sub-mission runs it to ship, never the other members'.
+
+→ [Full collaboration guide with a worked example](docs/concepts/collaboration.md) · [Multi-actor reference](references/multi-actor.md)
+
 ## When not to use Mugiwara
 
 - **Prototyping or spikes** — use Lane 4, or skip mugiwara entirely.
@@ -207,7 +245,6 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `mode`              | guided                          | guided / semi / auto                           |
 | `branch`            | `feature/{type}-{issue}-{slug}` | Branch naming                                  |
 | `commit`            | conventional                    | conventional / gitmoji / plain                 |
-| `base`              | main                            | PR target branch                               |
 | `coverage_new`      | 90                              | Coverage threshold for new files (%)           |
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
 | `review_depth`      | full                            | full / standard / quick — Robin's review depth |
@@ -215,6 +252,18 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 
 Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
 config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
+
+**How much does the crew ask you?**
+
+| Mode      | Plan | Execution | Ambiguities |
+| --------- | ---- | --------- | ----------- |
+| `guided`  | you approve every step | ask before each wave | ask the user |
+| `semi`    | you approve the written plan | auto from Wave 3 to ship | ask the user |
+| `auto`    | auto | auto all the way to ship (your member scope in a team) | resolved internally (brainstorm → Luffy decides) |
+
+In `auto`, the crew runs every wave autonomously — triage, plan, execute,
+quality, gates, review, heal, closure — and never downgrades to guided
+mid-mission. Only a genuine blocker or the heal halt pauses.
 
 → [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
 
@@ -228,7 +277,7 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Ship gate check         | `/mugiwara-ship`                         |
 | See initiative progress | `mugiwara initiative status <plan>`      |
-| Resume a mission        | `/mugiwara continue` or "where were we?"   |
+| Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
 | Check gate locally      | `bun run gate`                           |
 | All docs                | [docs/](docs/)                           |

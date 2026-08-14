@@ -112,8 +112,10 @@ Almost nothing in `guided` mode:
   hands you a verdict file with a ready PR summary. The crew never creates a
   PR, merges, or deploys.
 
-Switch to `semi` or `auto` if you want the crew to self-manage branch, commits,
-and ambiguities. See [modes](concepts/modes.md).
+Switch to `semi` if you want the crew to self-manage branch, commits, and
+execution from Wave 3 (you still approve the written plan and answer real
+questions). Switch to `auto` for full autonomy — the crew resolves ambiguities
+internally (brainstorm → Luffy decides). See [modes](concepts/modes.md).
 
 ## 4. The `.mugiwara/` workspace
 
@@ -122,7 +124,8 @@ Every mission writes to `.mugiwara/` at the repo root:
 ```
 .mugiwara/
 ├── config          # mode, branch, commit, coverage thresholds
-├── state.json      # computed at every wave boundary by scripts/savepoint.sh
+├── state/<mission>/   # computed at every wave boundary by scripts/savepoint.sh (solo state.json / team member.json)
+├── continue/<mission>/ # machine-written resume point per (mission, member)
 ├── spec/           # brainstorm output
 ├── plans/          # clean execution plan (source of truth from Wave 2)
 ├── results/        # per-mission folders: results/<mission>/ (01-execution … 07-pr-verdict + todos)
@@ -133,7 +136,7 @@ Every mission writes to `.mugiwara/` at the repo root:
 └── logs/           # decision log + cross-mission lessons
 ```
 
-**Savepoint** runs at every wave boundary — `state.json` carries lane, wave,
+**Savepoint** runs at every wave boundary — the mission state carries lane, wave,
 files, blockers, heal cycle, and token budget. Resume reads one file instead of
 six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 

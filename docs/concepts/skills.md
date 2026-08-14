@@ -28,7 +28,7 @@ it embodies a role.
 | `mugiwara-pr` | Terminal: push + verdict file with ready PR summary; never creates a PR |
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
 | `mugiwara-sunset` | Sunset & migration: keep-or-retire gate, cutover playbooks, safe schema changes |
-| `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/state.json`; never restart |
+| `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/state/<mission>/[member].json`; never restart |
 | `mugiwara-lessons` | Cross-mission memory: actionable lessons ledger, read at triage, written at closure |
 
 ## Engineering practice

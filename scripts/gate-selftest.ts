@@ -187,23 +187,24 @@ if (!existsSync(savepointFile)) {
   }
 }
 
-// --- D10 mutation: break continue.md writer → savepoint test red ---
-console.log('\nD10 — continue.md writer mutation');
+// --- D10 mutation: break continue writer → savepoint test red ---
+console.log('\nD10 — continue writer mutation');
 if (!existsSync(savepointFile)) {
   console.log('  ⚠  savepoint.sh not found, skipping');
 } else {
   const original = readFileSync(savepointFile, 'utf8');
   try {
-    // silently drop the continue.md block (make the writer a no-op)
+    // silently drop the continue writer block (make it a no-op). Anchor on the
+    // D10 header comment so the regex hits the writer, not the STATE_FILE if.
     const broken = original.replace(
-      /CONTINUE_FILE="\$MUGIWARA_DIR\/continue.md"[\s\S]*?\nfi\n\n/,
-      'CONTINUE_FILE="$MUGIWARA_DIR/continue.md"\n# continue.md writer disabled\n\n'
+      /# --- continue\/<mission>\/<member>\.json \(D10\): machine-written resume point ---[\s\S]*?\nfi\n\n/,
+      '# --- continue writer disabled (D10) ---\n\n'
     );
     if (broken === original) {
       console.log('  ⚠  D10 mutation pattern not found — skipping');
     } else {
       writeFileSync(savepointFile, broken);
-      assert('broken continue.md writer → savepoint fails', false, () => run('D10', 'bun run test -- savepoint -t "D10"'));
+      assert('broken continue writer → savepoint fails', false, () => run('D10', 'bun run test -- savepoint -t "D10"'));
     }
   } finally {
     writeFileSync(savepointFile, original);

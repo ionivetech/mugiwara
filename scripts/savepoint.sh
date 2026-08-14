@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# scripts/savepoint.sh — write .mugiwara/state.json at every wave boundary.
-# Computed from git + file counts; zero model judgement.
+# scripts/savepoint.sh — write .mugiwara/state/<mission>/<member>.json at every
+# wave boundary. Computed from git + file counts; zero model judgement.
+# Identity is (mission, member), never branch. Solo = member empty → the file
+# is named state.json. Usage:
+#   savepoint.sh <mission> [member] [wave] [mode]
 set -u
 
 die() { echo "savepoint: $*" >&2; exit 1; }
@@ -34,26 +37,18 @@ GIT_NAME="$(git config user.name 2>/dev/null || true)"
 GIT_EMAIL="$(git config user.email 2>/dev/null || true)"
 if [ -n "$GIT_NAME" ] && [ -n "$GIT_EMAIL" ]; then GIT_ID="$GIT_NAME <$GIT_EMAIL>"; else GIT_ID="$GIT_NAME"; fi
 
-# --- parse mission args ---
-# --branch flag must parse FIRST — it shifts positionals
-BRANCH_MODE=0
-if [ "${1:-}" = "--branch" ]; then
-  BRANCH_MODE=1
-  shift
-  # branch-mode interface (D7): <mission> <branch> [wave] [mode] — actor
-  # auto-resolves from git identity, never a positional.
-  MISSION="${1:-${STATE_MISSION:-}}"
-  BRANCH="${2:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-  WAVE="${3:-${STATE_WAVE:-1}}"
-  MODE="${4:-${STATE_MODE:-guided}}"
-  ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}"
-else
-  MISSION="${1:-${STATE_MISSION:-}}"
-  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"
-  BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-  WAVE="${4:-${STATE_WAVE:-1}}"
-  MODE="${5:-${STATE_MODE:-guided}}"
-fi
+# --- parse mission args: <mission> [member] [wave] [mode] ---
+MISSION="${1:-${STATE_MISSION:-}}"
+MEMBER="${2:-${STATE_MEMBER:-}}"
+WAVE="${3:-${STATE_WAVE:-1}}"
+MODE="${4:-${STATE_MODE:-guided}}"
+ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}"
+BRANCH="$(git branch --show-current 2>/dev/null || echo 'unknown')"
+
+# treat the legacy empty-actor placeholder '""' as "no member" (solo). The old
+# interface used '""' for the actor slot; the new (mission, member) interface
+# uses an empty arg. Accept both so callers need not know which one.
+if [ "$MEMBER" = '""' ]; then MEMBER=""; fi
 
 # mission allowlist — MISSION feeds paths + sed + node argv; traversal or
 # sed metacharacters must not reach filesystem operations
@@ -66,21 +61,32 @@ if [[ "$MISSION" =~ ^\.+$ ]]; then
   die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
 fi
 
-# per-branch state file when --branch used
-# BRANCH_SLUG sanitized to [A-Za-z0-9._-] — it feeds file names and the
-# continue.md writer; a newline/control char in BRANCH would escape the line
-# format and corrupt both (F5). Dropping illegal chars is safe: slugs are
-# keys, not content. First translate path separators to '-', then drop
-# everything not in the allowlist (tr set is literal; \t\n cannot appear in
-# git refs anyway). Dot-only slugs are emptied (BSD/macOS-safe: no \+ BRE).
-BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
-if [ "$BRANCH_MODE" -eq 1 ]; then
-  STATE_FILE="$MUGIWARA_DIR/state-${BRANCH_SLUG}.json"
-else
-  STATE_FILE="$MUGIWARA_DIR/state.json"
+# member allowlist — MEMBER feeds a per-member file name; same rules as MISSION.
+case "$MEMBER" in
+  *[!a-zA-Z0-9._-]*) die "invalid member name \"$MEMBER\" (allowlist: [a-zA-Z0-9._-])" ;;
+esac
+if [[ "$MEMBER" =~ ^\.+$ ]]; then
+  die "invalid member name \"$MEMBER\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
 fi
 
-[ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [actor] [branch] [wave] [mode]"
+# BRANCH_SLUG sanitized to [A-Za-z0-9._-] — it feeds the continue branch field;
+# a newline/control char in BRANCH would corrupt the JSON (F5). Dropping illegal
+# chars is safe: slugs are keys, not content. Dot-only slugs emptied
+# (BSD/macOS-safe: no \+ BRE).
+BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
+
+# state + continue live per (mission, member). Solo (member empty) → state.json.
+STATE_DIR="$MUGIWARA_DIR/state/$MISSION"
+CONTINUE_DIR="$MUGIWARA_DIR/continue/$MISSION"
+if [ -n "$MEMBER" ]; then
+  STATE_FILE="$STATE_DIR/$MEMBER.json"
+  CONTINUE_FILE="$CONTINUE_DIR/$MEMBER.json"
+else
+  STATE_FILE="$STATE_DIR/state.json"
+  CONTINUE_FILE="$CONTINUE_DIR/state.json"
+fi
+
+[ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [member] [wave] [mode]"
 [ -d .git ] || die "not a git repository"
 
 # --- computed fields ---
@@ -275,11 +281,12 @@ elif [ "$BUDGET" -gt 0 ] && [ "$TOKENS_EST" -ge "$WARN_AT" ] 2>/dev/null; then
   STATUS="warn"
 fi
 
-mkdir -p "$MUGIWARA_DIR"
+mkdir -p "$MUGIWARA_DIR/state/$MISSION" "$MUGIWARA_DIR/continue/$MISSION"
 
 node -e "
 const data = {
   mission: process.argv[1],
+  member: process.argv[31] || null,
   actor: process.argv[2],
   branch: process.argv[3],
   lane: process.argv[4],
@@ -317,58 +324,56 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
-  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN"
+  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
 fi
 
-# --- continue.md (D10): machine-written resume point at every wave boundary ---
+# --- continue/<mission>/<member>.json (D10): machine-written resume point ---
 # Written alongside state.json so an interrupted session (step-limit truncation,
 # crash, new session) can resume without human recall. Same trust as state.json:
 # computed fields, never model judgement. The resume skill treats it as data to
 # verify against the plan/todos, never verbatim instructions.
-# Branch-scoped like state.json: in --branch mode the file is
-# continue-<branch-slug>.md so parallel branch missions never clobber each
-# other's resume point (multi-actor). The crew-written next_session_prompt
-# line is preserved across savepoints — savepoint never invents it.
-CONTINUE_FILE="$MUGIWARA_DIR/continue.md"
-if [ "$BRANCH_MODE" -eq 1 ]; then
-  CONTINUE_FILE="$MUGIWARA_DIR/continue-${BRANCH_SLUG}.md"
-fi
+# Scoped by (mission, member) like state.json — solo writes state.json, team
+# writes <member>.json, so parallel members never clobber each other. The
+# crew-written next_session_prompt line is preserved across savepoints.
 if [ -n "$MISSION" ]; then
   NEXT_SESSION_PROMPT=""
   if [ -f "$CONTINUE_FILE" ]; then
-    NEXT_SESSION_PROMPT=$(grep -E '^-?[[:space:]]*next_session_prompt:' "$CONTINUE_FILE" 2>/dev/null | head -1 || true)
+    NEXT_SESSION_PROMPT=$(node -e "try{const s=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(s.next_session_prompt||'')}catch(e){process.stdout.write('')}" "$CONTINUE_FILE" 2>/dev/null || true)
   fi
-  # N2: every field echoed into continue.md is validated first. MISSION is
-  # allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized — a
-  # newline in any of them must never break the line format.
+  # N2: every field echoed into continue is validated first. MISSION + MEMBER
+  # are allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized.
   CONT_WAVE=$(echo "$WAVE" | tr -cd '0-9')
   case "$MODE" in
     guided|semi|auto) CONT_MODE="$MODE" ;;
     *) CONT_MODE="guided" ;;
   esac
-  # BRANCH_SLUG is already sanitized to [A-Za-z0-9._-] with a tr set that
-  # has NO trailing '/' — that set is portable (GNU/BSD). A set ending in
-  # './' makes GNU tr treat '_-/' as a reversed range and emit nothing
-  # (macOS passed, Linux CI failed: '- branch: unknown'). Reuse the slug.
   CONT_BRANCH="${BRANCH_SLUG:-unknown}"
-  {
-    echo "# Continue — $MISSION"
-    echo ""
-    echo "- mission: $MISSION"
-    echo "- branch: ${CONT_BRANCH:-unknown}"
-    echo "- wave: ${CONT_WAVE:-0}"
-    echo "- mode: $CONT_MODE"
-    echo "- tasks_done: $TASKS_DONE"
-    echo "- tasks_total: $TASKS_TOTAL"
-    echo "- lane: $LANE"
-    echo "- lane_prev: ${LANE_PREV:-none}"
-    echo "- updated_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    echo "- next_action: verify this wave against the plan, then continue per plan (next wave or closure)"
-    [ -n "$NEXT_SESSION_PROMPT" ] && echo "$NEXT_SESSION_PROMPT"
-  } > "$CONTINUE_FILE"
+  node -e "
+  const fs = require('fs');
+  const data = {
+    mission: process.argv[1],
+    member: process.argv[2] || null,
+    actor: process.argv[13] || '',
+    branch: process.argv[3],
+    wave: parseInt(process.argv[4], 10) || 0,
+    mode: process.argv[5],
+    tasks_done: parseInt(process.argv[6], 10) || 0,
+    tasks_total: parseInt(process.argv[7], 10) || 0,
+    lane: process.argv[8],
+    lane_prev: process.argv[9] || null,
+    updated_at: process.argv[10],
+    next_action: 'verify this wave against the plan, then continue per plan (next wave or closure)'
+  };
+  try { data.next_session_prompt = JSON.parse(fs.readFileSync(process.argv[12],'utf8')).next_session_prompt || ''; } catch (e) { data.next_session_prompt = ''; }
+  fs.writeFileSync(process.argv[11], JSON.stringify(data, null, 2) + '\n');
+  " \
+    "$MISSION" "$MEMBER" "$CONT_BRANCH" "$CONT_WAVE" "$CONT_MODE" \
+    "$TASKS_DONE" "$TASKS_TOTAL" "$LANE" "$LANE_PREV" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    "$CONTINUE_FILE" "$CONTINUE_FILE" "$ACTOR"
 fi
 
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"

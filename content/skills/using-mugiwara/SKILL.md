@@ -37,7 +37,7 @@ Mugiwara is a governed engineering team in your coding agent. 12 specialists —
 | Robin | Reviewer — breaking-change map (read-only) |
 | Jinbe | Security — STRIDE, OWASP, secret scan (read-only) |
 | Brook | Healer — reads ledger, fixes failures |
-| Resume | Continuity — rebuild from state.json |
+| Resume | Continuity — rebuild from the mission state |
 
 For task routing and classification, `mugiwara-orchestration` auto-loads as gatekeeper.
 This skill is documentation — load manually with `/using-mugiwara` or similar trigger phrases.

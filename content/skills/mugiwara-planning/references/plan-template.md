@@ -43,7 +43,7 @@ Multi-PR scope (>2 days). Split into sub-missions — never one giant plan:
 
 - Each sub-mission: own PR, done-criteria (checkbox list), continuation pointer.
 - Every sub-mission ends in a mergeable state.
-- Continuation via `.mugiwara/continue.md` — next sub-mission resumes from the pointer, never restarts.
+- Continuation via `.mugiwara/continue/<mission>/[member].json` — next sub-mission resumes from the pointer, never restarts.
 - Each sub-mission needs its own wave table.
 
 ## Interview-first & mode (prose detail)
@@ -57,9 +57,9 @@ never plan from an empty spec, that is fiction.
 
 Mode gates (per mode config):
 
-- `guided`: batch ONE question round, wait for answers, then present the plan for an explicit user GO — current behavior.
-- `semi`: self-answer non-blocking ambiguities + log them in the decision log; still present the plan for user GO.
-- `auto`: proceed past approval only with zero blocking ambiguities AND zero high-risk tasks (task `Risk` line = deploy / migration / DB / public API / state-mutating); else stop and present the plan for user GO.
+- `guided`: batch ONE question round, wait for answers, then present the plan for an explicit user GO.
+- `semi`: manual until the written plan — batch the question round, wait, present the plan for an explicit user GO; execution from Wave 3 onward is automatic.
+- `auto`: fully automatic — no user GO required. Ambiguities are resolved internally: the owning agent brainstorms with Usopp, Luffy makes the call, and the crew proceeds. Only a genuine blocker or the heal halt pauses. If a blocking question truly cannot be resolved from the repo + skills, escalate to Luffy → the user.
 
 Never hand to the executor without a GO except through the auto gate above;
 the anti-pattern list binds in every mode.

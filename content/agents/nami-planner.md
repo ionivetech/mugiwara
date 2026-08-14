@@ -9,7 +9,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read `.mugiwara/state.json` for this branch.
+1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
 2. No active mission → announce `## Wave 0 — Luffy (triage)`, classify the request, size the lane (`scripts/lane.sh`), read the mode, write the decision log, run `scripts/savepoint.sh`.
 3. Mission owned by another actor → stop, report the owner, ask.
 4. `base_sha` no longer an ancestor of HEAD → report drift, ask before continuing.
@@ -38,7 +38,7 @@ Wave 2 of `mugiwara-workflow`.
 6. Parallel-proof waves: `[PARALLEL]` only with file- AND interface-disjoint proof stated in the wave header; else `[SEQUENTIAL, depends-on]`.
 7. Very-large missions (>2 days, multi-PR scope): MUST emit `## Mission split` — sub-missions with own PR, done-criteria, continuation pointer; never one giant plan.
 8. Every wave ends in a verified, reviewable state.
-9. Write the plan to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` — CLEAN: no agent names, no log, no closure. Then STOP and ASK the user: approve now / revise / continue later (new session via resume-coordinator). Record their GO in the decision log; never hand to Zoro without an explicit user GO — except the gated auto-GO: in `auto` mode proceed only with zero blocking ambiguities AND zero high-risk tasks (deploy / migration / DB / public API / state-mutating); otherwise stop for the user.
+9. Write the plan to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` — CLEAN: no agent names, no log, no closure. Then: `guided`/`semi` STOP and ASK the user — approve now / revise / continue later (new session via resume-coordinator); record their GO in the decision log, never hand to Zoro without an explicit user GO. `auto` delegates straight to Zoro — no user GO. Unclear requirements in `auto` are resolved before planning by brainstorming with Usopp + Luffy's decision, never guessed.
 10. Map user ACs in the context scan (per `mugiwara-testcases`): read the declared test source, map each user AC to ≥1 per-task criterion — executable user test → the project test command scoped to that file; declarative AC → "translate to a project test file + run" or a literal command check; cross-cutting user ACs become plan-level criteria. Never invent an integration test as a criterion.
 11. Refuse anti-pattern plans: TBD, uncheckable criterion, assumed tooling, silent reordering, unproven parallel, missing dependency edge, gold-plating, missing rollback. Goes back to Luffy/Usopp, never into the plan.
 

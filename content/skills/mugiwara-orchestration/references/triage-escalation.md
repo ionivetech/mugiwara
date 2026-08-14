@@ -1,7 +1,7 @@
 # Triage & Escalation — full reference
 
 Full classifier, lane routing, precedence, pressure rationalizations, auto
-ceiling, escalation owners, and heal bounds. The SKILL.md body carries one-line
+auto-never-drops, escalation owners, and heal bounds. The SKILL.md body carries one-line
 pointers; this file is the detail.
 
 ## Request classifier (Wave 0) — 8 classes
@@ -63,17 +63,14 @@ Moved to the SKILL.md body — pressure resistance must fire mid-argument, befor
 the agent opens a reference. See `## Rationalizations (pressure resistance)`
 in `SKILL.md`.
 
-## Auto mode ceiling
+## Auto mode never drops
 
-`auto` never covers: the lane ROSE to 3 mid-mission (`lane_rose` in
-`state.json`), a sensitive path touched (auth/payment/billing/crypto/secrets/
-migration — see `scripts/lane.sh`), or heal cycles exceeding one. On any of
-those, auto drops to guided — announce the drop and ask.
-
-Sized at 3 at triage is NOT a drop: a mission that starts full (9+ files, no
-sensitive path) stays auto. Escalation and sensitivity are the triggers, not
-the lane number itself. `auto` on an auth change still drops — sensitivity
-overrides the lane number.
+`auto` runs every wave autonomously to closure. Lane rise (`lane_rose`), a
+sensitive path touched (auth/payment/billing/crypto/secrets/migration — see
+`scripts/lane.sh`), or heal cycles do NOT downgrade the mode. The lane may
+escalate (more waves, more care) but the mode stays auto. Only a genuine
+blocker or the heal halt pauses and escalates to the user; the mode is never
+switched down mid-mission.
 
 ## Lane-escalation owner (who checks, when)
 
@@ -91,7 +88,7 @@ been; Luffy owns the lane decision.
 
 ## Heal bound — halt, not a red flag
 
-Read `heal_cycle` from `.mugiwara/state.json` (written by savepoint.sh). At 3,
+Read `heal_cycle` from `.mugiwara/state/<mission>/[member].json` (written by savepoint.sh). At 3,
 STOP and escalate to the user with full history. This is a halt, not a red
 flag: red flags are prose, a counter is state. Nothing re-runs Wave 8 past 3
 cycles.

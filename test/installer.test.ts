@@ -391,8 +391,9 @@ test('parseFrontmatter rejects bad line', () => {
 
 test('resetMission blocks when active actor exists without force', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-mission-'));
-  mkdirSync(join(dir, '.mugiwara'), { recursive: true });
-  writeFileSync(join(dir, '.mugiwara', 'state.json'), JSON.stringify({ actor: 'testuser' }));
+  mkdirSync(join(dir, '.mugiwara', 'state', 'm1'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'state', 'm1', 'state.json'),
+    JSON.stringify({ actor: 'testuser', updated_at: '2026-08-14T00:00:00Z' }));
   const result = resetMission(dir, false);
   expect(result.blocked).toContain('testuser');
   expect(result.removed).toHaveLength(0);
@@ -402,7 +403,9 @@ test('resetMission with force bypasses actor guard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-missionf-'));
   mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
   writeFileSync(join(dir, '.mugiwara', 'plans', 'dummy.md'), 'plan');
-  writeFileSync(join(dir, '.mugiwara', 'state.json'), JSON.stringify({ actor: 'testuser' }));
+  mkdirSync(join(dir, '.mugiwara', 'state', 'm1'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'state', 'm1', 'state.json'),
+    JSON.stringify({ actor: 'testuser', updated_at: '2026-08-14T00:00:00Z' }));
   const result = resetMission(dir, false, true);
   expect(result.blocked).toBeUndefined();
   expect(result.removed).toContain('plans');
@@ -423,7 +426,9 @@ describe('ensureProjectGitignore', () => {
       expect(r.appended).toBe(true);
       const text = readFileSync(join(dir, '.gitignore'), 'utf8');
       expect(text).toContain('.mugiwara/refs/');
-      expect(text).toContain('.mugiwara/state.json');
+      expect(text).toContain('.mugiwara/state/');
+      expect(text).toContain('.mugiwara/continue/');
+      expect(text).not.toContain('.mugiwara/state.json');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -561,6 +566,29 @@ describe('ensureProjectGitignore', () => {
       const text = readFileSync(join(dir, '.gitignore'), 'utf8');
       expect(text).not.toContain('.mugiwara/state.json');
       expect(text).toContain('.mugiwara/state.custom-owner-line');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('ensureProjectGitignore upgrades legacy block to state/ + continue/ folders', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi11-'));
+    try {
+      // v0.6.2 undelimited legacy block
+      writeFileSync(join(dir, '.gitignore'),
+        '# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.\n' +
+        '# Ignore session state and regenerated files.\n' +
+        '.mugiwara/state.json\n.mugiwara/state-*.json\n.mugiwara/config\n.mugiwara/continue.md\n.mugiwara/refs/\n');
+      const r = ensureProjectGitignore(dir);
+      expect(r.appended).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).toContain('.mugiwara/state/');
+      expect(text).toContain('.mugiwara/continue/');
+      expect(text).not.toContain('.mugiwara/state.json');
+      expect(text).not.toContain('.mugiwara/continue.md');
+      // idempotent: second call detects the new block, appends nothing
+      const r2 = ensureProjectGitignore(dir);
+      expect(r2.appended).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

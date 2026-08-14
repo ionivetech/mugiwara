@@ -31,7 +31,7 @@ What actually differs per harness tier. Every skill and agent file ships to ever
 - Saves ~40k tokens of glob-load. Trade: the model must decide to open the ref.
 - **Project scope only.**
 - `references/` files are copied to `.mugiwara/refs/` — depth is available, just not auto-loaded.
-- Wave-boundary state flush: savepoint writes `state.json` so the model has computed state to resume from.
+- Wave-boundary state flush: savepoint writes the mission state so the model has computed state to resume from.
 
 ## What's the same everywhere
 
@@ -39,7 +39,7 @@ What actually differs per harness tier. Every skill and agent file ships to ever
 - All 15 agent markdown files ship to every harness.
 - `references/` files are always copied.
 - The workflow, lane sizing, and evidence discipline are identical — the difference is in how the model loads them.
-- The `.mugiwara/continue.md` handoff is harness-agnostic (works across every tier in this matrix). Step caps are per-platform and do not break the protocol — one `/mugiwara continue` per session restores the exact resume point on any harness.
+- The `.mugiwara/continue/<mission>/[member].json` handoff is harness-agnostic (works across every tier in this matrix). Step caps are per-platform and do not break the protocol — one `/mugiwara continue` per session restores the exact resume point on any harness.
 
 ## Write-boundary enforcement (honest limits)
 

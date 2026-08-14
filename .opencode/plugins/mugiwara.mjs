@@ -92,7 +92,7 @@ function readAgents(stepsEnabled = true) {
     if (CREW[name]) {
       // steps caps per-agent agentic iterations. In auto mode the crew runs
       // the pipeline without check-in pauses, so a hard steps cap truncates
-      // mid-wave — the crew relies on continue.md at wave boundaries instead
+      // mid-wave — the crew relies on the continue file at wave boundaries instead
       // of opencode's per-agent step limit. Guided/semi keep the cap so a
       // paused human session cannot loop unbounded.
       const { steps, ...rest } = CREW[name];

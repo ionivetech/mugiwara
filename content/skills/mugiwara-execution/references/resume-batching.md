@@ -23,10 +23,10 @@ that passes on first run has proven nothing.
 
 ## Batch-resume protocol
 
-- Before starting a wave: if `.mugiwara/continue.md` exists, resume from its
+- Before starting a wave: if `.mugiwara/continue/<mission>/[member].json` exists, resume from its
   next_action — never re-run completed tasks; verify against todos `[x]` marks.
-- After each batch: update `.mugiwara/continue.md` next_action to the next task.
+- After each batch: update `.mugiwara/continue/<mission>/[member].json` next_action to the next task.
 - `[PARALLEL]` batches stay per sub-mission — a batch never crosses a
   sub-mission boundary.
-- continue.md is the handoff contract: state.json proves what is done,
-  continue.md says what is next (see `mugiwara-resume`).
+- continue is the handoff contract: state proves what is done,
+  continue says what is next (see `mugiwara-resume`).

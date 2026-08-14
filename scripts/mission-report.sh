@@ -12,25 +12,38 @@ MISSION="${1:-}"
 case "$MISSION" in
   *[!a-zA-Z0-9._-]*) echo "mission-report: invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" >&2; exit 1 ;;
 esac
+if [[ "$MISSION" =~ ^\.+$ ]]; then
+  echo "mission-report: invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-], not a dot-path)" >&2; exit 1
+fi
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
-STATE_FILE="$MUGIWARA_DIR/state.json"
+# state lives per (mission, member): solo = state/<mission>/state.json;
+# MEMBER env selects a team member's state, else the solo state.
+MEMBER="${MEMBER:-}"
+case "$MEMBER" in
+  *[!a-zA-Z0-9._-]*) echo "mission-report: invalid member \"$MEMBER\" (allowlist: [a-zA-Z0-9._-])" >&2; exit 1 ;;
+esac
+if [ -n "$MEMBER" ]; then
+  STATE_FILE="$MUGIWARA_DIR/state/$MISSION/$MEMBER.json"
+else
+  STATE_FILE="$MUGIWARA_DIR/state/$MISSION/state.json"
+fi
 REPORT_DIR="$MUGIWARA_DIR/reports"
 RESULTS_DIR="$MUGIWARA_DIR/results/$MISSION"
 REVIEW_DIR="$MUGIWARA_DIR/review"
 ISSUES_DIR="$MUGIWARA_DIR/issues"
 
-export STATE_FILE REPORT_DIR RESULTS_DIR REVIEW_DIR ISSUES_DIR MISSION
+export STATE_FILE REPORT_DIR RESULTS_DIR REVIEW_DIR ISSUES_DIR MISSION MUGIWARA_DIR
 node << 'NODE'
 const fs = require('fs');
 const path = require('path');
 
-const stateFile = process.env.STATE_FILE || ".mugiwara/state.json";
+const stateFile = process.env.STATE_FILE || ".mugiwara/state/unknown/state.json";
 const reportDir = process.env.REPORT_DIR || ".mugiwara/reports";
 const resultsDir = process.env.RESULTS_DIR || ".mugiwara/results/unknown";
 const reviewDir = process.env.REVIEW_DIR || ".mugiwara/review";
 const issuesDir = process.env.ISSUES_DIR || ".mugiwara/issues";
-const mugiDir = path.dirname(stateFile);
+const mugiDir = process.env.MUGIWARA_DIR || ".mugiwara";
 const mission = process.env.MISSION || "unknown";
 
 fs.mkdirSync(reportDir, { recursive: true });

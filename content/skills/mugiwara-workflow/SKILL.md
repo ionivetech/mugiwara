@@ -80,7 +80,7 @@ Read-only investigation (no file change) → Answer/Explore — no crew, no Luff
 
 ## Session handoff
 
-At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/continue.md` before the final text response: mission, sub_mission, wave, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the wave. Next session starts with `/mugiwara continue` — no re-explanation. `auto` mode continues across sessions via continue.md: one command per session, no re-explanation. state.json proves what is done; continue.md says what is next — verify next_action against state.json, escalate contradictions.
+At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/continue/<mission>/[member].json` before the final text response: mission, member, wave, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the wave. Next session starts with `/mugiwara continue <mission> [member]` — no re-explanation. `auto` mode continues across sessions via the continue file: one command per session, no re-explanation. State proves what is done; continue says what is next — verify next_action against state, escalate contradictions.
 
 ## Blocker protocol
 
@@ -92,7 +92,7 @@ Brook reads this at Wave 8. Never silently work around a blocker.
 
 ## Cleanup (Wave 9)
 
-Archive, never delete: run `mugiwara archive <mission>` — folds `logs/`, `spec/`, `review/`, `issues/` into the mission report and removes the loose files. Step results `results/<mission>/01..05` + `todos.md` are EVIDENCE — KEEP them in place; they feed `reports/` and closure links. Keep: everything under `results/<mission>/`, `plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — folds `logs/`, `spec/`, `review/`, `issues/` into the mission report and removes the loose files. Step results `results/<mission>/01..05` + `todos.md` are EVIDENCE — KEEP them in place; they feed `reports/` and closure links. Keep: everything under `results/<mission>/`, `plans/`, `reports/`, `config`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
 
 ## Rules
 

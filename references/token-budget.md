@@ -14,7 +14,7 @@ Warn and stop thresholds for mission token consumption.
 
 ## Mechanism
 
-`scripts/savepoint.sh` writes `tokens_est` to `.mugiwara/state.json` when a
+`scripts/savepoint.sh` writes `tokens_est` to `.mugiwara/state/<mission>/[member].json` when a
 `MUGIWARA_TOKENS` env var is set (the harness should export estimated tokens
 consumed so far).
 

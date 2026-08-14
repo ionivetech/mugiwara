@@ -13,7 +13,7 @@ This is the companion to the feature table in the
 - [5. Config system](#5-config-system)
 - [6. Lane sizing](#6-lane-sizing)
 - [7. Configurable depth](#7-configurable-depth)
-- [8. Savepoint state (`state.json`)](#8-savepoint-state)
+- [8. Savepoint state (`state/<mission>/`)](#8-savepoint-state)
 - [9. Resume & continue](#9-resume--continue)
 - [10. Lessons ledger](#10-lessons-ledger)
 - [11. Sonar-style quality](#11-sonar-style-quality)
@@ -130,15 +130,18 @@ next batch starts.
 **What.** One lever decides how much the crew does without asking. Three
 levels, read once per wave — a flip applies from the next wave.
 
-| Level | Plan GO | Branch/commit | Ambiguities | Check-ins |
-|-------|---------|---------------|-------------|-----------|
-| **guided** | ask the user | ask the user | ask the user | ask the user |
-| **semi** | present plan for user GO | auto | self-answer + log | log, no pause |
-| **auto** | gated auto-GO | auto | self-answer + log | log, no pause |
+| Level | Plan | Execution | Ambiguities | Check-ins |
+|-------|------|-----------|-------------|-----------|
+| **guided** | you approve every step | ask before each wave | ask the user | ask the user |
+| **semi** | you approve the written plan | **auto** from Zoro's wave to ship | ask the user | log, ask when there is a question |
+| **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
-`auto` has one safety line: it proceeds past plan approval only with zero
-blocking ambiguities AND zero high-risk tasks (deploy / migration / DB /
-public API / state-mutating).
+`auto` runs fully automatic from the first prompt to ship: triage, plan,
+execute, quality, gates, review, heal, closure — no user GO. In a team plan
+auto covers **your member scope only**: resuming your sub-mission runs it
+autonomously to ship, never the other members'. If a requirement is unclear,
+the owning agent brainstorms with Usopp, Luffy makes the call, and the crew
+proceeds. Only a genuine blocker or the heal halt pauses.
 
 **How to use.**
 
@@ -196,7 +199,7 @@ project config file that overrides the global defaults.
 | 3 · Full | 9+ files, or auth/payment/migration touched | all 9 waves | ~20k |
 | 4 · Spike | exploratory | brainstorm → re-triage | ~3k |
 
-**How to use.** Automatic. View the result in `.mugiwara/state.json`
+**How to use.** Automatic. View the result in `.mugiwara/state/<mission>/[member].json`
 (`lane`, `lane_reason`, `lane_rose`). Machine output:
 
 ```bash
@@ -239,27 +242,29 @@ project.
 
 ## 8. Savepoint state
 
-**What.** `scripts/savepoint.sh` writes `.mugiwara/state.json` at every wave
-boundary. Every field is **computed from git + file counts**, never
-model-supplied: mission, actor, branch, lane, wave, mode, base/head SHA,
-files touched, LOC delta, sensitive paths, task counts, open blockers, heal
-cycle, token estimate, budget status, evidence file list.
+**What.** `scripts/savepoint.sh` writes
+`.mugiwara/state/<mission>/[member].json` at every wave boundary. Every field
+is **computed from git + file counts**, never model-supplied: mission, member,
+actor, branch, lane, wave, mode, base/head SHA, files touched, LOC delta,
+sensitive paths, task counts, open blockers, heal cycle, token estimate,
+budget status, evidence file list. Identity = (mission, member); solo writes
+`state.json`.
 
 **How to use.** Read it to answer "where are we, how big, any blockers?"
 without opening many files. Written by the crew automatically.
 
 ```bash
-scripts/savepoint.sh <mission> <actor> <branch> <wave> <mode>
-scripts/savepoint.sh --branch <mission> <branch> [wave] [mode]  # branch-scoped, actor auto-resolved from git
+scripts/savepoint.sh <mission> [member] [wave] [mode]
 ```
 
-**Scenario.** After a context loss you open `state.json`: Wave 3, 5/5 tasks
-done in the first batch, 0 blockers, mode semi — a one-file picture of the
-whole mission.
+**Scenario.** After a context loss you open `state/<mission>/state.json`:
+Wave 3, 5/5 tasks done in the first batch, 0 blockers, mode semi — a one-file
+picture of the whole mission.
 
-**Multi-actor safe.** State is branch-scoped (`--branch`), so two engineers can
-share one repo without colliding; `mugiwara reset` refuses to wipe another
-actor's live mission without `--force`.
+**Multi-actor safe.** State is scoped by (mission, member), so any number of
+engineers can share one repo without colliding — each member has their own
+file in the mission folder. `mugiwara reset` refuses to wipe another actor's
+live mission without `--force`.
 
 → [Audit trail](audit-trail.md) · [savepoint.test.ts](../../test/savepoint.test.ts)
 
@@ -268,30 +273,34 @@ actor's live mission without `--force`.
 ## 9. Resume & continue
 
 **What.** Rebuild the mission from disk state and continue — never restart.
-`resume-coordinator` reads `state.json`, reports one line
-("Resumed: Wave 3, 2/5 tasks, 0 blockers, mode semi"), and hands off to the
-next wave without re-running completed work.
+`resume-coordinator` reads the state + continue JSON, reports one line
+("Resumed: <mission> [<member>], Wave 3, 2/5 tasks, 0 blockers, mode semi"),
+and hands off to the next wave without re-running completed work.
 
 **How to use.**
 
 ```
-/mugiwara continue
+/mugiwara continue                 # list in-flight (never auto-start)
+/mugiwara continue <mission>       # solo → resume; team → list members
+/mugiwara continue <mission> <member>  # resume that member's work
 ```
 
 or just say "where were we?" at session start. In **auto mode** the
-`session-start` hook reads `.mugiwara/continue.md` and injects an
-`AUTO-RESUME` context line at session start — no manual command needed.
+`session-start` hook scans `continue/<mission>/*.json` for the current git
+actor and surfaces an `AUTO-RESUME` context (single mission → resume hint;
+multiple → list) — it never auto-resumes an ambiguous mission.
 
 **Where the resume point lives.** `scripts/savepoint.sh` writes
-`.mugiwara/continue.md` at every wave boundary with the position fields
-(mission, branch, wave, mode, tasks done/total, lane, next_action) — machine
-written, same trust as `state.json`. The `next_session_prompt` line is
-crew-written and preserved across savepoints. The resume skill verifies every
-field against the plan + todos before acting; a contradiction escalates.
+`continue/<mission>/[member].json` at every wave boundary with the position
+fields (mission, member, branch, wave, mode, tasks done/total, lane,
+next_action) — machine written, same trust as `state.json`. The
+`next_session_prompt` field is crew-written and preserved across savepoints.
+The resume skill verifies every field against the plan + todos before acting;
+a contradiction escalates.
 
 **Scenario.** Session dies mid-execution on Friday. Monday you open the same
-repo: the crew reads state + `continue.md`, verifies `next_action` against
-todos, and picks up at the exact task — no re-run, no restart.
+repo: the crew reads state + continue, verifies `next_action` against todos,
+and picks up at the exact task — no re-run, no restart.
 
 → [Resume skill](../../content/skills/mugiwara-resume/SKILL.md)
 
@@ -592,12 +601,13 @@ start.
 
 ## 25. Cost tracking
 
-**What.** Per-lane token budgets (lean 4k, standard 10k, full 20k). Status
-writes to `state.json` (`tokens_est`, `budget`, `budget_status`): warn at
-1.5×, stop at 3×. Surfaced in the mission report as cost delta vs. lane
-budget.
+**What.** Per-lane token budgets (lean 12k, standard 25k, full 50k). Status
+writes to `state/<mission>/[member].json` (`tokens_est`, `budget`,
+`budget_status`): warn at 1.5×, stop at 3×. Surfaced in the mission report as
+cost delta vs. lane budget.
 
-**How to use.** Automatic. Read `.mugiwara/state.json` or the mission report.
+**How to use.** Automatic. Read `.mugiwara/state/<mission>/[member].json` or
+the mission report.
 
 **Scenario.** A standard mission passes 15k tokens → `warn` logged; 30k →
 `stop`, state written, and the mission pauses for a human decision.

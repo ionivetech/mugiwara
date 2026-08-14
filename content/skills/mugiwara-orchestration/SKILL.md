@@ -17,7 +17,7 @@ Size the mission against five pillars; highest gate determines route. Table: `re
 Every wave returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. Non-execution crew members return results:
 
 - Usopp → return brainstorm → Luffy routes to Nami or Zoro
-- Nami → return plan → guided: ask user, semi/auto: delegate
+- Nami → return plan → guided/semi: Luffy asks the user for GO; auto: Luffy delegates to Zoro
 - Sanji → return quality → Luffy routes pass/fail
 - Franky → return gates → Luffy routes pass/fail
 - Robin/Jinbe → return findings → Luffy routes to Brook/Zoro/defer
@@ -58,10 +58,10 @@ Wave 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<missi
 User may summon crew members directly. Luffy records the route + reason. Zoro/Brook: execute/heal immediately. All others: return to Luffy. Direct calls do not skip check-ins.
 
 ## Periodic check-ins
-Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** continue.md at every wave boundary — never only session end (rule #6).
-**Auto ceiling:** auto drops to guided when the lane ROSE to 3 mid-mission (`lane_rose` in `.mugiwara/state.json`), a sensitive path is touched (auth/payment/billing/crypto/secrets/migration — see `scripts/lane.sh`), or heal cycles exceed one. Sized at 3 at triage is not a drop — a mission that starts full in auto mode stays auto. Announce the drop.
-**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or an auto-ceiling drop pauses.
-**Heal halt:** read `heal_cycle` from `.mugiwara/state.json`. At `heal_max_cycles` (read from `.mugiwara/config`, default 3), STOP and escalate to the user.
+Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** the continue file at every wave boundary — never only session end (rule #6).
+**Auto never drops:** in `auto` mode the crew runs every wave autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause.
+**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
+**Heal halt:** read `heal_cycle` from `.mugiwara/state/<mission>/[member].json`. At `heal_max_cycles` (read from `.mugiwara/config`, default 3), STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
 ## Rationalizations (pressure resistance)
