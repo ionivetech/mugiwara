@@ -5,7 +5,8 @@ Every mission creates and works inside `.mugiwara/` at the repo root.
 ```
 .mugiwara/
 ├── config              → runtime mode config (gitignored; project overrides global)
-├── state.json          → computed mission state at every wave boundary (scripts/savepoint.sh)
+├── state/<mission>/    → computed mission state per (mission, member): state.json (solo) or <member>.json (scripts/savepoint.sh)
+├── continue/<mission>/ → machine-written resume point per (mission, member): state.json (solo) or <member>.json
 ├── spec/               → brainstorm output: YYYY-MM-DD-<mission>.md
 ├── plans/              → plan doc: YYYY-MM-DD-<mission>.md — CLEAN, Nami-only, source of truth from Wave 2
 ├── results/            → per-mission folder: results/<mission>/ holds every wave artifact
@@ -45,7 +46,8 @@ artifacts go outside `.mugiwara/`.
 Step results are evidence — KEEP every file in `results/<mission>/`
 (`01-execution.md` through `05-healing.md`, `todos.md`, `06-closure.md`,
 `07-pr-verdict.md`); they feed the mission report and closure links. Delete
-only consumed cross-artifacts: `logs/`, `spec/`, `review/`, `issues/`. Keep
-`plans/`, `reports/`, `config`, `state.json`, `logs/lessons.md` (canonical
+only consumed cross-artifacts: `logs/`, `spec/`, `review/`, `issues/`,
+`state/<mission>/`, `continue/<mission>/`. Keep
+`plans/`, `reports/`, `config`, `logs/lessons.md` (canonical
 lessons ledger; cross-mission state: `backup/`, `manifest.json`). List
 candidates before deleting.

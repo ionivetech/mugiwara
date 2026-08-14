@@ -40,7 +40,7 @@ reflected in the budgets. Lean/standard/full were rescaled from the old
 Spike stays a deliberate floor — a resize lane, not a content-loaded one.
 
 Budgets warn at exactly 1.5× budget, stop at exactly 3×, both boundaries
-inclusive (`>=`). Write state to `.mugiwara/state.json` before stopping.
+inclusive (`>=`). Write state to `.mugiwara/state/<mission>/[member].json` before stopping.
 
 ## Measured benchmark (2026-08-13 QA mission)
 
@@ -71,7 +71,7 @@ All numbers below were measured on this repo, not estimated.
 
 ## Per-mission cost
 
-`state.json` carries `tokens_est` — the estimated tokens consumed by this
+the mission state carries `tokens_est` — the estimated tokens consumed by this
 mission. At closure, the mission report surfaces:
 
 - Total tokens for the mission

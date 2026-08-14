@@ -9,7 +9,7 @@ write-scope: source
 
 ## Before you start
 
-1. Read `.mugiwara/state.json` for this branch.
+1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
 2. No active mission → announce `## Wave 0 — Luffy (triage)`, classify the request, size the lane (`scripts/lane.sh`), read the mode, write the decision log, run `scripts/savepoint.sh`.
 3. Mission owned by another actor → stop, report the owner, ask.
 4. `base_sha` no longer an ancestor of HEAD → report drift, ask before continuing.

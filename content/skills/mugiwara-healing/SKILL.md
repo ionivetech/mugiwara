@@ -53,7 +53,7 @@ Before fixing a bug: write the failing test that reproduces it, watch it fail, t
 2. Every code fix ships with the failed check now passing (run it, capture output).
 3. Never delete or weaken tests/configs to make a failure disappear.
 4. After healing: update the ledger — mark each healed row with evidence; keep unfixed rows for escalation.
-5. Cycle counter: read `heal_cycle` from `.mugiwara/state.json` (savepoint writes it). After this wave the flow returns to Wave 4 (Chopper) for re-audit. **At 3, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past 3.
+5. Cycle counter: read `heal_cycle` from `.mugiwara/state/<mission>/[member].json` (savepoint writes it). After this wave the flow returns to Wave 4 (Chopper) for re-audit. **At 3, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past 3.
 
 ## Worker subagents
 

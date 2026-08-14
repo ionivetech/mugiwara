@@ -11,7 +11,7 @@ by whom — and the cost of the process scales to the size of the work.
 - **Lane sizing** — process scales from zero waves (typo) to nine (auth
   migration), computed from the diff by `scripts/lane.sh`, not guessed.
 - **Evidence trail** — every wave boundary writes computed state to
-  `state.json`. No wave passes on a spoken claim. `scripts/evidence.sh` wraps
+  `state/<mission>/[member].json`. No wave passes on a spoken claim. `scripts/evidence.sh` wraps
   check commands and captures output.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.

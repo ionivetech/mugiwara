@@ -91,7 +91,7 @@ been; Luffy owns the lane decision.
 
 ## Heal bound — halt, not a red flag
 
-Read `heal_cycle` from `.mugiwara/state.json` (written by savepoint.sh). At 3,
+Read `heal_cycle` from `.mugiwara/state/<mission>/[member].json` (written by savepoint.sh). At 3,
 STOP and escalate to the user with full history. This is a halt, not a red
 flag: red flags are prose, a counter is state. Nothing re-runs Wave 8 past 3
 cycles.

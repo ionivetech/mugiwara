@@ -73,14 +73,14 @@ consumed.
 | stop | tokens ≥ 3× budget | Write state, report to user, pause mission |
 
 Budget guidance, not a hard kill switch. The model decides whether to stop —
-savepoint just writes the status to `state.json`.
+savepoint just writes the status to the mission state.
 
 ## Escalation
 
 Lane **escalates when work outgrows the estimate.** At every wave boundary,
 `scripts/savepoint.sh` re-checks the diff. If files grew or a sensitive path
 appeared, lane rises. A lane **never auto-drops** — savepoint clamps to the
-previous peak (`lane_peak` in `state.json`) even when the diff shrinks, and
+previous peak (`lane_peak` in the mission state) even when the diff shrinks, and
 `lane_rose` flags the escalation. Under-process costs more than over-process.
 A fresh mission (different mission name) resets the clamp.
 

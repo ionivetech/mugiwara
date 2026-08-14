@@ -69,7 +69,7 @@ Published with failures — the first pack to admit where it breaks.
 | R7 | ✅ | Savepoint script runs |
 | R8 | ❌ | No source-grounding without body loaded |
 | R9 | ❌ | No ledger without body loaded |
-| R10 | ✅ | Report generated from state.json |
+| R10 | ✅ | Report generated from the mission state |
 
 ## Methodology
 

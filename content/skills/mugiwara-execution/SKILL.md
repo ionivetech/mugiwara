@@ -34,7 +34,7 @@ Before touching code:
 
 ## Wave execution
 
-Before starting: if `.mugiwara/continue.md` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
+Before starting: if `.mugiwara/continue/<mission>/[member].json` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
 
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
@@ -72,7 +72,7 @@ resume in a fresh session (plan order unchanged).`
 
 ## Batch resume
 
-After each batch, update `.mugiwara/continue.md` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
+After each batch, update `.mugiwara/continue/<mission>/[member].json` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
 
 ## Task batching & delegation format (parallel workers only)
 

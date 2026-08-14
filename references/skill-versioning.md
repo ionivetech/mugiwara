@@ -4,7 +4,7 @@ What happens to an existing `.mugiwara/` when a skill changes shape mid-mission.
 
 ## Version stamp
 
-`state.json` carries a `skill_version` field:
+the mission state carries a `skill_version` field:
 
 ```json
 {
@@ -19,7 +19,7 @@ schema, or workspace layout.
 
 ## Resume mismatch behavior
 
-On resume, compare `skill_version` in `state.json` with the installed version:
+On resume, compare `skill_version` in the mission state with the installed version:
 
 | Match | Behavior |
 |-------|----------|
@@ -38,7 +38,7 @@ skill is the exact failure class the workspace contract exists to prevent.
 
 ## Non-breaking changes (bump minor/patch)
 
-- New optional fields in state.json
+- New optional fields in the mission state
 - New reference files
 - Description trimming (same retrieval vocabulary)
 - Body rewrites within same contract

@@ -43,7 +43,7 @@ Multi-PR scope (>2 days). Split into sub-missions — never one giant plan:
 
 - Each sub-mission: own PR, done-criteria (checkbox list), continuation pointer.
 - Every sub-mission ends in a mergeable state.
-- Continuation via `.mugiwara/continue.md` — next sub-mission resumes from the pointer, never restarts.
+- Continuation via `.mugiwara/continue/<mission>/[member].json` — next sub-mission resumes from the pointer, never restarts.
 - Each sub-mission needs its own wave table.
 
 ## Interview-first & mode (prose detail)

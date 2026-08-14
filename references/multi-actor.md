@@ -1,20 +1,26 @@
 # Multi-Actor Workspace
 
-Mugiwara in a team repo — two engineers running missions without collision.
+Mugiwara in a team repo — several engineers running missions without collision.
 
 ## State isolation
 
-`state.json` carries an `actor` field. Mission directories are namespaced by
-branch, not just date:
+Identity is **(mission, member)**, never branch. Every engineer's work lives in
+its own file inside the mission folder, so parallel work never collides:
 
 ```
 .mugiwara/
-├── state.json                          # per-repo, single actor's current mission
-├── state-<branch>.json                 # per-branch state for parallel missions
-├── plans/<branch>-<mission>.md
-├── reports/<branch>-<mission>.md
-├── results/<branch>-<mission>-*.md
+├── state/<mission>/state.json        # solo mission state
+├── state/<mission>/<member>.json     # team member state
+├── continue/<mission>/state.json     # solo resume point (D10)
+├── continue/<mission>/<member>.json  # team member resume point
+├── plans/<mission>.md                # shared plan (source of truth)
+├── reports/YYYY-MM-DD-<mission>.md
+├── results/<mission>-*.md
 ```
+
+Branch is an implementation detail, not an identity: a member can hold several
+missions on one branch, or two members can share a mission on separate branches.
+State and continue follow the person and the plan, not the branch.
 
 ## Safe reset
 
@@ -22,7 +28,7 @@ branch, not just date:
 
 ```
 $ mugiwara reset
-✗ Active mission for 'farid' on branch 'feature/auth'. Use --force to override.
+✗ Active mission for 'farid'. Use --force to override.
 ```
 
 `--force` still preserves `logs/lessons.md` and `config`.
@@ -32,18 +38,32 @@ $ mugiwara reset
 The lessons ledger (`logs/lessons.md`) stays shared — that is the point of it.
 All actors read and write to the same file. Append-only, never overwrite.
 
-## Branch namespacing
+## Member namespacing
 
-`scripts/savepoint.sh` accepts `--branch <mission> <branch> [wave] [mode]`
-to write per-branch state (actor auto-resolves from git identity):
+`scripts/savepoint.sh` writes per-(mission, member) state. Solo missions (no
+member argument) write `state.json`; team missions write `<member>.json`:
 
 ```bash
-scripts/savepoint.sh --branch dark-mode feature/dark-mode 1 guided
-# writes .mugiwara/state-feature-dark-mode.json
+scripts/savepoint.sh dark-mode                 # solo → state/dark-mode/state.json
+scripts/savepoint.sh payment-gateway farid    # team → state/payment-gateway/farid.json
+scripts/savepoint.sh payment-gateway sari     #        state/payment-gateway/sari.json
 ```
 
-The resume point follows the same scoping: `continue.md` is written per
-branch as `continue-<branch-slug>.md` in `--branch` mode, so parallel branch
-missions never clobber each other's resume position.
+The resume point follows the same scoping: `continue/<mission>/<member>.json`
+(team) or `continue/<mission>/state.json` (solo), so parallel members never
+clobber each other's resume position.
 
-`scripts/mission-report.sh` follows the same convention.
+## Resuming your own work
+
+```
+/mugiwara continue                 # list every in-flight mission for you
+/mugiwara continue <mission>       # solo → resume; team → list members
+/mugiwara continue <mission> <member>  # resume exactly that member's work
+```
+
+The session-start hook (auto mode) surfaces only the missions owned by your git
+actor — never another member's. If you hold several in-flight missions it lists
+them and asks, it never guesses.
+
+`scripts/mission-report.sh` follows the same convention (`MEMBER` env selects a
+team member's state).
