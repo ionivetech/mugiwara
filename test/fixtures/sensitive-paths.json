@@ -19,8 +19,9 @@
     ".github/workflows/deploy.yml": "x\n",
     "Dockerfile": "x\n",
     "docker-compose.yml": "x\n",
-    "src/webhooks/stripe.ts": "x\n"
+    "src/webhooks/stripe.ts": "x\n",
+    "src/tokens/refresh.ts": "x\n"
   },
-  "expect": { "lane": "full", "sensitive_paths_min": 14 },
-  "note": "D3: plural forms + 8 categories. 14 of 15 branch paths are sensitive; see sensitive-paths-negative for exclusions."
+  "expect": { "lane": "full", "sensitive_paths_min": 15 },
+  "note": "D3: plural forms + 8 categories + heal families (tokens/). 15 of 16 branch paths are sensitive; see sensitive-paths-negative for exclusions."
 }

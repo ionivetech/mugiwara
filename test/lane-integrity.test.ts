@@ -1,7 +1,8 @@
-// test/lane-integrity.test.ts — 33-case matrix from the v0.6.2 Principal
-// Engineer Review (D1-D9). Uses test/fixtures/*.json materialized by
-// scripts/setup-fixtures.ts. Every assertion is non-trivial — a field that
-// reads a wrong value fails (G3 assertion rule).
+// test/lane-integrity.test.ts — 36-case matrix from the v0.6.2 Principal
+// Engineer Review (D1-D9) + fixture expect blocks + lanes.md drift gate.
+// Uses test/fixtures/*.json materialized by scripts/setup-fixtures.ts.
+// Every assertion is non-trivial — a field that reads a wrong value fails
+// (G3 assertion rule).
 import { test, expect } from 'vitest';
 import { execSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
@@ -128,7 +129,8 @@ test('case 7: lane held at full after sensitive path removed (clamp D2)', { time
     expect(state.lane).toBe('full');
     expect(state.lane_peak).toBe('full');
 
-    // remove ALL sensitive files -> diff drops to zero, but clamp holds full
+    // remove ALL sensitive files -> diff collapses to deletions only, but the
+    // clamp holds full
     execSync('git rm -q -r --ignore-unmatch src db certs keys .github && git rm -q --ignore-unmatch Dockerfile docker-compose.yml && git commit -q -m shrink', { cwd: dir });
     runSavepoint(dir, 'm', '', 2, 'guided');
     state = readState(dir);
@@ -465,14 +467,21 @@ test('case 33: non-git dir -> both tools fail gracefully', { timeout: SLOW }, ()
 // A fixture with an "expect" block declares its own expected lane.sh outcome.
 // This generic consumer asserts it, so a fixture cannot silently drift from
 // what the pattern source produces (G3: values that are never read are absent).
+const EXPECT_KEYS = ['lane', 'sensitive_paths_min', 'sensitive_paths_max'];
 function assertFixtureExpect(fixture: string) {
   const fx = JSON.parse(readFileSync(join(ROOT, 'test', 'fixtures', `${fixture}.json`), 'utf8')) as {
+    baseBranch?: string;
     expect?: { lane?: string; sensitive_paths_min?: number; sensitive_paths_max?: number };
   };
   if (!fx.expect) return;
+  // unknown expect keys pass silently — reject them so a typo'd assertion
+  // cannot masquerade as coverage (G3)
+  for (const k of Object.keys(fx.expect)) {
+    expect(EXPECT_KEYS, `fixture ${fixture}: unknown expect key "${k}"`).toContain(k);
+  }
   const dir = fixtureDir(fixture);
   try {
-    const r = run(LANE, ['main', '--json'], dir);
+    const r = run(LANE, [fx.baseBranch || 'main', '--json'], dir);
     expect(r.status).toBe(0);
     const j = JSON.parse(r.stdout);
     if (fx.expect.lane) expect(j.lane).toBe(fx.expect.lane);
@@ -494,6 +503,8 @@ test('case 35: lanes.md pattern block matches patterns.sh (drift gate)', () => {
   const m = pats.match(/SENSITIVE_PATS="([^"]+)"/);
   expect(m).not.toBeNull();
   // normalize regex forms for doc display: strip backslash escapes + trailing $
+  // NOTE: the doc block is DISPLAY form — paste the raw regex verbatim and this
+  // test goes red (fail-safe direction: false red, never false green).
   const sourceTokens = new Set(m![1].split('|').map(t => t.replace(/\\/g, '').replace(/\$$/, '')));
   const doc = readFileSync(join(ROOT, 'docs', 'concepts', 'lanes.md'), 'utf8');
   const after = doc.slice(doc.indexOf('The patterns live in one place'));
