@@ -84,6 +84,29 @@ test('runtime edit permission applies only to internal subagent agents (write-sc
   }
 });
 
+test('wave-banners table: crew colors are the single source (all agents, valid hex)', async () => {
+  // the plugin derives agent colors from the table — the table must cover the
+  // full crew with well-formed hexes or agent chips silently lose their tint
+  const table = readFileSync(join(contentDir, 'skills', 'mugiwara-workflow', 'references', 'wave-banners.md'), 'utf8');
+  const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|$/gm)];
+  expect(rows).toHaveLength(15);
+  const ids = rows.map(r => r[1]);
+  const expected = [
+    'luffy-orchestrator', 'usopp-brainstorm', 'nami-planner', 'zoro-execution', 'chopper-checkpoint',
+    'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'brook-healing',
+    'skeptic-verifier', 'eval-runner', 'resume-coordinator', 'memory-keeper', 'onboarding-guide',
+  ];
+  expect(ids.sort()).toEqual(expected.sort());
+  for (const r of rows) {
+    expect(r[2]).toMatch(/^#[0-9a-f]{6}$/);
+    expect(parseInt(r[3], 10)).toBeGreaterThanOrEqual(0);
+    expect(parseInt(r[3], 10)).toBeLessThanOrEqual(255);
+    expect(r[4]).toMatch(/\S/);
+  }
+  // luffy stays red — the plugin test below depends on the derived value
+  expect(rows.find(r => r[1] === 'luffy-orchestrator')![2]).toBe('#ef4444');
+});
+
 test('config hook applies per-agent opencode tuning (color/temp/steps)', async () => {
   // isolate from ambient repo mode: run in a temp repo with mode=auto so the
   // steps-cap is dropped deterministically (auto relies on the continue JSON)
