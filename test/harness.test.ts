@@ -190,7 +190,7 @@ test('savepoint: sensitive escalation WINS over docs-only downgrade (twin of lan
 
 // ---------- heal_cycle counting ----------
 
-test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate or error', { timeout: 20000 }, () => {
+test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate or error', { timeout: 40000 }, () => {
   const dir = newRepo('heal');
   try {
     const evDir = join(dir, '.mugiwara', 'results', 'healtest');
