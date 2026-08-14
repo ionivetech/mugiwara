@@ -14,26 +14,31 @@ Mugiwara's evidence lands where the team reviews. At terminal, push the mission 
 
 ## Verdict file
 
-Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
+Write `.mugiwara/results/<mission>/07-pr-verdict.md` — ONE document that IS
+the ready PR material (the user copies the title line and the body as-is).
+No separate report section plus a PR-body copy: one flow, in this exact order:
 
-- **PR Title first** — `{type}: {Title Case summary}` — mandatory Title case (significant words capitalized), e.g. `Feat: Add Evidence Links To Mugiwara Reports`.
-- **PR Body** — everything below lives in the body, in this exact order:
-  1. Summary — goal, mode, waves, task count.
-  2. Per-wave evidence table — wave, task, status, evidence link (`[path](relative/path)`).
-  3. Gates — quality, gates, review + security dispositions, each verdict with evidence.
-  4. Review & security — findings with dispositions.
-  5. User tests — when declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
-  6. Closure report link — `[06-closure.md](.mugiwara/results/<mission>/06-closure.md)`.
-  7. Verdict — PASS / FAIL with the single blocking reason, if any.
+1. **Title** — `# {type}: {Title Case summary}` — mandatory Title case, e.g.
+   `# Feat: Add Evidence Links To Mugiwara Reports`.
+2. **Summary** — goal, mode, waves, task count, branch/stacking note,
+   closure report link (`[06-closure.md](.mugiwara/results/<mission>/06-closure.md)`).
+3. **What changed** — the files/features, one bullet per logical unit.
+4. **Per-wave evidence** — wave, task, status, evidence link
+   (`[path](relative/path)`). Gates, review, security, and heal rows live here
+   with their dispositions.
+5. **Tests** — captured test counts (never asserted); the ATDD oracle result
+   when user tests were declared (per `mugiwara-testcases`).
+6. **Checks** — the gate command block (typecheck/test/build/validators/
+   selftest lines with results).
+7. **Verdict** — PASS / FAIL with the single blocking reason, if any.
 
 ## PR summary
 
-Prepare the PR description so the user can paste and submit without writing it:
-
-- Title — `{type}: {Title Case summary}` (mandatory Title case), FIRST in the paste block.
-- Body — the verdict-file PR summary block (what changed, evidence, checks).
-- Body order — Summary → Per-wave evidence → Gates → Review & security → User tests → Closure report link → Verdict (mirrors the verdict file).
-- Validate every interpolated value against the safe charset and quote it.
+The verdict file IS the PR summary. No second block: the user pastes the file
+— title line into the PR title, the rest into the body. Order mirrors the
+verdict file (title → summary → what changed → per-wave evidence → tests →
+checks → verdict). Validate every interpolated value against the safe charset
+and quote it.
 
 The summary is material, never posted — the crew stops at push.
 
