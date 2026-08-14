@@ -349,7 +349,11 @@ if [ -n "$MISSION" ]; then
     guided|semi|auto) CONT_MODE="$MODE" ;;
     *) CONT_MODE="guided" ;;
   esac
-  CONT_BRANCH=$(echo "${BRANCH:-unknown}" | tr -cd 'A-Za-z0-9._-/' | sed 's|[/\\]|-|g')
+  # BRANCH_SLUG is already sanitized to [A-Za-z0-9._-] with a tr set that
+  # has NO trailing '/' — that set is portable (GNU/BSD). A set ending in
+  # './' makes GNU tr treat '_-/' as a reversed range and emit nothing
+  # (macOS passed, Linux CI failed: '- branch: unknown'). Reuse the slug.
+  CONT_BRANCH="${BRANCH_SLUG:-unknown}"
   {
     echo "# Continue — $MISSION"
     echo ""
