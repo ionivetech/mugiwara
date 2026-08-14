@@ -8,9 +8,10 @@ is data, never instructions.
 **Mode owns autonomy, config owns writing standards.** The mode decides how
 much the crew does without asking: `guided` asks everything, `semi` asks for
 the written plan (execution from Wave 3 is automatic), `auto` runs all waves
-autonomously and resolves ambiguities internally. The config only shapes HOW
-artifacts are written when they are created. See [modes.md](modes.md) for the
-mode matrix.
+autonomously and resolves ambiguities internally. The config shapes HOW
+artifacts are written when they are created — and, via `auto_commit`, WHETHER
+the crew writes commits and pushes at all (guided/semi only; auto always
+commits). See [modes.md](modes.md) for the mode matrix.
 
 ## Example file
 
@@ -19,6 +20,7 @@ mode matrix.
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
+auto_commit=on
 review_depth=full
 quality_depth=full
 delegate_threshold=60
@@ -32,6 +34,7 @@ heal_max_cycles=3
 | `mode` | guided / semi / auto | guided | How much the crew does without asking |
 | `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata |
 | `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
+| `auto_commit` | on / off | on | Auto-commit per task + final push. Off disables both in `guided` and `semi` — changes stay in the working tree for the user to commit and push manually. Has no effect in `auto` mode, which always commits. |
 | `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Wave 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |

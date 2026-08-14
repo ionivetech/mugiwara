@@ -14,32 +14,25 @@ Mugiwara's evidence lands where the team reviews. At terminal, push the mission 
 
 ## Verdict file
 
-Write `.mugiwara/results/<mission>/07-pr-verdict.md`:
-
-- **PR Title first** — `{type}: {Title Case summary}` — mandatory Title case (significant words capitalized), e.g. `Feat: Add Evidence Links To Mugiwara Reports`.
-- **PR Body** — everything below lives in the body, in this exact order:
-  1. Summary — goal, mode, waves, task count.
-  2. Per-wave evidence table — wave, task, status, evidence link (`[path](relative/path)`).
-  3. Gates — quality, gates, review + security dispositions, each verdict with evidence.
-  4. Review & security — findings with dispositions.
-  5. User tests — when declared, the ATDD oracle result (per `mugiwara-testcases`), from real runs, never asserted.
-  6. Closure report link — `[06-closure.md](.mugiwara/results/<mission>/06-closure.md)`.
-  7. Verdict — PASS / FAIL with the single blocking reason, if any.
+Write `.mugiwara/results/<mission>/07-pr-verdict.md` — ONE document that IS
+the ready PR material (no separate report + PR-body copy). Exact order —
+Title → Summary (key-point bullets) → What changed (compact file inventory
+paragraph) → Per-wave evidence → Tests → Checks → Verdict. Full spec:
+`references/verdict-format.md`.
 
 ## PR summary
 
-Prepare the PR description so the user can paste and submit without writing it:
-
-- Title — `{type}: {Title Case summary}` (mandatory Title case), FIRST in the paste block.
-- Body — the verdict-file PR summary block (what changed, evidence, checks).
-- Body order — Summary → Per-wave evidence → Gates → Review & security → User tests → Closure report link → Verdict (mirrors the verdict file).
-- Validate every interpolated value against the safe charset and quote it.
+The verdict file IS the PR summary. No second block: the user pastes the file
+— title line into the PR title, the rest into the body. Order mirrors the
+verdict file (title → summary → what changed → per-wave evidence → tests →
+checks → verdict). Validate every interpolated value against the safe charset
+and quote it.
 
 The summary is material, never posted — the crew stops at push.
 
 ## Handoff rule
 
-Push the branch + write the verdict file at terminal, after every wave passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-wave (reviewer noise).
+Push the branch + write the verdict file at terminal, after every wave passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-wave (reviewer noise). With `auto_commit=off` (guided/semi only): nothing to push — write the verdict file, hand the UNCOMMITTED working tree to the user with the exact commit + push commands; `auto` mode always pushes.
 
 ## Push adapter (plain git, no gh)
 

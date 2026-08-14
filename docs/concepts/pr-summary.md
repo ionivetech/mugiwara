@@ -12,14 +12,15 @@ addition is that the PR description is already written.
 
 1. Save-point commit → push the mission branch with plain `git push -u origin <branch>`.
 2. Write `.mugiwara/results/<mission>/07-pr-verdict.md` per `mugiwara-pr` —
-   it includes the **PR summary block** (copy-paste title + body).
-3. Hand the branch + verdict file to you. You open the PR and paste the block.
+   the verdict file IS the PR summary: title line + body, one document,
+   order title → summary → what changed → per-wave evidence → tests → checks.
+3. Hand the branch + verdict file to you. You open the PR and paste it as-is.
 
 No `gh` CLI, no PR API calls, no auto-reaction to review comments or CI.
 
-## The PR summary block
+## The verdict file
 
-The verdict file's PR summary is shaped by `.mugiwara/config` (project) /
+The verdict file is shaped by `.mugiwara/config` (project) /
 `~/.mugiwara/config` (global):
 
 Example:
@@ -30,9 +31,10 @@ branch=feature/{type}-{issue}-{slug}
 commit=conventional
 ```
 
-The title is a concise `{type}: {summary}` line from mission metadata; the body
-is the verdict-file PR summary block (what changed, evidence, checks). The
-summary is **material, never posted** — the crew's job ends at push.
+The title is a concise `{type}: {summary}` line from mission metadata; the
+body is the rest of the verdict file (summary, what changed, per-wave
+evidence, tests, checks) — one document, no separate block. The summary is
+**material, never posted** — the crew's job ends at push.
 
 ## Why no auto-create
 
