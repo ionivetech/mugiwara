@@ -39,7 +39,7 @@ The summary is material, never posted — the crew stops at push.
 
 ## Handoff rule
 
-Push the branch + write the verdict file at terminal, after every wave passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-wave (reviewer noise).
+Push the branch + write the verdict file at terminal, after every wave passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-wave (reviewer noise). With `auto_commit=off` (guided/semi only): nothing to push — write the verdict file, hand the UNCOMMITTED working tree to the user with the exact commit + push commands; `auto` mode always pushes.
 
 ## Push adapter (plain git, no gh)
 

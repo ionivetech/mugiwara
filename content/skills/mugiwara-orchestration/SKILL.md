@@ -35,7 +35,7 @@ In `auto` mode the AI decides everything; any requirement that stays unclear aft
 
 ## Mode read (Wave 0)
 
-Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave. Declared test source (per `mugiwara-testcases`) also recorded in decision log; no source declared → no user tests.
+Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) then `~/.mugiwara/config` (global); a key missing from both = `guided`. Record the active mode AND `auto_commit` (default on) in the decision log. Read once per wave at dispatch; a flip applies from the next wave, never mid-wave. Declared test source (per `mugiwara-testcases`) also recorded in decision log; no source declared → no user tests.
 
 ## Request classifier (Wave 0) — 8 classes
 
@@ -99,7 +99,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Wave 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `scripts/savepoint.sh <mission>` to write final state, then `scripts/mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
 
 ## Spirit vs letter
 
