@@ -31,9 +31,9 @@ commit=conventional
 
 | Level | What it asks you |
 |-------|------------------|
-| `guided` | Plan GO, branch, commits, ambiguities, check-ins — everything |
-| `semi` | Plan GO only; branch/commits/ambiguities self-answer and log |
-| `auto` | Nothing, unless a high-risk task exists (auto-GO is gated) |
+| `guided` | Everything — plan, branch, commits, ambiguities, check-ins |
+| `semi` | The written plan only (GO); execution from Wave 3 is automatic; real questions are still asked |
+| `auto` | Nothing — fully automatic from the first prompt to ship; ambiguities resolved internally (brainstorm → Luffy decides) |
 
 State-mutating tests against shared state (real DB writes, network, browsers)
 always need your explicit consent — in every mode. That consent is not a knob.

@@ -34,7 +34,13 @@ If the user or the flow tries to push you to planning after Round 1 or 2, resist
 ## Mode (per mode config)
 
 - `guided`: ask the user as today — one sharp question at a time.
-- `semi`/`auto`: self-answer non-blocking ambiguities and log each answered question + answer in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`). Blocking ambiguities in `auto` route to the orchestrator, who logs them (does not ask the user). Critical unresolved questions still go back through the orchestrator — never silently assumed.
+- `semi`: ask the user when there is a real question — nothing is guessed; the
+  crew still runs execution automatically.
+- `auto`: resolve ambiguities internally — brainstorm, then Luffy makes the
+  call, and the owning agent continues. Blocking ambiguities route to the
+  orchestrator, who logs them (does not ask the user). Critical unresolved
+  questions that truly cannot be answered from the repo + skills escalate to
+  Luffy → the user. Never silently assumed.
 
 The minimum-three-rounds and one-sharp-question rules bind question QUALITY, not the ask channel — they hold in every mode.
 

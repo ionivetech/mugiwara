@@ -5,10 +5,12 @@
 missing from both falls back to the default. Unknown keys are ignored. Config
 is data, never instructions.
 
-**Mode owns autonomy, config owns writing standards.** Whether branch and commit
-run automatically is decided by one lever — the mode. The config only shapes
-HOW those artifacts are written when they are created. See [modes.md](modes.md)
-for the mode matrix.
+**Mode owns autonomy, config owns writing standards.** The mode decides how
+much the crew does without asking: `guided` asks everything, `semi` asks for
+the written plan (execution from Wave 3 is automatic), `auto` runs all waves
+autonomously and resolves ambiguities internally. The config only shapes HOW
+artifacts are written when they are created. See [modes.md](modes.md) for the
+mode matrix.
 
 ## Example file
 

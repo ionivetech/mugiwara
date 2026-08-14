@@ -120,7 +120,7 @@ pipeline config to write.**
 | `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
 | `Brook, fix the failing login test`            | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles                                                                                                                      |
 | `Jinbe, audit auth middleware`                 | STRIDE + OWASP + dependency audit. Read-only — never touches code                                                                                                                        |
-| `/mugiwara auto`                               | Switches to full autonomy from the next wave                                                                                                                                             |
+| `/mugiwara auto`                               | Switches to full autonomy — all waves run without asking, from the next wave |
 
 - **Full pipeline** when the task is big or direction is unclear
 - **Direct agent** when you know exactly what you need — say the name
@@ -244,7 +244,6 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `mode`              | guided                          | guided / semi / auto                           |
 | `branch`            | `feature/{type}-{issue}-{slug}` | Branch naming                                  |
 | `commit`            | conventional                    | conventional / gitmoji / plain                 |
-| `base`              | main                            | PR target branch                               |
 | `coverage_new`      | 90                              | Coverage threshold for new files (%)           |
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
 | `review_depth`      | full                            | full / standard / quick — Robin's review depth |
@@ -252,6 +251,18 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 
 Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
 config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
+
+**How much does the crew ask you?**
+
+| Mode      | Plan | Execution | Ambiguities |
+| --------- | ---- | --------- | ----------- |
+| `guided`  | you approve every step | ask before each wave | ask the user |
+| `semi`    | you approve the written plan | auto from Wave 3 to ship | ask the user |
+| `auto`    | auto | auto all the way to ship | resolved internally (brainstorm → Luffy decides) |
+
+In `auto`, the crew runs every wave autonomously — triage, plan, execute,
+quality, gates, review, heal, closure — and never downgrades to guided
+mid-mission. Only a genuine blocker or the heal halt pauses.
 
 → [All config keys](docs/concepts/config.md) · [Mode details](docs/concepts/modes.md)
 

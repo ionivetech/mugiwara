@@ -17,7 +17,7 @@ Size the mission against five pillars; highest gate determines route. Table: `re
 Every wave returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. Non-execution crew members return results:
 
 - Usopp → return brainstorm → Luffy routes to Nami or Zoro
-- Nami → return plan → guided: ask user, semi/auto: delegate
+- Nami → return plan → guided/semi: Luffy asks the user for GO; auto: Luffy delegates to Zoro
 - Sanji → return quality → Luffy routes pass/fail
 - Franky → return gates → Luffy routes pass/fail
 - Robin/Jinbe → return findings → Luffy routes to Brook/Zoro/defer

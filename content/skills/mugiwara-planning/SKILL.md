@@ -25,7 +25,10 @@ Classify the mission by size first — after Luffy's route — then write the pl
 
 Batch blocking ambiguities into ONE question round; never assume silently. Mode gates per config. Full detail: `references/plan-template.md`.
 
-For team initiatives, add to batch: "Solo or team?" In guided/semi: asked. In auto: solo unless user requests team split. If team: collect assignee + branch per sub-mission.
+For team initiatives, add to batch: "Solo or team?" — asked in EVERY mode, never
+defaulted silently. If team: collect assignee + branch per sub-mission; a team
+without member names is a blocking ambiguity — ask before writing, never invent
+assignees. Solo default applies only when the user never mentioned a team.
 
 ## Full context scan
 
@@ -65,13 +68,7 @@ Before the detail blocks, add two markdown tables so Zoro can read the shape at 
 **Task size = commit granularity.** Zoro commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task should be folded into its neighboring logical task, never standalone. If the plan is full of XS tasks, merge them up before writing: a plan sliced into a dozen one-line commits is a plan that will litter the history. Few, well-sized tasks → few, meaningful commits.
 
 ## Waves
-
-Group tasks into waves; each wave ends in a verified, reviewable state.
-
-- `[PARALLEL]` ONLY when tasks share no file AND no interface dependency; state the proof (disjoint files + no shared interface) in the wave header.
-- Otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption.
-
-Per-wave gate: acceptance checks run, evidence captured; a wave starts only when its dependencies are proven done.
+Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALLEL]` ONLY when tasks share no file AND no interface dependency (state the proof); otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption. Per-wave gate: acceptance checks run with evidence; a wave starts only when its dependencies are proven done.
 
 ## Implementation graph
 
@@ -79,8 +76,7 @@ Every edge names its file: `consumes <file> from Task M → produces <file> for 
 
 ## Acceptance vs Definition of Done
 
-- **Acceptance** = "did we build the right thing?" — per task, command-verifiable.
-- **Definition of Done** = "finished to standard?" — correctness, quality, integration, docs, ship-readiness; checked at the final wave.
+- **Acceptance** = "did we build the right thing?" — per task, command-verifiable. **Definition of Done** = "finished to standard?" — correctness, quality, integration, docs, ship-readiness; checked at the final wave.
 
 ## Anti-patterns
 
@@ -109,7 +105,7 @@ Plan doc is single source of truth. Update status via `scripts/initiative.ts set
 
 ## Mission split (very large) — Lane 3
 
-Very-large missions (>2 days, multi-PR scope) split into sub-missions, never one giant plan. Each sub-mission: its own PR, done-criteria (checkbox list), and a continuation pointer; every sub-mission ends in a mergeable state. Continuation flows through `.mugiwara/continue/<mission>/[member].json` — the next sub-mission resumes from the pointer, never restarts. Every sub-mission needs its own wave table; Nami writes the split before any task detail.
+Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/continue/<mission>/[member].json` — next sub-mission resumes from the pointer, never restarts. Nami writes the split before any task detail.
 
 ## Handoff
 

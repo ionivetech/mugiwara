@@ -9,19 +9,24 @@ those artifacts are written when they are created.
 
 ## The three levels
 
-| Level | Plan GO | Branch/commit | Ambiguities | Check-ins |
-|-------|---------|---------------|-------------|-----------|
-| **guided** | ask the user | ask the user | ask the user | ask the user |
-| **semi** | present plan for user GO | auto | self-answer + log | log, no pause |
-| **auto** | gated auto-GO | auto | self-answer + log | log, no pause |
+| Level | Plan | Execution | Ambiguities | Check-ins |
+|-------|------|-----------|-------------|-----------|
+| **guided** | you approve every step | ask before each wave | ask the user | ask the user |
+| **semi** | you approve the plan (manual until the plan is written) | **auto** from Zoro's execution wave to ship | ask the user | log, ask when there is a question |
+| **auto** | auto | auto all the way to ship | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
-- **guided** — you steer everything: approve the plan, decide branch and
-  commit style, answer every ambiguity, get asked at every gate. The default.
-- **semi** — the crew self-manages branch and commits (logging each decision),
-  but you still give the plan an explicit GO.
-- **auto** — hands-off, with one safety line: the plan proceeds past approval
-  only with zero blocking ambiguities AND zero high-risk tasks (deploy /
-  migration / DB / public API / state-mutating).
+- **guided** — fully manual: you steer everything. Approve the plan, decide
+  branch and commit style, answer every ambiguity, get asked at every gate.
+  The default.
+- **semi** — manual up to the written plan (you give the plan an explicit GO),
+  then **automatic from Zoro's execution wave through to ship**: the crew
+  self-manages branch and commits, runs quality, gates, review, heal, closure.
+  If a real question comes up, it still asks you — nothing is guessed.
+- **auto** — fully automatic from the first prompt to ship: triage, plan,
+  execute, quality, gates, review, heal, closure all run without asking. If a
+  requirement is unclear or ambiguous, the crew resolves it internally: the
+  owning agent brainstorms with Usopp, Luffy makes the call, and the owning
+  agent continues its work. Only a genuine blocker or the heal halt pauses.
 
 Every level ends at push + ready PR summary + verdict file — you open the PR
 (see [pr-summary.md](pr-summary.md)).

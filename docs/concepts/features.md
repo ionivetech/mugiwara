@@ -130,15 +130,16 @@ next batch starts.
 **What.** One lever decides how much the crew does without asking. Three
 levels, read once per wave — a flip applies from the next wave.
 
-| Level | Plan GO | Branch/commit | Ambiguities | Check-ins |
-|-------|---------|---------------|-------------|-----------|
-| **guided** | ask the user | ask the user | ask the user | ask the user |
-| **semi** | present plan for user GO | auto | self-answer + log | log, no pause |
-| **auto** | gated auto-GO | auto | self-answer + log | log, no pause |
+| Level | Plan | Execution | Ambiguities | Check-ins |
+|-------|------|-----------|-------------|-----------|
+| **guided** | you approve every step | ask before each wave | ask the user | ask the user |
+| **semi** | you approve the written plan | **auto** from Zoro's wave to ship | ask the user | log, ask when there is a question |
+| **auto** | auto | auto all the way to ship | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
-`auto` has one safety line: it proceeds past plan approval only with zero
-blocking ambiguities AND zero high-risk tasks (deploy / migration / DB /
-public API / state-mutating).
+`auto` runs fully automatic from the first prompt to ship: triage, plan,
+execute, quality, gates, review, heal, closure — no user GO. If a requirement
+is unclear, the owning agent brainstorms with Usopp, Luffy makes the call, and
+the crew proceeds. Only a genuine blocker or the heal halt pauses.
 
 **How to use.**
 
