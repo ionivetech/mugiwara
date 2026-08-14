@@ -84,7 +84,10 @@ function buildArchiveFixture(dir: string): string {
   writeFileSync(join(root, 'logs', 'demo.md'), 'log');
   writeFileSync(join(root, 'logs', '2026-08-13-demo.md'), 'log');
   writeFileSync(join(root, 'logs', 'lessons.md'), 'lessons');
-  writeFileSync(join(root, 'continue.md'), 'mission: demo\n');
+  mk('continue/demo');
+  writeFileSync(join(root, 'continue', 'demo', 'state.json'), '{"mission":"demo","wave":3}\n');
+  mk('state/demo');
+  writeFileSync(join(root, 'state', 'demo', 'state.json'), '{"mission":"demo","wave":3}\n');
   writeFileSync(join(root, 'config'), 'mode=guided\n');
   return root;
 }
@@ -102,7 +105,8 @@ test('archiveMission keeps step results as evidence, removes consumed cross-arti
   expect(removed).toContain(join('issues', 'demo-blockers.md'));
   expect(removed).toContain(join('logs', 'demo.md'));
   expect(removed).toContain(join('logs', '2026-08-13-demo.md'));
-  expect(removed).toContain('continue.md');
+  expect(removed).toContain(join('continue', 'demo'));
+  expect(removed).toContain(join('state', 'demo'));
 
   expect(kept).toContain(join('results', 'demo', '01-execution.md'));
   expect(kept).toContain(join('results', 'demo', '02-quality.md'));
@@ -144,7 +148,8 @@ test('archiveMission --dry-run removes nothing', () => {
   expect(existsSync(join(root, 'results', 'demo', '01-execution.md'))).toBe(true);
   expect(existsSync(join(root, 'spec', 'demo.md'))).toBe(true);
   expect(existsSync(join(root, 'logs', 'demo.md'))).toBe(true);
-  expect(existsSync(join(root, 'continue.md'))).toBe(true);
+  expect(existsSync(join(root, 'continue', 'demo', 'state.json'))).toBe(true);
+  expect(existsSync(join(root, 'state', 'demo', 'state.json'))).toBe(true);
   expect(index).toBeUndefined();
   expect(existsSync(join(root, 'reports', 'index.md'))).toBe(false);
 });
