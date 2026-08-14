@@ -32,12 +32,12 @@ not move: no runtime, 26 skills, twelve harnesses of uneven capability.
 
 ### Current state
 
-Verified by execution at v0.5.5:
+Verified by execution at v0.6.2 (2026-08-14):
 
 ```
-26 skills · 12 agents (+3 internal) · 18 skill-local references · 12 harness targets
+26 skills · 15 agents (+3 internal) · 33 skill-local references · 12 harness targets
 cold-load index      1.3k tokens, budget-gated
-retrieval accuracy   rank-1 88.2% · top-3 100% · negatives 100%
+retrieval accuracy   rank-1 93.5% · top-3 100% · negatives 100%
 determinism          lane · savepoint · evidence · mission-report
 install coverage     91.6% across 9 targets
 ```

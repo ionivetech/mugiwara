@@ -9,7 +9,8 @@ read it as a reviewer.
 |----------|------|-----------|------|-----|
 | **Plan doc** | `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | Nami (planning) | Wave 2 | Zero-context executor — waves, tasks, criteria, risk |
 | **Spec** | `.mugiwara/spec/YYYY-MM-DD-<mission>.md` | Usopp (brainstorm) / Luffy (spec bridge) | Wave 0–1 | Bridge from idea to plan — goal, acceptance, constraints |
-| **State** | `.mugiwara/state.json` | `scripts/savepoint.sh` | Every wave boundary | Computed mission state: lane, wave, files, blockers, token budget, evidence paths |
+| **State** | `.mugiwara/state.json` | `scripts/savepoint.sh` | Every wave boundary | Computed mission state: lane + lane_peak (clamp), wave, files, loc_ins/del/churn, sensitive paths, blockers, token budget, evidence paths |
+| **Continue** | `.mugiwara/continue.md` | `scripts/savepoint.sh` | Every wave boundary | Machine-written resume point: mission, wave, tasks done/total, mode, next action |
 | **Decision log** | `.mugiwara/logs/YYYY-MM-DD-<mission>.md` | Luffy (orchestrator) | Every wave | Route reason, check-in verdicts, mode flips, decisions |
 | **Blocker ledger** | `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` | Any agent | On blocker hit | Row per blocker: wave, task, symptom, attempted, help-needed |
 | **Todo list** | `.mugiwara/results/<mission>/todos.md` | Zoro (execution) | Wave 3 | Checkbox per task, checked with evidence pointer |

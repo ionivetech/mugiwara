@@ -7,6 +7,25 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
+# shared path patterns — single source of truth (D3)
+# shellcheck source=scripts/lib/patterns.sh
+source "$(dirname "$0")/lib/patterns.sh"
+# shared lane budgets — single source of truth (D5), validated by lane-base.ts
+# shellcheck source=scripts/lib/lane-base.sh
+source "$(dirname "$0")/lib/lane-base.sh"
+
+# lane ordering: direct < lean < standard < full < spike (spike resizes, not a rise)
+lane_rank() {
+  case "$1" in
+    direct) echo 0 ;;
+    lean) echo 1 ;;
+    standard) echo 2 ;;
+    full) echo 3 ;;
+    spike) echo 4 ;;
+    *) echo 0 ;;
+  esac
+}
+
 # --- git identity for actor attribution ---
 # Resolve once from repo git config; used when no actor is passed explicitly.
 # GIT_AUTHOR_NAME is an env var usually unset — falling through to $USER
@@ -21,11 +40,13 @@ BRANCH_MODE=0
 if [ "${1:-}" = "--branch" ]; then
   BRANCH_MODE=1
   shift
+  # branch-mode interface (D7): <mission> <branch> [wave] [mode] — actor
+  # auto-resolves from git identity, never a positional.
   MISSION="${1:-${STATE_MISSION:-}}"
-  ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"
-  BRANCH="${3:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
-  WAVE="${4:-${STATE_WAVE:-1}}"
-  MODE="${5:-${STATE_MODE:-guided}}"
+  BRANCH="${2:-$(git branch --show-current 2>/dev/null || echo 'unknown')}"
+  WAVE="${3:-${STATE_WAVE:-1}}"
+  MODE="${4:-${STATE_MODE:-guided}}"
+  ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}"
 else
   MISSION="${1:-${STATE_MISSION:-}}"
   ACTOR="${2:-${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}}"
@@ -46,7 +67,13 @@ if [[ "$MISSION" =~ ^\.+$ ]]; then
 fi
 
 # per-branch state file when --branch used
-BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-')
+# BRANCH_SLUG sanitized to [A-Za-z0-9._-] — it feeds file names and the
+# continue.md writer; a newline/control char in BRANCH would escape the line
+# format and corrupt both (F5). Dropping illegal chars is safe: slugs are
+# keys, not content. First translate path separators to '-', then drop
+# everything not in the allowlist (tr set is literal; \t\n cannot appear in
+# git refs anyway). Dot-only slugs are emptied (BSD/macOS-safe: no \+ BRE).
+BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
 if [ "$BRANCH_MODE" -eq 1 ]; then
   STATE_FILE="$MUGIWARA_DIR/state-${BRANCH_SLUG}.json"
 else
@@ -63,17 +90,23 @@ HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true)
 FILES_TOUCHED=$( [ -n "$CHANGED_FILES" ] && echo "$CHANGED_FILES" | wc -l | tr -d ' ' || echo 0 )
 
+LOC_INS=0
+LOC_DEL=0
 LOC_DELTA=0
+LOC_CHURN=0
 if [ "$BASE_SHA" != "unknown" ]; then
   STAT=$(git diff --shortstat "$BASE_SHA"..HEAD 2>/dev/null || echo "")
   INS=$(echo "$STAT" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
   DEL=$(echo "$STAT" | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
-  LOC_DELTA=$(( ${INS:-0} - ${DEL:-0} ))
+  LOC_INS=$(( ${INS:-0} + 0 ))
+  LOC_DEL=$(( ${DEL:-0} + 0 ))
+  LOC_DELTA=$(( LOC_INS - LOC_DEL ))
+  # churn is insertion+deletion — refactors and deletions are work too (D4)
+  LOC_CHURN=$(( LOC_INS + LOC_DEL ))
 fi
 [ -z "$LOC_DELTA" ] && LOC_DELTA=0
 
-SENSITIVE_PATTERNS="auth/|payment/|billing/|crypto/|secrets/|\.env$|config/.*key|migration/|\.sql$|schema\.|\.prisma$|\.terraform|\.tf$"
-SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATTERNS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
+SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 
 LANE="direct"
 LANE_REASON=""
@@ -109,7 +142,6 @@ fi
 # path-weighted sizing (mirrors lane.sh): docs-only changes outside the product
 # surface never escalate to full from file count alone; sensitive-path
 # escalation above still wins.
-PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
 if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ]; then
   CODE_COUNT=$(echo "$CHANGED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
@@ -117,6 +149,42 @@ if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ];
     LANE="standard"
     LANE_REASON="$FILES_TOUCHED files, docs-only — path-weighted down from $PREV"
   fi
+fi
+
+# --- lane-rise compare (F9) + monotonic clamp (D2): read previous state ---
+# Clamp runs here — before LANE_BASE/BUDGET — so tokens and budget follow the
+# held lane, never the raw shrunken one.
+LANE_PREV=""
+LANE_PEAK=""
+LANE_ROSE=false
+PREV_MISSION=""
+if [ -f "$STATE_FILE" ]; then
+  PREV_JSON=$(node -e "try{const fs=require('fs');const s=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(JSON.stringify({mission:s.mission||'',lane:s.lane||'',peak:s.lane_peak||''}))}catch(e){process.stdout.write('{}')}" "$STATE_FILE" 2>/dev/null || true)
+  PREV_MISSION=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).mission||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+  LANE_PREV=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).lane||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+  LANE_PEAK=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).peak||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+fi
+# fresh mission resets the clamp: a different mission in state.json is a new
+# run, not a lane drop — no carry-over of peak or prev (case 10).
+if [ -n "$PREV_MISSION" ] && [ "$PREV_MISSION" != "$MISSION" ]; then
+  LANE_PREV=""
+  LANE_PEAK=""
+fi
+# monotonic clamp: never drop below the previous peak; spike is a resize, not a rise.
+if [ -n "$LANE_PEAK" ] && [ "$LANE_PEAK" != "spike" ] && [ "$(lane_rank "$LANE")" -lt "$(lane_rank "$LANE_PEAK")" ]; then
+  LANE="$LANE_PEAK"
+  LANE_REASON="$LANE_REASON (held at peak $LANE — clamp D2)"
+fi
+if [ -z "$LANE_PEAK" ] || [ "$LANE_PEAK" = "spike" ]; then
+  LANE_PEAK="$LANE"
+elif [ "$(lane_rank "$LANE")" -gt "$(lane_rank "$LANE_PEAK")" ]; then
+  LANE_PEAK="$LANE"
+fi
+if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
+  case "$LANE_PREV:$LANE" in
+    direct:lean|direct:standard|direct:full|lean:standard|lean:full|standard:full) LANE_ROSE=true ;;
+    *) LANE_ROSE=false ;;
+  esac
 fi
 
 # task counts from plan doc — plan is written date-prefixed (plans/YYYY-MM-DD-<mission>.md)
@@ -168,17 +236,18 @@ fi
 
 # tokens proxy (F7): deterministic estimate when the harness does not report
 # real usage. Monotonic beats precise — LANE_BASE stands in for the skills
-# loaded this lane; loc_delta and written-artifact words scale with growth.
+# loaded this lane (measured from content, validated by scripts/lane-base.ts);
+# loc_churn and written-artifact words scale with growth.
 # MUGIWARA_TOKENS overrides as the reported value.
 LANE_BASE=0
 case "$LANE" in
-  lean) LANE_BASE=1500 ;;
-  standard) LANE_BASE=4000 ;;
-  full) LANE_BASE=9000 ;;
-  spike) LANE_BASE=1000 ;;
+  lean) LANE_BASE=$LANE_BASE_lean ;;
+  standard) LANE_BASE=$LANE_BASE_standard ;;
+  full) LANE_BASE=$LANE_BASE_full ;;
+  spike) LANE_BASE=$LANE_BASE_spike ;;
 esac
 DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/spec/*-${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md "$MUGIWARA_DIR"/logs/*-${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
-LOC_TOKENS=$(( LOC_DELTA > 0 ? LOC_DELTA * 12 : 0 ))
+LOC_TOKENS=$(( LOC_CHURN * 12 ))
 TOKENS_SOURCE="computed"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
 if [ -n "${MUGIWARA_TOKENS:-}" ]; then
@@ -189,10 +258,10 @@ fi
 # budget per lane
 BUDGET=0
 case "$LANE" in
-  lean) BUDGET=4000 ;;
-  standard) BUDGET=10000 ;;
-  full) BUDGET=20000 ;;
-  spike) BUDGET=3000 ;;
+  lean) BUDGET=$BUDGET_lean ;;
+  standard) BUDGET=$BUDGET_standard ;;
+  full) BUDGET=$BUDGET_full ;;
+  spike) BUDGET=$BUDGET_spike ;;
   *) BUDGET=0 ;;
 esac
 
@@ -208,20 +277,6 @@ fi
 
 mkdir -p "$MUGIWARA_DIR"
 
-# --- lane-rise compare (F9): read previous state, flag escalation ---
-LANE_PREV=""
-LANE_ROSE=false
-if [ -f "$STATE_FILE" ]; then
-  LANE_PREV=$(node -e "try{const s=require(process.argv[1]);process.stdout.write(s.lane||'')}catch(e){process.stdout.write('')}" "$STATE_FILE" 2>/dev/null || true)
-  if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
-    # lane order: direct < lean < standard < full < spike (spike resizes, not a rise)
-    case "$LANE_PREV:$LANE" in
-      direct:lean|direct:standard|direct:full|lean:standard|lean:full|standard:full) LANE_ROSE=true ;;
-      *) LANE_ROSE=false ;;
-    esac
-  fi
-fi
-
 node -e "
 const data = {
   mission: process.argv[1],
@@ -230,6 +285,7 @@ const data = {
   lane: process.argv[4],
   lane_reason: process.argv[5],
   lane_prev: process.argv[24] || null,
+  lane_peak: process.argv[27] || null,
   lane_rose: process.argv[25] === 'true',
   wave: parseInt(process.argv[6], 10),
   mode: process.argv[7],
@@ -237,6 +293,9 @@ const data = {
   head_sha: process.argv[9],
   files_touched: parseInt(process.argv[10], 10),
   loc_delta: parseInt(process.argv[11], 10),
+  loc_ins: parseInt(process.argv[28], 10) || 0,
+  loc_del: parseInt(process.argv[29], 10) || 0,
+  loc_churn: parseInt(process.argv[30], 10) || 0,
   sensitive_paths: process.argv[12] ? process.argv[12].split(',').filter(Boolean) : [],
   tasks: { done: parseInt(process.argv[13], 10), total: parseInt(process.argv[14], 10) },
   blockers_open: parseInt(process.argv[15], 10),
@@ -257,9 +316,59 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE"
+  "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
+  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
 fi
+
+# --- continue.md (D10): machine-written resume point at every wave boundary ---
+# Written alongside state.json so an interrupted session (step-limit truncation,
+# crash, new session) can resume without human recall. Same trust as state.json:
+# computed fields, never model judgement. The resume skill treats it as data to
+# verify against the plan/todos, never verbatim instructions.
+# Branch-scoped like state.json: in --branch mode the file is
+# continue-<branch-slug>.md so parallel branch missions never clobber each
+# other's resume point (multi-actor). The crew-written next_session_prompt
+# line is preserved across savepoints — savepoint never invents it.
+CONTINUE_FILE="$MUGIWARA_DIR/continue.md"
+if [ "$BRANCH_MODE" -eq 1 ]; then
+  CONTINUE_FILE="$MUGIWARA_DIR/continue-${BRANCH_SLUG}.md"
+fi
+if [ -n "$MISSION" ]; then
+  NEXT_SESSION_PROMPT=""
+  if [ -f "$CONTINUE_FILE" ]; then
+    NEXT_SESSION_PROMPT=$(grep -E '^-?[[:space:]]*next_session_prompt:' "$CONTINUE_FILE" 2>/dev/null | head -1 || true)
+  fi
+  # N2: every field echoed into continue.md is validated first. MISSION is
+  # allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized — a
+  # newline in any of them must never break the line format.
+  CONT_WAVE=$(echo "$WAVE" | tr -cd '0-9')
+  case "$MODE" in
+    guided|semi|auto) CONT_MODE="$MODE" ;;
+    *) CONT_MODE="guided" ;;
+  esac
+  # BRANCH_SLUG is already sanitized to [A-Za-z0-9._-] with a tr set that
+  # has NO trailing '/' — that set is portable (GNU/BSD). A set ending in
+  # './' makes GNU tr treat '_-/' as a reversed range and emit nothing
+  # (macOS passed, Linux CI failed: '- branch: unknown'). Reuse the slug.
+  CONT_BRANCH="${BRANCH_SLUG:-unknown}"
+  {
+    echo "# Continue — $MISSION"
+    echo ""
+    echo "- mission: $MISSION"
+    echo "- branch: ${CONT_BRANCH:-unknown}"
+    echo "- wave: ${CONT_WAVE:-0}"
+    echo "- mode: $CONT_MODE"
+    echo "- tasks_done: $TASKS_DONE"
+    echo "- tasks_total: $TASKS_TOTAL"
+    echo "- lane: $LANE"
+    echo "- lane_prev: ${LANE_PREV:-none}"
+    echo "- updated_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "- next_action: verify this wave against the plan, then continue per plan (next wave or closure)"
+    [ -n "$NEXT_SESSION_PROMPT" ] && echo "$NEXT_SESSION_PROMPT"
+  } > "$CONTINUE_FILE"
+fi
+
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"

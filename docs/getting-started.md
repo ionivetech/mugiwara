@@ -121,7 +121,7 @@ Every mission writes to `.mugiwara/` at the repo root:
 
 ```
 .mugiwara/
-├── config          # mode, branch, commit, base, coverage thresholds
+├── config          # mode, branch, commit, coverage thresholds
 ├── state.json      # computed at every wave boundary by scripts/savepoint.sh
 ├── spec/           # brainstorm output
 ├── plans/          # clean execution plan (source of truth from Wave 2)
@@ -146,7 +146,6 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 | `mode` | guided | Autonomy: guided/semi/auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | Commit style: conventional/gitmoji/plain |
-| `base` | main | PR target branch |
 | `coverage_new` | 90 | Coverage % for new files |
 | `coverage_modified` | 80 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |

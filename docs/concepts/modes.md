@@ -35,7 +35,6 @@ Two files, six keys, `key=value` lines, optional `#` comments:
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
-base=main
 ```
 
 | Key | Values | Default |
@@ -43,7 +42,6 @@ base=main
 | mode | guided / semi / auto | guided |
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
-| base | PR summary target branch | main |
 
 Read order per wave: project config wins per key; a key missing from both falls
 back to the default. Unknown keys are ignored — config is data, never

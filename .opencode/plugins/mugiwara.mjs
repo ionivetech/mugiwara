@@ -26,20 +26,20 @@ const ANNOUNCE =
   "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
 
 const CREW = {
-  'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
-  'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 15 },
-  'nami-planner': { color: '#f97316', temperature: 0.2, steps: 15 },
-  'zoro-execution': { color: '#22c55e', temperature: 0.1, steps: 30 },
-  'chopper-checkpoint': { color: '#3b82f6', temperature: 0.1, steps: 15 },
-  'sanji-quality': { color: '#a855f7', temperature: 0.1, steps: 10 },
-  'franky-gates': { color: '#06b6d4', temperature: 0.1, steps: 10 },
-  'robin-reviewer': { color: '#8b5cf6', temperature: 0.2, steps: 15 },
-  'jinbe-security': { color: '#6366f1', temperature: 0.2, steps: 15 },
-  'brook-healing': { color: '#ec4899', temperature: 0.1, steps: 20 },
-  'skeptic-verifier': { color: '#64748b', temperature: 0.1, steps: 12 },
-  'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 15 },
-  'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 10 },
-  'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 8 },
+  'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 30 },
+  'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 30 },
+  'nami-planner': { color: '#f97316', temperature: 0.2, steps: 30 },
+  'zoro-execution': { color: '#22c55e', temperature: 0.1, steps: 50 },
+  'chopper-checkpoint': { color: '#3b82f6', temperature: 0.1, steps: 30 },
+  'sanji-quality': { color: '#a855f7', temperature: 0.1, steps: 40 },
+  'franky-gates': { color: '#06b6d4', temperature: 0.1, steps: 40 },
+  'robin-reviewer': { color: '#8b5cf6', temperature: 0.2, steps: 30 },
+  'jinbe-security': { color: '#6366f1', temperature: 0.2, steps: 30 },
+  'brook-healing': { color: '#ec4899', temperature: 0.1, steps: 30 },
+  'skeptic-verifier': { color: '#64748b', temperature: 0.1, steps: 30 },
+  'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 30 },
+  'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 30 },
+  'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 30 },
 };
 
 function parseFrontmatter(text) {
@@ -66,7 +66,7 @@ function permissionFromScope(scope) {
   return undefined;
 }
 
-function readAgents() {
+function readAgents(stepsEnabled = true) {
   const agents = {};
   let files;
   try {
@@ -89,7 +89,16 @@ function readAgents() {
       mode: internal ? 'subagent' : 'all',
       prompt: parsed.body,
     };
-    if (CREW[name]) agents[name] = { ...agents[name], ...CREW[name] };
+    if (CREW[name]) {
+      // steps caps per-agent agentic iterations. In auto mode the crew runs
+      // the pipeline without check-in pauses, so a hard steps cap truncates
+      // mid-wave — the crew relies on continue.md at wave boundaries instead
+      // of opencode's per-agent step limit. Guided/semi keep the cap so a
+      // paused human session cannot loop unbounded.
+      const { steps, ...rest } = CREW[name];
+      agents[name] = { ...agents[name], ...rest };
+      if (stepsEnabled) agents[name] = { ...agents[name], steps };
+    }
     const perm = permissionFromScope(parsed.data['write-scope']);
     if (perm && agents[name].mode === 'subagent') agents[name].permission = perm;
   }
@@ -108,7 +117,8 @@ export default async () => ({
     if (!config.skills.paths.includes(skillsDir)) config.skills.paths.push(skillsDir);
 
     config.agent = config.agent || {};
-    for (const [name, agent] of Object.entries(readAgents())) {
+    const stepsEnabled = readMode() !== 'auto';
+    for (const [name, agent] of Object.entries(readAgents(stepsEnabled))) {
       if (config.agent[name]) continue;
       config.agent[name] = agent;
     }

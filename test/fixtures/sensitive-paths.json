@@ -1,0 +1,13 @@
+{
+  "name": "sensitive-paths",
+  "baseBranch": "main",
+  "base": {
+    "src/app.ts": "export const app = () => 1;\n"
+  },
+  "branch": {
+    "src/app.ts": "export const app = () => 1;\n",
+    "src/auth/login.ts": "export const login = () => 1;\n",
+    "src/payments/txn.ts": "export const txn = () => 1;\n"
+  },
+  "note": "auth/ + payments/ -> full regardless of count (D3 plural forms)"
+}

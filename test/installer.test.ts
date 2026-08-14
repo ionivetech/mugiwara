@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
 import { resetMission } from '../src/mission.ts';
-import { collectContent, installTo, removeInstalled, ensureProjectGitignore, type Target, type InstallOptions } from '../src/installer.ts';
+import { collectContent, installTo, removeInstalled, ensureProjectGitignore, removeProjectGitignore, type Target, type InstallOptions } from '../src/installer.ts';
 import { targets } from '../src/targets/index.ts';
 
 const fakeTarget: Target = {
@@ -16,7 +16,7 @@ const fakeTarget: Target = {
   }),
   transformSkill: (d, b) => ({ relPath: join(d.name, 'SKILL.md'), text: `S:${d.name}\n${b}` }),
   transformAgent: (d, b) => ({ relPath: `${d.name}.md`, text: `A:${d.name}\n${b}` }),
-  refsDir: ({ projectDir }) => join(projectDir, 'refs'),
+  refsDir: ({ projectDir }, skillName) => join(projectDir, 'refs', skillName),
 };
 
 const projectDir = mkdtempSync(join(tmpdir(), 'mugi-t-'));
@@ -65,10 +65,13 @@ test('installTo writes shared references to _shared/references/ (tier 1)', () =>
 test('installTo writes references/ into the target refs dir', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-refs-'));
   const r = installTo(fakeTarget, { ...opts, projectDir: dir });
-  const checklist = join(dir, 'refs', 'checklist.md');
+  const checklist = join(dir, 'refs', 'mugiwara-frontend', 'checklist.md');
   expect(existsSync(checklist)).toBe(true);
   expect(readFileSync(checklist, 'utf8')).toContain('WCAG');
   expect(r.written).toContain(checklist);
+  // agent-security refs land in their own skill-scoped dir (no collision)
+  const agentChecklist = join(dir, 'refs', 'mugiwara-agent-security', 'checklist.md');
+  expect(existsSync(agentChecklist)).toBe(true);
 });
 
 test('claude install writes references under the skill dir', () => {
@@ -461,6 +464,103 @@ describe('ensureProjectGitignore', () => {
       const r = ensureProjectGitignore(dir, { dryRun: true });
       expect(r.appended).toBe(true);
       expect(existsSync(join(dir, '.gitignore'))).toBe(false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('block is delimited — delimiters bound the mugiwara block', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi5-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'userline\n');
+      ensureProjectGitignore(dir);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      const start = text.indexOf('# >>> mugiwara >>>');
+      const end = text.indexOf('# <<< mugiwara <<<');
+      expect(start).toBeGreaterThanOrEqual(0);
+      expect(end).toBeGreaterThan(start);
+      // user line survives before the block
+      expect(text.slice(0, start)).toContain('userline');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore strips the block and preserves user lines', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi6-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'node_modules/\ndist/\n');
+      ensureProjectGitignore(dir);
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).not.toContain('mugiwara');
+      expect(text).toContain('node_modules/');
+      expect(text).toContain('dist/');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore legacy block (undelimited) stripped, user lines kept', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi7-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'),
+        'keepme\n' +
+        '# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.\n' +
+        '# Ignore session state and regenerated files.\n' +
+        '.mugiwara/state.json\n.mugiwara/refs/\n');
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).toContain('keepme');
+      expect(text).not.toContain('.mugiwara/');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore no-op when no mugiwara block present', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi8-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'), 'node_modules/\n');
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(false);
+      expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe('node_modules/\n');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore bails on missing END delimiter, preserves file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi9-'));
+    try {
+      // hand-edited: START present, END removed — must NOT truncate the file
+      writeFileSync(join(dir, '.gitignore'),
+        'node_modules/\n# >>> mugiwara >>>\n.mugiwara/state.json\n');
+      const before = readFileSync(join(dir, '.gitignore'), 'utf8');
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(false);
+      expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe(before);
+      expect(r.notes.join(' ')).toContain('delimiter mismatch');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore legacy block strips exact lines, keeps user-owned mugiwara-ish lines', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi10-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'),
+        '# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.\n' +
+        '# Ignore session state and regenerated files.\n' +
+        '.mugiwara/state.json\n.mugiwara/refs/\n' +
+        '.mugiwara/state.custom-owner-line\n'); // user-owned, must survive
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).not.toContain('.mugiwara/state.json');
+      expect(text).toContain('.mugiwara/state.custom-owner-line');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

@@ -71,15 +71,17 @@ format `scripts/mission-report.sh` produces:
 Work is sized to the diff — a typo gets no pipeline, an auth migration gets
 all nine waves. Mugiwara itself is free; token usage depends on the lane:
 
-| Lane                | Waves | Typical tokens |
-| ------------------- | :---: | :------------: |
-| Direct (typo)       |   0   |       ~0       |
-| Lean (small bug)    |   2   |      ~4k       |
-| Standard (feature)  |  5–7  |      ~10k      |
-| Full (architecture) | 9–11  |      ~20k      |
+| Lane                | Waves | Typical tokens | Budget |
+| ------------------- | :---: | :------------: | :----: |
+| Direct (typo)       |   0   |       ~0       |   —    |
+| Lean (small bug)    |   2   |      ~7k       | 12k    |
+| Standard (feature)  |  5–7  |      ~13k      | 25k    |
+| Full (architecture) | 9–11  |      ~23k      | 50k    |
 
 Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
-pauses at 3×.
+pauses at 3×. Lane bases are measured from the skills/agents loaded per lane
+by `scripts/lane-base.ts` — the constants fail CI if they drift from content
+load.
 
 → [Full cost model](docs/concepts/cost.md)
 
@@ -105,7 +107,7 @@ First run: `/mugiwara onboard` for guided setup. Then ask something non-trivial:
 > split this feature across the team: payment gateway, ledger, fraud
 ```
 
-A Standard lane mission (~10k tokens) produces a branch with test-first
+A Standard lane mission (~13k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
 at every step in your chat.
 
@@ -135,10 +137,10 @@ pipeline config to write.**
 | **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
-| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json`. Continues, never restarts.                  |
+| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state.json` + machine-written `continue.md`. Continues, never restarts. Auto-resumes in auto mode. |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
-→ All 19 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+→ All 28 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## The pipeline
 
@@ -226,7 +228,7 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Ship gate check         | `/mugiwara-ship`                         |
 | See initiative progress | `mugiwara initiative status <plan>`      |
-| Resume a mission        | `/mugiwara resume plan <name>`           |
+| Resume a mission        | `/mugiwara continue` or "where were we?"   |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
 | Check gate locally      | `bun run gate`                           |
 | All docs                | [docs/](docs/)                           |

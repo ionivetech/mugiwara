@@ -182,22 +182,30 @@ function assertNotSymlink(file: string): void {
   }
 }
 
+const GITIGNORE_BLOCK_START = '# >>> mugiwara >>>';
+const GITIGNORE_BLOCK_END = '# <<< mugiwara <<<';
+// legacy marker from v0.6.2 — block was undelimited, single '# mugiwara'
+// header. Kept for detection so an old install is not double-appended.
 const GITIGNORE_MARKER = '# mugiwara';
-const GITIGNORE_BLOCK = `# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.
+const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.
 # Ignore session state and regenerated files.
 .mugiwara/state.json
 .mugiwara/state-*.json
 .mugiwara/config
 .mugiwara/continue.md
 .mugiwara/refs/
+# <<< mugiwara <<<
 `;
 
 export function ensureProjectGitignore(projectDir: string, opts: { dryRun?: boolean } = {}): { appended: boolean; notes: string[] } {
   const { dryRun = false } = opts;
   const path = join(projectDir, '.gitignore');
   assertNotSymlink(path);
-  if (existsSync(path) && readFileSync(path, 'utf8').includes(GITIGNORE_MARKER)) {
-    return { appended: false, notes: [] };
+  if (existsSync(path)) {
+    const current = readFileSync(path, 'utf8');
+    if (current.includes(GITIGNORE_BLOCK_START) || current.includes(GITIGNORE_MARKER)) {
+      return { appended: false, notes: [] };
+    }
   }
   const existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
   const separator = existing.length && !existing.endsWith('\n') ? '\n' : '';
@@ -206,4 +214,50 @@ export function ensureProjectGitignore(projectDir: string, opts: { dryRun?: bool
     writeFileSync(path, existing + separator + GITIGNORE_BLOCK);
   }
   return { appended: true, notes: [`.gitignore ${dryRun ? 'would append' : 'appended'} mugiwara audit-trail block`] };
+}
+
+// remove the delimited mugiwara block, preserving user lines. Handles both
+// the current delimited block and the legacy undelimited block (v0.6.2).
+export function removeProjectGitignore(projectDir: string, { dryRun = false }: { dryRun?: boolean } = {}): { removed: boolean; notes: string[] } {
+  const path = join(projectDir, '.gitignore');
+  assertNotSymlink(path);
+  if (!existsSync(path)) return { removed: false, notes: [] };
+  const current = readFileSync(path, 'utf8');
+
+  const delimited = current.includes(GITIGNORE_BLOCK_START);
+  let cleaned: string;
+  if (delimited) {
+    // strip everything between (and including) the delimiters. Both
+    // delimiters must be present — a missing END (hand-edit) with end=-1
+    // would slice() from char 18 and truncate the user's file.
+    const start = current.indexOf(GITIGNORE_BLOCK_START);
+    const end = current.indexOf(GITIGNORE_BLOCK_END);
+    if (end < start) return { removed: false, notes: ['delimiter mismatch — .gitignore left untouched'] };
+    cleaned = current.slice(0, start) + current.slice(end + GITIGNORE_BLOCK_END.length);
+  } else if (current.includes(GITIGNORE_MARKER)) {
+    // legacy (v0.6.2): strip the exact undelimited block — the header, the
+    // explanatory comment, and the five known lines. Prefix-matching would
+    // delete user-owned lines that merely start with a mugiwara path.
+    const LEGACY_LINES = new Set([
+      '.mugiwara/state.json',
+      '.mugiwara/state-*.json',
+      '.mugiwara/config',
+      '.mugiwara/continue.md',
+      '.mugiwara/refs/',
+    ]);
+    const lines = current.split('\n').filter(l => {
+      const t = l.trim();
+      if (t.startsWith(GITIGNORE_MARKER)) return false; // header + comment
+      return !LEGACY_LINES.has(t);
+    });
+    cleaned = lines.join('\n');
+  } else {
+    return { removed: false, notes: [] };
+  }
+
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '').replace(/\n+$/, '\n');
+  if (cleaned.trim() === '') cleaned = '';
+  if (cleaned === current) return { removed: false, notes: [] };
+  if (!dryRun) writeFileSync(path, cleaned);
+  return { removed: true, notes: [`.gitignore ${dryRun ? 'would strip' : 'stripped'} mugiwara block`] };
 }

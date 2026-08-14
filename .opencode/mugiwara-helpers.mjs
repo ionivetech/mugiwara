@@ -93,7 +93,6 @@ export const DEFAULT_CONFIG_LINES = [
   'mode=guided',
   'branch=feature/{type}-{issue}-{slug}',
   'commit=conventional',
-  'base=main',
   'coverage_new=90',
   'coverage_modified=80',
   'review_depth=full',

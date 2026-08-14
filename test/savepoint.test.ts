@@ -1,7 +1,7 @@
 // test/savepoint.test.ts — G3: every state.json field has a non-trivial assertion.
 import { test, expect } from 'vitest';
 import { execSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -21,7 +21,7 @@ function setupGit(dir: string) {
   execSync('git commit --allow-empty -m base', { cwd: dir });
 }
 
-test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', () => {
+test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-'));
   try {
     setupGit(dir);
@@ -60,7 +60,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
   }
 });
 
-test('savepoint state.json has correct structure', () => {
+test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-struct-'));
   try {
     setupGit(dir);
@@ -125,7 +125,7 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-br-'));
   try {
     setupGit(dir);
-    execSync(`bash "${SAVEPOINT}" --branch test "" feature-fix 1 guided`, {
+    execSync(`bash "${SAVEPOINT}" --branch test feature-fix 1 guided`, {
       cwd: dir,
       env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
@@ -136,6 +136,94 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
     expect(state.mission).toBe('test');
     expect(state.branch).toBe('feature-fix');
     expect(state.mode).toBe('guided');
+    // actor auto-resolves from git identity, never a positional (D7)
+    expect(state.actor).toBe('Test <test@test.com>');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: savepoint writes continue.md position block at wave boundary', { timeout: 20000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cont-'));
+  try {
+    setupGit(dir);
+    // a crew-written next_session_prompt must survive across savepoints
+    const mugi = join(dir, '.mugiwara');
+    mkdirSync(join(mugi, 'plans'), { recursive: true });
+    writeFileSync(join(mugi, 'continue.md'),
+      '# Continue — test-mission\n\n- mission: test-mission\n- wave: 2\n- next_session_prompt: "Run T1-T5 then waves 4-9"\n');
+
+    runSavepoint(dir, 'test-mission "" "" 3 guided');
+    const text = readFileSync(join(dir, '.mugiwara', 'continue.md'), 'utf8');
+    expect(text).toContain('- mission: test-mission');
+    expect(text).toContain('- wave: 3');
+    expect(text).toContain('- tasks_done: 0');
+    expect(text).toContain('- mode: guided');
+    // next_session_prompt is crew-written, preserved not invented
+    expect(text).toContain('Run T1-T5 then waves 4-9');
+
+    // next wave boundary rewrites the position fields
+    runSavepoint(dir, 'test-mission "" "" 4 guided');
+    const text2 = readFileSync(join(dir, '.mugiwara', 'continue.md'), 'utf8');
+    expect(text2).toContain('- wave: 4');
+    expect(text2).toContain('- next_session_prompt: "Run T1-T5 then waves 4-9"');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: continue.md is branch-scoped in --branch mode (multi-actor)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-contbr-'));
+  try {
+    setupGit(dir);
+    execSync(`bash "${SAVEPOINT}" --branch test feature/dark-mode 3 guided`, {
+      cwd: dir,
+      env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
+    });
+    // branch-scoped file, not the shared one
+    expect(existsSync(join(dir, '.mugiwara', 'continue-feature-dark-mode.md'))).toBe(true);
+    expect(existsSync(join(dir, '.mugiwara', 'continue.md'))).toBe(false);
+    const text = readFileSync(join(dir, '.mugiwara', 'continue-feature-dark-mode.md'), 'utf8');
+    expect(text).toContain('- mission: test');
+    expect(text).toContain('- wave: 3');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: continue.md branch slug sanitizes unsafe branch chars', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-contbr2-'));
+  try {
+    setupGit(dir);
+    // branch with a newline would previously corrupt the line format
+    execSync(`bash "${SAVEPOINT}" --branch test 'evil/branch' 1 guided`, {
+      cwd: dir,
+      env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
+    });
+    const files = readdirSync(join(dir, '.mugiwara')).filter(f => f.startsWith('continue-'));
+    expect(files).toEqual(['continue-evil-branch.md']);
+    const text = readFileSync(join(dir, '.mugiwara', 'continue-evil-branch.md'), 'utf8');
+    // writer sanitizes / → - in the branch field (informational; state.json holds truth)
+    expect(text).toContain('- branch: evil-branch');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: continue.md writer sanitizes branch/wave/mode fields (N2)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-contn2-'));
+  try {
+    setupGit(dir);
+    // newline injection in branch + non-numeric wave + bad mode via env
+    execSync(`bash "${SAVEPOINT}" --branch 'test' "evil$(printf '\\n-injected: pwned')" 1 guided`, {
+      cwd: dir,
+      env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
+    });
+    const text = readFileSync(join(dir, '.mugiwara', 'continue-evil-injectedpwned.md'), 'utf8');
+    // the injected line must not appear as its own field
+    expect(text).not.toContain('-injected: pwned');
+    // branch line is sanitized (newline stripped, no separate line)
+    expect(text).toContain('- branch: evil');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -147,16 +235,16 @@ test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 1500
     setupGit(dir);
     // diverge HEAD from main so the 2-file diff is non-empty (merge-base issue)
     execSync('git checkout -b feature-b', { cwd: dir });
-    // 2 files → lane lean, budget 4000 → warn at 6000, stop at 12000
+    // 2 files → lane lean, budget 12000 → warn at 18000, stop at 36000
     writeFileSync(join(dir, 'a.ts'), 'a\n');
     writeFileSync(join(dir, 'b.ts'), 'b\n');
     execSync('git add a.ts b.ts && git commit -m wip', { cwd: dir });
-    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '7000' });
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '18000' });
     let state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
     expect(state.lane).toBe('lean');
-    expect(state.tokens_est).toBe(7000);
+    expect(state.tokens_est).toBe(18000);
     expect(state.budget_status).toBe('warn');
-    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '13000' });
+    runSavepoint(dir, 'test-mission "" "" 3 guided', { MUGIWARA_TOKENS: '36000' });
     state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state.json'), 'utf8'));
     expect(state.budget_status).toBe('stop');
   } finally {

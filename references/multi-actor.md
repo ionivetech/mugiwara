@@ -34,11 +34,16 @@ All actors read and write to the same file. Append-only, never overwrite.
 
 ## Branch namespacing
 
-`scripts/savepoint.sh` accepts `--branch <name>` to write per-branch state:
+`scripts/savepoint.sh` accepts `--branch <mission> <branch> [wave] [mode]`
+to write per-branch state (actor auto-resolves from git identity):
 
 ```bash
-scripts/savepoint.sh --branch "2026-08-11-dark-mode" "" "feature/dark-mode"
+scripts/savepoint.sh --branch dark-mode feature/dark-mode 1 guided
 # writes .mugiwara/state-feature-dark-mode.json
 ```
+
+The resume point follows the same scoping: `continue.md` is written per
+branch as `continue-<branch-slug>.md` in `--branch` mode, so parallel branch
+missions never clobber each other's resume position.
 
 `scripts/mission-report.sh` follows the same convention.

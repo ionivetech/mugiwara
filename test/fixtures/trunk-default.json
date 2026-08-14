@@ -1,0 +1,18 @@
+{
+  "name": "trunk-default",
+  "baseBranch": "master",
+  "base": {
+    "src/main.ts": "export const main = () => 1;\n",
+    "src/a.ts": "export const a = () => 1;\n",
+    "src/b.ts": "export const b = () => 1;\n",
+    "src/c.ts": "export const c = () => 1;\n"
+  },
+  "branch": {
+    "src/main.ts": "export const main = () => 1;\n",
+    "src/a.ts": "export const a = () => 1;\n",
+    "src/b.ts": "export const b = () => 1;\n",
+    "src/c.ts": "export const c = () => 1;\n",
+    "src/d.ts": "export const d = () => 1;\n"
+  },
+  "note": "trunk is master, not main -> base ref must fall back to master"
+}

@@ -60,9 +60,10 @@ bun run gate     # everything CI runs on a PR
 
 ```bash
 bun run typecheck                                              # TypeScript
-bun run test                                                   # 70 tests
+bun run test                                                   # tests
 bun run build                                                  # dist/
-bun scripts/validate-content.ts --check-manifest --check-docs  # content + manifest + docs drift + budget + section length + description hygiene
+bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity  # content + manifest + docs drift + thresholds match source + description hygiene
+bun scripts/lane-base.ts                                       # lane budgets match measured content load
 bun scripts/run-evals.ts                                       # behavioral evals
 bun scripts/retrieval-eval.ts                                  # retrieval ranking + floor ratchet
 bun scripts/verify-install.ts                                  # G1: resolve all references/*.md pointers after install
@@ -140,9 +141,12 @@ unchecked boxes are not done." Never just a bare filename.
 ## State fields
 
 `state.json` is the audit trail. Every field in `state.json` is computed, never
-model-supplied. Every field has a fixture assertion in `test/savepoint.test.ts`
-with a non-trivial expected value. A field that can silently read `0` is worse
-than an absent field — absence is visible, a wrong zero is not.
+model-supplied. Every field has a fixture assertion with a **non-trivial
+expected value** — `typeof`/`Array.isArray`/`toBeGreaterThanOrEqual(0)` is NOT
+coverage. Assert the exact value (`loc_churn === 1800`, `lane_peak === 'full'`,
+`lane_prev === 'standard'`) so a field that silently regresses to `0` or `null`
+fails red. A field that can silently read `0` is worse than an absent field —
+absence is visible, a wrong zero is not.
 
 ## Index budget
 

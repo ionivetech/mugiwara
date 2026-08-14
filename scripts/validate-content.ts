@@ -319,5 +319,66 @@ const agentsDoc = join(docsDir, 'concepts', 'agents.md');
   if (docErrors === 0) console.log('✓ docs in sync with content/');
 }
 
+// --- doc-integrity check: documented thresholds must match source constants ---
+// Docs are claims; a claim that drifts from the source is a lie. LANE_BASE +
+// BUDGET live in scripts/lib/lane-base.sh (validated by lane-base.ts); the
+// cost docs must cite the same numbers. Evidence logs carry an exit code /
+// verdict claim — a test must back it (lane-integrity cases 22-24).
+const integrityArg = process.argv.indexOf('--check-doc-integrity');
+if (integrityArg !== -1) {
+  const src = join(import.meta.dirname, '..', 'scripts', 'lib', 'lane-base.sh');
+  if (!existsSync(src)) {
+    errors.push('doc-integrity: scripts/lib/lane-base.sh not found — cannot verify thresholds');
+  } else {
+    const constants = readFileSync(src, 'utf8');
+    const docs = ['docs/concepts/cost.md', 'docs/concepts/lanes.md', 'README.md'];
+    const expected: [string, string][] = [
+      ['lean', '7,000'], ['standard', '13,000'], ['full', '23,000'],
+      ['lean', '12,000'], ['standard', '25,000'], ['full', '50,000'],
+    ];
+    for (const doc of docs) {
+      const p = join(import.meta.dirname, '..', doc);
+      if (!existsSync(p)) { errors.push(`doc-integrity: ${doc} not found`); continue; }
+      const text = readFileSync(p, 'utf8');
+      for (const [lane, num] of expected) {
+        // each doc must cite the budget/LANE_BASE number for that lane; accept
+        // both the comma form (7,000) and the k-shorthand (7k / ~7k)
+        const compact = num.replace(',', '').replace(/0+$/, '');
+        const kForm = /^(\d+)000$/.exec(num);
+        const variants = [num, compact, ...(kForm ? [`${kForm[1]}k`, `~${kForm[1]}k`] : [])];
+        if (!variants.some(v => text.includes(v))) {
+          errors.push(`doc-integrity: ${doc} missing ${lane} threshold ${num} (source: ${src})`);
+        }
+      }
+      // warn/stop are 1.5x / 3x of BUDGET (code: WARN_AT=BUDGET*3/2,
+      // STOP_AT=BUDGET*3) — presence is not enough, the arithmetic must be
+      // right. A doc claiming 1.5x/3x of LANE_BASE is the exact lie this gate
+      // exists to catch. Checked on the authoritative cost doc only.
+      if (doc === 'docs/concepts/cost.md') {
+        const budgets: [string, number][] = [['lean', 12000], ['standard', 25000], ['full', 50000]];
+        for (const [lane, budget] of budgets) {
+          const warn = budget * 3 / 2;
+          const stop = budget * 3;
+          const warnForms = [`${warn}`, `${Math.round(warn / 1000)}k`, `${warn.toLocaleString()}`, `${warn / 1000}k`];
+          const stopForms = [`${stop}`, `${stop / 1000}k`, `${stop.toLocaleString()}`];
+          const hasWarn = warnForms.some(f => text.includes(f));
+          const hasStop = stopForms.some(f => text.includes(f));
+          if (!hasWarn || !hasStop) {
+            errors.push(`doc-integrity: ${doc} ${lane} warn/stop must be 1.5x/3x of budget ${budget} (warn ${warn}, stop ${stop})`);
+          }
+        }
+      }
+    }
+    if (!constants.includes('LANE_BASE_lean=7000')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 7000)');
+    if (!constants.includes('BUDGET_full=50000')) errors.push('doc-integrity: source lane-base.sh full budget drifted (expected 50000)');
+  }
+  // evidence exit-code claim must be test-backed
+  const evTest = join(import.meta.dirname, '..', 'test', 'lane-integrity.test.ts');
+  const testText = existsSync(evTest) ? readFileSync(evTest, 'utf8') : '';
+  if (!testText.includes('# Exit:') || !testText.includes('# Verdict:')) {
+    errors.push('doc-integrity: audit-trail claims evidence logs carry exit code + verdict, but no test asserts them');
+  }
+}
+
 if (errors.length) { console.error(errors.map(e => `✗ ${e}`).join('\n')); process.exit(1); }
 console.log(`✓ content valid: ${skillDirs.length} skills, ${agentFiles.length} agents`);

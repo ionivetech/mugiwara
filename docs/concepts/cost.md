@@ -16,25 +16,31 @@ Only the **index** is a recurring cost. Body and references pay only when used.
 
 - **Target:** 1.2k tokens (descriptions + agent pointers)
 - **Gate:** 5,500 chars hard CI cap — any skill/agent description that pushes the total over fails validation
-- **Current:** 5,479 chars ≈ 1.37k tokens (26 skills + 15 agents), loaded every session
+- **Current:** 5,437 chars ≈ 1.36k tokens (26 skills + 15 agents), loaded every session
 
-The 5,500-char gate is now the tightest gate in the suite: only 21 chars of
-headroom. One meaningful description edit, or one new skill/agent, blows the
-budget.
+The 5,500-char gate is the tightest in the suite: ~63 chars of headroom. One
+meaningful description edit, or one new skill/agent, blows the budget.
 
 ## Cost per lane
 
-| Lane | Waves | Estimated tokens | Typical budget |
-|------|-------|:---:|:---:|
-| 0 Direct | none | ~0 | — |
-| 1 Lean | execute → quality | ~4k | warn at 6k, stop at 12k |
-| 2 Standard | plan → execute → audit → review | ~10k | warn at 15k, stop at 30k |
-| 3 Full | all 9 waves | ~20k | warn at 30k, stop at 60k |
-| 4 Spike | brainstorm → re-triage | ~3k | warn at 4.5k, stop at 9k |
+| Lane | Waves | LANE_BASE (measured) | Budget | Warn / Stop (1.5× / 3× budget) |
+|------|-------|:---:|:---:|:---:|
+| 0 Direct | none | ~0 | — | — |
+| 1 Lean | execute → quality | 7,000 | 12,000 | warn 18k / stop 36k |
+| 2 Standard | plan → execute → audit → review | 13,000 | 25,000 | warn 37.5k / stop 75k |
+| 3 Full | all 9 waves | 23,000 | 50,000 | warn 75k / stop 150k |
+| 4 Spike | brainstorm → re-triage | 1,000 | 3,000 | warn 4.5k / stop 9k |
 
-Budget guidance: warn at exactly 1.5× budget, stop at exactly 3×, both
-boundaries inclusive (`>=`). Write state to `.mugiwara/state.json` before
-stopping.
+LANE_BASE is **not a hand-written estimate** — `scripts/lane-base.ts`
+computes the honest instruction load from the skill + agent bodies each lane
+loads (wave owners per workflow.md, ×1.35 tokens/word). The gate fails if a
+constant drifts >20% from that measured load, so content growth must be
+reflected in the budgets. Lean/standard/full were rescaled from the old
+1.5k/4k/9k after a Lane-3 mission measured ~22.9k of instruction load (D5).
+Spike stays a deliberate floor — a resize lane, not a content-loaded one.
+
+Budgets warn at exactly 1.5× budget, stop at exactly 3×, both boundaries
+inclusive (`>=`). Write state to `.mugiwara/state.json` before stopping.
 
 ## Measured benchmark (2026-08-13 QA mission)
 
@@ -47,8 +53,8 @@ All numbers below were measured on this repo, not estimated.
 - **Budget boundaries:** warn/stop fire on `>=` at exactly 1.5× / 3× budget.
   Boundary-tested for standard and full lanes too (previously lean only).
 - **Words-to-warn/stop** (doc words, ignoring LOC; LOC tokens reduce headroom
-  at 12 tok/line): lean ~3.3k / ~7.8k, standard ~8.1k / ~19.3k, full ~15.6k /
-  ~37.8k.
+  at 12 tok/line): lean ~3.7k / ~10.4k, standard ~7.4k / ~21.3k, full ~10.9k /
+  ~32.6k.
 - **Static session overhead:** mugiwara catalog ~1,370 tokens (26 skills + 15
   agents). Compare: ponytail fully injected ~1,300 tokens (5,227 bytes),
   caveman ~625. Skill bodies (~200 KB across 26 skills) load on demand only —

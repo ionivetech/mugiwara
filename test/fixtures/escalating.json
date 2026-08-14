@@ -1,0 +1,21 @@
+{
+  "name": "escalating",
+  "baseBranch": "main",
+  "base": {
+    "src/main.ts": "export const main = () => 1;\n"
+  },
+  "branch": {
+    "src/main.ts": "export const main = () => 1;\n",
+    "src/a.ts": "export const a = () => 1;\n",
+    "src/b.ts": "export const b = () => 1;\n",
+    "src/c.ts": "export const c = () => 1;\n",
+    "src/d.ts": "export const d = () => 1;\n",
+    "src/e.ts": "export const e = () => 1;\n",
+    "src/f.ts": "export const f = () => 1;\n",
+    "src/g.ts": "export const g = () => 1;\n",
+    "src/h.ts": "export const h = () => 1;\n",
+    "src/i.ts": "export const i = () => 1;\n",
+    "src/j.ts": "export const j = () => 1;\n"
+  },
+  "note": "grew 1 -> 11 files: first savepoint lean, later savepoint full (lane_rose, clamp hold)"
+}

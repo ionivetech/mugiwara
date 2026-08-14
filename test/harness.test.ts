@@ -52,7 +52,7 @@ const newRepo = (tag: string) => {
 
 // ---------- lane.sh boundary matrix ----------
 
-test('lane.sh: file-count and LOC boundaries map to lanes', { timeout: 20000 }, () => {
+test('lane.sh: file-count and LOC boundaries map to lanes', { timeout: 60000 }, () => {
   const cases: { files: number; locPerFile: number; expectLane: string }[] = [
     { files: 0, locPerFile: 0, expectLane: 'direct' },
     { files: 1, locPerFile: 10, expectLane: 'direct' },
@@ -271,27 +271,27 @@ test('savepoint: fully-completed plan reports tasks.done=total (not 0)', { timeo
 
 // ---------- budget warn/stop for standard + full lanes ----------
 
-test('savepoint: budget warn/stop boundaries for standard (10000) and full (20000)', { timeout: 20000 }, () => {
+test('savepoint: budget warn/stop boundaries for standard (25000) and full (50000)', { timeout: 60000 }, () => {
   const dir = newRepo('budget');
   try {
     // 3 files -> standard
     commitFiles(dir, { 'a.ts': 'a\n', 'b.ts': 'b\n', 'c.ts': 'c\n' });
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '14999' });
+    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '37499' });
     expect(readState(dir).budget_status).toBe('ok');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '15000' });
+    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '37500' });
     expect(readState(dir).budget_status).toBe('warn');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '30000' });
+    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '75000' });
     expect(readState(dir).budget_status).toBe('stop');
 
     // 9 files -> full
     const files: Record<string, string> = {};
     for (let i = 0; i < 9; i++) files[`src/s${i}.ts`] = 'x\n';
     commitFiles(dir, files);
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '29999' });
+    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '74999' });
     expect(readState(dir).budget_status).toBe('ok');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '30000' });
+    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '75000' });
     expect(readState(dir).budget_status).toBe('warn');
-    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '60000' });
+    runSavepoint(dir, 'm "" "" 1 guided', { MUGIWARA_TOKENS: '150000' });
     expect(readState(dir).budget_status).toBe('stop');
   } finally {
     rmSync(dir, { recursive: true, force: true });

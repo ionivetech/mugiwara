@@ -1,0 +1,13 @@
+{
+  "name": "deletions-only",
+  "baseBranch": "main",
+  "base": {
+    "src/dead1.ts": "export const dead1 = () => 1;\n",
+    "src/dead2.ts": "export const dead2 = () => 2;\n",
+    "src/alive.ts": "export const alive = () => 3;\n"
+  },
+  "branch": {
+    "src/alive.ts": "export const alive = () => 3;\n"
+  },
+  "note": "only deletions -> negative loc_delta, positive loc_churn (D4 regression)"
+}

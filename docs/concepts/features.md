@@ -167,7 +167,6 @@ config owns writing standards."
 | `mode` | guided | guided / semi / auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | conventional / gitmoji / plain |
-| `base` | main | PR target branch |
 | `coverage_new` | 90 | Coverage threshold, new files |
 | `coverage_modified` | 80 | Coverage threshold, modified files |
 | `review_depth` | full | full / standard / quick |
@@ -251,7 +250,7 @@ without opening many files. Written by the crew automatically.
 
 ```bash
 scripts/savepoint.sh <mission> <actor> <branch> <wave> <mode>
-scripts/savepoint.sh --branch <mission> <actor> <branch> <wave> <mode>  # branch-scoped
+scripts/savepoint.sh --branch <mission> <branch> [wave] [mode]  # branch-scoped, actor auto-resolved from git
 ```
 
 **Scenario.** After a context loss you open `state.json`: Wave 3, 5/5 tasks
@@ -276,11 +275,19 @@ next wave without re-running completed work.
 **How to use.**
 
 ```
-/mugiwara resume plan <name>
 /mugiwara continue
 ```
 
-or just say "where were we?" at session start.
+or just say "where were we?" at session start. In **auto mode** the
+`session-start` hook reads `.mugiwara/continue.md` and injects an
+`AUTO-RESUME` context line at session start — no manual command needed.
+
+**Where the resume point lives.** `scripts/savepoint.sh` writes
+`.mugiwara/continue.md` at every wave boundary with the position fields
+(mission, branch, wave, mode, tasks done/total, lane, next_action) — machine
+written, same trust as `state.json`. The `next_session_prompt` line is
+crew-written and preserved across savepoints. The resume skill verifies every
+field against the plan + todos before acting; a contradiction escalates.
 
 **Scenario.** Session dies mid-execution on Friday. Monday you open the same
 repo: the crew reads state + `continue.md`, verifies `next_action` against
