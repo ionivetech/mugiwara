@@ -426,7 +426,9 @@ describe('ensureProjectGitignore', () => {
       expect(r.appended).toBe(true);
       const text = readFileSync(join(dir, '.gitignore'), 'utf8');
       expect(text).toContain('.mugiwara/refs/');
-      expect(text).toContain('.mugiwara/state.json');
+      expect(text).toContain('.mugiwara/state/');
+      expect(text).toContain('.mugiwara/continue/');
+      expect(text).not.toContain('.mugiwara/state.json');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

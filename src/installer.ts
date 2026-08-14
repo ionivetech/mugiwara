@@ -189,10 +189,9 @@ const GITIGNORE_BLOCK_END = '# <<< mugiwara <<<';
 const GITIGNORE_MARKER = '# mugiwara';
 const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.
 # Ignore session state and regenerated files.
-.mugiwara/state.json
-.mugiwara/state-*.json
+.mugiwara/state/
+.mugiwara/continue/
 .mugiwara/config
-.mugiwara/continue.md
 .mugiwara/refs/
 # <<< mugiwara <<<
 `;
