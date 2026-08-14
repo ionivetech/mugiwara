@@ -14,7 +14,14 @@ case "$MISSION" in
 esac
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
-STATE_FILE="$MUGIWARA_DIR/state.json"
+# state lives per (mission, member): solo = state/<mission>/state.json;
+# MEMBER env selects a team member's state, else the solo state.
+MEMBER="${MEMBER:-}"
+if [ -n "$MEMBER" ]; then
+  STATE_FILE="$MUGIWARA_DIR/state/$MISSION/$MEMBER.json"
+else
+  STATE_FILE="$MUGIWARA_DIR/state/$MISSION/state.json"
+fi
 REPORT_DIR="$MUGIWARA_DIR/reports"
 RESULTS_DIR="$MUGIWARA_DIR/results/$MISSION"
 REVIEW_DIR="$MUGIWARA_DIR/review"
@@ -25,7 +32,7 @@ node << 'NODE'
 const fs = require('fs');
 const path = require('path');
 
-const stateFile = process.env.STATE_FILE || ".mugiwara/state.json";
+const stateFile = process.env.STATE_FILE || ".mugiwara/state/unknown/state.json";
 const reportDir = process.env.REPORT_DIR || ".mugiwara/reports";
 const resultsDir = process.env.RESULTS_DIR || ".mugiwara/results/unknown";
 const reviewDir = process.env.REVIEW_DIR || ".mugiwara/review";
