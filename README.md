@@ -277,7 +277,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Ship gate check         | `/mugiwara-ship`                         |
 | See initiative progress | `mugiwara initiative status <plan>`      |
-| Resume a mission        | `/mugiwara continue` or "where were we?"   |
+| Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
 | Check gate locally      | `bun run gate`                           |
 | All docs                | [docs/](docs/)                           |

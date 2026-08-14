@@ -61,9 +61,14 @@ member file's work, nothing else.
 At session start the `session-start` hook scans `continue/<mission>/*.json`
 for your git actor:
 
-- **exactly one** in-flight mission → `AUTO-RESUME` hint for it
+- **exactly one** in-flight mission → a resume instruction is injected into
+  the session (load `mugiwara-resume`, continue from the exact point)
 - **several** → lists them and asks you to pick via `/mugiwara continue`
 - **other actors'** missions → never surfaced to you
+
+Resume is explicit, never guessed: a single in-flight mission gets a
+continue-the-work instruction; multiple missions always stop and ask. The
+model never picks which member or mission to resume on its own.
 
 **Nami's Solo-or-team question in auto:** Nami still asks "Solo or team?" —
 the default in auto is solo unless the user explicitly names a team. When a
@@ -118,12 +123,12 @@ Sari waits for A to merge, then rebases; Budi waits for B.
 
 ### 4. Session loss
 
-Sari's session dies mid-B. Monday:
+Sari's session dies mid-B. Monday, in auto mode the session-start hook
+surfaces her in-flight work:
 
 ```
-/mugiwara continue
-# AUTO-RESUME: 1 mission in-flight for sari:
-#   - payment-gateway-v2 (sari) — wave 3, 2/8 tasks
+AUTO-RESUME: 1 mission in-flight for sari:
+  - payment-gateway-v2 (sari) — wave 3, 2/8 tasks
 ```
 
 `/mugiwara continue payment-gateway-v2 sari` resumes exactly her checkpoint.

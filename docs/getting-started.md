@@ -112,8 +112,10 @@ Almost nothing in `guided` mode:
   hands you a verdict file with a ready PR summary. The crew never creates a
   PR, merges, or deploys.
 
-Switch to `semi` or `auto` if you want the crew to self-manage branch, commits,
-and ambiguities. See [modes](concepts/modes.md).
+Switch to `semi` if you want the crew to self-manage branch, commits, and
+execution from Wave 3 (you still approve the written plan and answer real
+questions). Switch to `auto` for full autonomy — the crew resolves ambiguities
+internally (brainstorm → Luffy decides). See [modes](concepts/modes.md).
 
 ## 4. The `.mugiwara/` workspace
 
