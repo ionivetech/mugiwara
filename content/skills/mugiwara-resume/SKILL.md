@@ -1,6 +1,6 @@
 ---
 name: mugiwara-resume
-description: Use when mission interrupted, context lost, or new session mid-mission — rebuild from .mugiwara/state/<mission>/ + continue/<mission>/, continue never restart.
+description: Use when mission interrupted, context lost, or new session mid-mission — rebuild from .mugiwara/state.json + continue/<mission>/, continue never restart.
 ---
 
 # Session Resume (Never Start Over)
