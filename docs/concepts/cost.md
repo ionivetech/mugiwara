@@ -24,17 +24,24 @@ budget.
 
 ## Cost per lane
 
-| Lane | Waves | Estimated tokens | Typical budget |
+| Lane | Waves | LANE_BASE (measured) | Budget |
 |------|-------|:---:|:---:|
 | 0 Direct | none | ~0 | — |
-| 1 Lean | execute → quality | ~4k | warn at 6k, stop at 12k |
-| 2 Standard | plan → execute → audit → review | ~10k | warn at 15k, stop at 30k |
-| 3 Full | all 9 waves | ~20k | warn at 30k, stop at 60k |
-| 4 Spike | brainstorm → re-triage | ~3k | warn at 4.5k, stop at 9k |
+| 1 Lean | execute → quality | 7,000 | warn at 10.5k, stop at 21k |
+| 2 Standard | plan → execute → audit → review | 13,000 | warn at 19.5k, stop at 39k |
+| 3 Full | all 9 waves | 23,000 | warn at 34.5k, stop at 69k |
+| 4 Spike | brainstorm → re-triage | 1,000 | warn at 1.5k, stop at 3k |
 
-Budget guidance: warn at exactly 1.5× budget, stop at exactly 3×, both
-boundaries inclusive (`>=`). Write state to `.mugiwara/state.json` before
-stopping.
+LANE_BASE is **not a hand-written estimate** — `scripts/lane-base.ts`
+computes the honest instruction load from the skill + agent bodies each lane
+loads (wave owners per workflow.md, ×1.35 tokens/word). The gate fails if a
+constant drifts >20% from that measured load, so content growth must be
+reflected in the budgets. Lean/standard/full were rescaled from the old
+1.5k/4k/9k after a Lane-3 mission measured ~22.9k of instruction load (D5).
+Spike stays a deliberate floor — a resize lane, not a content-loaded one.
+
+Budgets warn at exactly 1.5× budget, stop at exactly 3×, both boundaries
+inclusive (`>=`). Write state to `.mugiwara/state.json` before stopping.
 
 ## Measured benchmark (2026-08-13 QA mission)
 
@@ -47,8 +54,8 @@ All numbers below were measured on this repo, not estimated.
 - **Budget boundaries:** warn/stop fire on `>=` at exactly 1.5× / 3× budget.
   Boundary-tested for standard and full lanes too (previously lean only).
 - **Words-to-warn/stop** (doc words, ignoring LOC; LOC tokens reduce headroom
-  at 12 tok/line): lean ~3.3k / ~7.8k, standard ~8.1k / ~19.3k, full ~15.6k /
-  ~37.8k.
+  at 12 tok/line): lean ~3.7k / ~10.4k, standard ~7.4k / ~21.3k, full ~10.9k /
+  ~32.6k.
 - **Static session overhead:** mugiwara catalog ~1,370 tokens (26 skills + 15
   agents). Compare: ponytail fully injected ~1,300 tokens (5,227 bytes),
   caveman ~625. Skill bodies (~200 KB across 26 skills) load on demand only —

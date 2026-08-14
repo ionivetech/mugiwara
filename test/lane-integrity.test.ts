@@ -8,6 +8,11 @@ import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSy
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 
+// each case materializes a git repo + runs savepoint (spawnSync) — git init
+// and fixture setup are slow on CI. Raise the default per-test timeout via
+// the vitest config-less default (5000ms is too tight for 2-3 savepoints).
+const SLOW = 30000;
+
 const ROOT = join(import.meta.dirname, '..');
 const LANE = join(ROOT, 'scripts', 'lane.sh');
 const SAVEPOINT = join(ROOT, 'scripts', 'savepoint.sh');
@@ -38,7 +43,7 @@ function readState(dir: string, file = 'state.json') {
 
 // ---------- D1: cases 1-6 — lane_prev resolve + lane_rose ----------
 
-test('case 1: savepoint reads lane_prev from state.json (D1 fixed)', () => {
+test('case 1: savepoint reads lane_prev from state.json (D1 fixed)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -49,7 +54,7 @@ test('case 1: savepoint reads lane_prev from state.json (D1 fixed)', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 4: relative MUGIWARA_DIR resolves lane_prev (D1 exact bug)', () => {
+test('case 4: relative MUGIWARA_DIR resolves lane_prev (D1 exact bug)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     // first run with a RELATIVE MUGIWARA_DIR — the old require() choked on
@@ -71,7 +76,7 @@ test('case 4: relative MUGIWARA_DIR resolves lane_prev (D1 exact bug)', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 5: lane_rose true when lane rises (lean -> full via escalating fixture)', () => {
+test('case 5: lane_rose true when lane rises (lean -> full via escalating fixture)', { timeout: SLOW }, () => {
   const dir = fixtureDir('escalating');
   try {
     // escalating has 10 files -> full immediately; make first run lean by
@@ -87,7 +92,7 @@ test('case 5: lane_rose true when lane rises (lean -> full via escalating fixtur
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 6: lane_rose false on spike (spike is a resize, not a rise)', () => {
+test('case 6: lane_rose false on spike (spike is a resize, not a rise)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     // plant a spike-prev state, then run a normal lane -> not a rise
@@ -104,7 +109,7 @@ test('case 6: lane_rose false on spike (spike is a resize, not a rise)', () => {
 
 // ---------- D2: cases 7-10 — monotonic clamp + lane_peak ----------
 
-test('case 7: lane held at full after sensitive path removed (clamp D2)', () => {
+test('case 7: lane held at full after sensitive path removed (clamp D2)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -122,7 +127,7 @@ test('case 7: lane held at full after sensitive path removed (clamp D2)', () => 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 9: lane_peak recorded and rises with lane', () => {
+test('case 9: lane_peak recorded and rises with lane', { timeout: SLOW }, () => {
   const dir = fixtureDir('escalating');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -132,7 +137,7 @@ test('case 9: lane_peak recorded and rises with lane', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 10: fresh mission resets lane_peak (no clamp carry-over)', () => {
+test('case 10: fresh mission resets lane_peak (no clamp carry-over)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
     run(SAVEPOINT, ['sensitive', '', '', '1', 'guided'], dir);
@@ -148,7 +153,7 @@ test('case 10: fresh mission resets lane_peak (no clamp carry-over)', () => {
 
 // ---------- D3: cases 11-15 — shared patterns, plural sensitive paths ----------
 
-test('case 11: payments/ and migrations/ escalate to full (D3 plural forms)', () => {
+test('case 11: payments/ and migrations/ escalate to full (D3 plural forms)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-d3-'));
   try {
     baseRepo(dir);
@@ -159,7 +164,7 @@ test('case 11: payments/ and migrations/ escalate to full (D3 plural forms)', ()
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 12: package.json does NOT escalate (deps rule deferred to policy)', () => {
+test('case 12: package.json does NOT escalate (deps rule deferred to policy)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-d3pkg-'));
   try {
     baseRepo(dir);
@@ -170,7 +175,7 @@ test('case 12: package.json does NOT escalate (deps rule deferred to policy)', (
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 13: authors/ NOT matched by auth/ pattern', () => {
+test('case 13: authors/ NOT matched by auth/ pattern', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-d3auth-'));
   try {
     baseRepo(dir);
@@ -180,7 +185,7 @@ test('case 13: authors/ NOT matched by auth/ pattern', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 14: sensitive escalation wins over docs-only downgrade', () => {
+test('case 14: sensitive escalation wins over docs-only downgrade', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
     const r = run(LANE, ['main', '--json'], dir);
@@ -190,7 +195,7 @@ test('case 14: sensitive escalation wins over docs-only downgrade', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 15: lane.sh and savepoint.sh agree (shared patterns)', () => {
+test('case 15: lane.sh and savepoint.sh agree (shared patterns)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
     const r = run(LANE, ['main', '--json'], dir);
@@ -204,7 +209,7 @@ test('case 15: lane.sh and savepoint.sh agree (shared patterns)', () => {
 
 // ---------- D4/D5: cases 16-21 — churn-based tokens + new budgets ----------
 
-test('case 16: churn 1800 -> tokens_est > 30000 (D4: churn x 12, not delta)', () => {
+test('case 16: churn 1800 -> tokens_est > 30000 (D4: churn x 12, not delta)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-churn-'));
   try {
     execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
@@ -232,7 +237,7 @@ test('case 16: churn 1800 -> tokens_est > 30000 (D4: churn x 12, not delta)', ()
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 17: deletions -> negative delta, positive churn, tokens > 0 (D4)', () => {
+test('case 17: deletions -> negative delta, positive churn, tokens > 0 (D4)', { timeout: SLOW }, () => {
   const dir = fixtureDir('deletions-only');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -244,7 +249,7 @@ test('case 17: deletions -> negative delta, positive churn, tokens > 0 (D4)', ()
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 18: MUGIWARA_TOKENS override honored (reported source)', () => {
+test('case 18: MUGIWARA_TOKENS override honored (reported source)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir, { MUGIWARA_TOKENS: '12345' });
@@ -254,7 +259,7 @@ test('case 18: MUGIWARA_TOKENS override honored (reported source)', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 19: warn at 1.5x new standard budget (25000 -> 37500)', () => {
+test('case 19: warn at 1.5x new standard budget (25000 -> 37500)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir, { MUGIWARA_TOKENS: '37499' });
@@ -266,7 +271,7 @@ test('case 19: warn at 1.5x new standard budget (25000 -> 37500)', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 20: LANE_BASE matches lane-base.ts computed load (D5)', () => {
+test('case 20: LANE_BASE matches lane-base.ts computed load (D5)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -277,7 +282,7 @@ test('case 20: LANE_BASE matches lane-base.ts computed load (D5)', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 21: lane-base generator validates constants (gate)', () => {
+test('case 21: lane-base generator validates constants (gate)', { timeout: SLOW }, () => {
   const r = spawnSync('bun', [join(ROOT, 'scripts', 'lane-base.ts')], { cwd: ROOT, encoding: 'utf8' });
   expect(r.status).toBe(0);
   expect(r.stdout).toContain('constants match content load');
@@ -285,7 +290,7 @@ test('case 21: lane-base generator validates constants (gate)', () => {
 
 // ---------- D6: cases 22-24 — evidence exit + verdict ----------
 
-test('case 22: evidence log carries # Exit: and # Verdict: PASS on success', () => {
+test('case 22: evidence log carries # Exit: and # Verdict: PASS on success', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-ev-'));
   try {
     execSync('mkdir -p .mugiwara/results/m', { cwd: dir });
@@ -300,7 +305,7 @@ test('case 22: evidence log carries # Exit: and # Verdict: PASS on success', () 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 23: evidence log carries FAIL verdict and preserves exit code', () => {
+test('case 23: evidence log carries FAIL verdict and preserves exit code', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-ev2-'));
   try {
     execSync('mkdir -p .mugiwara/results/m', { cwd: dir });
@@ -315,7 +320,7 @@ test('case 23: evidence log carries FAIL verdict and preserves exit code', () =>
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 24: evidence stdin pipeline also gets trailer', () => {
+test('case 24: evidence stdin pipeline also gets trailer', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-ev3-'));
   try {
     execSync('mkdir -p .mugiwara/results/m', { cwd: dir });
@@ -332,7 +337,7 @@ test('case 24: evidence stdin pipeline also gets trailer', () => {
 
 // ---------- D7/D8: cases 25-28 — branch-mode interface + gitignore ----------
 
-test('case 25: --branch m feat/other -> state-feat-other.json, branch resolved (D7)', () => {
+test('case 25: --branch m feat/other -> state-feat-other.json, branch resolved (D7)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-br-'));
   try {
     execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
@@ -349,7 +354,7 @@ test('case 25: --branch m feat/other -> state-feat-other.json, branch resolved (
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 27: uninstall leaves no mugiwara lines in .gitignore (D8)', async () => {
+test('case 27: uninstall leaves no mugiwara lines in .gitignore (D8)', { timeout: SLOW }, async () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-uni-'));
   try {
     execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
@@ -367,7 +372,7 @@ test('case 27: uninstall leaves no mugiwara lines in .gitignore (D8)', async () 
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 28: gitignore block is delimited', async () => {
+test('case 28: gitignore block is delimited', { timeout: SLOW }, async () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-delim-'));
   try {
     const { ensureProjectGitignore } = await import(INSTALLER);
@@ -380,7 +385,7 @@ test('case 28: gitignore block is delimited', async () => {
 
 // ---------- Regressions 29-33 ----------
 
-test('case 29: docs-only change does not escalate to full (path-weighted)', () => {
+test('case 29: docs-only change does not escalate to full (path-weighted)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-doc-'));
   try {
     baseRepo(dir);
@@ -394,7 +399,7 @@ test('case 29: docs-only change does not escalate to full (path-weighted)', () =
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 30: deleted sources -> full via sensitive-path removal keeps clamp (D2 regression)', () => {
+test('case 30: deleted sources -> full via sensitive-path removal keeps clamp (D2 regression)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -406,7 +411,7 @@ test('case 30: deleted sources -> full via sensitive-path removal keeps clamp (D
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 31: unicode + spaced paths do not break lane detection', () => {
+test('case 31: unicode + spaced paths do not break lane detection', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-uni-'));
   try {
     baseRepo(dir);
@@ -419,7 +424,7 @@ test('case 31: unicode + spaced paths do not break lane detection', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 32: corrupt state.json degrades gracefully, lane_prev null', () => {
+test('case 32: corrupt state.json degrades gracefully, lane_prev null', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);
@@ -431,7 +436,7 @@ test('case 32: corrupt state.json degrades gracefully, lane_prev null', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 33: non-git dir -> both tools fail gracefully', () => {
+test('case 33: non-git dir -> both tools fail gracefully', { timeout: SLOW }, () => {
   const dir = fixtureDir('no-git');
   try {
     const l = run(LANE, [], dir);
@@ -445,7 +450,7 @@ test('case 33: non-git dir -> both tools fail gracefully', () => {
 
 // ---------- extra: loc_ins/loc_del/loc_churn fixture assertions ----------
 
-test('fixture: escalating repo files_touched matches branch diff', () => {
+test('fixture: escalating repo files_touched matches branch diff', { timeout: SLOW }, () => {
   const dir = fixtureDir('escalating');
   try {
     run(SAVEPOINT, ['m', '', '', '1', 'guided'], dir);

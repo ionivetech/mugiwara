@@ -71,15 +71,17 @@ format `scripts/mission-report.sh` produces:
 Work is sized to the diff — a typo gets no pipeline, an auth migration gets
 all nine waves. Mugiwara itself is free; token usage depends on the lane:
 
-| Lane                | Waves | Typical tokens |
-| ------------------- | :---: | :------------: |
-| Direct (typo)       |   0   |       ~0       |
-| Lean (small bug)    |   2   |      ~4k       |
-| Standard (feature)  |  5–7  |      ~10k      |
-| Full (architecture) | 9–11  |      ~20k      |
+| Lane                | Waves | Typical tokens | Budget |
+| ------------------- | :---: | :------------: | :----: |
+| Direct (typo)       |   0   |       ~0       |   —    |
+| Lean (small bug)    |   2   |      ~7k       | 12k    |
+| Standard (feature)  |  5–7  |      ~13k      | 25k    |
+| Full (architecture) | 9–11  |      ~23k      | 50k    |
 
 Usage tracked in `.mugiwara/state.json` per mission. Budget warns at 1.5×,
-pauses at 3×.
+pauses at 3×. Lane bases are measured from the skills/agents loaded per lane
+by `scripts/lane-base.ts` — the constants fail CI if they drift from content
+load.
 
 → [Full cost model](docs/concepts/cost.md)
 
@@ -105,7 +107,7 @@ First run: `/mugiwara onboard` for guided setup. Then ask something non-trivial:
 > split this feature across the team: payment gateway, ledger, fraud
 ```
 
-A Standard lane mission (~10k tokens) produces a branch with test-first
+A Standard lane mission (~13k tokens) produces a branch with test-first
 commits, an audit report, a security review, and a ready PR summary — visible
 at every step in your chat.
 
