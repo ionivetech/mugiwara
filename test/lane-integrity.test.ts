@@ -352,15 +352,15 @@ test('case 25: team member -> state/<mission>/<member>.json, branch from git (D7
   const dir = mkdtempSync(join(tmpdir(), 'mugi-br-'));
   try {
     execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -qb feat/other', { cwd: dir });
-    const r = spawnSync('bash', [SAVEPOINT, 'm', 'sari', '1', 'guided'], {
+    const r = spawnSync('bash', [SAVEPOINT, 'm', 'patty', '1', 'guided'], {
       cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
     expect(r.status).toBe(0);
-    const stateFile = join(dir, '.mugiwara', 'state', 'm', 'sari.json');
+    const stateFile = join(dir, '.mugiwara', 'state', 'm', 'patty.json');
     expect(existsSync(stateFile)).toBe(true);
     const state = JSON.parse(readFileSync(stateFile, 'utf8'));
     expect(state.mission).toBe('m');
-    expect(state.member).toBe('sari');
+    expect(state.member).toBe('patty');
     expect(state.branch).toBe('feat/other'); // auto from git, no positional
     expect(state.actor).toBe('T <t@t.com>'); // auto-resolved from git, no positional
   } finally { rmSync(dir, { recursive: true, force: true }); }

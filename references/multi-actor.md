@@ -28,7 +28,7 @@ State and continue follow the person and the plan, not the branch.
 
 ```
 $ mugiwara reset
-✗ Active mission for 'farid'. Use --force to override.
+✗ Active mission for 'john'. Use --force to override.
 ```
 
 `--force` still preserves `logs/lessons.md` and `config`.
@@ -45,8 +45,8 @@ member argument) write `state.json`; team missions write `<member>.json`:
 
 ```bash
 scripts/savepoint.sh dark-mode                 # solo → state/dark-mode/state.json
-scripts/savepoint.sh payment-gateway farid    # team → state/payment-gateway/farid.json
-scripts/savepoint.sh payment-gateway sari     #        state/payment-gateway/sari.json
+scripts/savepoint.sh payment-gateway john    # team → state/payment-gateway/john.json
+scripts/savepoint.sh payment-gateway patty     #        state/payment-gateway/patty.json
 ```
 
 The resume point follows the same scoping: `continue/<mission>/<member>.json`

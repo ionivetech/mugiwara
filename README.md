@@ -32,7 +32,7 @@ format `scripts/mission-report.sh` produces:
 
     # Mission: invitation-accepted-flow . 2026-08-11
 
-    **Lane** full . **Mode** guided . **Actor** farid . **Branch** feature/MKR-412
+    **Lane** full . **Mode** guided . **Actor** john . **Branch** feature/MKR-412
 
     ## What changed
 
@@ -213,7 +213,7 @@ Quick start for a team:
 # Each member works on their own branch, resume only their own work
 /mugiwara continue                      # list every in-flight mission for YOU
 /mugiwara continue payment-gateway      # solo → resume; team → list members
-/mugiwara continue payment-gateway sari # resume exactly sari's work
+/mugiwara continue payment-gateway patty # resume exactly patty's work
 
 # Coordination radar
 bun run scripts/initiative.ts status plans/<mission>.md          # who's where

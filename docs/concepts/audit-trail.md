@@ -90,7 +90,7 @@ The trail is real files, not promises. Three representative examples.
 
     # Mission: invitation-accepted-flow . 2026-08-11
 
-    **Lane** full . **Mode** guided . **Actor** farid . **Branch** feature/MKR-412
+    **Lane** full . **Mode** guided . **Actor** john . **Branch** feature/MKR-412
 
     ## Waves
 

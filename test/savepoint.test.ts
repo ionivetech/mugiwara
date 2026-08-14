@@ -137,15 +137,15 @@ test('savepoint team member writes state to state/<mission>/<member>.json', { ti
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-member-'));
   try {
     setupGit(dir);
-    runSavepoint(dir, 'payment-gateway sari 1 guided');
+    runSavepoint(dir, 'payment-gateway patty 1 guided');
 
-    const stateFile = statePath(dir, 'payment-gateway', 'sari');
+    const stateFile = statePath(dir, 'payment-gateway', 'patty');
     expect(existsSync(stateFile)).toBe(true);
     // solo state.json not created by a team run
     expect(existsSync(statePath(dir, 'payment-gateway'))).toBe(false);
     const state = JSON.parse(readFileSync(stateFile, 'utf8'));
     expect(state.mission).toBe('payment-gateway');
-    expect(state.member).toBe('sari');
+    expect(state.member).toBe('patty');
     expect(state.wave).toBe(1);
     expect(state.mode).toBe('guided');
     // actor auto-resolves from git identity, never a positional
@@ -188,15 +188,15 @@ test('D10: continue is (mission, member) scoped — team members never clobber',
   try {
     setupGit(dir);
     // two members on the same mission → separate files
-    runSavepoint(dir, 'payment-gateway farid 3 guided');
-    runSavepoint(dir, 'payment-gateway sari 3 guided');
+    runSavepoint(dir, 'payment-gateway john 3 guided');
+    runSavepoint(dir, 'payment-gateway patty 3 guided');
 
-    expect(existsSync(continuePath(dir, 'payment-gateway', 'farid'))).toBe(true);
-    expect(existsSync(continuePath(dir, 'payment-gateway', 'sari'))).toBe(true);
-    const farid = JSON.parse(readFileSync(continuePath(dir, 'payment-gateway', 'farid'), 'utf8'));
-    const sari = JSON.parse(readFileSync(continuePath(dir, 'payment-gateway', 'sari'), 'utf8'));
-    expect(farid.member).toBe('farid');
-    expect(sari.member).toBe('sari');
+    expect(existsSync(continuePath(dir, 'payment-gateway', 'john'))).toBe(true);
+    expect(existsSync(continuePath(dir, 'payment-gateway', 'patty'))).toBe(true);
+    const john = JSON.parse(readFileSync(continuePath(dir, 'payment-gateway', 'john'), 'utf8'));
+    const patty = JSON.parse(readFileSync(continuePath(dir, 'payment-gateway', 'patty'), 'utf8'));
+    expect(john.member).toBe('john');
+    expect(patty.member).toBe('patty');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

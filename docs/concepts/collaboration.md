@@ -51,10 +51,10 @@ touches, and heal cycles do **not** downgrade the mode. Only a genuine blocker
 or the heal halt pauses.
 
 **Auto applies per member, not per mission.** In a team plan, auto covers only
-the member's own scope. If Sari runs in auto and resumes her sub-mission with
-`/mugiwara continue payment-gateway-v2 sari`, the crew runs her sub-mission
+the member's own scope. If Patty runs in auto and resumes her sub-mission with
+`/mugiwara continue payment-gateway-v2 patty`, the crew runs her sub-mission
 autonomously to ship — triage, plan, execute, quality, gates, review, heal,
-closure — but it never touches Farid's or Budi's sub-missions. Their work is
+closure — but it never touches John's or Austin's sub-missions. Their work is
 not auto-run, not re-planned, not committed by her session. Auto scope = your
 member file's work, nothing else.
 
@@ -76,9 +76,9 @@ team is named, member names are required (never invented).
 
 ## Worked example — Payment Gateway v2
 
-Three engineers (Farid, Sari, Budi) build a payment gateway in one repo.
+Three engineers (John, Patty, Austin) build a payment gateway in one repo.
 
-### 1. Plan (Farid, lead — guided mode)
+### 1. Plan (John, lead — guided mode)
 
 ```
 /mugiwara guided
@@ -92,46 +92,46 @@ assignee + branch per sub-mission and writes one plan:
 ## Sub-missions
 | ID | Name            | Assignee | Branch            | Status | Depends | Touched Files |
 |----|-----------------|----------|-------------------|--------|---------|---------------|
-| A  | Ledger API      | farid    | feat/pg-ledger    | [ ]    | —       | contracts/, src/ledger/ |
-| B  | Payment capture | sari     | feat/pg-capture   | [ ]    | A       | src/payments/, src/webhook/ |
-| C  | UI checkout     | budi     | feat/pg-ui        | [ ]    | B       | src/ui/checkout/ |
+| A  | Ledger API      | john    | feat/pg-ledger    | [ ]    | —       | contracts/, src/ledger/ |
+| B  | Payment capture | patty     | feat/pg-capture   | [ ]    | A       | src/payments/, src/webhook/ |
+| C  | UI checkout     | austin     | feat/pg-ui        | [ ]    | B       | src/ui/checkout/ |
 ```
 
-Savepoint runs: `state/payment-gateway-v2/farid.json` etc.
+Savepoint runs: `state/payment-gateway-v2/john.json` etc.
 
 ### 2. Each member works their own branch
 
 ```bash
 git checkout feat/pg-capture
-/mugiwara continue payment-gateway-v2 sari   # resume sari's work, never farid's/budi's
+/mugiwara continue payment-gateway-v2 patty   # resume patty's work, never john's/austin's
 ```
 
-`continue/payment-gateway-v2/sari.json` is sari's resume point. Farid and Budi
+`continue/payment-gateway-v2/patty.json` is patty's resume point. John and Austin
 have their own files — no clobbering.
 
 ### 3. Coordination
 
 ```bash
 bun run scripts/initiative.ts status plans/2026-08-20-payment-gateway-v2.md
-# A farid   [~] · B sari [ ] (dep A) · C budi [ ] (dep B)
+# A john   [~] · B patty [ ] (dep A) · C austin [ ] (dep B)
 
 bun run scripts/initiative.ts conflict-check plans/2026-08-20-payment-gateway-v2.md
 # A touches contracts/ + src/ledger/; B touches src/payments/ — no overlap
 ```
 
-Sari waits for A to merge, then rebases; Budi waits for B.
+Patty waits for A to merge, then rebases; Austin waits for B.
 
 ### 4. Session loss
 
-Sari's session dies mid-B. Monday, in auto mode the session-start hook
+Patty's session dies mid-B. Monday, in auto mode the session-start hook
 surfaces her in-flight work:
 
 ```
-AUTO-RESUME: 1 mission in-flight for sari:
-  - payment-gateway-v2 (sari) — wave 3, 2/8 tasks
+AUTO-RESUME: 1 mission in-flight for patty:
+  - payment-gateway-v2 (patty) — wave 3, 2/8 tasks
 ```
 
-`/mugiwara continue payment-gateway-v2 sari` resumes exactly her checkpoint.
+`/mugiwara continue payment-gateway-v2 patty` resumes exactly her checkpoint.
 
 ### 5. Solo member
 

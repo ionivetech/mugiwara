@@ -69,7 +69,7 @@ $ mugiwara blame src/auth/invitation.ts:42
   agent   zoro-execution · claude-sonnet-4.6 · lane full
   gate    coverage 94% · security STRIDE clean · DoD 5/5
   report  .mugiwara/reports/2026-08-11-invitation-accepted.md
-  human   reviewed by farid, PR #412
+  human   reviewed by john, PR #412
 ```
 
 **Why now.** Internal AI-usage policies are landing at most engineering orgs, and

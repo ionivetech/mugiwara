@@ -463,15 +463,15 @@ test('D10: session-start lists multiple in-flight missions, does not auto-resume
       writeFileSync(join(d, `${member}.json`),
         JSON.stringify({ mission, member, actor: 'Test <test@test.com>', wave: 2, mode: 'auto', tasks_done: 1, tasks_total: 8 }));
     };
-    write('payment-gateway', 'farid');
-    write('payment-gateway', 'sari');
+    write('payment-gateway', 'john');
+    write('payment-gateway', 'patty');
     execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
 
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
     const json = JSON.parse(out) as { additionalContext: string };
     expect(json.additionalContext).toContain('2 missions in-flight');
-    expect(json.additionalContext).toContain('payment-gateway (farid)');
-    expect(json.additionalContext).toContain('payment-gateway (sari)');
+    expect(json.additionalContext).toContain('payment-gateway (john)');
+    expect(json.additionalContext).toContain('payment-gateway (patty)');
     expect(json.additionalContext).toContain('Run /mugiwara continue <mission> [member]');
     // never auto-resumed a specific one
     expect(json.additionalContext).not.toContain('continue from the exact point');
