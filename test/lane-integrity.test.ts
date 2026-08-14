@@ -489,6 +489,20 @@ test('fixture expect: sensitive-paths → full with ≥14 sensitive paths', { ti
 
 test('fixture expect: sensitive-paths-negative → standard, zero sensitive', { timeout: SLOW }, () => assertFixtureExpect('sensitive-paths-negative'));
 
+test('case 35: lanes.md pattern block matches patterns.sh (drift gate)', () => {
+  const pats = readFileSync(join(ROOT, 'scripts', 'lib', 'patterns.sh'), 'utf8');
+  const m = pats.match(/SENSITIVE_PATS="([^"]+)"/);
+  expect(m).not.toBeNull();
+  // normalize regex forms for doc display: strip backslash escapes + trailing $
+  const sourceTokens = new Set(m![1].split('|').map(t => t.replace(/\\/g, '').replace(/\$$/, '')));
+  const doc = readFileSync(join(ROOT, 'docs', 'concepts', 'lanes.md'), 'utf8');
+  const after = doc.slice(doc.indexOf('The patterns live in one place'));
+  const block = after.match(/```\n([\s\S]*?)\n```/)?.[1];
+  expect(block).toBeTruthy();
+  const docTokens = new Set(block!.trim().split(/\s+/));
+  expect([...sourceTokens].sort()).toEqual([...docTokens].sort());
+});
+
 // ---------- extra: loc_ins/loc_del/loc_churn fixture assertions ----------
 
 test('fixture: escalating repo files_touched matches branch diff', { timeout: SLOW }, () => {

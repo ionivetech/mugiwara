@@ -39,14 +39,19 @@ Lane 3 (Full), regardless of file count. The patterns live in one place —
 change there applies to both):
 
 ```
-auth/ payment/ payments/ billing/ crypto/ secrets/ .env
-config/.*key migration/ migrations/ .sql schema. .prisma .terraform .tf
+auth/ oauth payment/ payments/ billing/ crypto/ secrets/ credential session/ token/ rbac permission acl/ iam/ .env
+config/.*key .pem .key .p12 migration/ migrations/ migrate/ .sql schema. .prisma .terraform .tf Dockerfile docker-compose .github/workflows/ webhooks?/
 ```
 
-Plural forms (`payments/`, `migrations/`) included — the singular-only list
-missed them (D3). Deliberately **not** matched: `package.json` (dependency
-churn is policy-as-code, not a sensitive lane trigger — deferred to policy)
-and `authors/` (contains "auth" but never `auth/`).
+Plural forms (`payments/`, `migrations/`) and the v0.6.4 categories (oauth,
+credential, session/, token/, rbac, permission, acl/, iam/, cert keys, migrate/,
+Dockerfile, docker-compose, `.github/workflows/`, webhooks) included — the
+v0.6.3 list missed them (D3). This block is drift-guarded: `lane-integrity`
+case 35 asserts it equals the `patterns.sh` source, so a pattern change without
+a doc update turns CI red. Deliberately **not** matched: `package.json`
+(dependency churn is policy-as-code, not a sensitive lane trigger — deferred to
+policy) and `authors/` (contains "auth" but never `auth/`). Slash anchoring
+keeps `tokenizer`/`authentication` out; the negative fixture pins those traps.
 
 Use `--json` for machine output:
 
