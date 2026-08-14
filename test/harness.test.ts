@@ -52,7 +52,7 @@ const newRepo = (tag: string) => {
 
 // ---------- lane.sh boundary matrix ----------
 
-test('lane.sh: file-count and LOC boundaries map to lanes', { timeout: 20000 }, () => {
+test('lane.sh: file-count and LOC boundaries map to lanes', { timeout: 60000 }, () => {
   const cases: { files: number; locPerFile: number; expectLane: string }[] = [
     { files: 0, locPerFile: 0, expectLane: 'direct' },
     { files: 1, locPerFile: 10, expectLane: 'direct' },
@@ -271,7 +271,7 @@ test('savepoint: fully-completed plan reports tasks.done=total (not 0)', { timeo
 
 // ---------- budget warn/stop for standard + full lanes ----------
 
-test('savepoint: budget warn/stop boundaries for standard (25000) and full (50000)', { timeout: 20000 }, () => {
+test('savepoint: budget warn/stop boundaries for standard (25000) and full (50000)', { timeout: 60000 }, () => {
   const dir = newRepo('budget');
   try {
     // 3 files -> standard

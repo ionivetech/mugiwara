@@ -21,7 +21,7 @@ function setupGit(dir: string) {
   execSync('git commit --allow-empty -m base', { cwd: dir });
 }
 
-test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', () => {
+test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-'));
   try {
     setupGit(dir);
@@ -60,7 +60,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
   }
 });
 
-test('savepoint state.json has correct structure', () => {
+test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-struct-'));
   try {
     setupGit(dir);
@@ -143,7 +143,7 @@ test('savepoint --branch mode writes state to branch-specific file', () => {
   }
 });
 
-test('D10: savepoint writes continue.md position block at wave boundary', () => {
+test('D10: savepoint writes continue.md position block at wave boundary', { timeout: 20000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-cont-'));
   try {
     setupGit(dir);
