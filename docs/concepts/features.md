@@ -134,12 +134,14 @@ levels, read once per wave — a flip applies from the next wave.
 |-------|------|-----------|-------------|-----------|
 | **guided** | you approve every step | ask before each wave | ask the user | ask the user |
 | **semi** | you approve the written plan | **auto** from Zoro's wave to ship | ask the user | log, ask when there is a question |
-| **auto** | auto | auto all the way to ship | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
+| **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
 `auto` runs fully automatic from the first prompt to ship: triage, plan,
-execute, quality, gates, review, heal, closure — no user GO. If a requirement
-is unclear, the owning agent brainstorms with Usopp, Luffy makes the call, and
-the crew proceeds. Only a genuine blocker or the heal halt pauses.
+execute, quality, gates, review, heal, closure — no user GO. In a team plan
+auto covers **your member scope only**: resuming your sub-mission runs it
+autonomously to ship, never the other members'. If a requirement is unclear,
+the owning agent brainstorms with Usopp, Luffy makes the call, and the crew
+proceeds. Only a genuine blocker or the heal halt pauses.
 
 **How to use.**
 

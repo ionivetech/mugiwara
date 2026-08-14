@@ -13,7 +13,7 @@ those artifacts are written when they are created.
 |-------|------|-----------|-------------|-----------|
 | **guided** | you approve every step | ask before each wave | ask the user | ask the user |
 | **semi** | you approve the plan (manual until the plan is written) | **auto** from Zoro's execution wave to ship | ask the user | log, ask when there is a question |
-| **auto** | auto | auto all the way to ship | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
+| **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
 - **guided** — fully manual: you steer everything. Approve the plan, decide
   branch and commit style, answer every ambiguity, get asked at every gate.
@@ -23,10 +23,13 @@ those artifacts are written when they are created.
   self-manages branch and commits, runs quality, gates, review, heal, closure.
   If a real question comes up, it still asks you — nothing is guessed.
 - **auto** — fully automatic from the first prompt to ship: triage, plan,
-  execute, quality, gates, review, heal, closure all run without asking. If a
-  requirement is unclear or ambiguous, the crew resolves it internally: the
-  owning agent brainstorms with Usopp, Luffy makes the call, and the owning
-  agent continues its work. Only a genuine blocker or the heal halt pauses.
+  execute, quality, gates, review, heal, closure all run without asking. In a
+  team mission, auto covers **your member scope only** — resuming your
+  sub-mission with `/mugiwara continue <mission> <member>` runs your work
+  autonomously to ship, never the other members'. If a requirement is unclear
+  or ambiguous, the crew resolves it internally: the owning agent brainstorms
+  with Usopp, Luffy makes the call, and the owning agent continues its work.
+  Only a genuine blocker or the heal halt pauses.
 
 Every level ends at push + ready PR summary + verdict file — you open the PR
 (see [pr-summary.md](pr-summary.md)).

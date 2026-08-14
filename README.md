@@ -220,8 +220,9 @@ bun run scripts/initiative.ts status plans/<mission>.md          # who's where
 bun run scripts/initiative.ts conflict-check plans/<mission>.md  # shared-file overlap
 ```
 
-Auto mode runs every wave autonomously — including team missions — and never
-downgrades to guided mid-mission.
+Auto mode runs every wave autonomously — and never downgrades to guided
+mid-mission. In a team plan, auto covers **your member scope only**: resuming
+your sub-mission runs it to ship, never the other members'.
 
 → [Full collaboration guide with a worked example](docs/concepts/collaboration.md) · [Multi-actor reference](references/multi-actor.md)
 
@@ -258,7 +259,7 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 | --------- | ---- | --------- | ----------- |
 | `guided`  | you approve every step | ask before each wave | ask the user |
 | `semi`    | you approve the written plan | auto from Wave 3 to ship | ask the user |
-| `auto`    | auto | auto all the way to ship | resolved internally (brainstorm → Luffy decides) |
+| `auto`    | auto | auto all the way to ship (your member scope in a team) | resolved internally (brainstorm → Luffy decides) |
 
 In `auto`, the crew runs every wave autonomously — triage, plan, execute,
 quality, gates, review, heal, closure — and never downgrades to guided

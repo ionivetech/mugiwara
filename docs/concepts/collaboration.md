@@ -48,12 +48,26 @@ survives the merge.
 
 `auto` runs every wave autonomously to closure — lane rise, sensitive-path
 touches, and heal cycles do **not** downgrade the mode. Only a genuine blocker
-or the heal halt pauses. At session start the `session-start` hook scans
-`continue/<mission>/*.json` for your git actor:
+or the heal halt pauses.
+
+**Auto applies per member, not per mission.** In a team plan, auto covers only
+the member's own scope. If Sari runs in auto and resumes her sub-mission with
+`/mugiwara continue payment-gateway-v2 sari`, the crew runs her sub-mission
+autonomously to ship — triage, plan, execute, quality, gates, review, heal,
+closure — but it never touches Farid's or Budi's sub-missions. Their work is
+not auto-run, not re-planned, not committed by her session. Auto scope = your
+member file's work, nothing else.
+
+At session start the `session-start` hook scans `continue/<mission>/*.json`
+for your git actor:
 
 - **exactly one** in-flight mission → `AUTO-RESUME` hint for it
 - **several** → lists them and asks you to pick via `/mugiwara continue`
 - **other actors'** missions → never surfaced to you
+
+**Nami's Solo-or-team question in auto:** Nami still asks "Solo or team?" —
+the default in auto is solo unless the user explicitly names a team. When a
+team is named, member names are required (never invented).
 
 ## Worked example — Payment Gateway v2
 

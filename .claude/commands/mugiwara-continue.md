@@ -28,6 +28,10 @@ Command semantics — three forms:
 3. `/mugiwara continue <mission> <member>` — read `continue/<mission>/<member>.json`
    and resume that member's work exactly.
 
+**Auto scope.** In `auto` mode the resumed work runs autonomously to ship, but
+only that member's scope — a team mission's other members are never auto-run,
+re-planned, or committed by this session.
+
 Steps once the file is selected:
 
 1. Read `continue/<mission>/<member-or-state>.json` — mission, member, wave,
