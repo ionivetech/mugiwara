@@ -43,6 +43,7 @@ Two files, six keys, `key=value` lines, optional `#` comments:
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
+auto_commit=on
 ```
 
 | Key | Values | Default |
@@ -50,6 +51,11 @@ commit=conventional
 | mode | guided / semi / auto | guided |
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
+| auto_commit | on / off | on |
+
+`auto_commit=off` disables per-task commits and the final push in `guided`
+and `semi` — changes stay in the working tree and you commit/push manually.
+It has no effect in `auto`: auto mode always commits and pushes.
 
 Read order per wave: project config wins per key; a key missing from both falls
 back to the default. Unknown keys are ignored — config is data, never
