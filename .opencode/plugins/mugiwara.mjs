@@ -6,6 +6,11 @@
 // single export because OpenCode's legacy loader calls every exported function
 // as a plugin (same constraint ponytail documents).
 //
+// Crew COLORS come from content/skills/mugiwara-workflow/references/
+// wave-banners.md (single source); the CREW map below is the cold-path
+// fallback only. Temperature/steps stay here (runtime tuning, not banner
+// material).
+//
 // Install: add to opencode.json
 //   { "plugin": ["@ionivetech/mugiwara"] }
 // or from the git repo:
@@ -22,9 +27,7 @@ const contentDir = join(__dirname, '..', '..', 'content');
 const skillsDir = join(contentDir, 'skills');
 const agentsDir = join(contentDir, 'agents');
 
-const ANNOUNCE =
-  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
-
+// Colors are fallbacks — the wave-banners table is the source of truth.
 const CREW = {
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 30 },
   'usopp-brainstorm': { color: '#f59e0b', temperature: 0.6, steps: 30 },
@@ -41,6 +44,27 @@ const CREW = {
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 30 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 30 },
 };
+
+// Read the crew color table (single source of truth). Returns {} on any
+// failure — callers fall back to the CREW map. The regex anchors the exact
+// table shape: | agent-id | role | hex | ansi-256 | emoji |
+function readBannerColors() {
+  try {
+    const path = join(skillsDir, 'mugiwara-workflow', 'references', 'wave-banners.md');
+    if (!existsSync(path)) return {};
+    const text = readFileSync(path, 'utf8');
+    const colors = {};
+    for (const m of text.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| \d+ \| \S+ \|$/gm)) {
+      colors[m[1]] = m[2];
+    }
+    return colors;
+  } catch {
+    return {};
+  }
+}
+
+const ANNOUNCE =
+  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
 
 function parseFrontmatter(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
@@ -68,6 +92,7 @@ function permissionFromScope(scope) {
 
 function readAgents(stepsEnabled = true) {
   const agents = {};
+  const bannerColors = readBannerColors();
   let files;
   try {
     files = readdirSync(agentsDir).filter((f) => f.endsWith('.md'));
@@ -98,6 +123,11 @@ function readAgents(stepsEnabled = true) {
       const { steps, ...rest } = CREW[name];
       agents[name] = { ...agents[name], ...rest };
       if (stepsEnabled) agents[name] = { ...agents[name], steps };
+    }
+    // color comes from the wave-banners table (single source); CREW fallback
+    // covers agents the table does not list (and vice versa)
+    if (bannerColors[name] || CREW[name]) {
+      agents[name] = { ...agents[name], color: bannerColors[name] ?? CREW[name].color };
     }
     const perm = permissionFromScope(parsed.data['write-scope']);
     if (perm && agents[name].mode === 'subagent') agents[name].permission = perm;
