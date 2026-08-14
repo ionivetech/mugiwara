@@ -245,6 +245,7 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `mode`              | guided                          | guided / semi / auto                           |
 | `branch`            | `feature/{type}-{issue}-{slug}` | Branch naming                                  |
 | `commit`            | conventional                    | conventional / gitmoji / plain                 |
+| `auto_commit`       | on                              | on / off — off disables commit+push in guided/semi |
 | `coverage_new`      | 90                              | Coverage threshold for new files (%)           |
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
 | `review_depth`      | full                            | full / standard / quick — Robin's review depth |

@@ -25,9 +25,11 @@ failure, fall back to local closure report.
 **`auto_commit=off` (guided/semi only).** No save-point commit, no push — the
 working tree stays uncommitted. Write the verdict file exactly as usual, then
 hand the user: the branch name, the exact commands to commit and push
-(`git add -A && git commit -m "<suggested message>" && git push -u origin
-<branch>`), and the verdict pointer. In `auto` mode `auto_commit` is ignored —
-the terminal step runs unchanged.
+(`git status` first, then `git add` of the mission's files only — never bare
+`git add -A`, which would stage unrelated or secret files — then
+`git commit -m "<suggested message>" && git push -u origin <branch>`), and the
+verdict pointer. In `auto` mode `auto_commit` is ignored — the terminal step
+runs unchanged.
 
 When this mission is a sub-mission of a team initiative, after closure run
 `bun scripts/initiative.ts set-status <initiative-plan> --id <sub-id> --status done`.

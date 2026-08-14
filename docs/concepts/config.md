@@ -8,9 +8,10 @@ is data, never instructions.
 **Mode owns autonomy, config owns writing standards.** The mode decides how
 much the crew does without asking: `guided` asks everything, `semi` asks for
 the written plan (execution from Wave 3 is automatic), `auto` runs all waves
-autonomously and resolves ambiguities internally. The config only shapes HOW
-artifacts are written when they are created. See [modes.md](modes.md) for the
-mode matrix.
+autonomously and resolves ambiguities internally. The config shapes HOW
+artifacts are written when they are created — and, via `auto_commit`, WHETHER
+the crew writes commits and pushes at all (guided/semi only; auto always
+commits). See [modes.md](modes.md) for the mode matrix.
 
 ## Example file
 

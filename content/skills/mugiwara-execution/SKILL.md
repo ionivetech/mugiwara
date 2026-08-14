@@ -14,9 +14,10 @@ Execute the plan exactly. No silent reordering, no skipping steps, no "close eno
 
 ## Ask before working
 
-- `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints. With `auto_commit=off`: no ask — work on the current branch, leave changes uncommitted.
+- `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints. With `auto_commit=off`: the branch ask stays, the commit question is skipped — changes stay uncommitted.
 - `semi`: auto-create the mission branch per the config `branch` key; auto-commit per task in the config `commit` style ONLY when `auto_commit=on` (default). Off → leave every task's changes uncommitted; the user commits manually.
-- `auto`: auto-create the branch and auto-commit per task ALWAYS — `auto_commit=off` has no effect in auto mode. Record mode + branch + commit style + `auto_commit` in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>/todos.md`.
+- `auto`: auto-create the branch and auto-commit per task ALWAYS — `auto_commit=off` has no effect in auto mode.
+Record mode + branch + commit style + `auto_commit` in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>/todos.md` — every mode.
 
 Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`.
 

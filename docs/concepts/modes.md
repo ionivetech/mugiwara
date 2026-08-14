@@ -4,8 +4,10 @@ The crew's autonomy level. Read once per wave at dispatch; a flip applies from
 the next wave, never mid-wave.
 
 **Mode owns autonomy, config owns writing standards.** Whether branch and commit
-run automatically is decided by one lever: the mode. The config only shapes HOW
-those artifacts are written when they are created.
+run automatically is decided by the mode — except one config lever: `auto_commit
+=off` disables commits and the final push in `guided`/`semi` (you commit
+manually; `auto` ignores it). The config shapes HOW artifacts are written when
+they are created.
 
 ## The three levels
 
@@ -31,12 +33,13 @@ those artifacts are written when they are created.
   with Usopp, Luffy makes the call, and the owning agent continues its work.
   Only a genuine blocker or the heal halt pauses.
 
-Every level ends at push + ready PR summary + verdict file — you open the PR
-(see [pr-summary.md](pr-summary.md)).
+Every level ends at push + ready PR summary + verdict file — you open the PR.
+With `auto_commit=off` (guided/semi) the crew pushes nothing: it hands you the
+uncommitted tree with the exact commit + push commands (see [pr-summary.md](pr-summary.md)).
 
 ## Config
 
-Two files, six keys, `key=value` lines, optional `#` comments:
+Two files, `key=value` lines, optional `#` comments:
 
 ```
 # .mugiwara/config (project) overrides ~/.mugiwara/config (global)
@@ -81,5 +84,6 @@ not a mode knob. Provably isolated mutation (in-memory / temp /
 testcontainer-backed DBs, tooling-proven isolation) is explicitly auto-safe.
 
 **Terminal.** Every mode ends at push + ready PR summary + verdict file (you
-open the PR). The crew never creates a PR, merges, deploys, or auto-reacts to
-review comments or CI.
+open the PR) — or, with `auto_commit=off` in guided/semi, an uncommitted tree
+handed to you with commit + push instructions. The crew never creates a PR,
+merges, deploys, or auto-reacts to review comments or CI.

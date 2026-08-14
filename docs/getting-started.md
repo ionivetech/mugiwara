@@ -149,6 +149,7 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 | `mode` | guided | Autonomy: guided/semi/auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | Commit style: conventional/gitmoji/plain |
+| `auto_commit` | on | on/off — off: guided/semi never commit+push, you do |
 | `coverage_new` | 90 | Coverage % for new files |
 | `coverage_modified` | 80 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |

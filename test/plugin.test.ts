@@ -107,6 +107,25 @@ test('wave-banners table: crew colors are the single source (all agents, valid h
   expect(rows.find(r => r[1] === 'luffy-orchestrator')![2]).toBe('#ef4444');
 });
 
+test('wave-banners table: fallback CREW maps stay in parity with the table', () => {
+  // the CREW maps are cold-path fallbacks — if they drift from the table,
+  // a table-read failure silently serves stale colors (the exact class the
+  // single-source refactor closed). Read both sources and compare hexes.
+  const table = readFileSync(join(contentDir, '..', 'references', 'wave-banners.md'), 'utf8');
+  const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)];
+  const tableHex: Record<string, string> = {};
+  for (const r of rows) tableHex[r[1]] = r[2];
+  for (const src of [join('..', '.opencode', 'plugins', 'mugiwara.mjs'), join('..', 'src', 'targets', 'opencode.ts')]) {
+    const code = readFileSync(join(import.meta.dirname, src), 'utf8');
+    for (const id of Object.keys(tableHex)) {
+      const m = code.match(new RegExp(`'${id}': \\{ color: '(#[0-9a-f]{6})'`));
+      if (m) {
+        expect(m[1], `${src}: ${id} fallback hex`).toBe(tableHex[id]);
+      }
+    }
+  }
+});
+
 test('config hook applies per-agent opencode tuning (color/temp/steps)', async () => {
   // isolate from ambient repo mode: run in a temp repo with mode=auto so the
   // steps-cap is dropped deterministically (auto relies on the continue JSON)
