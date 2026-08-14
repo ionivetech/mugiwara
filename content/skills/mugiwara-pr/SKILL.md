@@ -21,8 +21,12 @@ No separate report section plus a PR-body copy: one flow, in this exact order:
 1. **Title** — `# {type}: {Title Case summary}` — mandatory Title case, e.g.
    `# Feat: Add Evidence Links To Mugiwara Reports`.
 2. **Summary** — goal, mode, waves, task count, branch/stacking note,
-   closure report link (`[06-closure.md](.mugiwara/results/<mission>/06-closure.md)`).
-3. **What changed** — the files/features, one bullet per logical unit.
+   closure report link (`[06-closure.md](.mugiwara/results/<mission>/06-closure.md)`);
+   then the mission's key points as compact bullets (what each defect/feature
+   does — never a file list).
+3. **What changed** — ONE compact paragraph, file inventory only: `<N> files:
+   <comma-separated paths>, <grouped counts>, docs (dir or file list), README.`
+   Feature detail lives in Summary, not here.
 4. **Per-wave evidence** — wave, task, status, evidence link
    (`[path](relative/path)`). Gates, review, security, and heal rows live here
    with their dispositions.
