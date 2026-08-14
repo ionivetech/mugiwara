@@ -531,6 +531,40 @@ describe('ensureProjectGitignore', () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  test('removeProjectGitignore bails on missing END delimiter, preserves file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi9-'));
+    try {
+      // hand-edited: START present, END removed — must NOT truncate the file
+      writeFileSync(join(dir, '.gitignore'),
+        'node_modules/\n# >>> mugiwara >>>\n.mugiwara/state.json\n');
+      const before = readFileSync(join(dir, '.gitignore'), 'utf8');
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(false);
+      expect(readFileSync(join(dir, '.gitignore'), 'utf8')).toBe(before);
+      expect(r.notes.join(' ')).toContain('delimiter mismatch');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('removeProjectGitignore legacy block strips exact lines, keeps user-owned mugiwara-ish lines', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gi10-'));
+    try {
+      writeFileSync(join(dir, '.gitignore'),
+        '# mugiwara — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.\n' +
+        '# Ignore session state and regenerated files.\n' +
+        '.mugiwara/state.json\n.mugiwara/refs/\n' +
+        '.mugiwara/state.custom-owner-line\n'); // user-owned, must survive
+      const r = removeProjectGitignore(dir);
+      expect(r.removed).toBe(true);
+      const text = readFileSync(join(dir, '.gitignore'), 'utf8');
+      expect(text).not.toContain('.mugiwara/state.json');
+      expect(text).toContain('.mugiwara/state.custom-owner-line');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 test('resetMission preserve keeps logs when keepLogs is true', () => {

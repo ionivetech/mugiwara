@@ -85,17 +85,32 @@ test('runtime edit permission applies only to internal subagent agents (write-sc
 });
 
 test('config hook applies per-agent opencode tuning (color/temp/steps)', async () => {
-  const { config } = await plugin();
-  const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
-  await config(cfg);
-  const luffy = cfg.agent['luffy-orchestrator'];
-  expect(luffy.color).toBe('#ef4444');
-  expect(luffy.temperature).toBe(0.2);
-  const chopper = cfg.agent['chopper-checkpoint'];
-  expect((chopper as { permission?: unknown }).permission).toBeUndefined();
-  // steps are mode-aware: the repo's .mugiwara/config is mode=auto, so the
-  // per-agent steps cap is dropped (auto relies on continue.md, not a step cap)
-  expect(chopper.steps).toBeUndefined();
+  // isolate from ambient repo mode: run in a temp repo with mode=auto so the
+  // steps-cap is dropped deterministically (auto relies on continue.md)
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-plugin-auto-'));
+  try {
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=auto\n');
+    execSync('git init -q && git config user.email t@t.com && git config user.name T', { cwd: dir });
+    const { config } = await plugin();
+    const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
+    const prev = process.cwd();
+    process.chdir(dir);
+    try {
+      await config(cfg);
+    } finally {
+      process.chdir(prev);
+    }
+    const luffy = cfg.agent['luffy-orchestrator'];
+    expect(luffy.color).toBe('#ef4444');
+    expect(luffy.temperature).toBe(0.2);
+    const chopper = cfg.agent['chopper-checkpoint'];
+    expect((chopper as { permission?: unknown }).permission).toBeUndefined();
+    // auto mode drops the per-agent steps cap
+    expect(chopper.steps).toBeUndefined();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('config hook keeps per-agent steps in guided/semi mode', async () => {
@@ -408,6 +423,10 @@ test('D10: session-start hook emits AUTO-RESUME context in auto mode from contin
     expect(json.additionalContext).toContain('AUTO-RESUME: mission "test-mission"');
     expect(json.additionalContext).toContain('wave 3, 7/12 tasks');
     expect(json.additionalContext).toContain('Never restart the mission');
+    // F1: free-text fields are never interpolated into the prompt — only
+    // positional, allowlisted data is forwarded
+    expect(json.additionalContext).not.toContain('proceed to Wave 4');
+    expect(json.additionalContext).not.toContain('Run T1-T5');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

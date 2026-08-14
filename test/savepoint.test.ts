@@ -1,7 +1,7 @@
 // test/savepoint.test.ts — G3: every state.json field has a non-trivial assertion.
 import { test, expect } from 'vitest';
 import { execSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -167,6 +167,43 @@ test('D10: savepoint writes continue.md position block at wave boundary', { time
     const text2 = readFileSync(join(dir, '.mugiwara', 'continue.md'), 'utf8');
     expect(text2).toContain('- wave: 4');
     expect(text2).toContain('- next_session_prompt: "Run T1-T5 then waves 4-9"');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: continue.md is branch-scoped in --branch mode (multi-actor)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-contbr-'));
+  try {
+    setupGit(dir);
+    execSync(`bash "${SAVEPOINT}" --branch test feature/dark-mode 3 guided`, {
+      cwd: dir,
+      env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
+    });
+    // branch-scoped file, not the shared one
+    expect(existsSync(join(dir, '.mugiwara', 'continue-feature-dark-mode.md'))).toBe(true);
+    expect(existsSync(join(dir, '.mugiwara', 'continue.md'))).toBe(false);
+    const text = readFileSync(join(dir, '.mugiwara', 'continue-feature-dark-mode.md'), 'utf8');
+    expect(text).toContain('- mission: test');
+    expect(text).toContain('- wave: 3');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: continue.md branch slug sanitizes unsafe branch chars', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-contbr2-'));
+  try {
+    setupGit(dir);
+    // branch with a newline would previously corrupt the line format
+    execSync(`bash "${SAVEPOINT}" --branch test 'evil/branch' 1 guided`, {
+      cwd: dir,
+      env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
+    });
+    const files = readdirSync(join(dir, '.mugiwara')).filter(f => f.startsWith('continue-'));
+    expect(files).toEqual(['continue-evil-branch.md']);
+    const text = readFileSync(join(dir, '.mugiwara', 'continue-evil-branch.md'), 'utf8');
+    expect(text).toContain('- branch: evil/branch');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
