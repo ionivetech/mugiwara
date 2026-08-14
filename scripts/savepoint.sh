@@ -72,8 +72,8 @@ fi
 # format and corrupt both (F5). Dropping illegal chars is safe: slugs are
 # keys, not content. First translate path separators to '-', then drop
 # everything not in the allowlist (tr set is literal; \t\n cannot appear in
-# git refs anyway).
-BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\+$//' )
+# git refs anyway). Dot-only slugs are emptied (BSD/macOS-safe: no \+ BRE).
+BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
 if [ "$BRANCH_MODE" -eq 1 ]; then
   STATE_FILE="$MUGIWARA_DIR/state-${BRANCH_SLUG}.json"
 else
@@ -341,13 +341,22 @@ if [ -n "$MISSION" ]; then
   if [ -f "$CONTINUE_FILE" ]; then
     NEXT_SESSION_PROMPT=$(grep -E '^-?[[:space:]]*next_session_prompt:' "$CONTINUE_FILE" 2>/dev/null | head -1 || true)
   fi
+  # N2: every field echoed into continue.md is validated first. MISSION is
+  # allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized — a
+  # newline in any of them must never break the line format.
+  CONT_WAVE=$(echo "$WAVE" | tr -cd '0-9')
+  case "$MODE" in
+    guided|semi|auto) CONT_MODE="$MODE" ;;
+    *) CONT_MODE="guided" ;;
+  esac
+  CONT_BRANCH=$(echo "${BRANCH:-unknown}" | tr -cd 'A-Za-z0-9._-/' | sed 's|[/\\]|-|g')
   {
     echo "# Continue — $MISSION"
     echo ""
     echo "- mission: $MISSION"
-    echo "- branch: ${BRANCH:-unknown}"
-    echo "- wave: $WAVE"
-    echo "- mode: $MODE"
+    echo "- branch: ${CONT_BRANCH:-unknown}"
+    echo "- wave: ${CONT_WAVE:-0}"
+    echo "- mode: $CONT_MODE"
     echo "- tasks_done: $TASKS_DONE"
     echo "- tasks_total: $TASKS_TOTAL"
     echo "- lane: $LANE"

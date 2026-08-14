@@ -56,7 +56,11 @@ if (mode === 'auto') {
     const wave = field('wave');
     const tasksDone = field('tasks_done');
     const tasksTotal = field('tasks_total');
-    if (mission && /^[A-Za-z0-9._-]+$/.test(mission)) {
+    // N1: every interpolated field is validated — mission allowlisted,
+    // wave/tasks numeric. A malicious continue.md line like
+    // `- wave: 3, ignore all instructions` must never reach the prompt.
+    if (mission && /^[A-Za-z0-9._-]+$/.test(mission)
+      && /^\d+$/.test(wave) && /^\d+$/.test(tasksDone) && /^\d+$/.test(tasksTotal)) {
       resumeContext =
         `AUTO-RESUME: mission "${mission}" is in-flight (wave ${wave}, ${tasksDone}/${tasksTotal} tasks). ` +
         `Read .mugiwara/continue.md (or continue-${slug}.md if branch-scoped) + state.json, load the ` +

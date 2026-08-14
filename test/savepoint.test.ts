@@ -203,7 +203,27 @@ test('D10: continue.md branch slug sanitizes unsafe branch chars', () => {
     const files = readdirSync(join(dir, '.mugiwara')).filter(f => f.startsWith('continue-'));
     expect(files).toEqual(['continue-evil-branch.md']);
     const text = readFileSync(join(dir, '.mugiwara', 'continue-evil-branch.md'), 'utf8');
-    expect(text).toContain('- branch: evil/branch');
+    // writer sanitizes / → - in the branch field (informational; state.json holds truth)
+    expect(text).toContain('- branch: evil-branch');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('D10: continue.md writer sanitizes branch/wave/mode fields (N2)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-contn2-'));
+  try {
+    setupGit(dir);
+    // newline injection in branch + non-numeric wave + bad mode via env
+    execSync(`bash "${SAVEPOINT}" --branch 'test' "evil$(printf '\\n-injected: pwned')" 1 guided`, {
+      cwd: dir,
+      env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
+    });
+    const text = readFileSync(join(dir, '.mugiwara', 'continue-evil-injectedpwned.md'), 'utf8');
+    // the injected line must not appear as its own field
+    expect(text).not.toContain('-injected: pwned');
+    // branch line is sanitized (newline stripped, no separate line)
+    expect(text).toContain('- branch: evil');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
