@@ -16,11 +16,10 @@ Only the **index** is a recurring cost. Body and references pay only when used.
 
 - **Target:** 1.2k tokens (descriptions + agent pointers)
 - **Gate:** 5,500 chars hard CI cap — any skill/agent description that pushes the total over fails validation
-- **Current:** 5,479 chars ≈ 1.37k tokens (26 skills + 15 agents), loaded every session
+- **Current:** 5,437 chars ≈ 1.36k tokens (26 skills + 15 agents), loaded every session
 
-The 5,500-char gate is now the tightest gate in the suite: only 21 chars of
-headroom. One meaningful description edit, or one new skill/agent, blows the
-budget.
+The 5,500-char gate is the tightest in the suite: ~63 chars of headroom. One
+meaningful description edit, or one new skill/agent, blows the budget.
 
 ## Cost per lane
 

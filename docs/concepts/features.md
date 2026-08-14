@@ -275,7 +275,6 @@ next wave without re-running completed work.
 **How to use.**
 
 ```
-/mugiwara resume plan <name>
 /mugiwara continue
 ```
 
