@@ -80,7 +80,10 @@ Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never ou
 
 ## Wave transitions (visibility)
 
-Banner `## Wave N — <crew>` opens every wave; a skip is recorded, never silent. See `references/check-ins.md`.
+Banner in the owning agent's color opens every wave — terminal equals line
+`===== WAVE 3 — ZORO (EXECUTION) =====`, markdown UI emoji heading
+`## ⚔️ WAVE 3 — ZORO (EXECUTION)`. Spec + colors: the workflow skill's
+`references/wave-banners.md`. A skip is recorded, never silent.
 
 ## Work splitting
 

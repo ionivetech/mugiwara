@@ -70,6 +70,22 @@ intermediate files, then the terminal step in every mode: **save-point commit �
 push the mission branch → write the PR verdict file → hand branch + verdict to
 you**, who opens the PR. The crew never creates a PR, merges, or deploys.
 
+## Banners and progress
+
+Each wave opens with a colored banner in the owning agent's color and closes
+with a handoff line. Terminal sessions get the ANSI-colored equals line
+(`===== WAVE 3 — ZORO (EXECUTION) =====`); markdown UIs (Claude Code UI,
+VSCode, Codex) get the emoji heading form (`## ⚔️ WAVE 3 — ZORO (EXECUTION)`)
+— no ANSI, nothing to garble. Colors and emoji come from one table
+(`content/skills/mugiwara-workflow/references/wave-banners.md`), which the
+opencode plugin and installer read too, so the banner color always matches
+the agent's UI chip.
+
+Progress is mirrored into the host's native todo tool (opencode `todowrite`,
+Claude Code `Task*`) in the same response each task's evidence lands — one
+transition per call, never batched at wave end. The plan doc stays the source
+of truth; the host tool is a mirror.
+
 ## The two rules that hold it together
 
 1. **Evidence over claims.** No wave passes on assertion — the owning agent
