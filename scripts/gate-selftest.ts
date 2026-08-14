@@ -89,6 +89,104 @@ if (!existsSync(join(root, 'test', 'savepoint.test.ts'))) {
   }
 }
 
+// --- D1 mutation: break LANE_PREV resolve (require-style) → lane-integrity red ---
+console.log('\nD1 — LANE_PREV resolve mutation');
+const savepointFile = join(root, 'scripts', 'savepoint.sh');
+if (!existsSync(savepointFile)) {
+  console.log('  ⚠  savepoint.sh not found, skipping');
+} else {
+  const original = readFileSync(savepointFile, 'utf8');
+  try {
+    // reintroduce the D1 defect: read lane_prev with require() of a relative path
+    const broken = original.replace(
+      /PREV_JSON=\$\(node -e "try\{const fs=require\('fs'\);const s=JSON\.parse\(fs\.readFileSync\(process\.argv\[1\],'utf8'\)\);process\.stdout\.write\(JSON\.stringify\(\{mission:s\.mission\|\|'',lane:s\.lane\|\|'',peak:s\.lane_peak\|\|''\}\)\)\}catch\(e\)\{process\.stdout\.write\('\{\}'\)\}" "\$STATE_FILE" 2>\/dev\/null \|\| true\)/,
+      "PREV_JSON=$(node -e \"try{const s=require(process.argv[1]);process.stdout.write(JSON.stringify({mission:s.mission||'',lane:s.lane||'',peak:s.lane_peak||''}))}catch(e){process.stdout.write('{}')}\" \"$STATE_FILE\" 2>/dev/null || true)"
+    );
+    if (broken === original) {
+      console.log('  ⚠  D1 mutation pattern not found — skipping');
+    } else {
+      writeFileSync(savepointFile, broken);
+      assert('broken LANE_PREV resolve → lane-integrity fails', false, () => run('D1', 'bun run test -- lane-integrity -t "lane_prev"'));
+    }
+  } finally {
+    writeFileSync(savepointFile, original);
+    assert('restored → lane-integrity passes', true, () => run('D1', 'bun run test -- lane-integrity -t "lane_prev"'));
+  }
+}
+
+// --- D2 mutation: break monotonic clamp (drop lane_rank) → red ---
+console.log('\nD2 — monotonic clamp mutation');
+if (!existsSync(savepointFile)) {
+  console.log('  ⚠  savepoint.sh not found, skipping');
+} else {
+  const original = readFileSync(savepointFile, 'utf8');
+  try {
+    // neuter the clamp: make lane_rank always return 0 so a drop never holds
+    const broken = original.replace(
+      /lane_rank\(\) \{\n  case "\$1" in\n    direct\) echo 0 ;;[\s\S]*?\n  esac\n\}/,
+      'lane_rank() {\n  echo 0\n}'
+    );
+    if (broken === original) {
+      console.log('  ⚠  D2 mutation pattern not found — skipping');
+    } else {
+      writeFileSync(savepointFile, broken);
+      assert('broken clamp → lane-integrity fails', false, () => run('D2', 'bun run test -- lane-integrity -t "clamp"'));
+    }
+  } finally {
+    writeFileSync(savepointFile, original);
+    assert('restored → lane-integrity passes', true, () => run('D2', 'bun run test -- lane-integrity -t "clamp"'));
+  }
+}
+
+// --- D3 mutation: empty SENSITIVE_PATS → lane-integrity red ---
+console.log('\nD3 — sensitive patterns mutation');
+const patternsFile = join(root, 'scripts', 'lib', 'patterns.sh');
+if (!existsSync(patternsFile)) {
+  console.log('  ⚠  patterns.sh not found, skipping');
+} else {
+  const original = readFileSync(patternsFile, 'utf8');
+  try {
+    // reintroduce the D3 defect: singular-only list (no payments/, migrations/)
+    const broken = original.replace(
+      /SENSITIVE_PATS=.*/,
+      'SENSITIVE_PATS="auth/|payment/|billing/|crypto/|secrets/|\\.env$|config/.*key|migration/|\\.sql$|schema\\.|\\.prisma$|\\.terraform|\\.tf$"'
+    );
+    if (broken === original) {
+      console.log('  ⚠  D3 mutation pattern not found — skipping');
+    } else {
+      writeFileSync(patternsFile, broken);
+      assert('singular sensitive patterns → lane-integrity fails', false, () => run('D3', 'bun run test -- lane-integrity -t "payments"'));
+    }
+  } finally {
+    writeFileSync(patternsFile, original);
+    assert('restored → lane-integrity passes', true, () => run('D3', 'bun run test -- lane-integrity -t "payments"'));
+  }
+}
+
+// --- D4 mutation: zero LOC_TOKENS → lane-integrity red ---
+console.log('\nD4 — churn token mutation');
+if (!existsSync(savepointFile)) {
+  console.log('  ⚠  savepoint.sh not found, skipping');
+} else {
+  const original = readFileSync(savepointFile, 'utf8');
+  try {
+    // revert to delta-based (0 on deletions/refactors)
+    const broken = original.replace(
+      /LOC_TOKENS=\$\(\( LOC_CHURN \* 12 \)\)/,
+      'LOC_TOKENS=$(( LOC_DELTA > 0 ? LOC_DELTA * 12 : 0 ))'
+    );
+    if (broken === original) {
+      console.log('  ⚠  D4 mutation pattern not found — skipping');
+    } else {
+      writeFileSync(savepointFile, broken);
+      assert('zero churn tokens → lane-integrity fails', false, () => run('D4', 'bun run test -- lane-integrity -t "churn"'));
+    }
+  } finally {
+    writeFileSync(savepointFile, original);
+    assert('restored → lane-integrity passes', true, () => run('D4', 'bun run test -- lane-integrity -t "churn"'));
+  }
+}
+
 // --- Retrieval eval ratchet ---
 console.log('\nRetrieval eval ratchet');
 if (!existsSync(join(root, 'scripts', 'retrieval-eval.ts'))) {
