@@ -350,12 +350,23 @@ if (integrityArg !== -1) {
           errors.push(`doc-integrity: ${doc} missing ${lane} threshold ${num} (source: ${src})`);
         }
       }
-      // warn/stop multiples must be present or the doc is silently stale
-      if (!text.includes('1.5×') && !text.includes('1.5x')) {
-        errors.push(`doc-integrity: ${doc} missing warn threshold 1.5x`);
-      }
-      if (!text.includes('3×') && !text.includes('3x')) {
-        errors.push(`doc-integrity: ${doc} missing stop threshold 3x`);
+      // warn/stop are 1.5x / 3x of BUDGET (code: WARN_AT=BUDGET*3/2,
+      // STOP_AT=BUDGET*3) — presence is not enough, the arithmetic must be
+      // right. A doc claiming 1.5x/3x of LANE_BASE is the exact lie this gate
+      // exists to catch. Checked on the authoritative cost doc only.
+      if (doc === 'docs/concepts/cost.md') {
+        const budgets: [string, number][] = [['lean', 12000], ['standard', 25000], ['full', 50000]];
+        for (const [lane, budget] of budgets) {
+          const warn = budget * 3 / 2;
+          const stop = budget * 3;
+          const warnForms = [`${warn}`, `${Math.round(warn / 1000)}k`, `${warn.toLocaleString()}`, `${warn / 1000}k`];
+          const stopForms = [`${stop}`, `${stop / 1000}k`, `${stop.toLocaleString()}`];
+          const hasWarn = warnForms.some(f => text.includes(f));
+          const hasStop = stopForms.some(f => text.includes(f));
+          if (!hasWarn || !hasStop) {
+            errors.push(`doc-integrity: ${doc} ${lane} warn/stop must be 1.5x/3x of budget ${budget} (warn ${warn}, stop ${stop})`);
+          }
+        }
       }
     }
     if (!constants.includes('LANE_BASE_lean=7000')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 7000)');
