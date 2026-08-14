@@ -22,17 +22,12 @@ No `gh` CLI, no PR API calls, no auto-reaction to review comments or CI.
 The verdict file's PR summary is shaped by `.mugiwara/config` (project) /
 `~/.mugiwara/config` (global):
 
-| Key | Default | What it shapes |
-|-----|---------|----------------|
-| `base` | `main` | The target branch named in the PR summary |
-
 Example:
 
 ```
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
-base=main
 ```
 
 The title is a concise `{type}: {summary}` line from mission metadata; the body

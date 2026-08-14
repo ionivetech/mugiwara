@@ -167,7 +167,6 @@ config owns writing standards."
 | `mode` | guided | guided / semi / auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | conventional / gitmoji / plain |
-| `base` | main | PR target branch |
 | `coverage_new` | 90 | Coverage threshold, new files |
 | `coverage_modified` | 80 | Coverage threshold, modified files |
 | `review_depth` | full | full / standard / quick |

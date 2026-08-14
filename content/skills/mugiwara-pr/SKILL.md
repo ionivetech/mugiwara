@@ -33,7 +33,6 @@ Prepare the PR description so the user can paste and submit without writing it:
 - Title — `{type}: {Title Case summary}` (mandatory Title case), FIRST in the paste block.
 - Body — the verdict-file PR summary block (what changed, evidence, checks).
 - Body order — Summary → Per-wave evidence → Gates → Review & security → User tests → Closure report link → Verdict (mirrors the verdict file).
-- Target — the `base` config (default `main`) is named in the summary.
 - Validate every interpolated value against the safe charset and quote it.
 
 The summary is material, never posted — the crew stops at push.

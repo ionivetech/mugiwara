@@ -17,7 +17,6 @@ for the mode matrix.
 mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
-base=main
 review_depth=full
 quality_depth=full
 delegate_threshold=60
@@ -31,7 +30,6 @@ heal_max_cycles=3
 | `mode` | guided / semi / auto | guided | How much the crew does without asking |
 | `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata |
 | `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
-| `base` | branch name | `main` | The PR target named in the prepared PR summary |
 | `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Wave 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |
