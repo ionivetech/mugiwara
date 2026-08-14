@@ -23,7 +23,7 @@ CHANGED=$(git diff --name-only "$BASE"..HEAD 2>/dev/null || git diff --name-only
 FILE_COUNT=0
 [ -n "$CHANGED" ] && FILE_COUNT=$(echo "$CHANGED" | wc -l | tr -d ' ')
 
-SENSITIVE=$(echo "$CHANGED" | grep -E "$SENSITIVE_PATS" 2>/dev/null | head -5 | tr '\n' ',' | sed 's/,$//' || true)
+SENSITIVE=$(echo "$CHANGED" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 HAS_SENSITIVE=0
 [ -n "$SENSITIVE" ] && HAS_SENSITIVE=1
 

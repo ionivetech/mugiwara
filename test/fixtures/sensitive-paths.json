@@ -6,8 +6,21 @@
   },
   "branch": {
     "src/app.ts": "export const app = () => 1;\n",
-    "src/auth/login.ts": "export const login = () => 1;\n",
-    "src/payments/txn.ts": "export const txn = () => 1;\n"
+    "src/auth/login.ts": "x\n",
+    "src/payments/txn.ts": "x\n",
+    "db/migrate/001.rb": "x\n",
+    "src/credentials/store.ts": "x\n",
+    "src/session/token.ts": "x\n",
+    "src/rbac/roles.ts": "x\n",
+    "src/permissions/acl.ts": "x\n",
+    "src/iam/policy.ts": "x\n",
+    "certs/server.pem": "x\n",
+    "keys/private.key": "x\n",
+    ".github/workflows/deploy.yml": "x\n",
+    "Dockerfile": "x\n",
+    "docker-compose.yml": "x\n",
+    "src/webhooks/stripe.ts": "x\n"
   },
-  "note": "auth/ + payments/ -> full regardless of count (D3 plural forms)"
+  "expect": { "lane": "full", "sensitive_paths_min": 14 },
+  "note": "D3: plural forms + 8 categories. 14 of 15 branch paths are sensitive; see sensitive-paths-negative for exclusions."
 }
