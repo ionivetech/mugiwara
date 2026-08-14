@@ -96,6 +96,6 @@ The plan doc `.mugiwara/results/<mission>/todos.md` stays the source of truth
 on every host; host tools mirror it. Mirror timing is hard: seed at Wave 2
 (tasks + wave list), update in the SAME response each task's evidence lands,
 one transition per call, never batched at wave end. Wave banners use the crew
-color table in `content/skills/mugiwara-workflow/references/wave-banners.md`
+color table in `references/wave-banners.md`
 — the plugin and installer read the same table, so the banner color always
 matches the agent's UI chip.

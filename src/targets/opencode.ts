@@ -42,8 +42,10 @@ function readBannerColors(): Record<string, string> {
   try {
     if (!existsSync(BANNER_TABLE)) return {};
     const text = readFileSync(BANNER_TABLE, 'utf8');
-    const colors: Record<string, string> = {};
-    for (const m of text.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| \d+ \| \S+ \|$/gm)) {
+    // null-prototype + CRLF-tolerant: agent ids are trusted repo content, but
+    // a future `__proto__` id must never write the object's prototype
+    const colors: Record<string, string> = Object.create(null);
+    for (const m of text.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)) {
       colors[m[1]] = m[2];
     }
     return colors;

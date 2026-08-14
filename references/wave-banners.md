@@ -67,5 +67,9 @@ wizard agents — their banners appear only when a wave or worker names them.
 2. The color comes from this table only — never invent a hex mid-mission.
 3. Terminal variant when the session looks like a terminal; UI variant for
    markdown-rendering UIs. When unsure, the UI variant is safe everywhere.
-4. Adding a crew member? Add the row here first; the plugin and target
+4. Only the crew table's colors and the two SGR forms above (truecolor,
+   256-index) may appear in a banner — never other escape families (OSC,
+   title, cursor, other SGR codes). The banner is a fixed template, not a
+   formatting playground.
+5. Adding a crew member? Add the row here first; the plugin and target
    generator pick it up automatically.

@@ -77,7 +77,7 @@ with a handoff line. Terminal sessions get the ANSI-colored equals line
 (`===== WAVE 3 — ZORO (EXECUTION) =====`); markdown UIs (Claude Code UI,
 VSCode, Codex) get the emoji heading form (`## ⚔️ WAVE 3 — ZORO (EXECUTION)`)
 — no ANSI, nothing to garble. Colors and emoji come from one table
-(`content/skills/mugiwara-workflow/references/wave-banners.md`), which the
+(`references/wave-banners.md`), which the
 opencode plugin and installer read too, so the banner color always matches
 the agent's UI chip.
 

@@ -88,7 +88,7 @@ test('wave-banners table: crew colors are the single source (all agents, valid h
   // the plugin derives agent colors from the table — the table must cover the
   // full crew with well-formed hexes or agent chips silently lose their tint
   const table = readFileSync(join(contentDir, '..', 'references', 'wave-banners.md'), 'utf8');
-  const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|$/gm)];
+  const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)];
   expect(rows).toHaveLength(15);
   const ids = rows.map(r => r[1]);
   const expected = [
@@ -127,6 +127,9 @@ test('config hook applies per-agent opencode tuning (color/temp/steps)', async (
     const luffy = cfg.agent['luffy-orchestrator'];
     expect(luffy.color).toBe('#ef4444');
     expect(luffy.temperature).toBe(0.2);
+    // onboarding-guide is NOT in the plugin's CREW fallback map — its color
+    // can only come from the wave-banners table (proves derivation, not fallback)
+    expect((cfg.agent['onboarding-guide'] as { color?: string }).color).toBe('#0ea5e9');
     const chopper = cfg.agent['chopper-checkpoint'];
     expect((chopper as { permission?: unknown }).permission).toBeUndefined();
     // auto mode drops the per-agent steps cap

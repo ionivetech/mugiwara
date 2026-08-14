@@ -6,8 +6,8 @@
 // single export because OpenCode's legacy loader calls every exported function
 // as a plugin (same constraint ponytail documents).
 //
-// Crew COLORS come from content/skills/mugiwara-workflow/references/
-// wave-banners.md (single source); the CREW map below is the cold-path
+// Crew COLORS come from references/wave-banners.md (single source, shared
+// references dir); the CREW map below is the cold-path
 // fallback only. Temperature/steps stay here (runtime tuning, not banner
 // material).
 //
@@ -53,8 +53,10 @@ function readBannerColors() {
     const path = join(__dirname, '..', '..', 'references', 'wave-banners.md');
     if (!existsSync(path)) return {};
     const text = readFileSync(path, 'utf8');
-    const colors = {};
-    for (const m of text.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| \d+ \| \S+ \|$/gm)) {
+    // null-prototype: agent ids are trusted repo content, but a future
+    // `__proto__` id must never write the object's prototype
+    const colors = Object.create(null);
+    for (const m of text.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)) {
       colors[m[1]] = m[2];
     }
     return colors;
