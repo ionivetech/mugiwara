@@ -163,6 +163,30 @@ if (!existsSync(patternsFile)) {
   }
 }
 
+// --- D3b mutation: strip the NEW pattern categories → lane-integrity red ---
+console.log('\nD3b — new category strip mutation');
+if (!existsSync(patternsFile)) {
+  console.log('  ⚠  patterns.sh not found, skipping');
+} else {
+  const original = readFileSync(patternsFile, 'utf8');
+  try {
+    // reintroduce the v0.6.3 defect: plural forms present, 8 new categories absent
+    const broken = original.replace(
+      /SENSITIVE_PATS=.*/,
+      'SENSITIVE_PATS="auth/|payment/|payments/|billing/|crypto/|secrets/|\\.env$|config/.*key|migration/|migrations/|\\.sql$|schema\\.|\\.prisma$|\\.terraform|\\.tf$"'
+    );
+    if (broken === original) {
+      console.log('  ⚠  D3b mutation pattern not found — skipping');
+    } else {
+      writeFileSync(patternsFile, broken);
+      assert('missing new categories → lane-integrity fails', false, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
+    }
+  } finally {
+    writeFileSync(patternsFile, original);
+    assert('restored → lane-integrity passes', true, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
+  }
+}
+
 // --- D4 mutation: zero LOC_TOKENS → lane-integrity red ---
 console.log('\nD4 — churn token mutation');
 if (!existsSync(savepointFile)) {
