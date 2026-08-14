@@ -68,6 +68,15 @@ const writeTree = (tree: Record<string, string>) => {
   }
 };
 
+// names feed unquoted git branch args — validate before interpolation (F3).
+// Fixture files are repo-owned, but `name` is a CLI arg and `trunk` comes from
+// fixture JSON; both must be safe git ref names.
+const SAFE_REF = /^[A-Za-z0-9._/-]+$/;
+if (!SAFE_REF.test(name) || !SAFE_REF.test(fx.baseBranch || '')) {
+  console.error(`fixture ${name}: unsafe branch name rejected`);
+  process.exit(1);
+}
+
 execSync('git init -q', { cwd: target });
 execSync('git config user.email test@test.com && git config user.name Test', { cwd: target });
 

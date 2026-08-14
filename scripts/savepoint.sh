@@ -67,7 +67,13 @@ if [[ "$MISSION" =~ ^\.+$ ]]; then
 fi
 
 # per-branch state file when --branch used
-BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-')
+# BRANCH_SLUG sanitized to [A-Za-z0-9._-] — it feeds file names and the
+# continue.md writer; a newline/control char in BRANCH would escape the line
+# format and corrupt both (F5). Dropping illegal chars is safe: slugs are
+# keys, not content. First translate path separators to '-', then drop
+# everything not in the allowlist (tr set is literal; \t\n cannot appear in
+# git refs anyway).
+BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\+$//' )
 if [ "$BRANCH_MODE" -eq 1 ]; then
   STATE_FILE="$MUGIWARA_DIR/state-${BRANCH_SLUG}.json"
 else
@@ -322,9 +328,14 @@ fi
 # crash, new session) can resume without human recall. Same trust as state.json:
 # computed fields, never model judgement. The resume skill treats it as data to
 # verify against the plan/todos, never verbatim instructions.
-# The crew-written next_session_prompt line is preserved across savepoints —
-# it carries the session's continuation instruction, savepoint never invents it.
+# Branch-scoped like state.json: in --branch mode the file is
+# continue-<branch-slug>.md so parallel branch missions never clobber each
+# other's resume point (multi-actor). The crew-written next_session_prompt
+# line is preserved across savepoints — savepoint never invents it.
 CONTINUE_FILE="$MUGIWARA_DIR/continue.md"
+if [ "$BRANCH_MODE" -eq 1 ]; then
+  CONTINUE_FILE="$MUGIWARA_DIR/continue-${BRANCH_SLUG}.md"
+fi
 if [ -n "$MISSION" ]; then
   NEXT_SESSION_PROMPT=""
   if [ -f "$CONTINUE_FILE" ]; then
@@ -342,7 +353,7 @@ if [ -n "$MISSION" ]; then
     echo "- lane: $LANE"
     echo "- lane_prev: ${LANE_PREV:-none}"
     echo "- updated_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    echo "- next_action: Wave $WAVE complete — verify then proceed to Wave $((WAVE + 1)) per plan"
+    echo "- next_action: verify this wave against the plan, then continue per plan (next wave or closure)"
     [ -n "$NEXT_SESSION_PROMPT" ] && echo "$NEXT_SESSION_PROMPT"
   } > "$CONTINUE_FILE"
 fi

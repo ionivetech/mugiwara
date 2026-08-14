@@ -220,25 +220,36 @@ export function ensureProjectGitignore(projectDir: string, opts: { dryRun?: bool
 // the current delimited block and the legacy undelimited block (v0.6.2).
 export function removeProjectGitignore(projectDir: string, { dryRun = false }: { dryRun?: boolean } = {}): { removed: boolean; notes: string[] } {
   const path = join(projectDir, '.gitignore');
+  assertNotSymlink(path);
   if (!existsSync(path)) return { removed: false, notes: [] };
   const current = readFileSync(path, 'utf8');
 
   const delimited = current.includes(GITIGNORE_BLOCK_START);
   let cleaned: string;
   if (delimited) {
-    // strip everything between (and including) the delimiters
+    // strip everything between (and including) the delimiters. Both
+    // delimiters must be present — a missing END (hand-edit) with end=-1
+    // would slice() from char 18 and truncate the user's file.
     const start = current.indexOf(GITIGNORE_BLOCK_START);
     const end = current.indexOf(GITIGNORE_BLOCK_END);
+    if (end < start) return { removed: false, notes: ['delimiter mismatch — .gitignore left untouched'] };
     cleaned = current.slice(0, start) + current.slice(end + GITIGNORE_BLOCK_END.length);
   } else if (current.includes(GITIGNORE_MARKER)) {
-    // legacy: strip the header + the five known lines, keep user lines
-    const lines = current.split('\n').filter(l =>
-      !l.startsWith(GITIGNORE_MARKER) &&
-      !l.startsWith('.mugiwara/state.json') &&
-      !l.startsWith('.mugiwara/state-*.json') &&
-      !l.startsWith('.mugiwara/config') &&
-      !l.startsWith('.mugiwara/continue.md') &&
-      !l.startsWith('.mugiwara/refs/'));
+    // legacy (v0.6.2): strip the exact undelimited block — the header, the
+    // explanatory comment, and the five known lines. Prefix-matching would
+    // delete user-owned lines that merely start with a mugiwara path.
+    const LEGACY_LINES = new Set([
+      '.mugiwara/state.json',
+      '.mugiwara/state-*.json',
+      '.mugiwara/config',
+      '.mugiwara/continue.md',
+      '.mugiwara/refs/',
+    ]);
+    const lines = current.split('\n').filter(l => {
+      const t = l.trim();
+      if (t.startsWith(GITIGNORE_MARKER)) return false; // header + comment
+      return !LEGACY_LINES.has(t);
+    });
     cleaned = lines.join('\n');
   } else {
     return { removed: false, notes: [] };
