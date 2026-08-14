@@ -59,8 +59,8 @@ User may summon crew members directly. Luffy records the route + reason. Zoro/Br
 
 ## Periodic check-ins
 Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** the continue file at every wave boundary — never only session end (rule #6).
-**Auto ceiling:** auto drops to guided when the lane ROSE to 3 mid-mission (`lane_rose` in `.mugiwara/state/<mission>/[member].json`), a sensitive path is touched (auth/payment/billing/crypto/secrets/migration — see `scripts/lane.sh`), or heal cycles exceed one. Sized at 3 at triage is not a drop — a mission that starts full in auto mode stays auto. Announce the drop.
-**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or an auto-ceiling drop pauses.
+**Auto never drops:** in `auto` mode the crew runs every wave autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause.
+**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
 **Heal halt:** read `heal_cycle` from `.mugiwara/state/<mission>/[member].json`. At `heal_max_cycles` (read from `.mugiwara/config`, default 3), STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 

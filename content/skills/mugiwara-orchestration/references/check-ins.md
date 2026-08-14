@@ -1,6 +1,6 @@
 # Check-ins — mugiwara-orchestration
 
-Operational detail for the "Periodic check-ins" and "Wave transitions" sections of `mugiwara-orchestration`'s SKILL.md. Mode-critical rules (auto ceiling, auto never asks scope, heal halt, pressure) stay inline in the skill body.
+Operational detail for the "Periodic check-ins" and "Wave transitions" sections of `mugiwara-orchestration`'s SKILL.md. Mode-critical rules (auto never drops, auto never asks scope, heal halt, pressure) stay inline in the skill body.
 
 ## Periodic check-ins
 
