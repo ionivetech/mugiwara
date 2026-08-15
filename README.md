@@ -250,6 +250,7 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
 | `review_depth`      | full                            | full / standard / quick — Robin's review depth |
 | `quality_depth`     | full                            | full / standard / quick — Sanji's check depth  |
+| `verbosity`         | normal                          | normal / full — how much the crew echoes. `normal` hides investigation steps (reads, greps) and file contents; edits, results, decisions stay visible. `full` echoes everything. Never suppresses decisions, questions, blockers, or lane rises |
 
 Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
 config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
@@ -416,6 +417,8 @@ Uninstall: `mugiwara uninstall`
 All platforms get the full crew — 12 agents (+3 internal), 26 skills.
 Enforcement depth varies by harness; see the [harness matrix](docs/reference/harness-matrix.md).
 
+→ [How the skills stay small: three-layer disclosure](docs/reference/skill-anatomy.md)
+
 → [Per-platform guides](docs/install/index.md)
 
 ## Update
@@ -453,7 +456,7 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 **Start here:** [Getting started](docs/getting-started.md) · [What mugiwara replaces](docs/concepts/comparison.md)
 
-**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md)
+**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md) · [Security](docs/concepts/security.md)
 
 **Crew:** [Agents](docs/concepts/agents.md) · [Skills](docs/concepts/skills.md)
 
@@ -464,6 +467,20 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 **Troubleshooting:** [Common problems](docs/troubleshooting.md)
 
 **Roadmap:** [ROADMAP.md](ROADMAP.md)
+
+## What is measured, and what is not
+
+| Claim | Status |
+|---|---|
+| Retrieval routing rank-1 | **93.5%**, 181 probes, offline, in CI |
+| Reference pointers resolve | **66/66**, 3 tiers, in CI |
+| Lane constants match content load | **verified**, in CI |
+| Write-scope enforcement | **opencode only** — rules-based elsewhere |
+| Cross-harness mission behavior | **12/12 platforms** — 9 rules-dir installs + 3 marketplace manifests, in CI |
+| Outcome vs other approaches | **not measured** — see roadmap |
+
+Numbers here are produced by `bun run gate`. Nothing in this table is an
+estimate.
 
 ## License
 
