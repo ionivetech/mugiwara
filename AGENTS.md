@@ -106,6 +106,17 @@ class.
 
 No PR merges without all green CI.
 
+### Assertion rules
+
+- **No `expect()` inside a conditional** unless the condition is itself a
+  declared invariant (e.g. `if (tier === 3)`). An assertion that can be skipped
+  is not an assertion. Enforced by `validate-content.ts`.
+- **Type checks are not coverage.** `typeof x === 'number'` passes on `0`.
+  `Array.isArray(x)` passes on `[]`. Assert the value the fixture was built to
+  produce.
+- Every field in `state.json` has a fixture assertion with a non-trivial
+  expected value.
+
 ## Skill standards
 
 Every skill is `content/skills/<name>/SKILL.md`:

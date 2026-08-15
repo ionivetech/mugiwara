@@ -68,6 +68,20 @@ if (!existsSync(join(root, 'scripts', 'validate-content.ts'))) {
   }
 }
 
+// --- G5: conditional-assertion guard — prove expect-in-conditional goes red ---
+console.log('\nG5 — conditional-assertion guard');
+{
+  const testFile = join(root, 'test', 'targets.test.ts');
+  const original = readFileSync(testFile, 'utf8');
+  try {
+    writeFileSync(testFile, `${original}\nif (x) { expect(1).toBe(1); }\n`);
+    assert('expect() in non-invariant conditional → exit 1', false, () => run('G5', 'bun scripts/validate-content.ts'));
+  } finally {
+    writeFileSync(testFile, original);
+    assert('restored → exit 0', true, () => run('G5', 'bun scripts/validate-content.ts'));
+  }
+}
+
 // --- G3: savepoint fixtures — prove test fails when a field is broken ---
 console.log('\nG3 — savepoint fixtures');
 if (!existsSync(join(root, 'test', 'savepoint.test.ts'))) {
