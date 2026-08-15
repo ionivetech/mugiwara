@@ -80,3 +80,4 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 - Asserting test results without running the suite.
 - Silently skipping the wave when no tooling is found.
 - Running state-mutating user tests without consent.
+- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.

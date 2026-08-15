@@ -65,5 +65,6 @@ TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must
 - Commits containing undeclared files, or missing declared files.
 - A DoD axis passed with no evidence.
 - Any urge to edit code instead of reporting the finding.
+- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
 
 All mean: the audit is incomplete. Finish it before issuing the verdict.

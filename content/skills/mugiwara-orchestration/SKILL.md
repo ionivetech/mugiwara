@@ -39,15 +39,11 @@ Read the runtime mode via mode config at Wave 0: `.mugiwara/config` (project) th
 
 ## Request classifier (Wave 0) — 8 classes
 
-Classify every incoming request. 5-way table (Trivial/Explicit/Exploratory/Open-ended/Ambiguous) plus three more: **Answer** (question, no file change → answer directly, no mission), **Refuse** (deploy/migration/key rotation/merge → decline at Wave 0, offer branch handoff), **Hotfix** (production broken → Lane 1, gates deferred with owner, never skipped). Full table + signals: `references/triage-escalation.md`.
-
-Record decision + one-line reason at the top of the decision log. Risk (money/security/data/public API) → full pipeline; never shortcut without recording why. Any route without a recorded reason is a red flag.
+Classify every incoming request. 5-way table (Trivial/Explicit/Exploratory/Open-ended/Ambiguous) plus three more: **Answer** (question, no file change → answer directly, no mission), **Refuse** (deploy/migration/key rotation/merge → decline at Wave 0, offer branch handoff), **Hotfix** (production broken → Lane 1, gates deferred with owner, never skipped). Full table + signals: `references/triage-escalation.md`. Record decision + one-line reason at the top of the decision log. Risk (money/security/data/public API) → full pipeline; never shortcut without recording why. Any route without a recorded reason is a red flag.
 
 ## Lane routing + precedence (Wave 0, size before process)
 
-Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Wave 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`.
-
-Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k vs ~40k tokens); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
+Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Wave 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k vs ~40k tokens); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
 
 ## Spec bridge (Wave 0 → Wave 2)
 
@@ -59,8 +55,7 @@ User may summon crew members directly. Luffy records the route + reason. Zoro/Br
 
 ## Periodic check-ins
 Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** the continue file at every wave boundary — never only session end (rule #6).
-**Auto never drops:** in `auto` mode the crew runs every wave autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause.
-**Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
+**Auto never drops:** in `auto` mode the crew runs every wave autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause. **Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Wave 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
 **Heal halt:** read `heal_cycle` from `.mugiwara/state/<mission>/[member].json`. At `heal_max_cycles` (read from `.mugiwara/config`, default 3), STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
@@ -80,10 +75,15 @@ Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never ou
 
 ## Wave transitions (visibility)
 
-Banner in the owning agent's color opens every wave — terminal equals line
-`===== WAVE 3 — ZORO (EXECUTION) =====`, markdown UI emoji heading
-`## ⚔️ WAVE 3 — ZORO (EXECUTION)`. Spec + colors: `_shared/references/wave-banners.md`.
-A skip is recorded, never silent.
+Banner in the owning agent's color opens every wave — the equals line
+`===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. A skip is recorded, never silent.
+
+## Output discipline
+
+Read `verbosity` from mode config at Wave 0 (default `normal`); never suppresses wave banners, file edits, gate verdicts, decisions, questions, blockers, lane rises, or escalations.
+At `normal`: investigation steps (reads, greps, probes), file contents, and narration are not echoed — name a file only when it matters; results collapse to one line + evidence path. At `full`: everything is echoed, including reads and reasoning.
+**The rule: the transcript must remain sufficient to review the mission without opening a file.** If collapsing a line breaks that, do not collapse it.
+Rendered examples: `references/output-contract.md` — match the shape.
 
 ## Work splitting
 
@@ -107,11 +107,7 @@ The plan doc is the contract, but the mission goal outranks it. If following the
 
 ## Write boundary
 
-Only Zoro (`mugiwara-execution`) and Brook (`mugiwara-healing`) write source. Every other role writes `.mugiwara/**` only. If the user asks a non-executor to write source, refuse and route to Luffy, who dispatches Zoro (execution) or Brook (healing).
-Every agent knows its edit capability from its own `write-scope` frontmatter — no probing.
-Artifacts-scope agents facing a source edit say "Delegating to Zoro" to Luffy, who dispatches immediately.
-Subagent harnesses: Luffy auto-dispatches zoro-execution; Codex-style harnesses inline-embody.
-Brook heals only; general source edits go to Zoro via Luffy.
+Only Zoro (`mugiwara-execution`) and Brook (`mugiwara-healing`) write source. Every other role writes `.mugiwara/**` only. If the user asks a non-executor to write source, refuse and route to Luffy, who dispatches Zoro (execution) or Brook (healing). Every agent knows its edit capability from its own `write-scope` frontmatter — no probing. Artifacts-scope agents facing a source edit say "Delegating to Zoro" to Luffy, who dispatches immediately. Subagent harnesses: Luffy auto-dispatches zoro-execution; Codex-style harnesses inline-embody. Brook heals only; general source edits go to Zoro via Luffy.
 
 ## Red flags
 
@@ -120,5 +116,6 @@ Brook heals only; general source edits go to Zoro via Luffy.
 - Starting a wave without a banner.
 - Routing a Refuse-class request to a crew member; recording a lane without its trigger.
 - A host todo UI that lags the plan doc — tasks done but still unchecked, or the plan's task list never mirrored to the host.
+- Re-reading state or an artifact the crew wrote earlier in the same session.
 - A main thread answering "I'm not the crew, I'll just handle it" instead of embodying the owning role.
 - An artifacts-scope agent probing permissions instead of delegating to Zoro via Luffy; full-crew process on a task that sizes Lane 0/1.
