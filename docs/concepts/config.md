@@ -25,6 +25,7 @@ review_depth=full
 quality_depth=full
 delegate_threshold=60
 heal_max_cycles=3
+verbosity=normal
 ```
 
 ## Keys
@@ -41,6 +42,7 @@ heal_max_cycles=3
 | `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Wave 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only) |
 | `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers (execution skill) |
 | `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation (orchestration) |
+| `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. |
 
 The mission **lane** (how many waves run) is decided by Luffy at triage — see
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.

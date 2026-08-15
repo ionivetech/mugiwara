@@ -76,6 +76,29 @@ mugiwara mode auto
 Writes the project `.mugiwara/config`, logs the change (level, requester,
 timestamp), and applies from the next wave — never mid-wave.
 
+## Output and step budget
+
+`verbosity` (config key, default `normal`) controls how much the crew echoes,
+not what it does. It never suppresses wave banners, file edits, gate
+verdicts, decisions, questions, blockers, lane rises, or escalations.
+
+- **normal** — investigation steps (reads, greps, probes) and file contents
+  are not echoed; a file is named only when it matters. Results collapse to
+  one line + evidence path (`✓ tests 84/84 → results/m/03-quality.md`);
+  conclusions, not derivations.
+- **full** — everything is echoed, including reads and reasoning. For
+  debugging the crew itself.
+
+**The rule: the transcript must stay sufficient to review the mission without
+opening a file** — test output may collapse (the evidence file holds it), a
+decision may not (it has no other home). The rule applies at `full` too:
+verbosity widens what is echoed, never narrows what the review needs.
+
+Step budget: tool calls are finite; the execution skill combines evidence
+runs, writes wave artifacts once, never re-reads what it just wrote, and
+batches reads. Guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. One wave
+rendered at both levels: `content/skills/mugiwara-orchestration/references/output-contract.md`.
+
 ## Invariants that hold in EVERY mode
 
 **Consent.** State-mutating tests against non-isolated/shared state (real DB
