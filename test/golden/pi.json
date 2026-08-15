@@ -1,0 +1,8 @@
+{
+  "target": "pi",
+  "kind": "marketplace-plugin",
+  "version_matches_package": true,
+  "skills_pointer_resolves": true,
+  "skills_count": 26,
+  "agents_metadata_set_equal": true
+}
