@@ -95,3 +95,154 @@ test('initiative: set-status exits 0 and plan file reflects the change', { timeo
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// ---------- collaboration regression cases (W4) ----------
+
+// three sub-missions; s1+s2 in-progress share src/api/shared.ts; comma-separated
+// touched files; s3 depends on s1 (pending). Header deliberately lowercase.
+const TEAM_PLAN = `# Team Plan
+
+## Sub-missions
+
+| id | name | assignee | branch | status | depends on | touched files |
+|---|---|---|---|---|---|---|
+| s1 | auth | alice | fix/auth | [~] |  | src/api/auth.ts, src/api/shared.ts |
+| s2 | cart | bob | feat/cart | [~] |  | src/cart.ts, src/api/shared.ts |
+| s3 | ship | carol | feat/ship | [ ] | s1 | src/ship.ts |
+`;
+
+test('initiative: lowercase header parses all 3 sub-missions', { timeout: 20000 }, () => {
+  const dir = newDir('lower');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN);
+    const r = runInitiative(dir, ['status', plan]);
+    expect(r.status, `stderr: ${r.stderr}`).toBe(0);
+    expect(r.stdout).toContain('s1');
+    expect(r.stdout).toContain('s2');
+    expect(r.stdout).toContain('s3');
+    expect(r.stdout).toContain('0/3 done');
+    // comma-split: no trailing comma, both files listed
+    expect(r.stdout).not.toContain(',,');
+    expect(r.stdout).toContain('src/api/auth.ts, src/api/shared.ts');
+    expect(r.stdout).toContain('src/cart.ts, src/api/shared.ts');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: mixed-case header (| Id | NAME |) parses all rows', { timeout: 20000 }, () => {
+  const dir = newDir('mixed');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN.replace('| id | name |', '| Id | NAME |'));
+    const r = runInitiative(dir, ['status', plan]);
+    expect(r.status, `stderr: ${r.stderr}`).toBe(0);
+    expect(r.stdout).toContain('s1');
+    expect(r.stdout).toContain('s2');
+    expect(r.stdout).toContain('s3');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: conflict-check exits 1 and names both IDs when files overlap', { timeout: 20000 }, () => {
+  const dir = newDir('conflict');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN);
+    const r = runInitiative(dir, ['conflict-check', plan]);
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain('1 file conflict(s) detected');
+    expect(r.stdout).toContain('src/api/shared.ts');
+    expect(r.stdout).toContain('s1');
+    expect(r.stdout).toContain('s2');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: conflict-check exits 0 when no files overlap', { timeout: 20000 }, () => {
+  const dir = newDir('noconflict');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN.replace('src/api/shared.ts', 'src/api/token.ts'));
+    const r = runInitiative(dir, ['conflict-check', plan]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('No file conflicts');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: Sub-missions present but malformed rows → exit 1 with header hint', { timeout: 20000 }, () => {
+  const dir = newDir('malformed-table');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, `# Team Plan\n\n## Sub-missions\n\n| id | name | assignee | branch | status | depends on | touched files |\n|---|---|---|---|---|---|---|\n| s1 | auth | alice | fix/auth | [~]\n`);
+    const r = runInitiative(dir, ['status', plan]);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('no rows parsed');
+    expect(r.stderr).toContain('| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |');
+    expect(r.stdout).not.toContain('solo mission');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: no Sub-missions section → exit 0, solo mission', { timeout: 20000 }, () => {
+  const dir = newDir('solo');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, `# Solo Plan\n\nJust one mission here.\n`);
+    const r = runInitiative(dir, ['status', plan]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('solo mission');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: status flags a sub blocked by a pending dependency', { timeout: 20000 }, () => {
+  const dir = newDir('blocked');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN);
+    const r = runInitiative(dir, ['status', plan]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('s3');
+    expect(r.stdout).toContain('blocked-by s1');
+    expect(r.stdout).not.toContain('blocked-by s2');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: set-status done marks only the target row [x]', { timeout: 20000 }, () => {
+  const dir = newDir('setdone');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN);
+    const r = runInitiative(dir, ['set-status', plan, '--id', 's1', '--status', 'done']);
+    expect(r.status).toBe(0);
+    const updated = readFileSync(plan, 'utf8');
+    expect(updated).toContain('| s1 | auth | alice | fix/auth | [x]');
+    expect(updated).toContain('| s2 | cart | bob | feat/cart | [~]');
+    expect(updated).toContain('| s3 | ship | carol | feat/ship | [ ]');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('initiative: set-status with unknown id exits 1 and names the id', { timeout: 20000 }, () => {
+  const dir = newDir('unknown');
+  try {
+    const plan = join(dir, 'plan.md');
+    writeFileSync(plan, TEAM_PLAN);
+    const r = runInitiative(dir, ['set-status', plan, '--id', 'nope', '--status', 'done']);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('nope');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
