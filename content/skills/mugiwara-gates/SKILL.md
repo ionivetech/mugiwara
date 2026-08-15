@@ -62,4 +62,5 @@ PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under thre
 - Gate waived without explicit user decision.
 - PASS on coverage/build while DoD fails.
 - Sonar PASS with unverified or faked data.
+- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
 All mean: the gate has not actually run. Report the gap or the fail, honestly.

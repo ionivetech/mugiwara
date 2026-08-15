@@ -207,10 +207,15 @@ for (const f of [...agentFiles, ...skillDirs.map(d => join(root, 'skills', d, 'S
   }
 }
 
-// --- manifest-sync check: .claude-plugin/plugin.json must set-equal content/ ---
+// --- manifest-sync check: every marketplace plugin.json set-equal content/ ---
 const manifestArg = process.argv.indexOf('--check-manifest');
 if (manifestArg !== -1) {
-  const manifests = ['.claude-plugin/plugin.json'];
+  const manifests = [
+    '.claude-plugin/plugin.json',
+    '.codex-plugin/plugin.json',
+    '.cursor-plugin/plugin.json',
+    '.kimi-plugin/plugin.json',
+  ];
   let manifestErrors = 0;
 
   for (const mp of manifests) {
@@ -377,6 +382,21 @@ if (integrityArg !== -1) {
   const testText = existsSync(evTest) ? readFileSync(evTest, 'utf8') : '';
   if (!testText.includes('# Exit:') || !testText.includes('# Verdict:')) {
     errors.push('doc-integrity: audit-trail claims evidence logs carry exit code + verdict, but no test asserts them');
+  }
+}
+
+// Conditional-assertion guard: an expect() reachable only inside a truthiness
+// check silently passes when the value is absent. This class produced 9 defects.
+// Allowed: checks keyed on a declared invariant (tier, fixture keys).
+const ALLOWED_COND = /if \((?:t\.tier === 3|keys\.length|label === 'exact'|fx\.expect\.(?:lane|sensitive_paths_(?:min|max)))/;
+const repoRoot = join(import.meta.dirname, '..');
+for (const f of readdirSync(join(repoRoot, 'test')).filter(x => x.endsWith('.test.ts'))) {
+  const src = readFileSync(join(repoRoot, 'test', f), 'utf8');
+  // matches both braced and brace-less conditionals whose body reaches an expect()
+  for (const m of src.matchAll(/if \([^)]+\)(?:\s*\{[^}]{0,400}?)?expect\(/gs)) {
+    if (!ALLOWED_COND.test(m[0])) {
+      errors.push(`test/${f}: expect() inside a conditional — assert presence explicitly instead:\n    ${m[0].slice(0, 80)}`);
+    }
   }
 }
 

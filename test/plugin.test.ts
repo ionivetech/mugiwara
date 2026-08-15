@@ -119,9 +119,8 @@ test('wave-banners table: fallback CREW maps stay in parity with the table', () 
     const code = readFileSync(join(import.meta.dirname, src), 'utf8');
     for (const id of Object.keys(tableHex)) {
       const m = code.match(new RegExp(`'${id}': \\{ color: '(#[0-9a-f]{6})'`));
-      if (m) {
-        expect(m[1], `${src}: ${id} fallback hex`).toBe(tableHex[id]);
-      }
+      expect(m, `${src}: ${id} is in wave-banners.md but missing from the fallback CREW map`).not.toBeNull();
+      expect(m![1], `${src}: ${id} fallback hex`).toBe(tableHex[id]);
     }
   }
 });
@@ -284,9 +283,15 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
       'coverage_modified=80',
       'review_depth=full',
       'quality_depth=full',
+      'delegate_threshold=60',
+      'heal_max_cycles=3',
+      'verbosity=normal',
     ]) {
       expect(body).toContain(key);
     }
+    // completeness: every documented key ships with a default — a fresh
+    // user's config must not silently miss a key (absent != default).
+    expect(body.trim().split('\n')).toHaveLength(11);
     // idempotent: second call returns false, leaves file unchanged
     expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
     expect(readFileSync(file, 'utf8')).toBe(body);

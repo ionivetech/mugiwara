@@ -49,6 +49,14 @@ install coverage     91.6% across 9 targets
 - **Onboarding wizard** — `/mugiwara onboard`: 9-question guided setup
   (host-native question flow, CLI fallback) for mode, review depth, quality checks
 
+**Satisfied at v0.6.5:** the hardening suite — assertion integrity
+(conditional-assertion gate + G5 mutation), published threat model
+(`docs/concepts/security.md`), output discipline (`verbosity` config),
+collaboration flows (case-insensitive parsing, loud failures, conflict
+checks), and cross-platform conformance (12/12 platforms,
+`scripts/conformance.ts`). Implemented items are removed from the list below —
+everything remaining is future work.
+
 Outstanding defects are tracked separately in the fix list, not here. A roadmap
 that contains bug fixes hides how much of it is actually new.
 
@@ -56,7 +64,27 @@ that contains bug fixes hides how much of it is actually new.
 
 ## Near — make the trail worth trusting
 
-### 1. Provenance ledger
+### 1. Outcome validation
+
+**Prove the thesis outside this repo.**
+
+Ten external repositories, at least one harness per tier. Record lane accuracy
+against human judgement, gate pass rate, tokens, wall-clock, heal cycles. Fill
+`docs/reference/compliance-matrix.md` with measurements instead of design intent.
+
+**Then publish the failures.** _"On Gemini tier 2, evidence checks hold 65% — use
+guided mode there."_ Every pack claims success; none publishes where it breaks.
+The first that states plainly where it fails becomes the most trusted, precisely
+because it admitted it. For a governance layer that is not a marketing choice —
+it is the product.
+
+**Why first.** This is the only item that measures whether mugiwara produces
+better work, and features 6 and 10 both depend on it being credible. It cannot
+be accelerated, so it starts before them.
+
+_Pillar 1._
+
+### 2. Provenance ledger
 
 **Line-level attribution for AI-written code.**
 
@@ -82,7 +110,7 @@ runtime, no history rewrite, survives rebase via `notes.rewriteRef`.
 
 _Pillar 1 · the highest-value item on this list._
 
-### 2. Review routing
+### 3. Review routing
 
 **Tell the reviewer where to look.**
 
@@ -103,7 +131,7 @@ section of the mission report, and a PR comment once CI lands.
 
 _Pillar 1 · the highest-leverage thing you can hand a human._
 
-### 3. Policy as code
+### 4. Policy as code
 
 **Org rules that override crew judgement.**
 
@@ -133,7 +161,7 @@ today's behavior.
 
 _Pillar 3, 5 · the adoption unlock._
 
-### 4. Cross-model verification
+### 5. Cross-model verification
 
 **A second model checks the first one's claim.**
 
@@ -157,7 +185,7 @@ _Pillar 1._
 
 ## Mid — governance that holds when nobody is watching
 
-### 5. Enforced merge gate
+### 6. Enforced merge gate
 
 **Mugiwara as a required CI check.**
 
@@ -170,13 +198,13 @@ of disappearing into PR history.
 If CI needs its own reporting path, the artifact is not canonical and Pillar 1 is
 weaker than claimed.
 
-**Depends on feature 10.** Do not make this a required check before there are
+**Depends on feature 1.** Do not make this a required check before there are
 numbers from repos nobody here controls. Blocking someone's PR on routing measured
 only in its own repo is the wrong first impression for a governance tool.
 
 _Pillar 1 · governance that is optional is not governance._
 
-### 6. Permission boundaries
+### 7. Permission boundaries
 
 **Personas with teeth.**
 
@@ -197,7 +225,7 @@ they do not have.
 
 _Pillar 1, 4 · an auditor that can edit code is not an auditor._
 
-### 7. Tool-surface governance
+### 8. Tool-surface governance
 
 **Audit what the agent can reach, not only what it wrote.**
 
@@ -213,7 +241,7 @@ systematic rather than advisory.
 
 _Pillar 1, 4 · governance that stops at the code is incomplete._
 
-### 8. Long-running missions
+### 9. Long-running missions
 
 **Work that outlives a session, a model, or a person.**
 
@@ -235,7 +263,7 @@ _Pillar 2, 5._
 
 ## Far — make the evidence worth something
 
-### 9. Signed attestation
+### 10. Signed attestation
 
 **Evidence that cannot be fabricated after the fact.**
 
@@ -252,26 +280,6 @@ something an auditor outside the team can rely on.
 user-supplied keys. No keys means today's behavior. Never a hard dependency.
 
 _Pillar 1 · the logical endpoint of the thesis._
-
-### 10. Outcome validation
-
-**Prove the thesis outside this repo.**
-
-Ten external repositories, at least one harness per tier. Record lane accuracy
-against human judgement, gate pass rate, tokens, wall-clock, heal cycles. Fill
-`docs/reference/compliance-matrix.md` with measurements instead of design intent.
-
-**Then publish the failures.** _"On Gemini tier 2, evidence checks hold 65% — use
-guided mode there."_ Every pack claims success; none publishes where it breaks.
-The first that states plainly where it fails becomes the most trusted, precisely
-because it admitted it. For a governance layer that is not a marketing choice —
-it is the product.
-
-**Cannot be accelerated.** Listed last by sequence, not by importance. Everything
-above is structural; this is the only item that speaks to outcome, and features 5
-and 9 both depend on it being credible.
-
-_Pillar 1._
 
 ---
 

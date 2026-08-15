@@ -47,6 +47,13 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 auto_commit=on
+coverage_new=90
+coverage_modified=80
+review_depth=full
+quality_depth=full
+delegate_threshold=60
+heal_max_cycles=3
+verbosity=normal
 ```
 
 | Key | Values | Default |
@@ -55,6 +62,13 @@ auto_commit=on
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
 | auto_commit | on / off | on |
+| coverage_new | 0-100 | 90 |
+| coverage_modified | 0-100 | 80 |
+| review_depth | full / standard / quick | full |
+| quality_depth | full / standard / quick | full |
+| delegate_threshold | 1-100 | 60 |
+| heal_max_cycles | number | 3 |
+| verbosity | normal / full | normal |
 
 `auto_commit=off` disables per-task commits and the final push in `guided`
 and `semi` — changes stay in the working tree and you commit/push manually.
@@ -75,6 +89,29 @@ mugiwara mode auto
 
 Writes the project `.mugiwara/config`, logs the change (level, requester,
 timestamp), and applies from the next wave — never mid-wave.
+
+## Output and step budget
+
+`verbosity` (config key, default `normal`) controls how much the crew echoes,
+not what it does. It never suppresses wave banners, file edits, gate
+verdicts, decisions, questions, blockers, lane rises, or escalations.
+
+- **normal** — investigation steps (reads, greps, probes) and file contents
+  are not echoed; a file is named only when it matters. Results collapse to
+  one line + evidence path (`✓ tests 84/84 → results/m/03-quality.md`);
+  conclusions, not derivations.
+- **full** — everything is echoed, including reads and reasoning. For
+  debugging the crew itself.
+
+**The rule: the transcript must stay sufficient to review the mission without
+opening a file** — test output may collapse (the evidence file holds it), a
+decision may not (it has no other home). The rule applies at `full` too:
+verbosity widens what is echoed, never narrows what the review needs.
+
+Step budget: tool calls are finite; the execution skill combines evidence
+runs, writes wave artifacts once, never re-reads what it just wrote, and
+batches reads. Guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. One wave
+rendered at both levels: `content/skills/mugiwara-orchestration/references/output-contract.md`.
 
 ## Invariants that hold in EVERY mode
 

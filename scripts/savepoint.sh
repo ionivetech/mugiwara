@@ -42,6 +42,16 @@ MISSION="${1:-${STATE_MISSION:-}}"
 MEMBER="${2:-${STATE_MEMBER:-}}"
 WAVE="${3:-${STATE_WAVE:-1}}"
 MODE="${4:-${STATE_MODE:-guided}}"
+# verbosity from config (project .mugiwara/config), default normal; env override
+VERBOSITY="${STATE_VERBOSITY:-normal}"
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  CFG_VERBOSITY=$(grep -E '^verbosity=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$CFG_VERBOSITY" ] && VERBOSITY="$CFG_VERBOSITY"
+fi
+case "$VERBOSITY" in
+  normal|full) ;;
+  *) VERBOSITY="normal" ;;
+esac
 ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}"
 BRANCH="$(git branch --show-current 2>/dev/null || echo 'unknown')"
 
@@ -296,6 +306,7 @@ const data = {
   lane_rose: process.argv[25] === 'true',
   wave: parseInt(process.argv[6], 10),
   mode: process.argv[7],
+  verbosity: process.argv[32] || 'normal',
   base_sha: process.argv[8],
   head_sha: process.argv[9],
   files_touched: parseInt(process.argv[10], 10),
@@ -324,7 +335,7 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
-  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER"
+  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

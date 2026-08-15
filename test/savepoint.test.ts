@@ -71,6 +71,34 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
   }
 });
 
+test('savepoint records verbosity from config (full) and defaults to normal', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-verb-'));
+  try {
+    setupGit(dir);
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    // config with verbosity=full → state.verbosity === 'full'
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\nverbosity=full\n');
+    runSavepoint(dir, 'verb-mission "" 1 guided');
+    let state = JSON.parse(readFileSync(statePath(dir, 'verb-mission'), 'utf8'));
+    expect(state.verbosity).toBe('full');
+    expect(state.mode).toBe('guided');
+
+    // config without the key → state.verbosity === 'normal'
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
+    runSavepoint(dir, 'verb-mission "" 1 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'verb-mission'), 'utf8'));
+    expect(state.verbosity).toBe('normal');
+
+    // invalid value → falls back to 'normal'
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'verbosity=loud\n');
+    runSavepoint(dir, 'verb-mission "" 1 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'verb-mission'), 'utf8'));
+    expect(state.verbosity).toBe('normal');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-struct-'));
   try {

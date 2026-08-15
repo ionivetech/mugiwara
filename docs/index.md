@@ -17,6 +17,7 @@ claim.
 | [Getting started](getting-started.md) | Install, first mission, what you see in the chat |
 | [Adoption guide](reference/adoption-guide.md) | Pick the harness, pick the mode, fit the crew to your workflow |
 | [Modes](concepts/modes.md) | guided / semi / auto — the autonomy levels, what each asks you |
+| [Security](concepts/security.md) | Threat model: injection via artifacts, read-untrusted split, reporting |
 | [Config](concepts/config.md) | Full reference for `.mugiwara/config` keys, review/quality depth, and commit styles |
 | [Auto-PR](concepts/pr-summary.md) | What the crew hands off at closure: push + a ready-to-paste PR summary (it never creates a PR) |
 | [The crew](concepts/agents.md) | All 12 agents (+3 internal) and when to summon each |

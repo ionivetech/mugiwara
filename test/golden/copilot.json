@@ -1,0 +1,62 @@
+{
+  "target": "copilot",
+  "tier": 2,
+  "state": {
+    "mission": "conform",
+    "member": null,
+    "lane": "standard",
+    "lane_reason": "4 files",
+    "files_touched": 4,
+    "loc_delta": 4,
+    "loc_ins": 4,
+    "loc_del": 0,
+    "loc_churn": 4,
+    "mode": "auto",
+    "verbosity": "normal",
+    "tasks_done": 0,
+    "tasks_total": 0,
+    "blockers_open": 0,
+    "heal_cycle": 1,
+    "tokens_source": "computed",
+    "budget_status": "ok",
+    "sensitive_paths": []
+  },
+  "report_sections": [
+    "## Mission header",
+    "## Token budget",
+    "## Tasks",
+    "## What changed",
+    "## Waves",
+    "## Gate & quality",
+    "## Evidence files",
+    "## Review & blockers",
+    "## State",
+    "## Evidence",
+    "## Updated"
+  ],
+  "evidence": {
+    "header": [
+      "# Evidence: lint",
+      "# Command: printf ok\\n",
+      "# ---"
+    ],
+    "trailer": [
+      "# Exit: 0",
+      "# Verdict: PASS"
+    ]
+  },
+  "gitignore_block": [
+    "# >>> mugiwara >>> — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.",
+    ".mugiwara/state/",
+    ".mugiwara/continue/",
+    ".mugiwara/config",
+    ".mugiwara/refs/",
+    "# <<< mugiwara <<<"
+  ],
+  "file_count": {
+    "skills": 32,
+    "agents": 15,
+    "state": 1,
+    "evidence": 1
+  }
+}

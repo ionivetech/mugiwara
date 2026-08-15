@@ -41,6 +41,9 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
     const out = t.transformSkill(skill, 'BODY\n');
     expect(out!.relPath.endsWith('.md')).toBe(true);
     if (t.tier !== 3) expect(out!.text.includes('BODY'), `${t.id} embeds body`).toBe(true);
+    if (t.tier === 3) {
+      expect(t.transformSkillFull, `${t.id}: tier 3 must define transformSkillFull`).toBeDefined();
+    }
     if (t.transformSkillFull) {
       const full = t.transformSkillFull(skill, 'BODY\n');
       if (t.tier === 3) {
@@ -221,3 +224,7 @@ test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () 
     expect(out.text, `${id} refusal line`).toContain('Only zoro-execution and brook-healing may modify source code');
   }
 });
+
+
+
+

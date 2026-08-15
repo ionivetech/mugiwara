@@ -106,5 +106,6 @@ One line each: `path:line: [blocker|major|minor] problem → fix`. Write finding
 - Deep security concerns re-reviewed here instead of handed to Jinbe.
 - Ego over evidence: holding a finding after the implementer showed the code is correct.
 - The same claim cycled more than 3 times without stopping or escalating.
+- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
 
 All mean: the review missed its job. Go back and map before you report.

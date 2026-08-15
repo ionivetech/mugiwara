@@ -55,40 +55,47 @@ function assertPlanContent(content: string, planFile: string): void {
   }
 }
 
-function parseSubMissions(content: string): SubMission[] {
+function parseSubMissions(content: string): { subs: SubMission[]; hasSection: boolean } {
   const lines = content.split('\n');
   let inTable = false;
   let inSubSection = false;
+  let hasSection = false;
   const subs: SubMission[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.startsWith('## Sub-missions')) {
+    if (line.trim().toLowerCase().startsWith('## sub-missions')) {
       inSubSection = true;
+      hasSection = true;
       continue;
     }
-    if (inSubSection && line.startsWith('## ') && !line.startsWith('## Sub-missions')) {
+    if (inSubSection && line.startsWith('## ') && !line.trim().toLowerCase().startsWith('## sub-missions')) {
       break;
     }
     if (!inSubSection) continue;
 
     const trimmed = line.trim();
-    if (trimmed.startsWith('| ID ') && trimmed.includes('| Name ')) {
+    const lower = trimmed.toLowerCase();
+    if (lower.startsWith('| id ') && lower.includes('| name ')) {
       inTable = true;
       continue;
     }
     if (inTable && trimmed.startsWith('|---')) continue;
     if (inTable && trimmed.startsWith('|')) {
-      const cols = trimmed.split('|').map(c => c.trim()).filter(Boolean);
+      // Keep interior empty cells (e.g. empty "depends on"): filter(Boolean)
+      // would shift columns and drop the touched-files tail.
+      const cols = trimmed.split('|').map(c => c.trim());
+      while (cols.length && cols[0] === '') cols.shift();
+      while (cols.length && cols[cols.length - 1] === '') cols.pop();
       if (cols.length >= 6) {
         subs.push({
           id: cols[0],
           name: cols[1],
           assignee: cols[2],
           branch: cols[3],
-          status: cols[4],
+          status: cols[4].replace('[X]', '[x]'),
           dependsOn: cols[5],
-          touchedFiles: cols.slice(6).join(' ').split(/\s+/).filter(Boolean),
+          touchedFiles: cols.slice(6).join(' ').split(/[,\s]+/).map(s => s.trim()).filter(Boolean),
         });
       }
     }
@@ -97,13 +104,23 @@ function parseSubMissions(content: string): SubMission[] {
     }
   }
 
-  return subs;
+  return { subs, hasSection };
+}
+
+function assertRowsParsed(planFile: string, content: string): { subs: SubMission[]; hasSection: boolean } {
+  const { subs, hasSection } = parseSubMissions(content);
+  if (hasSection && subs.length === 0) {
+    console.error('initiative: "## Sub-missions" section found but no rows parsed.');
+    console.error('  Expected header: | ID | Name | Assignee | Branch | Status | Depends On | Touched Files |');
+    process.exit(1);
+  }
+  return { subs, hasSection };
 }
 
 function cmdStatus(planFile: string): void {
   const content = readFileSync(planFile, 'utf8');
   assertPlanContent(content, planFile);
-  const subs = parseSubMissions(content);
+  const { subs } = assertRowsParsed(planFile, content);
 
   if (subs.length === 0) {
     console.log('No sub-missions found — solo mission.');
@@ -117,14 +134,24 @@ function cmdStatus(planFile: string): void {
   const filled = Math.round((doneCount / total) * barLen);
   const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
 
+  // dependency blocking: a sub whose dependency is not done is blocked
+  const statusById = new Map(subs.map(s => [s.id, s.status]));
+  const blockedBy = new Map<string, string>();
+  for (const s of subs) {
+    if (s.dependsOn && statusById.has(s.dependsOn) && statusById.get(s.dependsOn) !== '[x]') {
+      blockedBy.set(s.id, s.dependsOn);
+    }
+  }
+
   console.log(`\n${doneCount}/${total} done [${bar}] ${pct}%\n`);
   console.log(`${'ID'.padEnd(8)} ${'Name'.padEnd(20)} ${'Assignee'.padEnd(12)} ${'Branch'.padEnd(28)} ${'Status'.padEnd(8)} ${'Depends'.padEnd(10)} ${'Files'}`);
   console.log('─'.repeat(120));
 
   for (const s of subs) {
     const icon = { '[ ]': '◻', '[~]': '◉', '[x]': '✓', '[!]': '✗' }[s.status] || '?';
+    const blocked = blockedBy.has(s.id) ? ` ⛔ blocked-by ${blockedBy.get(s.id)}` : '';
     console.log(
-      `${s.id.padEnd(8)} ${s.name.padEnd(20)} ${s.assignee.padEnd(12)} ${s.branch.padEnd(28)} ${icon} ${s.status.padEnd(3)} ${s.dependsOn.padEnd(10)} ${s.touchedFiles.join(', ')}`
+      `${s.id.padEnd(8)} ${s.name.padEnd(20)} ${s.assignee.padEnd(12)} ${s.branch.padEnd(28)} ${icon} ${s.status.padEnd(3)} ${s.dependsOn.padEnd(10)} ${s.touchedFiles.join(', ')}${blocked}`
     );
   }
   console.log();
@@ -133,7 +160,7 @@ function cmdStatus(planFile: string): void {
 function cmdConflictCheck(planFile: string): void {
   const content = readFileSync(planFile, 'utf8');
   assertPlanContent(content, planFile);
-  const subs = parseSubMissions(content);
+  const { subs } = assertRowsParsed(planFile, content);
 
   if (subs.length === 0) {
     console.log('No sub-missions — no conflicts possible.');
@@ -168,6 +195,7 @@ function cmdConflictCheck(planFile: string): void {
     console.log(`\n${conflicts.length} file conflict(s) detected:\n`);
     console.log(conflicts.join('\n'));
     console.log();
+    process.exit(1);
   }
 }
 
@@ -187,28 +215,34 @@ function cmdSetStatus(planFile: string, id: string, status: string): void {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (line.startsWith('## Sub-missions')) {
+    if (line.trim().toLowerCase().startsWith('## sub-missions')) {
       inSubSection = true;
       continue;
     }
-    if (inSubSection && line.startsWith('## ') && !line.startsWith('## Sub-missions')) {
+    if (inSubSection && line.startsWith('## ') && !line.trim().toLowerCase().startsWith('## sub-missions')) {
       break;
     }
     if (!inSubSection) continue;
 
     const trimmed = line.trim();
-    if (trimmed.startsWith('| ID ')) { inTable = true; continue; }
+    if (trimmed.toLowerCase().startsWith('| id ')) { inTable = true; continue; }
     if (!inTable || !trimmed.startsWith('|')) continue;
     if (trimmed.startsWith('|---')) continue;
 
-    const cols = trimmed.split('|').map(c => c.trim()).filter(Boolean);
+    // same cell handling as parseSubMissions: interior empty cells preserved
+    const cols = trimmed.split('|').map(c => c.trim());
+    while (cols.length && cols[0] === '') cols.shift();
+    while (cols.length && cols[cols.length - 1] === '') cols.pop();
     if (cols[0] === id) {
-      const oldMarker = cols[4];
+      let oldMarker = cols[4];
+      if (oldMarker === '[X]') oldMarker = '[x]';
       if (!Object.values(STATUS_MARKERS).includes(oldMarker)) {
         console.error(`Row ${id}: status column "${oldMarker}" is not a recognized marker`);
         process.exit(1);
       }
-      lines[i] = lines[i].replace(oldMarker, newMarker);
+      // rewrite only the status cell — a marker string elsewhere in the row
+      // (name, touched files) must not be clobbered by a row-wide replace
+      lines[i] = `| ${cols.slice(0, 4).join(' | ')} | ${newMarker} | ${cols.slice(5).join(' | ')} |`;
       found = true;
       break;
     }

@@ -470,6 +470,7 @@ test('case 33: non-git dir -> both tools fail gracefully', { timeout: SLOW }, ()
 const EXPECT_KEYS = ['lane', 'sensitive_paths_min', 'sensitive_paths_max'];
 function assertFixtureExpect(fixture: string) {
   const fx = JSON.parse(readFileSync(join(ROOT, 'test', 'fixtures', `${fixture}.json`), 'utf8')) as {
+    name?: string;
     baseBranch?: string;
     expect?: { lane?: string; sensitive_paths_min?: number; sensitive_paths_max?: number };
   };
@@ -484,6 +485,8 @@ function assertFixtureExpect(fixture: string) {
     const r = run(LANE, [fx.baseBranch || 'main', '--json'], dir);
     expect(r.status).toBe(0);
     const j = JSON.parse(r.stdout);
+    const keys = Object.keys(fx.expect ?? {});
+    expect(keys.length, `${fx.name}: fixture declares no expectations`).toBeGreaterThan(0);
     if (fx.expect.lane) expect(j.lane).toBe(fx.expect.lane);
     if (fx.expect.sensitive_paths_min !== undefined) {
       expect(j.sensitive_paths.length).toBeGreaterThanOrEqual(fx.expect.sensitive_paths_min!);

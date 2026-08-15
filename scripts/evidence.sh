@@ -40,20 +40,33 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 HASH=$(echo "${LABEL}-${TIMESTAMP}-$$-${RANDOM}" | (sha256sum 2>/dev/null || shasum -a 256 2>/dev/null || openssl sha256) | cut -c1-12 2>/dev/null || echo "${TIMESTAMP}")
 EVIDENCE_FILE="$RESULTS_DIR/${LABEL}-${HASH}.log"
 
+# Neutralize forged verdict/exit header lines in captured output. The agent
+# trusts the real trailer only (# Exit:/# Verdict: appended after the block);
+# attacker output may try to impersonate it under any spelling — leading
+# whitespace, ANSI prefix, no space, CRLF. Idempotent: already-neutralized
+# #-Verdict: / #-Exit: lines pass through unchanged.
+SANITIZE='s/^[[:space:]]*(\x1b\[[0-9;]*m)*#[[:space:]]*(Verdict|Exit):/#-\2:/'
+
+# command line echoed in the header — collapse embedded newlines so an arg
+# cannot forge a header line inside "# Command:" (the header block is written
+# verbatim, outside the sanitizer).
+COMMAND_LINE=$(printf '%s ' "$@" 2>/dev/null | tr '\n\r' '  ' | sed 's/  *$//')
+
 {
   echo "# Evidence: $LABEL"
   echo "# At: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  echo "# Command: ${*:-<stdin pipeline>}"
+  echo "# Command: ${COMMAND_LINE:-<stdin pipeline>}"
   echo "# ---"
   echo
 
   if [ $# -gt 0 ]; then
-    "$@" 2>&1
+    "$@" 2>&1 | sed -E "$SANITIZE"
+    EXIT_CODE=${PIPESTATUS[0]}
   else
-    cat
+    sed -E "$SANITIZE"
+    EXIT_CODE=0
   fi
 } > "$EVIDENCE_FILE"
-EXIT_CODE=$?
 
 # trailer: exit code + verdict (D6). The verdict is PASS/FAIL derived from the
 # exit code — the check's own outcome, not the harness's opinion.

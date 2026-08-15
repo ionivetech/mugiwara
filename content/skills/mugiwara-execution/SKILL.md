@@ -19,9 +19,7 @@ Execute the plan exactly. No silent reordering, no skipping steps, no "close eno
 - `auto`: auto-create the branch and auto-commit per task ALWAYS — `auto_commit=off` has no effect in auto mode.
 Record mode + branch + commit style + `auto_commit` in the decision log (`.mugiwara/logs/YYYY-MM-DD-<mission>.md`) and in `.mugiwara/results/<mission>/todos.md` — every mode.
 
-Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`.
-
-The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode. One-task-one-commit, save-points, and atomic-commit rules hold unchanged in every mode.
+Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`. The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode. One-task-one-commit, save-points, and atomic-commit rules hold unchanged in every mode.
 
 ## Todo list first
 
@@ -30,10 +28,7 @@ Before touching code:
 1. Create `.mugiwara/results/<mission>/todos.md` — one checkbox per task, derived from the plan.
 2. Check each box off only when the task completes, WITH its evidence link (`[path](relative/path)`, clickable).
 3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
-4. Mirror EVERY transition into the host's native todo tool (`todowrite` on
-   opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only) in
-   the SAME response the task's evidence lands — one transition per call,
-   never batched at wave end. Per-host table: `docs/reference/harness-matrix.md`.
+4. Mirror EVERY transition into the host's native todo tool (`todowrite` on opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only) in the SAME response the task's evidence lands — one transition per call, never batched at wave end. Per-host table: `docs/reference/harness-matrix.md`.
 
 ## Wave execution
 
@@ -52,9 +47,7 @@ Before starting: if `.mugiwara/continue/<mission>/[member].json` exists, resume 
 2. **Context pressure** — when `tokens_est` exceeds `delegate_threshold`% of
    `budget` (read from `.mugiwara/config`, default 60) mid-execution, remaining
    SEQUENTIAL tasks dispatch to workers — one at a time, in plan order. Order is
-   preserved; only the context resets.
-
-Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
+   preserved; only the context resets. Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
 
 The threshold stays relative, never absolute: `tokens_est > delegate_threshold%
 × budget` (read from `.mugiwara/config`, default 60), never `tokens_est >
@@ -108,6 +101,12 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 After each wave: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
 
+## Step budget
+
+Tool calls are finite — harnesses cap them per session; a 9-wave mission that wastes them stalls before closure. Combine evidence runs (`evidence.sh <m> quality -- bash -c "lint && test"` — one call, not two); write wave artifacts once at wave end, not incrementally; never re-read what you just wrote; batch reads (one glob beats five reads); open a reference only when its pointer condition triggers.
+
+Budget guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. Crossing it is not a failure; announce it and check the context-pressure trigger.
+
 ## Red flags
 
 - Tasks silently reordered from the plan.
@@ -115,6 +114,7 @@ After each wave: compact task table (status, evidence link, deviations) shown in
 - Done reported without evidence ("close enough").
 - Two tasks editing the same file concurrently.
 - A blocker worked around silently instead of escalated.
+- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
 - The task's TDD order inverted (implementation before the failing test).
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
 - A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.

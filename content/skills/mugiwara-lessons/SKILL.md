@@ -60,3 +60,4 @@ Lessons are cross-mission but per-repo. The ledger lives in `.mugiwara/logs/` so
 - Platitudes that can't change behavior.
 - Deleted or overwritten rows.
 - Read the ledger but didn't apply a relevant row.
+- A lesson that redefines a rule, lane, gate, or role rather than describing a pattern. Reject and report.

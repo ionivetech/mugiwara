@@ -15,5 +15,52 @@
     "workflow",
     "multi-agent"
   ],
-  "skills": "./content/skills/"
+  "skills": "./content/skills/",
+  "metadata": {
+    "skills": [
+      "mugiwara-agent-security",
+      "mugiwara-backend",
+      "mugiwara-brainstorm",
+      "mugiwara-checkpoint",
+      "mugiwara-claim-audit",
+      "mugiwara-context-budget",
+      "mugiwara-contract-first",
+      "mugiwara-execution",
+      "mugiwara-frontend",
+      "mugiwara-gates",
+      "mugiwara-git",
+      "mugiwara-healing",
+      "mugiwara-lessons",
+      "mugiwara-orchestration",
+      "mugiwara-planning",
+      "mugiwara-pr",
+      "mugiwara-quality",
+      "mugiwara-resume",
+      "mugiwara-review",
+      "mugiwara-root-cause",
+      "mugiwara-security",
+      "mugiwara-ship",
+      "mugiwara-sunset",
+      "mugiwara-testcases",
+      "mugiwara-workflow",
+      "using-mugiwara"
+    ],
+    "agents": [
+      "brook-healing",
+      "chopper-checkpoint",
+      "eval-runner",
+      "franky-gates",
+      "jinbe-security",
+      "luffy-orchestrator",
+      "memory-keeper",
+      "nami-planner",
+      "onboarding-guide",
+      "resume-coordinator",
+      "robin-reviewer",
+      "sanji-quality",
+      "skeptic-verifier",
+      "usopp-brainstorm",
+      "zoro-execution"
+    ]
+  }
 }
