@@ -283,9 +283,15 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
       'coverage_modified=80',
       'review_depth=full',
       'quality_depth=full',
+      'delegate_threshold=60',
+      'heal_max_cycles=3',
+      'verbosity=normal',
     ]) {
       expect(body).toContain(key);
     }
+    // completeness: every documented key ships with a default — a fresh
+    // user's config must not silently miss a key (absent != default).
+    expect(body.trim().split('\n')).toHaveLength(11);
     // idempotent: second call returns false, leaves file unchanged
     expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
     expect(readFileSync(file, 'utf8')).toBe(body);

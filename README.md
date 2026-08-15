@@ -250,6 +250,8 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
 | `review_depth`      | full                            | full / standard / quick — Robin's review depth |
 | `quality_depth`     | full                            | full / standard / quick — Sanji's check depth  |
+| `delegate_threshold`| 60                              | % of token budget at which remaining tasks dispatch to workers |
+| `heal_max_cycles`   | 3                               | Max heal-loop cycles before human escalation    |
 | `verbosity`         | normal                          | normal / full — how much the crew echoes. `normal` hides investigation steps (reads, greps) and file contents; edits, results, decisions stay visible. `full` echoes everything. Never suppresses decisions, questions, blockers, or lane rises |
 
 Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project

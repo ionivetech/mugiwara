@@ -47,6 +47,13 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 auto_commit=on
+coverage_new=90
+coverage_modified=80
+review_depth=full
+quality_depth=full
+delegate_threshold=60
+heal_max_cycles=3
+verbosity=normal
 ```
 
 | Key | Values | Default |
@@ -55,6 +62,13 @@ auto_commit=on
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain | conventional |
 | auto_commit | on / off | on |
+| coverage_new | 0-100 | 90 |
+| coverage_modified | 0-100 | 80 |
+| review_depth | full / standard / quick | full |
+| quality_depth | full / standard / quick | full |
+| delegate_threshold | 1-100 | 60 |
+| heal_max_cycles | number | 3 |
+| verbosity | normal / full | normal |
 
 `auto_commit=off` disables per-task commits and the final push in `guided`
 and `semi` — changes stay in the working tree and you commit/push manually.

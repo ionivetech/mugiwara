@@ -98,6 +98,9 @@ export const DEFAULT_CONFIG_LINES = [
   'coverage_modified=80',
   'review_depth=full',
   'quality_depth=full',
+  'delegate_threshold=60',
+  'heal_max_cycles=3',
+  'verbosity=normal',
 ];
 
 // Idempotent: writes the full default config only when .mugiwara/config is
