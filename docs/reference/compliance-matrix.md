@@ -11,18 +11,21 @@ Published with failures — the first pack to admit where it breaks.
 
 ## Rules under test
 
-| # | Rule | Mechanism | Pillar |
-|---|------|-----------|--------|
-| R1 | Lane sizing | `mugiwara run lane.sh` | 2 |
-| R2 | Skip gates respected | Skill prose | 1 |
-| R3 | Evidence over claims | Chopper re-verification | 1 |
-| R4 | Wave boundaries (banner + report) | Workflow skill | 2 |
-| R5 | Heal loop bound (≤3 cycles) | Orchestration skill | 2 |
-| R6 | DoD verified (5 axes) | `references/definition-of-done.md` | 1 |
-| R7 | State written at wave boundary | `mugiwara savepoint` | 2 |
-| R8 | Source-backed code (no hallucinated APIs) | `references/source-grounding.md` | 4 |
-| R9 | Blocker ledger written on failure | Agent discipline | 1 |
-| R10 | Mission report at closure | `mugiwara savepoint` | 1 |
+| # | Rule | Mechanism | Kind | Pillar |
+|---|------|-----------|------|--------|
+| R1 | Lane sizing | `mugiwara run lane.sh` | aspirational — the script is honest, nothing runs it | 2 |
+| R2 | Skip gates respected | Skill prose (presence checked by the validator) | enforced (presence) / aspirational (use) | 1 |
+| R3 | Evidence over claims | Chopper re-verification | aspirational | 1 |
+| R4 | Wave boundaries (banner + report) | Workflow skill | aspirational | 2 |
+| R5 | Heal loop bound (≤3 cycles) | Orchestration skill | aspirational — no mechanism halts a 4th | 2 |
+| R6 | DoD verified (5 axes) | `references/definition-of-done.md` | aspirational | 1 |
+| R7 | State written at wave boundary | `mugiwara savepoint`; `hooks/auto-savepoint.ts` on Claude Code | **enforced on `claude`**, aspirational elsewhere | 2 |
+| R8 | Source-backed code (no hallucinated APIs) | `references/source-grounding.md` | aspirational | 4 |
+| R9 | Blocker ledger written on failure | Agent discipline | aspirational | 1 |
+| R10 | Mission report at closure | `mugiwara run mission-report.sh` | aspirational | 1 |
+
+Full split, and why the ✅ marks below are model behaviour rather than
+guarantees: [enforcement.md](enforcement.md).
 
 ## Results by model
 
@@ -36,7 +39,7 @@ Published with failures — the first pack to admit where it breaks.
 | R4 | ✅ | Banners + reports consistent |
 | R5 | ✅ | Heal loop bound respected |
 | R6 | ✅ | DoD axes checked |
-| R7 | ✅ | Savepoint script runs |
+| R7 | ✅ | Savepoint script runs (hook-driven on `claude`; crew-driven elsewhere) |
 | R8 | ⚠️ | Hallucinates APIs ~8% of the time without source-grounding |
 | R9 | ✅ | Ledger entries reliable |
 | R10 | ✅ | Closure report written |
@@ -51,7 +54,7 @@ Published with failures — the first pack to admit where it breaks.
 | R4 | ⚠️ | Wave banners inconsistent |
 | R5 | ⚠️ | Heal loop may exceed 3 cycles |
 | R6 | ⚠️ | DoD enforcement weaker |
-| R7 | ✅ | Savepoint script runs |
+| R7 | ✅ | Savepoint script runs (hook-driven on `claude`; crew-driven elsewhere) |
 | R8 | ❌ | Hallucinated APIs frequent without source-grounding loaded |
 | R9 | ❌ | Blocker ledger often empty even on failures |
 | R10 | ⚠️ | Mission report sometimes incomplete |
@@ -66,7 +69,7 @@ Published with failures — the first pack to admit where it breaks.
 | R4 | ❌ | Wave chaining broken without orchestration body |
 | R5 | ❌ | Heal loop unenforced |
 | R6 | ❌ | DoD unverified |
-| R7 | ✅ | Savepoint script runs |
+| R7 | ✅ | Savepoint script runs (hook-driven on `claude`; crew-driven elsewhere) |
 | R8 | ❌ | No source-grounding without body loaded |
 | R9 | ❌ | No ledger without body loaded |
 | R10 | ✅ | Report generated from the mission state |
