@@ -40,17 +40,20 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
   for (const t of Object.values(targets)) {
     const out = t.transformSkill(skill, 'BODY\n');
     expect(out!.relPath.endsWith('.md')).toBe(true);
-    if (t.tier !== 3) expect(out!.text.includes('BODY'), `${t.id} embeds body`).toBe(true);
+    // Any target that defines transformSkillFull ships a stub to the rules
+    // glob and the body to refs; everyone else embeds the body inline.
+    // Copilot joined the stub side (A1): it injects every matching
+    // instruction file into every request, so the corpus is per-request cost.
+    const hasStub = t.transformSkillFull?.(skill, 'BODY\n') != null;
+    if (!hasStub) expect(out!.text.includes('BODY'), `${t.id} embeds body`).toBe(true);
     if (t.tier === 3) {
       expect(t.transformSkillFull, `${t.id}: tier 3 must define transformSkillFull`).toBeDefined();
     }
-    if (t.transformSkillFull) {
-      const full = t.transformSkillFull(skill, 'BODY\n');
-      if (t.tier === 3) {
-        expect(full, `${t.id} full ref`).not.toBeNull();
-        expect(full!.text.includes('BODY'), `${t.id} full ref embeds body`).toBe(true);
-      }
-    }
+    const full = t.transformSkillFull?.(skill, 'BODY\n') ?? null;
+    expect(t.tier !== 3 || full !== null, `${t.id} tier 3 full ref`).toBe(true);
+    // Targets with a full-ref transform ship a stub; the body lives in refs.
+    expect(full === null || full.text.includes('BODY'), `${t.id} full ref embeds body`).toBe(true);
+    expect(full === null || !out!.text.includes('BODY'), `${t.id} stub must not embed body`).toBe(true);
   }
   const claudeOut = targets.claude.transformSkill(skill, 'BODY\n');
   expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-workflow');
@@ -152,13 +155,13 @@ test('2-16 tier-3 targets emit stubs to the rules glob and full bodies to refs',
 
     const stub = readFileSync(join(skillsDir, 'mugiwara-workflow.md'), 'utf8');
     expect(stub.length, `${id} stub is small`).toBeLessThan(400);
-    expect(stub).toContain('.mugiwara/refs/mugiwara-workflow.md');
+    expect(stub).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
 
-    const full = readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-workflow.md'), 'utf8');
+    const full = readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md'), 'utf8');
     expect(full.length, `${id} full body in refs`).toBeGreaterThan(2000);
 
     const agentStub = readFileSync(join(skillsDir, 'agent-luffy-orchestrator.md'), 'utf8');
-    expect(agentStub).toContain('.mugiwara/refs/luffy-orchestrator.md');
+    expect(agentStub).toContain('.mugiwara/refs/luffy-orchestrator/luffy-orchestrator.md');
   }
 });
 
