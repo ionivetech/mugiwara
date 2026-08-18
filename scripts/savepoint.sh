@@ -3,7 +3,7 @@
 # wave boundary. Computed from git + file counts; zero model judgement.
 # Identity is (mission, member), never branch. Solo = member empty → the file
 # is named state.json. Usage:
-#   savepoint.sh <mission> [member] [wave] [mode]
+#   savepoint.sh <mission> [member] [wave] [mode] [lane]
 set -u
 
 die() { echo "savepoint: $*" >&2; exit 1; }
@@ -42,6 +42,15 @@ MISSION="${1:-${STATE_MISSION:-}}"
 MEMBER="${2:-${STATE_MEMBER:-}}"
 WAVE="${3:-${STATE_WAVE:-1}}"
 MODE="${4:-${STATE_MODE:-guided}}"
+# Triage lane (M7): the lane Luffy assigned at Wave 0. Without it savepoint
+# recomputed the lane from file counts alone and silently discarded the
+# triage decision — a Lane 3 mission recorded itself as "direct". Explicit
+# lane acts as a FLOOR: the computed lane may still raise it, never lower it.
+LANE_EXPLICIT="${5:-${STATE_LANE:-}}"
+case "$LANE_EXPLICIT" in
+  ""|direct|lean|standard|full|spike) ;;
+  *) die "invalid lane \"$LANE_EXPLICIT\" (one of: direct lean standard full spike)" ;;
+esac
 # Wave may be fractional in the docs (4.5 = the checkpoint between waves).
 # parseInt("4.5")=4 while tr -cd '0-9' gives "45", so state and continue
 # disagreed on the same mission. Normalize once, here, for both writers.
@@ -109,7 +118,7 @@ else
   CONTINUE_FILE="$CONTINUE_DIR/state.json"
 fi
 
-[ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [member] [wave] [mode]"
+[ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [member] [wave] [mode] [lane]"
 [ -d .git ] || die "not a git repository"
 
 # --- computed fields ---
@@ -171,6 +180,19 @@ if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ];
     PREV="$LANE"
     LANE="standard"
     LANE_REASON="$FILES_TOUCHED files, docs-only — path-weighted down from $PREV"
+  fi
+fi
+
+# explicit triage lane (M7) applied as a floor — the computed lane above may
+# raise it, never lower it. Sensitive-path escalation still wins
+# unconditionally: spike is a resize, not a rise, so it never displaces the
+# full lane a sensitive path forced.
+if [ -n "$LANE_EXPLICIT" ]; then
+  if [ "$LANE_EXPLICIT" = "spike" ] && [ -n "$SENSITIVE_PATHS" ]; then
+    LANE_REASON="$LANE_REASON (explicit spike ignored — sensitive paths)"
+  elif [ "$(lane_rank "$LANE_EXPLICIT")" -gt "$(lane_rank "$LANE")" ]; then
+    LANE_REASON="triage lane $LANE_EXPLICIT (floor; computed $LANE — $LANE_REASON)"
+    LANE="$LANE_EXPLICIT"
   fi
 fi
 
