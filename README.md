@@ -281,6 +281,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Ship gate check         | `/mugiwara-ship`                         |
 | See initiative progress | `mugiwara initiative status <plan>`      |
 | Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
+| See mission position    | `mugiwara status` (wave, tasks, lane, blockers, budget) |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
 | Check gate locally      | `bun run gate`                           |
 | All docs                | [docs/](docs/)                           |

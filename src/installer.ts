@@ -44,6 +44,15 @@ export interface Target {
   transformSkillFull?(data: FrontmatterData, body: string): TransformOut | null;
   transformAgentFull?(data: FrontmatterData, body: string): TransformOut | null;
   postInstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean; files: string[] }): { written: string[]; notes: string[] };
+  /**
+   * Undo anything postInstall did to a file mugiwara does not own.
+   *
+   * Files listed in the manifest are deleted wholesale on uninstall, so a
+   * shared file we merely EDITED (settings.json) must never be reported as
+   * written — deleting it destroys the user's own configuration. Such files are
+   * un-merged here instead.
+   */
+  postUninstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean }): { changed: string[]; notes: string[] };
 }
 
 export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'content');

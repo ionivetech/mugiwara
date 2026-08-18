@@ -11,6 +11,8 @@ import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProj
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission, archiveMission } from './mission.ts';
 import { runOnboard } from './onboard.ts';
+import { runScript, RUNNABLE } from './run.ts';
+import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor } from './continue.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -27,6 +29,10 @@ export async function run(argv: string[]): Promise<void> {
     case 'reset': return resetCmd(flags);
     case 'archive': return archive(flags, _);
     case 'onboard': return onboardCmd(flags);
+    case 'continue': return continueCmd(flags, _);
+    case 'status': return statusCmd(flags);
+    case 'run': return runCmd(flags, _);
+    case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -158,6 +164,16 @@ async function uninstall(flags: Args['flags']): Promise<void> {
     if (!ok) { console.log('Aborted.'); return; }
   }
   const removed = removeInstalled(manifest, { dryRun: flag(flags.dryRun) });
+  // Un-merge anything we injected into files the user owns. These are
+  // deliberately absent from the manifest — deleting them would destroy the
+  // user's own configuration alongside ours.
+  for (const id of manifest.targets) {
+    const t = targets[id];
+    if (!t?.postUninstall) continue;
+    const post = t.postUninstall({ scope, projectDir, home, dryRun: flag(flags.dryRun) });
+    for (const f of post.changed) console.log(`   unwired mugiwara hooks from ${f}`);
+    for (const n of post.notes) console.log(`   note: ${n}`);
+  }
   if (!flag(flags.dryRun)) {
     if (scope === 'project') {
       const gi = removeProjectGitignore(projectDir);
@@ -200,6 +216,82 @@ function list(flags: Args['flags']): void {
   if (!found) console.log('No mugiwara installation found.');
 }
 
+/**
+ * `mugiwara continue [mission] [member]` — the deterministic half of resume.
+ *
+ * Selecting which mission/member to resume is a directory scan, not a judgement
+ * call, so it runs here instead of costing the host model a reasoning turn.
+ * Only the last step (verifying next_action against the plan) needs a model,
+ * and that happens after this prints.
+ *
+ * Exit codes: 0 = a single resume point was printed; 2 = ambiguous or absent,
+ * the caller must stop and let the user pick.
+ */
+function continueCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const [mission, member] = positionals.slice(1);
+  let entries = readContinue(projectDir);
+
+  // default to this actor's work; --all crosses actors on a shared checkout
+  if (!flag(flags.all)) {
+    const actor = gitActor(projectDir);
+    const mine = entries.filter((e) => e.actor === actor);
+    // an actor-less savepoint (older file, or git identity unset) is still the
+    // only thing on disk — showing nothing would look like "no missions"
+    if (mine.length) entries = mine;
+  }
+
+  const r = resolveContinue(entries, mission, member);
+  if (r.kind === 'resume') { console.log(formatResume(r.entry)); return; }
+
+  if (r.kind === 'none') {
+    console.log('No mission in flight. Start one with Wave 0 triage (mugiwara-orchestration).');
+  } else if (r.kind === 'missions') {
+    console.log(`${new Set(r.entries.map((e) => e.mission)).size} missions in flight:\n`);
+    console.log(formatTable(r.entries));
+    console.log('\nPick one: mugiwara continue <mission> [member]');
+  } else if (r.kind === 'members') {
+    console.log(`Mission "${r.mission}" has ${r.entries.length} members in flight:\n`);
+    console.log(formatTable(r.entries));
+    console.log(`\nPick one: mugiwara continue ${r.mission} <member>`);
+  } else if (r.kind === 'unknown-mission') {
+    console.error(`No in-flight mission "${r.mission}". Known: ${r.known.join(', ') || '(none)'}`);
+  } else {
+    console.error(`Mission "${r.mission}" has no member "${r.member}". Known: ${r.known.join(', ')}`);
+  }
+  process.exit(2);
+}
+
+/** `mugiwara status` — one screen of computed mission state, no model needed. */
+function statusCmd(flags: Args['flags']): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const states = readState(projectDir);
+  if (!states.length) { console.log('No mission state on disk.'); return; }
+  const actor = flag(flags.all) ? null : gitActor(projectDir);
+  const rows = actor ? (states.filter((s) => s.actor === actor).length ? states.filter((s) => s.actor === actor) : states) : states;
+  for (const s of rows) {
+    const scope = s.member ? ` [${s.member}]` : '';
+    console.log(`${s.mission}${scope}`);
+    console.log(`  wave ${s.wave} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
+    console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/3 · files touched ${s.files_touched}`);
+    if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})`);
+    console.log(`  branch ${s.branch} · updated ${s.updated_at}`);
+    if (s.evidence.length) console.log(`  evidence: ${s.evidence.join(', ')}`);
+  }
+}
+
+/** `mugiwara run <script.sh> [args]` — run a bundled harness script here. */
+function runCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const name = positionals[1];
+  if (!name) {
+    console.error(`usage: mugiwara run <script> [args...]\n  scripts: ${RUNNABLE.join(', ')}`);
+    process.exit(1);
+  }
+  const code = runScript(name, positionals.slice(2), projectDir);
+  if (code !== 0) process.exit(code);
+}
+
 function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
@@ -212,6 +304,14 @@ Usage:
   mugiwara reset         wipe mission state (spec/plans/results/review/issues[/logs])
   mugiwara archive <m>    fold a closed mission's evidence into its report, then remove loose files
   mugiwara onboard       run the zero-LLM onboarding wizard (writes .mugiwara/config)
+  mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
+  mugiwara continue <m> [member]
+                         print the exact resume point for that mission/member
+  mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
+  mugiwara run <script> [args...]
+                         run a bundled harness script here (${RUNNABLE.join(', ')})
+  mugiwara savepoint <mission> [member] [wave] [mode]
+                         shorthand for: mugiwara run savepoint.sh ...
   mugiwara --help        this help
   mugiwara --version     print version
 
@@ -223,6 +323,7 @@ Flags:
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
   --check                with list: report missing files (health check)
+  --all                  with continue/status: every actor, not just yours
   --keep-logs            with reset: keep .mugiwara/logs (lessons ledger survives)`);
 }
 
