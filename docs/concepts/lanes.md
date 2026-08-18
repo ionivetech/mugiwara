@@ -1,7 +1,7 @@
 # Lanes & Sizing
 
 The crew sizes a mission before it runs. Lane is computed from the diff by
-`scripts/lane.sh` — deterministic, not estimated.
+`mugiwara run lane.sh` — deterministic, not estimated.
 
 ## The lanes
 
@@ -21,7 +21,7 @@ hand-tuned.
 
 ## How lane is computed
 
-`scripts/lane.sh <base-ref>` runs `git diff --name-only` against the base ref
+`mugiwara run lane.sh <base-ref>` runs `git diff --name-only` against the base ref
 and applies deterministic rules:
 
 | Diff | Lane |
@@ -70,7 +70,7 @@ Use `--json` for machine output:
 
 ## Token budget
 
-Every lane has a budget enforced by `scripts/savepoint.sh` at each wave
+Every lane has a budget enforced by `mugiwara savepoint` at each wave
 boundary. The harness sets `MUGIWARA_TOKENS` env var with estimated tokens
 consumed.
 
@@ -86,7 +86,7 @@ savepoint just writes the status to the mission state.
 ## Escalation
 
 Lane **escalates when work outgrows the estimate.** At every wave boundary,
-`scripts/savepoint.sh` re-checks the diff. If files grew or a sensitive path
+`mugiwara savepoint` re-checks the diff. If files grew or a sensitive path
 appeared, lane rises. A lane **never auto-drops** — savepoint clamps to the
 previous peak (`lane_peak` in the mission state) even when the diff shrinks, and
 `lane_rose` flags the escalation. Under-process costs more than over-process.
@@ -101,5 +101,5 @@ Exploratory missions start at Lane 4. Usopp brainstorms, then the mission is
 re-triaged into the right lane. A spike that stays a spike (no code change
 decided) ends at Wave 1.
 
-Lane is computed per mission by `scripts/lane.sh`, not stored in
+Lane is computed per mission by `mugiwara run lane.sh`, not stored in
 `.mugiwara/config`.

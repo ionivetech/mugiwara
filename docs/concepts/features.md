@@ -192,7 +192,7 @@ project config file that overrides the global defaults.
 ## 6. Lane sizing
 
 **What.** Work is sized deterministically from `git diff --name-only` by
-`scripts/lane.sh`, not estimated by the model.
+`mugiwara run lane.sh`, not estimated by the model.
 
 | Lane | Picks when | Waves | Budget |
 |------|-----------|-------|:---:|
@@ -206,7 +206,7 @@ project config file that overrides the global defaults.
 (`lane`, `lane_reason`, `lane_rose`). Machine output:
 
 ```bash
-scripts/lane.sh main --json
+mugiwara run lane.sh main --json
 ```
 
 **Detail.** Sensitive paths (`auth/ payment/ billing/ crypto/ secrets/ .env`
@@ -245,7 +245,7 @@ project.
 
 ## 8. Savepoint state
 
-**What.** `scripts/savepoint.sh` writes
+**What.** `mugiwara savepoint` writes
 `.mugiwara/state/<mission>/[member].json` at every wave boundary. Every field
 is **computed from git + file counts**, never model-supplied: mission, member,
 actor, branch, lane, wave, mode, base/head SHA, files touched, LOC delta,
@@ -257,7 +257,7 @@ budget status, evidence file list. Identity = (mission, member); solo writes
 without opening many files. Written by the crew automatically.
 
 ```bash
-scripts/savepoint.sh <mission> [member] [wave] [mode]
+mugiwara savepoint <mission> [member] [wave] [mode]
 ```
 
 **Scenario.** After a context loss you open `state/<mission>/state.json`:
@@ -293,7 +293,7 @@ or just say "where were we?" at session start. In **auto mode** the
 actor and surfaces an `AUTO-RESUME` context (single mission → resume hint;
 multiple → list) — it never auto-resumes an ambiguous mission.
 
-**Where the resume point lives.** `scripts/savepoint.sh` writes
+**Where the resume point lives.** `mugiwara savepoint` writes
 `continue/<mission>/[member].json` at every wave boundary with the position
 fields (mission, member, branch, wave, mode, tasks done/total, lane,
 next_action) — machine written, same trust as `state.json`. The
@@ -649,7 +649,7 @@ case fails under a fresh judge → the skill is fixed, the eval is not touched.
 **What.** What keeps the pipeline honest when markdown alone can't force a
 model: computed mechanisms leave a trace regardless of model cooperation —
 lane sizing, savepoint state, evidence capture
-(`scripts/evidence.sh`), index-budget validation, manifest sync, and skill
+(`mugiwara run evidence.sh`), index-budget validation, manifest sync, and skill
 format checks. Discipline rules (skip gates, evidence over claims, wave
 banners, bounded heal loop) rely on the model reading and following them.
 

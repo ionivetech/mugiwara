@@ -40,13 +40,13 @@ All actors read and write to the same file. Append-only, never overwrite.
 
 ## Member namespacing
 
-`scripts/savepoint.sh` writes per-(mission, member) state. Solo missions (no
+`mugiwara savepoint` writes per-(mission, member) state (on Claude Code a Stop hook also writes savepoints automatically; the explicit call is the wave-boundary marker). Solo missions (no
 member argument) write `state.json`; team missions write `<member>.json`:
 
 ```bash
-scripts/savepoint.sh dark-mode                 # solo → state/dark-mode/state.json
-scripts/savepoint.sh payment-gateway john    # team → state/payment-gateway/john.json
-scripts/savepoint.sh payment-gateway patty     #        state/payment-gateway/patty.json
+mugiwara savepoint dark-mode                 # solo → state/dark-mode/state.json
+mugiwara savepoint payment-gateway john    # team → state/payment-gateway/john.json
+mugiwara savepoint payment-gateway patty     #        state/payment-gateway/patty.json
 ```
 
 The resume point follows the same scoping: `continue/<mission>/<member>.json`
@@ -65,5 +65,5 @@ The session-start hook (auto mode) surfaces only the missions owned by your git
 actor — never another member's. If you hold several in-flight missions it lists
 them and asks, it never guesses.
 
-`scripts/mission-report.sh` follows the same convention (`MEMBER` env selects a
+`mugiwara run mission-report.sh` follows the same convention (`MEMBER` env selects a
 team member's state).

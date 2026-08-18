@@ -14,7 +14,7 @@ against, what it does not, and where to report a flaw.
   logged to the blocker ledger and reported to the user. See Artifact trust.
 - **Injection via tool output.** Evidence logs capture raw stdout from
   arbitrary commands; the header-forging vector is neutralized at write time
-  (`scripts/evidence.sh` rewrites forged `# Verdict:` / `# Exit:` lines), and
+  (`mugiwara run evidence.sh` rewrites forged `# Verdict:` / `# Exit:` lines), and
   the agent acts on the real trailer only.
 - **Injection via web content.** Web-fetched text is treated as data at the
   read boundary. The read-untrusted / act-separately split governs it.

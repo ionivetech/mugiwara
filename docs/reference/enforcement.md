@@ -8,9 +8,9 @@ is a mix of mechanism and discipline.
 
 | Rule | Mechanism |
 |------|-----------|
-| Lane sizing | `scripts/lane.sh` computes lane from `git diff --name-only` |
-| State persistence | `scripts/savepoint.sh` writes the mission state at every wave boundary |
-| Evidence capture | `scripts/evidence.sh <mission> <label> -- <cmd>` writes stdout/stderr to `.mugiwara/results/<mission>/<label>-<hash>.log` |
+| Lane sizing | `mugiwara run lane.sh` computes lane from `git diff --name-only` |
+| State persistence | `mugiwara savepoint` writes the mission state at every wave boundary |
+| Evidence capture | `mugiwara run evidence.sh <mission> <label> -- <cmd>` writes stdout/stderr to `.mugiwara/results/<mission>/<label>-<hash>.log` |
 | Index budget | validator enforces 12k char ceiling on skill + agent descriptions |
 | Manifest sync | validator asserts manifest set-equals `content/`; CI blocks drift |
 | Skill format | validator checks name, description length, body ≤120 lines, skip gate, duplicate names |

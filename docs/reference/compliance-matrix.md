@@ -13,16 +13,16 @@ Published with failures — the first pack to admit where it breaks.
 
 | # | Rule | Mechanism | Pillar |
 |---|------|-----------|--------|
-| R1 | Lane sizing | `scripts/lane.sh` | 2 |
+| R1 | Lane sizing | `mugiwara run lane.sh` | 2 |
 | R2 | Skip gates respected | Skill prose | 1 |
 | R3 | Evidence over claims | Chopper re-verification | 1 |
 | R4 | Wave boundaries (banner + report) | Workflow skill | 2 |
 | R5 | Heal loop bound (≤3 cycles) | Orchestration skill | 2 |
 | R6 | DoD verified (5 axes) | `references/definition-of-done.md` | 1 |
-| R7 | State written at wave boundary | `scripts/savepoint.sh` | 2 |
+| R7 | State written at wave boundary | `mugiwara savepoint` | 2 |
 | R8 | Source-backed code (no hallucinated APIs) | `references/source-grounding.md` | 4 |
 | R9 | Blocker ledger written on failure | Agent discipline | 1 |
-| R10 | Mission report at closure | `scripts/savepoint.sh` | 1 |
+| R10 | Mission report at closure | `mugiwara savepoint` | 1 |
 
 ## Results by model
 

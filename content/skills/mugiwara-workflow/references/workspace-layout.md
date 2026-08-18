@@ -11,7 +11,7 @@ mission artifact in any other language is a defect, not a style choice.
 ```
 .mugiwara/
 ├── config              → runtime mode config (gitignored; project overrides global)
-├── state/<mission>/    → computed mission state per (mission, member): state.json (solo) or <member>.json (scripts/savepoint.sh)
+├── state/<mission>/    → computed mission state per (mission, member): state.json (solo) or <member>.json (mugiwara savepoint)
 ├── continue/<mission>/ → machine-written resume point per (mission, member): state.json (solo) or <member>.json
 ├── spec/               → brainstorm output: YYYY-MM-DD-<mission>.md
 ├── plans/              → plan doc: YYYY-MM-DD-<mission>.md — CLEAN, Nami-only, source of truth from Wave 2

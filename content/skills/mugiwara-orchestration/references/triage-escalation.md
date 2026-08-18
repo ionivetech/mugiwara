@@ -67,7 +67,7 @@ in `SKILL.md`.
 
 `auto` runs every wave autonomously to closure. Lane rise (`lane_rose`), a
 sensitive path touched (auth/payment/billing/crypto/secrets/migration — see
-`scripts/lane.sh`), or heal cycles do NOT downgrade the mode. The lane may
+`mugiwara run lane.sh`), or heal cycles do NOT downgrade the mode. The lane may
 escalate (more waves, more care) but the mode stays auto. Only a genuine
 blocker or the heal halt pauses and escalates to the user; the mode is never
 switched down mid-mission.
@@ -77,7 +77,7 @@ switched down mid-mission.
 A lane may rise mid-mission (diff grew, sensitive path touched, failures
 repeated). The owner is Luffy, at every per-wave check-in:
 
-1. Re-run `scripts/lane.sh` at each wave boundary.
+1. Re-run `mugiwara run lane.sh` at each wave boundary.
 2. If the lane rose → announce the escalation, record the trigger in the
    decision log, and re-plan the remaining waves (through Nami) to match.
 3. `savepoint.sh` writes `lane` each wave — compare against the previous value

@@ -14,7 +14,9 @@ Warn and stop thresholds for mission token consumption.
 
 ## Mechanism
 
-`scripts/savepoint.sh` writes `tokens_est` to `.mugiwara/state/<mission>/[member].json` when a
+On Claude Code a Stop hook writes savepoints automatically at turn end; the crew's explicit call marks the wave boundary.
+
+`mugiwara savepoint` writes `tokens_est` to `.mugiwara/state/<mission>/[member].json` when a
 `MUGIWARA_TOKENS` env var is set (the harness should export estimated tokens
 consumed so far).
 
@@ -22,7 +24,7 @@ Warn: log to decision log. Stop: write state, report to user, pause mission.
 
 ## Per-mission cost tracking
 
-At closure, `scripts/mission-report.sh` surfaces tokens vs. budget in the
+At closure, `mugiwara run mission-report.sh` surfaces tokens vs. budget in the
 mission report. Trend across missions: `logs/lessons.md` carries token data
 per mission for the memory keeper to surface cost trends.
 

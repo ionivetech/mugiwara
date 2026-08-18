@@ -22,7 +22,7 @@ with a handoff line:
   decimal (truecolor `38;2;R;G;B`). If the terminal lacks truecolor, use the
   `ansi-256` index: `\x1b[38;5;Nm`.
 - Wave 9's handoff: `→ closure`.
-- The literal `WAVE N —` text must stay exact: `scripts/savepoint.sh` counts
+- The literal `WAVE N —` text must stay exact: `mugiwara savepoint` counts
   heal cycles by grepping `wave 8` (case-insensitive) in the trace. A banner
   that drops the literal silently resets the heal loop.
 - Never convey the wave by color alone — the crew name always accompanies

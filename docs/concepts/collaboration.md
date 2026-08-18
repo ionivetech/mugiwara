@@ -40,9 +40,13 @@ survives the merge.
 | `/mugiwara continue` | **List** every in-flight mission for your git actor. Never auto-starts. |
 | `/mugiwara continue <mission>` | Solo plan → resume `continue/<mission>/state.json`. Team plan → **list members** and stop (member required). |
 | `/mugiwara continue <mission> <member>` | Resume exactly that member's work. |
+| `mugiwara status` | Computed position per mission: wave, tasks, lane, blockers, budget. |
 | `bun run scripts/initiative.ts status <plan>` | Dashboard: assignee, branch, status per sub-mission. |
 | `bun run scripts/initiative.ts conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
 | `bun run scripts/initiative.ts set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
+
+> The `initiative.ts` commands below are **repo-development-only**: the script lives in the mugiwara repo and is not shipped by the installer, and `mugiwara run` takes `.sh` scripts only. In an installed project, edit the sub-mission rows in the plan doc directly — the plan doc is the source of truth either way.
+
 
 ## Auto mode
 
@@ -110,6 +114,9 @@ git checkout feat/pg-capture
 have their own files — no clobbering.
 
 ### 3. Coordination
+
+Repo-development-only (see the note above) — in an installed project, read and
+edit the sub-mission table in the plan doc:
 
 ```bash
 bun run scripts/initiative.ts status plans/2026-08-20-payment-gateway-v2.md

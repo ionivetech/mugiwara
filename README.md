@@ -28,7 +28,7 @@ every agent, every skill, every rule is static markdown.
 ## See the evidence
 
 A closed mission leaves a report you can actually read. This is the exact
-format `scripts/mission-report.sh` produces:
+format `mugiwara run mission-report.sh` produces:
 
     # Mission: invitation-accepted-flow . 2026-08-11
 
@@ -214,9 +214,11 @@ Quick start for a team:
 /mugiwara continue payment-gateway      # solo → resume; team → list members
 /mugiwara continue payment-gateway patty # resume exactly patty's work
 
-# Coordination radar
+# Coordination radar (repo-development-only: initiative.ts is not installed)
 bun run scripts/initiative.ts status plans/<mission>.md          # who's where
 bun run scripts/initiative.ts conflict-check plans/<mission>.md  # shared-file overlap
+# In an installed project: read the sub-mission table in the plan doc, and
+# `mugiwara status` for computed per-mission position.
 ```
 
 Auto mode runs every wave autonomously — and never downgrades to guided

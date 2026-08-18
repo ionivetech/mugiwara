@@ -9,8 +9,8 @@ read it as a reviewer.
 |----------|------|-----------|------|-----|
 | **Plan doc** | `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | Nami (planning) | Wave 2 | Zero-context executor — waves, tasks, criteria, risk |
 | **Spec** | `.mugiwara/spec/YYYY-MM-DD-<mission>.md` | Usopp (brainstorm) / Luffy (spec bridge) | Wave 0–1 | Bridge from idea to plan — goal, acceptance, constraints |
-| **State** | `.mugiwara/state/<mission>/[member].json` | `scripts/savepoint.sh` | Every wave boundary | Computed mission state: lane + lane_peak (clamp), wave, files, loc_ins/del/churn, sensitive paths, blockers, token budget, evidence paths. Identity = (mission, member); solo = state.json |
-| **Continue** | `.mugiwara/continue/<mission>/[member].json` | `scripts/savepoint.sh` | Every wave boundary | Machine-written resume point: mission, member, wave, tasks done/total, mode, next action |
+| **State** | `.mugiwara/state/<mission>/[member].json` | `mugiwara savepoint` | Every wave boundary | Computed mission state: lane + lane_peak (clamp), wave, files, loc_ins/del/churn, sensitive paths, blockers, token budget, evidence paths. Identity = (mission, member); solo = state.json |
+| **Continue** | `.mugiwara/continue/<mission>/[member].json` | `mugiwara savepoint` | Every wave boundary | Machine-written resume point: mission, member, wave, tasks done/total, mode, next action |
 | **Decision log** | `.mugiwara/logs/YYYY-MM-DD-<mission>.md` | Luffy (orchestrator) | Every wave | Route reason, check-in verdicts, mode flips, decisions |
 | **Blocker ledger** | `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` | Any agent | On blocker hit | Row per blocker: wave, task, symptom, attempted, help-needed |
 | **Todo list** | `.mugiwara/results/<mission>/todos.md` | Zoro (execution) | Wave 3 | Checkbox per task, checked with evidence pointer |
@@ -21,11 +21,16 @@ read it as a reviewer.
 | **Security report** | `.mugiwara/review/YYYY-MM-DD-<mission>-security.md` | Jinbe (security) | Wave 7 | STRIDE, OWASP mapping, checklist, CVSS severity |
 | **Heal report** | `.mugiwara/results/<mission>/05-healing.md` | Brook (healing) | Wave 8 | Fixed list, escalated list, updated ledger |
 | **Closure report** | `.mugiwara/results/<mission>/06-closure.md` | Luffy (orchestrator) | Wave 9 | Mission summary, per-wave outcomes, deferred items, lessons |
-| **Mission report** | `.mugiwara/reports/YYYY-MM-DD-<mission>.md` | `scripts/mission-report.sh` | Wave 9 | Human-readable summary: what changed, gates, state, token cost |
+| **Mission report** | `.mugiwara/reports/YYYY-MM-DD-<mission>.md` | `mugiwara run mission-report.sh` | Wave 9 | Human-readable summary: what changed, gates, state, token cost |
 | **PR verdict** | `.mugiwara/results/<mission>/07-pr-verdict.md` | Luffy (orchestrator) | Wave 9 | Ready PR summary block for the user to open the PR |
 | **Trace** | `(legacy, no longer written)` | Resume coordinator | Every dispatch | Dispatch → outcome — drives resume (legacy; mission state preferred) |
 | **Lessons ledger** | `.mugiwara/logs/lessons.md` | Memory Keeper | Cross-mission | One row per real lesson, append-only, all actors share |
-| **Evidence logs** | `.mugiwara/results/<mission>/<label>-<hash>.log` | `scripts/evidence.sh` | On demand | Command stdout/stderr capture with timestamp and exit code |
+| **Evidence logs** | `.mugiwara/results/<mission>/<label>-<hash>.log` | `mugiwara run evidence.sh` | On demand | Command stdout/stderr capture with timestamp and exit code |
+
+The `mugiwara …` entries above are bundled shell scripts (`savepoint.sh`,
+`lane.sh`, `evidence.sh`, `mission-report.sh`) that the CLI resolves from the
+package root, so they work on every install target rather than only where a
+`scripts/` directory happens to sit in the cwd.
 
 ## How to read as a reviewer
 

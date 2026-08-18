@@ -19,7 +19,7 @@ After every wave AND at the end of each execution batch, verify:
 3. Heal-loop counters within bounds (max `heal_max_cycles` (default 3) cycles). At the limit, STOP
    and escalate to the user — a halt, not a red flag. Red flags are prose; a counter is state.
 4. Blocker ledger `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` reviewed; every row has an owner or a path forward.
-5. **Lane re-run** — `scripts/lane.sh`; if the lane rose, announce the escalation and record the trigger. Luffy owns this, nobody else.
+5. **Lane re-run** — `mugiwara run lane.sh`; if the lane rose, announce the escalation and record the trigger. Luffy owns this, nobody else.
 6. **Handoff contract current** — `.mugiwara/continue/<mission>/[member].json` is written at every wave boundary
    (mission, sub_mission, wave, tasks, next_action, next_session_prompt) — never only at
    session end. Luffy owns it and verifies it at every check-in; a wave that ends without

@@ -45,7 +45,7 @@ appear. Reasoning reduced to conclusions.
 
 ```
 ==================== ⚔️ WAVE 3 — ZORO (EXECUTION) ====================
-$ bun scripts/lane.sh m
+$ mugiwara run lane.sh m
 lane: full (44 files, 5 sensitive)
 $ readFileSync src/auth/invitation.ts
   export function signInvitation(...) {

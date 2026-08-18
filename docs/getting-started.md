@@ -124,7 +124,7 @@ Every mission writes to `.mugiwara/` at the repo root:
 ```
 .mugiwara/
 ├── config          # mode, branch, commit, coverage thresholds
-├── state/<mission>/   # computed at every wave boundary by scripts/savepoint.sh (solo state.json / team member.json)
+├── state/<mission>/   # computed at every wave boundary by mugiwara savepoint (solo state.json / team member.json)
 ├── continue/<mission>/ # machine-written resume point per (mission, member)
 ├── spec/           # brainstorm output
 ├── plans/          # clean execution plan (source of truth from Wave 2)

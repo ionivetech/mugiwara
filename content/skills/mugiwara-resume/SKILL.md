@@ -24,7 +24,7 @@ Resume reads per-(mission, member) files. Identity is (mission, member), never b
 ├── continue/<mission>/<member>.json # team member resume point
 ```
 
-All position data is computed at every wave boundary by `scripts/savepoint.sh`. State JSON shape (solo example):
+All position data is computed at every wave boundary by `mugiwara savepoint`. On Claude Code a Stop hook writes one automatically at every turn end, so the crew's explicit call marks the wave boundary rather than being the only thing keeping state alive. State JSON shape (solo example):
 
 ```json
 {
