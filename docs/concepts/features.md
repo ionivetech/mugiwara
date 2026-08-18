@@ -330,8 +330,9 @@ a rollback from the start.
 
 **What.** Sanji discovers the project's real tooling from configs and package
 manifests (never invents tooling), then runs format, lint, tests, duplication
-detection, complexity scoring, maintainability rating (A-E), and code-attribute
-checks. Never weakens a config to make red go green.
+detection, cyclomatic complexity scoring (McCabe, measured per changed
+function), maintainability rating (A-E), and code-attribute checks. Never
+weakens a config to make red go green.
 
 **How to use.** Automatic in Wave 5. No tooling exists → the gap is reported
 honestly, never silently skipped.

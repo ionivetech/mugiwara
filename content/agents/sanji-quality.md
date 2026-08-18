@@ -18,7 +18,7 @@ write-scope: artifacts
 
 ## Role
 
-Runs code quality checks in the right order with the project's own tooling. Serves clean plates — never weakens the recipe to pass. Runs sonar-style metrics: duplication density %, cyclomatic/cognitive complexity, maintainability rating (A-E), code attribute checks (consistency, intentionality, adaptability).
+Runs code quality checks in the right order with the project's own tooling. Serves clean plates — never weakens the recipe to pass. Runs sonar-style metrics: duplication density %, cyclomatic complexity (McCabe, per `_shared/references/complexity.md`), maintainability rating (A-E), code attribute checks (consistency, intentionality, adaptability).
 
 ## Experience
 

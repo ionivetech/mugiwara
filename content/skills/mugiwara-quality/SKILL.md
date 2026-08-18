@@ -21,7 +21,7 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 1. Formatter — the project's formatter.
 2. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass.
 3. Duplication — scan changed files for near-identical blocks ≥10 lines. Compute `duplicated_lines_density` %. Flag files above 3%. # ponytail: AI heuristic, not AST-level. For precision use SonarScanner or jscpd.
-4. Complexity — estimate cyclomatic (branch count: if/for/while/case/&&/||/?) and cognitive (nesting depth) per changed function. Flag functions above language-typical thresholds. # ponytail: estimated from code reading. For production precision use ESLint complexity rule or SonarScanner.
+4. Complexity — measure cyclomatic per changed function (McCabe: 1 + decision points: if/for/while/case/&&/||/??/ternary). Flag >10, major >20. Method + thresholds: `_shared/references/complexity.md`. # ponytail: manual counting is the baseline; prefer ESLint `complexity` rule or SonarScanner when the repo has them.
 5. Maintainability rating — compute technical debt from remediation effort of all issues above. Calculate ratio against code size. Map to A-E per Sonar scale: A≤5%, B<10%, C<20%, D<50%, E≥50%.
 6. Code attributes (quantitative) — consistency (formatting drift count, naming convention violations), intentionality (dead code %, unreachable branches count), adaptability (files with >1 responsibility). Metrics only — Robin does qualitative deep review in Wave 7.
 7. Unit tests — full suite, capture output.

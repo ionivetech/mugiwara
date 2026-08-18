@@ -51,7 +51,7 @@ Rating E = won't merge. Rating D = review with caution + mitigation plan require
 
 - Duplication: 3+ near-identical blocks that should be one function.
 - Unused code: dead functions, unreachable branches, orphaned imports/vars.
-- Complexity: functions doing several jobs, deep nesting, long parameter lists.
+- Complexity: measure cyclomatic per changed function (McCabe: 1 + decision points). Flag >10, major >20. Method + thresholds + evidence format: `_shared/references/complexity.md`. Every flagged function lists its counted branches.
 - Naming: names that lie about behavior, deviation from repo conventions.
 - Comments: commented-out code, stale comments contradicting the code.
 
