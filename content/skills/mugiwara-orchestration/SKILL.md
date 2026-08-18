@@ -76,7 +76,7 @@ Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never ou
 ## Wave transitions (visibility)
 
 Banner in the owning agent's color opens every wave — the equals line
-`===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. A skip is recorded, never silent.
+`===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the wave's first response; handoff `→ Wave N+1 — Crew (Role)` = LAST line of the wave's final response. A skip is recorded, never silent.
 
 ## Output discipline
 
