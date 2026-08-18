@@ -1,6 +1,6 @@
 // src/onboard.ts — zero-LLM onboarding wizard (6 questions, writes .mugiwara/config).
 // Runs on every platform via the `mugiwara onboard` CLI command. No LLM, no network.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRl, choose, confirm, type Rl } from './prompt.ts';
 
@@ -69,12 +69,25 @@ async function askFreeText(rl: Rl, prompt: string): Promise<string> {
   }
 }
 
+// Same guard the runtime helpers use: a symlinked config must never be
+// overwritten through the wizard (the target file is not ours to write).
+function assertNotSymlink(file: string): void {
+  if (!existsSync(file)) return;
+  try {
+    if (lstatSync(file).isSymbolicLink()) throw new Error(`refusing to follow symlink: ${file}`);
+  } catch (e) {
+    if ((e as { code?: string }).code === 'ENOENT') return;
+    throw e;
+  }
+}
+
 export async function runOnboard(projectDir: string): Promise<void> {
   if (!process.stdin.isTTY) {
     throw new Error('Not a terminal. Run `mugiwara onboard` in a terminal, or edit .mugiwara/config directly.');
   }
   const mugiwaraDir = join(projectDir, '.mugiwara');
   const configPath = join(mugiwaraDir, 'config');
+  assertNotSymlink(configPath);
   const existing = parseConfig(existsSync(configPath) ? readFileSync(configPath, 'utf8').split(/\r?\n/) : []);
 
   const rl = createRl();
