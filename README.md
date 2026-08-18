@@ -117,7 +117,7 @@ pipeline config to write.**
 | You say                                        | What happens                                                                                                                                                                             |
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `add search bar to products page`              | Luffy triages → Nami plans 3 tasks → Zoro executes TDD → Chopper audits → Sanji runs quality → Franky gates → Robin reviews → code pushed, PR summary ready                              |
-| `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → `mugiwara initiative status` shows progress → all done → initiative closure |
+| `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → the plan's sub-mission table shows progress → all done → initiative closure |
 | `Brook, fix the failing login test`            | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles                                                                                                                      |
 | `Jinbe, audit auth middleware`                 | STRIDE + OWASP + dependency audit. Read-only — never touches code                                                                                                                        |
 | `/mugiwara auto`                               | Switches to full autonomy — all waves run without asking, from the next wave |
@@ -281,7 +281,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Review a PR diff        | `/mugiwara-review` or "review this PR"   |
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Ship gate check         | `/mugiwara-ship`                         |
-| See initiative progress | `mugiwara initiative status <plan>`      |
+| See initiative progress | read the sub-mission table in the plan doc (a `mugiwara initiative` CLI is planned, not shipped) |
 | Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
 | See mission position    | `mugiwara status` (wave, tasks, lane, blockers, budget) |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |

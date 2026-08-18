@@ -482,15 +482,20 @@ sub-mission.
 ```
 
 Nami interviews and writes an initiative plan; each dev works in their own
-branch; `mugiwara initiative status <plan>` (via
-`bun scripts/initiative.ts`) shows progress; all sub-missions `[x]` →
+branch; the plan's sub-mission table shows progress; all sub-missions `[x]` →
 initiative-level closure.
+
+There is no `mugiwara initiative` CLI — it is planned, not shipped
+(`src/cli.ts` has no such command). `scripts/initiative.ts` automates the same
+reads for repo development only; it is not installed into a project, and
+`mugiwara run` accepts `.sh` scripts only. In an installed project the plan doc
+is both the source of truth and the dashboard.
 
 **Scenario.** Three developers, one payment split. Each owns a file-disjoint
 sub-mission, never colliding; the initiative plan shows green across all three
 before the shared closure.
 
-→ [Initiative script](../../scripts/initiative.ts) · [README example](../../README.md#30-second-try)
+→ [Initiative script (repo-development-only)](../../scripts/initiative.ts) · [README example](../../README.md#30-second-try)
 
 ---
 

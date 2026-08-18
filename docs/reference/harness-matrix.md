@@ -90,6 +90,19 @@ targets must be Luffy) plus the tier-3 stub lines in `src/targets/generic.ts`.
 The validator is the floor everywhere; CI blocks drift. This does not make
 mugiwara a runtime — see `enforcement.md`.
 
+## Turn-end enforcement capability
+
+Hooks are the only mechanism that produces a mission artifact without a model
+choosing to, and they are not portable.
+
+| Target | Turn-end enforcement | Basis |
+|--------|----------------------|-------|
+| `claude` | **enforced** | `Stop` + `SubagentStop` run `hooks/auto-savepoint.ts` |
+| `opencode` | advisory only | no verified turn-end event to bind to |
+| the other 7 targets | advisory only | no hook mechanism at all |
+
+Full ENFORCED / ASPIRATIONAL split: [enforcement.md](enforcement.md).
+
 ## Worker dispatch capability
 
 | Harness | Worker dispatch | Context-pressure fallback |
