@@ -98,7 +98,7 @@ load.
 npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-First run: `/mugiwara onboard` for guided setup. Then ask something non-trivial:
+First run: run `mugiwara onboard` in your terminal for guided setup (zero-LLM wizard). Then ask something non-trivial:
 
 ```
 > add role-based access control: admin, editor, viewer
@@ -161,7 +161,7 @@ flowchart TB
 
 ## The crew
 
-12 agents (+3 internal). Each has role boundaries — auditors
+11 agents (+3 internal). Each has role boundaries — auditors
 and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 | Agent                | Role                                                                                    |  Permission   |
@@ -176,7 +176,6 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 | `robin-reviewer`     | Reviewer — breaking-change map, reliability rating, code attribute deep review          | **read-only** |
 | `jinbe-security`     | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility            | **read-only** |
 | `brook-healing`      | Healer — reads ledger, root-cause fixes ≤3 cycles                                       |       —       |
-| `onboarding-guide`   | Onboarding wizard — 9Q guided setup via host question tool, writes config               |       —       |
 | `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts                    |       —       |
 
 **Internal agents** (dispatch-only):
@@ -244,7 +243,7 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | ------------------- | ------------------------------- | ---------------------------------------------- |
 | `mode`              | guided                          | guided / semi / auto                           |
 | `branch`            | `feature/{type}-{issue}-{slug}` | Branch naming                                  |
-| `commit`            | conventional                    | conventional / gitmoji / plain                 |
+| `commit`            | conventional                    | conventional / gitmoji / plain / template (e.g. `{issue}: {title}`) |
 | `auto_commit`       | on                              | on / off — off disables commit+push in guided/semi |
 | `coverage_new`      | 90                              | Coverage threshold for new files (%)           |
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
@@ -254,7 +253,7 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `heal_max_cycles`   | 3                               | Max heal-loop cycles before human escalation    |
 | `verbosity`         | normal                          | normal / full — how much the crew echoes. `normal` hides investigation steps (reads, greps) and file contents; edits, results, decisions stay visible. `full` echoes everything. Never suppresses decisions, questions, blockers, or lane rises |
 
-Set via `/mugiwara onboard` or edit directly. Unknown keys ignored. Project
+Set via `mugiwara onboard` or edit directly. Unknown keys ignored. Project
 config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 
 **How much does the crew ask you?**
@@ -275,7 +274,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 
 | Need                    | Command / Doc                            |
 | ----------------------- | ---------------------------------------- |
-| First-time setup        | `/mugiwara onboard`                      |
+| First-time setup        | `mugiwara onboard` (terminal) or `/mugiwara onboard` |
 | Plan a feature          | `/mugiwara-plan` or just describe it     |
 | Review a PR diff        | `/mugiwara-review` or "review this PR"   |
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
@@ -416,7 +415,7 @@ Uninstall: `mugiwara uninstall`
 
 </details>
 
-All platforms get the full crew — 12 agents (+3 internal), 26 skills.
+All platforms get the full crew — 11 agents (+3 internal), 26 skills.
 Enforcement depth varies by harness; see the [harness matrix](docs/reference/harness-matrix.md).
 
 → [How the skills stay small: three-layer disclosure](docs/reference/skill-anatomy.md)

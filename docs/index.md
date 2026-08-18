@@ -20,12 +20,12 @@ claim.
 | [Security](concepts/security.md) | Threat model: injection via artifacts, read-untrusted split, reporting |
 | [Config](concepts/config.md) | Full reference for `.mugiwara/config` keys, review/quality depth, and commit styles |
 | [Auto-PR](concepts/pr-summary.md) | What the crew hands off at closure: push + a ready-to-paste PR summary (it never creates a PR) |
-| [The crew](concepts/agents.md) | All 12 agents (+3 internal) and when to summon each |
+| [The crew](concepts/agents.md) | All 11 agents (+3 internal) and when to summon each |
 | [The techniques](concepts/skills.md) | All 26 skills and what each enforces |
 | [The wave pipeline](concepts/workflow.md) | How a mission flows Wave 0 → Wave 9 |
 | [Execution model](concepts/execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
 | [Lanes & sizing](concepts/lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
-| [Onboarding & initiatives](concepts/workflow.md) | 9Q guided setup, team sub-missions, shared plans, status tracking |
+| [Onboarding & initiatives](concepts/workflow.md) | Zero-LLM `mugiwara onboard` setup, team sub-missions, shared plans, status tracking |
 | [Team collaboration](concepts/collaboration.md) | One shared plan, per-(mission, member) state + resume, worked example |
 | [Enforcement](reference/enforcement.md) | Skip gates, evidence over claims, and capability tiers |
 | [Git discipline](concepts/git-strategy.md) | Commits, branches, save-points — and why the executor commits |

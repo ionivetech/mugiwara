@@ -10,6 +10,7 @@ import { targets, TARGET_IDS } from './targets/index.ts';
 import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission, archiveMission } from './mission.ts';
+import { runOnboard } from './onboard.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -25,6 +26,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'list': return list(flags);
     case 'reset': return resetCmd(flags);
     case 'archive': return archive(flags, _);
+    case 'onboard': return onboardCmd(flags);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -51,6 +53,12 @@ function archive(flags: Args['flags'], positionals: string[]): void {
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
   if (result.index) console.log(`index updated: ${result.index}`);
+}
+
+async function onboardCmd(flags: Args['flags']): Promise<void> {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  if (!existsSync(projectDir)) throw new Error(`Project dir not found: ${projectDir}`);
+  await runOnboard(projectDir);
 }
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
@@ -203,6 +211,7 @@ Usage:
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (spec/plans/results/review/issues[/logs])
   mugiwara archive <m>    fold a closed mission's evidence into its report, then remove loose files
+  mugiwara onboard       run the zero-LLM onboarding wizard (writes .mugiwara/config)
   mugiwara --help        this help
   mugiwara --version     print version
 

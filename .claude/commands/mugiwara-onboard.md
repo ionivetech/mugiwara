@@ -1,15 +1,14 @@
 ---
-description: Run the Mugiwara onboarding wizard — conversation via the onboarding-guide agent, or the terminal wizard (bun scripts/onboard.ts) for CLI users.
+description: Run the Mugiwara onboarding wizard — zero-LLM terminal wizard via `mugiwara onboard`, writes .mugiwara/config.
 ---
 Mugiwara onboard: $ARGUMENTS
 
-Run the onboarding wizard. Two paths:
+Run the onboarding wizard. One path only — the zero-LLM terminal wizard:
 
-1. Conversation (default): the onboarding-guide agent runs the 9-question
-   wizard through the host's native question tool (choices + free type),
-   then writes .mugiwara/config. No network.
-2. Terminal (CLI users / non-interactive hosts):
-   `bun scripts/onboard.ts`
+1. Tell the user to run `mugiwara onboard` in their terminal (or `bunx @ionivetech/mugiwara onboard`).
+2. Do NOT ask the questions yourself. Do NOT write .mugiwara/config. The wizard is a plain
+   script — no LLM, no network, works on every platform.
+3. After the user finishes, verify `.mugiwara/config` exists and summarize the values.
 
-The wizard never writes .mugiwara/onboard.json. All 15 crew agents are always
-active — no agent-selection step.
+The wizard never writes .mugiwara/onboard.json. All 14 crew agents are always active —
+no agent-selection step.

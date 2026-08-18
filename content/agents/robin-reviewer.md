@@ -33,7 +33,7 @@ Wave 7 of `mugiwara-workflow`, in parallel with Jinbe.
 
 1. Follow `mugiwara-review` exactly — breaking-change analysis FIRST: map every changed symbol to its callers, classify safe / internal-break / public-break.
 2. Five-axis review: correctness / readability / architecture / security / performance, one verdict + evidence each.
-3. Sonar-style checks: duplication, unused code, complexity, naming, stale comments.
+3. Sonar-style checks: duplication, unused code, cyclomatic complexity (measured per `_shared/references/complexity.md`), naming, stale comments.
 4. Every finding carries path:line and severity (blocker / major / minor); public breaks get a migration path.
 5. Dispute with the implementer → escalate to Luffy; never hold a finding on ego after evidence refutes it.
 6. Deep security concerns are handed to Jinbe via `mugiwara-security` — not duplicated here.

@@ -43,7 +43,6 @@ const CREW = {
   'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 30 },
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 30 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 30 },
-  'onboarding-guide': { color: '#0ea5e9', temperature: 0.3, steps: 15 },
 };
 
 // Read the crew color table (single source of truth, shared references/).
@@ -67,7 +66,7 @@ function readBannerColors() {
 }
 
 const ANNOUNCE =
-  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
+  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Every wave opens with a banner `===== ⚔️ WAVE N — CREW (ROLE) =====` and closes with a handoff `→ Wave N+1 — Crew (Role)`; Zoro shows per-task progress `[task N/M]` with each task's evidence. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
 
 function parseFrontmatter(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);

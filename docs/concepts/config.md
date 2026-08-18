@@ -35,8 +35,8 @@ verbosity=normal
 | Key | Values | Default | Meaning |
 |-----|--------|---------|---------|
 | `mode` | guided / semi / auto | guided | How much the crew does without asking |
-| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata |
-| `commit` | conventional / gitmoji / plain | conventional | Commit message style (see below) |
+| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata (see [Branch and commit templates](#branch-and-commit-templates)) |
+| `commit` | conventional / gitmoji / plain / template | conventional | Commit message style, or a template with placeholders (see below) |
 | `auto_commit` | on / off | on | Auto-commit per task + final push. Off disables both in `guided` and `semi` — changes stay in the working tree for the user to commit and push manually. Has no effect in `auto` mode, which always commits. |
 | `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
@@ -66,6 +66,48 @@ never mid-wave.
   emoji; a bit noisy in plain terminals.
 - **plain** — no prefix, just a short imperative sentence: `Fix export csv
   encoding`. Clearest for repos that don't use any convention.
+- **template** — any value containing `{` is treated as a template with
+  placeholders, e.g. `commit={issue}: {title}` produces
+  `CR-5432: Testing button`. See below.
 
 Switch freely per project — it only affects the message format, never the
 one-logical-task-one-commit rule.
+
+## Branch and commit templates
+
+Both `branch` and `commit` accept templates with placeholders filled from
+mission metadata. A value containing `{` is a template; anything else is a
+style name (commit) or a literal pattern (branch).
+
+### Placeholders
+
+| Placeholder | Meaning | Example |
+|-------------|---------|---------|
+| `{type}` | Change type from the task: feat / fix / chore / refactor / docs | `feat` |
+| `{issue}` | Ticket/key reference (fallback: date) | `CR-5432` |
+| `{slug}` | Kebab-case mission title | `testing-button` |
+| `{title}` | Task summary, imperative, capitalized (commit templates only) | `Testing button` |
+
+### Branch examples
+
+| Config | Result for ticket CR-5432, mission "Testing button" |
+|--------|-----------------------------------------------------|
+| `branch=feature/{type}-{issue}-{slug}` (default) | `feature/feat-CR-5432-testing-button` |
+| `branch={issue}-{slug}` | `CR-5432-testing-button` |
+| `branch=feat/{slug}` | `feat/testing-button` |
+| `branch=feature/{issue}` | `feature/CR-5432` |
+
+Branch names are kebab-case; the crew never force-pushes a pushed branch.
+
+### Commit examples
+
+| Config | Result for ticket CR-5432, task "Testing button" |
+|--------|--------------------------------------------------|
+| `commit={issue}: {title}` | `CR-5432: Testing button` |
+| `commit=[{issue}] {type}: {title}` | `[CR-5432] feat: Testing button` |
+| `commit={type}({issue}): {title}` | `feat(CR-5432): Testing button` |
+| `commit={title}` | `Testing button` |
+
+A template with no `{issue}` placeholder falls back to the date for the
+ticket ref, exactly like the branch pattern. The subject stays <= 50 chars
+and imperative — templates shape the format, never the content quality.

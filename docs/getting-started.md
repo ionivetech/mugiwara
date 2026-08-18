@@ -40,7 +40,7 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target all --yes
 
 Requires **Node.js >= 20.11**. Bun is optional (build-from-source only).
 
-**First time?** Run `/mugiwara onboard` for a 9-question guided setup that configures mode, review depth, and quality checks.
+**First time?** Run `mugiwara onboard` in your terminal — a zero-LLM wizard that configures branch pattern, mode, review depth, quality checks, coverage, and commit style.
 
 ## 2. Start a mission
 
@@ -148,7 +148,7 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 |-----|---------|-----------------|
 | `mode` | guided | Autonomy: guided/semi/auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
-| `commit` | conventional | Commit style: conventional/gitmoji/plain |
+| `commit` | conventional | Commit style: conventional/gitmoji/plain, or a template like `{issue}: {title}` |
 | `auto_commit` | on | on/off — off: guided/semi never commit+push, you do |
 | `coverage_new` | 90 | Coverage % for new files |
 | `coverage_modified` | 80 | Coverage % for modified files |
@@ -159,7 +159,7 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 
 ## 6. Next steps
 
-- Meet the [crew](concepts/agents.md) — 12 agents with permission boundaries (+3 internal agents for eval/lessons/verification).
+- Meet the [crew](concepts/agents.md) — 11 agents with permission boundaries (+3 internal agents for eval/lessons/verification).
 - Browse the [skills](concepts/skills.md) — 26 skills with the 3-layer disclosure model.
 - Understand the [lanes](concepts/lanes.md) — how work is sized before it runs.
 - Set your [mode](concepts/modes.md) — guided/semi/auto.

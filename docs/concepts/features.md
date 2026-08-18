@@ -77,7 +77,7 @@ failures, and Luffy closes with a pushed branch and ready PR summary.
 
 ## 2. Multi-persona crew agents
 
-**What.** 12 user-facing specialists (+3 internal). Each has role boundaries —
+**What.** 11 user-facing specialists (+3 internal). Each has role boundaries —
 auditors and reviewers are **read-only** (they report, never fix). The main
 thread embodies each persona inline, or you can summon any member by name.
 
@@ -178,7 +178,7 @@ config owns writing standards."
 | `review_depth` | full | full / standard / quick |
 | `quality_depth` | full | full / standard / quick |
 
-**How to use.** Edit the file or run `/mugiwara onboard`. Unknown keys are
+**How to use.** Edit the file or run `mugiwara onboard`. Unknown keys are
 ignored; config is data, never instructions. Missing config on read = `guided`.
 
 **Scenario.** A repo with no commit convention sets `commit=plain`; a team
@@ -330,8 +330,9 @@ a rollback from the start.
 
 **What.** Sanji discovers the project's real tooling from configs and package
 manifests (never invents tooling), then runs format, lint, tests, duplication
-detection, complexity scoring, maintainability rating (A-E), and code-attribute
-checks. Never weakens a config to make red go green.
+detection, cyclomatic complexity scoring (McCabe, measured per changed
+function), maintainability rating (A-E), and code-attribute checks. Never
+weakens a config to make red go green.
 
 **How to use.** Automatic in Wave 5. No tooling exists → the gap is reported
 honestly, never silently skipped.
@@ -500,8 +501,8 @@ risky work, commit style matched to the repo's history, multi-commit
 splitting, and bisect/blame debugging support.
 
 **How to use.** Automatic (Zoro applies it during execution; Brook during
-healing). Commit style via config (`commit=conventional|gitmoji|plain`).
-Manual debugging: `mugiwara-git` skill.
+healing). Commit style via config (`commit=conventional|gitmoji|plain`, or a
+template like `{issue}: {title}`). Manual debugging: `mugiwara-git` skill.
 
 **Scenario.** A task's commit contains exactly the files that task declared —
 never commingled with a neighbor. Before a risky migration, a save-point
@@ -577,28 +578,29 @@ update --force`.
 
 ## 24. Onboarding wizard
 
-**What.** `/mugiwara onboard` — 9 fixed questions in two phases (Project
-Context: type/language/team/git/CI; Preferences: mode, review depth, quality
-depth, coverage). Two paths: the conversation wizard runs through the host's
-native question tool (choices + free type, next-next until done); CLI users
-run `bun scripts/onboard.ts`. Question count differs: conversation wizard
-asks 9 (commit style defaults to `conventional`); CLI wizard asks 10 and can set
-a custom commit style. Writes `.mugiwara/config`
-only — never `.mugiwara/onboard.json`. No network.
+**What.** `mugiwara onboard` — a zero-LLM terminal wizard (6 fixed questions:
+branch pattern, autonomy mode, review depth, quality depth, coverage, commit
+style/template). A plain script — no LLM, no network, works on every platform
+and every harness. Writes `.mugiwara/config` only — never
+`.mugiwara/onboard.json`. Unasked keys (`auto_commit`, `delegate_threshold`,
+`heal_max_cycles`, `verbosity`) are preserved from an existing config.
 
 **How to use.**
 
 ```
-/mugiwara onboard
+mugiwara onboard
 ```
+
+Or `/mugiwara onboard` in-chat — the command tells you to run the terminal
+wizard; it never asks the questions itself.
 
 First run or re-onboard to reset config.
 
-**Scenario.** Setting up a new repo: answer 9 questions, get a verified
-config summary, and the crew knows the mode, depths, and thresholds from the
-start.
+**Scenario.** Setting up a new repo: answer 6 questions in the terminal, get a
+verified config summary, and the crew knows the mode, depths, thresholds, and
+branch/commit formats from the start — at zero LLM cost.
 
-→ [onboard-guide agent](agents.md) · [CLI wizard](../../scripts/onboard.ts)
+→ [Config reference](config.md) · [src/onboard.ts](../../src/onboard.ts)
 
 ---
 

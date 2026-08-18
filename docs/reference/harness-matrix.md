@@ -62,7 +62,7 @@ frontmatter) splits into two regimes.
 **User-facing crew agents** (luffy-orchestrator, usopp-brainstorm,
 nami-planner, zoro-execution, chopper-checkpoint, sanji-quality,
 franky-gates, robin-reviewer, jinbe-security, brook-healing,
-resume-coordinator, onboarding-guide) run inline in the main thread with the
+resume-coordinator) run inline in the main thread with the
 full toolset and get **no runtime write-scope enforcement** on any harness.
 Discipline is rules-based: persona rules (`## Before you start`), the
 orchestration skill's Write boundary section, and the write-scope reflex (an

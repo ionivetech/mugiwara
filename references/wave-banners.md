@@ -46,10 +46,9 @@ with a handoff line:
 | eval-runner | EvalRunner | #14b8a6 | 37 | 🧪 |
 | resume-coordinator | Resume | #d97706 | 172 | 🔄 |
 | memory-keeper | MemoryKeeper | #d946ef | 200 | 🧠 |
-| onboarding-guide | Guide | #0ea5e9 | 75 | 🚀 |
 
-Skeptic, EvalRunner, Resume, MemoryKeeper and Guide are internal/dispatch or
-wizard agents — their banners appear only when a wave or worker names them.
+Skeptic, EvalRunner, Resume and MemoryKeeper are internal/dispatch agents —
+their banners appear only when a wave or worker names them.
 
 ## Rules
 
