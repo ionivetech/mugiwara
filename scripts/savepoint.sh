@@ -276,12 +276,19 @@ for evf in "$MUGIWARA_DIR/results/${MISSION}/"*.md; do
   EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/results/${MISSION}/$(basename "$evf")"
 done
 
-# skill version from package.json (argv-passing — never interpolate paths into node -e)
-SKILL_VERSION="1"
-if [ -f package.json ]; then
-  PKG_JSON="$MUGIWARA_DIR/../package.json"
-  [ -f "$PKG_JSON" ] && SKILL_VERSION=$(node -e "try{console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version.split('.')[0])}catch(e){console.log('1')}" "$PKG_JSON" 2>/dev/null || echo "1")
+# skill version — MUGIWARA's own package.json, resolved from the script
+# location (B3). The old "$MUGIWARA_DIR/../package.json" was the USER's
+# project manifest: the version-mismatch resume prompt fired when a user
+# shipped their own v2.0.0 and stayed silent across every real mugiwara
+# release. Never fall back to the user's file — "unknown" is the honest
+# answer. Full version, not the major: mugiwara's breaking changes land in
+# 0.x minors, which a major-only string can never see.
+SKILL_VERSION="unknown"
+PKG_JSON="$(dirname "$0")/../package.json"
+if [ -f "$PKG_JSON" ]; then
+  SKILL_VERSION=$(node -e "try{const v=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version;console.log(v||'unknown')}catch(e){console.log('unknown')}" "$PKG_JSON" 2>/dev/null || echo "unknown")
 fi
+[ -z "$SKILL_VERSION" ] && SKILL_VERSION="unknown"
 
 # tokens proxy (F7): deterministic estimate when the harness does not report
 # real usage. Monotonic beats precise — LANE_BASE stands in for the skills
