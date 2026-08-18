@@ -33,7 +33,7 @@ The plugin (`mugiwara.mjs`) does four things:
 
 1. **Config hook** — registers `content/skills/` as a skills path and
    `content/agents/` as agents so OpenCode discovers the full crew
-   (26 skills + 12 agents (+3 internal)) without any file copying.
+   (26 skills + 11 agents (+3 internal)) without any file copying.
 
 2. **System transform hook** — injects the crew announce header and active
    autonomy mode into every session's system prompt.

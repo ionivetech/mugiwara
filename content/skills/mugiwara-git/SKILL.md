@@ -37,12 +37,17 @@ Git hygiene keeps the mission reversible: one logical change per commit, a save-
 2. Scoped subject when scope is not obvious: `feat(auth): enforce session TTL`.
 3. Body (after a blank line) explains WHY, not what. What is visible in the diff; why is not.
 4. Match the repo's existing style — detect it before writing messages (below).
+5. Config `commit` may be a template: any value containing `{` is a template with
+   placeholders `{type}` `{issue}` `{title}` (e.g. `{issue}: {title}` → `CR-5432: Testing
+   button`). Fill placeholders from mission metadata; `{issue}` falls back to the date.
+   Style names (conventional/gitmoji/plain) keep their normal rules.
 
 ## Style detection
 
 1. Inspect existing history before the first commit: `git log --oneline -20`.
 2. Copy the observed conventions: prefix style (`feat:`/`fix:` vs plain), subject case, body usage, subject length.
 3. No commits in the repo yet → adopt conventional commits and note it in the plan.
+4. A config `commit` template overrides history detection — the user's format wins.
 
 ## Branch naming
 

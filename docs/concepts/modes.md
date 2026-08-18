@@ -60,7 +60,7 @@ verbosity=normal
 |-----|--------|---------|
 | mode | guided / semi / auto | guided |
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
-| commit | conventional / gitmoji / plain | conventional |
+| commit | conventional / gitmoji / plain / template | conventional |
 | auto_commit | on / off | on |
 | coverage_new | 0-100 | 90 |
 | coverage_modified | 0-100 | 80 |

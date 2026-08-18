@@ -43,7 +43,6 @@ const CREW = {
   'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 30 },
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 30 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 30 },
-  'onboarding-guide': { color: '#0ea5e9', temperature: 0.3, steps: 15 },
 };
 
 // Read the crew color table (single source of truth, shared references/).

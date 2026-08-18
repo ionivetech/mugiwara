@@ -53,7 +53,11 @@ branch=feature/{type}-{issue}-{slug}
 `{type}` = feat/fix/chore/refactor from the task, `{issue}` = ticket/key
 reference (fallback: date), `{slug}` = kebab-case mission title. Created before
 the first task commit; never force-push once pushed. No mugiwara-prefixed
-branch names.
+branch names. Any pattern with these placeholders works — e.g.
+`branch={issue}-{slug}` yields `CR-5432-testing-button`. Commit messages
+follow the `commit` key: a style name (conventional/gitmoji/plain) or a
+template with `{type}` `{issue}` `{title}` (e.g. `commit={issue}: {title}` →
+`CR-5432: Testing button`). Full guide: [config.md](config.md).
 
 ## Terminal step
 

@@ -30,8 +30,7 @@
       "skeptic-verifier",
       "eval-runner",
       "resume-coordinator",
-      "memory-keeper",
-      "onboarding-guide"
+      "memory-keeper"
     ],
     "skills": [
       "mugiwara-agent-security",

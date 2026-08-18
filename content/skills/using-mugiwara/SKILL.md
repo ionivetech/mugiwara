@@ -42,7 +42,7 @@ Mugiwara is a governed engineering team in your coding agent. 12 specialists —
 For task routing and classification, `mugiwara-orchestration` auto-loads as gatekeeper.
 This skill is documentation — load manually with `/using-mugiwara` or similar trigger phrases.
 Full pipeline: see skills/mugiwara-workflow.
-First time? Run `/mugiwara onboard` for guided setup. See `content/agents/onboarding-guide.md`.
+First time? Run `mugiwara onboard` in your terminal for guided setup (zero-LLM wizard, writes `.mugiwara/config`).
 
 ## Red flags
 

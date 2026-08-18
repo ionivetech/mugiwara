@@ -18,7 +18,7 @@ only shrinks.
 you open after deciding to do the work. *If the agent must open a file to know
 whether a rule applies, that rule effectively does not exist.*
 
-**Measured at v0.6.4:** index 1.4k tokens across 26 skills and 15 agents — 3.1%
+**Measured at v0.6.4:** index 1.4k tokens across 26 skills and 14 agents — 3.1%
 of total content. Body averages 764 words per skill; references hold 12,627
 words across 40 files. 96.9% of the pack costs nothing until it is needed.
 

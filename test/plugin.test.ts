@@ -30,12 +30,12 @@ test('config hook registers skills path (absolute, deduped)', async () => {
   expect(cfg.skills.paths).toContain('/fake/pre-existing');
 });
 
-test('config hook registers all 15 agents: internal -> subagent mode, user-facing -> all mode', async () => {
+test('config hook registers all 14 agents: internal -> subagent mode, user-facing -> all mode', async () => {
   const { config } = await plugin();
   const cfg = { agent: {} };
   await config(cfg);
   const names = Object.keys(cfg.agent);
-  expect(names).toHaveLength(15);
+  expect(names).toHaveLength(14);
   expect(names).toContain('luffy-orchestrator');
   const internal = ['skeptic-verifier', 'eval-runner', 'memory-keeper'];
   for (const [name, a] of Object.entries(cfg.agent)) {
@@ -89,12 +89,12 @@ test('wave-banners table: crew colors are the single source (all agents, valid h
   // full crew with well-formed hexes or agent chips silently lose their tint
   const table = readFileSync(join(contentDir, '..', 'references', 'wave-banners.md'), 'utf8');
   const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)];
-  expect(rows).toHaveLength(15);
+  expect(rows).toHaveLength(14);
   const ids = rows.map(r => r[1]);
   const expected = [
     'luffy-orchestrator', 'usopp-brainstorm', 'nami-planner', 'zoro-execution', 'chopper-checkpoint',
     'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'brook-healing',
-    'skeptic-verifier', 'eval-runner', 'resume-coordinator', 'memory-keeper', 'onboarding-guide',
+    'skeptic-verifier', 'eval-runner', 'resume-coordinator', 'memory-keeper',
   ];
   expect(ids.sort()).toEqual(expected.sort());
   for (const r of rows) {
@@ -145,9 +145,6 @@ test('config hook applies per-agent opencode tuning (color/temp/steps)', async (
     const luffy = cfg.agent['luffy-orchestrator'];
     expect(luffy.color).toBe('#ef4444');
     expect(luffy.temperature).toBe(0.2);
-    // onboarding-guide is NOT in the plugin's CREW fallback map — its color
-    // can only come from the wave-banners table (proves derivation, not fallback)
-    expect((cfg.agent['onboarding-guide'] as { color?: string }).color).toBe('#0ea5e9');
     const chopper = cfg.agent['chopper-checkpoint'];
     expect((chopper as { permission?: unknown }).permission).toBeUndefined();
     // auto mode drops the per-agent steps cap

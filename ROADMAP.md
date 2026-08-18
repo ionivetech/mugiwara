@@ -35,7 +35,7 @@ not move: no runtime, 26 skills, twelve harnesses of uneven capability.
 Verified by execution at v0.6.2 (2026-08-14):
 
 ```
-26 skills · 15 agents (+3 internal) · 33 skill-local references · 12 harness targets
+26 skills · 14 agents (+3 internal) · 33 skill-local references · 12 harness targets
 cold-load index      1.3k tokens, budget-gated
 retrieval accuracy   rank-1 93.5% · top-3 100% · negatives 100%
 determinism          lane · savepoint · evidence · mission-report
@@ -46,8 +46,9 @@ install coverage     91.6% across 9 targets
 - **Sonar-style metrics** — duplication %, complexity scoring, maintainability rating (A–E), code attribute checks per wave
 - **Security hotspots + SCA** — STRIDE-pointed hotspot review, license compliance, dependency audit
 - **Team initiatives** — sub-mission planning, shared plan, status tracking for multi-engineer collaboration
-- **Onboarding wizard** — `/mugiwara onboard`: 9-question guided setup
-  (host-native question flow, CLI fallback) for mode, review depth, quality checks
+- **Onboarding wizard** — `mugiwara onboard`: zero-LLM terminal wizard
+  (6 questions) for branch pattern, mode, review depth, quality checks,
+  coverage, and commit style/template
 
 **Satisfied at v0.6.5:** the hardening suite — assertion integrity
 (conditional-assertion gate + G5 mutation), published threat model
