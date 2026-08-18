@@ -19,9 +19,13 @@ if ! git rev-parse "$BASE" >/dev/null 2>&1; then
   [ -n "$ALT" ] && BASE="$ALT" || BASE="HEAD~1"
 fi
 
-CHANGED=$(git diff --name-only "$BASE"..HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true)
+# union of committed + staged + unstaged + untracked (F) — see patterns.sh
+CHANGED=$(changed_files "$BASE")
 FILE_COUNT=0
 [ -n "$CHANGED" ] && FILE_COUNT=$(echo "$CHANGED" | wc -l | tr -d ' ')
+read -r ADDED_INS ADDED_DEL <<EOF
+$(changed_loc "$BASE")
+EOF
 
 SENSITIVE=$(echo "$CHANGED" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 HAS_SENSITIVE=0
@@ -35,7 +39,7 @@ if [ "$FILE_COUNT" -eq 0 ] 2>/dev/null; then
   LANE="direct"
   REASON="no changed files"
 elif [ "$FILE_COUNT" -le 1 ] 2>/dev/null; then
-  ADDED=$(git diff --numstat "$BASE"..HEAD 2>/dev/null | awk '{s+=$1} END {print s+0}' || echo 0)
+  ADDED="${ADDED_INS:-0}"
   if [ "$ADDED" -lt 20 ] 2>/dev/null; then
     LANE="direct"
     REASON="1 file, <20 LOC"

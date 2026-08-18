@@ -42,6 +42,19 @@ MISSION="${1:-${STATE_MISSION:-}}"
 MEMBER="${2:-${STATE_MEMBER:-}}"
 WAVE="${3:-${STATE_WAVE:-1}}"
 MODE="${4:-${STATE_MODE:-guided}}"
+# Wave may be fractional in the docs (4.5 = the checkpoint between waves).
+# parseInt("4.5")=4 while tr -cd '0-9' gives "45", so state and continue
+# disagreed on the same mission. Normalize once, here, for both writers.
+# Keep only digits and the decimal point, then take the integer part. Garbage
+# input still sanitizes to 0 (the N2 contract the continue writer already had);
+# a fractional wave now truncates identically in BOTH writers instead of
+# splitting into 4 (parseInt) and 45 (digit-strip).
+WAVE_INT=$(printf '%s' "$WAVE" | tr -cd '0-9.')
+WAVE_INT=${WAVE_INT%%.*}
+case "$WAVE_INT" in
+  ''|*[!0-9]*) WAVE_INT=0 ;;
+esac
+
 # verbosity from config (project .mugiwara/config), default normal; env override
 VERBOSITY="${STATE_VERBOSITY:-normal}"
 if [ -f "$MUGIWARA_DIR/config" ]; then
@@ -103,24 +116,18 @@ fi
 BASE_SHA=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || git merge-base HEAD "$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "unknown")
 HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
-CHANGED_FILES=$(git diff --name-only "$BASE_SHA"..HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true)
+# union of committed + staged + unstaged + untracked (F) — see patterns.sh
+CHANGED_FILES=$(changed_files "$BASE_SHA")
 FILES_TOUCHED=$( [ -n "$CHANGED_FILES" ] && echo "$CHANGED_FILES" | wc -l | tr -d ' ' || echo 0 )
 
-LOC_INS=0
-LOC_DEL=0
-LOC_DELTA=0
-LOC_CHURN=0
-if [ "$BASE_SHA" != "unknown" ]; then
-  STAT=$(git diff --shortstat "$BASE_SHA"..HEAD 2>/dev/null || echo "")
-  INS=$(echo "$STAT" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
-  DEL=$(echo "$STAT" | grep -oE '[0-9]+ deletion'  | grep -oE '[0-9]+' || echo 0)
-  LOC_INS=$(( ${INS:-0} + 0 ))
-  LOC_DEL=$(( ${DEL:-0} + 0 ))
-  LOC_DELTA=$(( LOC_INS - LOC_DEL ))
-  # churn is insertion+deletion — refactors and deletions are work too (D4)
-  LOC_CHURN=$(( LOC_INS + LOC_DEL ))
-fi
-[ -z "$LOC_DELTA" ] && LOC_DELTA=0
+read -r LOC_INS LOC_DEL <<EOF
+$(changed_loc "$BASE_SHA")
+EOF
+LOC_INS=$(( ${LOC_INS:-0} + 0 ))
+LOC_DEL=$(( ${LOC_DEL:-0} + 0 ))
+LOC_DELTA=$(( LOC_INS - LOC_DEL ))
+# churn is insertion+deletion — refactors and deletions are work too (D4)
+LOC_CHURN=$(( LOC_INS + LOC_DEL ))
 
 SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 
@@ -142,7 +149,7 @@ elif [ "$FILES_TOUCHED" -ge 2 ] 2>/dev/null; then
   LANE_REASON="$FILES_TOUCHED files"
 elif [ "$FILES_TOUCHED" -eq 1 ] 2>/dev/null; then
   # 1-file rule mirrors lane.sh: >=20 added LOC -> lean, else direct
-  ADDED=$(git diff --numstat "$BASE_SHA"..HEAD 2>/dev/null | awk '{s+=$1} END {print s+0}')
+  ADDED="$LOC_INS"
   if [ "${ADDED:-0}" -ge 20 ] 2>/dev/null; then
     LANE="lean"
     LANE_REASON="1 file, $ADDED LOC"
@@ -217,7 +224,11 @@ if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
 fi
 
 # blocker count
-BLOCKERS_FILE=$(ls "$MUGIWARA_DIR/issues/${MISSION}-blockers.md" 2>/dev/null || true)
+# The crew writes the DATED name (`YYYY-MM-DD-<mission>-blockers.md`) — that is
+# what 15 prose sites mandate and what lands on disk. Matching only the bare
+# name made blockers_open structurally 0 forever, and that zero feeds the DoD
+# ship-readiness axis. Accept both; newest wins.
+BLOCKERS_FILE=$(ls -t "$MUGIWARA_DIR/issues/${MISSION}-blockers.md" "$MUGIWARA_DIR"/????-??-??-"${MISSION}"-blockers.md "$MUGIWARA_DIR/issues"/????-??-??-"${MISSION}"-blockers.md 2>/dev/null | head -1 || true)
 BLOCKERS_OPEN=0
 if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
   # data rows start with a wave number; header "| wave |" and separator
@@ -329,7 +340,7 @@ const data = {
 require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\n');
 " \
   "$MISSION" "$ACTOR" "$BRANCH" "$LANE" "$LANE_REASON" \
-  "$WAVE" "$MODE" "$BASE_SHA" "$HEAD_SHA" "$FILES_TOUCHED" \
+  "$WAVE_INT" "$MODE" "$BASE_SHA" "$HEAD_SHA" "$FILES_TOUCHED" \
   "$LOC_DELTA" "$SENSITIVE_PATHS" "$TASKS_DONE" "$TASKS_TOTAL" \
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
@@ -356,7 +367,7 @@ if [ -n "$MISSION" ]; then
   fi
   # N2: every field echoed into continue is validated first. MISSION + MEMBER
   # are allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized.
-  CONT_WAVE=$(echo "$WAVE" | tr -cd '0-9')
+  CONT_WAVE="$WAVE_INT"
   case "$MODE" in
     guided|semi|auto) CONT_MODE="$MODE" ;;
     *) CONT_MODE="guided" ;;
