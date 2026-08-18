@@ -47,12 +47,22 @@ for (const id of TARGET_IDS) {
     const skillFiles = findMd(skillsDir).filter((f) => !f.replace(skillsDir, '').includes('/references/'));
 
     for (const file of skillFiles) {
+      // Targets emit skills either as `<skillsDir>/<name>/SKILL.md` (claude) or
+      // as a flat `<skillsDir>/<name>.instructions.md` (copilot). Both forms
+      // must yield the skill name, because non-native targets store references
+      // per-skill under `.mugiwara/refs/<name>/`.
+      const relSkill = relative(skillsDir, file);
+      const skillName = relSkill.includes('/') ? relSkill.split('/')[0] : basename(relSkill).split('.')[0];
+
       for (const m of readFileSync(file, 'utf8').matchAll(/`([^`]*references\/[^`]+\.md)`/g)) {
         pointers++;
         const pointer = m[1];
         const candidates = [
           join(dirname(file), pointer),
           join(mugiwaraRefsDir, pointer.replace(/^(?:_shared\/)?references\//, '')),
+          ...(target.refsDir
+            ? [join(target.refsDir({ scope: 'project', projectDir: dir, home: '' }, skillName), basename(pointer))]
+            : []),
         ];
         if (!candidates.some((p) => existsSync(p))) {
           brokenPointers++;
