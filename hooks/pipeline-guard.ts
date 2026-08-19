@@ -9,13 +9,17 @@
 // model to run savepoint.sh; production executions before that day: 0. Prose
 // enforcement measured 0-for-21, so this is a machine check instead.
 //
-// The enforced invariant is deliberately narrow: **triage happened and is on
-// disk** — NOT "the whole pipeline ran". Lane 0 satisfies it with a Lane 0
-// savepoint, so no exception list is needed and the check is safe to default on.
+// Two invariants, both narrow:
+//   1. **triage happened and is on disk** — NOT "the whole pipeline ran".
+//      Lane 0 satisfies it with a Lane 0 savepoint, so no exception list is
+//      needed and the check is safe to default on. Blocks.
+//   2. **Lane 1+ source work went through an executor.** Lane 0 is exempt from
+//      this one (it skips dispatch by design); an ABSENT lane is not — that is
+//      check 1's territory, never a Lane 0 exemption. Warns only, see below.
 //
 // Fails OPEN on any internal error. A fence that can wedge a session gets
 // disabled by its users, and then it fences nothing.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
@@ -76,23 +80,55 @@ function sourceChanged(): boolean {
   }
 }
 
-/** Triage on disk = at least one readable savepoint for some mission. */
-function triageOnDisk(): boolean {
+/**
+ * The newest readable savepoint for any mission, or null when there is none.
+ * Its existence IS the triage fact (check 1); its `lane` field is the input to
+ * the write-boundary check (check 2).
+ */
+function newestMissionState(): { mission: string; lane: string } | null {
   const base = join(cwd, '.mugiwara', 'state');
-  if (!existsSync(base)) return false;
+  if (!existsSync(base)) return null;
+  let best: { mission: string; lane: string } | null = null;
+  let bestAt = -1;
   try {
     for (const e of readdirSync(base, { withFileTypes: true })) {
       if (!e.isDirectory()) continue;
       for (const f of readdirSync(join(base, e.name))) {
         if (!f.endsWith('.json')) continue;
+        const p = join(base, e.name, f);
         try {
-          const s = JSON.parse(readFileSync(join(base, e.name, f), 'utf8')) as { mission?: unknown };
-          if (typeof s.mission === 'string' && s.mission) return true;
+          const s = JSON.parse(readFileSync(p, 'utf8')) as { mission?: unknown; lane?: unknown };
+          if (typeof s.mission !== 'string' || !s.mission) continue;
+          const at = statSync(p).mtimeMs;
+          if (at <= bestAt) continue;
+          bestAt = at;
+          best = { mission: s.mission, lane: typeof s.lane === 'string' ? s.lane : '' };
         } catch { /* corrupt savepoint is not triage */ }
       }
     }
   } catch { /* unreadable — treat as absent */ }
-  return false;
+  return best;
+}
+
+// Lane 0 (`direct`) is the ONLY lane that legitimately skips dispatch: it is
+// still inside mugiwara (it has a savepoint — that is check 1), it just runs
+// minimum process. From `lean` up, the lane itself says the work should have
+// been handed to an executor.
+const LANE_RANK: Record<string, number> = { direct: 0, lean: 1, standard: 2, full: 3, spike: 4 };
+
+/** An executor (Zoro/Brook) was dispatched or embodied in this session. */
+function executorDispatched(sessionId: string): boolean {
+  const file = join(cwd, '.mugiwara', 'state', '.engaged');
+  if (!existsSync(file)) return false;
+  try {
+    const m = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; executor_dispatched_at?: string };
+    const at = Date.parse(m.executor_dispatched_at ?? '') || 0;
+    if (!at) return false;
+    if (sessionId && m.session_id && m.session_id !== sessionId) return false;
+    return Date.now() - at < MARKER_TTL_MS;
+  } catch {
+    return false;
+  }
 }
 
 async function main(): Promise<void> {
@@ -111,7 +147,33 @@ async function main(): Promise<void> {
   const sessionId = typeof payload.session_id === 'string' ? payload.session_id : '';
   if (!engaged(sessionId)) return;
   if (!sourceChanged()) return;
-  if (triageOnDisk()) return;
+
+  const state = newestMissionState();
+
+  // --- check 2: the write boundary -----------------------------------------
+  // Triage exists and sized the mission Lane 1+, source changed, and no
+  // executor was ever dispatched or embodied this session. That is the captain
+  // implementing work the lane says should have been handed to Zoro or Brook.
+  //
+  // Reported as a WARNING even under enforce=block. Half the predicate is a
+  // crisp on-disk fact (the lane field); the other half infers from the ABSENCE
+  // of a dispatch marker, and absence has failure modes the lane does not —
+  // a harness whose PostToolUse payload omits the agent name, or a dispatch
+  // that happened in an earlier session. Those produce false positives, and a
+  // false block is the one outcome that gets the whole fence switched off.
+  // Raise to block once dispatch recording is proven across harnesses.
+  if (state) {
+    const rank = LANE_RANK[state.lane] ?? -1; // unknown/absent lane → no opinion
+    if (rank >= 1 && !executorDispatched(sessionId)) {
+      process.stderr.write(
+        `⚠ Mugiwara: mission "${state.mission}" is sized Lane ${rank} (${state.lane}) and source changed, ` +
+        'but no executor (zoro-execution / brook-healing) was dispatched or embodied this session. ' +
+        'Only Zoro and Brook write source — dispatch one, or re-triage as Lane 0 (direct) if the work ' +
+        'really is that small. Set enforce=off in .mugiwara/config to disable these checks.\n',
+      );
+    }
+    return;
+  }
 
   const reason =
     'Mugiwara: source changed in this session but no Wave 0 triage is on disk. ' +

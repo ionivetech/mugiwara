@@ -27,6 +27,13 @@ async function main(): Promise<void> {
   const blob = JSON.stringify(payload).toLowerCase();
   if (!blob.includes('mugiwara')) return;
 
+  // Executor dispatch is a second, narrower fact recorded in the same marker:
+  // did the session hand source work to the only two roles allowed to write it
+  // (Zoro / Brook)? Both the subagent form and the inline-embody skill form
+  // count — on Codex-style harnesses embodying the role IS the dispatch.
+  // The guard uses this to catch a captain implementing Lane 1+ work inline.
+  const dispatched = /zoro-execution|brook-healing|mugiwara-execution|mugiwara-healing|mugiwara-execute|mugiwara-heal/.test(blob);
+
   const dir = join(cwd, '.mugiwara', 'state');
   const file = join(dir, '.engaged');
   // session_id scopes the marker when the payload carries one. Its presence on
@@ -38,13 +45,25 @@ async function main(): Promise<void> {
     mkdirSync(dir, { recursive: true });
     // preserve the first engagement time; only refresh the touch timestamp
     let firstSeen = new Date().toISOString();
+    let dispatchedAt = '';
     if (existsSync(file)) {
       try {
-        const prev = JSON.parse(readFileSync(file, 'utf8')) as { first_seen?: string };
+        const prev = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; first_seen?: string; executor_dispatched_at?: string };
         if (typeof prev.first_seen === 'string') firstSeen = prev.first_seen;
+        // A dispatch belongs to the session that made it. Carrying it into the
+        // next session would excuse a captain who implements inline today
+        // because Zoro ran yesterday.
+        const sameSession = !sessionId || !prev.session_id || prev.session_id === sessionId;
+        if (sameSession && typeof prev.executor_dispatched_at === 'string') dispatchedAt = prev.executor_dispatched_at;
       } catch { /* corrupt marker — rewrite it */ }
     }
-    writeFileSync(file, JSON.stringify({ session_id: sessionId, first_seen: firstSeen, touched_at: new Date().toISOString() }, null, 2) + '\n');
+    if (dispatched) dispatchedAt = new Date().toISOString();
+    writeFileSync(file, JSON.stringify({
+      session_id: sessionId,
+      first_seen: firstSeen,
+      touched_at: new Date().toISOString(),
+      executor_dispatched_at: dispatchedAt,
+    }, null, 2) + '\n');
   } catch {
     // cannot write (read-only fs, permissions) — stay silent, guard stays off
   }
