@@ -99,10 +99,10 @@ const RUNTIME_SHAPES: RegExp[] = [
 // Shape violations that exist today and are NOT fixed in this mission because
 // another worker holds `content/**` prose this wave. Ratchet: a NEW violation
 // fails the gate; these two are reported, then must be deleted from this list.
-const KNOWN_SHAPE_DRIFT = new Map<string, string>([
-  ['.mugiwara/review/<mission>-review.md', 'content/skills/mugiwara-gates/SKILL.md — undated, should be YYYY-MM-DD-<mission>-review.md'],
-  ['.mugiwara/review/<mission>-security.md', 'content/skills/mugiwara-gates/SKILL.md — undated, should be YYYY-MM-DD-<mission>-security.md'],
-]);
+// Prose paths whose SHAPE is known-wrong but not yet fixed. Reported every run
+// so they cannot rot quietly; emptied as each is repaired. Keep this empty —
+// an entry here is a defect with a due date, never a permanent exemption.
+const KNOWN_SHAPE_DRIFT = new Map<string, string>([]);
 
 /** `[label](path)`, `bun scripts/x.ts --flag`, trailing punctuation → the bare path. */
 function normalizePath(raw: string): string {
