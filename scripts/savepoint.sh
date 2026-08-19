@@ -74,7 +74,7 @@ case "$VERBOSITY" in
   normal|full) ;;
   *) VERBOSITY="normal" ;;
 esac
-ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-}}}}"
+ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-${USERNAME:-}}}}}"
 BRANCH="$(git branch --show-current 2>/dev/null || echo 'unknown')"
 
 # treat the legacy empty-actor placeholder '""' as "no member" (solo). The old

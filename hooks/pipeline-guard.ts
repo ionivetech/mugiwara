@@ -21,6 +21,7 @@
 // disabled by its users, and then it fences nothing.
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
@@ -29,7 +30,9 @@ const MARKER_TTL_MS = 12 * 60 * 60 * 1000; // 12h — a stale marker must not po
 type Enforce = 'off' | 'warn' | 'block';
 
 function readEnforce(): Enforce {
-  for (const base of [cwd, process.env.HOME ?? '']) {
+  // homedir(), not $HOME: Windows sets USERPROFILE and leaves HOME unset, so
+  // the global ~/.mugiwara/config was never read there.
+  for (const base of [cwd, homedir()]) {
     if (!base) continue;
     const file = join(base, '.mugiwara', 'config');
     if (!existsSync(file)) continue;

@@ -28,18 +28,36 @@ export const RUNNABLE = ['savepoint.sh', 'lane.sh', 'evidence.sh', 'mission-repo
 export function findBash(): string | null {
   const explicit = process.env.MUGIWARA_BASH?.trim();
   if (explicit) return existsSync(explicit) ? explicit : null;
-  if (process.platform !== 'win32') return '/bin/bash';
-  for (const p of [
-    'C:\\Program Files\\Git\\bin\\bash.exe',
-    'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
-    join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Git', 'bin', 'bash.exe'),
-  ]) {
+  const candidates =
+    process.platform === 'win32'
+      ? [
+          'C:\\Program Files\\Git\\bin\\bash.exe',
+          'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
+          join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Git', 'bin', 'bash.exe'),
+        ]
+      : // /bin/bash is not universal on Linux — Alpine and other busybox-based
+        // images ship /bin/sh only. Probing beats assuming: an assumed path
+        // spawns ENOENT, which surfaces as a stack trace instead of the
+        // actionable "no bash found" message below.
+        ['/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash', '/opt/homebrew/bin/bash'];
+  for (const p of candidates) {
     if (p && existsSync(p)) return p;
   }
-  // last resort: whatever is on PATH (Git Bash, WSL, MSYS)
-  const probe = spawnSync('where', ['bash'], { encoding: 'utf8' });
+  // last resort: whatever is on PATH (Git Bash, WSL, MSYS, a nonstandard prefix)
+  const probe = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['bash'], {
+    encoding: 'utf8',
+  });
   const first = probe.stdout?.split(/\r?\n/).find((l) => l.trim());
   return first?.trim() || null;
+}
+
+/** Platform-correct remedy for a missing bash — "install Git for Windows" is wrong advice on Linux. */
+export function noBashMessage(): string {
+  const remedy =
+    process.platform === 'win32'
+      ? 'Install Git for Windows (which ships bash)'
+      : 'Install bash with your package manager (e.g. `apk add bash`, `apt install bash`)';
+  return `no bash found. ${remedy}, or set MUGIWARA_BASH to a bash executable.`;
 }
 
 export function runScript(name: string, args: string[], projectDir: string): number {
@@ -53,11 +71,7 @@ export function runScript(name: string, args: string[], projectDir: string): num
     throw new Error(`script not found: ${name}${have.length ? ` (available: ${have.join(', ')})` : ''}`);
   }
   const bash = findBash();
-  if (!bash) {
-    throw new Error(
-      'no bash found. Install Git for Windows (which ships bash), or set MUGIWARA_BASH to a bash executable.',
-    );
-  }
+  if (!bash) throw new Error(noBashMessage());
   const r = spawnSync(bash, [script, ...args], {
     cwd: resolve(projectDir),
     stdio: 'inherit',

@@ -69,7 +69,9 @@ export function gitActor(cwd: string): string {
   const name = git(['config', 'user.name']);
   const email = git(['config', 'user.email']);
   if (name && email) return `${name} <${email}>`;
-  return name || (process.env.USER ?? '');
+  // USERNAME is the Windows spelling of USER; savepoint.sh resolves the same
+  // chain, and the two must stay byte-identical or the actor filter drops rows.
+  return name || process.env.USER || process.env.USERNAME || '';
 }
 
 /** Read every JSON under `.mugiwara/<root>/<mission>/*.json`. Corrupt files are skipped. */

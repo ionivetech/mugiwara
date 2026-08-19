@@ -4,11 +4,12 @@
 // hooks/pipeline-guard.ts
 import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { execFileSync } from "child_process";
+import { homedir } from "os";
 import { join } from "path";
 var cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 var MARKER_TTL_MS = 12 * 60 * 60 * 1000;
 function readEnforce() {
-  for (const base of [cwd, process.env.HOME ?? ""]) {
+  for (const base of [cwd, homedir()]) {
     if (!base)
       continue;
     const file = join(base, ".mugiwara", "config");

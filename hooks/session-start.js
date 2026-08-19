@@ -3,7 +3,7 @@
 
 // hooks/session-start.ts
 import { readFileSync, existsSync, readdirSync } from "fs";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
 var cwd = process.cwd();
@@ -30,11 +30,18 @@ function gitActor() {
     const envName = process.env.GIT_AUTHOR_NAME?.trim() ?? "";
     if (envName)
       return envName;
-    const name = execSync("git config user.name 2>/dev/null || true", { cwd, encoding: "utf8" }).trim();
-    const email = execSync("git config user.email 2>/dev/null || true", { cwd, encoding: "utf8" }).trim();
+    const git = (key) => {
+      try {
+        return execFileSync("git", ["config", key], { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+      } catch {
+        return "";
+      }
+    };
+    const name = git("user.name");
+    const email = git("user.email");
     if (name && email)
       return `${name} <${email}>`;
-    return name || (process.env.USER ?? "");
+    return name || process.env.USER || process.env.USERNAME || "";
   } catch {
     return "";
   }

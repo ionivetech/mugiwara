@@ -7,7 +7,7 @@
 // actor.
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -37,10 +37,21 @@ function gitActor(): string {
     if (stateActor) return stateActor;
     const envName = process.env.GIT_AUTHOR_NAME?.trim() ?? '';
     if (envName) return envName;
-    const name = execSync('git config user.name 2>/dev/null || true', { cwd, encoding: 'utf8' }).trim();
-    const email = execSync('git config user.email 2>/dev/null || true', { cwd, encoding: 'utf8' }).trim();
+    // execFileSync, not a shell string: `2>/dev/null || true` is POSIX syntax
+    // that cmd.exe does not understand, so on Windows this threw and the actor
+    // silently fell through to $USER. stdio ignores stderr instead.
+    // an unset key exits 1 — that is "no value", not a failure, so it must not
+    // abort the whole resolution and lose the USER/USERNAME fallback below.
+    const git = (key: string) => {
+      try {
+        return execFileSync('git', ['config', key], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      } catch { return ''; }
+    };
+    const name = git('user.name');
+    const email = git('user.email');
     if (name && email) return `${name} <${email}>`;
-    return name || (process.env.USER ?? '');
+    // USERNAME is the Windows spelling of USER
+    return name || process.env.USER || process.env.USERNAME || '';
   } catch {
     return '';
   }

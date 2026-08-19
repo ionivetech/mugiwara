@@ -61,7 +61,7 @@ describe('bash lookup fails CLOSED', () => {
     } finally { prev === undefined ? delete process.env.MUGIWARA_BASH : (process.env.MUGIWARA_BASH = prev); }
   });
 
-  test('runScript with a broken MUGIWARA_BASH throws the install-Git-for-Windows message — not a silent no-op', () => {
+  test('runScript with a broken MUGIWARA_BASH throws an actionable, platform-correct message — not a silent no-op', () => {
     const prev = process.env.MUGIWARA_BASH;
     process.env.MUGIWARA_BASH = join(DIR, 'no', 'such', 'bash');
     try {
@@ -70,7 +70,9 @@ describe('bash lookup fails CLOSED', () => {
       try { returned = runScript('savepoint.sh', ['m'], DIR); } catch (e) { msg = (e as Error).message; }
       expect(returned).toBeUndefined();           // it threw; it did not return 0
       expect(msg).toContain('no bash found');
-      expect(msg).toContain('Git for Windows');
+      // "install Git for Windows" is wrong advice on Linux/macOS — the remedy
+      // has to name the platform's actual package manager there
+      expect(msg).toContain(process.platform === 'win32' ? 'Git for Windows' : 'package manager');
       expect(msg).toContain('MUGIWARA_BASH');
     } finally { prev === undefined ? delete process.env.MUGIWARA_BASH : (process.env.MUGIWARA_BASH = prev); }
   });
@@ -137,3 +139,16 @@ describe('a real savepoint.sh run through runScript', () => {
 });
 
 process.on('exit', () => { try { rmSync(DIR, { recursive: true, force: true }); } catch { /* best effort */ } });
+
+describe('bash lookup on POSIX does not assume /bin/bash', () => {
+  test('findBash returns a path that actually exists (Alpine ships /bin/sh only)', () => {
+    const prev = process.env.MUGIWARA_BASH;
+    delete process.env.MUGIWARA_BASH;
+    try {
+      const bash = findBash();
+      // null is a legitimate answer on a bash-less machine; a non-null answer
+      // must never be an assumed path that is not there
+      if (bash !== null) expect(existsSync(bash)).toBe(true);
+    } finally { if (prev !== undefined) process.env.MUGIWARA_BASH = prev; }
+  });
+});

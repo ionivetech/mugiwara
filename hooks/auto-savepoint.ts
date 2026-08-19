@@ -11,6 +11,9 @@
 // explicit crew action; this only keeps tasks/lane/blockers honest.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+// Shared with `mugiwara run` — a second copy here drifted (it lacked the PATH
+// probe), so the hook found no bash where the CLI did. One definition, bundled in.
+import { findBash } from '../src/run.ts';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -81,20 +84,6 @@ function activeMission(): Active | null {
     }
   }
   return best ?? bootstrapMission();
-}
-
-function findBash(): string | null {
-  const explicit = process.env.MUGIWARA_BASH?.trim();
-  if (explicit) return existsSync(explicit) ? explicit : null;
-  if (process.platform !== 'win32') return '/bin/bash';
-  for (const p of [
-    'C:\\Program Files\\Git\\bin\\bash.exe',
-    'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
-    join(process.env.LOCALAPPDATA ?? '', 'Programs', 'Git', 'bin', 'bash.exe'),
-  ]) {
-    if (p && existsSync(p)) return p;
-  }
-  return null;
 }
 
 try {
