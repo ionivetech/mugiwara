@@ -24,6 +24,8 @@ Every wave returns to Luffy — no crew member hands off directly to another. Ex
 
 ## Coordination files
 
+Team repos — per-(mission, member) isolation, no collisions: `_shared/references/multi-actor.md`.
+
 The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/results/<mission>/06-closure.md`.
 
 ## Actor attribution (every .mugiwara write)

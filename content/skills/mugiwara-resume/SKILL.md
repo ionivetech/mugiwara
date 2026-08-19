@@ -14,6 +14,8 @@ The host AI can lose context — compaction, new session, crash. Disk state is t
 
 ## State contract
 
+What happens when a skill changes shape mid-mission: `_shared/references/skill-versioning.md`.
+
 Resume reads per-(mission, member) files. Identity is (mission, member), never branch. Solo missions use member-less files named `state.json`.
 
 ```

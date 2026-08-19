@@ -143,10 +143,13 @@ for (const file of proseFiles) {
 // ---------------------------------------------------------------------------
 // C. reference reachability (file → pointer, the inverse of check A)
 // ---------------------------------------------------------------------------
-// Ratchet, not a hard zero: 15 files are unreachable today. Deleting them is a
-// content decision, not a gate decision — so the gate freezes the number and
-// fails the moment a 16th appears.
-const ORPHAN_BASELINE = 18;
+// Hard zero. The 18 orphans this ratchet was holding were all substantive —
+// worksheets, rubrics and worked examples their own skill visibly needed — so
+// every one was wired to its parent section rather than deleted. With the
+// backlog at zero the ratchet becomes what it should always have been: a new
+// reference file must be pointed at by the prose that needs it, or it is not
+// a reference, it is dead weight shipped to every project.
+const ORPHAN_BASELINE = 0;
 
 const corpus = proseFiles.map((f) => ({ file: f, body: readFileSync(f, 'utf8') }));
 const refFiles = proseFiles.filter((f) => f.includes('/references/') || relative(repoRoot, f).startsWith('references/'));

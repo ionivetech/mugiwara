@@ -39,6 +39,8 @@ Before fixing a bug: write the failing test that reproduces it, watch it fail, t
 
 ## Triage matrix
 
+Full taxonomy behind the matrix: `references/failure-taxonomy.md`.
+
 | Failure | Action |
 |---------|--------|
 | lint/format error | auto-fix (formatter when supported), re-run |

@@ -82,8 +82,7 @@ six-field worker prompt. Thin prompts cause thin results.
 > Isolation is for context and permission, never for autonomy.
 
 ## TDD discipline & user tests
-
-Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule.
+Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule. One task end to end, RED through commit: `references/worked-example.md`.
 
 ## One logical task, one commit
 

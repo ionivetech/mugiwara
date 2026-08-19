@@ -29,6 +29,8 @@ For every task in the completed wave, in order:
 
 ## Failure ledger
 
+Row schema + worked rows: `references/ledger-format.md`.
+
 Append each failing criterion as one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`:
 
 `| wave | task | symptom | attempted | help-needed |`

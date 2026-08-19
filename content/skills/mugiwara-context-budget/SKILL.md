@@ -18,6 +18,8 @@ Run this whenever the job outgrows a short conversation: a mission spanning many
 
 ## Process
 
+Worked budget, tier by tier: `references/context-budget.md`. Warn/stop thresholds per lane: `_shared/references/token-budget.md`.
+
 1. **Budget the context first.** Before reading anything, state the likely ceiling: how many tokens this mission can afford, how much is already spent, what must survive to the end (mission goal, key decisions, task list). Recheck the ledger after every wave. If spend runs ahead of plan, compress before continuing — never after the window fills.
 
 2. **Feed selectively, not wholesale.** Pull the relevant spec section, the files being touched, and one example of the pattern in use — not the entire spec, not the whole module tree. For each new file, ask: does the next decision need this, or is a search result and a one-line summary enough? A long context is not a guarantee of accuracy; it is drift accumulating.

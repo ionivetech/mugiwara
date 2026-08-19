@@ -22,6 +22,8 @@ Framework code from docs, not memory: `_shared/references/source-grounding.md`.
 
 Full 4-phase walkthrough: `references/process.md` — reproduce, localize, reduce, fix+guard, escalation. 33 lines of detail; no step is optional.
 
+Worked example, one bug from report to guard: `references/four-phase-worked.md`.
+
 A failure is a stopping event, not a speed bump. Do not guess, do not patch. Walk the four phases in order; each gates the next.
 
 ## Rationalizations

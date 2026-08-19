@@ -80,6 +80,8 @@ Every edge names its file: `consumes <file> from Task M → produces <file> for 
 
 ## Anti-patterns
 
+Each with its failure mode and the fix: `references/anti-patterns.md`.
+
 - "TBD", "add appropriate error handling", or "similar to Task N" in a step.
 - No Files paths, or an Acceptance like "works correctly" (uncheckable).
 - Assumed tooling not confirmed in the context scan, or silent reordering/dropping tasks.
