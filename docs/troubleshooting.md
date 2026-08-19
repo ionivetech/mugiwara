@@ -42,24 +42,24 @@ a version manager (nvm, fnm, volta).
 - **Tier-3 stub.** On rules-dir harnesses, the loaded file is a stub pointing at
   `.mugiwara/refs/<name>.md`. If the full body is missing, reinstall.
 
-### The crew ran too many / too few waves
+### The crew ran too many / too few flow stages
 
-Lane routing sizes the mission at Wave 0. If the estimate was wrong, the lane
+Lane routing sizes the mission at Flow 0. If the estimate was wrong, the lane
 escalates when the work outgrows it. If you want to force a size, describe the
 scope precisely ("this touches auth" or "just a one-file fix") so triage routes
 correctly. There is no config key for the lane.
 
-### A wave is skipped silently
+### A flow stage is skipped silently
 
-Not by design. Luffy records every omitted wave and its reason in the decision
-log (`.mugiwara/logs/`). If a wave vanished with no record, it is a harness bug —
+Not by design. Luffy records every omitted flow stage and its reason in the decision
+log (`.mugiwara/logs/`). If a flow stage vanished with no record, it is a harness bug —
 report it with the mission log.
 
 ### Context grows too large over a long mission
 
 Evidence lives in `.mugiwara/` files; the conversation carries terse verdicts
 and pointers. On tier-3 harnesses the crew also flushes full state to
-`.mugiwara/` at each wave so a resume does not need the prior context. If it is
+`.mugiwara/` at each flow stage so a resume does not need the prior context. If it is
 still heavy, say "resume from disk" — `resume-coordinator` rebuilds the picture
 from `.mugiwara/`.
 

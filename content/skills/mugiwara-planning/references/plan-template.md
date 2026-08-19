@@ -51,14 +51,14 @@ Multi-PR scope (>2 days). Split into sub-missions — never one giant plan:
 Batch ALL blocking ambiguities into ONE question round before writing. If a
 major decision appears mid-plan, stop and ask then — never assume silently.
 Unanswered question goes back to Luffy, never forward to Zoro. Read the
-mission spec at `.mugiwara/spec/YYYY-MM-DD-<mission>.md` (the Wave 0/1
+mission spec at `.mugiwara/spec/YYYY-MM-DD-<mission>.md` (the Flow 0/1
 bridge); if none exists, return to Luffy for the spec bridge or brainstorm —
 never plan from an empty spec, that is fiction.
 
 Mode gates (per mode config):
 
 - `guided`: batch ONE question round, wait for answers, then present the plan for an explicit user GO.
-- `semi`: manual until the written plan — batch the question round, wait, present the plan for an explicit user GO; execution from Wave 3 onward is automatic.
+- `semi`: manual until the written plan — batch the question round, wait, present the plan for an explicit user GO; execution from Flow 3 onward is automatic.
 - `auto`: fully automatic — no user GO required. Ambiguities are resolved internally: the owning agent brainstorms with Usopp, Luffy makes the call, and the crew proceeds. Only a genuine blocker or the heal halt pauses. If a blocking question truly cannot be resolved from the repo + skills, escalate to Luffy → the user.
 
 Never hand to the executor without a GO except through the auto gate above;

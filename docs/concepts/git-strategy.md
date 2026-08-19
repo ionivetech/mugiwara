@@ -23,7 +23,7 @@ tasks are sized at that granularity — see `mugiwara-planning`.
 
 - Adjacent trivial changes (typo, formatting, one-line tweak) fold into the
   neighboring logical task's commit.
-- Never one commit per keystroke; never a wave of micro-commits.
+- Never one commit per keystroke; never a flow stage of micro-commits.
 - If the plan slices finer than a logical change, group adjacent tasks into one
   commit and note the grouping in the execution report.
 

@@ -245,7 +245,7 @@ function continueCmd(flags: Args['flags'], positionals: string[]): void {
   if (r.kind === 'resume') { console.log(formatResume(r.entry)); return; }
 
   if (r.kind === 'none') {
-    console.log('No mission in flight. Start one with Wave 0 triage (mugiwara-orchestration).');
+    console.log('No mission in flight. Start one with Flow 0 triage (mugiwara-orchestration).');
   } else if (r.kind === 'missions') {
     console.log(`${new Set(r.entries.map((e) => e.mission)).size} missions in flight:\n`);
     console.log(formatTable(r.entries));

@@ -8,7 +8,7 @@
 
 A governed engineering crew for your AI agent — evidence at every step, and a
 process that sizes itself to the work. A typo costs nothing. An auth migration
-gets all nine waves. No runtime, no API keys, no servers. Just markdown your
+gets all nine flow stages. No runtime, no API keys, no servers. Just markdown your
 agent already knows how to read.
 
 Works on Claude Code, opencode, Copilot, Gemini, and 8 more platforms.
@@ -39,16 +39,16 @@ format `mugiwara run mission-report.sh` produces:
     11 files, +340 LOC
     Sensitive paths: src/auth/
 
-    ## Waves
+    ## Flow stages
 
-    | Wave | Artifact | Verdict |
+    | Flow stage | Artifact | Verdict |
     |------|----------|---------|
-    | Execute (Wave 3) | `01-execution.md` | PASS |
-    | Checkpoint (Wave 4) | `02-audit.md` | PASS |
-    | Quality (Wave 5) | `03-quality.md` | PASS |
-    | Gates (Wave 6) | `04-gates.md` | PASS |
-    | Healing (Wave 8) | `05-healing.md` | PASS |
-    | Closure (Wave 9) | `06-closure.md` | GO |
+    | Execute (Flow 3) | `01-execution.md` | PASS |
+    | Checkpoint (Flow 4) | `02-audit.md` | PASS |
+    | Quality (Flow 5) | `03-quality.md` | PASS |
+    | Gates (Flow 6) | `04-gates.md` | PASS |
+    | Healing (Flow 8) | `05-healing.md` | PASS |
+    | Closure (Flow 9) | `06-closure.md` | GO |
 
     ## Review & blockers
 
@@ -60,7 +60,7 @@ format `mugiwara run mission-report.sh` produces:
 
     | Field | Value |
     |-------|-------|
-    | Wave | 9 |
+    | Flow stage | 9 |
     | Tasks | 6/6 done |
     | Blockers open | 0 |
     | Heal cycles | 1 |
@@ -69,9 +69,9 @@ format `mugiwara run mission-report.sh` produces:
 ## Lanes
 
 Work is sized to the diff — a typo gets no pipeline, an auth migration gets
-all nine waves. Mugiwara itself is free; token usage depends on the lane:
+all nine flow stages. Mugiwara itself is free; token usage depends on the lane:
 
-| Lane                | Waves | Typical tokens | Budget |
+| Lane | Flow stages | Typical tokens | Budget |
 | ------------------- | :---: | :------------: | :----: |
 | Direct (typo)       |   0   |       ~0       |   —    |
 | Lean (small bug)    |   2   |      ~7k       | 12k    |
@@ -120,7 +120,7 @@ pipeline config to write.**
 | `split payment system: gateway, ledger, fraud` | Nami interviews team → writes initiative plan with sub-missions + assignees → each dev works in own branch → the plan's sub-mission table shows progress → all done → initiative closure |
 | `Brook, fix the failing login test`            | Healer reads failure ledger, root-cause fixes, proves fix ≤3 cycles                                                                                                                      |
 | `Jinbe, audit auth middleware`                 | STRIDE + OWASP + dependency audit. Read-only — never touches code                                                                                                                        |
-| `/mugiwara auto`                               | Switches to full autonomy — all waves run without asking, from the next wave |
+| `/mugiwara auto`                               | Switches to full autonomy — all flow stages run without asking, from the next flow stage |
 
 - **Full pipeline** when the task is big or direction is unclear
 - **Direct agent** when you know exactly what you need — say the name
@@ -182,9 +182,9 @@ and reviewers are read-only. Call them by name or let the pipeline auto-route.
 
 | Agent              | Role                                                  | Used by                        |
 | ------------------ | ----------------------------------------------------- | ------------------------------ |
-| `skeptic-verifier` | Adversarial verifier — doubts every claim             | Wave 4.5, high-stakes missions |
+| `skeptic-verifier` | Adversarial verifier — doubts every claim             | Flow 4.5, high-stakes missions |
 | `eval-runner`      | Harness tester — task suites, judge rubric            | `bun scripts/run-evals.ts`     |
-| `memory-keeper`    | Lessons ledger — surface at start, capture at closure | Wave 0 (read), Wave 9 (write)  |
+| `memory-keeper`    | Lessons ledger — surface at start, capture at closure | Flow 0 (read), Flow 9 (write)  |
 
 → [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
 
@@ -221,7 +221,7 @@ bun run scripts/initiative.ts conflict-check plans/<mission>.md  # shared-file o
 # `mugiwara status` for computed per-mission position.
 ```
 
-Auto mode runs every wave autonomously — and never downgrades to guided
+Auto mode runs every flow stage autonomously — and never downgrades to guided
 mid-mission. In a team plan, auto covers **your member scope only**: resuming
 your sub-mission runs it to ship, never the other members'.
 
@@ -262,11 +262,11 @@ config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 
 | Mode      | Plan | Execution | Ambiguities |
 | --------- | ---- | --------- | ----------- |
-| `guided`  | you approve every step | ask before each wave | ask the user |
-| `semi`    | you approve the written plan | auto from Wave 3 to ship | ask the user |
+| `guided`  | you approve every step | ask before each flow stage | ask the user |
+| `semi`    | you approve the written plan | auto from Flow 3 to ship | ask the user |
 | `auto`    | auto | auto all the way to ship (your member scope in a team) | resolved internally (brainstorm → Luffy decides) |
 
-In `auto`, the crew runs every wave autonomously — triage, plan, execute,
+In `auto`, the crew runs every flow stage autonomously — triage, plan, execute,
 quality, gates, review, heal, closure — and never downgrades to guided
 mid-mission. Only a genuine blocker or the heal halt pauses.
 
@@ -283,7 +283,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Ship gate check         | `/mugiwara-ship`                         |
 | See initiative progress | read the sub-mission table in the plan doc (a `mugiwara initiative` CLI is planned, not shipped) |
 | Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
-| See mission position    | `mugiwara status` (wave, tasks, lane, blockers, budget) |
+| See mission position    | `mugiwara status` (flow stage, tasks, lane, blockers, budget) |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
 | Check gate locally      | `bun run gate`                           |
 | All docs                | [docs/](docs/)                           |

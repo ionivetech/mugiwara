@@ -7,24 +7,24 @@ description: Use at closure to push branch + prepare PR material — plain git p
 
 ## Skip when
 
-- Not at closure: PR material is terminal-step-only, never per-wave.
+- Not at closure: PR material is terminal-step-only, never per-flow-stage.
 - User handles the PR themselves and declined the verdict file.
 
-Mugiwara's evidence lands where the team reviews. At terminal, push the mission branch with plain `git` and write one structured verdict file. No PR is created by the crew — the user opens the PR and pastes the ready PR summary. Never per-wave.
+Mugiwara's evidence lands where the team reviews. At terminal, push the mission branch with plain `git` and write one structured verdict file. No PR is created by the crew — the user opens the PR and pastes the ready PR summary. Never per-flow-stage.
 
 ## Verdict file
 
 Write `.mugiwara/results/<mission>/07-pr-verdict.md` — ONE document that IS
 the ready PR material (no separate report + PR-body copy). Exact order —
 Title → Summary (key-point bullets) → What changed (compact file inventory
-paragraph) → Per-wave evidence → Tests → Checks → Verdict. Full spec:
+paragraph) → Per-flow-stage evidence → Tests → Checks → Verdict. Full spec:
 `references/verdict-format.md`.
 
 ## PR summary
 
 The verdict file IS the PR summary. No second block: the user pastes the file
 — title line into the PR title, the rest into the body. Order mirrors the
-verdict file (title → summary → what changed → per-wave evidence → tests →
+verdict file (title → summary → what changed → per-flow-stage evidence → tests →
 checks → verdict). Validate every interpolated value against the safe charset
 and quote it.
 
@@ -32,7 +32,7 @@ The summary is material, never posted — the crew stops at push.
 
 ## Handoff rule
 
-Push the branch + write the verdict file at terminal, after every wave passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-wave (reviewer noise). With `auto_commit=off` (guided/semi only): nothing to push — write the verdict file, hand the UNCOMMITTED working tree to the user with the exact commit + push commands; `auto` mode always pushes.
+Push the branch + write the verdict file at terminal, after every flow stage passes (never a draft state — the user opens the PR when they choose). The verdict is delivered as a file, not posted; the user pastes it into their PR. Never per-flow-stage (reviewer noise). With `auto_commit=off` (guided/semi only): nothing to push — write the verdict file, hand the UNCOMMITTED working tree to the user with the exact commit + push commands; `auto` mode always pushes.
 
 ## Push adapter (plain git, no gh)
 
@@ -55,7 +55,7 @@ Before finalizing the verdict file, scan it for secret patterns (`.env`-style li
 ## Rules
 
 1. Write the verdict file before pushing; hand off last, once.
-2. Push branch + verdict file at terminal; never per-wave.
+2. Push branch + verdict file at terminal; never per-flow-stage.
 3. Verdicts come from captured evidence (command output), never asserted.
 4. No PR is created, no auto-reaction to review comments or CI in any mode.
 5. Auth missing → local closure fallback + logged reason.

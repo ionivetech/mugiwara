@@ -121,7 +121,7 @@ test('mission-report: full fixture writes enriched report (exit 0)', { timeout: 
 
     // existing wave table + verdict sniffing intact
     expect(report).toContain('## Waves');
-    expect(report).toContain('Execute (Wave 3)');
+    expect(report).toContain('Execute (Flow 3)');
     expect(report).toContain('PASS');
   } finally {
     rmSync(dir, { recursive: true, force: true });

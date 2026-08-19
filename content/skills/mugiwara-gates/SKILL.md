@@ -22,7 +22,7 @@ Gates are binary: pass or fail, with evidence. No negotiation, no "almost passes
 
 ## Sonar-style quality gate
 
-Franky reads evidence from prior wave reports (never re-runs
+Franky reads evidence from prior flow-stage reports (never re-runs
 checks): Jinbe (`.mugiwara/review/YYYY-MM-DD-<mission>-security.md`),
 Robin (`.mugiwara/review/YYYY-MM-DD-<mission>-review.md`), Sanji
 (`.mugiwara/results/<mission>/03-quality.md`).
@@ -38,7 +38,7 @@ Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capt
 
 ## Optional e2e gate (per `mugiwara-quality`)
 
-Runs only when quality wave triggered it (repo e2e setup + changed-file e2e patterns, user consent). Skipped/unrun is logged, never blocks PASS. Final verdict: coverage + sonar + build + DoD.
+Runs only when quality flow stage triggered it (repo e2e setup + changed-file e2e patterns, user consent). Skipped/unrun is logged, never blocks PASS. Final verdict: coverage + sonar + build + DoD.
 
 ## Definition of Done standing gate
 
@@ -52,7 +52,7 @@ A fixed cross-project bar. Full definitions: `_shared/references/definition-of-d
 ## Verdict
 
 PASS only when coverage AND sonar AND build AND DoD all pass with evidence. Write verdict to `.mugiwara/results/<mission>/04-gates.md`.
-PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under threshold + by how much → return to Luffy (routes to Brook). Never dispatch next wave yourself.
+PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under threshold + by how much → return to Luffy (routes to Brook). Never dispatch the next flow stage yourself.
 
 ## Red flags
 

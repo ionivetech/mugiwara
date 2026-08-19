@@ -6,7 +6,7 @@ small Node CLI (`mugiwara`) — no daemons, nothing to host. It ships **15
 agents (12 + 3 internal)** and **26 skills**, and the workflow **auto-activates** — every
 non-trivial request fires the pipeline. Work is **sized to a lane**
 before it runs: small fixes skip the pipeline, sensitive changes run the full
-nine waves, and every wave passes only on **evidence**, never on a spoken
+nine flow stages, and every flow stage passes only on **evidence**, never on a spoken
 claim.
 
 ## Start here
@@ -22,7 +22,7 @@ claim.
 | [Auto-PR](concepts/pr-summary.md) | What the crew hands off at closure: push + a ready-to-paste PR summary (it never creates a PR) |
 | [The crew](concepts/agents.md) | All 11 agents (+3 internal) and when to summon each |
 | [The techniques](concepts/skills.md) | All 26 skills and what each enforces |
-| [The wave pipeline](concepts/workflow.md) | How a mission flows Wave 0 → Wave 9 |
+| [The flow pipeline](concepts/workflow.md) | How a mission flows Flow 0 → Flow 9 |
 | [Execution model](concepts/execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
 | [Lanes & sizing](concepts/lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
 | [Onboarding & initiatives](concepts/workflow.md) | Zero-LLM `mugiwara onboard` setup, team sub-missions, shared plans, status tracking |

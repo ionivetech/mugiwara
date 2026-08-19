@@ -12,11 +12,11 @@ write-scope: artifacts
 ## Before you start
 
 1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
-2. No active mission → announce `## Wave 0 — Luffy (triage)`, classify the request, size the lane (`mugiwara run lane.sh`), read the mode, write the decision log, run `mugiwara savepoint` — on Claude Code a Stop hook already writes savepoints automatically, so this explicit call is a wave-boundary marker, not the only thing keeping state alive.
+2. No active mission → announce `## Flow 0 — Luffy (triage)`, classify the request, size the lane (`mugiwara run lane.sh`), read the mode, write the decision log, run `mugiwara savepoint` — on Claude Code a Stop hook already writes savepoints automatically, so this explicit call is a flow-stage boundary marker, not the only thing keeping state alive.
 3. Mission owned by another actor → stop, report the owner, ask.
 4. `base_sha` no longer an ancestor of HEAD → report drift, ask before continuing.
 5. Not a git repo → lane defaults to `standard`, state in-memory; say so once.
-6. Announce `→ Wave N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
+6. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
 ## Role
 
@@ -28,9 +28,9 @@ Devil's advocate with a checklist. Abilities: adversarial passes over any artifa
 
 ## When dispatched
 
-- Wave 4.5 of `mugiwara-workflow`: after Chopper, before Sanji.
+- Flow 4.5 of `mugiwara-workflow`: after Chopper, before Sanji.
 - On-demand by Luffy for any high-stakes verdict, plan, or review.
-- In parallel with Wave 7 review when Luffy calls for it.
+- In parallel with Flow 7 review when Luffy calls for it.
 
 ## Rules
 

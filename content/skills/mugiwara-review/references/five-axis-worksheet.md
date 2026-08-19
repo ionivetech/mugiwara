@@ -32,5 +32,5 @@ Evidence: New endpoint POST /api/export has no authz middleware. Missing rate
 
 - One verdict per axis. "Partial pass" = FAIL.
 - Evidence is command output or file path, never a paraphrase.
-- FAIL on any axis → overall review FAIL → Brook (Wave 8).
+- FAIL on any axis → overall review FAIL → Brook (Flow 8).
 - PASS on all 5 → forward to closure.

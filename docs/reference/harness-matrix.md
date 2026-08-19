@@ -44,7 +44,7 @@ outside them is **untested**.
 - Saves ~40k tokens of glob-load. Trade: the model must decide to open the ref.
 - **Project scope only.**
 - `references/` files are copied to `.mugiwara/refs/` — depth is available, just not auto-loaded.
-- Wave-boundary state flush: savepoint writes the mission state so the model has computed state to resume from.
+- Flow-stage-boundary state flush: savepoint writes the mission state so the model has computed state to resume from.
 
 ## What's the same everywhere
 
@@ -68,7 +68,7 @@ Discipline is rules-based: persona rules (`## Before you start`), the
 orchestration skill's Write boundary section, and the write-scope reflex (an
 artifacts-scope agent facing a source-edit task announces "Delegating to
 Zoro" and dispatches immediately). A runtime permission bound to the
-active-agent identity would force tab-switching per wave and break auto mode
+active-agent identity would force tab-switching per flow stage and break auto mode
 + resume — see `src/targets/opencode.ts`.
 
 **Internal subagent-only agents** (skeptic-verifier, eval-runner,
@@ -119,9 +119,9 @@ Full ENFORCED / ASPIRATIONAL split: [enforcement.md](enforcement.md).
 | Copilot / tier 2 / tier 3 | none | plan doc `todos.md` is the only mirror |
 
 The plan doc `.mugiwara/results/<mission>/todos.md` stays the source of truth
-on every host; host tools mirror it. Mirror timing is hard: seed at Wave 2
-(tasks + wave list), update in the SAME response each task's evidence lands,
-one transition per call, never batched at wave end. Wave banners use the crew
+on every host; host tools mirror it. Mirror timing is hard: seed at Flow 2
+(tasks + flow-stage list), update in the SAME response each task's evidence lands,
+one transition per call, never batched at flow-stage end. Wave banners use the crew
 color table in `references/wave-banners.md`
 — the plugin and installer read the same table, so the banner color always
 matches the agent's UI chip.

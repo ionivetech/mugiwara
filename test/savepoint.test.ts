@@ -139,7 +139,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
       join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
       [
         '# Decision log — heal-mission',
-        '## Wave 8 — healing (Brook)',
+        '## Flow 8 — healing (Brook)',
         'Fixed: heal counter wired to the decision log.',
         'The healing text mentions heal workers that never ran.',
       ].join('\n') + '\n',
@@ -153,9 +153,9 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
       join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
       [
         '# Decision log — heal-mission',
-        '## Wave 8 — healing (Brook)',
+        '## Flow 8 — healing (Brook)',
         'Cycle one.',
-        '## Wave 8 — healing (Brook)',
+        '## Flow 8 — healing (Brook)',
         'Cycle two.',
         '## Wave 8b — unrelated enforcement section, not a heal cycle',
       ].join('\n') + '\n',

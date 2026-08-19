@@ -91,12 +91,12 @@ const updated = val(s, 'updated_at', now);
 
 // --- wave artifact scan: results/<mission>/NN-*.md with verdict sniffing ---
 const WAVE_LABEL = {
-  "01-execution": "Execute (Wave 3)",
-  "02-audit": "Checkpoint (Wave 4)",
-  "03-quality": "Quality (Wave 5)",
-  "04-gates": "Gates (Wave 6)",
-  "05-healing": "Healing (Wave 8)",
-  "06-closure": "Closure (Wave 9)",
+  "01-execution": "Execute (Flow 3)",
+  "02-audit": "Checkpoint (Flow 4)",
+  "03-quality": "Quality (Flow 5)",
+  "04-gates": "Gates (Flow 6)",
+  "05-healing": "Healing (Flow 8)",
+  "06-closure": "Closure (Flow 9)",
   "07-pr-verdict": "PR material",
 };
 

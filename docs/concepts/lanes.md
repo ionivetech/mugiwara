@@ -5,12 +5,12 @@ The crew sizes a mission before it runs. Lane is computed from the diff by
 
 ## The lanes
 
-| Lane | Picks when | Waves | Token budget |
+| Lane | Picks when | Flow stages | Token budget |
 |------|-----------|-------|:------:|
 | **0 · Direct** | typo, rename, 1 file <20 LOC | none | ~0 |
 | **1 · Lean** | bug in 1-2 files, <50 LOC | execute → quality | ~7k / 12k |
 | **2 · Standard** | feature, 3-8 files | plan → execute → audit → review | ~13k / 25k |
-| **3 · Full** | architecture, migration, 9+ files, or auth/payment/API touched | all 9 waves | ~23k / 50k |
+| **3 · Full** | architecture, migration, 9+ files, or auth/payment/API touched | all 9 flow stages | ~23k / 50k |
 | **4 · Spike** | exploratory, needs direction | brainstorm → re-triage | ~1k / 3k |
 
 The "typical" column is the measured LANE_BASE — the token load of the skills
@@ -70,7 +70,7 @@ Use `--json` for machine output:
 
 ## Token budget
 
-Every lane has a budget enforced by `mugiwara savepoint` at each wave
+Every lane has a budget enforced by `mugiwara savepoint` at each flow stage
 boundary. The harness sets `MUGIWARA_TOKENS` env var with estimated tokens
 consumed.
 
@@ -85,7 +85,7 @@ savepoint just writes the status to the mission state.
 
 ## Escalation
 
-Lane **escalates when work outgrows the estimate.** At every wave boundary,
+Lane **escalates when work outgrows the estimate.** At every flow-stage boundary,
 `mugiwara savepoint` re-checks the diff. If files grew or a sensitive path
 appeared, lane rises. A lane **never auto-drops** — savepoint clamps to the
 previous peak (`lane_peak` in the mission state) even when the diff shrinks, and
@@ -99,7 +99,7 @@ full pipeline," Luffy records it in the decision log and escalates.
 
 Exploratory missions start at Lane 4. Usopp brainstorms, then the mission is
 re-triaged into the right lane. A spike that stays a spike (no code change
-decided) ends at Wave 1.
+decided) ends at Flow 1.
 
 Lane is computed per mission by `mugiwara run lane.sh`, not stored in
 `.mugiwara/config`.

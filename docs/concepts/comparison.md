@@ -5,17 +5,17 @@ What mugiwara is and when to use something else.
 ## What mugiwara is
 
 **Mugiwara is the governance layer for AI-assisted engineering work.** Every
-change carries a human-reviewable trail — which wave, what evidence, approved
+change carries a human-reviewable trail — which flow stage, what evidence, approved
 by whom — and the cost of the process scales to the size of the work.
 
-- **Lane sizing** — process scales from zero waves (typo) to nine (auth
+- **Lane sizing** — process scales from zero flow stages (typo) to nine (auth
   migration), computed from the diff by `mugiwara run lane.sh`, not guessed.
-- **Evidence trail** — every wave boundary writes computed state to
-  `state/<mission>/[member].json`. No wave passes on a spoken claim. `mugiwara run evidence.sh` wraps
+- **Evidence trail** — every flow-stage boundary writes computed state to
+  `state/<mission>/[member].json`. No flow stage passes on a spoken claim. `mugiwara run evidence.sh` wraps
   check commands and captures output.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.
-- **15 named agents** in a 9-wave gated pipeline — each wave has a defined
+- **15 named agents** in a 9-flow-stage gated pipeline — each flow stage has a defined
   owner, handoff, and verification gate.
 - **26 skills** with skip gates on all of them, progressive disclosure into
   `references/`, and deterministic tooling for lane, evidence, and state.
@@ -25,7 +25,7 @@ by whom — and the cost of the process scales to the size of the work.
 - **A runtime or daemon.** Orchestration stays in the harness. Pure markdown.
 - **Auto-merge or auto-deploy.** Human review at the PR is the terminal gate.
 - **Unattended marathon mode.** Mugiwara runs inline by default — you watch
-  every wave. Subagents only for parallel work.
+  every flow stage. Subagents only for parallel work.
 - **Skill-count growth.** 26 is the ceiling; a new skill replaces an old one.
 - **Head-to-head feature scorecards.** The compliance matrix replaces them.
 

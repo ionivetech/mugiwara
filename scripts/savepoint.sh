@@ -42,7 +42,7 @@ MISSION="${1:-${STATE_MISSION:-}}"
 MEMBER="${2:-${STATE_MEMBER:-}}"
 WAVE="${3:-${STATE_WAVE:-1}}"
 MODE="${4:-${STATE_MODE:-guided}}"
-# Triage lane (M7): the lane Luffy assigned at Wave 0. Without it savepoint
+# Triage lane (M7): the lane Luffy assigned at Flow 0. Without it savepoint
 # recomputed the lane from file counts alone and silently discarded the
 # triage decision — a Lane 3 mission recorded itself as "direct". Explicit
 # lane acts as a FLOOR: the computed lane may still raise it, never lower it.
@@ -261,12 +261,12 @@ fi
 # heal cycle — count Wave-8 (healing) section headings in the DECISION LOG,
 # which every mission writes (luffy-orchestrator rule 10). Not the word "heal"
 # anywhere (heal workers/healing text would inflate the counter and cause a
-# premature halt). Each heal cycle is logged as a "## Wave 8 — healing" section;
+# premature halt). Each heal cycle is logged as a "## Flow 8 — healing" section;
 # the [^0-9a-z] guard keeps adjacent "## Wave 8b"-style sections from counting.
 HEAL_CYCLE=1
 LOG_FILE=$(ls -t "$MUGIWARA_DIR"/????-??-??-"${MISSION}".md "$MUGIWARA_DIR/logs"/????-??-??-"${MISSION}".md 2>/dev/null | head -1 || true)
 if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
-  HEAL_COUNT=$(grep -ciE '^## wave 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)
+  HEAL_COUNT=$(grep -ciE '^## flow 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 

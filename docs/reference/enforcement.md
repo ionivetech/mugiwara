@@ -26,7 +26,7 @@ Something other than a model checks these. Drift breaks CI.
 | **Savepoint written at turn end** | `hooks/auto-savepoint.ts` (Stop + SubagentStop) refreshes the active mission's state with no model involvement | `hooks/hooks.json` — **Claude Code only** |
 
 `hooks/auto-savepoint.ts` is the only mechanism in mugiwara that produces a
-mission artifact without a model choosing to. It refreshes the *current* wave;
+mission artifact without a model choosing to. It refreshes the *current* flow stage;
 it never advances one. On every other harness, state is written only when the
 crew remembers to run `mugiwara savepoint`.
 
@@ -38,7 +38,7 @@ never "the harness guarantees".
 
 | Rule | Stated in | Reality |
 |------|-----------|---------|
-| Lane re-run at each wave boundary | orchestration skill, check-ins | `lane.sh` computes honestly *when run*; nothing runs it |
+| Lane re-run at each flow stage boundary | orchestration skill, check-ins | `lane.sh` computes honestly *when run*; nothing runs it |
 | Evidence capture over claims | every skill's iron law | `evidence.sh` writes a real log *when invoked*; a spoken "tests pass" is unchecked |
 | Heal cap (≤3 cycles) | orchestration, healing | `heal_cycle` is written to state, but no mechanism halts a 4th |
 | Blocker-zero DoD | definition-of-done | verified by a model reading a ledger a model wrote |
@@ -61,7 +61,7 @@ bottom two rows, it has to be checked by a human or by CI — not assumed.
 ## Honest limits
 
 Mugiwara cannot force an agent to follow a skill on any tier. Models can skip
-a skill, rush a wave, or pass on a claim. The validator is the floor
+a skill, rush a flow stage, or pass on a claim. The validator is the floor
 everywhere and CI blocks drift; the Claude Code hook is the only runtime floor.
 Everything else in this repo is discipline, and discipline is a hope, not a
 mechanism.

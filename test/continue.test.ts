@@ -199,7 +199,7 @@ describe('formatResume — the single-line contract mugiwara-resume depends on',
       next_action: 'run T-4', next_session_prompt: 'mugiwara continue seamless', updated_at: '',
     });
     expect(line).toBe(
-      'Resumed: seamless, Wave 3, 2/5 tasks — next_action: run T-4 — run: mugiwara continue seamless',
+      'Resumed: seamless, Flow 3, 2/5 tasks — next_action: run T-4 — run: mugiwara continue seamless',
     );
     expect(line.split('\n')).toHaveLength(1);
   });
@@ -209,7 +209,7 @@ describe('formatResume — the single-line contract mugiwara-resume depends on',
       mission: 'seamless', member: 'zoro', actor: 'a', branch: 'main', wave: 1, mode: 'semi',
       tasks_done: 0, tasks_total: 3, lane: 'lean', next_action: 'start', next_session_prompt: '', updated_at: '',
     });
-    expect(line).toBe('Resumed: seamless [zoro], Wave 1, 0/3 tasks — next_action: start — run: (no next_session_prompt recorded)');
+    expect(line).toBe('Resumed: seamless [zoro], Flow 1, 0/3 tasks — next_action: start — run: (no next_session_prompt recorded)');
   });
 
   test('formatTable renders a header plus one row per entry, solo member as em dash', () => {

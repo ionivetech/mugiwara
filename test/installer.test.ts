@@ -138,7 +138,7 @@ test('session-start hook carries default-on doctrine, directs to mugiwara-orches
   const hook = readFileSync(join(import.meta.dirname, '..', 'hooks', 'session-start.ts'), 'utf8');
   expect(hook).toContain('mugiwara off');
   expect(hook).toContain('mugiwara-orchestration');
-  expect(hook).toContain('Wave 0 triage');
+  expect(hook).toContain('Flow 0 triage');
   expect(hook).toContain('Lane 0');
 });
 

@@ -202,16 +202,16 @@ test('savepoint: heal_cycle counts Wave-8 healing sections in the decision log; 
     expect(readState(dir, 'healtest').heal_cycle).toBe(1);
 
     // one heal section -> 2
-    writeFileSync(logFile, '# Decision log — healtest\n## Wave 8 — healing (Brook)\nmore\n');
+    writeFileSync(logFile, '# Decision log — healtest\n## Flow 8 — healing (Brook)\nmore\n');
     runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(2);
 
     // two sections -> 3
-    writeFileSync(logFile, '## Wave 8 — healing (Brook)\n## Wave 8 — healing (Brook)\n');
+    writeFileSync(logFile, '## Flow 8 — healing (Brook)\n## Flow 8 — healing (Brook)\n');
     runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(3);
 
-    // "heal" prose WITHOUT a "## Wave 8" section: must stay 1 and emit no syntax error
+    // "heal" prose WITHOUT a "## Flow 8" section: must stay 1 and emit no syntax error
     // (regression guard for bug F1: grep -c zero-match double-emit)
     writeFileSync(logFile, 'heal workers healed the bug\n');
     const r = runSavepoint(dir, 'healtest "" 1 guided');

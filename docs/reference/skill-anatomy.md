@@ -53,7 +53,7 @@ skills/<skill-name>/references/<topic>.md   # optional: overflow detail
 ```markdown
 ---
 name: mugiwara-checkpoint
-description: Use after an execution wave to audit results against the plan.
+description: Use after an execution flow stage to audit results against the plan.
 ---
 # Checkpoint (Chopper)
 

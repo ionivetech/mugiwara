@@ -23,17 +23,17 @@ meaningful description edit, or one new skill/agent, blows the budget.
 
 ## Cost per lane
 
-| Lane | Waves | LANE_BASE (measured) | Budget | Warn / Stop (1.5× / 3× budget) |
+| Lane | Flow stages | LANE_BASE (measured) | Budget | Warn / Stop (1.5× / 3× budget) |
 |------|-------|:---:|:---:|:---:|
 | 0 Direct | none | ~0 | — | — |
 | 1 Lean | execute → quality | 7,000 | 12,000 | warn 18k / stop 36k |
 | 2 Standard | plan → execute → audit → review | 13,000 | 25,000 | warn 37.5k / stop 75k |
-| 3 Full | all 9 waves | 23,000 | 50,000 | warn 75k / stop 150k |
+| 3 Full | all 9 flow stages | 23,000 | 50,000 | warn 75k / stop 150k |
 | 4 Spike | brainstorm → re-triage | 1,000 | 3,000 | warn 4.5k / stop 9k |
 
 LANE_BASE is **not a hand-written estimate** — `scripts/lane-base.ts`
 computes the honest instruction load from the skill + agent bodies each lane
-loads (wave owners per workflow.md, ×1.35 tokens/word). The gate fails if a
+loads (flow-stage owners per workflow.md, ×1.35 tokens/word). The gate fails if a
 constant drifts >20% from that measured load, so content growth must be
 reflected in the budgets. Lean/standard/full were rescaled from the old
 1.5k/4k/9k after a Lane-3 mission measured ~22.9k of instruction load (D5).

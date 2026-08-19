@@ -225,5 +225,5 @@ export function formatTable(entries: ContinueEntry[]): string {
 export function formatResume(e: ContinueEntry): string {
   const scope = e.member ? ` [${e.member}]` : '';
   const next = e.next_session_prompt || '(no next_session_prompt recorded)';
-  return `Resumed: ${e.mission}${scope}, Wave ${e.wave}, ${e.tasks_done}/${e.tasks_total} tasks — next_action: ${e.next_action} — run: ${next}`;
+  return `Resumed: ${e.mission}${scope}, Flow ${e.wave}, ${e.tasks_done}/${e.tasks_total} tasks — next_action: ${e.next_action} — run: ${next}`;
 }

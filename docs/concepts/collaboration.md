@@ -25,11 +25,11 @@ Branch is an implementation detail, not an identity.
 ├── continue/<mission>/<member>.json  # team member resume point
 ├── plans/<mission>.md                # ONE shared plan (source of truth)
 ├── reports/YYYY-MM-DD-<mission>.md   # aggregate mission report
-├── results/<mission>/*               # wave evidence (committed)
+├── results/<mission>/*               # flow-stage evidence (committed)
 └── logs/lessons.md                   # shared lessons ledger (append-only)
 ```
 
-`state/` and `continue/` are gitignored (recomputed each wave). `plans/`,
+`state/` and `continue/` are gitignored (recomputed each flow stage). `plans/`,
 `results/`, `reports/`, `logs/lessons.md` are committed — the audit trail
 survives the merge.
 
@@ -40,7 +40,7 @@ survives the merge.
 | `/mugiwara continue` | **List** every in-flight mission for your git actor. Never auto-starts. |
 | `/mugiwara continue <mission>` | Solo plan → resume `continue/<mission>/state.json`. Team plan → **list members** and stop (member required). |
 | `/mugiwara continue <mission> <member>` | Resume exactly that member's work. |
-| `mugiwara status` | Computed position per mission: wave, tasks, lane, blockers, budget. |
+| `mugiwara status` | Computed position per mission: flow stage, tasks, lane, blockers, budget. |
 | `bun run scripts/initiative.ts status <plan>` | Dashboard: assignee, branch, status per sub-mission. |
 | `bun run scripts/initiative.ts conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
 | `bun run scripts/initiative.ts set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
@@ -50,7 +50,7 @@ survives the merge.
 
 ## Auto mode
 
-`auto` runs every wave autonomously to closure — lane rise, sensitive-path
+`auto` runs every flow stage autonomously to closure — lane rise, sensitive-path
 touches, and heal cycles do **not** downgrade the mode. Only a genuine blocker
 or the heal halt pauses.
 
@@ -135,7 +135,7 @@ surfaces her in-flight work:
 
 ```
 AUTO-RESUME: 1 mission in-flight for patty:
-  - payment-gateway-v2 (patty) — wave 3, 2/8 tasks
+  - payment-gateway-v2 (patty) — flow stage 3, 2/8 tasks
 ```
 
 `/mugiwara continue payment-gateway-v2 patty` resumes exactly her checkpoint.

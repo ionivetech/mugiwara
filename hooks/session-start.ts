@@ -124,7 +124,7 @@ if (mode === 'auto') {
 console.log(
   JSON.stringify({
     additionalContext:
-      "Mugiwara crew active by default. Say \\`mugiwara off\\` for a request and the crew stands down (Luffy acknowledges, records it in the decision log). Before ANY task — load \\`mugiwara-orchestration\\` skill as gatekeeper. NEVER execute, answer, or make changes without Wave 0 triage. Classification overhead <15 seconds — cheaper than an incorrect fix. Lane 0 for trivial work (single-file/<20 LOC) skips pipeline; Lane 1+ follows full pipeline. Mode: guided / semi / auto (see .mugiwara/config). Switch with \\`/mugiwara <mode>\\` — applies from the next wave. Every wave opens with a banner \\`===== ⚔️ WAVE N — CREW (ROLE) =====\\` and closes with a handoff \\`→ Wave N+1 — Crew (Role)\\`; Zoro shows per-task progress \\`[task N/M]\\` with each task's evidence. See skills/mugiwara-workflow." +
+      "Mugiwara crew active by default. Say \\`mugiwara off\\` for a request and the crew stands down (Luffy acknowledges, records it in the decision log). Before ANY task — load \\`mugiwara-orchestration\\` skill as gatekeeper. NEVER execute, answer, or make changes without Flow 0 triage. Classification overhead <15 seconds — cheaper than an incorrect fix. Lane 0 for trivial work (single-file/<20 LOC) skips pipeline; Lane 1+ follows full pipeline. Mode: guided / semi / auto (see .mugiwara/config). Switch with \\`/mugiwara <mode>\\` — applies from the next flow stage. Every flow stage opens with a banner \\`===== ⚔️ FLOW N — CREW (ROLE) =====\\` and closes with a handoff \\`→ Flow N+1 — Crew (Role)\\`; Zoro shows per-task progress \\`[task N/M]\\` with each task's evidence. See skills/mugiwara-workflow." +
       (resumeContext ? "\n\n" + resumeContext : "")
   })
 );

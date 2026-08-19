@@ -13,7 +13,7 @@ agents/<name>.md
 ```markdown
 ---
 name: chopper-checkpoint
-description: Dispatch after each execution wave to audit results against the plan - re-runs every acceptance criterion, verifies commit hygiene and parallel-file safety, classifies failures honestly, appends ledger rows, and issues a Definition-of-Done verdict. Auditor only; never fixes code.
+description: Dispatch after each execution flow stage to audit results against the plan - re-runs every acceptance criterion, verifies commit hygiene and parallel-file safety, classifies failures honestly, appends ledger rows, and issues a Definition-of-Done verdict. Auditor only; never fixes code.
 skills: mugiwara-checkpoint
 ---
 
@@ -42,7 +42,7 @@ Agents follow a fixed skeleton so every member reads the same way:
    crosses ("Auditor, not fixer", "never implements code").
 2. **Experience** — a one-line persona so the model adopts the right instincts
    ("QA lead who has caught 'works on my machine' for 20 years").
-3. **When dispatched** — which wave of `mugiwara-workflow` and with what inputs.
+3. **When dispatched** — which flow stage of `mugiwara-workflow` and with what inputs.
 4. **Rules** — numbered, each an action bound to its reason, deferring to the
    held skill for the full protocol.
 5. **Output** — where the artifact lands (`.mugiwara/results/...`) and how it
@@ -51,7 +51,7 @@ Agents follow a fixed skeleton so every member reads the same way:
 
 ## Agent vs skill
 
-- A **skill** is the reusable playbook ("how to audit a wave").
+- A **skill** is the reusable playbook ("how to audit a flow stage").
 - An **agent** is the persona that applies it ("Chopper is the auditor; Chopper
   never fixes code").
 

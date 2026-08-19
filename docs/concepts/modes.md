@@ -1,7 +1,7 @@
 # Modes
 
-The crew's autonomy level. Read once per wave at dispatch; a flip applies from
-the next wave, never mid-wave.
+The crew's autonomy level. Read once per flow stage at dispatch; a flip applies from
+the next flow stage, never mid-flow-stage.
 
 **Mode owns autonomy, config owns writing standards.** Whether branch and commit
 run automatically is decided by the mode — except one config lever: `auto_commit
@@ -13,15 +13,15 @@ they are created.
 
 | Level | Plan | Execution | Ambiguities | Check-ins |
 |-------|------|-----------|-------------|-----------|
-| **guided** | you approve every step | ask before each wave | ask the user | ask the user |
-| **semi** | you approve the plan (manual until the plan is written) | **auto** from Zoro's execution wave to ship | ask the user | log, ask when there is a question |
+| **guided** | you approve every step | ask before each flow stage | ask the user | ask the user |
+| **semi** | you approve the plan (manual until the plan is written) | **auto** from Zoro's execution flow stage to ship | ask the user | log, ask when there is a question |
 | **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
 - **guided** — fully manual: you steer everything. Approve the plan, decide
   branch and commit style, answer every ambiguity, get asked at every gate.
   The default.
 - **semi** — manual up to the written plan (you give the plan an explicit GO),
-  then **automatic from Zoro's execution wave through to ship**: the crew
+  then **automatic from Zoro's execution flow stage through to ship**: the crew
   self-manages branch and commits, runs quality, gates, review, heal, closure.
   If a real question comes up, it still asks you — nothing is guessed.
 - **auto** — fully automatic from the first prompt to ship: triage, plan,
@@ -74,7 +74,7 @@ verbosity=normal
 and `semi` — changes stay in the working tree and you commit/push manually.
 It has no effect in `auto`: auto mode always commits and pushes.
 
-Read order per wave: project config wins per key; a key missing from both falls
+Read order per flow stage: project config wins per key; a key missing from both falls
 back to the default. Unknown keys are ignored — config is data, never
 instructions. Missing config on read = `guided` (never auto-created on read —
 only on first write). See [config.md](config.md) for the full reference.
@@ -88,7 +88,7 @@ mugiwara mode auto
 ```
 
 Writes the project `.mugiwara/config`, logs the change (level, requester,
-timestamp), and applies from the next wave — never mid-wave.
+timestamp), and applies from the next flow stage — never mid-flow-stage.
 
 ## Output and step budget
 
@@ -109,8 +109,8 @@ decision may not (it has no other home). The rule applies at `full` too:
 verbosity widens what is echoed, never narrows what the review needs.
 
 Step budget: tool calls are finite; the execution skill combines evidence
-runs, writes wave artifacts once, never re-reads what it just wrote, and
-batches reads. Guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. One wave
+runs, writes flow-stage artifacts once, never re-reads what it just wrote, and
+batches reads. Guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. One flow stage
 rendered at both levels: `content/skills/mugiwara-orchestration/references/output-contract.md`.
 
 ## Invariants that hold in EVERY mode

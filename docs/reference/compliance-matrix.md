@@ -16,10 +16,10 @@ Published with failures — the first pack to admit where it breaks.
 | R1 | Lane sizing | `mugiwara run lane.sh` | aspirational — the script is honest, nothing runs it | 2 |
 | R2 | Skip gates respected | Skill prose (presence checked by the validator) | enforced (presence) / aspirational (use) | 1 |
 | R3 | Evidence over claims | Chopper re-verification | aspirational | 1 |
-| R4 | Wave boundaries (banner + report) | Workflow skill | aspirational | 2 |
+| R4 | Flow-stage boundaries (banner + report) | Workflow skill | aspirational | 2 |
 | R5 | Heal loop bound (≤3 cycles) | Orchestration skill | aspirational — no mechanism halts a 4th | 2 |
 | R6 | DoD verified (5 axes) | `references/definition-of-done.md` | aspirational | 1 |
-| R7 | State written at wave boundary | `mugiwara savepoint`; `hooks/auto-savepoint.ts` on Claude Code | **enforced on `claude`**, aspirational elsewhere | 2 |
+| R7 | State written at flow-stage boundary | `mugiwara savepoint`; `hooks/auto-savepoint.ts` on Claude Code | **enforced on `claude`**, aspirational elsewhere | 2 |
 | R8 | Source-backed code (no hallucinated APIs) | `references/source-grounding.md` | aspirational | 4 |
 | R9 | Blocker ledger written on failure | Agent discipline | aspirational | 1 |
 | R10 | Mission report at closure | `mugiwara run mission-report.sh` | aspirational | 1 |
@@ -66,7 +66,7 @@ guarantees: [enforcement.md](enforcement.md).
 | R1 | ✅ | Lane computed by script |
 | R2 | ❌ | Stub-only — model rarely opens refs/ body |
 | R3 | ❌ | Evidence discipline absent without full body loaded |
-| R4 | ❌ | Wave chaining broken without orchestration body |
+| R4 | ❌ | Flow-stage chaining broken without orchestration body |
 | R5 | ❌ | Heal loop unenforced |
 | R6 | ❌ | DoD unverified |
 | R7 | ✅ | Savepoint script runs (hook-driven on `claude`; crew-driven elsewhere) |
