@@ -51,6 +51,8 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "coverage-gate": "bun scripts/coverage-gate.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "build": "bun build src/cli.ts --outfile dist/mugiwara.js --target node --format esm && bun scripts/build-hooks.ts",
@@ -61,7 +63,7 @@
     "sync-version": "bun scripts/sync-version.ts",
     "build-hooks": "bun scripts/build-hooks.ts",
     "build-hooks:check": "bun scripts/build-hooks.ts --check",
-    "gate": "bun run build-hooks:check && bun run typecheck && bun run test && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity && bun scripts/lane-base.ts && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts && bun scripts/verify-install.ts && bun scripts/conformance.ts",
+    "gate": "bun run build-hooks:check && bun run typecheck && bun run test:coverage && bun run build && bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity && bun scripts/lane-base.ts && bun run verify-pack && bun scripts/run-evals.ts && bun scripts/retrieval-eval.ts && bun scripts/verify-install.ts && bun scripts/conformance.ts && bun run coverage-gate",
     "verify-pack": "npm pack --dry-run 2>&1 | node -e \"let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{if(!s.includes('ionivetech-mugiwara')){console.error('npm pack failed');process.exit(1)};console.log('npm package clean')})\"",
     "prepack": "bun run build && bun run sync-version"
   },

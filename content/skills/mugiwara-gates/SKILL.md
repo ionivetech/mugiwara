@@ -16,8 +16,9 @@ Gates are binary: pass or fail, with evidence. No negotiation, no "almost passes
 
 1. Measure coverage with the project's existing tooling.
 2. Read thresholds from `.mugiwara/config` then `~/.mugiwara/config` for `coverage_new` and `coverage_modified`. Defaults: new ≥ 90%, modified ≥ 80%. Missing key or 0 = no threshold. Identify new/modified via git diff.
-3. No coverage tooling → report the gap, propose minimal tooling, ask user to add or waive.
-4. User-AC declared (per `mugiwara-testcases`): config thresholds apply to unit-level code only; user-AC verdict governs ship-readiness.
+3. No coverage tooling or no test suite → record a SKIP with its reason. Never a fake pass; propose minimal tooling, ask user to add or waive.
+4. In this repo the gate is executable: `bun run coverage-gate` (`scripts/coverage-gate.ts`) does all three against the mission's `base_sha`, and runs as the last step of `bun run gate`. Never lower a threshold or exclude a file to make it green — add the missing tests.
+5. User-AC declared (per `mugiwara-testcases`): config thresholds apply to unit-level code only; user-AC verdict governs ship-readiness.
 
 ## Sonar-style quality gate
 
