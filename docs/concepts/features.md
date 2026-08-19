@@ -197,10 +197,10 @@ project config file that overrides the global defaults.
 | Lane | Picks when | Flow stages | Budget |
 |------|-----------|-------|:---:|
 | 0 · Direct | typo, rename, 1 file <20 LOC | none | ~0 |
-| 1 · Lean | bug in 1-2 files, <50 LOC | execute → quality | ~4k |
-| 2 · Standard | feature, 3-8 files | plan → execute → audit → review | ~10k |
-| 3 · Full | 9+ files, or auth/payment/migration touched | all 9 flow stages | ~20k |
-| 4 · Spike | exploratory | brainstorm → re-triage | ~3k |
+| 1 · Lean | bug in 1-2 files, <50 LOC | execute → quality | 12k |
+| 2 · Standard | feature, 3-8 files | plan → execute → audit → review | 25k |
+| 3 · Full | 9+ files, or auth/payment/migration touched | all 9 flow stages | 50k |
+| 4 · Spike | exploratory | brainstorm → re-triage | 3k |
 
 **How to use.** Automatic. View the result in `.mugiwara/state/<mission>/[member].json`
 (`lane`, `lane_reason`, `lane_rose`). Machine output:
@@ -560,7 +560,8 @@ runs the identical crew with identical behavior.
 ## 23. CLI
 
 **What.** A small Node CLI for lifecycle management: install wizard, update,
-uninstall via manifest, list + health check, and reset with protection.
+uninstall via manifest, list + health check, reset with protection, plus the
+mission subcommands `continue`, `status`, `run`, `savepoint`, and `initiative`.
 
 **How to use.**
 
@@ -570,12 +571,20 @@ mugiwara update --target <id> --yes    # overwrite to latest
 mugiwara list --check                  # health check, missing files
 mugiwara uninstall                     # remove installed files
 mugiwara reset --keep-logs             # wipe state, keep lessons
+mugiwara continue                      # list in-flight missions (every mode)
+mugiwara continue <mission> [member]   # exact resume point
+mugiwara status                        # computed state: flow stage, tasks, lane, blockers, budget
+mugiwara run <script.sh> [args]        # run a bundled harness script
+mugiwara savepoint <mission> [member] [flow stage] [mode]
+mugiwara initiative <status|conflict-check|set-status> <plan> [args]
 mugiwara --version                     # version
 ```
 
 **Scenario.** A broken install after a manual edit is diagnosed with
 `mugiwara list --check`; the missing files are restored with `mugiwara
-update --force`.
+update --force`. Mid-mission, `mugiwara status` shows where the crew is and
+`mugiwara continue` resumes it; a team lead runs `mugiwara initiative
+conflict-check <plan>` before two devs collide on the same files.
 
 → [CLI reference](../install/cli.md) · [src/cli.ts](../../src/cli.ts)
 
@@ -659,6 +668,21 @@ lane sizing, savepoint state, evidence capture
 (`mugiwara run evidence.sh`), index-budget validation, manifest sync, and skill
 format checks. Discipline rules (skip gates, evidence over claims, flow-stage
 banners, bounded heal loop) rely on the model reading and following them.
+
+**Machine enforcement added by the seamless-rework mission:**
+- **`enforce` config key** (`off` / `warn` / `block`, default `block`) — the
+  pipeline guard reads it; `off` disables the hooks, `warn` reports, `block`
+  fails the turn.
+- **Coverage thresholds** (`coverage_new` / `coverage_modified` in
+  `.mugiwara/config`, default 90/80) are gate-enforced on the diff by
+  `scripts/coverage-gate.ts`; `0` disables a threshold; no test suite = SKIP
+  with a reason, never a fake pass.
+- **Five hooks** (Claude Code only): `session-start`, `mugiwara-mode-tracker`,
+  `auto-savepoint`, `pipeline-guard`, `engagement-marker`. They run on
+  SessionStart / UserPromptSubmit / PostToolUse / Stop / SubagentStop.
+- **Per-target enforcement**: `claude` = enforced (hooks run); `opencode` +
+  the other 7 targets = advisory (prose + validator only). Full split:
+  [enforcement.md](../reference/enforcement.md).
 
 **How to use.** Automatic. Run locally with `bun run gate`; mechanisms run
 in CI on every PR.

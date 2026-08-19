@@ -67,3 +67,17 @@ Everything else in this repo is discipline, and discipline is a hope, not a
 mechanism.
 
 Mugiwara is a skills pack, not a supervisor.
+
+## Deliberate omissions (do not "fix" these)
+
+- **`run-evals --run` is unwired by decision.** The behavioural rubric scoring
+  stays in the code but no npm script or CI workflow runs it — 59 cases × one
+  model call per run is a token cost the user declined. Do not add it to a gate.
+- **OpenCode has no turn-end enforcement.** Only `tool.execute.before|after`,
+  `chat.message`, and `experimental.chat.system.transform` exist; there is no
+  verified turn-end event to bind a Stop hook to. It stays a documented gap —
+  do not fake a guarantee.
+- **Windows / Linux support is reasoned from source, not executed.** The
+  cross-platform fixes are verified by reasoning and tests, but no Windows or
+  musl-Linux machine has run the harness end to end. A manual test on those
+  platforms is outstanding.
