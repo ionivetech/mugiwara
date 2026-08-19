@@ -41,11 +41,11 @@ survives the merge.
 | `/mugiwara continue <mission>` | Solo plan → resume `continue/<mission>/state.json`. Team plan → **list members** and stop (member required). |
 | `/mugiwara continue <mission> <member>` | Resume exactly that member's work. |
 | `mugiwara status` | Computed position per mission: flow stage, tasks, lane, blockers, budget. |
-| `bun run scripts/initiative.ts status <plan>` | Dashboard: assignee, branch, status per sub-mission. |
-| `bun run scripts/initiative.ts conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
-| `bun run scripts/initiative.ts set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
+| `mugiwara initiative status <plan>` | Dashboard: assignee, branch, status per sub-mission. |
+| `mugiwara initiative conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
+| `mugiwara initiative set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
 
-> The `initiative.ts` commands below are **repo-development-only**: the script lives in the mugiwara repo and is not shipped by the installer, and `mugiwara run` takes `.sh` scripts only. In an installed project, edit the sub-mission rows in the plan doc directly — the plan doc is the source of truth either way.
+> The `initiative` subcommand ships with the installer. In an installed project, `mugiwara initiative <status|conflict-check|set-status> <plan>` works directly; the plan doc is the source of truth either way.
 
 
 ## Auto mode
@@ -119,10 +119,10 @@ Repo-development-only (see the note above) — in an installed project, read and
 edit the sub-mission table in the plan doc:
 
 ```bash
-bun run scripts/initiative.ts status plans/2026-08-20-payment-gateway-v2.md
+mugiwara initiative status plans/2026-08-20-payment-gateway-v2.md
 # A john   [~] · B patty [ ] (dep A) · C austin [ ] (dep B)
 
-bun run scripts/initiative.ts conflict-check plans/2026-08-20-payment-gateway-v2.md
+mugiwara initiative conflict-check plans/2026-08-20-payment-gateway-v2.md
 # A touches contracts/ + src/ledger/; B touches src/payments/ — no overlap
 ```
 

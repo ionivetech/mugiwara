@@ -74,6 +74,29 @@ case "$VERBOSITY" in
   normal|full) ;;
   *) VERBOSITY="normal" ;;
 esac
+
+# heal_max_cycles from config (project .mugiwara/config), default 3; env override
+HEAL_MAX_CYCLES="${STATE_HEAL_MAX_CYCLES:-3}"
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  CFG_HEAL_MAX=$(grep -E '^heal_max_cycles=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$CFG_HEAL_MAX" ] && HEAL_MAX_CYCLES="$CFG_HEAL_MAX"
+fi
+case "$HEAL_MAX_CYCLES" in
+  ''|*[!0-9]*) HEAL_MAX_CYCLES=3 ;;
+esac
+[ "$HEAL_MAX_CYCLES" -lt 1 ] 2>/dev/null && HEAL_MAX_CYCLES=3
+
+# delegate_threshold from config (project .mugiwara/config), default 60; env override
+DELEGATE_THRESHOLD="${STATE_DELEGATE_THRESHOLD:-60}"
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  CFG_DELEGATE=$(grep -E '^delegate_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$CFG_DELEGATE" ] && DELEGATE_THRESHOLD="$CFG_DELEGATE"
+fi
+case "$DELEGATE_THRESHOLD" in
+  ''|*[!0-9]*) DELEGATE_THRESHOLD=60 ;;
+esac
+[ "$DELEGATE_THRESHOLD" -lt 1 ] 2>/dev/null && DELEGATE_THRESHOLD=1
+[ "$DELEGATE_THRESHOLD" -gt 100 ] 2>/dev/null && DELEGATE_THRESHOLD=100
 ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-${USERNAME:-}}}}}"
 BRANCH="$(git branch --show-current 2>/dev/null || echo 'unknown')"
 
@@ -270,6 +293,14 @@ if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 
+# heal halt — computed from the heal counter and the config cap (task 4f wires
+# heal_max_cycles into the counter's home). heal_cycle starts at 1, so
+# heal_cycle >= heal_max_cycles means the cap is reached: escalate, never re-run.
+HEAL_HALT=false
+if [ "$HEAL_CYCLE" -ge "$HEAL_MAX_CYCLES" ] 2>/dev/null; then
+  HEAL_HALT=true
+fi
+
 # evidence paths — per-mission results folder (quoted printf, no sed — mission
 # name is allowlisted above, but avoid sed metacharacter semantics entirely)
 EVIDENCE=""
@@ -333,6 +364,19 @@ elif [ "$BUDGET" -gt 0 ] && [ "$TOKENS_EST" -ge "$WARN_AT" ] 2>/dev/null; then
   STATUS="warn"
 fi
 
+# delegate due — the execution skill's context-pressure trigger (task 4f wires
+# delegate_threshold into a computed flag). tokens_est >= threshold% of budget
+# → remaining sequential tasks dispatch to workers. Threshold stays relative:
+# a bigger budget raises the bar, it does not remove it. Budget 0 (unknown
+# lane) → never due.
+DELEGATE_DUE=false
+if [ "$BUDGET" -gt 0 ] 2>/dev/null; then
+  DELEGATE_AT=$(( BUDGET * DELEGATE_THRESHOLD / 100 ))
+  if [ "$TOKENS_EST" -ge "$DELEGATE_AT" ] 2>/dev/null; then
+    DELEGATE_DUE=true
+  fi
+fi
+
 mkdir -p "$MUGIWARA_DIR/state/$MISSION" "$MUGIWARA_DIR/continue/$MISSION"
 
 node -e "
@@ -360,6 +404,10 @@ const data = {
   tasks: { done: parseInt(process.argv[13], 10), total: parseInt(process.argv[14], 10) },
   blockers_open: parseInt(process.argv[15], 10),
   heal_cycle: parseInt(process.argv[16], 10),
+  heal_max_cycles: parseInt(process.argv[33], 10) || 3,
+  heal_halt: process.argv[34] === 'true',
+  delegate_threshold: parseInt(process.argv[35], 10) || 60,
+  delegate_due: process.argv[36] === 'true',
   tokens_est: parseInt(process.argv[17], 10) || 0,
   tokens_source: process.argv[26] || 'computed',
   budget: parseInt(process.argv[18], 10) || 0,
@@ -377,7 +425,8 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
-  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY"
+  "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
+  "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

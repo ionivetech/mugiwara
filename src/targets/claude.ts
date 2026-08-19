@@ -40,8 +40,8 @@ function copyScripts(dstDir: string): string[] {
     if (!existsSync(src)) return;
     for (const f of readdirSync(src)) {
       // install.sh is the npx bootstrap, not a harness script — never shipped
-      // into a project.
-      if (!f.endsWith('.sh') || f === 'install.sh') continue;
+      // into a project. initiative.ts ships too: `mugiwara initiative` runs it.
+      if ((!f.endsWith('.sh') && f !== 'initiative.ts') || f === 'install.sh') continue;
       const to = join(dst, f);
       mkdirSync(dst, { recursive: true });
       copyFileSync(join(src, f), to);

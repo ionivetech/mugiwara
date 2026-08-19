@@ -44,14 +44,15 @@ Before starting: if `.mugiwara/continue/<mission>/[member].json` exists, resume 
 ## Worker dispatch triggers
 
 1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
-2. **Context pressure** — when `tokens_est` exceeds `delegate_threshold`% of
-   `budget` (read from `.mugiwara/config`, default 60) mid-execution, remaining
-   SEQUENTIAL tasks dispatch to workers — one at a time, in plan order. Order is
-   preserved; only the context resets. Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
+2. **Context pressure** — when `delegate_due` reads `true` in
+   `.mugiwara/state/<mission>/[member].json` (savepoint computes it as
+   `tokens_est ≥ delegate_threshold% of budget`, config default 60), remaining
+   SEQUENTIAL tasks dispatch to workers — one at a time, in plan order.
+   Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.`
 
-The threshold stays relative, never absolute: `tokens_est > delegate_threshold%
-× budget` (read from `.mugiwara/config`, default 60), never `tokens_est >
-80,000` (obsolete in six months). A bigger window raises the threshold; it does not remove it.
+Computed, never manual: savepoint emits `delegate_due` (relative
+`tokens_est ≥ delegate_threshold% × budget`, default 60), never an absolute
+`tokens_est > 80,000` (obsolete in six months). A bigger budget raises the bar; it does not remove it.
 
 ## Tier gating & fallback
 
@@ -59,9 +60,9 @@ Real worker dispatch exists only where the harness has subagents — tier 1
 (Claude Code, opencode) plus Copilot. Gate the context-pressure trigger on
 that capability: if the harness cannot dispatch, do not promise fresh workers.
 
-Where workers are unavailable and context pressure crosses the threshold:
+Where workers are unavailable and `delegate_due` is true:
 write a savepoint, run the checkpoint, and suggest a fresh session via
-`resume`. Announce: `⚠ context 62% — no worker dispatch on this harness;
+`resume`. Announce: `⚠ context — no worker dispatch on this harness;
 savepoint written, resume in a fresh session (plan order unchanged).`
 
 ## Batch resume

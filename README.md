@@ -214,9 +214,9 @@ Quick start for a team:
 /mugiwara continue payment-gateway      # solo → resume; team → list members
 /mugiwara continue payment-gateway patty # resume exactly patty's work
 
-# Coordination radar (repo-development-only: initiative.ts is not installed)
-bun run scripts/initiative.ts status plans/<mission>.md          # who's where
-bun run scripts/initiative.ts conflict-check plans/<mission>.md  # shared-file overlap
+# Coordination radar
+mugiwara initiative status plans/<mission>.md          # who's where
+mugiwara initiative conflict-check plans/<mission>.md  # shared-file overlap
 # In an installed project: read the sub-mission table in the plan doc, and
 # `mugiwara status` for computed per-mission position.
 ```
@@ -281,7 +281,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Review a PR diff        | `/mugiwara-review` or "review this PR"   |
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Ship gate check         | `/mugiwara-ship`                         |
-| See initiative progress | read the sub-mission table in the plan doc (a `mugiwara initiative` CLI is planned, not shipped) |
+| See initiative progress | `mugiwara initiative status <plan>` |
 | Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
 | See mission position    | `mugiwara status` (flow stage, tasks, lane, blockers, budget) |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |

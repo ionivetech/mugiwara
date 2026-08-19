@@ -45,7 +45,7 @@ Classify every incoming request. 5-way table (Trivial/Explicit/Exploratory/Open-
 
 ## Lane routing + precedence (Flow 0, size before process)
 
-Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Flow 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k vs ~40k tokens); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
+Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Flow 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k inline vs ~132k measured per dispatch); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
 
 ## Spec bridge (Flow 0 → Flow 2)
 
@@ -58,7 +58,7 @@ User may summon crew members directly. Luffy records the route + reason. Zoro/Br
 ## Periodic check-ins
 Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** the continue file at every flow-stage boundary — never only session end (rule #6).
 **Auto never drops:** in `auto` mode the crew runs every flow stage autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause. **Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Flow 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
-**Heal halt:** read `heal_cycle` from `.mugiwara/state/<mission>/[member].json`. At `heal_max_cycles` (read from `.mugiwara/config`, default 3), STOP and escalate to the user.
+**Heal halt:** read `heal_halt` from `.mugiwara/state/<mission>/[member].json`. savepoint computes it (`heal_cycle ≥ heal_max_cycles`, config default 3); when it reads `true`, STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
 ## Rationalizations (pressure resistance)

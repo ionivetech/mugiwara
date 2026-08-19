@@ -55,7 +55,7 @@ Full taxonomy behind the matrix: `references/failure-taxonomy.md`.
 2. Every code fix ships with the failed check now passing (run it, capture output).
 3. Never delete or weaken tests/configs to make a failure disappear.
 4. After healing: update the ledger — mark each healed row with evidence; keep unfixed rows for escalation.
-5. Cycle counter: read `heal_cycle` from `.mugiwara/state/<mission>/[member].json` (savepoint writes it). After this flow stage the flow returns to Flow 4 (Chopper) for re-audit. **At 3, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past 3.
+5. Cycle counter: read `heal_halt` from `.mugiwara/state/<mission>/[member].json` (savepoint writes it as `heal_cycle ≥ heal_max_cycles`, config default 3). After this flow stage the flow returns to Flow 4 (Chopper) for re-audit. **When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past `heal_max_cycles`.
 
 ## Worker subagents
 

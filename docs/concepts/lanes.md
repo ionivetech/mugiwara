@@ -71,8 +71,10 @@ Use `--json` for machine output:
 ## Token budget
 
 Every lane has a budget enforced by `mugiwara savepoint` at each flow stage
-boundary. The harness sets `MUGIWARA_TOKENS` env var with estimated tokens
-consumed.
+boundary. `savepoint` computes `tokens_est` — an estimate of tokens consumed
+(LANE_BASE + doc words ×1.35 + changed LOC ×12) — and compares it against the
+budget. A user may override the estimate by setting `MUGIWARA_TOKENS`; nothing
+sets it automatically.
 
 | Status | Condition | Action |
 |--------|-----------|--------|

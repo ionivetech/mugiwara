@@ -103,7 +103,7 @@ Team plans add `## Sub-missions` table after task index. Solo missions skip. Sta
 |----|------|----------|--------|--------|------------|---------------|
 | sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [ ] | — | src/payment/ |
 
-Plan doc is single source of truth. Update the status cell in the plan doc directly (`scripts/initiative.ts` is repo-development-only, not installed).
+Plan doc is single source of truth. Update the status cell in the plan doc directly (`mugiwara initiative set-status <plan> --id <id> --status <x>` automates it).
 
 ## Mission split (very large) — Lane 3
 

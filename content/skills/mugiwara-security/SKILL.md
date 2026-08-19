@@ -31,9 +31,9 @@ List every surface: endpoints, CLI, config inputs, file/DB reads, external calls
 
 ## OWASP Top 10 mapping
 
-Category-by-category mapping: `references/owasp-mapping.md`.
+Category-by-category mapping: `references/owasp-top10.md` — 10 categories with review areas.
 
-Required when the project handles payments, health data, or PII. Map each security check to its OWASP category; a handled category with no mapping row = documentation gap. Full table: `references/owasp-top10.md` — 10 categories with review areas.
+Required when the project handles payments, health data, or PII. Map each security check to its OWASP category; a handled category with no mapping row = documentation gap.
 
 ## Authn/Authz patterns
 

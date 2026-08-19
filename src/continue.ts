@@ -34,8 +34,15 @@ export type ContinueEntry = {
 
 export type StateEntry = ContinueEntry & {
   lane_reason: string;
+  lane_rose: boolean;
+  lane_prev: string;
+  lane_peak: string;
   blockers_open: number;
   heal_cycle: number;
+  heal_max_cycles: number;
+  heal_halt: boolean;
+  delegate_threshold: number;
+  delegate_due: boolean;
   tokens_est: number;
   budget: number;
   budget_status: string;
@@ -135,11 +142,18 @@ export function readState(projectDir: string): StateEntry[] {
       tasks_total: num(tasks.total),
       lane: text(r.lane) || 'direct',
       lane_reason: text(r.lane_reason),
+      lane_rose: r.lane_rose === true,
+      lane_prev: text(r.lane_prev),
+      lane_peak: text(r.lane_peak),
       next_action: '',
       next_session_prompt: '',
       updated_at: text(r.updated_at),
       blockers_open: num(r.blockers_open),
       heal_cycle: num(r.heal_cycle),
+      heal_max_cycles: num(r.heal_max_cycles) || 3,
+      heal_halt: r.heal_halt === true,
+      delegate_threshold: num(r.delegate_threshold) || 60,
+      delegate_due: r.delegate_due === true,
       tokens_est: num(r.tokens_est),
       budget: num(r.budget),
       budget_status: text(r.budget_status) || 'ok',

@@ -57,6 +57,10 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(typeof state.tasks.total).toBe('number');
     expect(state.blockers_open).toBe(0);
     expect(state.heal_cycle).toBe(1);
+    expect(state.heal_max_cycles).toBe(3); // default, no config present
+    expect(state.heal_halt).toBe(false);   // heal_cycle 1 < max 3
+    expect(state.delegate_threshold).toBe(60); // default, no config present
+    expect(state.delegate_due).toBe(false); // direct lane → budget 0 → never due
     expect(state.tokens_est).toBeGreaterThanOrEqual(0);
     expect(['computed', 'reported']).toContain(state.tokens_source);
     expect(state.budget).toBeGreaterThanOrEqual(0);
@@ -163,6 +167,68 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
     runSavepoint(dir, 'heal-mission "" 3 guided');
     state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
     expect(state.heal_cycle).toBe(3);
+    // default max 3 → heal_cycle 3 >= 3 → halt, the computed cap the skills read
+    expect(state.heal_max_cycles).toBe(3);
+    expect(state.heal_halt).toBe(true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('4f: savepoint reads heal_max_cycles and delegate_threshold from config', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cfgwire-'));
+  try {
+    setupGit(dir);
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+
+    // config values win; heal_cycle 1 < max 5 → no halt
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\nheal_max_cycles=5\ndelegate_threshold=20\n');
+    runSavepoint(dir, 'cfg-mission "" 1 guided');
+    let state = JSON.parse(readFileSync(statePath(dir, 'cfg-mission'), 'utf8'));
+    expect(state.heal_max_cycles).toBe(5);
+    expect(state.heal_halt).toBe(false);
+    expect(state.delegate_threshold).toBe(20);
+
+    // garbage values fall back to defaults
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'heal_max_cycles=abc\ndelegate_threshold=0\n');
+    runSavepoint(dir, 'cfg-mission "" 1 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'cfg-mission'), 'utf8'));
+    expect(state.heal_max_cycles).toBe(3);
+    expect(state.delegate_threshold).toBe(1); // 0 clamped to the 1-100 range
+
+    // out-of-range threshold clamps to the 1-100 range
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'delegate_threshold=250\n');
+    runSavepoint(dir, 'cfg-mission "" 1 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'cfg-mission'), 'utf8'));
+    expect(state.delegate_threshold).toBe(100);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('4f: delegate_due is true when tokens_est crosses delegate_threshold% of budget', { timeout: 15000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-delegate-'));
+  try {
+    setupGit(dir);
+    // 2 files → lane lean, budget 12000 (lane-base). threshold 20 → due at 2400.
+    execSync('git checkout -b feature-d', { cwd: dir });
+    writeFileSync(join(dir, 'a.ts'), 'a\n');
+    writeFileSync(join(dir, 'b.ts'), 'b\n');
+    execSync('git add a.ts b.ts && git commit -m wip', { cwd: dir });
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'delegate_threshold=20\n');
+
+    runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '3000' });
+    let state = JSON.parse(readFileSync(statePath(dir, 'test-mission'), 'utf8'));
+    expect(state.lane).toBe('lean');
+    expect(state.budget).toBe(12000);
+    expect(state.delegate_threshold).toBe(20);
+    expect(state.delegate_due).toBe(true);
+
+    // below the bar → not due; threshold stays relative to budget
+    runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '2000' });
+    state = JSON.parse(readFileSync(statePath(dir, 'test-mission'), 'utf8'));
+    expect(state.delegate_due).toBe(false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

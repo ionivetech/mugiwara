@@ -34,9 +34,11 @@ subtracted from these figures.
 
 On Claude Code a Stop hook writes savepoints automatically at turn end; the crew's explicit call marks the wave boundary.
 
-`mugiwara savepoint` writes `tokens_est` to `.mugiwara/state/<mission>/[member].json` when a
-`MUGIWARA_TOKENS` env var is set (the harness should export estimated tokens
-consumed so far).
+`mugiwara savepoint` writes `tokens_est` to `.mugiwara/state/<mission>/[member].json`
+at each flow-stage boundary — a work/churn estimate (LANE_BASE + doc words ×1.35 +
+changed LOC ×12), not measured usage. A user may override it by setting the
+`MUGIWARA_TOKENS` env var (switches `tokens_source` to `reported`); nothing sets
+it automatically.
 
 Warn: log to decision log. Stop: write state, report to user, pause mission.
 

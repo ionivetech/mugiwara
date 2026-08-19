@@ -40,10 +40,10 @@ never "the harness guarantees".
 |------|-----------|---------|
 | Lane re-run at each flow stage boundary | orchestration skill, check-ins | `lane.sh` computes honestly *when run*; nothing runs it |
 | Evidence capture over claims | every skill's iron law | `evidence.sh` writes a real log *when invoked*; a spoken "tests pass" is unchecked |
-| Heal cap (≤3 cycles) | orchestration, healing | `heal_cycle` is written to state, but no mechanism halts a 4th |
+| Heal cap (≤`heal_max_cycles`) | orchestration, healing | `savepoint.sh` computes `heal_halt` (`heal_cycle ≥ heal_max_cycles`, config default 3) into state; no mechanism stops a model that ignores it |
 | Blocker-zero DoD | definition-of-done | verified by a model reading a ledger a model wrote |
 | Lane monotonicity (rise, never drop) | triage-escalation | recorded in state; not enforced against a model that re-sizes downward |
-| Config keys | `.mugiwara/config` | 7 of 8 keys (`mode`, `branch`, `commit`, `auto_commit`, `review_depth`, `quality_depth`, `delegate_threshold`, `heal_max_cycles`) are read by models only. `verbosity` alone has a machine consumer. |
+| Config keys | `.mugiwara/config` | `verbosity`, `delegate_threshold`, `heal_max_cycles` are read by `savepoint.sh` (recorded/computed into `state.json`). The rest (`mode`, `branch`, `commit`, `auto_commit`, `review_depth`, `quality_depth`) are read by models only. |
 
 ## Per-target enforcement capability
 

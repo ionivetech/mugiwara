@@ -44,12 +44,13 @@ inclusive (`>=`). Write state to `.mugiwara/state/<mission>/[member].json` befor
 
 ## Measured benchmark (2026-08-13 QA mission)
 
-All numbers below were measured on this repo, not estimated.
+All numbers below were measured on this repo unless marked as an estimate.
 
-- **Estimator exactness:** `TOKENS_EST = LANE_BASE + DOC_WORDS×1.35 + LOC×12`
-  matches a manual recompute exactly in every run, including bash integer
-  truncation, the LOC term, and the `MUGIWARA_TOKENS` override (which switches
-  `tokens_source` to `reported`).
+- **Estimator reproducibility:** `TOKENS_EST = LANE_BASE + DOC_WORDS×1.35 + LOC×12`
+  is a work/churn estimate, not measured usage — it matches a manual recompute
+  exactly in every run, including bash integer truncation, the LOC term, and
+  the user-supplied `MUGIWARA_TOKENS` override (which switches `tokens_source`
+  to `reported`).
 - **Budget boundaries:** warn/stop fire on `>=` at exactly 1.5× / 3× budget.
   Boundary-tested for standard and full lanes too (previously lean only).
 - **Words-to-warn/stop** (doc words, ignoring LOC; LOC tokens reduce headroom
@@ -71,8 +72,9 @@ All numbers below were measured on this repo, not estimated.
 
 ## Per-mission cost
 
-the mission state carries `tokens_est` — the estimated tokens consumed by this
-mission. At closure, the mission report surfaces:
+the mission state carries `tokens_est` — the estimated token load for this
+mission (LANE_BASE + doc words ×1.35 + changed LOC ×12), or the user-supplied
+`MUGIWARA_TOKENS` value when set. At closure, the mission report surfaces:
 
 - Total tokens for the mission
 - Lane it ran on

@@ -34,7 +34,7 @@ Subagents exist to parallelize, never to hide work:
    conversation.
 4. **Check subagents** — Chopper, Robin, and Jinbe may spawn subagents for
    independent re-runs or diff passes.
-5. **Context pressure** — when `tokens_est` exceeds 60% of `budget`
+5. **Context pressure** — when the `tokens_est` estimate exceeds 60% of `budget`
    mid-execution, remaining sequential tasks dispatch to workers one at a time,
    in plan order. Order is preserved; only the context resets.
 

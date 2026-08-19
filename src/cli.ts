@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // src/cli.ts
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +34,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'status': return statusCmd(flags);
     case 'run': return runCmd(flags, _);
     case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
+    case 'initiative': return initiativeCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -137,6 +139,22 @@ async function install(flags: Args['flags']): Promise<void> {
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
+  // TASK 8: name exactly one next step, and state the active mode + enforce
+  // value since both change behaviour.
+  if (scope === 'project') {
+    const cfg = join(projectDir, '.mugiwara', 'config');
+    let mode = 'guided', enforce = 'block';
+    if (existsSync(cfg)) {
+      for (const line of readFileSync(cfg, 'utf8').split(/\r?\n/)) {
+        const [k, v] = line.split('=').map((s) => s.trim());
+        if (k === 'mode') mode = v;
+        if (k === 'enforce') enforce = v;
+      }
+    }
+    console.log(`\nNext: run \`mugiwara onboard\` to customise (mode=${mode}, enforce=${enforce} now).`);
+  } else {
+    console.log('\nNext: run `mugiwara onboard` in a project to write its .mugiwara/config.');
+  }
 }
 
 async function uninstall(flags: Args['flags']): Promise<void> {
@@ -272,9 +290,9 @@ function statusCmd(flags: Args['flags']): void {
   for (const s of rows) {
     const scope = s.member ? ` [${s.member}]` : '';
     console.log(`${s.mission}${scope}`);
-    console.log(`  wave ${s.wave} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
-    console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/3 · files touched ${s.files_touched}`);
-    if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})`);
+    console.log(`  wave ${s.wave} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
+    console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALT' : ''} · files touched ${s.files_touched}`);
+    if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})${s.delegate_due ? ' · delegate due' : ''}`);
     console.log(`  branch ${s.branch} · updated ${s.updated_at}`);
     if (s.evidence.length) console.log(`  evidence: ${s.evidence.join(', ')}`);
   }
@@ -290,6 +308,24 @@ function runCmd(flags: Args['flags'], positionals: string[]): void {
   }
   const code = runScript(name, positionals.slice(2), projectDir);
   if (code !== 0) process.exit(code);
+}
+
+/** `mugiwara initiative <status|conflict-check|set-status> <plan> [args]` — team sub-mission coordination. */
+function initiativeCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const sub = positionals[1];
+  if (!sub) {
+    console.error('usage: mugiwara initiative <status|conflict-check|set-status> <plan-file> [--id <id> --status <s>]');
+    process.exit(1);
+  }
+  const script = join(import.meta.dirname, '..', 'scripts', 'initiative.ts');
+  const r = spawnSync(process.execPath, [script, ...positionals.slice(1)], {
+    cwd: projectDir,
+    stdio: 'inherit',
+    env: process.env,
+  });
+  if (r.error) throw r.error;
+  if (r.status) process.exit(r.status);
 }
 
 function help(): void {
@@ -312,6 +348,8 @@ Usage:
                          run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [wave] [mode]
                          shorthand for: mugiwara run savepoint.sh ...
+  mugiwara initiative <status|conflict-check|set-status> <plan> [args]
+                         team sub-mission coordination (status / conflict-check / set-status)
   mugiwara --help        this help
   mugiwara --version     print version
 

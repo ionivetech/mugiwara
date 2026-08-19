@@ -485,17 +485,17 @@ Nami interviews and writes an initiative plan; each dev works in their own
 branch; the plan's sub-mission table shows progress; all sub-missions `[x]` →
 initiative-level closure.
 
-There is no `mugiwara initiative` CLI — it is planned, not shipped
-(`src/cli.ts` has no such command). `scripts/initiative.ts` automates the same
-reads for repo development only; it is not installed into a project, and
-`mugiwara run` accepts `.sh` scripts only. In an installed project the plan doc
-is both the source of truth and the dashboard.
+`mugiwara initiative <status|conflict-check|set-status> <plan>` ships with the
+installer. `scripts/initiative.ts` backs it: `status` renders the sub-mission
+dashboard, `conflict-check` flags overlapping touched files between in-progress
+sub-missions, `set-status` updates one row. The plan doc is both the source of
+truth and the dashboard.
 
 **Scenario.** Three developers, one payment split. Each owns a file-disjoint
 sub-mission, never colliding; the initiative plan shows green across all three
 before the shared closure.
 
-→ [Initiative script (repo-development-only)](../../scripts/initiative.ts) · [README example](../../README.md#30-second-try)
+→ [Initiative script](../../scripts/initiative.ts) · [README example](../../README.md#30-second-try)
 
 ---
 
@@ -613,14 +613,16 @@ branch/commit formats from the start — at zero LLM cost.
 
 **What.** Per-lane token budgets (lean 12k, standard 25k, full 50k). Status
 writes to `state/<mission>/[member].json` (`tokens_est`, `budget`,
-`budget_status`): warn at 1.5×, stop at 3×. Surfaced in the mission report as
-cost delta vs. lane budget.
+`budget_status`): warn at 1.5×, stop at 3×. `tokens_est` is a work/churn
+estimate (LANE_BASE + doc words ×1.35 + changed LOC ×12), not measured usage.
+Surfaced in the mission report as cost delta vs. lane budget.
 
 **How to use.** Automatic. Read `.mugiwara/state/<mission>/[member].json` or
 the mission report.
 
-**Scenario.** A standard mission passes 15k tokens → `warn` logged; 30k →
-`stop`, state written, and the mission pauses for a human decision.
+**Scenario.** A standard mission's estimated load passes 15k tokens → `warn`
+logged; 30k → `stop`, state written, and the mission pauses for a human
+decision.
 
 → [Cost model](cost.md)
 

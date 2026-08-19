@@ -160,6 +160,32 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
     result.written.push(...post.written);
     result.notes.push(...post.notes);
   }
+
+  // TASK 8: a fresh install must be immediately usable — write a default
+  // .mugiwara/config (the same defaults `mugiwara onboard` would write) so no
+  // key silently falls back. Only for project scope; global installs don't own
+  // a project config. Never overwrite an existing config.
+  if (scope === 'project') {
+    const configPath = join(projectDir, '.mugiwara', 'config');
+    if (!existsSync(configPath)) {
+      const body = [
+        'mode=guided',
+        'branch=feature/{type}-{issue}-{slug}',
+        'commit=conventional',
+        'auto_commit=on',
+        'coverage_new=90',
+        'coverage_modified=80',
+        'review_depth=full',
+        'quality_depth=full',
+        'delegate_threshold=60',
+        'heal_max_cycles=3',
+        'verbosity=normal',
+      ].join('\n') + '\n';
+      if (!dryRun) { mkdirSync(dirname(configPath), { recursive: true }); writeFileSync(configPath, body); }
+      result.written.push(configPath);
+      result.notes.push(`default config written: ${configPath} (run \`mugiwara onboard\` to customise)`);
+    }
+  }
   return result;
 }
 

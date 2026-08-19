@@ -32,7 +32,7 @@ verdict pointer. In `auto` mode `auto_commit` is ignored — the terminal step
 runs unchanged.
 
 When this mission is a sub-mission of a team initiative, after closure set
-that sub-mission's status cell to `done` in the initiative plan doc (`scripts/initiative.ts` automates it for repo development only — it is not installed).
+that sub-mission's status cell to `done` in the initiative plan doc (`mugiwara initiative set-status <plan> --id <id> --status done` automates it).
 When all sub-missions show `[x]`, present initiative-level closure summary.
 
 ## Lessons

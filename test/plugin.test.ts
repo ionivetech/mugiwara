@@ -528,6 +528,32 @@ test('D10: session-start lists multiple in-flight missions, does not auto-resume
   }
 });
 
+test('D10: session-start lists in-flight missions in non-auto modes, never auto-resumes', { timeout: 20000 }, () => {
+  for (const mode of ['guided', 'semi']) {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-hooklist-'));
+    try {
+      mkdirSync(join(dir, '.mugiwara', 'continue', 'test-mission'), { recursive: true });
+      if (mode === 'semi') writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=semi\n');
+      // single solo mission owned by this git actor
+      writeFileSync(join(dir, '.mugiwara', 'continue', 'test-mission', 'state.json'),
+        JSON.stringify({ mission: 'test-mission', member: null, actor: 'Test <test@test.com>', wave: 3, mode, tasks_done: 7, tasks_total: 12 }));
+      execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
+
+      const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
+      const json = JSON.parse(out) as { additionalContext: string };
+      // listed in every mode
+      expect(json.additionalContext).toContain('IN-FLIGHT: 1 mission in-flight');
+      expect(json.additionalContext).toContain('test-mission');
+      expect(json.additionalContext).toContain('Run /mugiwara continue <mission> [member]');
+      // auto-resume is auto-only
+      expect(json.additionalContext).not.toContain('AUTO-RESUME:');
+      expect(json.additionalContext).not.toContain('continue from the exact point');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
 test('D10: session-start ignores missions owned by other actors', { timeout: 20000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-hookother-'));
   try {
