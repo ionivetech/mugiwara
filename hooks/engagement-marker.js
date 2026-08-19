@@ -17,6 +17,7 @@ async function main() {
   if (!blob.includes("mugiwara"))
     return;
   const dispatched = /zoro-execution|brook-healing|mugiwara-execution|mugiwara-healing|mugiwara-execute|mugiwara-heal/.test(blob);
+  const planned = /nami-planner|mugiwara-planning|mugiwara-plan/.test(blob);
   const dir = join(cwd, ".mugiwara", "state");
   const file = join(dir, ".engaged");
   const sessionId = typeof payload.session_id === "string" ? payload.session_id : "";
@@ -24,6 +25,7 @@ async function main() {
     mkdirSync(dir, { recursive: true });
     let firstSeen = new Date().toISOString();
     let dispatchedAt = "";
+    let plannedAt = "";
     if (existsSync(file)) {
       try {
         const prev = JSON.parse(readFileSync(file, "utf8"));
@@ -32,15 +34,20 @@ async function main() {
         const sameSession = !sessionId || !prev.session_id || prev.session_id === sessionId;
         if (sameSession && typeof prev.executor_dispatched_at === "string")
           dispatchedAt = prev.executor_dispatched_at;
+        if (sameSession && typeof prev.planner_dispatched_at === "string")
+          plannedAt = prev.planner_dispatched_at;
       } catch {}
     }
     if (dispatched)
       dispatchedAt = new Date().toISOString();
+    if (planned)
+      plannedAt = new Date().toISOString();
     writeFileSync(file, JSON.stringify({
       session_id: sessionId,
       first_seen: firstSeen,
       touched_at: new Date().toISOString(),
-      executor_dispatched_at: dispatchedAt
+      executor_dispatched_at: dispatchedAt,
+      planner_dispatched_at: plannedAt
     }, null, 2) + `
 `);
   } catch {}

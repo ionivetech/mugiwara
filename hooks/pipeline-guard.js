@@ -96,6 +96,45 @@ function executorDispatched(sessionId) {
     return false;
   }
 }
+function plannerDispatched(sessionId) {
+  const file = join(cwd, ".mugiwara", "state", ".engaged");
+  if (!existsSync(file))
+    return false;
+  try {
+    const m = JSON.parse(readFileSync(file, "utf8"));
+    const at = Date.parse(m.planner_dispatched_at ?? "") || 0;
+    if (!at)
+      return false;
+    if (sessionId && m.session_id && m.session_id !== sessionId)
+      return false;
+    return Date.now() - at < MARKER_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+function planTouched() {
+  const plansDir = join(cwd, ".mugiwara", "plans");
+  if (!existsSync(plansDir))
+    return false;
+  let sessionStart = 0;
+  const markerFile = join(cwd, ".mugiwara", "state", ".engaged");
+  if (existsSync(markerFile)) {
+    try {
+      const m = JSON.parse(readFileSync(markerFile, "utf8"));
+      sessionStart = Date.parse(m.first_seen ?? "") || 0;
+    } catch {}
+  }
+  try {
+    for (const e of readdirSync(plansDir)) {
+      if (!e.endsWith(".md"))
+        continue;
+      const at = statSync(join(plansDir, e)).mtimeMs;
+      if (at >= sessionStart)
+        return true;
+    }
+  } catch {}
+  return false;
+}
 async function main() {
   let input = "";
   for await (const chunk of process.stdin)
@@ -112,23 +151,30 @@ async function main() {
   const sessionId = typeof payload.session_id === "string" ? payload.session_id : "";
   if (!engaged(sessionId))
     return;
-  if (!sourceChanged())
-    return;
   const state = newestMissionState();
+  const sourceChangedNow = sourceChanged();
   if (state) {
     const rank = LANE_RANK[state.lane] ?? -1;
-    if (rank >= 1 && !executorDispatched(sessionId)) {
+    if (rank >= 1 && sourceChangedNow && !executorDispatched(sessionId)) {
       process.stderr.write(`\u26A0 Mugiwara: mission "${state.mission}" is sized Lane ${rank} (${state.lane}) and source changed, ` + "but no executor (zoro-execution / brook-healing) was dispatched or embodied this session. " + "Only Zoro and Brook write source \u2014 dispatch one, or re-triage as Lane 0 (direct) if the work " + `really is that small. Set enforce=off in .mugiwara/config to disable these checks.
+`);
+    }
+    if (planTouched() && !plannerDispatched(sessionId)) {
+      process.stderr.write("\u26A0 Mugiwara: a plan doc under .mugiwara/plans/ was written this session, " + "but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. " + "Only Nami writes the plan \u2014 dispatch nami-planner, or record the plan as a " + `deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.
 `);
     }
     return;
   }
-  const reason = "Mugiwara: source changed in this session but no Wave 0 triage is on disk. " + "Run Wave 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
-  if (enforce === "warn") {
-    process.stderr.write(`\u26A0 ${reason}
+  if (!state) {
+    if (!sourceChangedNow)
+      return;
+    const reason = "Mugiwara: source changed in this session but no Wave 0 triage is on disk. " + "Run Wave 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
+    if (enforce === "warn") {
+      process.stderr.write(`\u26A0 ${reason}
 `);
-    return;
+      return;
+    }
+    process.stdout.write(JSON.stringify({ decision: "block", reason }));
   }
-  process.stdout.write(JSON.stringify({ decision: "block", reason }));
 }
 main().catch(() => {});

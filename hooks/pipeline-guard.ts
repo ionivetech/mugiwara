@@ -134,6 +134,51 @@ function executorDispatched(sessionId: string): boolean {
   }
 }
 
+/** A planner (Nami) was dispatched or embodied in this session. */
+function plannerDispatched(sessionId: string): boolean {
+  const file = join(cwd, '.mugiwara', 'state', '.engaged');
+  if (!existsSync(file)) return false;
+  try {
+    const m = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; planner_dispatched_at?: string };
+    const at = Date.parse(m.planner_dispatched_at ?? '') || 0;
+    if (!at) return false;
+    if (sessionId && m.session_id && m.session_id !== sessionId) return false;
+    return Date.now() - at < MARKER_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A plan doc under .mugiwara/plans/ was created or modified in this session.
+ * .mugiwara/ is gitignored, so git status cannot see plan files — read the
+ * filesystem directly and compare mtimes against the session's first-seen
+ * marker. A plan written after the session engaged counts as "touched this
+ * session". Only .mugiwara/plans/*.md counts — the plan doc is the artifact
+ * only Nami may write.
+ */
+function planTouched(): boolean {
+  const plansDir = join(cwd, '.mugiwara', 'plans');
+  if (!existsSync(plansDir)) return false;
+  // session start = the marker's first_seen; anything newer is this session's work
+  let sessionStart = 0;
+  const markerFile = join(cwd, '.mugiwara', 'state', '.engaged');
+  if (existsSync(markerFile)) {
+    try {
+      const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string };
+      sessionStart = Date.parse(m.first_seen ?? '') || 0;
+    } catch { /* no marker — fall through to any-plan */ }
+  }
+  try {
+    for (const e of readdirSync(plansDir)) {
+      if (!e.endsWith('.md')) continue;
+      const at = statSync(join(plansDir, e)).mtimeMs;
+      if (at >= sessionStart) return true;
+    }
+  } catch { /* unreadable — treat as untouched */ }
+  return false;
+}
+
 async function main(): Promise<void> {
   let input = '';
   for await (const chunk of process.stdin) input += chunk;
@@ -149,9 +194,9 @@ async function main(): Promise<void> {
 
   const sessionId = typeof payload.session_id === 'string' ? payload.session_id : '';
   if (!engaged(sessionId)) return;
-  if (!sourceChanged()) return;
 
   const state = newestMissionState();
+  const sourceChangedNow = sourceChanged();
 
   // --- check 2: the write boundary -----------------------------------------
   // Triage exists and sized the mission Lane 1+, source changed, and no
@@ -167,7 +212,7 @@ async function main(): Promise<void> {
   // Raise to block once dispatch recording is proven across harnesses.
   if (state) {
     const rank = LANE_RANK[state.lane] ?? -1; // unknown/absent lane → no opinion
-    if (rank >= 1 && !executorDispatched(sessionId)) {
+    if (rank >= 1 && sourceChangedNow && !executorDispatched(sessionId)) {
       process.stderr.write(
         `⚠ Mugiwara: mission "${state.mission}" is sized Lane ${rank} (${state.lane}) and source changed, ` +
         'but no executor (zoro-execution / brook-healing) was dispatched or embodied this session. ' +
@@ -175,23 +220,44 @@ async function main(): Promise<void> {
         'really is that small. Set enforce=off in .mugiwara/config to disable these checks.\n',
       );
     }
+    // --- check 3: the plan boundary (escape #2) ------------------------------
+    // A plan doc was written this session but no planner (Nami) was dispatched.
+    // Only Nami writes the plan. Lane 0 cannot trigger this (no plan doc); an
+    // ABSENT lane is check 1's territory, never a Lane 0 exemption. Warn-only
+    // for now — raise together with check 2 once dispatch recording is proven
+    // across harnesses.
+    if (planTouched() && !plannerDispatched(sessionId)) {
+      process.stderr.write(
+        '⚠ Mugiwara: a plan doc under .mugiwara/plans/ was written this session, ' +
+        'but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. ' +
+        'Only Nami writes the plan — dispatch nami-planner, or record the plan as a ' +
+        'deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.\n',
+      );
+    }
     return;
   }
 
-  const reason =
-    'Mugiwara: source changed in this session but no Wave 0 triage is on disk. ' +
-    'Run Wave 0 (classify, size the lane, write the decision log) and record it with ' +
-    '`mugiwara savepoint <mission> "" 0 <mode>` — or, if this is Lane 0 trivial work, ' +
-    'record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.';
+  // --- check 1: triage on disk ---------------------------------------------
+  // No mission state at all and source changed → no triage happened. This is
+  // the original invariant and it BLOCKS (the triage fact is a crisp on-disk
+  // check, no absence-inference). Only fires when source actually changed.
+  if (!state) {
+    if (!sourceChangedNow) return;
+    const reason =
+      'Mugiwara: source changed in this session but no Wave 0 triage is on disk. ' +
+      'Run Wave 0 (classify, size the lane, write the decision log) and record it with ' +
+      '`mugiwara savepoint <mission> "" 0 <mode>` — or, if this is Lane 0 trivial work, ' +
+      'record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.';
 
-  if (enforce === 'warn') {
-    process.stderr.write(`⚠ ${reason}\n`);
-    return;
+    if (enforce === 'warn') {
+      process.stderr.write(`⚠ ${reason}\n`);
+      return;
+    }
+    // `block` renders as a hook error in the transcript, which is what genuine
+    // drift should look like. The 8-consecutive-continuation cap bounds the cost
+    // of a wrong predicate.
+    process.stdout.write(JSON.stringify({ decision: 'block', reason }));
   }
-  // `block` renders as a hook error in the transcript, which is what genuine
-  // drift should look like. The 8-consecutive-continuation cap bounds the cost
-  // of a wrong predicate.
-  process.stdout.write(JSON.stringify({ decision: 'block', reason }));
 }
 
 main().catch(() => { /* fail open — never wedge a session */ });

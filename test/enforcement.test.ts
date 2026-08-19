@@ -7,7 +7,7 @@
 // stayed green through exactly that failure.
 import { test, expect } from 'vitest';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -38,7 +38,7 @@ function hook(script: string, cwd: string, payload: object): { out: string; err:
 }
 
 const engage = (dir: string, sessionId = 's1'): void => {
-  hook(MARKER, dir, { tool_name: 'Skill', tool_input: { skill: 'mugiwara-plan' }, session_id: sessionId });
+  hook(MARKER, dir, { tool_name: 'Skill', tool_input: { skill: 'mugiwara-workflow' }, session_id: sessionId });
 };
 const touchSource = (dir: string): void => writeFileSync(join(dir, 'app.js'), 'code\n');
 const blocked = (out: string): boolean => out.includes('"decision":"block"');
@@ -256,5 +256,87 @@ test('marker: a non-executor subagent does not record a dispatch', { timeout: 20
     hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'mugiwara:nami-planner' }, session_id: 's1' });
     stateWithLane(dir, 'big-mission', 'full');
     expect(boundaryWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+// ---------- check 3: the plan boundary (escape #2 — only Nami writes the plan) ----------
+
+const planWarned = (err: string): boolean => err.includes('Only Nami writes the plan');
+
+const touchPlan = (dir: string): void => {
+  mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'plans', '2026-08-19-test-mission.md'), '# Plan\n');
+};
+
+const dispatchPlanner = (dir: string, sessionId = 's1'): void => {
+  hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'mugiwara:nami-planner' }, session_id: sessionId });
+};
+
+test('guard: plan written + no planner dispatched → warns (escape #2 closed)', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    touchPlan(dir);
+    stateWithLane(dir, 'test-mission', 'full');
+    const { out, err } = hook(GUARD, dir, { session_id: 's1' });
+    expect(planWarned(err)).toBe(true);
+    expect(out).toBe(''); // warn, not block
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: plan written + Nami dispatched → silent', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    dispatchPlanner(dir);
+    touchPlan(dir);
+    stateWithLane(dir, 'test-mission', 'full');
+    const { out, err } = hook(GUARD, dir, { session_id: 's1' });
+    expect(planWarned(err)).toBe(false);
+    expect(out).toBe('');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: no plan touched → silent even with no planner', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    stateWithLane(dir, 'test-mission', 'full');
+    const { out, err } = hook(GUARD, dir, { session_id: 's1' });
+    expect(planWarned(err)).toBe(false);
+    expect(out).toBe('');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: Lane 0 (direct) + no plan doc → silent (Lane 0 has no plan doc)', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    stateWithLane(dir, 'test-mission', 'direct');
+    const { out, err } = hook(GUARD, dir, { session_id: 's1' });
+    expect(planWarned(err)).toBe(false);
+    expect(out).toBe('');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: plan guard respects enforce=off and stop_hook_active', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    touchPlan(dir);
+    stateWithLane(dir, 'test-mission', 'full');
+    expect(planWarned(hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }).err)).toBe(false);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=off\n');
+    expect(planWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('marker: a planner dispatch records planner_dispatched_at, not executor', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'mugiwara:nami-planner' }, session_id: 's1' });
+    const marker = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', '.engaged'), 'utf8'));
+    expect(marker.planner_dispatched_at).toBeTruthy();
+    expect(marker.executor_dispatched_at).toBeFalsy();
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

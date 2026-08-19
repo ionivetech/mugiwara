@@ -34,6 +34,13 @@ async function main(): Promise<void> {
   // The guard uses this to catch a captain implementing Lane 1+ work inline.
   const dispatched = /zoro-execution|brook-healing|mugiwara-execution|mugiwara-healing|mugiwara-execute|mugiwara-heal/.test(blob);
 
+  // Planner dispatch is a third fact: did the session hand plan-writing to the
+  // only role allowed to write the plan doc (Nami)? Same two forms count —
+  // subagent `nami-planner` and inline skill `mugiwara-planning`/`mugiwara-plan`.
+  // The guard uses this to catch a captain (or anyone else) writing the plan
+  // inline, which is escape #2: only Nami writes the plan.
+  const planned = /nami-planner|mugiwara-planning|mugiwara-plan/.test(blob);
+
   const dir = join(cwd, '.mugiwara', 'state');
   const file = join(dir, '.engaged');
   // session_id scopes the marker when the payload carries one. Its presence on
@@ -46,23 +53,27 @@ async function main(): Promise<void> {
     // preserve the first engagement time; only refresh the touch timestamp
     let firstSeen = new Date().toISOString();
     let dispatchedAt = '';
+    let plannedAt = '';
     if (existsSync(file)) {
       try {
-        const prev = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; first_seen?: string; executor_dispatched_at?: string };
+        const prev = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; first_seen?: string; executor_dispatched_at?: string; planner_dispatched_at?: string };
         if (typeof prev.first_seen === 'string') firstSeen = prev.first_seen;
         // A dispatch belongs to the session that made it. Carrying it into the
         // next session would excuse a captain who implements inline today
         // because Zoro ran yesterday.
         const sameSession = !sessionId || !prev.session_id || prev.session_id === sessionId;
         if (sameSession && typeof prev.executor_dispatched_at === 'string') dispatchedAt = prev.executor_dispatched_at;
+        if (sameSession && typeof prev.planner_dispatched_at === 'string') plannedAt = prev.planner_dispatched_at;
       } catch { /* corrupt marker — rewrite it */ }
     }
     if (dispatched) dispatchedAt = new Date().toISOString();
+    if (planned) plannedAt = new Date().toISOString();
     writeFileSync(file, JSON.stringify({
       session_id: sessionId,
       first_seen: firstSeen,
       touched_at: new Date().toISOString(),
       executor_dispatched_at: dispatchedAt,
+      planner_dispatched_at: plannedAt,
     }, null, 2) + '\n');
   } catch {
     // cannot write (read-only fs, permissions) — stay silent, guard stays off
