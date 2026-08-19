@@ -25,9 +25,9 @@ current actor's work.
 | Exit | Meaning | What you do |
 |:----:|---------|-------------|
 | `2` | Ambiguous or absent — the CLI listed the in-flight missions/members, or said there are none | **STOP.** The user picks. Never guess a mission or member, never auto-resume one of several. |
-| `0` | Exactly one resume point printed (`Resumed: <mission> [<member>], Wave N, X/Y tasks — next_action: … — run: …`) | Continue to step 3. |
+| `0` | Exactly one resume point printed (`Resumed: <mission> [<member>], Flow N, X/Y tasks — next_action: … — run: …`) | Continue to step 3. |
 
-Exit 2 with no missions listed means there is nothing in flight: suggest Wave 0
+Exit 2 with no missions listed means there is nothing in flight: suggest Flow 0
 triage for a new mission and stop.
 
 ## Step 3 — the part that needs a model

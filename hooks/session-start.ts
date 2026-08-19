@@ -67,38 +67,38 @@ const continueRoot = join(cwd, '.mugiwara', 'continue');
 const active: { mission: string; member: string | null; wave: string; done: string; total: string }[] = [];
 
   if (existsSync(continueRoot)) {
-  // continue/<mission>/*.json — scan every mission folder
-  const missions = readdirSync(continueRoot, { withFileTypes: true })
-    .filter((e) => e.isDirectory() && isSafeKey(e.name))
-    .map((e) => e.name);
-  for (const mission of missions) {
-    const dir = join(continueRoot, mission);
-    const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
-    for (const f of files) {
-      const file = join(dir, f);
-      if (!existsSync(file)) continue;
-      try {
-        const s = JSON.parse(readFileSync(file, 'utf8'));
-        // only this actor's states; solo (state.json) belongs to whoever
-        // owns its actor field
-        if (s.actor !== actor) continue;
-        if (!isSafeKey(String(s.mission ?? ''))) continue;
-        const member = s.member === null || s.member === undefined ? null : String(s.member);
-        if (member !== null && !isSafeKey(member)) continue;
-        if (!isNum(String(s.wave ?? '')) || !isNum(String(s.tasks_done ?? '')) || !isNum(String(s.tasks_total ?? ''))) continue;
-        active.push({
-          mission: String(s.mission),
-          member,
-          wave: String(s.wave),
-          done: String(s.tasks_done),
-          total: String(s.tasks_total),
-        });
-      } catch {
-        // corrupt continue file — skip, never crash the hook
+    // continue/<mission>/*.json — scan every mission folder
+    const missions = readdirSync(continueRoot, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && isSafeKey(e.name))
+      .map((e) => e.name);
+    for (const mission of missions) {
+      const dir = join(continueRoot, mission);
+      const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
+      for (const f of files) {
+        const file = join(dir, f);
+        if (!existsSync(file)) continue;
+        try {
+          const s = JSON.parse(readFileSync(file, 'utf8'));
+          // only this actor's states; solo (state.json) belongs to whoever
+          // owns its actor field
+          if (s.actor !== actor) continue;
+          if (!isSafeKey(String(s.mission ?? ''))) continue;
+          const member = s.member === null || s.member === undefined ? null : String(s.member);
+          if (member !== null && !isSafeKey(member)) continue;
+          if (!isNum(String(s.wave ?? '')) || !isNum(String(s.tasks_done ?? '')) || !isNum(String(s.tasks_total ?? ''))) continue;
+          active.push({
+            mission: String(s.mission),
+            member,
+            wave: String(s.wave),
+            done: String(s.tasks_done),
+            total: String(s.tasks_total),
+          });
+        } catch {
+          // corrupt continue file — skip, never crash the hook
+        }
       }
     }
   }
-}
 
 if (active.length === 1 && mode === 'auto') {
   // auto-resume is auto-only

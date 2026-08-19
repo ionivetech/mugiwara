@@ -218,8 +218,8 @@ test('savepoint: heal_cycle counts Wave-8 healing sections in the decision log; 
     expect(readState(dir, 'healtest').heal_cycle).toBe(1);
     expect(r.stderr).not.toContain('syntax error');
 
-    // an adjacent "## Wave 8b"-style section is NOT a heal cycle and must not count
-    writeFileSync(logFile, '## Wave 8b — enforcement section, not a heal cycle\n');
+    // an adjacent "## Flow 8b"-style section is NOT a heal cycle and must not count
+    writeFileSync(logFile, '## Flow 8b — enforcement section, not a heal cycle\n');
     runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(1);
   } finally {

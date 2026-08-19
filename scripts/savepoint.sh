@@ -281,15 +281,28 @@ if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
   BLOCKERS_OPEN=$(grep -cE '^\| ?[0-9]+ ?\|' "$BLOCKERS_FILE" 2>/dev/null || true)
 fi
 
-# heal cycle — count Wave-8 (healing) section headings in the DECISION LOG,
+# heal cycle — count Flow-8 (healing) section headings in the DECISION LOG,
 # which every mission writes (luffy-orchestrator rule 10). Not the word "heal"
 # anywhere (heal workers/healing text would inflate the counter and cause a
 # premature halt). Each heal cycle is logged as a "## Flow 8 — healing" section;
-# the [^0-9a-z] guard keeps adjacent "## Wave 8b"-style sections from counting.
+# the [^0-9a-z] guard keeps adjacent "## Flow 8b"-style sections from counting.
+# Aggregate across ALL dated logs (a multi-day mission spans several files) —
+# reading only the newest would undercount earlier days' heal cycles.
 HEAL_CYCLE=1
-LOG_FILE=$(ls -t "$MUGIWARA_DIR"/????-??-??-"${MISSION}".md "$MUGIWARA_DIR/logs"/????-??-??-"${MISSION}".md 2>/dev/null | head -1 || true)
-if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
-  HEAL_COUNT=$(grep -ciE '^## flow 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)
+HEAL_COUNT=0
+# Cap the date prefix to today: a future-dated log (9999-…) must not inflate
+# the heal counter and trigger a premature halt.
+TODAY=$(date +%Y-%m-%d)
+for LOG_FILE in "$MUGIWARA_DIR"/????-??-??-"${MISSION}".md "$MUGIWARA_DIR/logs"/????-??-??-"${MISSION}".md; do
+  [ -f "$LOG_FILE" ] || continue
+  LOG_DATE=$(basename "$LOG_FILE" | cut -c1-10)
+  case "$LOG_DATE" in
+    ''|*[!0-9-]*) continue ;;
+  esac
+  if [ "$LOG_DATE" \> "$TODAY" ]; then continue; fi
+  HEAL_COUNT=$((HEAL_COUNT + $(grep -ciE '^## flow 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)))
+done
+if [ "$HEAL_COUNT" -gt 0 ]; then
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 

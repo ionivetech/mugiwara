@@ -2,7 +2,7 @@
 // @bun
 
 // hooks/pipeline-guard.ts
-import { existsSync, readFileSync, readdirSync, statSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync, lstatSync } from "fs";
 import { execFileSync } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
@@ -116,19 +116,21 @@ function planTouched() {
   const plansDir = join(cwd, ".mugiwara", "plans");
   if (!existsSync(plansDir))
     return false;
-  let sessionStart = 0;
   const markerFile = join(cwd, ".mugiwara", "state", ".engaged");
-  if (existsSync(markerFile)) {
-    try {
-      const m = JSON.parse(readFileSync(markerFile, "utf8"));
-      sessionStart = Date.parse(m.first_seen ?? "") || 0;
-    } catch {}
-  }
+  if (!existsSync(markerFile))
+    return false;
+  let sessionStart = 0;
+  try {
+    const m = JSON.parse(readFileSync(markerFile, "utf8"));
+    sessionStart = Date.parse(m.first_seen ?? "") || 0;
+  } catch {}
+  if (!sessionStart)
+    return false;
   try {
     for (const e of readdirSync(plansDir)) {
       if (!e.endsWith(".md"))
         continue;
-      const at = statSync(join(plansDir, e)).mtimeMs;
+      const at = lstatSync(join(plansDir, e)).mtimeMs;
       if (at >= sessionStart)
         return true;
     }
@@ -168,7 +170,7 @@ async function main() {
   if (!state) {
     if (!sourceChangedNow)
       return;
-    const reason = "Mugiwara: source changed in this session but no Wave 0 triage is on disk. " + "Run Wave 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
+    const reason = "Mugiwara: source changed in this session but no Flow 0 triage is on disk. " + "Run Flow 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
     if (enforce === "warn") {
       process.stderr.write(`\u26A0 ${reason}
 `);

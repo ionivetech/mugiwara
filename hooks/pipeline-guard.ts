@@ -4,7 +4,7 @@
 //
 // Why this exists, precisely: in the session that produced this file, a
 // luffy-orchestrator subagent ran, stopped, and the main thread then did hours
-// of source work with no Wave 0, no plan, no decision log and no savepoint.
+// of source work with no Flow 0, no plan, no decision log and no savepoint.
 // Nobody noticed until the user asked. 21 files under content/ instruct the
 // model to run savepoint.sh; production executions before that day: 0. Prose
 // enforcement measured 0-for-21, so this is a machine check instead.
@@ -19,7 +19,7 @@
 //
 // Fails OPEN on any internal error. A fence that can wedge a session gets
 // disabled by its users, and then it fences nothing.
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync, lstatSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -160,19 +160,23 @@ function plannerDispatched(sessionId: string): boolean {
 function planTouched(): boolean {
   const plansDir = join(cwd, '.mugiwara', 'plans');
   if (!existsSync(plansDir)) return false;
-  // session start = the marker's first_seen; anything newer is this session's work
-  let sessionStart = 0;
+  // session start = the marker's first_seen; anything newer is this session's work.
+  // An ABSENT marker means the session never engaged — treat as untouched, never
+  // as "every plan counts" (a 0 fallback would flag every pre-existing plan).
   const markerFile = join(cwd, '.mugiwara', 'state', '.engaged');
-  if (existsSync(markerFile)) {
-    try {
-      const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string };
-      sessionStart = Date.parse(m.first_seen ?? '') || 0;
-    } catch { /* no marker — fall through to any-plan */ }
-  }
+  if (!existsSync(markerFile)) return false;
+  let sessionStart = 0;
+  try {
+    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string };
+    sessionStart = Date.parse(m.first_seen ?? '') || 0;
+  } catch { /* corrupt marker — treat as untouched */ }
+  if (!sessionStart) return false;
   try {
     for (const e of readdirSync(plansDir)) {
       if (!e.endsWith('.md')) continue;
-      const at = statSync(join(plansDir, e)).mtimeMs;
+      // lstat, not stat: a symlinked plan pointing outside .mugiwara/plans/
+      // must not count as a plan write.
+      const at = lstatSync(join(plansDir, e)).mtimeMs;
       if (at >= sessionStart) return true;
     }
   } catch { /* unreadable — treat as untouched */ }
@@ -244,8 +248,8 @@ async function main(): Promise<void> {
   if (!state) {
     if (!sourceChangedNow) return;
     const reason =
-      'Mugiwara: source changed in this session but no Wave 0 triage is on disk. ' +
-      'Run Wave 0 (classify, size the lane, write the decision log) and record it with ' +
+      'Mugiwara: source changed in this session but no Flow 0 triage is on disk. ' +
+      'Run Flow 0 (classify, size the lane, write the decision log) and record it with ' +
       '`mugiwara savepoint <mission> "" 0 <mode>` — or, if this is Lane 0 trivial work, ' +
       'record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.';
 

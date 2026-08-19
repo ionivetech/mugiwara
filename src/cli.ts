@@ -290,7 +290,7 @@ function statusCmd(flags: Args['flags']): void {
   for (const s of rows) {
     const scope = s.member ? ` [${s.member}]` : '';
     console.log(`${s.mission}${scope}`);
-    console.log(`  wave ${s.wave} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
+    console.log(`  flow ${s.wave} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
     console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALT' : ''} · files touched ${s.files_touched}`);
     if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})${s.delegate_due ? ' · delegate due' : ''}`);
     console.log(`  branch ${s.branch} · updated ${s.updated_at}`);
@@ -319,7 +319,10 @@ function initiativeCmd(flags: Args['flags'], positionals: string[]): void {
     process.exit(1);
   }
   const script = join(import.meta.dirname, '..', 'scripts', 'initiative.ts');
-  const r = spawnSync(process.execPath, [script, ...positionals.slice(1)], {
+  // initiative.ts is TypeScript — spawn `bun` (which strips types), not node,
+  // which only strips types on >=22.18. engines floor is >=20.11.
+  const bun = process.platform === 'win32' ? 'bun.exe' : 'bun';
+  const r = spawnSync(bun, [script, ...positionals.slice(1)], {
     cwd: projectDir,
     stdio: 'inherit',
     env: process.env,

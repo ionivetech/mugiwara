@@ -30,7 +30,7 @@ type Active = { mission: string; member: string; wave: string; mode: string; upd
  * that never engaged the crew.
  */
 function bootstrapMission(): Active | null {
-  // A plan, spec, or decision log means Wave 0 produced artifacts but no
+  // A plan, spec, or decision log means Flow 0 produced artifacts but no
   // savepoint — exactly the drift this hook exists to end.
   for (const dir of ['plans', 'spec', 'logs']) {
     const d = join(cwd, '.mugiwara', dir);

@@ -167,7 +167,11 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   // a project config. Never overwrite an existing config.
   if (scope === 'project') {
     const configPath = join(projectDir, '.mugiwara', 'config');
-    if (!existsSync(configPath)) {
+    // lstat, not existsSync: a pre-created symlinked config must not be
+    // followed and overwritten (TOCTOU / symlink defense-in-depth).
+    let configExists = false;
+    try { configExists = lstatSync(configPath).isFile() || lstatSync(configPath).isSymbolicLink(); } catch { configExists = false; }
+    if (!configExists) {
       const body = [
         'mode=guided',
         'branch=feature/{type}-{issue}-{slug}',

@@ -152,7 +152,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
     state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
     expect(state.heal_cycle).toBe(2);
 
-    // two recorded cycles → cycle 3; a "Wave 8b"-style adjacent section does NOT count
+    // two recorded cycles → cycle 3; a "Flow 8b"-style adjacent section does NOT count
     writeFileSync(
       join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
       [
@@ -161,7 +161,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
         'Cycle one.',
         '## Flow 8 — healing (Brook)',
         'Cycle two.',
-        '## Wave 8b — unrelated enforcement section, not a heal cycle',
+        '## Flow 8b — unrelated enforcement section, not a heal cycle',
       ].join('\n') + '\n',
     );
     runSavepoint(dir, 'heal-mission "" 3 guided');

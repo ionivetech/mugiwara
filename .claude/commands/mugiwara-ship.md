@@ -3,7 +3,7 @@ description: Close the mission as Luffy (closure + ship stage, at mission end)
 ---
 Close the mission as Luffy, inline in the main conversation:
 
-1. **Entry protocol first** — read the mission state (`.mugiwara/state/<mission>/[member].json`). No active mission → run Wave 0 triage before anything else. Foreign mission → stop, report owner. Base drift → stop, ask. Non-git → degrade to standard, say so once.
+1. **Entry protocol first** — read the mission state (`.mugiwara/state/<mission>/[member].json`). No active mission → run Flow 0 triage before anything else. Foreign mission → stop, report owner. Base drift → stop, ask. Non-git → degrade to standard, say so once.
 2. Load the skills: `mugiwara-orchestration` + `mugiwara-ship`.
 3. Run the ship gate: pre-launch checklist, feature flags, staged rollout, mandatory rollback plan — binary GO/NO-GO with evidence.
 4. Bridge on `.mugiwara/plans/` (promise) vs `.mugiwara/results/` (evidence) for the Definition-of-Done verdict.

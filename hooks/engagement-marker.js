@@ -13,11 +13,15 @@ async function main() {
   try {
     payload = JSON.parse(input);
   } catch {}
-  const blob = JSON.stringify(payload).toLowerCase();
-  if (!blob.includes("mugiwara"))
+  const toolName = typeof payload.tool_name === "string" ? payload.tool_name.toLowerCase() : "";
+  const toolInput = payload.tool_input ?? {};
+  const subagentType = typeof toolInput.subagent_type === "string" ? toolInput.subagent_type.toLowerCase() : "";
+  const skillName = typeof toolInput.skill === "string" ? toolInput.skill.toLowerCase() : "";
+  const agentField = `${toolName} ${subagentType} ${skillName}`;
+  if (!agentField.includes("mugiwara"))
     return;
-  const dispatched = /zoro-execution|brook-healing|mugiwara-execution|mugiwara-healing|mugiwara-execute|mugiwara-heal/.test(blob);
-  const planned = /nami-planner|mugiwara-planning|mugiwara-plan/.test(blob);
+  const dispatched = /zoro-execution|brook-healing|mugiwara-execution|mugiwara-healing|mugiwara-execute|mugiwara-heal/.test(agentField);
+  const planned = /nami-planner|mugiwara-planning|mugiwara-plan/.test(agentField);
   const dir = join(cwd, ".mugiwara", "state");
   const file = join(dir, ".engaged");
   const sessionId = typeof payload.session_id === "string" ? payload.session_id : "";
@@ -29,9 +33,9 @@ async function main() {
     if (existsSync(file)) {
       try {
         const prev = JSON.parse(readFileSync(file, "utf8"));
-        if (typeof prev.first_seen === "string")
-          firstSeen = prev.first_seen;
         const sameSession = !sessionId || !prev.session_id || prev.session_id === sessionId;
+        if (sameSession && typeof prev.first_seen === "string")
+          firstSeen = prev.first_seen;
         if (sameSession && typeof prev.executor_dispatched_at === "string")
           dispatchedAt = prev.executor_dispatched_at;
         if (sameSession && typeof prev.planner_dispatched_at === "string")
