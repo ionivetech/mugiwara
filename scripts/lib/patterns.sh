@@ -20,6 +20,33 @@ SENSITIVE_PATS="auth/|oauth2?/|payment/|payments/|billing/|crypto/|secrets/|cred
 # count alone (path-weighted sizing).
 PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
 
+# Installed-harness rules dirs — what `mugiwara install` writes into a project
+# (~50 files across the 9 targets). In a CONSUMER project these are installed
+# config, no different from the crew's own .mugiwara/ bookkeeping: the first
+# savepoint after an install counted them and sized every fresh mission Lane 3
+# before a single line of the user's own work existed. In MUGIWARA'S OWN repo
+# the same dirs are the product surface (they are in PRODUCT_PAT), so the
+# exclusion is conditional on the repo identity, never unconditional.
+# Unanchored on purpose — call sites anchor with ^ (name lists) or a tab
+# (numstat rows).
+HARNESS_PAT="\.claude/|\.opencode/|\.github/(instructions|agents)/|\.gemini/mugiwara/|\.codex/mugiwara/|\.devin/rules/|\.clinerules/|\.kilo/rules/|\.agents/rules/"
+
+# harness_excluded — true (exit 0) when harness rules dirs must NOT count
+# toward mission sizing, i.e. this repo is not mugiwara itself. Identity comes
+# from the repo root package.json name ("mugiwara" or "@scope/mugiwara"), the
+# same manifest savepoint already trusts for skill_version.
+harness_excluded() {
+  local root
+  root=$(git rev-parse --show-toplevel 2>/dev/null || echo .)
+  ! grep -qE '"name"[[:space:]]*:[[:space:]]*"(@[^"/]+/)?mugiwara"' "$root/package.json" 2>/dev/null
+}
+
+# drop_harness <anchor> — filter stdin, dropping harness paths in consumer
+# repos and passing everything through in mugiwara's own.
+drop_harness() {
+  if harness_excluded; then grep -vE "$1($HARNESS_PAT)" || true; else cat; fi
+}
+
 # --- working-tree-aware change set (F) -------------------------------------
 # `git diff BASE..HEAD` alone is blind to uncommitted work, and the old
 # `|| git diff --cached` fallback was dead code (|| fires on non-zero exit,
@@ -56,7 +83,7 @@ changed_files() {
     # porcelain covers staged + unstaged + untracked in one pass; strip the
     # 2-char status + space, and keep the destination side of a rename.
     git status --porcelain --untracked-files=all 2>/dev/null | sed 's/^...//; s/^.* -> //' || true
-  } | grep -v '^[[:space:]]*$' | grep -v "^$(mugiwara_rel)/" | sort -u
+  } | grep -v '^[[:space:]]*$' | grep -v "^$(mugiwara_rel)/" | drop_harness '^' | sort -u
 }
 
 # changed_loc <base-ref> — echoes "<insertions> <deletions>" over the same
@@ -74,5 +101,5 @@ changed_loc() {
       case "$f" in "$MUGI_REL"/*) continue ;; esac
       printf '%s\t0\t%s\n' "$(wc -l < "$f" 2>/dev/null | tr -d ' ' || echo 0)" "$f"
     done
-  } | grep -v "	$MUGI_REL/" | awk '{ if ($1 ~ /^[0-9]+$/) i+=$1; if ($2 ~ /^[0-9]+$/) d+=$2 } END { print (i+0)" "(d+0) }'
+  } | grep -v "	$MUGI_REL/" | drop_harness '	' | awk '{ if ($1 ~ /^[0-9]+$/) i+=$1; if ($2 ~ /^[0-9]+$/) d+=$2 } END { print (i+0)" "(d+0) }'
 }
