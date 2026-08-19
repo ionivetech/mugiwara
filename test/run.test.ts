@@ -9,6 +9,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runScript, findBash, RUNNABLE, SCRIPTS_DIR } from '../src/run.ts';
 
+// git init + a real savepoint.sh spawn blows past vitest's 5s default on a loaded
+// machine — the same reason lane-integrity.test.ts and savepoint.test.ts carry
+// explicit timeouts. Anything here that shells out gets this, not a smaller test.
+const SLOW = 30000;
+
 const DIR = mkdtempSync(join(tmpdir(), 'mugi-run-'));
 
 describe('script name allowlist — a name, never a path', () => {
@@ -80,7 +85,7 @@ describe('bash lookup fails CLOSED', () => {
 });
 
 describe('a real savepoint.sh run through runScript', () => {
-  test('writes state and continue JSON into a fixture git repo', () => {
+  test('writes state and continue JSON into a fixture git repo', { timeout: SLOW }, () => {
     const repo = mkdtempSync(join(tmpdir(), 'mugi-run-repo-'));
     try {
       const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, stdio: 'ignore' });
@@ -112,7 +117,7 @@ describe('a real savepoint.sh run through runScript', () => {
     } finally { rmSync(repo, { recursive: true, force: true }); }
   });
 
-  test('runs against the passed projectDir, not the harness cwd', () => {
+  test('runs against the passed projectDir, not the harness cwd', { timeout: SLOW }, () => {
     const repo = mkdtempSync(join(tmpdir(), 'mugi-run-cwd-'));
     try {
       const git = (...args: string[]) => execFileSync('git', args, { cwd: repo, stdio: 'ignore' });

@@ -7,6 +7,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readContinue, readState, resolveContinue, formatResume, formatTable } from '../src/continue.ts';
 
+// only the `cli()` cases below shell out (bun + src/cli.ts, twice in one case);
+// the rest are in-process and stay on the default timeout.
+const SLOW = 30000;
+
 type Rec = Record<string, unknown>;
 
 /** Build a project dir with `.mugiwara/<root>/<mission>/<file>.json` savepoints. */
@@ -230,7 +234,7 @@ describe('actor filtering (cli continueCmd)', () => {
     }
   };
 
-  test('an actor-less savepoint is still listed — filtering must not blank the output', () => {
+  test('an actor-less savepoint is still listed — filtering must not blank the output', { timeout: SLOW }, () => {
     const dir = fixture([{ mission: 'orphan-actor', file: 'state', body: { ...entry('orphan-actor'), actor: '' } }]);
     try {
       const out = cli(dir, [], { STATE_ACTOR: 'Nobody <nobody@example.com>' });
@@ -239,7 +243,7 @@ describe('actor filtering (cli continueCmd)', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('when the actor DOES match, only that actor\'s missions show', () => {
+  test('when the actor DOES match, only that actor\'s missions show', { timeout: SLOW }, () => {
     const dir = fixture([
       { mission: 'mine-m', file: 'state', body: entry('mine-m', { actor: 'Me <me@example.com>' }) },
       { mission: 'theirs-m', file: 'state', body: entry('theirs-m', { actor: 'Them <them@example.com>' }) },
