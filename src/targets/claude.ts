@@ -55,14 +55,18 @@ function copyScripts(dstDir: string): string[] {
 }
 
 type HookEntry = { type: string; command: string; timeout?: number };
-type HookGroup = { hooks: HookEntry[] };
+type HookGroup = { matcher?: string; hooks: HookEntry[] };
 
 function wireSettings(root: string, hooksDir: string): { written: string[]; notes: string[] } {
   const file = join(root, 'settings.json');
-  const events: Record<string, { file: string; timeout: number }> = {
+  const events: Record<string, { file: string; timeout: number; matcher?: string }> = {
     SessionStart: { file: 'session-start.js', timeout: 10 },
     UserPromptSubmit: { file: 'mugiwara-mode-tracker.js', timeout: 5 },
     Stop: { file: 'auto-savepoint.js', timeout: 20 },
+    SubagentStop: { file: 'pipeline-guard.js', timeout: 15 },
+    // matcher scopes the marker to crew invocations — without it the hook would
+    // fire on every tool call in the session for no benefit
+    PostToolUse: { file: 'engagement-marker.js', timeout: 5, matcher: 'Task|Skill' },
   };
 
   let settings: Record<string, unknown> = {};
@@ -82,7 +86,9 @@ function wireSettings(root: string, hooksDir: string): { written: string[]; note
     const groups = Array.isArray(hooks[event]) ? hooks[event] : [];
     const already = groups.some((g) => g.hooks?.some((h) => h.command?.includes(spec.file)));
     if (already) continue;
-    groups.push({ hooks: [{ type: 'command', command: JSON.stringify(command), timeout: spec.timeout }] });
+    const group: HookGroup = { hooks: [{ type: 'command', command: JSON.stringify(command), timeout: spec.timeout }] };
+    if (spec.matcher) group.matcher = spec.matcher;
+    groups.push(group);
     hooks[event] = groups;
     changed = true;
   }
@@ -112,7 +118,7 @@ function unwireSettings(root: string): { changed: string[]; notes: string[] } {
   const hooks = settings.hooks as Record<string, HookGroup[]> | undefined;
   if (!hooks) return { changed: [], notes: [] };
 
-  const ours = new Set(['session-start.js', 'mugiwara-mode-tracker.js', 'auto-savepoint.js']);
+  const ours = new Set(['session-start.js', 'mugiwara-mode-tracker.js', 'auto-savepoint.js', 'pipeline-guard.js', 'engagement-marker.js']);
   const isOurs = (h: HookEntry): boolean =>
     [...ours].some((f) => h.command?.includes(join('hooks', f)) || h.command?.includes(`hooks/${f}`));
 

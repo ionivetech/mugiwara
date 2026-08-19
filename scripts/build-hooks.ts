@@ -12,7 +12,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const HOOK_ENTRIES = ['session-start', 'mugiwara-mode-tracker', 'auto-savepoint'];
+export const HOOK_ENTRIES = ['session-start', 'mugiwara-mode-tracker', 'auto-savepoint', 'engagement-marker', 'pipeline-guard'];
 
 // --check verifies the committed .js files are present and current, without
 // rewriting them. hooks.json points at the .js builds, so a missing or stale

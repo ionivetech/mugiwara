@@ -22,8 +22,8 @@ Gates are binary: pass or fail, with evidence. No negotiation, no "almost passes
 ## Sonar-style quality gate
 
 Franky reads evidence from prior wave reports (never re-runs
-checks): Jinbe (`.mugiwara/review/<mission>-security.md`),
-Robin (`.mugiwara/review/<mission>-review.md`), Sanji
+checks): Jinbe (`.mugiwara/review/YYYY-MM-DD-<mission>-security.md`),
+Robin (`.mugiwara/review/YYYY-MM-DD-<mission>-review.md`), Sanji
 (`.mugiwara/results/<mission>/03-quality.md`).
 Evaluated: Vulnerabilities=0, Bugs=0, Code smells≤project
 threshold, Coverage(new code)≥config threshold,
