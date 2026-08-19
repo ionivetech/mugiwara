@@ -123,6 +123,51 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
   }
 });
 
+test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the word "heal"', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-heal-'));
+  try {
+    setupGit(dir);
+    mkdirSync(join(dir, '.mugiwara', 'logs'), { recursive: true });
+
+    // no decision log → heal_cycle = 1 (no healing happened)
+    runSavepoint(dir, 'heal-mission "" 3 guided');
+    let state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
+    expect(state.heal_cycle).toBe(1);
+
+    // one heal cycle section → cycle 2; the word "heal" in prose does not inflate
+    writeFileSync(
+      join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
+      [
+        '# Decision log — heal-mission',
+        '## Wave 8 — healing (Brook)',
+        'Fixed: heal counter wired to the decision log.',
+        'The healing text mentions heal workers that never ran.',
+      ].join('\n') + '\n',
+    );
+    runSavepoint(dir, 'heal-mission "" 3 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
+    expect(state.heal_cycle).toBe(2);
+
+    // two recorded cycles → cycle 3; a "Wave 8b"-style adjacent section does NOT count
+    writeFileSync(
+      join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
+      [
+        '# Decision log — heal-mission',
+        '## Wave 8 — healing (Brook)',
+        'Cycle one.',
+        '## Wave 8 — healing (Brook)',
+        'Cycle two.',
+        '## Wave 8b — unrelated enforcement section, not a heal cycle',
+      ].join('\n') + '\n',
+    );
+    runSavepoint(dir, 'heal-mission "" 3 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
+    expect(state.heal_cycle).toBe(3);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS overrides as reported', { timeout: 15000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-tokens-'));
   try {

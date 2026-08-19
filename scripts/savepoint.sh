@@ -258,13 +258,15 @@ if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
   BLOCKERS_OPEN=$(grep -cE '^\| ?[0-9]+ ?\|' "$BLOCKERS_FILE" 2>/dev/null || true)
 fi
 
-# heal cycle — count WAVE-8 banner occurrences in the trace, not the word
-# "heal" anywhere (heal workers/healing text would inflate the counter and
-# cause a premature halt)
+# heal cycle — count Wave-8 (healing) section headings in the DECISION LOG,
+# which every mission writes (luffy-orchestrator rule 10). Not the word "heal"
+# anywhere (heal workers/healing text would inflate the counter and cause a
+# premature halt). Each heal cycle is logged as a "## Wave 8 — healing" section;
+# the [^0-9a-z] guard keeps adjacent "## Wave 8b"-style sections from counting.
 HEAL_CYCLE=1
-TRACE_FILE=$(ls "$MUGIWARA_DIR/results/${MISSION}/"*trace*.md 2>/dev/null | head -1 || true)
-if [ -n "$TRACE_FILE" ] && [ -f "$TRACE_FILE" ]; then
-  HEAL_COUNT=$(grep -ci '^.*Wave 8.*\|wave 8' "$TRACE_FILE" 2>/dev/null || true)
+LOG_FILE=$(ls -t "$MUGIWARA_DIR"/????-??-??-"${MISSION}".md "$MUGIWARA_DIR/logs"/????-??-??-"${MISSION}".md 2>/dev/null | head -1 || true)
+if [ -n "$LOG_FILE" ] && [ -f "$LOG_FILE" ]; then
+  HEAL_COUNT=$(grep -ciE '^## wave 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
 

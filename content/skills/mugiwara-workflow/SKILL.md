@@ -43,7 +43,7 @@ Waves are phases, not files. The plan doc defines them. The harness runs inline.
 
 **Inline by default.** Main thread embodies each crew role using that crew's skill. Every wave runs in the main conversation. **One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
 
-**Banners.** Every wave opens with a banner in the owning agent's color and closes with a handoff line — the equals line `===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Keep literal `WAVE N —` (savepoint's heal counter greps it). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the wave's first response; handoff `→ Wave N+1 — Crew (Role)` = LAST line of the wave's final response. A wave without both is skipped — record why.
+**Banners.** Every wave opens with a banner in the owning agent's color and closes with a handoff line — the equals line `===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Keep literal `WAVE N —` (the check-in protocol reads it; heal cycles are counted from the decision log's `## Wave 8` sections, not from banners). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the wave's first response; handoff `→ Wave N+1 — Crew (Role)` = LAST line of the wave's final response. A wave without both is skipped — record why.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 

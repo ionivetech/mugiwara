@@ -42,7 +42,8 @@ with the handoff line `→ Wave N+1 — <crew>` (Wave 9: `→ closure`). Termina
 equals line `===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` wrapped in ANSI truecolor
 `\x1b[38;2;R;G;Bm...\x1b[0m` (256 fallback `38;5;N`); markdown UIs: the plain
 equals line, no ANSI. The literal `WAVE N —`
-text must stay exact (savepoint's heal counter greps `wave 8`). Colors
+text must stay exact (the check-in protocol reads it; heal cycles are counted
+from the decision log's `## Wave 8` sections, not from banners). Colors
 and the full spec: `_shared/references/wave-banners.md`. No wave starts without its banner. A wave intentionally
 omitted is never silent — record wave, owner, and reason in the decision log
 before moving on. The user must always see which crew runs now and who takes
