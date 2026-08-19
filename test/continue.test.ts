@@ -1,11 +1,11 @@
 // test/continue.test.ts — src/continue.ts had zero tests. It decides which
 // mission gets resumed; a wrong answer resumes someone else's work.
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, beforeEach, afterEach, afterAll } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { readContinue, readState, resolveContinue, formatResume, formatTable } from '../src/continue.ts';
+import { readContinue, readState, resolveContinue, formatResume, formatTable, gitActor } from '../src/continue.ts';
 
 // only the `cli()` cases below shell out (bun + src/cli.ts, twice in one case);
 // the rest are in-process and stay on the default timeout.
@@ -222,6 +222,200 @@ describe('formatResume — the single-line contract mugiwara-resume depends on',
       expect(lines[1]).toContain('—');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
+});
+
+describe('readState — lane / heal / delegate fields', () => {
+  test('surfaces lane_rose, lane_prev, lane_peak, heal_halt, delegate_due and numeric fields', () => {
+    const dir = fixture([{
+      root: 'state', mission: 'st-f', file: 'state',
+      body: {
+        mission: 'st-f', actor: 'a', branch: 'b', wave: 4,
+        lane: 'lean', lane_reason: 'tokens',
+        lane_rose: true, lane_prev: 'standard', lane_peak: 'full',
+        blockers_open: 2, heal_cycle: 1, heal_max_cycles: 5, heal_halt: true,
+        delegate_threshold: 75, delegate_due: true,
+        tokens_est: 9001, budget: 40, budget_status: 'warn', files_touched: 12,
+      },
+    }]);
+    try {
+      const [s] = readState(dir);
+      expect(s.lane_rose).toBe(true);
+      expect(s.lane_prev).toBe('standard');
+      expect(s.lane_peak).toBe('full');
+      expect(s.heal_halt).toBe(true);
+      expect(s.delegate_due).toBe(true);
+      expect(s.heal_max_cycles).toBe(5);
+      expect(s.delegate_threshold).toBe(75);
+      expect(s.blockers_open).toBe(2);
+      expect(s.heal_cycle).toBe(1);
+      expect(s.tokens_est).toBe(9001);
+      expect(s.budget).toBe(40);
+      expect(s.budget_status).toBe('warn');
+      expect(s.files_touched).toBe(12);
+      expect(s.lane_reason).toBe('tokens');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('falsy flag fields stay false; a non-object tasks object and absent heal/delegate defaults hold', () => {
+    const dir = fixture([{
+      root: 'state', mission: 'st-f', file: 'state',
+      body: { mission: 'st-f', lane_rose: false, heal_halt: false, delegate_due: false, tasks: 'not-an-object' },
+    }]);
+    try {
+      const [s] = readState(dir);
+      expect(s.lane_rose).toBe(false);
+      expect(s.heal_halt).toBe(false);
+      expect(s.delegate_due).toBe(false);
+      expect(s.tasks_done).toBe(0);
+      expect(s.tasks_total).toBe(0);
+      expect(s.heal_max_cycles).toBe(3);   // documented default when absent/0
+      expect(s.delegate_threshold).toBe(60);
+      expect(s.evidence).toEqual([]);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('scan safety — unsafe mission dirs, unsafe member files, non-json ignored', () => {
+  test('mission dirs failing isSafeKey and member files with unsafe names are skipped; non-json ignored', () => {
+    const dir = fixture([{ mission: 'safe', file: 'state', body: entry('safe') }]);
+    const base = join(dir, '.mugiwara', 'continue');
+    mkdirSync(join(base, 'has space'), { recursive: true });
+    writeFileSync(join(base, 'has space', 'state.json'), JSON.stringify(entry('x')));
+    mkdirSync(join(base, '.hidden'), { recursive: true });
+    writeFileSync(join(base, 'safe', 'bad member.json'), JSON.stringify(entry('safe')));
+    writeFileSync(join(base, 'safe', 'notes.txt'), 'not json');
+    try {
+      const got = readContinue(dir);
+      expect(got.map((e) => e.member)).toEqual([null]); // only safe/state survives
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('resolveContinue — remaining branches', () => {
+  test('form 1 (no args) on a single TEAM mission lists members via the recursive path', () => {
+    const dir = fixture([
+      { mission: 'team-m', file: 'zoro', body: entry('team-m') },
+      { mission: 'team-m', file: 'sanji', body: entry('team-m') },
+    ]);
+    try {
+      const r = resolveContinue(readContinue(dir));
+      expect(r.kind).toBe('members');
+      if (r.kind === 'members') expect(r.entries).toHaveLength(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('form 1 (no args) single team mission WITH a member arg recurses straight to a resume', () => {
+    const dir = fixture([
+      { mission: 'team-m', file: 'zoro', body: entry('team-m') },
+      { mission: 'team-m', file: 'sanji', body: entry('team-m') },
+    ]);
+    try {
+      const r = resolveContinue(readContinue(dir), undefined, 'sanji');
+      expect(r.kind).toBe('resume');
+      if (r.kind === 'resume') expect(r.entry.member).toBe('sanji');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('member requested on a solo-only mission is unknown-member with (solo) in known', () => {
+    const dir = fixture([{ mission: 'solo-m', file: 'state', body: entry('solo-m') }]);
+    try {
+      const r = resolveContinue(readContinue(dir), 'solo-m', 'nobody');
+      expect(r.kind).toBe('unknown-member');
+      if (r.kind === 'unknown-member') expect(r.known).toEqual(['(solo)']);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('formatTable — column alignment across rows', () => {
+  test('member column pads to the widest mission so em dashes align across rows', () => {
+    const dir = fixture([
+      { mission: 'long-mission-name', file: 'state', body: entry('long-mission-name', { wave: 10 }) },
+      { mission: 'm', file: 'state', body: entry('m', { wave: 1 }) },
+    ]);
+    try {
+      const lines = formatTable(readContinue(dir)).split('\n');
+      expect(lines).toHaveLength(3); // header + 2 rows
+      const emCol = lines.map((l) => l.indexOf('—'));
+      expect(emCol[1]).toBe(emCol[2]);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('gitActor — env precedence STATE_ACTOR > GIT_AUTHOR_NAME > git config > USER', () => {
+  const ENV_KEYS = ['STATE_ACTOR', 'GIT_AUTHOR_NAME', 'USER', 'USERNAME', 'HOME', 'XDG_CONFIG_HOME', 'GIT_CONFIG_NOSYSTEM'];
+  const saved: Record<string, string | undefined> = {};
+  const bareCwd = mkdtempSync(join(tmpdir(), 'mugi-gitactor-'));
+
+  const repoWith = (name?: string, email?: string): string => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-gitrepo-'));
+    execFileSync('git', ['init', '-q', dir], { stdio: 'ignore' });
+    if (name) execFileSync('git', ['config', 'user.name', name], { cwd: dir, stdio: 'ignore' });
+    if (email) execFileSync('git', ['config', 'user.email', email], { cwd: dir, stdio: 'ignore' });
+    return dir;
+  };
+
+  beforeEach(() => {
+    for (const k of ENV_KEYS) { saved[k] = process.env[k]; delete process.env[k]; }
+    // isolate from the machine's global git config so only local config counts
+    process.env.HOME = bareCwd;
+    process.env.XDG_CONFIG_HOME = join(bareCwd, '.xdg');
+    process.env.GIT_CONFIG_NOSYSTEM = '1';
+  });
+  afterEach(() => {
+    for (const k of ENV_KEYS) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  });
+
+  test('STATE_ACTOR wins over GIT_AUTHOR_NAME and USER', () => {
+    process.env.STATE_ACTOR = 'Luffy <luffy@example.com>';
+    process.env.GIT_AUTHOR_NAME = 'Zoro';
+    process.env.USER = 'nami';
+    expect(gitActor(bareCwd)).toBe('Luffy <luffy@example.com>');
+  });
+
+  test('STATE_ACTOR whitespace-only is treated as unset and falls to GIT_AUTHOR_NAME', () => {
+    process.env.STATE_ACTOR = '   ';
+    process.env.GIT_AUTHOR_NAME = 'Zoro <zoro@example.com>';
+    expect(gitActor(bareCwd)).toBe('Zoro <zoro@example.com>');
+  });
+
+  test('GIT_AUTHOR_NAME beats USER', () => {
+    process.env.GIT_AUTHOR_NAME = 'Sanji <sanji@example.com>';
+    process.env.USER = 'nami';
+    expect(gitActor(bareCwd)).toBe('Sanji <sanji@example.com>');
+  });
+
+  test('git config name + email combine into "name <email>"', () => {
+    const dir = repoWith('Brook', 'brook@example.com');
+    try {
+      expect(gitActor(dir)).toBe('Brook <brook@example.com>');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('git config name without email returns the bare name', () => {
+    const dir = repoWith('Brook');
+    try {
+      expect(gitActor(dir)).toBe('Brook');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('no git identity → falls back to USER', () => {
+    process.env.USER = 'nami';
+    expect(gitActor(bareCwd)).toBe('nami');
+  });
+
+  test('USERNAME is the Windows-spelling fallback when USER unset', () => {
+    process.env.USERNAME = 'vivi';
+    expect(gitActor(bareCwd)).toBe('vivi');
+  });
+
+  test('nothing set anywhere → empty string, never throws', () => {
+    expect(gitActor(bareCwd)).toBe('');
+  });
+
+  afterAll(() => { rmSync(bareCwd, { recursive: true, force: true }); });
 });
 
 describe('actor filtering (cli continueCmd)', () => {
