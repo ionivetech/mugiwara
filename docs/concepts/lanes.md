@@ -1,16 +1,16 @@
 # Lanes & Sizing
 
 The crew sizes a mission before it runs. Lane is computed from the diff by
-`scripts/lane.sh` — deterministic, not estimated.
+`mugiwara run lane.sh` — deterministic, not estimated.
 
 ## The lanes
 
-| Lane | Picks when | Waves | Token budget |
+| Lane | Picks when | Flow stages | Token budget |
 |------|-----------|-------|:------:|
 | **0 · Direct** | typo, rename, 1 file <20 LOC | none | ~0 |
 | **1 · Lean** | bug in 1-2 files, <50 LOC | execute → quality | ~7k / 12k |
 | **2 · Standard** | feature, 3-8 files | plan → execute → audit → review | ~13k / 25k |
-| **3 · Full** | architecture, migration, 9+ files, or auth/payment/API touched | all 9 waves | ~23k / 50k |
+| **3 · Full** | architecture, migration, 9+ files, or auth/payment/API touched | all 9 flow stages | ~23k / 50k |
 | **4 · Spike** | exploratory, needs direction | brainstorm → re-triage | ~1k / 3k |
 
 The "typical" column is the measured LANE_BASE — the token load of the skills
@@ -21,7 +21,7 @@ hand-tuned.
 
 ## How lane is computed
 
-`scripts/lane.sh <base-ref>` runs `git diff --name-only` against the base ref
+`mugiwara run lane.sh <base-ref>` runs `git diff --name-only` against the base ref
 and applies deterministic rules:
 
 | Diff | Lane |
@@ -70,9 +70,11 @@ Use `--json` for machine output:
 
 ## Token budget
 
-Every lane has a budget enforced by `scripts/savepoint.sh` at each wave
-boundary. The harness sets `MUGIWARA_TOKENS` env var with estimated tokens
-consumed.
+Every lane has a budget enforced by `mugiwara savepoint` at each flow stage
+boundary. `savepoint` computes `tokens_est` — an estimate of tokens consumed
+(LANE_BASE + doc words ×1.35 + changed LOC ×12) — and compares it against the
+budget. A user may override the estimate by setting `MUGIWARA_TOKENS`; nothing
+sets it automatically.
 
 | Status | Condition | Action |
 |--------|-----------|--------|
@@ -85,8 +87,8 @@ savepoint just writes the status to the mission state.
 
 ## Escalation
 
-Lane **escalates when work outgrows the estimate.** At every wave boundary,
-`scripts/savepoint.sh` re-checks the diff. If files grew or a sensitive path
+Lane **escalates when work outgrows the estimate.** At every flow-stage boundary,
+`mugiwara savepoint` re-checks the diff. If files grew or a sensitive path
 appeared, lane rises. A lane **never auto-drops** — savepoint clamps to the
 previous peak (`lane_peak` in the mission state) even when the diff shrinks, and
 `lane_rose` flags the escalation. Under-process costs more than over-process.
@@ -99,7 +101,7 @@ full pipeline," Luffy records it in the decision log and escalates.
 
 Exploratory missions start at Lane 4. Usopp brainstorms, then the mission is
 re-triaged into the right lane. A spike that stays a spike (no code change
-decided) ends at Wave 1.
+decided) ends at Flow 1.
 
-Lane is computed per mission by `scripts/lane.sh`, not stored in
+Lane is computed per mission by `mugiwara run lane.sh`, not stored in
 `.mugiwara/config`.

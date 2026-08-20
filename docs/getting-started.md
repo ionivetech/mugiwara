@@ -54,11 +54,11 @@ then give any non-trivial request.
 ```
 
 Luffy routes it to **Lane 1** (Lean). Zoro reproduces and fixes, Sanji runs
-format + lint + tests. Two waves, visible as compact checkpoint reports. No
-nine-wave ceremony for a one-file bug.
+format + lint + tests. Two flow stages, visible as compact checkpoint reports. No
+nine-flow-stage ceremony for a one-file bug.
 
 That's lane sizing: the process scales to the work. A typo (Lane 0) runs zero
-waves — the fix happens directly.
+flow stages — the fix happens directly.
 
 ### Medium: lane 2
 
@@ -67,7 +67,7 @@ waves — the fix happens directly.
 ```
 
 Touches frontend + API. Luffy routes to **Lane 2** (Standard). Nami plans 1
-wave with 3-5 tasks, Zoro executes test-first, Chopper audits every criterion,
+flow stage with 3-5 tasks, Zoro executes test-first, Chopper audits every criterion,
 Sanji and Franky gate, Robin and Jinbe review.
 
 ### Large: lane 3
@@ -76,25 +76,25 @@ Sanji and Franky gate, Robin and Jinbe review.
 > add role-based access control to the API
 ```
 
-Touches auth — Luffy routes to **Lane 3** (Full). All 9 waves run. Nami plans
+Touches auth — Luffy routes to **Lane 3** (Full). All 9 flow stages run. Nami plans
 the migration, Zoro executes, Chopper audits, Sanji tests, Franky gates, Robin
 reviews the diff with a breaking-change map, Jinbe runs STRIDE + OWASP, Brook
 heals any failures (max 3 cycles), Luffy closes with a mission report + push +
 ready PR summary.
 
 ```
-  Wave 0  Luffy   triage → route: full pipe (auth/ touched)
-  Wave 2  Nami    plan   → .mugiwara/plans/2026-08-10-rbac.md (2 waves, 5 tasks)
-  Wave 3  Zoro    execute→ 5 tasks, evidence per task
-  Wave 4  Chopper audit  → PASS: all criteria met, commit hygiene clean
-  Wave 5  Sanji   quality → PASS: lint 0, 312 tests green
-  Wave 6  Franky  gates  → PASS: new 94%, modified 87%, build green
-  Wave 7  Robin   review → 2 minor findings (batched)
-  Wave 7  Jinbe   security→ PASS: STRIDE clean, 0 high
-  Wave 9  Luffy   closure→ mission report + push + ready PR summary
+  Flow 0  Luffy   triage → route: full pipe (auth/ touched)
+  Flow 2  Nami    plan   → .mugiwara/plans/2026-08-10-rbac.md (2 plan waves, 5 tasks)
+  Flow 3  Zoro    execute→ 5 tasks, evidence per task
+  Flow 4  Chopper audit  → PASS: all criteria met, commit hygiene clean
+  Flow 5  Sanji   quality → PASS: lint 0, 312 tests green
+  Flow 6  Franky  gates  → PASS: new 94%, modified 87%, build green
+  Flow 7  Robin   review → 2 minor findings (batched)
+  Flow 7  Jinbe   security→ PASS: STRIDE clean, 0 high
+  Flow 9  Luffy   closure→ mission report + push + ready PR summary
 ```
 
-The crew runs **inline** in your main conversation — every wave reports as a
+The crew runs **inline** in your main conversation — every flow stage reports as a
 compact checkpoint. Subagents only for parallel task batches.
 
 Prefer to drive stages yourself? Every stage has a slash command:
@@ -113,7 +113,7 @@ Almost nothing in `guided` mode:
   PR, merges, or deploys.
 
 Switch to `semi` if you want the crew to self-manage branch, commits, and
-execution from Wave 3 (you still approve the written plan and answer real
+execution from Flow 3 (you still approve the written plan and answer real
 questions). Switch to `auto` for full autonomy — the crew resolves ambiguities
 internally (brainstorm → Luffy decides). See [modes](concepts/modes.md).
 
@@ -124,10 +124,10 @@ Every mission writes to `.mugiwara/` at the repo root:
 ```
 .mugiwara/
 ├── config          # mode, branch, commit, coverage thresholds
-├── state/<mission>/   # computed at every wave boundary by scripts/savepoint.sh (solo state.json / team member.json)
+├── state/<mission>/   # computed at every flow-stage boundary by mugiwara savepoint (solo state.json / team member.json)
 ├── continue/<mission>/ # machine-written resume point per (mission, member)
 ├── spec/           # brainstorm output
-├── plans/          # clean execution plan (source of truth from Wave 2)
+├── plans/          # clean execution plan (source of truth from Flow 2)
 ├── results/        # per-mission folders: results/<mission>/ (01-execution … 07-pr-verdict + todos)
 ├── reports/        # human-readable mission reports
 ├── review/         # review + security findings
@@ -136,7 +136,7 @@ Every mission writes to `.mugiwara/` at the repo root:
 └── logs/           # decision log + cross-mission lessons
 ```
 
-**Savepoint** runs at every wave boundary — the mission state carries lane, wave,
+**Savepoint** runs at every flow-stage boundary — the mission state carries lane, flow stage,
 files, blockers, heal cycle, and token budget. Resume reads one file instead of
 six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 

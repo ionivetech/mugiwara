@@ -1,6 +1,6 @@
 ---
 name: mugiwara-healing
-description: Use when an execution wave failed, earlier waves produced failures, broken things to fix — reads blocker ledger, stop-the-line triage, root-cause fixes, prove-it before fixing. Max 3 cycles.
+description: Use when an execution flow stage failed, earlier flow stages produced failures, broken things to fix — reads blocker ledger, stop-the-line triage, root-cause fixes, prove-it before fixing. Max 3 cycles.
 ---
 
 # Healing (Brook)
@@ -39,6 +39,8 @@ Before fixing a bug: write the failing test that reproduces it, watch it fail, t
 
 ## Triage matrix
 
+Full taxonomy behind the matrix: `references/failure-taxonomy.md`.
+
 | Failure | Action |
 |---------|--------|
 | lint/format error | auto-fix (formatter when supported), re-run |
@@ -53,15 +55,15 @@ Before fixing a bug: write the failing test that reproduces it, watch it fail, t
 2. Every code fix ships with the failed check now passing (run it, capture output).
 3. Never delete or weaken tests/configs to make a failure disappear.
 4. After healing: update the ledger — mark each healed row with evidence; keep unfixed rows for escalation.
-5. Cycle counter: read `heal_cycle` from `.mugiwara/state/<mission>/[member].json` (savepoint writes it). After this wave the flow returns to Wave 4 (Chopper) for re-audit. **At 3, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past 3.
+5. Cycle counter: read `heal_halt` from `.mugiwara/state/<mission>/[member].json` (savepoint writes it as `heal_cycle ≥ heal_max_cycles`, config default 3). After this flow stage the flow returns to Flow 4 (Chopper) for re-audit. **When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past `heal_max_cycles`.
 
 ## Worker subagents
 
-Brook runs inline for triage + ledger reading; parallel fixes use disposable WORKER subagents. Full protocol: `references/workers.md` — heal-worker grouping (independent rows in parallel), 5-field worker prompt, validation workers (reviewer/security/re-run), then back to Wave 4. Workers are NOT crew members.
+Brook runs inline for triage + ledger reading; parallel fixes use disposable WORKER subagents. Full protocol: `references/workers.md` — heal-worker grouping (independent rows in parallel), 5-field worker prompt, validation workers (reviewer/security/re-run), then back to Flow 4. Workers are NOT crew members.
 
 ## Output
 
-Fixed list (finding → commit → evidence), escalated list (finding → plan → owner), updated ledger → back to Wave 4 (Chopper).
+Fixed list (finding → commit → evidence), escalated list (finding → plan → owner), updated ledger → back to Flow 4 (Chopper).
 
 ## Red flags
 

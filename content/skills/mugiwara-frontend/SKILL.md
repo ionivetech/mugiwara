@@ -28,8 +28,7 @@ Match the repo's standard before writing anything new; reuse its components and 
 Capture current layout, spacing/type scales, palette, and component inventory before changing existing UI. Fix real problems; do not restyle what works.
 
 ## Design-system extraction (before markup)
-
-Extract tokens from the stack's design system BEFORE markup — spacing scale, type scale, role-based palette, radii, shadows, motion language. Name them semantically (`surface-muted`, not `c3`); store where the stack keeps tokens. No tokens extracted, no markup written. Then turn tokens into a small primitive set (button, input, card, icon, layout helpers) before composing screens — reuse primitives everywhere; every bespoke component is debt on every screen.
+Extract tokens from the stack's design system BEFORE markup — spacing scale, type scale, role-based palette, radii, shadows, motion language. Name them semantically (`surface-muted`, not `c3`); store where the stack keeps tokens. No tokens extracted, no markup written; token set and naming: `references/design-tokens.md`. Then turn tokens into a small primitive set (button, input, card, icon, layout helpers) before composing screens — reuse primitives everywhere; every bespoke component is debt on every screen.
 
 ## Component architecture
 
@@ -66,14 +65,13 @@ Extract tokens first, then reproduce structure faithfully: hierarchy, alignment,
 Mobile-first: start at the smallest screen, add breakpoints as layout needs them. Default full-width stacked; columns only when there is room. Use the stack's breakpoints, not a parallel scale; fluid containers, type, and spacing. Verify at every breakpoint, including between them — 3 widths checked is not 12 checked.
 
 ## Banned AI-default patterns (the slop list)
-
 - Centered hero trio: headline + subtitle + two buttons, dead center, gradient text.
 - Row of 3-4 identical feature cards with icon-circle + title + two lines.
 - Purple/indigo gradient everything; glassmorphism everywhere; emoji as icons.
 - Placeholder content where real product copy exists.
 - Stock hero illustrations when the design specifies otherwise.
 
-If the brief genuinely calls for one of these, execute it well — but the default is: don't.
+Full catalog with the tell for each: `references/slop-catalog.md`. If the brief genuinely calls for one of these, execute it well — but the default is: don't.
 
 ## WCAG 2.1 AA accessibility
 

@@ -8,7 +8,7 @@ description: Use when executing an approved plan — todo list first, sequential
 ## Skip when
 
 - No approved plan exists to execute — this is triage, brainstorm, or planning territory.
-- Lane 0 direct work (typo, rename, single small fix) with no wave structure.
+- Lane 0 direct work (typo, rename, single small fix) with no flow-stage structure.
 
 Execute the plan exactly. No silent reordering, no skipping steps, no "close enough".
 
@@ -28,9 +28,9 @@ Before touching code:
 1. Create `.mugiwara/results/<mission>/todos.md` — one checkbox per task, derived from the plan.
 2. Check each box off only when the task completes, WITH its evidence link (`[path](relative/path)`, clickable).
 3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
-4. Mirror EVERY transition into the host's native todo tool (`todowrite` on opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only) in the SAME response the task's evidence lands — one transition per call, never batched at wave end. Per-host table: `docs/reference/harness-matrix.md`. Every task response opens with `[task N/M] <status>` — progress is visible on every harness, todo tool or not.
+4. Mirror EVERY transition into the host's native todo tool (`todowrite` on opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only) in the SAME response the task's evidence lands — one transition per call, never batched at flow-stage end. Per-host table: `docs/reference/harness-matrix.md`. Every task response opens with `[task N/M] <status>` — progress is visible on every harness, todo tool or not.
 
-## Wave execution
+## Flow-stage execution
 
 Before starting: if `.mugiwara/continue/<mission>/[member].json` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
 
@@ -44,14 +44,15 @@ Before starting: if `.mugiwara/continue/<mission>/[member].json` exists, resume 
 ## Worker dispatch triggers
 
 1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
-2. **Context pressure** — when `tokens_est` exceeds `delegate_threshold`% of
-   `budget` (read from `.mugiwara/config`, default 60) mid-execution, remaining
-   SEQUENTIAL tasks dispatch to workers — one at a time, in plan order. Order is
-   preserved; only the context resets. Announce: `⚠ context 62% — remaining tasks run in fresh workers, plan order unchanged.`
+2. **Context pressure** — when `delegate_due` reads `true` in
+   `.mugiwara/state/<mission>/[member].json` (savepoint computes it as
+   `tokens_est ≥ delegate_threshold% of budget`, config default 60), remaining
+   SEQUENTIAL tasks dispatch to workers — one at a time, in plan order.
+   Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.`
 
-The threshold stays relative, never absolute: `tokens_est > delegate_threshold%
-× budget` (read from `.mugiwara/config`, default 60), never `tokens_est >
-80,000` (obsolete in six months). A bigger window raises the threshold; it does not remove it.
+Computed, never manual: savepoint emits `delegate_due` (relative
+`tokens_est ≥ delegate_threshold% × budget`, default 60), never an absolute
+`tokens_est > 80,000` (obsolete in six months). A bigger budget raises the bar; it does not remove it.
 
 ## Tier gating & fallback
 
@@ -59,9 +60,9 @@ Real worker dispatch exists only where the harness has subagents — tier 1
 (Claude Code, opencode) plus Copilot. Gate the context-pressure trigger on
 that capability: if the harness cannot dispatch, do not promise fresh workers.
 
-Where workers are unavailable and context pressure crosses the threshold:
+Where workers are unavailable and `delegate_due` is true:
 write a savepoint, run the checkpoint, and suggest a fresh session via
-`resume`. Announce: `⚠ context 62% — no worker dispatch on this harness;
+`resume`. Announce: `⚠ context — no worker dispatch on this harness;
 savepoint written, resume in a fresh session (plan order unchanged).`
 
 ## Batch resume
@@ -76,14 +77,13 @@ six-field worker prompt. Thin prompts cause thin results.
 ## Surfacing rule
 
 > **Delegated work is not hidden work.** A worker may run out of view; its
-> result may not. Every worker returns a wave banner, a one-line verdict, and an
+> result may not. Every worker returns a flow stage banner, a one-line verdict, and an
 > evidence link into the main thread. The user never clicks into a subagent to
 > know what happened.
 > Isolation is for context and permission, never for autonomy.
 
 ## TDD discipline & user tests
-
-Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule.
+Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule. One task end to end, RED through commit: `references/worked-example.md`.
 
 ## One logical task, one commit
 
@@ -91,7 +91,7 @@ Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verif
 
 ## Blockers → issues ledger
 
-Blocked → one row `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`, then escalate to Luffy. Never work around a blocker silently.
+Blocked → one row `| flow stage | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`, then escalate to Luffy. Never work around a blocker silently.
 
 ## Frontend tasks
 
@@ -99,11 +99,11 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 
 ## Report
 
-After each wave: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Wave 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
+After each flow stage: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Flow 4). Write detailed execution log to `.mugiwara/results/<mission>/01-execution.md`. Never dispatch another crew member.
 
 ## Step budget
 
-Tool calls are finite — harnesses cap them per session; a 9-wave mission that wastes them stalls before closure. Combine evidence runs (`evidence.sh <m> quality -- bash -c "lint && test"` — one call, not two); write wave artifacts once at wave end, not incrementally; never re-read what you just wrote; batch reads (one glob beats five reads); open a reference only when its pointer condition triggers.
+Tool calls are finite — harnesses cap them per session; a 9-flow-stage mission that wastes them stalls before closure. Combine evidence runs (`evidence.sh <m> quality -- bash -c "lint && test"` — one call, not two); write flow stage artifacts once at flow-stage end, not incrementally; never re-read what you just wrote; batch reads (one glob beats five reads); open a reference only when its pointer condition triggers.
 
 Budget guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. Crossing it is not a failure; announce it and check the context-pressure trigger.
 
@@ -117,8 +117,8 @@ Budget guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. Crossing it is
 - Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
 - The task's TDD order inverted (implementation before the failing test).
 - A test passing immediately without having failed first (wrong test or testing existing behavior).
-- A commit containing files beyond its declared task, or a wave of micro-commits with no logical grouping.
+- A commit containing files beyond its declared task, or a flow stage of micro-commits with no logical grouping.
 - Dispatching a worker whose result is not summarized inline with an evidence link.
-- Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Wave 2.
+- Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Flow 2.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

@@ -32,29 +32,20 @@ jobs:
       - name: "Install dependencies"
         run: bun install --frozen-lockfile
 
-      - name: "Typecheck"
-        run: bun run typecheck
+      # One gate, one definition. `bun run gate` in package.json is the single
+      # source of truth — CI used to re-list the steps by hand and the two
+      # drifted, omitting verify-install, gate-selftest, lane-base, verify-pack,
+      # build-hooks and --check-doc-integrity. Five capabilities shipped dead
+      # behind a green board because the documented gate was not the executed
+      # gate. Add new checks to `gate`, never here.
+      - name: "Full gate (single source of truth: package.json `gate`)"
+        run: bun run gate
 
-      - name: "Unit tests"
-        run: bun run test
-
-      - name: "Build"
-        run: bun run build
-
-      - name: "Validate content (manifest + docs)"
-        run: bun scripts/validate-content.ts --check-manifest --check-docs
-
-      - name: "Validate eval cases"
-        run: bun scripts/run-evals.ts
-
-      - name: "Retrieval ranking eval"
-        run: bun scripts/retrieval-eval.ts --json
+      - name: "Gate self-test (every gate must fail when it should)"
+        run: bun scripts/gate-selftest.ts
 
       - name: "Plugin sync check"
         run: bun scripts/validate-content.ts --check-sync
-
-      - name: "Conformance (3 harness tiers)"
-        run: bun scripts/conformance.ts
 
       - name: "Smoke test (CLI --version)"
         run: node dist/mugiwara.js --version

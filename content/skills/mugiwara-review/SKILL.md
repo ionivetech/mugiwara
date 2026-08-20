@@ -24,6 +24,8 @@ Review like the diff will be maintained by someone else at 3am — and like the 
 
 ## Five-axis review
 
+Per-axis worksheet: `references/five-axis-worksheet.md`.
+
 One verdict + evidence per axis: correctness / readability / architecture / security / performance. No axis passes on assertion.
 
 Correctness always asks: does this change BREAK anything that currently works? Run the suite, exercise the feature tests for the touched areas, and verify no silent regression.
@@ -60,6 +62,8 @@ Rating E = won't merge. Rating D = review with caution + mitigation plan require
 Sanji produces metrics (quantitative), Robin interprets context (qualitative). Sanji's quality report is input to this review. Full worksheet: `references/code-attributes.md` — consistency, intentionality, adaptability per attribute.
 
 ## Severity
+
+What each level means, with examples: `references/severity-rubric.md`.
 
 - blocker: public-break with no migration path, wrong behavior shipped, security hole, correctness failure reaching users. Fix before merge.
 - major: internal-break with callers unfixed, missed contract, real-cost readability/architecture/performance issue, behavior change outside declared scope. Fix this mission.

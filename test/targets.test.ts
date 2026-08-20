@@ -1,6 +1,6 @@
 // test/targets.test.ts
 import { test, expect } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { targets, TARGET_IDS } from '../src/targets/index.ts';
@@ -40,17 +40,20 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
   for (const t of Object.values(targets)) {
     const out = t.transformSkill(skill, 'BODY\n');
     expect(out!.relPath.endsWith('.md')).toBe(true);
-    if (t.tier !== 3) expect(out!.text.includes('BODY'), `${t.id} embeds body`).toBe(true);
+    // Any target that defines transformSkillFull ships a stub to the rules
+    // glob and the body to refs; everyone else embeds the body inline.
+    // Copilot joined the stub side (A1): it injects every matching
+    // instruction file into every request, so the corpus is per-request cost.
+    const hasStub = t.transformSkillFull?.(skill, 'BODY\n') != null;
+    if (!hasStub) expect(out!.text.includes('BODY'), `${t.id} embeds body`).toBe(true);
     if (t.tier === 3) {
       expect(t.transformSkillFull, `${t.id}: tier 3 must define transformSkillFull`).toBeDefined();
     }
-    if (t.transformSkillFull) {
-      const full = t.transformSkillFull(skill, 'BODY\n');
-      if (t.tier === 3) {
-        expect(full, `${t.id} full ref`).not.toBeNull();
-        expect(full!.text.includes('BODY'), `${t.id} full ref embeds body`).toBe(true);
-      }
-    }
+    const full = t.transformSkillFull?.(skill, 'BODY\n') ?? null;
+    expect(t.tier !== 3 || full !== null, `${t.id} tier 3 full ref`).toBe(true);
+    // Targets with a full-ref transform ship a stub; the body lives in refs.
+    expect(full === null || full.text.includes('BODY'), `${t.id} full ref embeds body`).toBe(true);
+    expect(full === null || !out!.text.includes('BODY'), `${t.id} stub must not embed body`).toBe(true);
   }
   const claudeOut = targets.claude.transformSkill(skill, 'BODY\n');
   expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-workflow');
@@ -152,13 +155,13 @@ test('2-16 tier-3 targets emit stubs to the rules glob and full bodies to refs',
 
     const stub = readFileSync(join(skillsDir, 'mugiwara-workflow.md'), 'utf8');
     expect(stub.length, `${id} stub is small`).toBeLessThan(400);
-    expect(stub).toContain('.mugiwara/refs/mugiwara-workflow.md');
+    expect(stub).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
 
-    const full = readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-workflow.md'), 'utf8');
+    const full = readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md'), 'utf8');
     expect(full.length, `${id} full body in refs`).toBeGreaterThan(2000);
 
     const agentStub = readFileSync(join(skillsDir, 'agent-luffy-orchestrator.md'), 'utf8');
-    expect(agentStub).toContain('.mugiwara/refs/luffy-orchestrator.md');
+    expect(agentStub).toContain('.mugiwara/refs/luffy-orchestrator/luffy-orchestrator.md');
   }
 });
 
@@ -211,6 +214,106 @@ test('write-boundary: opencode user-facing source agent gets no permission block
     'BODY\n'
   )!;
   expect(out.text).not.toContain('permission:');
+});
+
+test('L1: claude internal agent with non-artifacts write-scope gets no generated tools', () => {
+  const out = targets.claude.transformAgent(
+    { name: 'skeptic-verifier', description: 'x', 'internal-agent': 'true', 'write-scope': 'source' } as never,
+    'BODY\n'
+  )!;
+  expect(parseFrontmatter(out.text).data.tools).toBeUndefined();
+});
+
+test('claude postInstall merges hooks into an existing settings.json, preserving user keys', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-wire-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-wirehome-'));
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(join(claudeDir, 'settings.json'), JSON.stringify({ foo: 'bar' }));
+  const r = targets.claude.postInstall!({ scope: 'project', projectDir: dir, home, dryRun: false, files: [] });
+  const settings = JSON.parse(readFileSync(join(claudeDir, 'settings.json'), 'utf8'));
+  expect(settings.foo).toBe('bar'); // user key preserved through merge
+  expect(settings.hooks.SessionStart).toBeTruthy();
+  expect(r.notes.some(n => n.includes('settings.json'))).toBe(true);
+});
+
+test('claude postInstall is idempotent: re-registering an existing hook leaves settings alone', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-wire2-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-wire2home-'));
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(join(claudeDir, 'settings.json'), JSON.stringify({ foo: 'bar' }));
+  targets.claude.postInstall!({ scope: 'project', projectDir: dir, home, dryRun: false, files: [] });
+  const first = readFileSync(join(claudeDir, 'settings.json'), 'utf8');
+  const r = targets.claude.postInstall!({ scope: 'project', projectDir: dir, home, dryRun: false, files: [] });
+  expect(readFileSync(join(claudeDir, 'settings.json'), 'utf8')).toBe(first);
+  expect(r.notes.some(n => n.includes('settings.json'))).toBe(false);
+});
+
+test('claude postInstall dryRun returns empty without touching disk', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-dry-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-dryhome-'));
+  const r = targets.claude.postInstall!({ scope: 'project', projectDir: dir, home, dryRun: true, files: [] });
+  expect(r.written).toEqual([]);
+  expect(r.notes).toEqual([]);
+  expect(existsSync(join(dir, '.claude'))).toBe(false);
+});
+
+test('claude postUninstall un-merges only mugiwara hooks from settings.json', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-unwire-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-unwirehome-'));
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  const settings = {
+    foo: 'bar',
+    hooks: {
+      SessionStart: [{ hooks: [{ type: 'command', command: JSON.stringify(join(claudeDir, 'hooks', 'session-start.js')), timeout: 10 }] }],
+      UserPromptSubmit: [{ hooks: [{ type: 'command', command: JSON.stringify(join(claudeDir, 'hooks', 'mugiwara-mode-tracker.js')), timeout: 5 }] }],
+      Stop: [{ hooks: [{ type: 'command', command: '/some/other/hook.js', timeout: 5 }] }],
+    },
+  };
+  writeFileSync(join(claudeDir, 'settings.json'), JSON.stringify(settings));
+  const r = targets.claude.postUninstall!({ scope: 'project', projectDir: dir, home, dryRun: false });
+  expect(r.changed).toContain(join(claudeDir, 'settings.json'));
+  const after = JSON.parse(readFileSync(join(claudeDir, 'settings.json'), 'utf8'));
+  expect(after.foo).toBe('bar'); // user key preserved
+  expect(after.hooks.SessionStart).toBeUndefined(); // mugiwara hook removed
+  expect(after.hooks.UserPromptSubmit).toBeUndefined();
+  expect(after.hooks.Stop).toHaveLength(1); // user hook kept
+  expect(after.hooks.Stop[0].hooks[0].command).toContain('/some/other/hook.js');
+});
+
+test('claude postUninstall leaves settings.json untouched when it has no mugiwara hooks', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-unwire2-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-unwire2home-'));
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(join(claudeDir, 'settings.json'), JSON.stringify({ foo: 'bar' }));
+  const r = targets.claude.postUninstall!({ scope: 'project', projectDir: dir, home, dryRun: false });
+  expect(r.changed).toEqual([]);
+  expect(JSON.parse(readFileSync(join(claudeDir, 'settings.json'), 'utf8')).foo).toBe('bar');
+});
+
+test('claude postInstall keeps an existing command file and notes it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cmd-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-cmdhome-'));
+  const cmdsDir = join(dir, '.claude', 'commands');
+  mkdirSync(cmdsDir, { recursive: true });
+  writeFileSync(join(cmdsDir, 'mugiwara-continue.md'), '# user override\n');
+  const r = targets.claude.postInstall!({ scope: 'project', projectDir: dir, home, dryRun: false, files: [] });
+  expect(readFileSync(join(cmdsDir, 'mugiwara-continue.md'), 'utf8')).toBe('# user override\n');
+  expect(r.notes.some(n => n.includes('existing command kept'))).toBe(true);
+});
+
+test('claude postUninstall dryRun returns empty without touching settings', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-unwire3-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-unwire3home-'));
+  const claudeDir = join(dir, '.claude');
+  mkdirSync(claudeDir, { recursive: true });
+  writeFileSync(join(claudeDir, 'settings.json'), JSON.stringify({ hooks: { SessionStart: [{ hooks: [{ command: 'x' }] }] } }));
+  const r = targets.claude.postUninstall!({ scope: 'project', projectDir: dir, home, dryRun: true });
+  expect(r.changed).toEqual([]);
+  expect(JSON.parse(readFileSync(join(claudeDir, 'settings.json'), 'utf8')).hooks.SessionStart).toBeTruthy();
 });
 
 test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {

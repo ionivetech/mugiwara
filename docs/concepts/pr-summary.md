@@ -13,7 +13,7 @@ addition is that the PR description is already written.
 1. Save-point commit → push the mission branch with plain `git push -u origin <branch>`.
 2. Write `.mugiwara/results/<mission>/07-pr-verdict.md` per `mugiwara-pr` —
    the verdict file IS the PR summary: title line + body, one document,
-   order title → summary → what changed → per-wave evidence → tests → checks.
+   order title → summary → what changed → per-flow-stage evidence → tests → checks.
 3. Hand the branch + verdict file to you. You open the PR and paste it as-is.
 
 No `gh` CLI, no PR API calls, no auto-reaction to review comments or CI.
@@ -32,7 +32,7 @@ commit=conventional
 ```
 
 The title is a concise `{type}: {summary}` line from mission metadata; the
-body is the rest of the verdict file (summary, what changed, per-wave
+body is the rest of the verdict file (summary, what changed, per-flow-stage
 evidence, tests, checks) — one document, no separate block. The summary is
 **material, never posted** — the crew's job ends at push.
 

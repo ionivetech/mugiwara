@@ -17,6 +17,10 @@
     "tasks_total": 0,
     "blockers_open": 0,
     "heal_cycle": 1,
+    "heal_max_cycles": 3,
+    "heal_halt": false,
+    "delegate_threshold": 60,
+    "delegate_due": false,
     "tokens_source": "computed",
     "budget_status": "ok",
     "sensitive_paths": []
@@ -26,7 +30,7 @@
     "## Token budget",
     "## Tasks",
     "## What changed",
-    "## Waves",
+    "## Flow stages",
     "## Gate & quality",
     "## Evidence files",
     "## Review & blockers",
@@ -54,8 +58,8 @@
     "# <<< mugiwara <<<"
   ],
   "file_count": {
-    "skills": 47,
-    "agents": 47,
+    "skills": 48,
+    "agents": 48,
     "state": 1,
     "evidence": 1
   }

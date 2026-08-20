@@ -7,8 +7,8 @@ Read after deciding to close a mission — never mid-argument.
 
 Present a detailed summary to the user — never a one-liner:
 
-- Mission summary — goal, mode, waves, task count.
-- Per-wave outcome table — wave, tasks, status, evidence link (clickable `[path](relative/path)`). Step results `results/<mission>/01..05` are evidence — never deleted at cleanup.
+- Mission summary — goal, mode, flow stages, task count.
+- Per-flow-stage outcome table — flow stage, tasks, status, evidence link (clickable `[path](relative/path)`). Step results `results/<mission>/01..05` are evidence — never deleted at cleanup.
 - Gate verdicts — quality, gates (coverage/build/DoD), review + security findings with dispositions, e2e (run / skipped + why).
 - Tests — unit/integration results; ATDD oracle verdict when user tests were declared.
 - Risks / rollback — remaining risk and the rollback path (revert commit / feature flag).
@@ -31,13 +31,13 @@ hand the user: the branch name, the exact commands to commit and push
 verdict pointer. In `auto` mode `auto_commit` is ignored — the terminal step
 runs unchanged.
 
-When this mission is a sub-mission of a team initiative, after closure run
-`bun scripts/initiative.ts set-status <initiative-plan> --id <sub-id> --status done`.
+When this mission is a sub-mission of a team initiative, after closure set
+that sub-mission's status cell to `done` in the initiative plan doc (`mugiwara initiative set-status <plan> --id <id> --status done` automates it).
 When all sub-missions show `[x]`, present initiative-level closure summary.
 
 ## Lessons
 
-At Wave 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to
+At Flow 0 triage read `.mugiwara/logs/lessons.md` and surface relevant rows to
 the owning agent. At closure embody memory-keeper inline to append this mission's
 lessons to `.mugiwara/logs/lessons.md` — one row per real lesson, append-only,
 never overwrite.

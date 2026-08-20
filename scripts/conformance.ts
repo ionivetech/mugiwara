@@ -101,6 +101,19 @@ function snapshot(targetId: string): Record<string, unknown> {
     if (!target) throw new Error(`unknown target ${targetId}`);
     installTo(target, { scope: 'project', projectDir: dir, force: true, dryRun: false });
 
+    // The installer's own output is harness config, not mission work — but it
+    // lands as untracked files, and savepoint/lane now count the working tree
+    // (F). Park it in .git/info/exclude so the snapshot keeps measuring the
+    // fixture's 4-file mission diff instead of "how many files does this
+    // target install". Local-only: .gitignore (which the golden snapshots)
+    // is untouched.
+    const untracked = execSync('git status --porcelain --untracked-files=normal', { cwd: dir, encoding: 'utf8' })
+      .split('\n').filter(Boolean).map(l => l.slice(3)).filter(Boolean);
+    if (untracked.length) {
+      const exclude = join(dir, '.git', 'info', 'exclude');
+      writeFileSync(exclude, (existsSync(exclude) ? readFileSync(exclude, 'utf8') : '') + '\n' + untracked.join('\n') + '\n');
+    }
+
     // 3. run the four core scripts + the gitignore write the CLI does post-install
     sh(`bash "${root}/scripts/lane.sh" main --json`, dir);
     sh(`bash "${root}/scripts/savepoint.sh" ${MISSION} "" 1 auto`, dir);
@@ -140,6 +153,10 @@ function snapshot(targetId: string): Record<string, unknown> {
         tasks_total: state.tasks?.total,
         blockers_open: state.blockers_open,
         heal_cycle: state.heal_cycle,
+        heal_max_cycles: state.heal_max_cycles,
+        heal_halt: state.heal_halt,
+        delegate_threshold: state.delegate_threshold,
+        delegate_due: state.delegate_due,
         tokens_source: state.tokens_source,
         budget_status: state.budget_status,
         sensitive_paths: state.sensitive_paths,

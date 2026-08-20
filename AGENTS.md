@@ -140,7 +140,6 @@ Every agent is `content/agents/<name>.md`:
 | Frontmatter `name` matches filename | exact match (without `.md`) |
 | `description` | pointer line: "Persona for <skill>. <role summary>." |
 | `skills` | list of held skills, comma-separated |
-| `permissions` | optional: `read-only`, `can-write`, `no-network` |
 | Language | **English only** |
 
 ## Reference files

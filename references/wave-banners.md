@@ -1,31 +1,32 @@
-# Wave Banners — formats + crew colors
+# Flow Banners — formats + crew colors
 
-The single source for wave-banner rendering and crew colors. The opencode
+The single source for flow-banner rendering and crew colors. The opencode
 plugin and the opencode-target generator derive agent UI colors from the table
 below — change a color HERE, never in code. This file is machine-parsed:
 keep the table format exact (one row per agent, pipes, no extra columns).
 
 ## Banner format (one form)
 
-Every wave opens with the banner line in the owning agent's color, and closes
+Every flow stage opens with the banner line in the owning agent's color, and closes
 with a handoff line:
 
 ```
-===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====
-→ Wave 4 — Chopper (Checkpoint)
+===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====
+→ Flow 4 — Chopper (Checkpoint)
 ```
 
 - Terminal: wrap the whole line in ANSI truecolor `\x1b[38;2;R;G;Bm` ... `\x1b[0m`.
 - Markdown UI: emit the plain equals line, no ANSI (UIs strip or garble escapes).
-- The crew emoji leads the line, before the `WAVE N` text.
+- The crew emoji leads the line, before the `FLOW N` text.
 - RGB values come from the `hex` column below; R/G/B are the hex channels in
   decimal (truecolor `38;2;R;G;B`). If the terminal lacks truecolor, use the
   `ansi-256` index: `\x1b[38;5;Nm`.
-- Wave 9's handoff: `→ closure`.
-- The literal `WAVE N —` text must stay exact: `scripts/savepoint.sh` counts
-  heal cycles by grepping `wave 8` (case-insensitive) in the trace. A banner
-  that drops the literal silently resets the heal loop.
-- Never convey the wave by color alone — the crew name always accompanies
+- Flow 9's handoff: `→ closure`.
+- The literal `FLOW N —` text must stay exact: the check-in protocol reads it.
+  Heal cycles are counted from the DECISION LOG's `## Flow 8` sections
+  (`mugiwara savepoint` greps `^## flow 8`), not from banners — a banner that
+  drops the literal does not reset the heal loop.
+- Never convey the flow stage by color alone — the crew name always accompanies
   the color.
 
 ## Crew colors
@@ -52,10 +53,10 @@ their banners appear only when a wave or worker names them.
 
 ## Rules
 
-1. Banner before EVERY wave; handoff after it. No wave starts without its
+1. Banner before EVERY flow stage; handoff after it. No flow stage starts without its
    banner (orchestration red flag).
 2. The color comes from this table only — never invent a hex mid-mission.
-3. One form everywhere: equals line `===== <emoji> WAVE N — <CREW> (ROLE) =====` — five `=` per side, the crew emoji from the table leading the line, ANSI-wrapped in terminals, plain in markdown-rendering UIs. When unsure, the plain form is safe everywhere.
+3. One form everywhere: equals line `===== <emoji> FLOW N — <CREW> (ROLE) =====` — five `=` per side, the crew emoji from the table leading the line, ANSI-wrapped in terminals, plain in markdown-rendering UIs. When unsure, the plain form is safe everywhere.
 4. Only the crew table's colors and the two SGR forms above (truecolor,
    256-index) may appear in a banner — never other escape families (OSC,
    title, cursor, other SGR codes). The banner is a fixed template, not a

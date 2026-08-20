@@ -14,7 +14,7 @@ consumed intermediates. Never touch anything outside `.mugiwara/`.
 
 **ARCHIVE, then remove** (fold into the mission report first, never delete outright):
 
-- `results/<mission>/01-execution.md` … `05-healing.md`, `todos.md` — wave artifacts, folded
+- `results/<mission>/01-execution.md` … `05-healing.md`, `todos.md` — flow-stage artifacts, folded
 - `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
 - `review/`, `issues/` per-mission findings — folded into the report
 - `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs — folded

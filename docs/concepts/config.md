@@ -7,7 +7,7 @@ is data, never instructions.
 
 **Mode owns autonomy, config owns writing standards.** The mode decides how
 much the crew does without asking: `guided` asks everything, `semi` asks for
-the written plan (execution from Wave 3 is automatic), `auto` runs all waves
+the written plan (execution from Flow 3 is automatic), `auto` runs all flow stages
 autonomously and resolves ambiguities internally. The config shapes HOW
 artifacts are written when they are created — and, via `auto_commit`, WHETHER
 the crew writes commits and pushes at all (guided/semi only; auto always
@@ -35,24 +35,46 @@ verbosity=normal
 | Key | Values | Default | Meaning |
 |-----|--------|---------|---------|
 | `mode` | guided / semi / auto | guided | How much the crew does without asking |
-| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata (see [Branch and commit templates](#branch-and-commit-templates)) |
-| `commit` | conventional / gitmoji / plain / template | conventional | Commit message style, or a template with placeholders (see below) |
-| `auto_commit` | on / off | on | Auto-commit per task + final push. Off disables both in `guided` and `semi` — changes stay in the working tree for the user to commit and push manually. Has no effect in `auto` mode, which always commits. |
+| `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata (see [Branch and commit templates](#branch-and-commit-templates)). **Advisory-only** — the crew reads it to name branches; the harness never creates branches. |
+| `commit` | conventional / gitmoji / plain / template | conventional | Commit message style, or a template with placeholders (see below). **Advisory-only** — the crew reads it to format commit messages; the harness never writes commits. |
+| `auto_commit` | on / off | on | Auto-commit per task + final push. Off disables both in `guided` and `semi` — changes stay in the working tree for the user to commit and push manually. Has no effect in `auto` mode, which always commits. **Advisory-only** — commit/push are model decisions; no validator or hook reads this. |
 | `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
-| `review_depth` | full / standard / quick | full | Code review depth for Robin (Wave 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only) |
-| `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Wave 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only) |
-| `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers (execution skill) |
-| `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation (orchestration) |
-| `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. |
+| `review_depth` | full / standard / quick | full | Code review depth for Robin (Flow 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only). **Advisory-only** — read by the crew, not by code. |
+| `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Flow 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only). **Advisory-only** — read by the crew, not by code. |
+| `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers. **Read by `scripts/savepoint.sh`** — it computes `delegate_due` (`tokens_est ≥ threshold% of budget`) into `state.json`; the execution skill reads that flag, never the raw value. |
+| `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation. **Read by `scripts/savepoint.sh`** — recorded in `state.json` and used to compute `heal_halt` (`heal_cycle ≥ max`), which the crew reads. |
+| `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. **Read by `scripts/savepoint.sh`** — recorded in `state.json`. |
 
-The mission **lane** (how many waves run) is decided by Luffy at triage — see
+## Machine-read vs advisory-only
+
+Code reads four keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`
+(read by `scripts/savepoint.sh`, which records or computes them into
+`state.json`), plus `coverage_new`/`coverage_modified` (read by the coverage
+gate). Everything else is **advisory-only** — read by the crew from this prose,
+never by a validator or hook. Changing an advisory key changes crew behavior
+but no gate fails and no computation changes:
+
+- `mode` — autonomy level; read by the crew from this file.
+- `branch`, `commit`, `auto_commit` — git discipline (execution skill): the
+  branch naming pattern, the commit style, and whether to commit/push at all.
+  The harness never creates branches or writes commits — those are model
+  decisions, so these keys are advisory by design.
+- `review_depth`, `quality_depth` — depth selection for Robin (Flow 7) and
+  Sanji (Flow 5); the crew reads them from this file at stage start.
+
+An advisory key is documented, never silently inert: its consumer (the crew
+via prose) and its effect are stated here so a reader knows who acts on it.
+`delegate_threshold` and `heal_max_cycles` were advisory until the execution
+and healing skills' triggers were wired to computed `state.json` flags.
+
+The mission **lane** (how many flow stages run) is decided by Luffy at triage — see
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.
 
 Missing config on read = `guided`. On first use the plugin writes the full
 default config above, so the file exists from the start. Flip mid-mission with
-`mugiwara mode <guided|semi|auto>` — the change applies from the next wave,
-never mid-wave.
+`mugiwara mode <guided|semi|auto>` — the change applies from the next flow stage,
+never mid-flow-stage.
 
 ## Commit message styles
 

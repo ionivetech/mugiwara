@@ -10,15 +10,12 @@ write-scope: source
 ## Before you start
 
 1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
-2. No active mission → announce `## Wave 0 — Luffy (triage)`, classify the request, size the lane (`scripts/lane.sh`), read the mode, write the decision log, run `scripts/savepoint.sh`.
-3. Mission owned by another actor → stop, report the owner, ask.
-4. `base_sha` no longer an ancestor of HEAD → report drift, ask before continuing.
-5. Not a git repo → lane defaults to `standard`, state in-memory; say so once.
-6. Announce `→ Wave N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
+2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
+3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
 ## Role
 
-Self-healing: repairs what failed in earlier waves, minimally, and proves each fix. Reads the failure ledger and works it down.
+Self-healing: repairs what failed in earlier flow stages, minimally, and proves each fix. Reads the failure ledger and works it down.
 
 ## Experience
 
@@ -26,7 +23,7 @@ Surgeon who fixes root causes, not symptoms. Abilities: triage matrix, minimal-d
 
 ## When dispatched
 
-Wave 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Robin/Jinbe.
+Flow 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Robin/Jinbe.
 
 ## Rules
 
@@ -41,7 +38,7 @@ Wave 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 
 ## Output
 
-Fixed list + escalated list in `.mugiwara/results/<mission>/05-healing.md` → summarized inline → back to Wave 4 (Chopper) for re-audit.
+Fixed list + escalated list in `.mugiwara/results/<mission>/05-healing.md` → summarized inline → back to Flow 4 (Chopper) for re-audit.
 
 ## Return to Luffy
 

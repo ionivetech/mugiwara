@@ -12,7 +12,7 @@ Every mission wave must satisfy all five before it is Done:
 | **Quality** | Lint, format, and tests are clean. | Run project formatter → linter → unit suite. Zero errors. Configs unweakened. |
 | **Integration** | The work fits the existing system. | Build/typecheck exits 0 against full tree. No regression in existing tests. |
 | **Docs** | User-facing and internal docs match the change. | README, changelog, API docs, and in-code docstrings updated where the change requires it. |
-| **Ship-readiness** | No blockers left open. | Blocker ledger `.mugiwara/issues/<mission>-blockers.md` has zero open rows. |
+| **Ship-readiness** | No blockers left open. | Blocker ledger `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` has zero open rows. |
 
 ## Verdict
 

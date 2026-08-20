@@ -6,7 +6,7 @@ This is the companion to the feature table in the
 
 ## Table of contents
 
-- [1. The 9-wave crew pipeline](#1-the-9-wave-crew-pipeline)
+- [1. The 9-flow-stage crew pipeline](#1-the-9-flow-stage-crew-pipeline)
 - [2. Multi-persona crew agents](#2-multi-persona-crew-agents)
 - [3. Inline execution model](#3-inline-execution-model)
 - [4. Autonomy modes (guided / semi / auto)](#4-autonomy-modes)
@@ -37,25 +37,25 @@ This is the companion to the feature table in the
 
 ---
 
-## 1. The 9-wave crew pipeline
+## 1. The 9-flow-stage crew pipeline
 
-**What.** Non-trivial work runs a ten-wave pipeline (Wave 0 triage + Waves
-1-9). Each wave is owned by one crew member, and every wave passes only on
+**What.** Non-trivial work runs a ten-flow pipeline (Flow 0 triage + Flow stages
+1-9). Each flow stage is owned by one crew member, and every flow stage passes only on
 **evidence** — the owning agent runs the check and shows the output, never a
 spoken claim.
 
-| Wave | Owner | Skill | Output |
+| Flow stage | Owner | Skill | Output |
 |------|-------|-------|--------|
 | 0 Triage | Luffy | `mugiwara-orchestration` | route decision + reason |
 | 1 Brainstorm | Usopp | `mugiwara-brainstorm` | options + recommendation |
-| 2 Planning | Nami | `mugiwara-planning` | plan doc: waves, tasks, criteria |
+| 2 Planning | Nami | `mugiwara-planning` | plan doc: plan waves, tasks, criteria |
 | 3 Execution | Zoro | `mugiwara-execution` | implemented tasks with evidence |
 | 4 Checkpoint | Chopper | `mugiwara-checkpoint` | audit report + failure ledger |
 | 4.5 Adversarial | Skeptic | `mugiwara-claim-audit` | findings (optional) |
 | 5 Quality | Sanji | `mugiwara-quality` | format / lint / test results |
 | 6 Gates | Franky | `mugiwara-gates` | coverage + build + DoD verdict |
 | 7 Review | Robin ∥ Jinbe | `mugiwara-review` + `mugiwara-security` | severity-tagged findings |
-| 8 Healing | Brook | `mugiwara-healing` | fixes; loops to Wave 4, ≤3 cycles |
+| 8 Healing | Brook | `mugiwara-healing` | fixes; loops to Flow 4, ≤3 cycles |
 | 9 Closure | Luffy | `mugiwara-orchestration` | closure report + push + PR verdict |
 
 **How to use.** Ask for something non-trivial. The pipeline auto-activates and
@@ -66,7 +66,7 @@ routes itself — no agent names to memorize, no pipeline config to write:
 ```
 
 **Scenario.** A 15-file refactor that touches the auth surface routes to
-Lane 3 (Full) and runs all 9 waves: Nami plans, Zoro executes test-first,
+Lane 3 (Full) and runs all 9 flow stages: Nami plans, Zoro executes test-first,
 Chopper re-runs every acceptance criterion, Sanji lint-tests, Franky checks
 coverage, Robin and Jinbe review the diff in parallel, Brook heals any
 failures, and Luffy closes with a pushed branch and ready PR summary.
@@ -87,7 +87,7 @@ thread embodies each persona inline, or you can summon any member by name.
 > Jinbe, audit auth middleware              # security only, read-only
 > Brook, fix the failing login test         # healer only
 > Nami, plan this out                       # planner directly
-> Chopper, audit the last wave              # checkpoint directly
+> Chopper, audit the last flow stage              # checkpoint directly
 ```
 
 **Detail.** Luffy still records the route and its reason in the decision log,
@@ -105,12 +105,12 @@ reports findings without touching code.
 ## 3. Inline execution model
 
 **What.** The crew runs **inline** in your main conversation by default. Every
-wave plays out where you can see it; evidence lands in `.mugiwara/` files and
+flow stage plays out where you can see it; evidence lands in `.mugiwara/` files and
 the chat carries terse verdicts and evidence pointers. Subagents exist to
 parallelize, never to hide work.
 
 **How to use.** Nothing to configure. Watch wave banners
-(`===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` —
+(`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` —
 ANSI-wrapped in terminals, plain in markdown UIs) and checkpoint
 reports in the chat.
 
@@ -130,12 +130,12 @@ next batch starts.
 ## 4. Autonomy modes
 
 **What.** One lever decides how much the crew does without asking. Three
-levels, read once per wave — a flip applies from the next wave.
+levels, read once per flow stage — a flip applies from the next flow stage.
 
 | Level | Plan | Execution | Ambiguities | Check-ins |
 |-------|------|-----------|-------------|-----------|
-| **guided** | you approve every step | ask before each wave | ask the user | ask the user |
-| **semi** | you approve the written plan | **auto** from Zoro's wave to ship | ask the user | log, ask when there is a question |
+| **guided** | you approve every step | ask before each flow stage | ask the user | ask the user |
+| **semi** | you approve the written plan | **auto** from Zoro's flow stage to ship | ask the user | log, ask when there is a question |
 | **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
 
 `auto` runs fully automatic from the first prompt to ship: triage, plan,
@@ -192,21 +192,21 @@ project config file that overrides the global defaults.
 ## 6. Lane sizing
 
 **What.** Work is sized deterministically from `git diff --name-only` by
-`scripts/lane.sh`, not estimated by the model.
+`mugiwara run lane.sh`, not estimated by the model.
 
-| Lane | Picks when | Waves | Budget |
+| Lane | Picks when | Flow stages | Budget |
 |------|-----------|-------|:---:|
 | 0 · Direct | typo, rename, 1 file <20 LOC | none | ~0 |
-| 1 · Lean | bug in 1-2 files, <50 LOC | execute → quality | ~4k |
-| 2 · Standard | feature, 3-8 files | plan → execute → audit → review | ~10k |
-| 3 · Full | 9+ files, or auth/payment/migration touched | all 9 waves | ~20k |
-| 4 · Spike | exploratory | brainstorm → re-triage | ~3k |
+| 1 · Lean | bug in 1-2 files, <50 LOC | execute → quality | 12k |
+| 2 · Standard | feature, 3-8 files | plan → execute → audit → review | 25k |
+| 3 · Full | 9+ files, or auth/payment/migration touched | all 9 flow stages | 50k |
+| 4 · Spike | exploratory | brainstorm → re-triage | 3k |
 
 **How to use.** Automatic. View the result in `.mugiwara/state/<mission>/[member].json`
 (`lane`, `lane_reason`, `lane_rose`). Machine output:
 
 ```bash
-scripts/lane.sh main --json
+mugiwara run lane.sh main --json
 ```
 
 **Detail.** Sensitive paths (`auth/ payment/ billing/ crypto/ secrets/ .env`
@@ -245,10 +245,10 @@ project.
 
 ## 8. Savepoint state
 
-**What.** `scripts/savepoint.sh` writes
-`.mugiwara/state/<mission>/[member].json` at every wave boundary. Every field
+**What.** `mugiwara savepoint` writes
+`.mugiwara/state/<mission>/[member].json` at every flow-stage boundary. Every field
 is **computed from git + file counts**, never model-supplied: mission, member,
-actor, branch, lane, wave, mode, base/head SHA, files touched, LOC delta,
+actor, branch, lane, flow stage, mode, base/head SHA, files touched, LOC delta,
 sensitive paths, task counts, open blockers, heal cycle, token estimate,
 budget status, evidence file list. Identity = (mission, member); solo writes
 `state.json`.
@@ -257,11 +257,11 @@ budget status, evidence file list. Identity = (mission, member); solo writes
 without opening many files. Written by the crew automatically.
 
 ```bash
-scripts/savepoint.sh <mission> [member] [wave] [mode]
+mugiwara savepoint <mission> [member] [flow stage] [mode]
 ```
 
 **Scenario.** After a context loss you open `state/<mission>/state.json`:
-Wave 3, 5/5 tasks done in the first batch, 0 blockers, mode semi — a one-file
+Flow 3, 5/5 tasks done in the first batch, 0 blockers, mode semi — a one-file
 picture of the whole mission.
 
 **Multi-actor safe.** State is scoped by (mission, member), so any number of
@@ -277,8 +277,8 @@ live mission without `--force`.
 
 **What.** Rebuild the mission from disk state and continue — never restart.
 `resume-coordinator` reads the state + continue JSON, reports one line
-("Resumed: <mission> [<member>], Wave 3, 2/5 tasks, 0 blockers, mode semi"),
-and hands off to the next wave without re-running completed work.
+("Resumed: <mission> [<member>], Flow 3, 2/5 tasks, 0 blockers, mode semi"),
+and hands off to the next flow stage without re-running completed work.
 
 **How to use.**
 
@@ -293,9 +293,9 @@ or just say "where were we?" at session start. In **auto mode** the
 actor and surfaces an `AUTO-RESUME` context (single mission → resume hint;
 multiple → list) — it never auto-resumes an ambiguous mission.
 
-**Where the resume point lives.** `scripts/savepoint.sh` writes
-`continue/<mission>/[member].json` at every wave boundary with the position
-fields (mission, member, branch, wave, mode, tasks done/total, lane,
+**Where the resume point lives.** `mugiwara savepoint` writes
+`continue/<mission>/[member].json` at every flow-stage boundary with the position
+fields (mission, member, branch, flow stage, mode, tasks done/total, lane,
 next_action) — machine written, same trust as `state.json`. The
 `next_session_prompt` field is crew-written and preserved across savepoints.
 The resume skill verifies every field against the plan + todos before acting;
@@ -311,7 +311,7 @@ and picks up at the exact task — no re-run, no restart.
 
 ## 10. Lessons ledger
 
-**What.** Cross-mission institutional memory. At Wave 0 the crew surfaces
+**What.** Cross-mission institutional memory. At Flow 0 the crew surfaces
 relevant past lessons; at closure it appends new ones. Append-only, one
 actionable row per real lesson, platitudes rejected.
 
@@ -334,7 +334,7 @@ detection, cyclomatic complexity scoring (McCabe, measured per changed
 function), maintainability rating (A-E), and code-attribute checks. Never
 weakens a config to make red go green.
 
-**How to use.** Automatic in Wave 5. No tooling exists → the gap is reported
+**How to use.** Automatic in Flow 5. No tooling exists → the gap is reported
 honestly, never silently skipped.
 
 **Scenario.** Sanji finds a linter warning in new code. Instead of adding an
@@ -353,7 +353,7 @@ granular sonar gate with per-condition thresholds (vulnerabilities, bugs,
 code smells, duplications). Missing coverage tooling is a reported gap, never
 a silent pass.
 
-**How to use.** Automatic in Wave 6. Thresholds via config
+**How to use.** Automatic in Flow 6. Thresholds via config
 (`coverage_new`, `coverage_modified`). Local full gate run: `bun run gate`.
 
 **Scenario.** A mission adds 40 new lines with 70% coverage. The gate reads
@@ -389,10 +389,10 @@ Critical. Brook fixes it and the audit is re-run before closure.
 
 **What.** Brook reads the entire blocker ledger at once, triages and groups
 failures, fixes **root causes** with minimal diffs, and proves each fix by
-re-running the check that failed. The loop returns to Wave 4 — max 3 cycles,
+re-running the check that failed. The loop returns to Flow 4 — max 3 cycles,
 then escalation to the human with full history.
 
-**How to use.** Automatic in Wave 8. Manual: `/mugiwara-heal`.
+**How to use.** Automatic in Flow 8. Manual: `/mugiwara-heal`.
 
 **Scenario.** Chopper's audit surfaces five failures. Brook fixes them in one
 pass with root-cause changes, re-runs each failed check, and hands back to
@@ -405,7 +405,7 @@ you.
 
 ## 15. Adversarial verification
 
-**What.** The optional Wave 4.5. Skeptic finds what is **wrong** — it never
+**What.** The optional Flow 4.5. Skeptic finds what is **wrong** — it never
 validates. It doubts claims, plans, and verdicts; classifies findings
 (actionable vs noise); and runs a bounded loop (3 cycles max). Read-only.
 
@@ -482,9 +482,14 @@ sub-mission.
 ```
 
 Nami interviews and writes an initiative plan; each dev works in their own
-branch; `mugiwara initiative status <plan>` (via
-`bun scripts/initiative.ts`) shows progress; all sub-missions `[x]` →
+branch; the plan's sub-mission table shows progress; all sub-missions `[x]` →
 initiative-level closure.
+
+`mugiwara initiative <status|conflict-check|set-status> <plan>` ships with the
+installer. `scripts/initiative.ts` backs it: `status` renders the sub-mission
+dashboard, `conflict-check` flags overlapping touched files between in-progress
+sub-missions, `set-status` updates one row. The plan doc is both the source of
+truth and the dashboard.
 
 **Scenario.** Three developers, one payment split. Each owns a file-disjoint
 sub-mission, never colliding; the initiative plan shows green across all three
@@ -555,7 +560,8 @@ runs the identical crew with identical behavior.
 ## 23. CLI
 
 **What.** A small Node CLI for lifecycle management: install wizard, update,
-uninstall via manifest, list + health check, and reset with protection.
+uninstall via manifest, list + health check, reset with protection, plus the
+mission subcommands `start`, `continue`, `status`, `run`, `savepoint`, and `initiative`.
 
 **How to use.**
 
@@ -565,12 +571,21 @@ mugiwara update --target <id> --yes    # overwrite to latest
 mugiwara list --check                  # health check, missing files
 mugiwara uninstall                     # remove installed files
 mugiwara reset --keep-logs             # wipe state, keep lessons
+mugiwara start <mission> [member]      # begin a mission from its plan (solo, or team sub-mission by git actor)
+mugiwara continue                      # list in-flight missions (every mode)
+mugiwara continue <mission> [member]   # exact resume point
+mugiwara status                        # computed state: flow stage, tasks, lane, blockers, budget
+mugiwara run <script.sh> [args]        # run a bundled harness script
+mugiwara savepoint <mission> [member] [flow stage] [mode]
+mugiwara initiative <status|conflict-check|set-status> <plan> [args]
 mugiwara --version                     # version
 ```
 
 **Scenario.** A broken install after a manual edit is diagnosed with
 `mugiwara list --check`; the missing files are restored with `mugiwara
-update --force`.
+update --force`. Mid-mission, `mugiwara status` shows where the crew is and
+`mugiwara continue` resumes it; a team lead runs `mugiwara initiative
+conflict-check <plan>` before two devs collide on the same files.
 
 → [CLI reference](../install/cli.md) · [src/cli.ts](../../src/cli.ts)
 
@@ -608,14 +623,16 @@ branch/commit formats from the start — at zero LLM cost.
 
 **What.** Per-lane token budgets (lean 12k, standard 25k, full 50k). Status
 writes to `state/<mission>/[member].json` (`tokens_est`, `budget`,
-`budget_status`): warn at 1.5×, stop at 3×. Surfaced in the mission report as
-cost delta vs. lane budget.
+`budget_status`): warn at 1.5×, stop at 3×. `tokens_est` is a work/churn
+estimate (LANE_BASE + doc words ×1.35 + changed LOC ×12), not measured usage.
+Surfaced in the mission report as cost delta vs. lane budget.
 
 **How to use.** Automatic. Read `.mugiwara/state/<mission>/[member].json` or
 the mission report.
 
-**Scenario.** A standard mission passes 15k tokens → `warn` logged; 30k →
-`stop`, state written, and the mission pauses for a human decision.
+**Scenario.** A standard mission's estimated load passes 15k tokens → `warn`
+logged; 30k → `stop`, state written, and the mission pauses for a human
+decision.
 
 → [Cost model](cost.md)
 
@@ -649,14 +666,29 @@ case fails under a fresh judge → the skill is fixed, the eval is not touched.
 **What.** What keeps the pipeline honest when markdown alone can't force a
 model: computed mechanisms leave a trace regardless of model cooperation —
 lane sizing, savepoint state, evidence capture
-(`scripts/evidence.sh`), index-budget validation, manifest sync, and skill
-format checks. Discipline rules (skip gates, evidence over claims, wave
+(`mugiwara run evidence.sh`), index-budget validation, manifest sync, and skill
+format checks. Discipline rules (skip gates, evidence over claims, flow-stage
 banners, bounded heal loop) rely on the model reading and following them.
+
+**Machine enforcement added by the seamless-rework mission:**
+- **`enforce` config key** (`off` / `warn` / `block`, default `block`) — the
+  pipeline guard reads it; `off` disables the hooks, `warn` reports, `block`
+  fails the turn.
+- **Coverage thresholds** (`coverage_new` / `coverage_modified` in
+  `.mugiwara/config`, default 90/80) are gate-enforced on the diff by
+  `scripts/coverage-gate.ts`; `0` disables a threshold; no test suite = SKIP
+  with a reason, never a fake pass.
+- **Five hooks** (Claude Code only): `session-start`, `mugiwara-mode-tracker`,
+  `auto-savepoint`, `pipeline-guard`, `engagement-marker`. They run on
+  SessionStart / UserPromptSubmit / PostToolUse / Stop / SubagentStop.
+- **Per-target enforcement**: `claude` = enforced (hooks run); `opencode` +
+  the other 7 targets = advisory (prose + validator only). Full split:
+  [enforcement.md](../reference/enforcement.md).
 
 **How to use.** Automatic. Run locally with `bun run gate`; mechanisms run
 in CI on every PR.
 
-**Scenario.** A model skips a wave or passes on a claim — savepoint and lane
+**Scenario.** A model skips a flow stage or passes on a claim — savepoint and lane
 still write state, evidence.sh still captures output, so the trace exposes
 the shortcut even when the model cooperates poorly.
 
@@ -677,7 +709,7 @@ integrity), `mugiwara-agent-security` (prompt injection, memory poisoning,
 excessive agency, MCP trust, sandboxing).
 
 **How to use.** Automatic — the skill fires when the task matches its
-description. Frontend tasks in Wave 3 always apply `mugiwara-frontend`.
+description. Frontend tasks in Flow 3 always apply `mugiwara-frontend`.
 
 **Scenario.** A new REST API is planned; `mugiwara-contract-first` shapes the
 contract before implementation, so backward-compatibility and error semantics
@@ -691,6 +723,6 @@ are decided up front instead of retrofitted.
 
 - [README — all features table](../../README.md#all-features)
 - [Getting started](../getting-started.md) — install and first mission
-- [Workflow](workflow.md) — the wave pipeline in detail
+- [Workflow](workflow.md) — the flow pipeline in detail
 - [Agents](agents.md) — the 12 + 3 crew members
 - [Skills](skills.md) — the 26 techniques

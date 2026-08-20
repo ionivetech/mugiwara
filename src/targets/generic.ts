@@ -31,7 +31,7 @@ export function makeGeneric(opts: {
         // tokens at session start. The agent reads the full file on demand.
         return {
           relPath: `${data.name}.md`,
-          text: `# ${data.name}\n\n> ${data.description}\n\n## Skip when\n\nFull skill: \`${data.name}\` — read \`.mugiwara/refs/${data.name}.md\` when the crew invokes this role.`,
+          text: `# ${data.name}\n\n> ${data.description}\n\n## Skip when\n\nFull skill: \`${data.name}\` — read \`.mugiwara/refs/${data.name}/${data.name}.md\` when the crew invokes this role.`,
         };
       }
       return { relPath: `${data.name}.md`, text: `# ${data.name}\n\n> ${data.description}\n\n${body}` };
@@ -44,7 +44,7 @@ export function makeGeneric(opts: {
       if (stubOnly) {
         return {
           relPath: `agent-${data.name}.md`,
-          text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills: ${data.skills ?? ''}. Read \`.mugiwara/refs/${data.name}.md\` when embodying this role.\n\nOnly zoro-execution and brook-healing may modify source code.\nReturn your output to luffy-orchestrator; do not choose the next step.`,
+          text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills: ${data.skills ?? ''}. Read \`.mugiwara/refs/${data.name}/${data.name}.md\` when embodying this role.\n\nOnly zoro-execution and brook-healing may modify source code.\nReturn your output to luffy-orchestrator; do not choose the next step.`,
         };
       }
       return { relPath: `agent-${data.name}.md`, text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills used: ${data.skills ?? ''}\n\n${body}` };
@@ -53,10 +53,15 @@ export function makeGeneric(opts: {
       if (!stubOnly) return null;
       return { relPath: `${data.name}.md`, text: `# Agent: ${data.name}\n\n> ${data.description}\n\nSkills used: ${data.skills ?? ''}\n\n${body}` };
     },
-    refsDir({ projectDir }: { scope: Scope; projectDir: string; home: string }) {
+    refsDir({ projectDir }: { scope: Scope; projectDir: string; home: string }, skillName: string) {
       // Keep reference detail outside the rules dir so the harness never
       // glob-loads it; the skill names the path and the agent reads on demand.
-      return join(projectDir, '.mugiwara', 'refs');
+      // Per-skill subdir is load-bearing, not tidiness: a flat refs dir let
+      // same-named references collide (agent-security/checklist.md vs
+      // frontend/checklist.md, contract-first/process.md vs
+      // root-cause/process.md) and first-writer-wins silently served the
+      // wrong document to the skill that asked for it.
+      return join(projectDir, '.mugiwara', 'refs', skillName);
     },
     postInstall({ projectDir, dryRun }) {
       if (!bootstrapFile) return { written: [], notes: [] };

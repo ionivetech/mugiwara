@@ -7,7 +7,7 @@ description: Use for commits, splitting, or git history debugging — atomic com
 
 ## Skip when
 
-- No commits to make this wave — nothing staged, nothing to split or amend.
+- No commits to make this flow stage — nothing staged, nothing to split or amend.
 - User handles version control manually for this mission.
 
 Git hygiene keeps the mission reversible: one logical change per commit, a save-point before risky work, and history you can bisect.
@@ -29,7 +29,7 @@ Git hygiene keeps the mission reversible: one logical change per commit, a save-
 
 1. A large task becomes multiple commits, one per logical step in the plan.
 2. Split boundaries follow the plan's tasks: no commit spans two plan tasks, no plan task is left partially committed.
-3. Commit each step the moment it is green; never batch a whole wave into one commit.
+3. Commit each step the moment it is green; never batch a whole flow stage into one commit.
 
 ## Commit message conventions
 

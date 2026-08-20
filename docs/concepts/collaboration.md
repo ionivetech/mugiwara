@@ -25,11 +25,11 @@ Branch is an implementation detail, not an identity.
 ├── continue/<mission>/<member>.json  # team member resume point
 ├── plans/<mission>.md                # ONE shared plan (source of truth)
 ├── reports/YYYY-MM-DD-<mission>.md   # aggregate mission report
-├── results/<mission>/*               # wave evidence (committed)
+├── results/<mission>/*               # flow-stage evidence (committed)
 └── logs/lessons.md                   # shared lessons ledger (append-only)
 ```
 
-`state/` and `continue/` are gitignored (recomputed each wave). `plans/`,
+`state/` and `continue/` are gitignored (recomputed each flow stage). `plans/`,
 `results/`, `reports/`, `logs/lessons.md` are committed — the audit trail
 survives the merge.
 
@@ -37,16 +37,21 @@ survives the merge.
 
 | Command | Behavior |
 |---------|----------|
+| `mugiwara start <mission> [member]` | **Begin** a mission from its plan. Solo → savepoint (member-less). Team → resolve your sub-mission by git actor (or pass member), savepoint, and mark it `[~]` in-progress in the plan. |
 | `/mugiwara continue` | **List** every in-flight mission for your git actor. Never auto-starts. |
 | `/mugiwara continue <mission>` | Solo plan → resume `continue/<mission>/state.json`. Team plan → **list members** and stop (member required). |
 | `/mugiwara continue <mission> <member>` | Resume exactly that member's work. |
-| `bun run scripts/initiative.ts status <plan>` | Dashboard: assignee, branch, status per sub-mission. |
-| `bun run scripts/initiative.ts conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
-| `bun run scripts/initiative.ts set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
+| `mugiwara status` | Computed position per mission: flow stage, tasks, lane, blockers, budget. |
+| `mugiwara initiative status <plan>` | Dashboard: assignee, branch, status per sub-mission. |
+| `mugiwara initiative conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
+| `mugiwara initiative set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
+
+> The `initiative` subcommand ships with the installer. In an installed project, `mugiwara initiative <status|conflict-check|set-status> <plan>` works directly; the plan doc is the source of truth either way. `mugiwara start` writes the savepoint AND marks the sub-mission in-progress in the plan — so the plan stays the single source of truth, and `initiative` is the monitoring layer that reads it.
+
 
 ## Auto mode
 
-`auto` runs every wave autonomously to closure — lane rise, sensitive-path
+`auto` runs every flow stage autonomously to closure — lane rise, sensitive-path
 touches, and heal cycles do **not** downgrade the mode. Only a genuine blocker
 or the heal halt pauses.
 
@@ -111,11 +116,14 @@ have their own files — no clobbering.
 
 ### 3. Coordination
 
+Repo-development-only (see the note above) — in an installed project, read and
+edit the sub-mission table in the plan doc:
+
 ```bash
-bun run scripts/initiative.ts status plans/2026-08-20-payment-gateway-v2.md
+mugiwara initiative status plans/2026-08-20-payment-gateway-v2.md
 # A john   [~] · B patty [ ] (dep A) · C austin [ ] (dep B)
 
-bun run scripts/initiative.ts conflict-check plans/2026-08-20-payment-gateway-v2.md
+mugiwara initiative conflict-check plans/2026-08-20-payment-gateway-v2.md
 # A touches contracts/ + src/ledger/; B touches src/payments/ — no overlap
 ```
 
@@ -128,7 +136,7 @@ surfaces her in-flight work:
 
 ```
 AUTO-RESUME: 1 mission in-flight for patty:
-  - payment-gateway-v2 (patty) — wave 3, 2/8 tasks
+  - payment-gateway-v2 (patty) — flow stage 3, 2/8 tasks
 ```
 
 `/mugiwara continue payment-gateway-v2 patty` resumes exactly her checkpoint.

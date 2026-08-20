@@ -38,14 +38,19 @@ Verified by execution at v0.6.2 (2026-08-14):
 26 skills · 14 agents (+3 internal) · 33 skill-local references · 12 harness targets
 cold-load index      1.3k tokens, budget-gated
 retrieval accuracy   rank-1 93.5% · top-3 100% · negatives 100%
-determinism          lane · savepoint · evidence · mission-report
+determinism          lane · savepoint (hook-driven on claude, crew-driven elsewhere)
+                     evidence + mission-report exist and run, but are called
+                     from prose once each — an optional tip and a closure step
 install coverage     91.6% across 9 targets
 ```
 
 **Newly shipped (v0.6.0):**
 - **Sonar-style metrics** — duplication %, complexity scoring, maintainability rating (A–E), code attribute checks per wave
 - **Security hotspots + SCA** — STRIDE-pointed hotspot review, license compliance, dependency audit
-- **Team initiatives** — sub-mission planning, shared plan, status tracking for multi-engineer collaboration
+- **Team initiatives** — sub-mission planning and the shared plan format, with
+  status tracked in the plan doc itself. No `mugiwara initiative` CLI shipped:
+  `src/cli.ts` has no such command, and `scripts/initiative.ts` is
+  repo-development-only (not installed)
 - **Onboarding wizard** — `mugiwara onboard`: zero-LLM terminal wizard
   (6 questions) for branch pattern, mode, review depth, quality checks,
   coverage, and commit style/template

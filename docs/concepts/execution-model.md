@@ -13,7 +13,7 @@ executes directly.
 ## Inline by default
 
 The crew runs **inline**. The main thread embodies each crew role using that
-member's skill, so every wave plays out in your main conversation and you watch
+member's skill, so every flow stage plays out in your main conversation and you watch
 it happen:
 
 - Luffy's triage, Nami's planning, Zoro's execution, Chopper's audit, Sanji's
@@ -34,7 +34,7 @@ Subagents exist to parallelize, never to hide work:
    conversation.
 4. **Check subagents** — Chopper, Robin, and Jinbe may spawn subagents for
    independent re-runs or diff passes.
-5. **Context pressure** — when `tokens_est` exceeds 60% of `budget`
+5. **Context pressure** — when the `tokens_est` estimate exceeds 60% of `budget`
    mid-execution, remaining sequential tasks dispatch to workers one at a time,
    in plan order. Order is preserved; only the context resets.
 
@@ -42,15 +42,15 @@ Worker results return as reports; the main thread summarizes them inline with
 evidence pointers.
 
 > **Delegated work is not hidden work.** A worker may run out of view; its
-> result may not. Every worker returns a wave banner, a one-line verdict, and an
+> result may not. Every worker returns a flow stage banner, a one-line verdict, and an
 > evidence path into the main thread. The user never clicks into a subagent to
 > know what happened. Isolation is for context and permission, never for
 > autonomy.
 
-## Why not dispatch every wave to a subagent?
+## Why not dispatch every flow stage to a subagent?
 
 Every harness — Claude Code, opencode, Codex, Cursor, Gemini — hides subagent
-internals behind a click or a side panel. If each wave ran as a subagent, you'd
+internals behind a click or a side panel. If each flow stage ran as a subagent, you'd
 be clicking through the whole mission to see what happened. Running the crew in
 the main conversation is the only way the process is genuinely visible.
 
@@ -68,11 +68,11 @@ linear.
 
 ## Checkpoint reports
 
-You see progress as **checkpoint reports**, not a firehose: a wave banner
-(`===== ⚔️ WAVE 3 — ZORO (EXECUTION) =====` in the
+You see progress as **checkpoint reports**, not a firehose: a flow stage banner
+(`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` in the
 agent's color — plain in markdown UIs, ANSI-wrapped in terminals), one compact report per crew member at each
 stage boundary (what ran / result / evidence pointer), a progress summary per
-wave, and a pause when something fails or gets risky. Subagents are used only
+flow stage, and a pause when something fails or gets risky. Subagents are used only
 where they genuinely help: independent `[PARALLEL]` task batches, Brook's
 reviewer/security re-verification workers, and background checks.
 
@@ -98,5 +98,5 @@ You can jump into any stage — e.g. run `/mugiwara-plan` first, then
 Inline execution grows the main-thread context over a long mission. The crew
 mitigates this: evidence goes to `.mugiwara/` files, reports are terse, and
 subagents isolate the genuinely heavy parallel work. For missions that must
-minimize main-context growth, the crew supports dispatching specific waves to a
+minimize main-context growth, the crew supports dispatching specific flow stages to a
 subagent — at the cost of visibility.

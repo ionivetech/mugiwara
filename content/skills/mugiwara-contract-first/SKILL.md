@@ -27,6 +27,8 @@ Framework APIs from docs, not memory: `_shared/references/source-grounding.md`.
 
 Full 5-step protocol: `references/process.md` — contract first, error semantics, boundary validation, backward compatibility, versioning discipline. 27 lines; every step required.
 
+Versioning + deprecation moves: `references/versioning-playbook.md`.
+
 ## Rationalizations
 
 | Rationalization | Reality |

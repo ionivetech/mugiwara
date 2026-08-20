@@ -12,8 +12,8 @@ Run the crew pipeline inline. To switch autonomy mode:
 /mugiwara           # show current mode
 ```
 
-The flip applies from the next wave, never mid-wave. If a flip arrives
-mid-wave, acknowledge it — "recorded, applies from Wave N+1" — never apply
+The flip applies from the next wave, never mid-flow-stage. If a flip arrives
+mid-flow-stage, acknowledge it — "recorded, applies from Flow N+1" — never apply
 silently, never ignore. Valid modes: guided, semi, auto.
 
 For workflow: `mugiwara-orchestration` auto-loads as gatekeeper — classify, route, check-in, close. See skills/mugiwara-workflow for the full pipeline. `mugiwara off` for a request stands the crew down.

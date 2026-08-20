@@ -20,7 +20,7 @@ Group 2 [SEQUENTIAL]: Row 3 (rbac.ts)
 ```
 
 Each heal worker receives a prompt with 5 fields:
-- **FAILURE** — ledger row verbatim (wave, task, symptom, attempted)
+- **FAILURE** — ledger row verbatim (flow stage, task, symptom, attempted)
 - **ROOT CAUSE** — Brook's triage result: where the bug is, why it happened
 - **FIX** — what to change, which file, which function
 - **MUST DO** — Prove-It: write regression test, watch it fail, implement fix, watch it pass, commit
@@ -33,6 +33,6 @@ After all heal workers complete, dispatch validation workers in parallel:
 - **security-worker** — security pass over fixes (per `mugiwara-security`)
 - **re-run-check worker** — independently re-runs failed checks, returns raw evidence
 
-Flow: Brook triage + grouping → dispatch heal workers parallel → aggregate results → dispatch validation workers → update ledger → back to Wave 4.
+Flow: Brook triage + grouping → dispatch heal workers parallel → aggregate results → dispatch validation workers → update ledger → back to Flow 4.
 
 Workers are NOT crew members — disposable subagents, one narrow job per worker. Crew runs inline in main thread.

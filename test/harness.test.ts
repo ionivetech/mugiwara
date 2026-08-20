@@ -190,43 +190,38 @@ test('savepoint: sensitive escalation WINS over docs-only downgrade (twin of lan
 
 // ---------- heal_cycle counting ----------
 
-test('savepoint: heal_cycle counts Wave-8 banners; heal prose does not inflate or error', { timeout: 40000 }, () => {
+test('savepoint: heal_cycle counts Wave-8 healing sections in the decision log; heal prose does not inflate or error', { timeout: 40000 }, () => {
   const dir = newRepo('heal');
   try {
-    const evDir = join(dir, '.mugiwara', 'results', 'healtest');
-    mkdirSync(evDir, { recursive: true });
+    const logDir = join(dir, '.mugiwara', 'logs');
+    mkdirSync(logDir, { recursive: true });
+    const logFile = join(logDir, '2026-08-19-healtest.md');
 
-    // no trace file -> 1
+    // no decision log -> 1
     runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(1);
 
-    // one banner -> 2
-    writeFileSync(join(evDir, '01-trace.md'), 'some text\n## Wave 8 — heal\nmore\n');
+    // one heal section -> 2
+    writeFileSync(logFile, '# Decision log — healtest\n## Flow 8 — healing (Brook)\nmore\n');
     runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(2);
 
-    // two banners -> 3
-    writeFileSync(join(evDir, '01-trace.md'), '## Wave 8 — heal\n## Wave 8 — heal\n');
+    // two sections -> 3
+    writeFileSync(logFile, '## Flow 8 — healing (Brook)\n## Flow 8 — healing (Brook)\n');
     runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(3);
 
-    // "heal" prose WITHOUT "Wave 8" banner: must stay 1 and emit no syntax error
+    // "heal" prose WITHOUT a "## Flow 8" section: must stay 1 and emit no syntax error
     // (regression guard for bug F1: grep -c zero-match double-emit)
-    writeFileSync(join(evDir, '01-trace.md'), 'heal workers healed the bug\n');
+    writeFileSync(logFile, 'heal workers healed the bug\n');
     const r = runSavepoint(dir, 'healtest "" 1 guided');
     expect(readState(dir, 'healtest').heal_cycle).toBe(1);
     expect(r.stderr).not.toContain('syntax error');
 
-    // NEW banner format (wave-banners.md) must still count: the equals-line +
-    // uppercase form contains the literal "WAVE 8" the counter greps for.
-    writeFileSync(join(evDir, '01-trace.md'), '==================== WAVE 8 — BROOK (HEALING) ====================\n');
+    // an adjacent "## Flow 8b"-style section is NOT a heal cycle and must not count
+    writeFileSync(logFile, '## Flow 8b — enforcement section, not a heal cycle\n');
     runSavepoint(dir, 'healtest "" 1 guided');
-    expect(readState(dir, 'healtest').heal_cycle).toBe(2);
-
-    // UI variant (emoji heading) also counts.
-    writeFileSync(join(evDir, '01-trace.md'), '## 🎻 WAVE 8 — BROOK (HEALING)\n');
-    runSavepoint(dir, 'healtest "" 1 guided');
-    expect(readState(dir, 'healtest').heal_cycle).toBe(2);
+    expect(readState(dir, 'healtest').heal_cycle).toBe(1);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

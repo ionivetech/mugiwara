@@ -1,6 +1,6 @@
-# Output contract — one wave at both verbosity levels
+# Output contract — one flow stage at both verbosity levels
 
-Purpose: show the exact shape a wave takes at `verbosity=normal` (default)
+Purpose: show the exact shape a flow stage takes at `verbosity=normal` (default)
 and `verbosity=full`. Match the shape for the level in effect. Reference:
 `mugiwara-orchestration` → Output discipline.
 
@@ -12,7 +12,7 @@ Whatever the level, these are always visible — they are the audit surface:
 - file edits: path + one-line summary
 - gate verdicts + evidence path
 - decisions, questions, blockers, lane rises, escalations
-- the handoff line to the next wave
+- the handoff line to the next flow stage
 
 ## The collapse table
 
@@ -21,7 +21,7 @@ Whatever the level, these are always visible — they are the audit surface:
 | 200 lines of test output | `✓ tests 84/84 → results/m/03-quality.md` |
 | Read/grep/probe tool calls + file contents | *(not echoed at `normal` — a file is named only when it matters)* |
 | Step-by-step reasoning | the conclusion |
-| Per-task bookkeeping | one summary line per wave |
+| Per-task bookkeeping | one summary line per flow stage |
 | Raw diff | `+42/-8` + one-line summary |
 
 ---
@@ -29,11 +29,11 @@ Whatever the level, these are always visible — they are the audit surface:
 ## `normal` — default
 
 ```
-==================== ⚔️ WAVE 3 — ZORO (EXECUTION) ====================
+==================== ⚔️ FLOW 3 — ZORO (EXECUTION) ====================
 ✎ src/auth/invitation.ts   +42/-8   token validation + redirect guard
 ✎ src/routes/index.ts      +6/-0    route registration
 ✓ tests 84/84 · lint 0     → results/m/03-quality.md
-→ Wave 4 — Chopper (Checkpoint)
+→ Flow 4 — Chopper (Checkpoint)
 ```
 
 Commands ran and passed; output collapsed to one line per gate with the
@@ -44,8 +44,8 @@ appear. Reasoning reduced to conclusions.
 ## `full` — everything
 
 ```
-==================== ⚔️ WAVE 3 — ZORO (EXECUTION) ====================
-$ bun scripts/lane.sh m
+==================== ⚔️ FLOW 3 — ZORO (EXECUTION) ====================
+$ mugiwara run lane.sh m
 lane: full (44 files, 5 sensitive)
 $ readFileSync src/auth/invitation.ts
   export function signInvitation(...) {
@@ -59,7 +59,7 @@ $ bun test test/unit
 ✎ src/auth/invitation.ts   +42/-8   token validation + redirect guard
 ✎ src/routes/index.ts      +6/-0    route registration
 ✓ quality pass → results/m/03-quality.md
-→ Wave 4 — Chopper (Checkpoint)
+→ Flow 4 — Chopper (Checkpoint)
 ```
 
 Every command, every read, every reasoning step — the raw transcript. Use it

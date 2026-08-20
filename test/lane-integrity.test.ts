@@ -527,3 +527,51 @@ test('fixture: escalating repo files_touched matches branch diff', { timeout: SL
     expect(state.files_touched).toBe(10);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---------- case 37-38: post-install harness dirs never size a consumer mission ----------
+
+// `mugiwara install` leaves ~50 untracked files under the harness rules dirs.
+// In a consumer project they are installed config; counting them sized every
+// fresh mission Lane 3 before the user wrote a line. In mugiwara's own repo
+// the same dirs ARE the product (PRODUCT_PAT), so the exclusion is keyed on
+// the repo-root package.json name — asserted in both directions here.
+function installedRepo(name: string): string {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-installed-'));
+  execSync('git init -q && git config user.email t@t.com && git config user.name T', { cwd: dir });
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name }));
+  writeFileSync(join(dir, 'README.md'), 'hi\n');
+  execSync('git add -A && git commit -qm base', { cwd: dir });
+  for (const d of ['.claude/skills', '.opencode/skills', '.github/instructions', '.kilo/rules']) {
+    execSync(`mkdir -p "${join(dir, d)}"`, { cwd: dir });
+    for (let i = 0; i < 12; i++) writeFileSync(join(dir, d, `s${i}.md`), 'x\n');
+  }
+  return dir;
+}
+
+test('case 37: consumer repo post-install sizes direct, not full', { timeout: SLOW }, () => {
+  const dir = installedRepo('my-app');
+  try {
+    const j = JSON.parse(run(LANE, ['main', '--json'], dir).stdout);
+    expect(j.lane).toBe('direct');
+    expect(j.files_touched).toBe(0);
+    // parity: savepoint must agree with lane.sh on the same tree
+    runSavepoint(dir, 'm');
+    const state = readState(dir);
+    expect(state.lane).toBe('direct');
+    expect(state.files_touched).toBe(0);
+    expect(state.loc_ins).toBe(0);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('case 38: mugiwara own repo still counts .claude/.opencode as product', { timeout: SLOW }, () => {
+  const dir = installedRepo('@ionivetech/mugiwara');
+  try {
+    const j = JSON.parse(run(LANE, ['main', '--json'], dir).stdout);
+    expect(j.lane).toBe('full');
+    expect(j.files_touched).toBe(48);
+    runSavepoint(dir, 'm');
+    const state = readState(dir);
+    expect(state.lane).toBe('full');
+    expect(state.files_touched).toBe(48);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

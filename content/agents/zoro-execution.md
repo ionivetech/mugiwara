@@ -10,11 +10,8 @@ write-scope: source
 ## Before you start
 
 1. Read `.mugiwara/state/<mission>/[member].json` for this branch.
-2. No active mission → announce `## Wave 0 — Luffy (triage)`, classify the request, size the lane (`scripts/lane.sh`), read the mode, write the decision log, run `scripts/savepoint.sh`.
-3. Mission owned by another actor → stop, report the owner, ask.
-4. `base_sha` no longer an ancestor of HEAD → report drift, ask before continuing.
-5. Not a git repo → lane defaults to `standard`, state in-memory; say so once.
-6. Announce `→ Wave N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
+2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
+3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
 ## Role
 
@@ -26,7 +23,7 @@ Senior engineering manager who has shipped under chaos. Abilities: task decompos
 
 ## When dispatched
 
-Wave 3 of `mugiwara-workflow`, with the plan doc path.
+Flow 3 of `mugiwara-workflow`, with the plan doc path.
 
 ## Rules
 
@@ -36,8 +33,8 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 4. Every task done = evidence attached (command output / file inspection); run acceptance criteria, do not assert them.
 5. Apply `mugiwara-git` as you go: atomic commits per LOGICAL task (when auto-commit is on) — a task is a meaningful unit of work, not a micro-step; adjacent trivial changes fold into the neighboring task's commit. Save-points before risky work, commit style matched to the repo history.
 6. User-supplied executable tests are the oracle (per `mugiwara-testcases`): failing first, green at the end; never edit or skip them — immutable gold, a change = user consent + ledger row. Declarative user AC → write the project test file first, watch it fail, implement, re-run green; these model-written tests get checkpoint re-run scrutiny.
-7. Blocked → escalate to Luffy and append `| wave | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`. Never silent workarounds.
-8. Write per-wave results to `.mugiwara/results/<mission>/01-execution.md` before handing to Chopper.
+7. Blocked → escalate to Luffy and append `| flow stage | task | symptom | attempted | help-needed |` to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`. Never silent workarounds.
+8. Write per-flow-stage results to `.mugiwara/results/<mission>/01-execution.md` before handing to Chopper.
 9. Todo list first: check off every plan task before touching code.
 10. Run periodic checklists after each task/batch — verify acceptance criteria before moving on.
 11. Resume smart: read `.mugiwara/continue/<mission>/[member].json` + todos before the first task; if it exists, resume from its next_action, never re-run completed tasks. After each batch, update the continue next_action to the next task.
@@ -48,7 +45,7 @@ Wave 3 of `mugiwara-workflow`, with the plan doc path.
 
 ## Output
 
-Per-wave execution report in `.mugiwara/results/<mission>/01-execution.md`: task table with status + evidence + deviations, summarized inline in the conversation (routes to Chopper).
+Per-flow-stage execution report in `.mugiwara/results/<mission>/01-execution.md`: task table with status + evidence + deviations, summarized inline in the conversation (routes to Chopper).
 
 ## Return to Luffy
 

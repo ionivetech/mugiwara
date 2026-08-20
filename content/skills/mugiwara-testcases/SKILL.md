@@ -14,12 +14,14 @@ User tests are the crew's acceptance oracle. This is the single home for the ATD
 
 ## Accepted formats
 
+What each format must carry to be usable: `references/intake-formats.md`.
+
 1. Existing repo test files (vitest / pytest / playwright / JUnit).
 2. User-written acceptance criteria — Gherkin AND plain markdown.
 
 ## Intake
 
-The declared test source is a path glob in the mission prompt (e.g. `tests/acceptance/`) or an explicit repo path, read at Wave 0 alongside the mode config. No automatic whole-repo scan. No test source declared → no user tests; quality runs unit / lint / format only.
+The declared test source is a path glob in the mission prompt (e.g. `tests/acceptance/`) or an explicit repo path, read at Flow 0 alongside the mode config. No automatic whole-repo scan. No test source declared → no user tests; quality runs unit / lint / format only.
 
 ## Trust (per the planning trust doctrine)
 
@@ -46,11 +48,11 @@ A red user test needs green-run evidence, not silence. After the 3-cycle heal lo
 
 ## Integration-class rule
 
-Sanji never creates integration tests; user-declared suites are the only integration-class tests that exist. The verdict on them comes from the quality wave evidence — user suites actually run, never asserted.
+Sanji never creates integration tests; user-declared suites are the only integration-class tests that exist. The verdict on them comes from the quality flow stage evidence — user suites actually run, never asserted.
 
 ## Rules
 
-1. Read the declared test source at Wave 0; no source declared = no user tests.
+1. Read the declared test source at Flow 0; no source declared = no user tests.
 2. User executable tests are immutable gold — edit or skip only with consent + a ledger row.
 3. Declarative AC always routes to translate-or-command-check; "run the .feature file" is banned.
 4. State-mutating user tests against shared state consent in every mode; provably-isolated ones run without consent.

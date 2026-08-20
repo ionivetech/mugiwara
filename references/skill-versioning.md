@@ -13,7 +13,7 @@ the mission state carries a `skill_version` field:
 }
 ```
 
-Set by `scripts/savepoint.sh` from the installed package version (`package.json`
+Set by `mugiwara savepoint` from the installed package version (`package.json`
 → `version` → major). Incremented on breaking changes to skill format, state
 schema, or workspace layout.
 

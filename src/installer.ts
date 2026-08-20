@@ -44,6 +44,15 @@ export interface Target {
   transformSkillFull?(data: FrontmatterData, body: string): TransformOut | null;
   transformAgentFull?(data: FrontmatterData, body: string): TransformOut | null;
   postInstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean; files: string[] }): { written: string[]; notes: string[] };
+  /**
+   * Undo anything postInstall did to a file mugiwara does not own.
+   *
+   * Files listed in the manifest are deleted wholesale on uninstall, so a
+   * shared file we merely EDITED (settings.json) must never be reported as
+   * written — deleting it destroys the user's own configuration. Such files are
+   * un-merged here instead.
+   */
+  postUninstall?(opts: { scope: Scope; projectDir: string; home: string; dryRun: boolean }): { changed: string[]; notes: string[] };
 }
 
 export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'content');
@@ -150,6 +159,36 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
     const post = target.postInstall({ scope, projectDir, home, dryRun, files: result.written });
     result.written.push(...post.written);
     result.notes.push(...post.notes);
+  }
+
+  // TASK 8: a fresh install must be immediately usable — write a default
+  // .mugiwara/config (the same defaults `mugiwara onboard` would write) so no
+  // key silently falls back. Only for project scope; global installs don't own
+  // a project config. Never overwrite an existing config.
+  if (scope === 'project') {
+    const configPath = join(projectDir, '.mugiwara', 'config');
+    // lstat, not existsSync: a pre-created symlinked config must not be
+    // followed and overwritten (TOCTOU / symlink defense-in-depth).
+    let configExists = false;
+    try { configExists = lstatSync(configPath).isFile() || lstatSync(configPath).isSymbolicLink(); } catch { configExists = false; }
+    if (!configExists) {
+      const body = [
+        'mode=guided',
+        'branch=feature/{type}-{issue}-{slug}',
+        'commit=conventional',
+        'auto_commit=on',
+        'coverage_new=90',
+        'coverage_modified=80',
+        'review_depth=full',
+        'quality_depth=full',
+        'delegate_threshold=60',
+        'heal_max_cycles=3',
+        'verbosity=normal',
+      ].join('\n') + '\n';
+      if (!dryRun) { mkdirSync(dirname(configPath), { recursive: true }); writeFileSync(configPath, body); }
+      result.written.push(configPath);
+      result.notes.push(`default config written: ${configPath} (run \`mugiwara onboard\` to customise)`);
+    }
   }
   return result;
 }

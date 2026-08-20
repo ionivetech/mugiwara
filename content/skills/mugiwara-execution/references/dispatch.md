@@ -1,7 +1,7 @@
 # Dispatch & batching detail
 
 Full detail behind `content/skills/mugiwara-execution/SKILL.md` — the output
-rule, the worker prompt format, and the per-wave report table.
+rule, the worker prompt format, and the per-flow stage report table.
 
 ## Task batching
 
@@ -32,7 +32,7 @@ A delegation prompt shorter than ~30 lines is too short — beef it up. Thin pro
 
 ## Report table
 
-After each wave: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format:
+After each flow stage: compact task table (status, evidence pointer, deviations) shown inline in the conversation. Format:
 
 ```
 | # | Task | Status | Evidence link |

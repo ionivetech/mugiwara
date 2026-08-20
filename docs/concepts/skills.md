@@ -7,12 +7,12 @@ it embodies a role.
 
 | Skill | Teaches |
 |-------|---------|
-| `mugiwara-workflow` | Harness entry: inline execution, gateway triage, wave pipeline, workspace, blocker protocol, cleanup |
+| `mugiwara-workflow` | Harness entry: inline execution, gateway triage, flow pipeline, workspace, blocker protocol, cleanup |
 | `mugiwara-orchestration` | Captain: 5-way classifier, check-ins, work splitting, decision log, closure |
 | `mugiwara-brainstorm` | Critical sparring: interrogate, research facts, cut over-engineering, recommend |
-| `mugiwara-planning` | Interview-first, full-context scan, wave plans with parallel/sequential markers, team sub-mission planning |
+| `mugiwara-planning` | Interview-first, full-context scan, plan waves with parallel/sequential markers, team sub-mission planning |
 | `mugiwara-execution` | Todo list, sequential inline + parallel worker batches, 6-field delegation, one commit per task |
-| `mugiwara-checkpoint` | Verify-everything audit — deduped re-runs scoped to wave diff; failure rows to blocker ledger |
+| `mugiwara-checkpoint` | Verify-everything audit — deduped re-runs scoped to flow-stage diff; failure rows to blocker ledger |
 | `mugiwara-quality` | Discover project tooling; formatter, linter, duplication detection, complexity scoring, maintainability rating (A–E), code attribute checks, unit tests |
 | `mugiwara-gates` | Coverage ≥90% new / ≥80% modified, build, DoD, granular sonar gate: vulnerabilities, bugs, code smells, duplications — per-condition thresholds |
 | `mugiwara-review` | Doubt-driven review: breaking-change map, five-axis, reliability rating (A–E), code attribute deep review, severity-tagged findings |

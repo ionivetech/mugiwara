@@ -14,12 +14,12 @@ Mugiwara is a governed engineering team in your coding agent. 12 specialists —
 
 1. `mugiwara-orchestration` auto-loads as gatekeeper for every task — classify, route, check-in, close.
 2. The pipeline: Luffy triage → Usopp brainstorm → Nami plan → Zoro execute → Chopper audit → Sanji quality → Franky gates → Robin/Jinbe review → Brook heal → Luffy closure.
-3. Every wave runs inline in the main thread. Subagents only for [PARALLEL] task batches.
-4. Evidence over claims — no wave passes on assertion. Checks must be re-run.
-5. Autonomy modes: `/mugiwara guided|semi|auto`. Flip applies next wave.
+3. Every flow stage runs inline in the main thread. Subagents only for [PARALLEL] task batches.
+4. Evidence over claims — no flow stage passes on assertion. Checks must be re-run.
+5. Autonomy modes: `/mugiwara guided|semi|auto`. Flip applies next flow stage.
 6. Workspace: `.mugiwara/` at repo root — plans, results, issues, logs, state.
 7. The main thread embodies the active role — it is never "plain Claude"
-   mid-mission. Shortcuts skip waves, never roles. Write-scope in each agent's
+   mid-mission. Shortcuts skip flow stages, never roles. Write-scope in each agent's
    frontmatter: artifacts agents delegate source edits to Zoro, never attempt
    them.
 

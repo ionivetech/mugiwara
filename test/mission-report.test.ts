@@ -97,7 +97,7 @@ test('mission-report: full fixture writes enriched report (exit 0)', { timeout: 
     expect(report).toContain('| Lane | standard |');
     expect(report).toContain('| Lane reason | 3 files |');
     expect(report).toContain('| Mode | auto |');
-    expect(report).toContain('| Wave | 4 |');
+    expect(report).toContain('| Flow | 4 |');
 
     // token budget section with fields
     expect(report).toContain('## Token budget');
@@ -120,8 +120,8 @@ test('mission-report: full fixture writes enriched report (exit 0)', { timeout: 
     expect(report).toContain('01-execution.md');
 
     // existing wave table + verdict sniffing intact
-    expect(report).toContain('## Waves');
-    expect(report).toContain('Execute (Wave 3)');
+    expect(report).toContain('## Flow stages');
+    expect(report).toContain('Execute (Flow 3)');
     expect(report).toContain('PASS');
   } finally {
     rmSync(dir, { recursive: true, force: true });

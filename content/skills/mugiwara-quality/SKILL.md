@@ -23,7 +23,7 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 3. Duplication — scan changed files for near-identical blocks ≥10 lines. Compute `duplicated_lines_density` %. Flag files above 3%. # ponytail: AI heuristic, not AST-level. For precision use SonarScanner or jscpd.
 4. Complexity — measure cyclomatic per changed function (McCabe: 1 + decision points: if/for/while/case/&&/||/??/ternary). Flag >10, major >20. Method + thresholds: `_shared/references/complexity.md`. # ponytail: manual counting is the baseline; prefer ESLint `complexity` rule or SonarScanner when the repo has them.
 5. Maintainability rating — compute technical debt from remediation effort of all issues above. Calculate ratio against code size. Map to A-E per Sonar scale: A≤5%, B<10%, C<20%, D<50%, E≥50%.
-6. Code attributes (quantitative) — consistency (formatting drift count, naming convention violations), intentionality (dead code %, unreachable branches count), adaptability (files with >1 responsibility). Metrics only — Robin does qualitative deep review in Wave 7.
+6. Code attributes (quantitative) — consistency (formatting drift count, naming convention violations), intentionality (dead code %, unreachable branches count), adaptability (files with >1 responsibility). Metrics only — Robin does qualitative deep review in Flow 7.
 7. Unit tests — full suite, capture output.
 8. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
 9. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
@@ -37,7 +37,7 @@ Run the declared user test files under the consent matrix:
 - Integration / e2e user tests: consent by mode — `guided`/`semi` ask first; `auto` runs only provably-isolated ones.
 - State-mutating user tests (DB writes, network, browsers): consent in ALL modes.
 
-The user-AC verdict feeds the gates wave — it must come from these runs actually executing, never asserted.
+The user-AC verdict feeds the gates flow stage — it must come from these runs actually executing, never asserted.
 
 ## Optional e2e gate
 
@@ -55,11 +55,11 @@ Hard rule: never create, write, or invent integration/e2e tests. If no user test
 
 ## No tooling found
 
-Say so explicitly, propose the minimal standard setup for the stack, and continue with what exists. Never silently skip the wave.
+Say so explicitly, propose the minimal standard setup for the stack, and continue with what exists. Never silently skip the flow stage.
 
 ## Report
 
-Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/results/<mission>/03-quality.md`. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next wave, fail → Brook (healing) or Zoro (trivial fix).
+Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/results/<mission>/03-quality.md`. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next flow stage, fail → Brook (healing) or Zoro (trivial fix).
 
 ## Rationalizations
 
@@ -70,7 +70,7 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 | "The config is too strict, weaken it." | Never weaken configs or downgrade severity to pass — fix the code. |
 | "The linter rule is wrong anyway." | Resolve it properly or report it; disabling is not resolving. |
 | "Integration tests, skip them, too slow." | Skipping is policy, not laziness: we never create integration tests, and undeclared suites don't run. Declared user suites run under the consent matrix. |
-| "No tooling found, wave done." | No tooling means say so and propose the minimal setup, never a silent skip. |
+| "No tooling found, flow stage done." | No tooling means say so and propose the minimal setup, never a silent skip. |
 | "Formatter and linter are the same." | They are separate checks; run both. |
 | "E2E setup exists, so the gate runs." | No — trigger needs BOTH setup AND changed-file e2e patterns, plus consent by mode. Otherwise skip-and-log, never run unasked. |
 
@@ -78,6 +78,6 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 
 - Weakening configs or disabling rules to make checks pass.
 - Asserting test results without running the suite.
-- Silently skipping the wave when no tooling is found.
+- Silently skipping the flow stage when no tooling is found.
 - Running state-mutating user tests without consent.
 - Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.

@@ -113,3 +113,18 @@ mugiwara list --check                             # health check (missing files)
 mugiwara reset --keep-logs                        # wipe mission state, keep lessons
 mugiwara reset --force                            # override multi-actor guard
 ```
+
+Mission runtime (usable from any harness — these are what the crew calls):
+
+```bash
+mugiwara status                                   # computed state per mission on disk
+mugiwara status --all                             # every actor, not just yours
+mugiwara continue [mission] [member]              # resolve the resume point (exit 2 = you pick)
+mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh · evidence.sh · mission-report.sh
+mugiwara savepoint <mission> [member] [flow stage] [mode]  # shorthand for run savepoint.sh
+```
+
+`status` reads `.mugiwara/state/` and prints flow stage, tasks, lane, mode, blockers,
+heal cycle, token budget, branch, and evidence paths — no model turn involved.
+`continue` exits `0` when it resolved exactly one resume point and `2` when it
+had to list options; on `2` the caller stops and the user picks.

@@ -32,19 +32,19 @@ commit=conventional
 | Level | What it asks you |
 |-------|------------------|
 | `guided` | Everything — plan, branch, commits, ambiguities, check-ins |
-| `semi` | The written plan only (GO); execution from Wave 3 is automatic; real questions are still asked |
+| `semi` | The written plan only (GO); execution from Flow 3 is automatic; real questions are still asked |
 | `auto` | Nothing — fully automatic from the first prompt to ship; ambiguities resolved internally (brainstorm → Luffy decides) |
 
 State-mutating tests against shared state (real DB writes, network, browsers)
 always need your explicit consent — in every mode. That consent is not a knob.
 
-Missing config on read = `guided`. A flip applies from the next wave, never
-mid-wave.
+Missing config on read = `guided`. A flip applies from the next flow stage, never
+mid-flow-stage.
 
 ## Fit the crew to your workflow
 
 - **Trivial one-liners** don't need the crew's full pipeline — Luffy routes them
-  to Lane 0 and they run with zero waves. The process scales to the work.
+  to Lane 0 and they run with zero flow stages. The process scales to the work.
 - **Medium features** run the standard pipeline: triage → plan → execute →
   checkpoint → quality → gates → review → closure.
 - **High-stakes work** (money, security, data, public API) always gets the full
@@ -55,7 +55,7 @@ mid-wave.
 ## The execution model, in one sentence
 
 The crew runs **inline in your main conversation**; subagents are used only for
-independent `[PARALLEL]` task batches and background checks. You see every wave
+independent `[PARALLEL]` task batches and background checks. You see every flow stage
 as it happens. See [execution-model.md](../concepts/execution-model.md).
 
 ## What the crew will never do
@@ -63,7 +63,7 @@ as it happens. See [execution-model.md](../concepts/execution-model.md).
 - Merge a PR, or deploy. It pushes the branch and hands you the verdict file —
   PR review is the terminal gate.
 - Auto-react to review comments or CI.
-- Let a wave pass on a spoken claim — evidence or it didn't happen.
+- Let a flow stage pass on a spoken claim — evidence or it didn't happen.
 - Work around a blocker silently — everything lands in the ledger.
 
 ## Going further

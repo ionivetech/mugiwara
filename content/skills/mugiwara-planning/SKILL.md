@@ -80,6 +80,8 @@ Every edge names its file: `consumes <file> from Task M → produces <file> for 
 
 ## Anti-patterns
 
+Each with its failure mode and the fix: `references/anti-patterns.md`.
+
 - "TBD", "add appropriate error handling", or "similar to Task N" in a step.
 - No Files paths, or an Acceptance like "works correctly" (uncheckable).
 - Assumed tooling not confirmed in the context scan, or silent reordering/dropping tasks.
@@ -101,7 +103,7 @@ Team plans add `## Sub-missions` table after task index. Solo missions skip. Sta
 |----|------|----------|--------|--------|------------|---------------|
 | sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [ ] | — | src/payment/ |
 
-Plan doc is single source of truth. Update status via `scripts/initiative.ts set-status`.
+Plan doc is single source of truth. Update the status cell in the plan doc directly (`mugiwara initiative set-status <plan> --id <id> --status <x>` automates it).
 
 ## Mission split (very large) — Lane 3
 

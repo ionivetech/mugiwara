@@ -89,7 +89,12 @@ test('generic install keeps references outside the rules glob', () => {
   installTo(targets['gemini'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
   const rulesDir = join(dir, '.gemini', 'mugiwara');
   expect(existsSync(join(rulesDir, 'mugiwara-frontend.md'))).toBe(true);
-  expect(existsSync(join(dir, '.mugiwara', 'refs', 'checklist.md'))).toBe(true);
+  // Per-skill refs dir (F2): a flat refs dir let same-named references
+  // collide — agent-security/checklist.md lost to frontend/checklist.md.
+  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-frontend', 'checklist.md'))).toBe(true);
+  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-agent-security', 'checklist.md'))).toBe(true);
+  expect(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-agent-security', 'checklist.md'), 'utf8'))
+    .toContain('Agent Security Checklist');
   expect(existsSync(join(rulesDir, 'mugiwara-frontend', 'references', 'checklist.md'))).toBe(false);
 });
 
@@ -133,7 +138,7 @@ test('session-start hook carries default-on doctrine, directs to mugiwara-orches
   const hook = readFileSync(join(import.meta.dirname, '..', 'hooks', 'session-start.ts'), 'utf8');
   expect(hook).toContain('mugiwara off');
   expect(hook).toContain('mugiwara-orchestration');
-  expect(hook).toContain('Wave 0 triage');
+  expect(hook).toContain('Flow 0 triage');
   expect(hook).toContain('Lane 0');
 });
 
@@ -219,8 +224,15 @@ test('copilot install writes .instructions.md skills and agent .md files', () =>
   const r = installTo(targets['copilot'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
   const skillFile = join(dir, '.github', 'instructions', 'mugiwara-workflow.instructions.md');
   expect(existsSync(skillFile)).toBe(true);
-  expect(readFileSync(skillFile, 'utf8')).toContain('Inline by default');
-  expect(readFileSync(skillFile, 'utf8')).toContain('applyTo: **/*');
+  // A1: copilot injects every matching instruction file into every request,
+  // so the instructions dir carries a routing stub, not the skill body.
+  const skillText = readFileSync(skillFile, 'utf8');
+  expect(skillText).not.toContain('Inline by default');
+  expect(skillText).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
+  expect(skillText).toContain('applyTo: **/*');
+  const fullBody = join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md');
+  expect(existsSync(fullBody)).toBe(true);
+  expect(readFileSync(fullBody, 'utf8')).toContain('Inline by default');
   const agentFile = join(dir, '.github', 'agents', 'luffy-orchestrator.md');
   expect(existsSync(agentFile)).toBe(true);
   expect(r.written.length).toBeGreaterThanOrEqual(35);
@@ -290,9 +302,9 @@ test('windsurf tier-3 writes stubs only, full body in .mugiwara/refs/', () => {
   expect(existsSync(stub)).toBe(true);
   const stubText = readFileSync(stub, 'utf8');
   expect(stubText).toContain('Skip when');
-  expect(stubText).toContain('.mugiwara/refs/mugiwara-workflow.md');
+  expect(stubText).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
   expect(stubText).not.toContain('Inline by default');
-  const full = join(dir, '.mugiwara', 'refs', 'mugiwara-workflow.md');
+  const full = join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md');
   expect(existsSync(full)).toBe(true);
   expect(readFileSync(full, 'utf8')).toContain('Inline by default');
 });

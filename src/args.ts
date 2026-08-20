@@ -9,7 +9,7 @@ export type Args = {
 const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target' };
 const BOOL_FLAGS: Record<string, string> = {
   '--global': 'global', '--yes': 'yes', '-y': 'yes', '--force': 'force',
-  '--dry-run': 'dryRun', '--keep-logs': 'keepLogs', '--check': 'check',
+  '--dry-run': 'dryRun', '--keep-logs': 'keepLogs', '--check': 'check', '--all': 'all',
   '--help': 'help', '-h': 'help', '--version': 'version', '-v': 'version',
 };
 

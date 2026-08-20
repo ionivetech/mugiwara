@@ -47,7 +47,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(typeof state.lane_reason).toBe('string');
     expect(state.lane_prev).toBeNull();
     expect(state.lane_rose).toBe(false);
-    expect(state.wave).toBe(3);
+    expect(state.flow).toBe(3);
     expect(state.mode).toBe('guided');
     expect(typeof state.files_touched).toBe('number');
     expect(state.files_touched).toBeGreaterThanOrEqual(0);
@@ -57,6 +57,10 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(typeof state.tasks.total).toBe('number');
     expect(state.blockers_open).toBe(0);
     expect(state.heal_cycle).toBe(1);
+    expect(state.heal_max_cycles).toBe(3); // default, no config present
+    expect(state.heal_halt).toBe(false);   // heal_cycle 1 < max 3
+    expect(state.delegate_threshold).toBe(60); // default, no config present
+    expect(state.delegate_due).toBe(false); // direct lane → budget 0 → never due
     expect(state.tokens_est).toBeGreaterThanOrEqual(0);
     expect(['computed', 'reported']).toContain(state.tokens_source);
     expect(state.budget).toBeGreaterThanOrEqual(0);
@@ -107,7 +111,7 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
 
     const state = JSON.parse(readFileSync(statePath(dir, 'test'), 'utf8'));
     expect(state.mission).toBeTruthy();
-    expect(state.wave).toBeGreaterThanOrEqual(1);
+    expect(state.flow).toBeGreaterThanOrEqual(1);
     expect(state.mode).toBe('guided');
     expect(typeof state.files_touched).toBe('number');
     expect(typeof state.loc_delta).toBe('number');
@@ -118,6 +122,113 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
     expect(['computed', 'reported']).toContain(state.tokens_source);
     expect(typeof state.skill_version).toBe('string');
     expect(typeof state.updated_at).toBe('string');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the word "heal"', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-heal-'));
+  try {
+    setupGit(dir);
+    mkdirSync(join(dir, '.mugiwara', 'logs'), { recursive: true });
+
+    // no decision log → heal_cycle = 1 (no healing happened)
+    runSavepoint(dir, 'heal-mission "" 3 guided');
+    let state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
+    expect(state.heal_cycle).toBe(1);
+
+    // one heal cycle section → cycle 2; the word "heal" in prose does not inflate
+    writeFileSync(
+      join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
+      [
+        '# Decision log — heal-mission',
+        '## Flow 8 — healing (Brook)',
+        'Fixed: heal counter wired to the decision log.',
+        'The healing text mentions heal workers that never ran.',
+      ].join('\n') + '\n',
+    );
+    runSavepoint(dir, 'heal-mission "" 3 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
+    expect(state.heal_cycle).toBe(2);
+
+    // two recorded cycles → cycle 3; a "Flow 8b"-style adjacent section does NOT count
+    writeFileSync(
+      join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
+      [
+        '# Decision log — heal-mission',
+        '## Flow 8 — healing (Brook)',
+        'Cycle one.',
+        '## Flow 8 — healing (Brook)',
+        'Cycle two.',
+        '## Flow 8b — unrelated enforcement section, not a heal cycle',
+      ].join('\n') + '\n',
+    );
+    runSavepoint(dir, 'heal-mission "" 3 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'heal-mission'), 'utf8'));
+    expect(state.heal_cycle).toBe(3);
+    // default max 3 → heal_cycle 3 >= 3 → halt, the computed cap the skills read
+    expect(state.heal_max_cycles).toBe(3);
+    expect(state.heal_halt).toBe(true);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('4f: savepoint reads heal_max_cycles and delegate_threshold from config', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cfgwire-'));
+  try {
+    setupGit(dir);
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+
+    // config values win; heal_cycle 1 < max 5 → no halt
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\nheal_max_cycles=5\ndelegate_threshold=20\n');
+    runSavepoint(dir, 'cfg-mission "" 1 guided');
+    let state = JSON.parse(readFileSync(statePath(dir, 'cfg-mission'), 'utf8'));
+    expect(state.heal_max_cycles).toBe(5);
+    expect(state.heal_halt).toBe(false);
+    expect(state.delegate_threshold).toBe(20);
+
+    // garbage values fall back to defaults
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'heal_max_cycles=abc\ndelegate_threshold=0\n');
+    runSavepoint(dir, 'cfg-mission "" 1 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'cfg-mission'), 'utf8'));
+    expect(state.heal_max_cycles).toBe(3);
+    expect(state.delegate_threshold).toBe(1); // 0 clamped to the 1-100 range
+
+    // out-of-range threshold clamps to the 1-100 range
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'delegate_threshold=250\n');
+    runSavepoint(dir, 'cfg-mission "" 1 guided');
+    state = JSON.parse(readFileSync(statePath(dir, 'cfg-mission'), 'utf8'));
+    expect(state.delegate_threshold).toBe(100);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('4f: delegate_due is true when tokens_est crosses delegate_threshold% of budget', { timeout: 15000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-delegate-'));
+  try {
+    setupGit(dir);
+    // 2 files → lane lean, budget 12000 (lane-base). threshold 20 → due at 2400.
+    execSync('git checkout -b feature-d', { cwd: dir });
+    writeFileSync(join(dir, 'a.ts'), 'a\n');
+    writeFileSync(join(dir, 'b.ts'), 'b\n');
+    execSync('git add a.ts b.ts && git commit -m wip', { cwd: dir });
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'delegate_threshold=20\n');
+
+    runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '3000' });
+    let state = JSON.parse(readFileSync(statePath(dir, 'test-mission'), 'utf8'));
+    expect(state.lane).toBe('lean');
+    expect(state.budget).toBe(12000);
+    expect(state.delegate_threshold).toBe(20);
+    expect(state.delegate_due).toBe(true);
+
+    // below the bar → not due; threshold stays relative to budget
+    runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '2000' });
+    state = JSON.parse(readFileSync(statePath(dir, 'test-mission'), 'utf8'));
+    expect(state.delegate_due).toBe(false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -174,7 +285,7 @@ test('savepoint team member writes state to state/<mission>/<member>.json', { ti
     const state = JSON.parse(readFileSync(stateFile, 'utf8'));
     expect(state.mission).toBe('payment-gateway');
     expect(state.member).toBe('patty');
-    expect(state.wave).toBe(1);
+    expect(state.flow).toBe(1);
     expect(state.mode).toBe('guided');
     // actor auto-resolves from git identity, never a positional
     expect(state.actor).toBe('Test <test@test.com>');
@@ -195,7 +306,7 @@ test('D10: savepoint writes continue JSON position block at wave boundary', { ti
     runSavepoint(dir, 'test-mission "" 3 guided');
     const cont2 = JSON.parse(readFileSync(continuePath(dir, 'test-mission'), 'utf8'));
     expect(cont2.mission).toBe('test-mission');
-    expect(cont2.wave).toBe(3);
+    expect(cont2.flow).toBe(3);
     expect(cont2.mode).toBe('guided');
     expect(cont2.lane).toBeTruthy();
     // next_session_prompt is crew-written, preserved not invented
@@ -204,7 +315,7 @@ test('D10: savepoint writes continue JSON position block at wave boundary', { ti
     // next wave boundary rewrites position fields
     runSavepoint(dir, 'test-mission "" 4 guided');
     const cont3 = JSON.parse(readFileSync(continuePath(dir, 'test-mission'), 'utf8'));
-    expect(cont3.wave).toBe(4);
+    expect(cont3.flow).toBe(4);
     expect(cont3.next_session_prompt).toBe('Run T1-T5 then waves 4-9');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -251,7 +362,7 @@ test('D10: continue writer sanitizes wave/mode fields (N2)', { timeout: 20000 },
     // non-numeric wave + bad mode via env — must not corrupt JSON
     runSavepoint(dir, 'test-mission "" "abc" "chaos"');
     const cont = JSON.parse(readFileSync(continuePath(dir, 'test-mission'), 'utf8'));
-    expect(cont.wave).toBe(0); // non-numeric → 0
+    expect(cont.flow).toBe(0); // non-numeric → 0
     expect(cont.mode).toBe('guided'); // bad enum → guided
   } finally {
     rmSync(dir, { recursive: true, force: true });
