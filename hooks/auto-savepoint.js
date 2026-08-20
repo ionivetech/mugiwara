@@ -84,7 +84,7 @@ function activeMission() {
         const updated = Date.parse(s.updated_at ?? "") || 0;
         if (best && updated <= best.updated)
           continue;
-        const wave = String(s.wave ?? "").replace(/\D/g, "") || "1";
+        const wave = String(s.flow ?? s.wave ?? "").replace(/\D/g, "") || "1";
         const mode = ["guided", "semi", "auto"].includes(s.mode) ? s.mode : "guided";
         best = { mission: e.name, member, wave, mode, updated };
       } catch {}

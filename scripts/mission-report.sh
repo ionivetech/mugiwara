@@ -75,7 +75,7 @@ const laneReason = val(s, 'lane_reason', 'n/a');
 const mode = val(s, 'mode', 'n/a');
 const actor = val(s, 'actor', 'n/a');
 const branch = val(s, 'branch', 'n/a');
-const wave = val(s, 'wave', 'n/a');
+const wave = val(s, 'flow', val(s, 'wave', 'n/a'));
 const filesTouched = val(s, 'files_touched', 0);
 const locDelta = val(s, 'loc_delta', 0);
 const locChurn = val(s, 'loc_churn', 0);
@@ -232,7 +232,7 @@ report += "| Lane | " + lane + (laneRose ? " ⬆ ROSE" : "") + " |\n";
 report += "| Lane peak | " + lanePeak + " |\n";
 report += "| Lane reason | " + laneReason + " |\n";
 report += "| Mode | " + mode + " |\n";
-report += "| Wave | " + wave + " |\n";
+report += "| Flow | " + wave + " |\n";
 report += "| Actor | " + actor + " |\n\n";
 
 report += "## Token budget\n\n| Field | Value |\n|-------|-------|\n";
@@ -253,7 +253,7 @@ report += filesTouched + " files, +" + locDelta + " LOC (" + locChurn + " churn)
 if (sensitive.length) report += "\nSensitive paths: " + sensitive.join(", ");
 report += "\n\n";
 
-report += "## Waves\n\n| Wave | Artifact | Verdict |\n|------|----------|---------|";
+report += "## Flow stages\n\n| Flow stage | Artifact | Verdict |\n|------|----------|---------|";
 if (waveRows.length) {
   for (const r of waveRows) report += "\n| " + r.label + " | `" + r.file + "` | " + r.verdict + " |";
 } else {
@@ -278,7 +278,7 @@ report += "Blocker ledger rows: " + issueRows.length + (issueRows.length ? "\n" 
 report += "\n\n";
 
 report += "## State\n\n| Field | Value |\n|-------|-------|\n";
-report += "| Wave | " + wave + " |\n";
+report += "| Flow | " + wave + " |\n";
 report += "| Tasks | " + (tasks.done || 0) + "/" + (tasks.total || 0) + " done |\n";
 report += "| Blockers open | " + blockers + " |\n";
 report += "| Heal cycles | " + healCycle + " |\n";

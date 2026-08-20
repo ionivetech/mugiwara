@@ -47,7 +47,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(typeof state.lane_reason).toBe('string');
     expect(state.lane_prev).toBeNull();
     expect(state.lane_rose).toBe(false);
-    expect(state.wave).toBe(3);
+    expect(state.flow).toBe(3);
     expect(state.mode).toBe('guided');
     expect(typeof state.files_touched).toBe('number');
     expect(state.files_touched).toBeGreaterThanOrEqual(0);
@@ -111,7 +111,7 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
 
     const state = JSON.parse(readFileSync(statePath(dir, 'test'), 'utf8'));
     expect(state.mission).toBeTruthy();
-    expect(state.wave).toBeGreaterThanOrEqual(1);
+    expect(state.flow).toBeGreaterThanOrEqual(1);
     expect(state.mode).toBe('guided');
     expect(typeof state.files_touched).toBe('number');
     expect(typeof state.loc_delta).toBe('number');
@@ -285,7 +285,7 @@ test('savepoint team member writes state to state/<mission>/<member>.json', { ti
     const state = JSON.parse(readFileSync(stateFile, 'utf8'));
     expect(state.mission).toBe('payment-gateway');
     expect(state.member).toBe('patty');
-    expect(state.wave).toBe(1);
+    expect(state.flow).toBe(1);
     expect(state.mode).toBe('guided');
     // actor auto-resolves from git identity, never a positional
     expect(state.actor).toBe('Test <test@test.com>');
@@ -306,7 +306,7 @@ test('D10: savepoint writes continue JSON position block at wave boundary', { ti
     runSavepoint(dir, 'test-mission "" 3 guided');
     const cont2 = JSON.parse(readFileSync(continuePath(dir, 'test-mission'), 'utf8'));
     expect(cont2.mission).toBe('test-mission');
-    expect(cont2.wave).toBe(3);
+    expect(cont2.flow).toBe(3);
     expect(cont2.mode).toBe('guided');
     expect(cont2.lane).toBeTruthy();
     // next_session_prompt is crew-written, preserved not invented
@@ -315,7 +315,7 @@ test('D10: savepoint writes continue JSON position block at wave boundary', { ti
     // next wave boundary rewrites position fields
     runSavepoint(dir, 'test-mission "" 4 guided');
     const cont3 = JSON.parse(readFileSync(continuePath(dir, 'test-mission'), 'utf8'));
-    expect(cont3.wave).toBe(4);
+    expect(cont3.flow).toBe(4);
     expect(cont3.next_session_prompt).toBe('Run T1-T5 then waves 4-9');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -362,7 +362,7 @@ test('D10: continue writer sanitizes wave/mode fields (N2)', { timeout: 20000 },
     // non-numeric wave + bad mode via env — must not corrupt JSON
     runSavepoint(dir, 'test-mission "" "abc" "chaos"');
     const cont = JSON.parse(readFileSync(continuePath(dir, 'test-mission'), 'utf8'));
-    expect(cont.wave).toBe(0); // non-numeric → 0
+    expect(cont.flow).toBe(0); // non-numeric → 0
     expect(cont.mode).toBe('guided'); // bad enum → guided
   } finally {
     rmSync(dir, { recursive: true, force: true });

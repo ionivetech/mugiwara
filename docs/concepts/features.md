@@ -561,7 +561,7 @@ runs the identical crew with identical behavior.
 
 **What.** A small Node CLI for lifecycle management: install wizard, update,
 uninstall via manifest, list + health check, reset with protection, plus the
-mission subcommands `continue`, `status`, `run`, `savepoint`, and `initiative`.
+mission subcommands `start`, `continue`, `status`, `run`, `savepoint`, and `initiative`.
 
 **How to use.**
 
@@ -571,6 +571,7 @@ mugiwara update --target <id> --yes    # overwrite to latest
 mugiwara list --check                  # health check, missing files
 mugiwara uninstall                     # remove installed files
 mugiwara reset --keep-logs             # wipe state, keep lessons
+mugiwara start <mission> [member]      # begin a mission from its plan (solo, or team sub-mission by git actor)
 mugiwara continue                      # list in-flight missions (every mode)
 mugiwara continue <mission> [member]   # exact resume point
 mugiwara status                        # computed state: flow stage, tasks, lane, blockers, budget

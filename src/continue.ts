@@ -22,7 +22,7 @@ export type ContinueEntry = {
   member: string | null;
   actor: string;
   branch: string;
-  wave: number;
+  flow: number;
   mode: string;
   tasks_done: number;
   tasks_total: number;
@@ -117,7 +117,7 @@ export function readContinue(projectDir: string): ContinueEntry[] {
     member,
     actor: text(r.actor),
     branch: text(r.branch),
-    wave: num(r.wave),
+    flow: num(r.flow ?? r.wave),
     mode: text(r.mode) || 'guided',
     tasks_done: num(r.tasks_done),
     tasks_total: num(r.tasks_total),
@@ -136,7 +136,7 @@ export function readState(projectDir: string): StateEntry[] {
       member,
       actor: text(r.actor),
       branch: text(r.branch),
-      wave: num(r.wave),
+      flow: num(r.flow ?? r.wave),
       mode: text(r.mode) || 'guided',
       tasks_done: num(tasks.done),
       tasks_total: num(tasks.total),
@@ -223,12 +223,12 @@ export function formatTable(entries: ContinueEntry[]): string {
   const rows = entries.map((e) => [
     e.mission,
     e.member ?? '—',
-    String(e.wave),
+    String(e.flow),
     `${e.tasks_done}/${e.tasks_total}`,
     e.lane,
     e.mode,
   ]);
-  const head = ['MISSION', 'MEMBER', 'WAVE', 'TASKS', 'LANE', 'MODE'];
+  const head = ['MISSION', 'MEMBER', 'FLOW', 'TASKS', 'LANE', 'MODE'];
   const widths = head.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
   const line = (cells: string[]): string =>
     '  ' + cells.map((c, i) => pad(c, widths[i])).join('  ').trimEnd();
@@ -239,5 +239,5 @@ export function formatTable(entries: ContinueEntry[]): string {
 export function formatResume(e: ContinueEntry): string {
   const scope = e.member ? ` [${e.member}]` : '';
   const next = e.next_session_prompt || '(no next_session_prompt recorded)';
-  return `Resumed: ${e.mission}${scope}, Flow ${e.wave}, ${e.tasks_done}/${e.tasks_total} tasks — next_action: ${e.next_action} — run: ${next}`;
+  return `Resumed: ${e.mission}${scope}, Flow ${e.flow}, ${e.tasks_done}/${e.tasks_total} tasks — next_action: ${e.next_action} — run: ${next}`;
 }

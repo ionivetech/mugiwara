@@ -470,7 +470,7 @@ test('D10: session-start auto-resumes single in-flight mission for actor', { tim
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
     const json = JSON.parse(out) as { additionalContext: string };
     expect(json.additionalContext).toContain('AUTO-RESUME: mission "test-mission"');
-    expect(json.additionalContext).toContain('wave 3, 7/12 tasks');
+    expect(json.additionalContext).toContain('flow 3, 7/12 tasks');
     expect(json.additionalContext).toContain('Never restart the mission');
     // F1: free-text fields are never interpolated into the prompt
     expect(json.additionalContext).not.toContain('Run T1-T5');

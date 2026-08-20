@@ -37,6 +37,7 @@ survives the merge.
 
 | Command | Behavior |
 |---------|----------|
+| `mugiwara start <mission> [member]` | **Begin** a mission from its plan. Solo → savepoint (member-less). Team → resolve your sub-mission by git actor (or pass member), savepoint, and mark it `[~]` in-progress in the plan. |
 | `/mugiwara continue` | **List** every in-flight mission for your git actor. Never auto-starts. |
 | `/mugiwara continue <mission>` | Solo plan → resume `continue/<mission>/state.json`. Team plan → **list members** and stop (member required). |
 | `/mugiwara continue <mission> <member>` | Resume exactly that member's work. |
@@ -45,7 +46,7 @@ survives the merge.
 | `mugiwara initiative conflict-check <plan>` | Shared touched-files across in-progress sub-missions. |
 | `mugiwara initiative set-status <plan> --id <id> --status <x>` | Update a sub-mission's status in the plan. |
 
-> The `initiative` subcommand ships with the installer. In an installed project, `mugiwara initiative <status|conflict-check|set-status> <plan>` works directly; the plan doc is the source of truth either way.
+> The `initiative` subcommand ships with the installer. In an installed project, `mugiwara initiative <status|conflict-check|set-status> <plan>` works directly; the plan doc is the source of truth either way. `mugiwara start` writes the savepoint AND marks the sub-mission in-progress in the plan — so the plan stays the single source of truth, and `initiative` is the monitoring layer that reads it.
 
 
 ## Auto mode

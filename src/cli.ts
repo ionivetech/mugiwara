@@ -35,6 +35,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'run': return runCmd(flags, _);
     case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
     case 'initiative': return initiativeCmd(flags, _);
+    case 'start': return startCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -290,7 +291,7 @@ function statusCmd(flags: Args['flags']): void {
   for (const s of rows) {
     const scope = s.member ? ` [${s.member}]` : '';
     console.log(`${s.mission}${scope}`);
-    console.log(`  flow ${s.wave} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
+    console.log(`  flow ${s.flow} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
     console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALT' : ''} · files touched ${s.files_touched}`);
     if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})${s.delegate_due ? ' · delegate due' : ''}`);
     console.log(`  branch ${s.branch} · updated ${s.updated_at}`);
@@ -331,6 +332,69 @@ function initiativeCmd(flags: Args['flags'], positionals: string[]): void {
   if (r.status) process.exit(r.status);
 }
 
+/** `mugiwara start <mission> [member]` — begin a mission from its plan. */
+function startCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const mission = positionals[1];
+  if (!mission) {
+    console.error('usage: mugiwara start <mission> [member]');
+    process.exit(1);
+  }
+  // find the plan doc: plans/<mission>.md or plans/YYYY-MM-DD-<mission>.md
+  const plansDir = join(projectDir, '.mugiwara', 'plans');
+  let planFile = '';
+  if (existsSync(plansDir)) {
+    const bare = join(plansDir, `${mission}.md`);
+    if (existsSync(bare)) planFile = bare;
+    else {
+      const dated = readdirSync(plansDir).filter((f) => f.endsWith(`-${mission}.md`)).sort().pop();
+      if (dated) planFile = join(plansDir, dated);
+    }
+  }
+  if (!planFile) {
+    console.error(`mugiwara start: no plan found for "${mission}" in ${plansDir}`);
+    process.exit(1);
+  }
+  const plan = readFileSync(planFile, 'utf8');
+
+  // team plan = has a ## Sub-missions table; solo = none.
+  const subMatch = plan.match(/##\s*Sub-missions/i);
+  let member = positionals[2] ?? '';
+  if (subMatch && !member) {
+    // team: find the row whose Assignee matches this git actor
+    const actor = gitActor(projectDir);
+    const name = actor.split('<')[0].trim();
+    const rowRe = /^\|\s*([\w.-]+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
+    let m: RegExpExecArray | null;
+    let found = '';
+    while ((m = rowRe.exec(plan))) {
+      const assignee = m[3].trim();
+      if (assignee === name || assignee === actor) { found = m[1].trim(); break; }
+    }
+    if (!found) {
+      console.error(`mugiwara start: no sub-mission assigned to "${name}" in ${planFile}. Pass a member explicitly: mugiwara start ${mission} <member>`);
+      process.exit(1);
+    }
+    member = found;
+  }
+
+  // write the savepoint: mission [member] flow=0 mode=auto lane=full (start)
+  const code = runScript('savepoint.sh', [mission, member, '0', 'auto', 'full'], projectDir);
+  if (code !== 0) process.exit(code);
+
+  // team plan: mark the sub-mission in-progress in the plan (source of truth)
+  if (subMatch && member) {
+    const init = join(import.meta.dirname, '..', 'scripts', 'initiative.ts');
+    const bun = process.platform === 'win32' ? 'bun.exe' : 'bun';
+    const r = spawnSync(bun, [init, 'set-status', planFile, '--id', member, '--status', 'in-progress'], {
+      cwd: projectDir, stdio: 'inherit', env: process.env,
+    });
+    if (r.status) process.exit(r.status);
+  }
+
+  console.log(`mugiwara start: ${mission}${member ? ` [${member}]` : ''} begun at Flow 0. Resume anytime with: mugiwara continue ${mission}${member ? ` ${member}` : ''}`);
+}
+
 function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
@@ -353,6 +417,8 @@ Usage:
                          shorthand for: mugiwara run savepoint.sh ...
   mugiwara initiative <status|conflict-check|set-status> <plan> [args]
                          team sub-mission coordination (status / conflict-check / set-status)
+  mugiwara start <mission> [member]
+                         begin a mission from its plan (solo, or team sub-mission by git actor)
   mugiwara --help        this help
   mugiwara --version     print version
 

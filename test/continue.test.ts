@@ -28,7 +28,7 @@ const entry = (mission: string, over: Rec = {}): Rec => ({
   mission,
   actor: 'Zoro <zoro@example.com>',
   branch: 'main',
-  wave: 3,
+  flow: 3,
   mode: 'auto',
   tasks_done: 2,
   tasks_total: 5,
@@ -194,7 +194,7 @@ describe('resolveContinue — the three command forms', () => {
 describe('formatResume — the single-line contract mugiwara-resume depends on', () => {
   test('solo entry: no member scope, all five fields present on one line', () => {
     const line = formatResume({
-      mission: 'seamless', member: null, actor: 'a', branch: 'main', wave: 3, mode: 'auto',
+      mission: 'seamless', member: null, actor: 'a', branch: 'main', flow: 3, mode: 'auto',
       tasks_done: 2, tasks_total: 5, lane: 'standard',
       next_action: 'run T-4', next_session_prompt: 'mugiwara continue seamless', updated_at: '',
     });
@@ -206,7 +206,7 @@ describe('formatResume — the single-line contract mugiwara-resume depends on',
 
   test('team entry carries [member] and a stated fallback when no prompt was recorded', () => {
     const line = formatResume({
-      mission: 'seamless', member: 'zoro', actor: 'a', branch: 'main', wave: 1, mode: 'semi',
+      mission: 'seamless', member: 'zoro', actor: 'a', branch: 'main', flow: 1, mode: 'semi',
       tasks_done: 0, tasks_total: 3, lane: 'lean', next_action: 'start', next_session_prompt: '', updated_at: '',
     });
     expect(line).toBe('Resumed: seamless [zoro], Flow 1, 0/3 tasks — next_action: start — run: (no next_session_prompt recorded)');
@@ -229,7 +229,7 @@ describe('readState — lane / heal / delegate fields', () => {
     const dir = fixture([{
       root: 'state', mission: 'st-f', file: 'state',
       body: {
-        mission: 'st-f', actor: 'a', branch: 'b', wave: 4,
+        mission: 'st-f', actor: 'a', branch: 'b', flow: 4,
         lane: 'lean', lane_reason: 'tokens',
         lane_rose: true, lane_prev: 'standard', lane_peak: 'full',
         blockers_open: 2, heal_cycle: 1, heal_max_cycles: 5, heal_halt: true,
@@ -329,8 +329,8 @@ describe('resolveContinue — remaining branches', () => {
 describe('formatTable — column alignment across rows', () => {
   test('member column pads to the widest mission so em dashes align across rows', () => {
     const dir = fixture([
-      { mission: 'long-mission-name', file: 'state', body: entry('long-mission-name', { wave: 10 }) },
-      { mission: 'm', file: 'state', body: entry('m', { wave: 1 }) },
+      { mission: 'long-mission-name', file: 'state', body: entry('long-mission-name', { flow: 10 }) },
+      { mission: 'm', file: 'state', body: entry('m', { flow: 1 }) },
     ]);
     try {
       const lines = formatTable(readContinue(dir)).split('\n');

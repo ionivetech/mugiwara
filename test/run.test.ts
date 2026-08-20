@@ -107,7 +107,7 @@ describe('a real savepoint.sh run through runScript', () => {
       const state = JSON.parse(readFileSync(statePath, 'utf8'));
       expect(state.mission).toBe('run-fixture');
       expect(state.member).toBeNull();
-      expect(state.wave).toBe(3);
+      expect(state.flow).toBe(3);
       expect(state.mode).toBe('auto');
       expect(typeof state.base_sha).toBe('string');
       expect(state.base_sha).not.toBe('');
