@@ -30,8 +30,32 @@ export function buildRollback(input: RollbackInput, commitsNewestFirst: string[]
     'set -euo pipefail',
     '',
   ];
-  if (!commitsNewestFirst.length) {
+  if (!commitsNewestFirst.length && !filesTouched.length) {
     lines.push('# No commits between base and HEAD on this branch — nothing to revert.', '');
+    return lines.join('\n');
+  }
+  if (!commitsNewestFirst.length) {
+    // Squash-merge workflows: the branch's changes reached the base ref as one
+    // squashed commit, so `rev-list base..branch` can come back empty while
+    // `git diff base branch` is not. "Nothing to revert" would be a lie — the
+    // changes are live. Emit loud, human-executable guidance and exit 1 so a
+    // careless run fails instead of silently doing nothing.
+    lines.push(
+      '# UNRESOLVED: squash-merged state detected.',
+      `# git rev-list ${input.baseSha}..${input.branch} is empty, but the diff`,
+      `# ${input.baseSha}..${input.branch} touches ${filesTouched.length} file(s):`,
+      '# the mission\'s changes were collapsed into commit(s) already on the base',
+      '# ref. No per-commit revert list can be derived automatically.',
+      '# Locate the squash commit, review it, then revert it:',
+      `#   git log --oneline ${input.baseSha}..HEAD --grep="${input.mission}"`,
+      '#   git revert <squash-commit>',
+      '# Files carrying the squashed changes (verify each after reverting):',
+      ...filesTouched.map((f) => `#   ${f}`),
+      '',
+      'echo "ROLLBACK INCOMPLETE: squash-merged state — locate and revert the squash commit manually" >&2',
+      'exit 1',
+      '',
+    );
     return lines.join('\n');
   }
   lines.push(

@@ -119,6 +119,21 @@ describe('rollback map', () => {
     const body = buildRollback({ mission: 'docs', branch: 'b', baseSha: 'x' }, [], []);
     expect(body).toContain('No commits between base and HEAD');
   });
+
+  it('squash-merged state (empty range, non-empty diff) emits unresolved-squash guidance, not "nothing to revert"', () => {
+    const body = buildRollback(
+      { mission: 'invite', branch: 'feat/invite', baseSha: 'abc1234' },
+      [],
+      ['src/a.ts', 'src/b.ts'],
+    );
+    expect(body).not.toContain('nothing to revert');
+    expect(body).toContain('UNRESOLVED');
+    expect(body).toContain('squash');
+    expect(body).toContain(`--grep="invite"`); // search key: mission name
+    expect(body).toContain('git revert <squash-commit>');
+    expect(body).toContain('#   src/a.ts');
+    expect(body).toContain('exit 1'); // hard-fail, never fake success
+  });
 });
 
 describe('provenance', () => {
