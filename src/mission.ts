@@ -1,6 +1,6 @@
 // src/mission.ts
 // Mission-state helpers for the mugiwara CLI.
-import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync, writeFileSync, renameSync } from 'node:fs';
+import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSync, renameSync, openSync, writeSync, closeSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { checkTrail, formatIssues } from './integrity.ts';
@@ -126,17 +126,64 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   const files = readdirSync(dir);
   const state = primaryState(dir, files);
+  // unique models across every stage's state file (A4) — collected HERE,
+  // before the fold deletes the .json files; team members and solo
+  // re-savepoints each record the model that ran their stage.
+  const stageModels = [...new Set(files.filter(isStateFile).map((f) => {
+    try {
+      const s = JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>;
+      return typeof s.model === 'string' ? s.model : '';
+    } catch { return ''; }
+  }).filter(Boolean))];
 
-  // Context budget: visible footprint number; over-budget fails
-  // when a ceiling is configured. Unset budget = recorded only.
-  let footprintLine = '';
+  // Cost surface — always readable section for the report (T8)
+  let costSection = '';
   if (!dryRun && state) {
     const chars = measureContextChars(dir);
     const budget = readBudgetConfig(projectDir);
-    footprintLine = formatFootprint(chars, budget);
+    const footprintLine = formatFootprint(chars, budget);
     if (budget && chars > budget) {
       throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
     }
+    const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
+    const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
+    const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
+    // lane budgets for readable delta (from lane-base.sh, mirrored here for display only)
+    const laneBudget = lane === 'lean' ? 12000 : lane === 'standard' ? 25000 : lane === 'full' ? 50000 : lane === 'spike' ? 3000 : 0;
+    const effBudget = budget || laneBudget;
+    const pct = effBudget ? Math.round((est / effBudget) * 100) : 0;
+    const delta = effBudget ? (est <= effBudget ? `${(effBudget - est).toLocaleString()} under` : `${(est - effBudget).toLocaleString()} over`) : 'no budget configured';
+    const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator';
+    // provider-reported rollup when any stage reported
+    let reportedTotal = 0;
+    let hasReported = false;
+    for (const f of files.filter(isStateFile)) {
+      try {
+        const s = JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>;
+        if (s.tokens_source === 'reported' && typeof s.tokens_est === 'number') {
+          reportedTotal += s.tokens_est;
+          hasReported = true;
+        }
+      } catch { /* corrupt — skip */ }
+    }
+    if (!hasReported && src === 'reported' && est > 0) {
+      reportedTotal = est;
+      hasReported = true;
+    }
+    costSection = [
+      '## Cost',
+      '',
+      '| Metric | Value |',
+      '|--------|-------|',
+      `| **Tokens used** | ${est.toLocaleString()} (${srcLabel}) |`,
+      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? Math.round(effBudget * 1.5).toLocaleString() : '—'} · stop ${effBudget ? (effBudget * 3).toLocaleString() : '—'}) |`,
+      `| **Budget status** | ${effBudget ? `${pct}% of budget · ${delta} · ${est >= effBudget * 3 ? 'STOP' : est >= effBudget * 1.5 ? 'WARN' : 'OK'}` : 'no lane budget'} |`,
+      `| **Context footprint** | ${chars.toLocaleString()} chars${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
+    ].join('\n');
+    if (hasReported) {
+      costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;
+    }
+    costSection += '\n';
   }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).
@@ -181,7 +228,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
             sensitive_paths: Array.isArray(state.sensitive_paths) ? (state.sensitive_paths as string[]) : [],
           } as never), mission)
         : '';
-      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (footprintLine ? `\n${footprintLine}\n` : '') + '\n');
+      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (costSection ? `\n${costSection}\n` : '') + '\n');
       renameSync(tmp, reportPath);
     }
     for (const f of fold) {
@@ -216,6 +263,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
           tasks_done: Number(state.tasks_done) || 0,
           tasks_total: Number(state.tasks_total) || 0,
           evidence: Array.isArray(state.evidence) ? (state.evidence as string[]) : [],
+          models: stageModels,
         });
         kept.push(join('missions', mission, 'provenance.md'));
       } catch { /* provenance is additive; archive proceeds */ }
@@ -228,8 +276,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   if (files.includes('handoff.md')) kept.push(join('missions', mission, 'handoff.md'));
   kept.push(join('missions', mission, 'report.md'));
 
-  // summary index: append one line per archived mission (retention aid),
-  // idempotently — never duplicate a line for an already-indexed mission.
+  // summary index: append one line per archived mission (retention aid).
+  // Atomic-append contract (finding A3): the line is written as ONE write()
+  // on an O_APPEND fd — POSIX positions O_APPEND writes atomically, so
+  // concurrent archivers never overwrite each other's bytes, and a small
+  // (<4k) single write does not interleave in practice. The pre-read
+  // idempotency check below still has a benign race window under true
+  // concurrency: two racers may both see the line missing and both append.
+  // That is a duplicate line, not a lost one — duplicates are the preferred
+  // failure mode; any future consumer of index.md must dedupe lines on read.
+  // Header creation stays racy-but-safe: two first-appends may each prepend
+  // "# Mission index\n\n", and header-only-plus-lines remains valid markdown
+  // either way.
   let index: string | undefined;
   const indexFile = join(root, 'index.md');
   const line = `- ${mission} — ${new Date().toISOString().slice(0, 10)}\n`;
@@ -237,7 +295,12 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const existing = existsSync(indexFile) ? readFileSync(indexFile, 'utf8') : '';
     if (!existing.split(/\r?\n/).some(l => l.startsWith(`- ${mission} —`))) {
       const header = existing ? '' : '# Mission index\n\n';
-      appendFileSync(indexFile, header + line);
+      const fd = openSync(indexFile, 'a');
+      try {
+        writeSync(fd, header + line);
+      } finally {
+        closeSync(fd);
+      }
     }
     index = 'index.md';
   }

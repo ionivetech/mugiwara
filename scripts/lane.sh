@@ -19,17 +19,46 @@ if ! git rev-parse "$BASE" >/dev/null 2>&1; then
   [ -n "$ALT" ] && BASE="$ALT" || BASE="HEAD~1"
 fi
 
+# lane_scope_glob (T5): monorepo scoping — when set, count only files matching the glob
+LANE_SCOPE_GLOB=""
+if [ -f .mugiwara/config ]; then
+  CFG_SCOPE=$(grep -E '^lane_scope_glob=' .mugiwara/config 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
+  [ -n "$CFG_SCOPE" ] && LANE_SCOPE_GLOB="$CFG_SCOPE"
+fi
+
 # union of committed + staged + unstaged + untracked (F) — see patterns.sh
 CHANGED=$(changed_files "$BASE")
-FILE_COUNT=0
-[ -n "$CHANGED" ] && FILE_COUNT=$(echo "$CHANGED" | wc -l | tr -d ' ')
-read -r ADDED_INS ADDED_DEL <<EOF
-$(changed_loc "$BASE")
-EOF
-
+# sensitive-path escalation always evaluates the unfiltered set (safety never shrinks)
 SENSITIVE=$(echo "$CHANGED" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 HAS_SENSITIVE=0
 [ -n "$SENSITIVE" ] && HAS_SENSITIVE=1
+# scoped count for lane sizing (T5)
+SCOPED="$CHANGED"
+if [ -n "$LANE_SCOPE_GLOB" ] && [ -n "$CHANGED" ]; then
+  shopt -s extglob globstar 2>/dev/null || true
+  SCOPED=""
+  while IFS= read -r _f; do
+    [ -z "$_f" ] && continue
+    # shellcheck disable=SC2053
+    if [[ "$_f" == $LANE_SCOPE_GLOB ]]; then
+      SCOPED="${SCOPED}${SCOPED:+
+}$_f"
+    fi
+  done <<< "$CHANGED"
+fi
+FILE_COUNT=0
+[ -n "$SCOPED" ] && FILE_COUNT=$(echo "$SCOPED" | wc -l | tr -d ' ')
+# LOC for the 1-file rule also scopes to the glob (otherwise a single in-scope
+# file with <20 LOC could be inflated by out-of-scope churn)
+if [ -n "$LANE_SCOPE_GLOB" ]; then
+  read -r ADDED_INS ADDED_DEL <<EOF
+$( { echo "$SCOPED" | while IFS= read -r _sf; do [ -n "$_sf" ] && git diff --numstat "$BASE"..HEAD -- "$_sf" 2>/dev/null; git diff --numstat HEAD -- "$_sf" 2>/dev/null; done; echo "$SCOPED" | while IFS= read -r _uf; do [ -z "$_uf" ] && continue; if git ls-files --others --exclude-standard -- "$_uf" 2>/dev/null | grep -qx "$_uf"; then printf '%s\t0\t%s\n' "$(wc -l < "$_uf" 2>/dev/null | tr -d ' ' || echo 0)" "$_uf"; fi; done; } | awk '{ if ($1 ~ /^[0-9]+$/) i+=$1; if ($2 ~ /^[0-9]+$/) d+=$2 } END { print (i+0)" "(d+0) }')
+EOF
+else
+  read -r ADDED_INS ADDED_DEL <<EOF
+$(changed_loc "$BASE")
+EOF
+fi
 
 # lane logic
 LANE="direct"
@@ -71,8 +100,9 @@ fi
 # code surface actually touched. Sensitive-path escalation above still wins.
 # Product surface for mugiwara: content/, src/, scripts/, test/, hooks/,
 # .opencode/, .claude/, evals/ — everything else is docs/config/asset.
-if [ "$LANE" = "full" ] && [ "$HAS_SENSITIVE" -eq 0 ] && [ -n "$CHANGED" ]; then
-  CODE_COUNT=$(echo "$CHANGED" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+# With lane_scope_glob the check applies to the scoped set — sensitive still wins unfiltered.
+if [ "$LANE" = "full" ] && [ "$HAS_SENSITIVE" -eq 0 ] && [ -n "$SCOPED" ]; then
+  CODE_COUNT=$(echo "$SCOPED" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
     LANE="standard"

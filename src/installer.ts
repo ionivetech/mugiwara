@@ -185,6 +185,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
         'delegate_threshold=60',
         'heal_max_cycles=3',
         'verbosity=normal',
+        '# context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)',
       ].join('\n') + '\n';
       if (!dryRun) { mkdirSync(dirname(configPath), { recursive: true }); writeFileSync(configPath, body); }
       result.written.push(configPath);

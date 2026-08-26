@@ -10,6 +10,18 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
+# optional provider-reported tokens file (T4): --tokens-file <path> JSON {input_tokens, output_tokens}
+TOKENS_FILE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tokens-file) TOKENS_FILE="${2:-}"; [ -n "$TOKENS_FILE" ] || die "--tokens-file requires a path"; shift 2 ;;
+    --tokens-file=*) TOKENS_FILE="${1#*=}"; shift ;;
+    --) shift; break ;;
+    -*) die "unknown flag \"$1\"" ;;
+    *) break ;;
+  esac
+done
+
 # shared path patterns — single source of truth (D3)
 # shellcheck source=scripts/lib/patterns.sh
 source "$(dirname "$0")/lib/patterns.sh"
@@ -99,6 +111,12 @@ esac
 [ "$DELEGATE_THRESHOLD" -gt 100 ] 2>/dev/null && DELEGATE_THRESHOLD=100
 ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-${USERNAME:-}}}}}"
 BRANCH="$(git branch --show-current 2>/dev/null || echo 'unknown')"
+# Per-stage model attribution (A4): record which model produced THIS stage.
+# MUGIWARA_MODEL wins over ANTHROPIC_MODEL; 'unknown' beats a lie. Closure
+# renders the unique set across stage files so mid-mission switches stay
+# visible in provenance instead of every line attributing to the last value.
+MODEL="${MUGIWARA_MODEL:-${ANTHROPIC_MODEL:-}}"
+[ -n "$MODEL" ] || MODEL="unknown"
 
 # treat the legacy empty-actor placeholder '""' as "no member" (solo). The old
 # interface used '""' for the actor slot; the new (mission, member) interface
@@ -155,20 +173,45 @@ fi
 BASE_SHA=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || git merge-base HEAD "$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "unknown")
 HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
+# lane_scope_glob (T5): monorepo scoping — count only files matching the glob
+LANE_SCOPE_GLOB=""
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  _cfg_scope=$(grep -E '^lane_scope_glob=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
+  [ -n "$_cfg_scope" ] && LANE_SCOPE_GLOB="$_cfg_scope"
+fi
 # union of committed + staged + unstaged + untracked (F) — see patterns.sh
 CHANGED_FILES=$(changed_files "$BASE_SHA")
-FILES_TOUCHED=$( [ -n "$CHANGED_FILES" ] && echo "$CHANGED_FILES" | wc -l | tr -d ' ' || echo 0 )
-
-read -r LOC_INS LOC_DEL <<EOF
+# sensitive-path escalation always uses unfiltered set (safety never shrinks, T5)
+SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
+# scoped counting (T5)
+SCOPED_FILES="$CHANGED_FILES"
+if [ -n "$LANE_SCOPE_GLOB" ] && [ -n "$CHANGED_FILES" ]; then
+  shopt -s extglob globstar 2>/dev/null || true
+  SCOPED_FILES=""
+  while IFS= read -r _sf; do
+    [ -z "$_sf" ] && continue
+    # shellcheck disable=SC2053
+    if [[ "$_sf" == $LANE_SCOPE_GLOB ]]; then
+      SCOPED_FILES="${SCOPED_FILES}${SCOPED_FILES:+
+}$_sf"
+    fi
+  done <<< "$CHANGED_FILES"
+fi
+FILES_TOUCHED=$( [ -n "$SCOPED_FILES" ] && echo "$SCOPED_FILES" | wc -l | tr -d ' ' || echo 0 )
+if [ -n "$LANE_SCOPE_GLOB" ]; then
+  read -r LOC_INS LOC_DEL <<EOF
+$( { echo "$SCOPED_FILES" | while IFS= read -r _lf; do [ -n "$_lf" ] && git diff --numstat "$BASE_SHA"..HEAD -- "$_lf" 2>/dev/null; git diff --numstat HEAD -- "$_lf" 2>/dev/null; done; echo "$SCOPED_FILES" | while IFS= read -r _uf; do [ -z "$_uf" ] && continue; if git ls-files --others --exclude-standard -- "$_uf" 2>/dev/null | grep -qx "$_uf"; then printf '%s\t0\t%s\n' "$(wc -l < "$_uf" 2>/dev/null | tr -d ' ' || echo 0)" "$_uf"; fi; done; } | awk '{ if ($1 ~ /^[0-9]+$/) i+=$1; if ($2 ~ /^[0-9]+$/) d+=$2 } END { print (i+0)" "(d+0) }')
+EOF
+else
+  read -r LOC_INS LOC_DEL <<EOF
 $(changed_loc "$BASE_SHA")
 EOF
+fi
 LOC_INS=$(( ${LOC_INS:-0} + 0 ))
 LOC_DEL=$(( ${LOC_DEL:-0} + 0 ))
 LOC_DELTA=$(( LOC_INS - LOC_DEL ))
 # churn is insertion+deletion — refactors and deletions are work too (D4)
 LOC_CHURN=$(( LOC_INS + LOC_DEL ))
-
-SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 
 LANE="direct"
 LANE_REASON=""
@@ -203,9 +246,10 @@ fi
 
 # path-weighted sizing (mirrors lane.sh): docs-only changes outside the product
 # surface never escalate to full from file count alone; sensitive-path
-# escalation above still wins.
-if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ]; then
-  CODE_COUNT=$(echo "$CHANGED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+# escalation above still wins. With lane_scope_glob the check applies to the
+# scoped set — but sensitive wins unfiltered above, so safety never shrinks.
+if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$SCOPED_FILES" ]; then
+  CODE_COUNT=$(echo "$SCOPED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
     LANE="standard"
@@ -353,7 +397,21 @@ fi
 # real usage. Monotonic beats precise — LANE_BASE stands in for the skills
 # loaded this lane (measured from content, validated by scripts/lane-base.ts);
 # loc_churn and written-artifact words scale with growth.
+# auto-detect harness for token reporting (Tier-1: Claude Code / opencode)
+# If --tokens-file not given, try env/file fallbacks so estimator is last resort.
+if [ -z "$TOKENS_FILE" ]; then
+  for _cand in "${MUGIWARA_TOKENS_FILE:-}" "${CLAUDE_TOKENS_FILE:-}" "${OPENCODE_TOKENS_FILE:-}" "/tmp/mugiwara-tokens.json" "$HOME/.cache/mugiwara/tokens.json" ".mugiwara/tokens.json"; do
+    [ -n "$_cand" ] && [ -f "$_cand" ] && TOKENS_FILE="$_cand" && break
+  done
+fi
+# detect harness (for logging / future tier checks)
+HARNESS="unknown"
+if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ] || echo "${ANTHROPIC_MODEL:-}" | grep -qi claude 2>/dev/null; then HARNESS="claude";
+elif [ -n "${OPENCODE:-}" ] || [ -f ".opencode/config.json" ] || [ -n "${OPENCODE_TOKENS_FILE:-}" ]; then HARNESS="opencode";
+elif [ -n "${CURSOR:-}" ] || [ -n "${VSCODE_GIT_ASKPASS_NODE:-}" ]; then HARNESS="cursor/vscode"; fi
+
 # MUGIWARA_TOKENS overrides as the reported value.
+# --tokens-file (T4) is the first-class provider-reported path: JSON {input_tokens, output_tokens}
 LANE_BASE=0
 case "$LANE" in
   lean) LANE_BASE=$LANE_BASE_lean ;;
@@ -363,10 +421,15 @@ case "$LANE" in
 esac
 DOC_WORDS=$(cat "$MISSION_DIR"/"$FLOWDIR"/*.md "$MISSION_DIR"/plan.md "$MISSION_DIR"/spec.md "$MISSION_DIR"/decisions.md 2>/dev/null | wc -w | tr -d ' ')
 LOC_TOKENS=$(( LOC_CHURN * 12 ))
-TOKENS_SOURCE="computed"
+TOKENS_SOURCE="estimator"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
 if [ -n "${MUGIWARA_TOKENS:-}" ]; then
   TOKENS_EST="${MUGIWARA_TOKENS}"
+  TOKENS_SOURCE="reported"
+fi
+if [ -n "$TOKENS_FILE" ]; then
+  [ -f "$TOKENS_FILE" ] || die "tokens file not found: $TOKENS_FILE"
+  TOKENS_EST=$(node -e "try{const j=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));const i=Number(j.input_tokens)||0;const o=Number(j.output_tokens)||0;console.log(i+o)}catch(e){console.log(0)}" "$TOKENS_FILE" 2>/dev/null || echo 0)
   TOKENS_SOURCE="reported"
 fi
 
@@ -419,6 +482,7 @@ const data = {
   flow: parseInt(process.argv[6], 10),
   mode: process.argv[7],
   verbosity: process.argv[32] || 'normal',
+  model: process.argv[37] || 'unknown',
   base_sha: process.argv[8],
   head_sha: process.argv[9],
   files_touched: parseInt(process.argv[10], 10),
@@ -452,7 +516,8 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
   "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
-  "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE"
+  "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE" \
+  "$MODEL"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

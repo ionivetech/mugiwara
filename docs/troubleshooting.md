@@ -126,6 +126,16 @@ Signing is optional and degrades to unsigned — stated, never faked. Install
 [minisign](https://jedisct1.github.io/minisign/) and set `MUGIWARA_SIGN_KEY`
 (or use `~/.mugiwara/minisign.key`) to enable.
 
+### `rollback.sh` says "nothing to revert" on a squash-merged branch
+
+That line is now allowed only when the working diff itself is empty. If the
+branch's changes were squash-merged to the base, `git rev-list base..branch`
+can be empty while `git diff base branch` is not — the collapsed commit lives
+on the base ref. `rollback.sh` then contains an `UNRESOLVED` section with
+`git log --oneline <base>..HEAD --grep="<mission>"` and `exit 1`, so a careless
+run fails loud instead of silently doing nothing. Locate the squash commit and
+`git revert <squash-commit>`.
+
 ## Policy
 
 ### lane/archive refuses to run after I edited `mugiwara.policy.yml`

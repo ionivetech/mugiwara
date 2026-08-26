@@ -62,7 +62,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(state.delegate_threshold).toBe(60); // default, no config present
     expect(state.delegate_due).toBe(false); // direct lane → budget 0 → never due
     expect(state.tokens_est).toBeGreaterThanOrEqual(0);
-    expect(['computed', 'reported']).toContain(state.tokens_source);
+    expect(['estimator', 'reported']).toContain(state.tokens_source);
     expect(state.budget).toBeGreaterThanOrEqual(0);
     expect(['ok', 'warn', 'stop']).toContain(state.budget_status);
     expect(typeof state.skill_version).toBe('string');
@@ -70,6 +70,38 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(Array.isArray(state.evidence)).toBe(true);
     expect(typeof state.updated_at).toBe('string');
     expect(state.updated_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('savepoint records model per stage: MUGIWARA_MODEL > ANTHROPIC_MODEL > unknown', { timeout: 60000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-model-'));
+  try {
+    setupGit(dir);
+    runSavepoint(dir, 'model-mission "" 1 auto', { MUGIWARA_MODEL: 'claude-x' });
+    expect(JSON.parse(readFileSync(statePath(dir, 'model-mission'), 'utf8')).model).toBe('claude-x');
+
+    runSavepoint(dir, 'model-mission "" 2 auto', { ANTHROPIC_MODEL: 'fallback-y' });
+    expect(JSON.parse(readFileSync(statePath(dir, 'model-mission'), 'utf8')).model).toBe('fallback-y');
+
+    runSavepoint(dir, 'model-mission "" 3 auto', { MUGIWARA_MODEL: '', ANTHROPIC_MODEL: '' });
+    expect(JSON.parse(readFileSync(statePath(dir, 'model-mission'), 'utf8')).model).toBe('unknown');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('savepoint --tokens-file flips source to reported with exact sum (T4)', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-tokens-'));
+  try {
+    setupGit(dir);
+    const tokensFile = join(dir, 'tokens.json');
+    writeFileSync(tokensFile, JSON.stringify({ input_tokens: 40000, output_tokens: 86400 }));
+    runSavepoint(dir, `--tokens-file ${tokensFile} tokens-mission "" 1 auto`);
+    const state = JSON.parse(readFileSync(statePath(dir, 'tokens-mission'), 'utf8'));
+    expect(state.tokens_source).toBe('reported');
+    expect(state.tokens_est).toBe(126400);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -119,7 +151,7 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
     expect(typeof state.blockers_open).toBe('number');
     expect(typeof state.heal_cycle).toBe('number');
     expect(typeof state.budget).toBe('number');
-    expect(['computed', 'reported']).toContain(state.tokens_source);
+    expect(['estimator', 'reported']).toContain(state.tokens_source);
     expect(typeof state.skill_version).toBe('string');
     expect(typeof state.updated_at).toBe('string');
   } finally {
@@ -260,7 +292,7 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
     expect(state.lane).toBe('direct');
     expect(state.loc_delta).toBe(10);
     expect(state.tokens_est).toBe(147);
-    expect(state.tokens_source).toBe('computed');
+    expect(state.tokens_source).toBe('estimator');
 
     // override → reported
     runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '12345' });

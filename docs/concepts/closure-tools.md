@@ -61,3 +61,12 @@ Keys come from `MUGIWARA_SIGN_KEY` / `MUGIWARA_SIGN_PASSWORD` or
 `~/.mugiwara/minisign.{key,pub}`. No minisign, no keys → unsigned, stated
 plainly. A signature turns "here is my evidence" into "here is evidence that
 cannot be edited after the fact".
+
+### Enterprise keys
+
+Today the attestation is minisign (ed25519 detached signatures). The planned
+enterprise path is **sigstore/keyless** or KMS-backed signing — same interface,
+no breaking change: `mugiwara sign <mission>` and `mugiwara sign <mission> --verify`
+will not change. Teams that need a KMS or a transparency log can adopt the new
+backend when it lands without updating call sites. See ROADMAP item 10 for the
+staged marker.

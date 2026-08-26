@@ -99,6 +99,18 @@ describe('closure integrity gate', () => {
     writeFileSync(join(dir, 'src', 'auth', 'gate.md'), 'real');
     expect(checkTrail(dir, dir).filter((i) => i.kind === 'dangling-path')).toEqual([]);
   });
+
+  it('evidence-thin: PASS-cited evidence without command output is flagged', () => {
+    writeFileSync(join(dir, 'report.md'), 'Verdict: PASS see [evidence](flows/04-gates.md)');
+    mkdirSync(join(dir, 'flows'), { recursive: true });
+    writeFileSync(join(dir, 'flows', '04-gates.md'), 'all good, no commands');
+    writeFileSync(join(dir, 'state.json'), JSON.stringify({ evidence: ['flows/04-gates.md'] }));
+    expect(checkTrail(dir, dir).some((i) => i.kind === 'evidence-thin')).toBe(true);
+
+    // with backticked command or status token it passes
+    writeFileSync(join(dir, 'flows', '04-gates.md'), 'ran `bun run test` → 3 passed, exit 0');
+    expect(checkTrail(dir, dir).some((i) => i.kind === 'evidence-thin')).toBe(false);
+  });
 });
 
 describe('rollback map', () => {
@@ -118,6 +130,21 @@ describe('rollback map', () => {
   it('empty range produces a no-op script', () => {
     const body = buildRollback({ mission: 'docs', branch: 'b', baseSha: 'x' }, [], []);
     expect(body).toContain('No commits between base and HEAD');
+  });
+
+  it('squash-merged state (empty range, non-empty diff) emits unresolved-squash guidance, not "nothing to revert"', () => {
+    const body = buildRollback(
+      { mission: 'invite', branch: 'feat/invite', baseSha: 'abc1234' },
+      [],
+      ['src/a.ts', 'src/b.ts'],
+    );
+    expect(body).not.toContain('nothing to revert');
+    expect(body).toContain('UNRESOLVED');
+    expect(body).toContain('squash');
+    expect(body).toContain(`--grep="invite"`); // search key: mission name
+    expect(body).toContain('git revert <squash-commit>');
+    expect(body).toContain('#   src/a.ts');
+    expect(body).toContain('exit 1'); // hard-fail, never fake success
   });
 });
 
@@ -140,6 +167,15 @@ describe('provenance', () => {
     const md = renderProvenanceMd(buildNote(state), null);
     expect(md).toContain('Commit: not recorded');
     expect(md).toContain('```');
+  });
+  it('note lists unique models when flow history records a switch', () => {
+    const note = buildNote({ ...state, models: ['claude-x', 'fallback-y', 'claude-x'] });
+    expect(note).toContain('model(s): claude-x, fallback-y');
+    expect(note).not.toMatch(/· claude-x ·/); // single-env snapshot wording gone
+  });
+  it('no recorded models keeps the env-fallback wording', () => {
+    const note = buildNote({ ...state, model: 'solo-model' });
+    expect(note).toMatch(/· solo-model · lane full ·/);
   });
   it('blame degrades without git or notes', () => {
     expect(blamePath('/nonexistent-repo', 'x.ts')).toContain('not a git repository');

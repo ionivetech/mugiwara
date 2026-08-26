@@ -159,7 +159,7 @@ today's behavior.
 
 _Pillar 3, 5 · the adoption unlock._
 
-### 4. Token efficiency — measured, not estimated — ◐ context budget shipped; provider telemetry documented, estimator remains default
+### 4. Token efficiency — measured, not estimated — ✅ context budget shipped; provider-reported path shipped (`--tokens-file` + `MUGIWARA_TOKENS`, report rollup)
 
 **The cost users feel daily, made verifiable.**
 
@@ -285,7 +285,7 @@ _Pillar 2, 5._
 
 ## Far — make the evidence worth something
 
-### 10. Signed attestation — ✅ shipped (optional minisign)
+### 10. Signed attestation — ✅ shipped (optional minisign) (KMS/sigstore path documented)
 
 **Evidence that cannot be fabricated after the fact.**
 

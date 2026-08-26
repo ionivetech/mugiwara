@@ -103,5 +103,25 @@ Exploratory missions start at Lane 4. Usopp brainstorms, then the mission is
 re-triaged into the right lane. A spike that stays a spike (no code change
 decided) ends at Flow 1.
 
+## Monorepo scoping (optional)
+
+For monorepos, scope lane sizing to one package/app without shrinking safety:
+
+```ini
+# .mugiwara/config
+lane_scope_glob=packages/app/**
+```
+
+When set, `lane.sh` and `savepoint.sh` count only changed files matching the
+glob before sizing; the 1-file LOC rule and file-count thresholds apply to the
+scoped set. **Sensitive-path escalation still evaluates the unfiltered diff**
+so a sensitive hit inside the scope still forces `full` — safety never shrinks.
+
+Examples:
+
+- 12 files changed outside `packages/app/**` + 1 inside → `standard` (not `full`)
+- a sensitive hit (`auth/`, `payments/`, `secrets/`, …) inside the scope → `full`
+- unset or `*` → today's behavior (no scoping)
+
 Lane is computed per mission by `mugiwara run lane.sh`, not stored in
 `.mugiwara/config`.

@@ -20,6 +20,13 @@ human review: pending (PR review is the terminal gate)
 The model line comes from `MUGIWARA_MODEL` (or `ANTHROPIC_MODEL`) when set;
 otherwise it says so plainly instead of inventing an attribution.
 
+Every savepoint also records the active model into state (`model` in the
+stage's state file). At closure, provenance renders the unique set across all
+stages as `model(s): a, b` — so switching models mid-mission stays visible
+instead of every line attributing to the last env value. **Set
+`MUGIWARA_MODEL` whenever you switch models**; that is the value each stage
+records.
+
 ## Two layers
 
 | Layer | Where | Who sees it |

@@ -22,6 +22,7 @@ export type NoteSource = {
   tasks_done: number;
   tasks_total: number;
   evidence: string[];
+  models?: string[];
 };
 
 function git(cwd: string, args: string[]): string {
@@ -37,12 +38,17 @@ export function modelLabel(): string {
 /** The provenance block — identical wording in the note and the md file. */
 export function buildNote(s: {
   mission: string; actor: string; lane: string; mode: string; branch: string;
-  tasks_done: number; tasks_total: number; evidence: string[]; model?: string;
+  tasks_done: number; tasks_total: number; evidence: string[]; model?: string; models?: string[];
 }): string {
   const gates = s.evidence.length ? s.evidence.join(' · ') : 'no evidence recorded';
+  // Per-stage attribution (A4): when flow history recorded models, render the
+  // unique set — a mid-mission switch must not collapse to the last env value.
+  // With nothing recorded, keep the env-fallback label wording.
+  const uniqModels = [...new Set((s.models ?? []).filter(Boolean))];
+  const modelPart = uniqModels.length ? `model(s): ${uniqModels.join(', ')}` : (s.model ?? modelLabel());
   return [
     `mission: ${s.mission}`,
-    `agent: ${s.actor || 'unknown'} · ${s.model ?? modelLabel()} · lane ${s.lane} · mode ${s.mode}`,
+    `agent: ${s.actor || 'unknown'} · ${modelPart} · lane ${s.lane} · mode ${s.mode}`,
     `tasks: ${s.tasks_done}/${s.tasks_total}`,
     `gates/evidence: ${gates}`,
     `branch: ${s.branch}`,

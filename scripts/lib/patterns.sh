@@ -31,6 +31,11 @@ PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^e
 # (numstat rows).
 HARNESS_PAT="\.claude/|\.opencode/|\.github/(instructions|agents)/|\.gemini/mugiwara/|\.codex/mugiwara/|\.devin/rules/|\.clinerules/|\.kilo/rules/|\.agents/rules/"
 
+# lane_scope_glob — optional monorepo scoping (T5). When set in .mugiwara/config
+# as e.g.  lane_scope_glob=packages/app/**  lane sizing counts only changed
+# files matching the glob; sensitive-path escalation still evaluates the
+# unfiltered set (safety never shrinks).
+
 # harness_excluded — true (exit 0) when harness rules dirs must NOT count
 # toward mission sizing, i.e. this repo is not mugiwara itself. Identity comes
 # from the repo root package.json name ("mugiwara" or "@scope/mugiwara"), the
