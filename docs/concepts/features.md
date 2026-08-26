@@ -30,6 +30,10 @@ This is the companion to the feature table in the
 - [22. Eval harness & self-testing gates](#22-eval-harness--self-testing-gates)
 - [23. Enforcement mechanisms](#23-enforcement-mechanisms)
 - [24. Engineering practice skills](#24-engineering-practice-skills)
+- [25. Provenance ledger](#25-provenance-ledger)
+- [26. Policy as code](#26-policy-as-code)
+- [27. Closure tools](#27-closure-tools)
+- [28. Permission boundaries & tool-surface governance](#28-permission-boundaries--tool-surface-governance)
 
 ## 1. The 9-flow-stage crew pipeline
 

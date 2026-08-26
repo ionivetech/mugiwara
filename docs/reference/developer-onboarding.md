@@ -21,8 +21,14 @@ mugiwara/
 ├── agents/             # symlink → content/agents (Claude Code plugin reads plugin root)
 ├── skills/             # symlink → content/skills
 ├── src/                # CLI, installer, targets, frontmatter parser
-├── scripts/            # validate-content, sync-version, run-evals, install scripts
-├── test/               # vitest suite
+│   └── closure modules: policy.ts (policy.yml), integrity.ts (archive
+│     gate), rollback.ts, provenance.ts (+ blame), routing.ts, budget.ts,
+│     sign.ts — wired together in mission.ts archiveMission, commands in cli.ts
+├── scripts/            # validate-content, sync-version, run-evals, install scripts,
+│                       # lane.sh + savepoint.sh (runtime), gate-selftest.ts (G2)
+├── test/               # vitest suite — closure*.test.ts covers the modules above
+├── evals/cases/        # behavioral + retrieval cases (run-evals, retrieval-eval)
+├── examples/trail/     # a real archived mission, shipped as documentation
 ├── .opencode/plugins/  # opencode plugin (registers crew at config load)
 ├── .claude-plugin/     # Claude Code marketplace + sync.sh (symlink guard)
 └── docs/               # these docs
@@ -38,6 +44,10 @@ where the symlinks are missing, recreate them:
 ```bash
 sh .claude-plugin/sync.sh
 ```
+
+> **Index budget:** skill+agent descriptions must stay ≤5,500 chars combined
+> (`bun scripts/validate-content.ts` enforces). A new description replaces an
+> old one — the catalog does not grow past the ceiling.
 
 Always edit `content/`. `bun run validate --check-sync` verifies the symlinks
 resolve to `content/` and never diverge.

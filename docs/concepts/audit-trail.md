@@ -42,15 +42,19 @@ occurs.
 
 ## How to read as a reviewer
 
-1. **Start with `report.md`** — one file: what changed, gates, token cost, and
-   (after archive) every wave artifact folded inside.
-2. **Check the gate verdict** (`waves/04-gates.md`) — coverage from config,
-   build, DoD. Any FAIL needs explanation.
+1. **Start with `report.md`** — one file: what changed, gates, token cost,
+   the **Review routing** section (ranked reading order — read those files
+   first), and (after archive) every wave artifact folded inside.
+2. **Check the gate verdict** (`waves/04-gates.md`) — coverage from config
+   (+ any policy raise), build, DoD. Any FAIL needs explanation.
 3. **Spot-check the audit report** (`waves/02-audit.md`) — did Chopper re-run
    checks or accept claims? Every criterion gets a command run + evidence row.
 4. **Review findings count** (`review.md`, `security.md`) — how many
    blocker/major/minor? Were they healed? Check the heal report for closure.
-5. **State.json** for raw numbers — lane, flow stage, files, blockers open,
+5. **Provenance** (`provenance.md`, or `mugiwara blame <path>` after fetching
+   notes) — who produced this, under which lane, with what evidence. Paste it
+   into the PR so the attribution survives outside `.mugiwara/`.
+6. **State.json** for raw numbers — lane, flow stage, files, blockers open,
    heal cycle, token budget status (ok/warn/stop).
 
 ## What stays after closure

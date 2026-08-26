@@ -131,21 +131,34 @@ pipeline config to write.**
 
 ### All features
 
+**Every day, on every repo:**
+
 | Feature                  | What you get                                                                                    |
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
 | **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
-| **Provenance**           | Per-commit attribution — agent, model, lane, evidence — as a git note + PR-ready record. `mugiwara blame`. |
-| **Policy as code**       | `mugiwara.policy.yml`: force lanes up, raise coverage gates, flag paths for human approval.     |
 | **Closure integrity**    | Archive fails on dangling links, secrets in the trail, or missing evidence.                     |
-| **Rollback map**         | Executable `rollback.sh` per mission: exact revert commands, newest-first. Human runs it.       |
+| **Provenance**           | Per-commit attribution — agent, model, lane, evidence. `mugiwara blame`.                        |
+| **Rollback map**         | Executable `rollback.sh` per mission: exact revert commands. Human runs it.                     |
 | **Review routing**       | Ranked reading order in every report: sensitive paths first, scaffolding last.                  |
-| **Staleness guard**      | Resume warns when main moved past the mission's base; `mugiwara handoff` for engineer hand-off. |
-| **Context budget**       | Trail size measured at closure; optional ceiling fails the archive like a test.                 |
+| **Staleness guard**      | Resume warns when main moved past the mission's base.                                           |
+
+**When a team scales it up:**
+
+| Feature                  | What you get                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Policy as code**       | `mugiwara.policy.yml`: force lanes up, raise coverage gates, flag paths for human approval.     |
 | **Signed attestation**   | Optional minisign signing of the report — evidence that cannot be edited after the fact.        |
-| **Team collaboration**   | One shared plan, per-(mission, member) state + resume. Any number of engineers, zero collisions. |
+| **Handoff**              | `mugiwara handoff`: engineer-to-engineer report from computed state.                            |
+| **Context budget**       | Trail size measured at closure; optional ceiling fails the archive like a test.                 |
+| **Team collaboration**   | One shared plan, per-(mission, member) state + resume. Zero collisions.                         |
+
+**Always on, under the surface:**
+
+| Feature                  | What you get                                                                                    |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
-| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/missions/<mission>/` state.json + continue.json. Continues, never restarts. Auto surfaces in-flight work (lists when ambiguous). |
+| **Resume from anywhere** | Rebuilds from `.mugiwara/` state. Continues, never restarts.                                    |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
 → All features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md) · [Provenance](docs/concepts/provenance.md) · [Policy](docs/concepts/policy-as-code.md) · [Closure tools](docs/concepts/closure-tools.md) · [Permissions](docs/concepts/permissions.md)
@@ -168,32 +181,11 @@ flowchart TB
 
 ## The crew
 
-11 agents (+3 internal). Each has role boundaries — auditors
-and reviewers are read-only. Call them by name or let the pipeline auto-route.
+11 agents (+3 internal), one specialist per role — auditors and reviewers are
+read-only by declared tool scope. Full table, summoning syntax, and boundary
+rules live in one place:
 
-| Agent                | Role                                                                                    |  Permission   |
-| -------------------- | --------------------------------------------------------------------------------------- | :-----------: |
-| `luffy-orchestrator` | Captain — triage, check-ins, closure                                                    |       —       |
-| `usopp-brainstorm`   | Critical friend — interrogates, researches, recommends                                  |       —       |
-| `nami-planner`       | Planner — interviews, full scan, scaled plans                                            |       —       |
-| `zoro-execution`     | Executor — TDD per task, evidence per commit                                            |       —       |
-| `chopper-checkpoint` | Auditor — re-runs criteria, failure ledger                                              | **read-only** |
-| `sanji-quality`      | Quality — format, lint, test, duplication, complexity, maintainability, code attributes |       —       |
-| `franky-gates`       | Gates — coverage, build, DoD, per-condition sonar gate                                  |       —       |
-| `robin-reviewer`     | Reviewer — breaking-change map, reliability rating, code attribute deep review          | **read-only** |
-| `jinbe-security`     | Security — STRIDE, OWASP, hotspots, SCA license, secret scan, responsibility            | **read-only** |
-| `brook-healing`      | Healer — reads ledger, root-cause fixes ≤3 cycles                                       |       —       |
-| `resume-coordinator` | Resumer — rebuilds state from `.mugiwara/`, continues never restarts                    |       —       |
-
-**Internal agents** (dispatch-only):
-
-| Agent              | Role                                                  | Used by                        |
-| ------------------ | ----------------------------------------------------- | ------------------------------ |
-| `skeptic-verifier` | Adversarial verifier — doubts every claim             | Flow 4.5, high-stakes missions |
-| `eval-runner`      | Harness tester — task suites, judge rubric            | `bun scripts/run-evals.ts`     |
-| `memory-keeper`    | Lessons ledger — surface at start, capture at closure | Flow 0 (read), Flow 9 (write)  |
-
-→ [Agent details: summoning, boundaries, parameters](docs/concepts/agents.md)
+→ [Agent details: roles, scopes, summoning, boundaries](docs/concepts/agents.md)
 
 ## Team collaboration
 

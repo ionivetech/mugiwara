@@ -151,3 +151,9 @@ Mugiwara skills reference general actions. On OpenCode these map to:
 
 After install, configure mugiwara in `.mugiwara/config` (project) or
 `~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
+
+### Permission boundaries (optional, tier 1)
+
+opencode is tier 1: persona tool scopes can be enforced via `permission`
+config. Snippets in [concepts/permissions.md](../concepts/permissions.md);
+scope them to the agent entry that runs the persona.

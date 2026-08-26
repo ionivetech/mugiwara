@@ -75,3 +75,10 @@ Or set permanently in `.mugiwara/config`: `mode=guided`.
 
 The session-start hook requires Claude Code plugin hook support. Ensure
 you're on a recent Claude Code version.
+
+### Permission boundaries (optional, tier 1)
+
+Claude Code is tier 1: per-persona tool scopes can be enforced by the harness
+itself. Deny-config snippets for the auditor/reviewer/healer scopes live in
+[concepts/permissions.md](../concepts/permissions.md) — attach them scoped to
+the agent's invocation context, not globally.

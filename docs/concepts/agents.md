@@ -1,4 +1,4 @@
-# The Crew — 12 Agents (+3 Internal)
+# The Crew — 11 Agents (+3 Internal)
 
 Every agent is a focused specialist. The main thread embodies each role inline
 using its skill; you can also summon any member directly.
@@ -49,5 +49,5 @@ check-ins. The harness stays coherent either way.
 Every install gets all 11 agents (+3 internal) and all 21 skills. No project-type selection —
 the harness routes each task to the right specialist.
 
-See [skills.md](skills.md) for the 26 techniques, or
+See [skills.md](skills.md) for the 21 techniques, or
 [workflow.md](workflow.md) for the pipeline.

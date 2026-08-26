@@ -80,12 +80,17 @@ Bitbucket web UIs alike), plus an optional local git note for line-level
 queries. `git blame` answers _who_; this answers _what verified it_.
 
 ```
-$ mugiwara blame src/auth/invitation.ts:42
+$ mugiwara blame src/auth/invitation.ts
+  commit 4f2a1bc (last touching this path)
   agent   zoro-execution · claude-sonnet-4.6 · lane full
   gate    coverage 94% · security STRIDE clean · DoD 5/5
   report  .mugiwara/missions/invitation-accepted/report.md
   human   reviewed by john, PR #412
 ```
+
+Attribution is file-level today — the last commit that touched the path.
+Line-level attribution needs per-line tracking the pipeline does not record
+yet; the honest scope is stated here rather than implied by syntax.
 
 **Why now.** Internal AI-usage policies are landing at most engineering orgs, and
 the near-universal first question is _which of this was AI-written?_ Today the
@@ -101,6 +106,9 @@ effects.
 _Pillar 1 · the highest-value item on this list._
 
 ### 2. Review routing — ✅ shipped
+
+Ranked reading order from lane, sensitive paths, and evidence coverage;
+heal-history weighting is deferred until per-file heal events are recorded.
 
 **Tell the reviewer where to look.**
 
@@ -119,7 +127,7 @@ gap is where governance quietly fails.
 **Feasible.** Every input already sits in `state.json` and the ledger. Output is a
 section of the mission report, and a PR comment once CI lands.
 
-_Pillar 1 · the highest-leverage thing you can hand a human._
+_Pillar 1 · the highest-value thing you can hand a human._
 
 ### 3. Policy as code — ✅ shipped
 
