@@ -141,7 +141,7 @@ pipeline config to write.**
 | **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state/<mission>/` + machine-written `continue/<mission>/`. Continues, never restarts. Auto surfaces in-flight work (lists when ambiguous). |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
-→ All 28 features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Team collaboration](docs/concepts/collaboration.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+→ All features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
 
 ## The pipeline
 

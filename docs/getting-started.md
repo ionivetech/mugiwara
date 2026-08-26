@@ -97,9 +97,10 @@ ready PR summary.
 The crew runs **inline** in your main conversation — every flow stage reports as a
 compact checkpoint. Subagents only for parallel task batches.
 
-Prefer to drive stages yourself? Every stage has a slash command:
-`/mugiwara-plan`, `/mugiwara-execute`, `/mugiwara-review`,
-`/mugiwara-security`, `/mugiwara-heal`, `/mugiwara-ship`. Jump into any stage.
+Prefer to drive part of it yourself? A few slash commands exist:
+`/mugiwara` (mode switch), `/mugiwara-continue` (resume),
+`/mugiwara-review`, `/mugiwara-security`. The rest of the pipeline routes
+itself — just ask in plain language.
 
 ## 3. What you do during a mission
 

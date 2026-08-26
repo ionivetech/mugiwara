@@ -49,7 +49,7 @@ Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Sta
 
 ## Spec bridge (Flow 0 → Flow 2)
 
-Flow 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` — the bridge Nami reads. A route straight to Flow 2 (Trivial / Explicit) skips Flow 1, so it MUST still write a spec file before planning: a short but complete statement of the goal, the acceptance criteria as given, and any constraints — taken from the user's request, not invented. Never start Flow 2 with `.mugiwara/spec/` empty: if no spec exists, write one from the request first (the `/mugiwara-plan` command reads this file). The spec is input to Nami, never the plan itself.
+Flow 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` — the bridge Nami reads. A route straight to Flow 2 (Trivial / Explicit) skips Flow 1, so it MUST still write a spec file before planning: a short but complete statement of the goal, the acceptance criteria as given, and any constraints — taken from the user's request, not invented. Never start Flow 2 with `.mugiwara/spec/` empty: if no spec exists, write one from the request first. The spec is input to Nami, never the plan itself.
 
 ## Direct calls
 

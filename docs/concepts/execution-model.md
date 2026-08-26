@@ -78,20 +78,19 @@ reviewer/security re-verification workers, and background checks.
 
 ## Manual stages
 
-Prefer to drive the stages yourself? Every stage has a slash command that loads
-the skill, runs the crew role inline, and bridges state from `.mugiwara/`:
+Prefer to drive part of the pipeline yourself? A few stages have slash
+commands that load the skill, run the crew role inline, and bridge state from
+`.mugiwara/`:
 
 | Command | Runs | Reads state from |
 |---------|------|------------------|
-| `/mugiwara-plan` | Nami | `.mugiwara/spec/` |
-| `/mugiwara-execute` | Zoro | `.mugiwara/plans/` |
 | `/mugiwara-review` | Robin | `.mugiwara/results/` + diff |
 | `/mugiwara-security` | Jinbe | `.mugiwara/results/` + diff |
-| `/mugiwara-heal` | Brook | `.mugiwara/issues/` |
-| `/mugiwara-ship` | Luffy | plan + results |
+| `/mugiwara-continue` | Resume coordinator | `.mugiwara/continue/` |
 
-You can jump into any stage — e.g. run `/mugiwara-plan` first, then
-`/mugiwara-execute` later when you're ready.
+The other flow stages (plan, execute, heal, ship) are driven by the pipeline
+itself — Luffy routes to them at the stage boundary. Ask in plain language and
+the owning crew member loads its skill.
 
 ## Trade-off
 

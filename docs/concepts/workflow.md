@@ -31,7 +31,7 @@ and sizes it to a **lane**:
 | Ambiguous | requirements, APIs, scope unclear | Flow 1 first |
 
 A clear-work route straight to Flow 2 still writes a short **spec bridge** to
-`.mugiwara/spec/` before planning — `/mugiwara-plan` reads that file, so it is
+`.mugiwara/spec/` before planning — Nami reads that file, so it is
 never empty. The decision + reason is logged in `.mugiwara/logs/`. Risk
 (money/security/data/public API) always triggers the full pipeline and the
 lane escalates automatically when the work outgrows the estimate — it never

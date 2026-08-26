@@ -386,7 +386,7 @@ failures, fixes **root causes** with minimal diffs, and proves each fix by
 re-running the check that failed. The loop returns to Flow 4 — max 3 cycles,
 then escalation to the human with full history.
 
-**How to use.** Automatic in Flow 8. Manual: `/mugiwara-heal`.
+**How to use.** Automatic in Flow 8 — Luffy routes to Brook when the audit or review leaves failures.
 
 **Scenario.** Chopper's audit surfaces five failures. Brook fixes them in one
 pass with root-cause changes, re-runs each failed check, and hands back to
@@ -420,7 +420,7 @@ method") and the plan is amended before code is written.
 staged rollout, and a mandatory rollback plan. A critical finding or a missing
 rollback plan → NO-GO.
 
-**How to use.** Automatic at closure; manual `/mugiwara-ship`.
+**How to use.** Automatic at closure — the final gate before the terminal step.
 
 **Scenario.** The mission passes all gates but has no rollback plan for the
 DB change. The ship gate says NO-GO; the plan is added before the branch is
