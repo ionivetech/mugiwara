@@ -78,6 +78,10 @@ describe('closure integrity gate', () => {
     const withSecret = checkTrail(dir, dir);
     expect(withSecret.some((i) => i.kind === 'secret' && i.detail.includes('GitHub token'))).toBe(true);
 
+    // the allow marker whitelists a deliberate example line
+    writeFileSync(join(dir, 'notes.md'), 'token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456" <!-- mugiwara:allow-secret -->');
+    expect(checkTrail(dir, dir).some((i) => i.kind === 'secret')).toBe(false);
+
     // clean trail passes silently
     writeFileSync(join(dir, 'report.md'), 'see [plan](plan.md)');
     writeFileSync(join(dir, 'waves.md'), '');

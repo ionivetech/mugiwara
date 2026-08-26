@@ -10,6 +10,13 @@ import { loadPolicy, matchedGlobs } from '../src/policy.ts';
 const input = readFileSync(0, 'utf8');
 const paths = input.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
 if (!paths.length) process.exit(0);
-const policy = loadPolicy(process.cwd());
+let policy;
+try {
+  policy = loadPolicy(process.cwd());
+} catch (e) {
+  // Fail closed: an unreadable rule must not look like "no rule".
+  console.error(`policy-force: ${(e as Error).message}`);
+  process.exit(2);
+}
 const hits = policy?.lanes?.force_full?.length ? matchedGlobs(paths, policy.lanes.force_full) : [];
 if (hits.length) process.stdout.write(hits.join(','));

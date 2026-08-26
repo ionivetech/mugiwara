@@ -220,6 +220,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   }
   removed.push(join('missions', mission, '<session state>'));
   if (files.includes('plan.md')) kept.push(join('missions', mission, 'plan.md'));
+  if (files.includes('handoff.md')) kept.push(join('missions', mission, 'handoff.md'));
   kept.push(join('missions', mission, 'report.md'));
 
   // summary index: append one line per archived mission (retention aid),

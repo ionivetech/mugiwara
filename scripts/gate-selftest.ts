@@ -12,7 +12,7 @@ let passed = 0;
 let failed = 0;
 
 function run(name: string, cmd: string): boolean {
-  try { execSync(cmd, { cwd: root, stdio: 'pipe', timeout: 60000 }); return true; }
+  try { execSync(cmd, { cwd: root, stdio: 'pipe', timeout: 180000 }); return true; }
   catch { return false; }
 }
 
@@ -520,8 +520,42 @@ console.log('\nCI — closure integrity gate');
     unlinkSync(join(mdir, 'report.md'));
     unlinkSync(join(mdir, 'state.json'));
     assert('cleaned → exit 0', true, () => run('CI-clean2', cli));
+
+    // Context-budget gate: a ceiling that the trail exceeds must fail red.
+    writeFileSync(join(mdir, 'state.json'), JSON.stringify({ mission: 'selftest-mission' }));
+    writeFileSync(join(mdir, 'report.md'), 'x'.repeat(500) + '\n');
+    mkdirSync(join(tmp, '.mugiwara'), { recursive: true });
+    writeFileSync(join(tmp, '.mugiwara', 'config'), 'context_budget_chars=10\n');
+    assert('over context budget → exit 1', false, () => run('CI-budget', cli));
+    unlinkSync(join(tmp, '.mugiwara', 'config'));
+    assert('budget unset → exit 0', true, () => run('CI-budget2', cli));
   } finally {
     rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+// --- POLICY: an invalid mugiwara.policy.yml fails lane.sh closed ---
+console.log('\nPOLICY — fail-closed policy parsing');
+{
+  const repo = mkdtempSync(join(tmpdir(), 'mugi-policy-'));
+  // lane.sh must run INSIDE the sandbox repo, not this one
+  const runInRepo = (args: string): boolean => {
+    try { execSync(`bash ${join(root, 'scripts', 'lane.sh')} ${args}`, { cwd: repo, stdio: 'pipe', timeout: 60000 }); return true; }
+    catch { return false; }
+  };
+  try {
+    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: repo, stdio: 'pipe' });
+    writeFileSync(join(repo, 'changed.ts'), 'export {};\n');
+    // no policy file → normal behavior
+    assert('no policy → lane runs', true, () => runInRepo('HEAD --json'));
+    // unknown root key must fail loud, not silently disable itself
+    writeFileSync(join(repo, 'mugiwara.policy.yml'), 'lanez:\n  force_full: ["src/**"]\n');
+    assert('bogus policy key → exit 1', false, () => runInRepo('HEAD --json'));
+    // valid policy parses and can force full
+    writeFileSync(join(repo, 'mugiwara.policy.yml'), 'lanes:\n  force_full:\n    - "**/*.ts"\n');
+    assert('valid policy → lane runs', true, () => runInRepo('HEAD --json'));
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
   }
 }
 

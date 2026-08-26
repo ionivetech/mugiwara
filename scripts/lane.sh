@@ -84,7 +84,12 @@ fi
 # full — always upward, never downward, and it wins over the docs-only
 # downgrade above. Optional by design: no policy file (or no bun) = no-op.
 if command -v bun >/dev/null 2>&1 && { [ -f mugiwara.policy.yml ] || [ -f mugiwara.policy.yaml ]; }; then
-  POLICY_HITS=$(printf '%s\n' "$CHANGED" | bun "$(dirname "$0")/policy-force.ts" 2>/dev/null || true)
+  POLICY_HITS=$(printf '%s\n' "$CHANGED" | bun "$(dirname "$0")/policy-force.ts")
+  RC=$?
+  if [ "$RC" -ne 0 ]; then
+    echo "lane: mugiwara.policy.yml is invalid — fix or remove it (fail-closed)" >&2
+    exit 1
+  fi
   if [ -n "$POLICY_HITS" ]; then
     LANE="full"
     REASON="policy force_full ($POLICY_HITS)"

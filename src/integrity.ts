@@ -23,6 +23,21 @@ const SECRET_PATTERNS: Array<[RegExp, string]> = [
   [/(api[_-]?key|secret|passwd|password)\s*[=:]\s*["'][^"'\s]{8,}["']/i, 'credential assignment'],
 ];
 
+const ALLOW_SECRET = 'mugiwara:allow-secret';
+
+/** Secret shapes per line; a line carrying the allow marker is skipped — deliberate examples stay possible. */
+function findSecrets(body: string): Array<{ label: string; hit: string }> {
+  const out: Array<{ label: string; hit: string }> = [];
+  for (const line of body.split(/\r?\n/)) {
+    if (line.includes(ALLOW_SECRET)) continue;
+    for (const [re, label] of SECRET_PATTERNS) {
+      const hit = line.match(re);
+      if (hit) out.push({ label, hit: hit[0] });
+    }
+  }
+  return out;
+}
+
 const TRAIL_EXTS = new Set(['.md', '.json', '.sh']);
 
 function trailFiles(dir: string): string[] {
@@ -68,14 +83,11 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
         });
       }
     }
-    for (const [re, label] of SECRET_PATTERNS) {
-      const hit = body.match(re);
-      if (hit) {
-        issues.push({
-          kind: 'secret',
-          detail: `${relative(projectRoot, f)} matches ${label}: ${hit[0].slice(0, 12)}…`,
-        });
-      }
+    for (const { label, hit } of findSecrets(body)) {
+      issues.push({
+        kind: 'secret',
+        detail: `${relative(projectRoot, f)} matches ${label}: ${hit.slice(0, 12)}…`,
+      });
     }
   }
 

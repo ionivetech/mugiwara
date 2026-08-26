@@ -216,7 +216,11 @@ fi
 # policy as code: mugiwara.policy.yml lanes.force_full raises the
 # lane to full — upward only. Optional: no file or no bun = no-op.
 if command -v bun >/dev/null 2>&1 && { [ -f mugiwara.policy.yml ] || [ -f mugiwara.policy.yaml ]; }; then
-  POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" | bun "$(dirname "$0")/policy-force.ts" 2>/dev/null || true)
+  POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" | bun "$(dirname "$0")/policy-force.ts")
+  RC=$?
+  if [ "$RC" -ne 0 ]; then
+    die "mugiwara.policy.yml is invalid — fix or remove it (fail-closed)"
+  fi
   if [ -n "$POLICY_HITS" ]; then
     LANE="full"
     LANE_REASON="policy force_full ($POLICY_HITS)"
