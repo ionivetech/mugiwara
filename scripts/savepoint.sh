@@ -173,20 +173,45 @@ fi
 BASE_SHA=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || git merge-base HEAD "$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "unknown")
 HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
+# lane_scope_glob (T5): monorepo scoping — count only files matching the glob
+LANE_SCOPE_GLOB=""
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  _cfg_scope=$(grep -E '^lane_scope_glob=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
+  [ -n "$_cfg_scope" ] && LANE_SCOPE_GLOB="$_cfg_scope"
+fi
 # union of committed + staged + unstaged + untracked (F) — see patterns.sh
 CHANGED_FILES=$(changed_files "$BASE_SHA")
-FILES_TOUCHED=$( [ -n "$CHANGED_FILES" ] && echo "$CHANGED_FILES" | wc -l | tr -d ' ' || echo 0 )
-
-read -r LOC_INS LOC_DEL <<EOF
+# sensitive-path escalation always uses unfiltered set (safety never shrinks, T5)
+SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
+# scoped counting (T5)
+SCOPED_FILES="$CHANGED_FILES"
+if [ -n "$LANE_SCOPE_GLOB" ] && [ -n "$CHANGED_FILES" ]; then
+  shopt -s extglob globstar 2>/dev/null || true
+  SCOPED_FILES=""
+  while IFS= read -r _sf; do
+    [ -z "$_sf" ] && continue
+    # shellcheck disable=SC2053
+    if [[ "$_sf" == $LANE_SCOPE_GLOB ]]; then
+      SCOPED_FILES="${SCOPED_FILES}${SCOPED_FILES:+
+}$_sf"
+    fi
+  done <<< "$CHANGED_FILES"
+fi
+FILES_TOUCHED=$( [ -n "$SCOPED_FILES" ] && echo "$SCOPED_FILES" | wc -l | tr -d ' ' || echo 0 )
+if [ -n "$LANE_SCOPE_GLOB" ]; then
+  read -r LOC_INS LOC_DEL <<EOF
+$( { echo "$SCOPED_FILES" | while IFS= read -r _lf; do [ -n "$_lf" ] && git diff --numstat "$BASE_SHA"..HEAD -- "$_lf" 2>/dev/null; git diff --numstat HEAD -- "$_lf" 2>/dev/null; done; echo "$SCOPED_FILES" | while IFS= read -r _uf; do [ -z "$_uf" ] && continue; if git ls-files --others --exclude-standard -- "$_uf" 2>/dev/null | grep -qx "$_uf"; then printf '%s\t0\t%s\n' "$(wc -l < "$_uf" 2>/dev/null | tr -d ' ' || echo 0)" "$_uf"; fi; done; } | awk '{ if ($1 ~ /^[0-9]+$/) i+=$1; if ($2 ~ /^[0-9]+$/) d+=$2 } END { print (i+0)" "(d+0) }')
+EOF
+else
+  read -r LOC_INS LOC_DEL <<EOF
 $(changed_loc "$BASE_SHA")
 EOF
+fi
 LOC_INS=$(( ${LOC_INS:-0} + 0 ))
 LOC_DEL=$(( ${LOC_DEL:-0} + 0 ))
 LOC_DELTA=$(( LOC_INS - LOC_DEL ))
 # churn is insertion+deletion — refactors and deletions are work too (D4)
 LOC_CHURN=$(( LOC_INS + LOC_DEL ))
-
-SENSITIVE_PATHS=$(echo "$CHANGED_FILES" | grep -E "$SENSITIVE_PATS" 2>/dev/null | tr '\n' ',' | sed 's/,$//' || true)
 
 LANE="direct"
 LANE_REASON=""
@@ -221,9 +246,10 @@ fi
 
 # path-weighted sizing (mirrors lane.sh): docs-only changes outside the product
 # surface never escalate to full from file count alone; sensitive-path
-# escalation above still wins.
-if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ]; then
-  CODE_COUNT=$(echo "$CHANGED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+# escalation above still wins. With lane_scope_glob the check applies to the
+# scoped set — but sensitive wins unfiltered above, so safety never shrinks.
+if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$SCOPED_FILES" ]; then
+  CODE_COUNT=$(echo "$SCOPED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
     LANE="standard"
