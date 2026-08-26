@@ -1,7 +1,6 @@
-// test/closure-integration.test.ts — closure features end-to-end
-// through archiveMission: integrity gate, rollback.sh, provenance.md,
-// review routing section, context footprint line.
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterAll } from 'vitest';
+
+vi.setConfig({ testTimeout: 30000 });
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';

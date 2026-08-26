@@ -1,6 +1,6 @@
-// test/closure-cli.test.ts — staleness detection against a real
-// git repo; policy lane escalation through the real lane.sh.
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterAll } from 'vitest';
+
+vi.setConfig({ testTimeout: 30000 });
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { execSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';

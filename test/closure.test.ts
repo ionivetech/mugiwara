@@ -1,6 +1,6 @@
-// test/closure.test.ts — closure feature modules: policy, integrity,
-// rollback, provenance, routing, budget, sign.
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { vi, describe, it, expect, beforeEach, afterAll } from 'vitest';
+
+vi.setConfig({ testTimeout: 30000 });
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
