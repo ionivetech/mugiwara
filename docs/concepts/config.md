@@ -29,6 +29,7 @@ verify_merged=off
 delegate_threshold=60
 heal_max_cycles=3
 verbosity=normal
+# context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)
 ```
 
 ## Keys
