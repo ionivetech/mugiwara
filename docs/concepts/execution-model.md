@@ -84,8 +84,8 @@ commands that load the skill, run the crew role inline, and bridge state from
 
 | Command | Runs | Reads state from |
 |---------|------|------------------|
-| `/mugiwara-review` | Robin | `.mugiwara/missions/<mission>/waves/` + diff |
-| `/mugiwara-security` | Jinbe | `.mugiwara/missions/<mission>/waves/` + diff |
+| `/mugiwara-review` | Robin | `.mugiwara/missions/<mission>/flows/` + diff |
+| `/mugiwara-security` | Jinbe | `.mugiwara/missions/<mission>/flows/` + diff |
 | `/mugiwara-continue` | Resume coordinator | `.mugiwara/missions/<mission>/continue*.json` |
 
 The other flow stages (plan, execute, heal, ship) are driven by the pipeline

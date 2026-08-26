@@ -3,6 +3,13 @@
 For each model + harness + tier combination, how well mugiwara's rules hold.
 Published with failures — the first pack to admit where it breaks.
 
+**Status of the numbers below.** They come from structured observation on this
+repository and its own missions during Aug 2026 — real runs, recorded
+verdicts, but a sample size of one codebase and few sessions per cell. Treat
+each cell as *one honest datapoint*, not a rate. Cells upgrade to measured
+rates only through the foreign-repo protocol in [Methodology](#methodology);
+nothing in this file is fabricated to fill a gap.
+
 ## How to read
 
 - ✅ Rule holds ≥90% of the time
@@ -80,5 +87,6 @@ Foreign-repo validation: same non-trivial task run on ≥10 repos per cell.
 Each rule checked against the expected artifact. Verdict based on pass rate
 across repos, not a single run.
 
-*Last updated: Aug 2026. Results are preliminary — foreign-repo validation
-pending.*
+*Last updated: Aug 2026. Results above are single-repo observations; the
+foreign-repo protocol is defined but not yet executed. Where a cell and your
+own experience disagree, trust your run and open an issue with the trail.*

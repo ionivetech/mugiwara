@@ -3,6 +3,31 @@
 Install the crew, run your first mission, and understand what you're looking at
 in the chat.
 
+## The minimal path
+
+Everything below is optional on day one. The shortest honest version:
+
+1. **Install** (next section). Nothing runs in the background.
+2. **Keep working exactly as before.** Small changes stay small — lane sizing
+   routes them around the pipeline automatically.
+3. **When a change feels big or touches something sensitive**, say so in your
+   request ("this touches auth"). That is the whole trigger: the crew sizes it
+   to a full lane, and you get plans, audits, gates, and a reviewable trail.
+4. **After any mission**, look at `.mugiwara/missions/<mission>/report.md` —
+   that file, plus `provenance.md` and `rollback.sh`, is the product.
+
+You never have to learn the nine flow stages to benefit. They are what happens
+when the work demands it. A sample of what a finished trail looks like ships
+in [`examples/trail/`](../examples/trail/README.md) — readable without
+running anything.
+
+## Requirements
+
+- Git (missions compute lanes and savepoints from git).
+- **bash** for `lane.sh`/`savepoint.sh` — present on macOS and Linux;
+  on Windows, Git for Windows ships it and mugiwara probes common paths.
+  Set `MUGIWARA_BASH` if yours lives elsewhere.
+
 ## 1. Install
 
 Pick your harness — every major one is supported. The two easiest:
@@ -137,7 +162,7 @@ Every mission writes to `.mugiwara/` at the repo root:
     ├── report.md             # closure report; archive folds the trail into it
     ├── state.json            # computed at every flow-stage boundary (team: <member>.json)
     ├── continue.json         # machine-written resume point (team: continue-<member>.json)
-    └── waves/                # per-flow-stage artifacts: 01-execution … 07-pr-verdict + todos
+    └── flows/                # per-flow-stage artifacts: 01-execution … 07-pr-verdict + todos
 ```
 
 **Savepoint** runs at every flow-stage boundary — the mission state carries lane, flow stage,

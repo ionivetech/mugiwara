@@ -4,7 +4,7 @@ Mugiwara is the governance layer for AI-assisted engineering work: every change
 the crew makes carries a human-reviewable trail — which wave, what evidence,
 approved by whom — and the cost of the process scales to the size of the work.
 
-This roadmap projects forward from that sentence. Twelve items, each named for
+This roadmap projects forward from that sentence. Eleven items, each named for
 what it does rather than when it lands.
 
 ---
@@ -43,10 +43,20 @@ determinism          lane · savepoint (hook-driven on claude, crew-driven elsew
 install coverage     verified across 9 targets + 3 marketplace manifests
 ```
 
+Shipped in this release: the closure subsystem — provenance ledger (git note
++ `provenance.md` + `mugiwara blame`), review routing and context footprint
+in every report, the closure integrity gate (dangling links, secrets, and
+missing evidence fail the archive), executable rollback maps, staleness
+warnings on resume with `mugiwara handoff`, optional minisign attestation,
+policy as code (`mugiwara.policy.yml` read by lane.sh/savepoint.sh and the
+coverage gate), per-persona tool scopes with a documented tier matrix, and
+the Flow 0 tool-surface inventory. Details: docs/concepts/{provenance,
+policy-as-code,closure-tools,permissions}.md and docs/adoption.md.
+
 Shipped at v0.6.6–0.7.0: the prune (onboarding wizard, session-start announce,
 5 overlapping skills, stage slash commands, team-initiative CLI,
 evidence.sh/mission-report.sh) and the mission-first workspace —
-`missions/<mission>/` with `plan.md`, `waves/`, `report.md`; archive folds the
+`missions/<mission>/` with `plan.md`, `flows/`, `report.md`; archive folds the
 trail into one file per mission; `mugiwara clean` batch-archives closed
 missions; audit-lite Lane 0/1 writes three artifacts instead of nine;
 cross-flow check reuse dedupes Flow 4/5/6 runs; `verify_merged=on` collapses
@@ -59,51 +69,46 @@ that contains bug fixes hides how much of it is actually new.
 
 ## Near — make the trail worth trusting
 
-### 1. Outcome validation
-
-**Prove the thesis outside this repo — publish before perfecting.**
-
-Five external repositories (not ten), at least one harness per tier. Two
-metrics only: gate pass rate against human judgement, and provider-reported
-tokens. Fill `docs/reference/compliance-matrix.md` with measurements instead
-of design intent.
-
-**Then publish the failures.** _"On Gemini tier 2, evidence checks hold 65% — use
-guided mode there."_ Every pack claims success; none publishes where it breaks.
-The first that states plainly where it fails becomes the most trusted, precisely
-because it admitted it. For a governance layer that is not a marketing choice —
-it is the product. A small study published this quarter beats a complete one
-that slips — items 7 and 11 need it credible, not exhaustive.
-
-_Pillar 1._
-
-### 2. Provenance ledger
+### 1. Provenance ledger — ✅ shipped
 
 **Line-level attribution for AI-written code.**
 
 For every mission, record which lines were agent-authored, under which lane, by
-which model, verified by which evidence — then attach it to the commit as a git
-note. `git blame` answers _who_; this answers _what verified it_.
+which model, verified by which evidence — distributed in two layers: a summary
+posted as a PR comment via the host API (visible in GitHub, GitLab, and
+Bitbucket web UIs alike), plus an optional local git note for line-level
+queries. `git blame` answers _who_; this answers _what verified it_.
 
 ```
-$ mugiwara blame src/auth/invitation.ts:42
+$ mugiwara blame src/auth/invitation.ts
+  commit 4f2a1bc (last touching this path)
   agent   zoro-execution · claude-sonnet-4.6 · lane full
   gate    coverage 94% · security STRIDE clean · DoD 5/5
   report  .mugiwara/missions/invitation-accepted/report.md
   human   reviewed by john, PR #412
 ```
 
+Attribution is file-level today — the last commit that touched the path.
+Line-level attribution needs per-line tracking the pipeline does not record
+yet; the honest scope is stated here rather than implied by syntax.
+
 **Why now.** Internal AI-usage policies are landing at most engineering orgs, and
 the near-universal first question is _which of this was AI-written?_ Today the
 honest answer is nobody knows. Mugiwara already holds every input — mission,
 lane, model, gates, evidence paths — and throws the linkage away at closure.
 
-**Feasible.** Git notes on `refs/notes/mugiwara`, written by `savepoint.sh`. No
-runtime, no history rewrite, survives rebase via `notes.rewriteRef`.
+**Feasible.** The summary layer reuses whatever host API the repo lives on;
+hosting UIs never render git notes, so they are the archive, not the channel.
+Notes go on `refs/notes/mugiwara`, written by `savepoint.sh` — no runtime, no
+history rewrite, survives rebase via `notes.rewriteRef`, removable without side
+effects.
 
 _Pillar 1 · the highest-value item on this list._
 
-### 3. Review routing
+### 2. Review routing — ✅ shipped
+
+Ranked reading order from lane, sensitive paths, and evidence coverage;
+heal-history weighting is deferred until per-file heal events are recorded.
 
 **Tell the reviewer where to look.**
 
@@ -122,9 +127,9 @@ gap is where governance quietly fails.
 **Feasible.** Every input already sits in `state.json` and the ledger. Output is a
 section of the mission report, and a PR comment once CI lands.
 
-_Pillar 1 · the highest-leverage thing you can hand a human._
+_Pillar 1 · the highest-value thing you can hand a human._
 
-### 4. Policy as code
+### 3. Policy as code — ✅ shipped
 
 **Org rules that override crew judgement.**
 
@@ -154,7 +159,7 @@ today's behavior.
 
 _Pillar 3, 5 · the adoption unlock._
 
-### 5. Token efficiency — measured, not estimated
+### 4. Token efficiency — measured, not estimated — ◐ context budget shipped; provider telemetry documented, estimator remains default
 
 **The cost users feel daily, made verifiable.**
 
@@ -175,50 +180,53 @@ else.
 
 _Pillar 3 · keeps the tool installed._
 
-### 6. Cross-model verification
+### 5. Closure integrity gate — ✅ shipped
 
-**A second model checks the first one's claim.**
+**The audit trail validates itself at archive time.**
 
-For high-stakes assertions — "tests pass", "no breaking change", "STRIDE clean" —
-a second, cheaper model re-reads the evidence artifact and returns agree/disagree
-with a reason. Disagreement escalates rather than blocks.
+Before `mugiwara archive` folds a mission's trail into `report.md`, a
+deterministic script checks three things: every path cited in the report and
+flow files exists; no file in the trail matches secret patterns (keys, tokens,
+credentials); and every gate verdict the report cites has a matching entry in
+the ledger. A violation fails the archive with an actionable message instead of
+shipping a broken or leaking artifact.
 
-**Why now.** Teams already run several models. Self-assessment is the weakest link
-in every agent pipeline, and `docs/reference/compliance-matrix.md` exists
-precisely because models differ in how reliably they follow a rule. Verification
-is the natural use of that variance.
+**Why now.** The redaction rule today is prose in the closure skill — exactly
+the class of check that `docs/enforcement.md` says cannot be trusted to a
+model's obedience. And a report with dangling evidence links is decoration, not
+evidence: the reader cannot tell a broken link from a hidden one.
 
-**Feasible, with a stated limit.** Needs a second model CLI, so it works on tier 1
-and part of tier 2. Opt-in, degrades to today's behavior elsewhere, and the
-mission report records which verification path ran. Uneven capability gets
-documented, never implied.
+**Feasible.** One script, wired as a pre-archive step of `mugiwara archive`,
+with a mutation in `gate-selftest.ts` proving it goes red — a gate that cannot
+fail is not a gate.
 
-_Pillar 1._
+_Pillar 1 · the cheapest trust upgrade on this list._
+
+### 6. Executable rollback map — ✅ shipped
+
+**Recovery you can run, not prose you must interpret.**
+
+`mugiwara-ship` already requires a rollback plan; today it is a paragraph the
+model writes. At closure, generate the exact commands from `state.json` instead
+— branch, commit range, touched files — into
+`.mugiwara/missions/<mission>/rollback.sh`, mirrored in the report. The human
+runs it; mugiwara never does.
+
+**Why now.** During an incident nobody should translate prose into git
+commands. The data already sits in `state.json` — today it is thrown away for a
+paragraph.
+
+**Feasible.** Deterministic generation from existing fields. Honors the
+no-auto-deploy constraint: mugiwara produces the plan, only a human executes
+it.
+
+_Pillar 1, 5._
 
 ---
 
 ## Mid — governance that holds when nobody is watching
 
-### 7. Enforced merge gate
-
-**Mugiwara as a required CI check.**
-
-`mugiwara ci --pr <url>` runs the wave audit, quality, gates, review, and security
-against the PR diff and posts severity-tagged findings. Replies of "fixed" or
-"won't fix" are re-evaluated, and the conversation joins the audit trail instead
-of disappearing into PR history.
-
-**Constraint.** A CI run must produce the same closure report as a local run.
-If CI needs its own reporting path, the artifact is not canonical and Pillar 1 is
-weaker than claimed.
-
-**Depends on feature 1.** Do not make this a required check before there are
-numbers from repos nobody here controls. Blocking someone's PR on routing measured
-only in its own repo is the wrong first impression for a governance tool.
-
-_Pillar 1 · governance that is optional is not governance._
-
-### 8. Permission boundaries
+### 7. Permission boundaries — ◐ scopes declared per persona + tier matrix documented; harness-native deny wiring is each team’s config
 
 **Personas with teeth.**
 
@@ -239,7 +247,7 @@ they do not have.
 
 _Pillar 1, 4 · an auditor that can edit code is not an auditor._
 
-### 9. Tool-surface governance
+### 8. Tool-surface governance — ◐ Flow 0 inventory shipped (decision-log recorded); quarantine + invocation hashing deferred
 
 **Audit what the agent can reach, not only what it wrote.**
 
@@ -255,7 +263,7 @@ systematic rather than advisory.
 
 _Pillar 1, 4 · governance that stops at the code is incomplete._
 
-### 10. Long-running missions
+### 9. Long-running missions — ✅ shipped (staleness on continue + mugiwara handoff)
 
 **Work that outlives a session, a model, or a person.**
 
@@ -277,7 +285,7 @@ _Pillar 2, 5._
 
 ## Far — make the evidence worth something
 
-### 11. Signed attestation
+### 10. Signed attestation — ✅ shipped (optional minisign)
 
 **Evidence that cannot be fabricated after the fact.**
 
@@ -297,7 +305,7 @@ _Pillar 1 · the logical endpoint of the thesis._
 
 ---
 
-### 12. Adoption kit
+### 11. Adoption kit — ✅ shipped as docs/adoption.md recipe + exchange spec; template repos are downstream work
 
 **Make the second mission as easy as the first.**
 

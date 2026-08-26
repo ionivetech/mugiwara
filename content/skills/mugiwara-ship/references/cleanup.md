@@ -8,12 +8,12 @@ dir to its durable core. Never touch anything outside `.mugiwara/`.
 - `config`, `lessons.md` — cross-mission
 - `missions/<mission>/plan.md` — the clean plan doc
 - `missions/<mission>/report.md` — the consolidated evidence: closure report
-  with every wave file, review, security, blockers, and decisions folded in
+  with every flow file, review, security, blockers, and decisions folded in
 - any cross-mission state (`backup/`, `manifest.json`)
 
 **FOLDED, then removed by archive**:
 
-- `missions/<mission>/waves/01-execution.md` … `08-verifier.md`, `todos.md`
+- `missions/<mission>/flows/01-execution.md` … `08-verifier.md`, `todos.md`
 - `missions/<mission>/spec.md` — consumed by planning
 - `missions/<mission>/review.md`, `security.md`, `blockers.md`, `decisions.md`
 - `missions/<mission>/state.json | <member>.json`,

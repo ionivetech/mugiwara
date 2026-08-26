@@ -1,0 +1,23 @@
+{
+  "name": "frontend-cwv-testability",
+  "skill": "mugiwara-frontend",
+  "trigger": {
+    "positive": [
+      { "prompt": "build the product gallery grid component with images", "top_k": 3 },
+      { "prompt": "make the checkout form testable and accessible", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "rotate the API keys in the vault" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Build a media-heavy landing section: hero image, three cards, a form. Cover what keeps Core Web Vitals inside budget and how tests select elements.",
+      "rubric": [
+        "images carry width/height or aspect-ratio so CLS stays under 0.1",
+        "stable data-testid plus role/label queries instead of CSS classes or mutable text",
+        "keyboard operability and visible focus are asserted, not assumed"
+      ]
+    }
+  ]
+}

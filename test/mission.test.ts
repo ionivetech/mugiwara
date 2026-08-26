@@ -8,10 +8,10 @@ import { resetMission, archiveMission } from '../src/mission.ts';
 test('resetMission removes mission dirs, keeps config/manifest/backup', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-reset-'));
   const root = join(dir, '.mugiwara');
-  mkdirSync(join(root, 'missions', 'demo', 'waves'), { recursive: true });
+  mkdirSync(join(root, 'missions', 'demo', 'flows'), { recursive: true });
   writeFileSync(join(root, 'missions', 'demo', 'plan.md'), 'plan');
   writeFileSync(join(root, 'missions', 'demo', 'state.json'), '{"actor":"x"}');
-  writeFileSync(join(root, 'missions', 'demo', 'waves', '01-execution.md'), 'x');
+  writeFileSync(join(root, 'missions', 'demo', 'flows', '01-execution.md'), 'x');
   mkdirSync(join(root, 'backup'), { recursive: true });
   writeFileSync(join(root, 'config'), 'mode=guided\n');
   const { removed, kept } = resetMission(dir, false, true);
@@ -70,25 +70,25 @@ function buildArchiveFixture(dir: string): string {
   const root = join(dir, '.mugiwara');
   const mission = join(root, 'missions', 'demo');
   const mk = (p: string) => { mkdirSync(p, { recursive: true }); };
-  mk(join(mission, 'waves'));
+  mk(join(mission, 'flows'));
   writeFileSync(join(mission, 'plan.md'), '# Plan — demo\n\n- [x] T1\n');
   writeFileSync(join(mission, 'spec.md'), 'spec body');
   writeFileSync(join(mission, 'decisions.md'), 'decision log body');
   writeFileSync(join(mission, 'blockers.md'), 'blocker rows');
   writeFileSync(join(mission, 'review.md'), 'review findings');
   writeFileSync(join(mission, 'security.md'), 'security findings');
-  writeFileSync(join(mission, 'waves', '01-execution.md'), 'exec evidence');
-  writeFileSync(join(mission, 'waves', '03-quality.md'), 'quality evidence');
-  writeFileSync(join(mission, 'waves', '06-closure.md'), 'closure summary');
-  writeFileSync(join(mission, 'waves', 'todos.md'), '- [x] T1');
-  writeFileSync(join(mission, 'waves', '07-pr-verdict.md'), 'pr verdict');
+  writeFileSync(join(mission, 'flows', '01-execution.md'), 'exec evidence');
+  writeFileSync(join(mission, 'flows', '03-quality.md'), 'quality evidence');
+  writeFileSync(join(mission, 'flows', '06-closure.md'), 'closure summary');
+  writeFileSync(join(mission, 'flows', 'todos.md'), '- [x] T1');
+  writeFileSync(join(mission, 'flows', '07-pr-verdict.md'), 'pr verdict');
   writeFileSync(join(mission, 'state.json'), JSON.stringify({ mission: 'demo', flow: 9 }) + '\n');
   writeFileSync(join(mission, 'continue.json'), JSON.stringify({ mission: 'demo', flow: 9 }) + '\n');
   writeFileSync(join(root, 'config'), 'mode=guided\n');
   return mission;
 }
 
-test('archiveMission folds waves + findings into report.md, keeps plan.md + report.md', () => {
+test('archiveMission folds flow files + findings into report.md, keeps plan.md + report.md', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-'));
   const missionDir = buildArchiveFixture(dir);
   const root = join(dir, '.mugiwara');
@@ -105,7 +105,7 @@ test('archiveMission folds waves + findings into report.md, keeps plan.md + repo
   expect(removed).toContain(join('missions', 'demo', 'review.md'));
   expect(removed).toContain(join('missions', 'demo', 'security.md'));
   expect(removed).toContain(join('missions', 'demo', 'spec.md'));
-  expect(existsSync(join(missionDir, 'waves'))).toBe(false);
+  expect(existsSync(join(missionDir, 'flows'))).toBe(false);
   expect(existsSync(join(missionDir, 'state.json'))).toBe(false);
   expect(existsSync(join(missionDir, 'continue.json'))).toBe(false);
 
@@ -139,11 +139,27 @@ test('archiveMission --dry-run folds nothing and writes no index', () => {
   const root = join(dir, '.mugiwara');
   const { index } = archiveMission(dir, 'demo', { dryRun: true });
 
-  expect(existsSync(join(missionDir, 'waves', '01-execution.md'))).toBe(true);
+  expect(existsSync(join(missionDir, 'flows', '01-execution.md'))).toBe(true);
   expect(existsSync(join(missionDir, 'spec.md'))).toBe(true);
   expect(existsSync(join(missionDir, 'state.json'))).toBe(true);
   expect(index).toBeUndefined();
   expect(existsSync(join(root, 'index.md'))).toBe(false);
+});
+
+test('archiveMission folds a legacy waves/ mission without splitting the trail', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-legacy-'));
+  const root = join(dir, '.mugiwara');
+  const missionDir = join(root, 'missions', 'old');
+  mkdirSync(join(missionDir, 'waves'), { recursive: true });
+  writeFileSync(join(missionDir, 'waves', '06-closure.md'), 'legacy closure body');
+  writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ mission: 'old' }));
+
+  const r = archiveMission(dir, 'old');
+  const rep = readFileSync(join(missionDir, 'report.md'), 'utf8');
+  expect(rep).toContain('## Archived: 06-closure.md');
+  expect(rep).toContain('legacy closure body');
+  expect(r.removed.join(',')).toContain(join('missions', 'old', 'waves', '06-closure.md'));
+  expect(existsSync(join(missionDir, 'flows'))).toBe(false); // never created for a legacy mission
 });
 
 test('archiveMission returns null report for an unknown mission', () => {

@@ -84,8 +84,58 @@ Config, manifest, and backups are always kept.
 Nothing on the remote is deleted by mugiwara. Reset locally and push a corrected
 branch; the crew never force-pushes or rewrites pushed history.
 
+## Closure tools
+
+### `mugiwara archive` fails with "closure integrity gate failed"
+
+The trail has one of: a link to a missing file, a secret-shaped string
+(AWS/GitHub/Slack token, private key, pasted JWT, credential assignment), or
+an evidence path that does not exist. Fix the flagged file and re-archive —
+there is no bypass flag. For a secret *example* your trail legitimately needs
+(test fixtures, docs), put the allow marker on the same line:
+
+```
+token = "ghp_example_not_a_real_secret" <!-- mugiwara:allow-secret -->
+```
+
+### `archive` fails with "context budget failed"
+
+Your trail exceeded `context_budget_chars` in `.mugiwara/config`. Trim the
+trail or raise the ceiling. Unset key = measured but never enforced.
+
+### Resume prints "⚠ stale base"
+
+Main moved ahead of the mission's recorded base since it started. Rebase or
+merge main into the mission branch before continuing — resuming on a moved
+base is how work silently conflicts.
+
+### `mugiwara blame` says "no mugiwara provenance note"
+
+Notes are not fetched by a normal clone/pull. Fetch them once:
+
+```bash
+git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara'
+```
+
+Commits from before provenance shipped, or from non-mugiwara work, honestly
+have no note.
+
+### `mugiwara sign` says "minisign not installed"
+
+Signing is optional and degrades to unsigned — stated, never faked. Install
+[minisign](https://jedisct1.github.io/minisign/) and set `MUGIWARA_SIGN_KEY`
+(or use `~/.mugiwara/minisign.key`) to enable.
+
+## Policy
+
+### lane/archive refuses to run after I edited `mugiwara.policy.yml`
+
+An unknown root key or unreadable policy file fails loudly instead of being
+silently ignored — a typo'd rule must not disable itself. Fix the key (known:
+`lanes`, `gates`, `evidence`) or remove the file.
+
 ## Reporting a bug
 
 Open an issue with: harness, install method, the failing command or request,
-the mission decision log (`.mugiwara/missions/<mission>/decisions.md`) and the relevant wave files under `.mugiwara/missions/<mission>/waves/`
+the mission decision log (`.mugiwara/missions/<mission>/decisions.md`) and the relevant flow files under `.mugiwara/missions/<mission>/flows/`
 output.

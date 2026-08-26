@@ -140,9 +140,23 @@ for (const [k, v] of Object.entries<any>(summary)) {
 }
 
 // ---- 4. apply the two thresholds ------------------------------------------
+// Policy as code: mugiwara.policy.yml gates.coverage can RAISE a
+// threshold — the max of config and policy wins, never lower.
 
-const NEW = threshold('coverage_new', 90);
-const MOD = threshold('coverage_modified', 80);
+const { loadPolicy, effectiveThreshold } = await import('../src/policy.ts');
+let policyCoverage: { new?: number; modified?: number } | undefined;
+try {
+  const policy = loadPolicy(root);
+  policyCoverage = policy?.gates?.coverage;
+  if (policy?.gates?.require_human_approval?.length)
+    console.log(`coverage-gate: policy requires human approval on: ${policy.gates.require_human_approval.join(', ')}`);
+} catch (e) {
+  console.log(`coverage-gate: ${(e as Error).message}`);
+  process.exit(1);
+}
+
+const NEW = effectiveThreshold(threshold('coverage_new', 90), policyCoverage?.new);
+const MOD = effectiveThreshold(threshold('coverage_modified', 80), policyCoverage?.modified);
 
 const rows = changed.map((c) => {
   const isNew = c.status === 'A';

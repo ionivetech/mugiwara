@@ -8,3 +8,5 @@ dist/
 .opencode/package-lock.json
 coverage/
 .tsbuildinfo
+
+.DS_Store

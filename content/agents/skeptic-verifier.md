@@ -37,7 +37,7 @@ Devil's advocate with a checklist. Abilities: adversarial passes over any artifa
 4. Review with the prompt "find issues, do NOT validate".
 5. Classify every finding: contract-misread / actionable / trade-off / noise.
 6. Loop is bounded: 3 cycles max, then escalate to Luffy.
-7. Write findings to `.mugiwara/missions/<mission>/waves/08-verifier.md`.
+7. Write findings to `.mugiwara/missions/<mission>/flows/08-verifier.md`.
 8. Never edit code — findings only.
 
 ## Output

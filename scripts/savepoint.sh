@@ -213,6 +213,20 @@ if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ];
   fi
 fi
 
+# policy as code: mugiwara.policy.yml lanes.force_full raises the
+# lane to full — upward only. Optional: no file or no bun = no-op.
+if command -v bun >/dev/null 2>&1 && { [ -f mugiwara.policy.yml ] || [ -f mugiwara.policy.yaml ]; }; then
+  POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" | bun "$(dirname "$0")/policy-force.ts")
+  RC=$?
+  if [ "$RC" -ne 0 ]; then
+    die "mugiwara.policy.yml is invalid — fix or remove it (fail-closed)"
+  fi
+  if [ -n "$POLICY_HITS" ]; then
+    LANE="full"
+    LANE_REASON="policy force_full ($POLICY_HITS)"
+  fi
+fi
+
 # explicit triage lane (M7) applied as a floor — the computed lane above may
 # raise it, never lower it. Sensitive-path escalation still wins
 # unconditionally: spike is a resize, not a rise, so it never displaces the
@@ -307,12 +321,18 @@ if [ "$HEAL_CYCLE" -ge "$HEAL_MAX_CYCLES" ] 2>/dev/null; then
   HEAL_HALT=true
 fi
 
-# evidence paths — the mission's waves folder (quoted printf, no sed — mission
-# name is allowlisted above, but avoid sed metacharacter semantics entirely)
+# evidence paths — the mission's flow folder (quoted printf, no sed — mission
+# name is allowlisted above, but avoid sed metacharacter semantics entirely).
+# New missions use flows/; a legacy mission that already keeps waves/ stays on
+# waves/ so an in-flight trail never splits across two directories.
+FLOWDIR="flows"
+if [ -d "$MISSION_DIR/waves" ] && [ ! -d "$MISSION_DIR/flows" ]; then
+  FLOWDIR="waves"
+fi
 EVIDENCE=""
-for evf in "$MISSION_DIR/waves/"*.md; do
+for evf in "$MISSION_DIR/$FLOWDIR/"*.md; do
   [ -f "$evf" ] || continue
-  EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/missions/${MISSION}/waves/$(basename "$evf")"
+  EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/missions/${MISSION}/${FLOWDIR}/$(basename "$evf")"
 done
 
 # skill version — MUGIWARA's own package.json, resolved from the script
@@ -341,7 +361,7 @@ case "$LANE" in
   full) LANE_BASE=$LANE_BASE_full ;;
   spike) LANE_BASE=$LANE_BASE_spike ;;
 esac
-DOC_WORDS=$(cat "$MISSION_DIR"/waves/*.md "$MISSION_DIR"/plan.md "$MISSION_DIR"/spec.md "$MISSION_DIR"/decisions.md 2>/dev/null | wc -w | tr -d ' ')
+DOC_WORDS=$(cat "$MISSION_DIR"/"$FLOWDIR"/*.md "$MISSION_DIR"/plan.md "$MISSION_DIR"/spec.md "$MISSION_DIR"/decisions.md 2>/dev/null | wc -w | tr -d ' ')
 LOC_TOKENS=$(( LOC_CHURN * 12 ))
 TOKENS_SOURCE="computed"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
@@ -484,4 +504,4 @@ if [ -n "$MISSION" ]; then
     "$CONTINUE_FILE" "$CONTINUE_FILE" "$ACTOR"
 fi
 
-echo "✓ savepoint written: $STATE_FILE (lane=$LANE, wave=$WAVE, files=$FILES_TOUCHED)"
+echo "✓ savepoint written: $STATE_FILE (lane=$LANE, flow=$WAVE, files=$FILES_TOUCHED)"

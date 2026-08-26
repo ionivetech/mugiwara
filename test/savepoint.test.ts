@@ -246,7 +246,7 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
     writeFileSync(join(dir, 'src', 'a.ts'), src);
     execSync('git add src/a.ts && git commit -m wip', { cwd: dir });
     // known evidence words: exactly 20 words in the mission results dir
-    const evDir = join(dir, '.mugiwara', 'missions', 'test-mission', 'waves');
+    const evDir = join(dir, '.mugiwara', 'missions', 'test-mission', 'flows');
     mkdirSync(evDir, { recursive: true });
     writeFileSync(join(evDir, '01-execution.md'), 'word '.repeat(20));
 

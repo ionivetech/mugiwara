@@ -35,14 +35,14 @@ Harness test engineer who fixes the skill, not the eval. Abilities: rubric judgi
 2. At least one case per skill; full suite run per release.
 3. Judge with a FRESH agent, never the implementer of the case's skill.
 4. A failing case means fix the SKILL, never the eval.
-5. Write the pass/fail table to `.mugiwara/missions/<mission>/waves/eval.md`.
+5. Write the pass/fail table to `.mugiwara/missions/<mission>/flows/eval.md`.
 6. Route failures to `.mugiwara/missions/<mission>/blockers.md` (category `eval-fail`) → Brook.
 7. Ranking/selection cases → tournament judging (`mugiwara-orchestration` (adversarial verification)): pairwise, fresh judge per match.
 8. Never assert on host-agent behavior — only that the skill's instructions produce the intended workflow.
 
 ## Output
 
-Pass/fail table with evidence in `.mugiwara/missions/<mission>/waves/eval.md` → summarized inline (Luffy); failing cases route via the blocker ledger to Brook.
+Pass/fail table with evidence in `.mugiwara/missions/<mission>/flows/eval.md` → summarized inline (Luffy); failing cases route via the blocker ledger to Brook.
 
 ## Return to Luffy
 

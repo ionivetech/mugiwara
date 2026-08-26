@@ -118,7 +118,7 @@ Full ENFORCED / ASPIRATIONAL split: [enforcement.md](enforcement.md).
 | Claude Code | `TaskCreate` / `TaskUpdate` / `TaskList` | `TodoWrite` deprecated since v2.1.142 |
 | Copilot / tier 2 / tier 3 | none | plan doc `todos.md` is the only mirror |
 
-The plan doc `.mugiwara/missions/<mission>/waves/todos.md` stays the source of truth
+The plan doc `.mugiwara/missions/<mission>/flows/todos.md` stays the source of truth
 on every host; host tools mirror it. Mirror timing is hard: seed at Flow 2
 (tasks + flow-stage list), update in the SAME response each task's evidence lands,
 one transition per call, never batched at flow-stage end. Wave banners use the crew

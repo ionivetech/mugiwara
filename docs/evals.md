@@ -91,7 +91,7 @@ as a prompt to read the skill, not as a verdict.
 
 ## Reporting
 
-Write the pass/fail table to `.mugiwara/missions/<mission>/waves/eval.md`, summarize
+Write the pass/fail table to `.mugiwara/missions/<mission>/flows/eval.md`, summarize
 inline for Luffy, and route failures through the blocker ledger.
 
 ## When to run

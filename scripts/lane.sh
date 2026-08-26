@@ -80,6 +80,22 @@ if [ "$LANE" = "full" ] && [ "$HAS_SENSITIVE" -eq 0 ] && [ -n "$CHANGED" ]; then
   fi
 fi
 
+# policy as code: mugiwara.policy.yml lanes.force_full pushes the lane UP to
+# full — always upward, never downward, and it wins over the docs-only
+# downgrade above. Optional by design: no policy file (or no bun) = no-op.
+if command -v bun >/dev/null 2>&1 && { [ -f mugiwara.policy.yml ] || [ -f mugiwara.policy.yaml ]; }; then
+  POLICY_HITS=$(printf '%s\n' "$CHANGED" | bun "$(dirname "$0")/policy-force.ts")
+  RC=$?
+  if [ "$RC" -ne 0 ]; then
+    echo "lane: mugiwara.policy.yml is invalid — fix or remove it (fail-closed)" >&2
+    exit 1
+  fi
+  if [ -n "$POLICY_HITS" ]; then
+    LANE="full"
+    REASON="policy force_full ($POLICY_HITS)"
+  fi
+fi
+
 if [ "$JSON_OUT" -eq 1 ]; then
   SENS_ARR=""
   [ -n "$SENSITIVE" ] && SENS_ARR=$(echo "$SENSITIVE" | tr ',' '\n' | sed 's/^/"/;s/$/"/' | tr '\n' ',' | sed 's/,$//')

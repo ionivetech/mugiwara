@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +13,8 @@ import { manifestPath, readManifest, writeManifest, type Scope } from './manifes
 import { resetMission, archiveMission } from './mission.ts';
 import { runScript, RUNNABLE } from './run.ts';
 import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor } from './continue.ts';
+import { blamePath } from './provenance.ts';
+import { signReport, verifyReport } from './sign.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -32,6 +35,9 @@ export async function run(argv: string[]): Promise<void> {
     case 'status': return statusCmd(flags);
     case 'run': return runCmd(flags, _);
     case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
+    case 'blame': return blameCmd(flags, _);
+    case 'handoff': return handoffCmd(flags, _);
+    case 'sign': return signCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -300,7 +306,13 @@ function continueCmd(flags: Args['flags'], positionals: string[]): void {
   }
 
   const r = resolveContinue(entries, mission, member);
-  if (r.kind === 'resume') { console.log(formatResume(r.entry)); return; }
+  if (r.kind === 'resume') {
+    console.log(formatResume(r.entry));
+    const st = readState(projectDir).find((s) => s.mission === r.entry.mission && s.member === r.entry.member);
+    const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
+    if (stale) console.log(stale);
+    return;
+  }
 
   if (r.kind === 'none') {
     console.log('No mission in flight. Start one with Flow 0 triage (mugiwara-orchestration).');
@@ -350,6 +362,86 @@ function runCmd(flags: Args['flags'], positionals: string[]): void {
   if (code !== 0) process.exit(code);
 }
 
+/** `mugiwara blame <path>` — provenance note on the last commit touching path. */
+function blameCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const path = positionals[1];
+  if (!path) { console.error('usage: mugiwara blame <file-path>'); process.exit(1); }
+  console.log(blamePath(projectDir, path));
+}
+
+/**
+ * Staleness: has main moved since the mission's recorded base?
+ * N commits behind = the ground this mission started from has shifted.
+ */
+export function stalenessLine(projectDir: string, baseSha: string): string | null {
+  if (!baseSha || baseSha === 'unknown') return null;
+  const git = (args: string[]): string => {
+    try {
+      return execFileSync('git', args, { cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    } catch { return ''; }
+  };
+  let main = '';
+  for (const ref of ['main', 'master']) {
+    main = git(['rev-parse', '--verify', ref]);
+    if (main) break;
+  }
+  if (!main) return null;
+  try {
+    const behind = Number(git(['rev-list', '--count', `${baseSha}..${main}`])) || 0;
+    return behind > 0
+      ? `⚠ stale base: main is ${behind} commit(s) ahead of this mission's base ${baseSha.slice(0, 7)} — rebase check before continuing`
+      : null;
+  } catch { return null; }
+}
+
+/** `mugiwara handoff <mission>` — a report the next engineer can act on. */
+function handoffCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const mission = positionals[1];
+  if (!mission) { console.error('usage: mugiwara handoff <mission> [--project <dir>]'); process.exit(1); }
+  const states = readState(projectDir).filter((s) => s.mission === mission);
+  if (!states.length) { console.error(`no in-flight mission "${mission}"`); process.exit(1); }
+  const lines = [
+    `# Handoff: ${mission}`,
+    '',
+    `Generated ${new Date().toISOString()} by \`mugiwara handoff\`.`,
+    '',
+    '| | |',
+    '|---|---|',
+  ];
+  for (const s of states) {
+    const scope = s.member ? ` [${s.member}]` : '';
+    lines.push(`| Mission${scope} | flow ${s.flow}, tasks ${s.tasks_done}/${s.tasks_total}, lane ${s.lane}${s.lane_rose ? ' (rose)' : ''}, mode ${s.mode} |`);
+    lines.push(`| Branch | \`${s.branch}\` |`);
+    lines.push(`| Actor | ${s.actor || '(unknown)'} |`);
+    if (s.next_action) lines.push(`| Next action | ${s.next_action} |`);
+    if (s.blockers_open) lines.push(`| Open blockers | ${s.blockers_open} |`);
+    if (s.heal_cycle) lines.push(`| Heal cycles | ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALTED' : ''} |`);
+    if (s.evidence.length) lines.push(`| Evidence | ${s.evidence.join(', ')} |`);
+    const stale = stalenessLine(projectDir, s.base_sha);
+    if (stale) lines.push(`| Staleness | ${stale.replace('⚠ stale base: ', '')} |`);
+  }
+  lines.push('', '## Resuming', '', `\`mugiwara continue ${mission}\` prints the exact resume point.`);
+  lines.push('Verify `next_action` against plan.md before executing — the table above is computed state, not judgement.');
+  const out = join('.mugiwara', 'missions', mission, 'handoff.md');
+  writeFileSync(resolve(projectDir, out), lines.join('\n') + '\n');
+  console.log(lines.join('\n'));
+  console.log(`\nwritten: ${out}`);
+}
+
+/** `mugiwara sign <mission>` / `--verify` — optional minisign attestation. */
+function signCmd(flags: Args['flags'], _: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const mission = _[1];
+  if (!mission) { console.error('usage: mugiwara sign <mission> [--verify] [--project <dir>]'); process.exit(1); }
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(missionDir)) { console.error(`no mission dir: ${missionDir}`); process.exit(1); }
+  const r = flag(flags.verify) ? verifyReport(projectDir, missionDir) : signReport(projectDir, missionDir);
+  console.log(`${r.ok ? '✓' : '✗'} ${r.message}`);
+  if (!r.ok) process.exit(1);
+}
+
 function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
@@ -367,9 +459,14 @@ Usage:
   mugiwara continue <m> [member]
                          print the exact resume point for that mission/member
   mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
+  mugiwara blame <path>  provenance note on the last commit touching <path>
+                         (fetch notes first: git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara')
+  mugiwara handoff <m>   write .mugiwara/missions/<m>/handoff.md — a report the next
+                         engineer can act on (computed state + staleness check)
+  mugiwara sign <m>      optional attestation: minisign-sign report.md (--verify to check)
   mugiwara run <script> [args...]
                          run a bundled harness script here (${RUNNABLE.join(', ')})
-  mugiwara savepoint <mission> [member] [wave] [mode]
+  mugiwara savepoint <mission> [member] [flow] [mode]
                          shorthand for: mugiwara run savepoint.sh ...
   mugiwara --help        this help
   mugiwara --version     print version

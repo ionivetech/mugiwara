@@ -90,8 +90,10 @@ const RUNTIME_SHAPES: RegExp[] = [
   /^\.mugiwara\/lessons\.md$/,
   /^\.mugiwara\/index\.md$/,
   /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/(plan|spec|decisions|blockers|review|security|report)\.md$/,
-  /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/waves\/([0-9]{2}-[a-z-]+|eval|resume|todos)\.md$/,
-  /^\.mugiwara\/missions\/<mission>\/waves\/?$/,
+  /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/flows\/([0-9]{2}-[a-z-]+|eval|resume|todos)\.md$/,
+  /^\.mugiwara\/missions\/<mission>\/flows\/?$/,
+  /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/waves\/([0-9]{2}-[a-z-]+|eval|resume|todos)\.md$/, // legacy layout, still read
+  /^\.mugiwara\/missions\/<mission>\/waves\/?$/, // legacy layout, still read
   /^\.mugiwara\/missions\/<mission>\/(state\.json|<member>\.json)$/,
   /^\.mugiwara\/missions\/<mission>\/(continue\.json|continue-<member>\.json)$/,
 ];

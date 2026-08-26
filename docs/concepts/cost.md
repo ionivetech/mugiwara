@@ -44,6 +44,27 @@ Spike stays a deliberate floor — a resize lane, not a content-loaded one.
 Budgets warn at exactly 1.5× budget, stop at exactly 3×, both boundaries
 inclusive (`>=`). Write state to `.mugiwara/missions/<mission>/[member].json` before stopping.
 
+## What is measurable today
+
+Two numbers are computed, gate-validated constants — not guesses:
+
+| Lane | Instruction base¹ (tokens) | Budget | Warn (1.5×) | Stop (3×) |
+|------|---------------------------|--------|-------------|-----------|
+| direct | 0 (no pipeline) | — | — | — |
+| spike | 1,000 | 3k | 4.5k | 9k |
+| lean | 7,000 | 12k | 18k | 36k |
+| standard | 13,000 | 25k | 37.5k | 75k |
+| full | 23,000 | 50k | 75k | 150k |
+
+¹ `LANE_BASE_*` from `scripts/lib/lane-base.sh` — the sum of skill+agent body
+word-counts × 1.35 for that lane's flow stages; `scripts/lane-base.ts` fails
+CI when a constant drifts >20% from content. Budget/warn/stop come from
+`BUDGET_*` in the same file; state warns at 1.5× and stops at 3×.
+
+What these numbers do NOT include: model I/O on your actual diff, tool
+outputs, harness system prompts. They bound the *process* cost — the part
+mugiwara adds — not the total session cost.
+
 ## Measured benchmark (2026-08-13 QA mission)
 
 All numbers below were measured on this repo unless marked as an estimate.

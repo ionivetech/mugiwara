@@ -43,17 +43,26 @@ verbosity=normal
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Flow 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only). **Advisory-only** — read by the crew, not by code. |
 | `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Flow 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only). **Advisory-only** — read by the crew, not by code. |
-| `verify_merged` | on / off | off | Merge Flow 5 (quality) and Flow 6 (gates) into ONE verify pass that writes both artifacts (`waves/03-quality.md` + `waves/04-gates.md`) from a single check run. Intended for strong models and small lanes where three separate verification passes are redundant; Lane 3 (sensitive) always keeps them separate. **Advisory-only** — read by the crew from this file at Flow 5 start. |
+| `verify_merged` | on / off | off | Merge Flow 5 (quality) and Flow 6 (gates) into ONE verify pass that writes both artifacts (`flows/03-quality.md` + `flows/04-gates.md`) from a single check run. Intended for strong models and small lanes where three separate verification passes are redundant; Lane 3 (sensitive) always keeps them separate. **Advisory-only** — read by the crew from this file at Flow 5 start. |
 | `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers. **Read by `scripts/savepoint.sh`** — it computes `delegate_due` (`tokens_est ≥ threshold% of budget`) into `state.json`; the execution skill reads that flag, never the raw value. |
 | `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation. **Read by `scripts/savepoint.sh`** — recorded in `state.json` and used to compute `heal_halt` (`heal_cycle ≥ max`), which the crew reads. |
 | `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. **Read by `scripts/savepoint.sh`** — recorded in `state.json`. |
+| `context_budget_chars` | number (bytes) | unset | Ceiling on the mission trail's total size (top-level `*.md` + `flows/*`), measured at archive. Over the ceiling fails the archive like a failed test; unset = measured and printed in the report only. **Read by the closure pipeline** (`src/budget.ts`). |
+
+## Policy file interplay
+
+`mugiwara.policy.yml` (repo root) is a separate mechanism from this config:
+config sets *your* thresholds; policy sets *the org's* rules on top. Where
+both define a coverage threshold, the higher value wins — policy can raise,
+never lower. See [policy-as-code](policy-as-code.md). An invalid policy file
+(unknown root key) fails lane/archive loudly instead of being ignored.
 
 ## Machine-read vs advisory-only
 
-Code reads four keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`
+Code reads five keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`
 (read by `scripts/savepoint.sh`, which records or computes them into
-`state.json`), plus `coverage_new`/`coverage_modified` (read by the coverage
-gate). Everything else is **advisory-only** — read by the crew from this prose,
+`state.json`), `coverage_new`/`coverage_modified` (read by the coverage
+gate), and `context_budget_chars` (read by the closure pipeline). Everything else is **advisory-only** — read by the crew from this prose,
 never by a validator or hook. Changing an advisory key changes crew behavior
 but no gate fails and no computation changes:
 

@@ -48,7 +48,7 @@ Never edit code. Findings only. Any urge to fix a finding means the audit has st
 
 ## Output
 
-Audit report to `.mugiwara/missions/<mission>/waves/02-audit.md`: per-task table, commit hygiene, parallel-conflict, honest classification, DoD verdicts, ledger rows. Show the verdict and the key evidence inline in the conversation — PASS → next flow stage. FAIL → report + ledger to Brook (Flow 8). You never fix a finding yourself; you may spawn check subagents for independent re-runs.
+Audit report to `.mugiwara/missions/<mission>/flows/02-audit.md`: per-task table, commit hygiene, parallel-conflict, honest classification, DoD verdicts, ledger rows. Show the verdict and the key evidence inline in the conversation — PASS → next flow stage. FAIL → report + ledger to Brook (Flow 8). You never fix a finding yourself; you may spawn check subagents for independent re-runs.
 
 ## Common rationalizations
 

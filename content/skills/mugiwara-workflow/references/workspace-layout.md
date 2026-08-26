@@ -21,12 +21,12 @@ mission artifact in any other language is a defect, not a style choice.
     ├── blockers.md         → blocker ledger rows
     ├── review.md           → Robin's findings
     ├── security.md         → Jinbe's findings
-    ├── report.md           → closure report; archive folds the wave files into it
+    ├── report.md           → closure report; archive folds the flow files into it
     ├── state.json          → computed state per (mission): solo = state.json,
     │   │                     team = <member>.json  (gitignored)
     │   └── continue.json   → machine resume point: solo = continue.json,
     │                         team = continue-<member>.json  (gitignored)
-    └── waves/              → per-flow-stage artifacts, numbered by flow order
+    └── flows/              → per-flow-stage artifacts, numbered by flow order
         ├── 01-execution.md → flow stage 3: task table + evidence
         ├── 02-audit.md     → flow stage 4: checkpoint report
         ├── 03-quality.md   → flow stage 5: quality report
@@ -40,7 +40,7 @@ mission artifact in any other language is a defect, not a style choice.
 
 Naming rule: bare names only. The date lives in `state.json` (`updated_at`)
 and in git history; the folder is the grouping. Lane 0/1 missions write the
-minimum: `state.json`, `waves/01-execution.md`, and `report.md` at closure —
+minimum: `state.json`, `flows/01-execution.md`, and `report.md` at closure —
 no plan/spec/blockers unless a blocker actually occurs (audit-lite).
 
 The plan doc stays clean: it holds ONLY the execution plan (flow stages, tasks,
@@ -53,7 +53,7 @@ artifacts go outside `.mugiwara/`.
 
 ## Cleanup (Flow 9)
 
-Run `mugiwara archive <mission>` (dry-run first). It folds every wave file,
+Run `mugiwara archive <mission>` (dry-run first). It folds every flow file,
 review, security, blockers, and decisions into `report.md`, then removes them
 along with session state (`*.json`). The mission dir ends as two durable
 files: `plan.md` + `report.md`. Batch form for several closed missions:
