@@ -123,6 +123,12 @@ esac
 if [[ "$MEMBER" =~ ^\.+$ ]]; then
   die "invalid member name \"$MEMBER\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
 fi
+# reserved stems — <member>.json and continue-<member>.json share the mission
+# dir with state.json / continue.json; member "state" or "continue" would
+# overwrite the solo files (state pointer or resume pointer).
+case "$MEMBER" in
+  state|continue) die "reserved member name \"$MEMBER\" (state, continue)" ;;
+esac
 
 # BRANCH_SLUG sanitized to [A-Za-z0-9._-] — it feeds the continue branch field;
 # a newline/control char in BRANCH would corrupt the JSON (F5). Dropping illegal

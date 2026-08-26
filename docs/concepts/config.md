@@ -75,9 +75,10 @@ The mission **lane** (how many flow stages run) is decided by Luffy at triage �
 [lanes.md](lanes.md). Config holds autonomy and writing standards only.
 
 Missing config on read = `guided`. On first use the plugin writes the full
-default config above, so the file exists from the start. Flip mid-mission with
-`mugiwara mode <guided|semi|auto>` — the change applies from the next flow stage,
-never mid-flow-stage.
+default config above, so the file exists from the start. Flip mid-mission by
+saying `mugiwara mode <guided|semi|auto>` in session (the mode-tracker hook
+edits this file — there is no CLI subcommand); the change applies from the
+next flow stage, never mid-flow-stage.
 
 ## Commit message styles
 

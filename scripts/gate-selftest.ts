@@ -82,6 +82,28 @@ console.log('\nG5 — conditional-assertion guard');
   }
 }
 
+// --- Cost gate: prove a drifted stated index size goes red -------------------
+// validate-content fails when docs/concepts/cost.md's "**Current:** N chars"
+// disagrees with the measured skill+agent description total. Without this
+// mutation the gate is unproven — a gate that cannot fail is not a gate.
+console.log('\nCost gate — measured vs stated index chars');
+{
+  const costFile = join(root, 'docs', 'concepts', 'cost.md');
+  const original = readFileSync(costFile, 'utf8');
+  try {
+    const drifted = original.replace(/\*\*Current:\*\* \d[\d,]* chars/, '**Current:** 1 chars');
+    if (drifted === original) {
+      console.log('  ⚠  "**Current:** N chars" pattern not found in cost.md — skipping');
+    } else {
+      writeFileSync(costFile, drifted);
+      assert('drifted stated index chars → exit 1', false, () => run('COST', 'bun scripts/validate-content.ts'));
+    }
+  } finally {
+    writeFileSync(costFile, original);
+    assert('restored → exit 0', true, () => run('COST', 'bun scripts/validate-content.ts'));
+  }
+}
+
 // --- G3: savepoint fixtures — prove test fails when a field is broken ---
 console.log('\nG3 — savepoint fixtures');
 if (!existsSync(join(root, 'test', 'savepoint.test.ts'))) {

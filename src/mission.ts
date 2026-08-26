@@ -1,6 +1,6 @@
 // src/mission.ts
 // Mission-state helpers for the mugiwara CLI (installer + reset only).
-import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync, writeFileSync } from 'node:fs';
+import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync, writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 
 function isStateFile(f: string): boolean {
@@ -111,7 +111,12 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
         const name = f.includes('/') ? (f.split('/').pop() ?? f) : f;
         return `\n\n## Archived: ${name}\n\n${body}`;
       }).join('');
-      writeFileSync(reportPath, report.trimEnd() + sections + '\n');
+      // atomic: write the folded report to a temp file, then rename over the
+      // target. A crash mid-write must never leave a truncated report — the
+      // fold deletes the wave files right after, so a partial write loses them.
+      const tmp = `${reportPath}.tmp`;
+      writeFileSync(tmp, report.trimEnd() + sections + '\n');
+      renameSync(tmp, reportPath);
     }
     for (const f of fold) {
       rmSync(join(dir, f), { force: true, recursive: true });
@@ -121,6 +126,11 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     for (const f of files.filter((f) => f.endsWith('.json'))) rmSync(join(dir, f), { force: true });
     // waves/ may now be empty — remove the folder
     if (existsSync(wavesDir) && readdirSync(wavesDir).length === 0) rmSync(wavesDir, { recursive: true, force: true });
+    // report.md must exist after archive — the closed marker `mugiwara clean`
+    // filters on. A stale in-flight mission folds nothing, so seed a stub.
+    if (!existsSync(reportPath)) {
+      writeFileSync(reportPath, `# Mission: ${mission}\n\nArchived before closure — no wave artifacts were present.\n`);
+    }
   } else {
     for (const f of fold) removed.push(join('missions', mission, f));
   }
