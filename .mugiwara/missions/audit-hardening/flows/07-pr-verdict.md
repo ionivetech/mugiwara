@@ -46,17 +46,14 @@ Fix every defect and gap surfaced by the deep CTO/principal audit plus the defer
 - `bun scripts/verify-install.ts` green (0/40 unreachable)
 - `bun scripts/conformance.ts` 12/12 platforms
 
-## Cost (final result — readable)
+## Cost
 
 | Metric | Value |
 |--------|-------|
-| **Tokens used** | `31,029` (estimator, `computed` = `LANE_BASE 23k` + words×1.35 + LOC×12) |
-| **Lane** | `full` — budget `50,000` · warn `75,000` (1.5×) · stop `150,000` (3×) · 19 files, 454 churn (escalated from `standard`, expected for 8-task scope) |
-| **Budget status** | `62%` of budget · `18,971` under · **OK** (< warn) |
-| **Context footprint** | `14,698` chars (no `context_budget_chars` configured — measured only) |
-| **Provider-reported** | `none` — estimator-only mission; with `--tokens-file` the report will show `Tokens reported total: N (provider-reported)` (see `docs/concepts/cost.md`) |
-
-*Source:* `src/mission.ts:Cost` section appended to `report.md` at `mugiwara archive` time; live `state.json` held `tokens_est 31029` `tokens_source computed` `lane full` — after archive state is folded, report is the durable cost record.
+| **Tokens used** | 31,029 (estimator (computed)) |
+| **Lane** | full (budget 50,000 · warn 75,000 · stop 150,000) |
+| **Budget status** | 62% of budget · 18,971 under · OK |
+| **Context footprint** | 14,698 chars (no context budget configured) |
 
 ## Checks
 
