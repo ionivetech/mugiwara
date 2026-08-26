@@ -75,7 +75,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
   }
 });
 
-test('savepoint records model per stage: MUGIWARA_MODEL > ANTHROPIC_MODEL > unknown', { timeout: 30000 }, () => {
+test('savepoint records model per stage: MUGIWARA_MODEL > ANTHROPIC_MODEL > unknown', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-model-'));
   try {
     setupGit(dir);

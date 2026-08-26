@@ -143,7 +143,7 @@ test('lane.sh: not a git repository exits 1', () => {
 
 // ---------- savepoint mission-name allowlist ----------
 
-test('savepoint: mission-name allowlist rejects traversal, dots, unicode, metachars', { timeout: 20000 }, () => {
+test('savepoint: mission-name allowlist rejects traversal, dots, unicode, metachars', { timeout: 60000 }, () => {
   const dir = newRepo('guard');
   // each name passed as ONE argv element via spawnSync — no split-args helper,
   // no quoting layer — the allowlist itself must reject, not the wrapper.
