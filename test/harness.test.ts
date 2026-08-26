@@ -344,38 +344,3 @@ test('savepoint: lane rise direct -> full sets lane_rose with lane_prev', { time
     rmSync(dir, { recursive: true, force: true });
   }
 });
-
-// ---------- evidence.sh ----------
-
-test('evidence.sh: exit-code passthrough, log written, -- separator, label allowlist', { timeout: 20000 }, () => {
-  const EVIDENCE = join(import.meta.dirname, '..', 'scripts', 'evidence.sh');
-  const dir = mkdtempSync(join(tmpdir(), 'mugi-harness-evidence-'));
-  const mugiDir = join(dir, '.mugiwara');
-  const run = (args: string[]) =>
-    spawnSync('bash', [EVIDENCE, ...args], { cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: mugiDir } });
-  try {
-    // exit-code passthrough with explicit -- separator; log written
-    const pass = run(['evtest', 'ev-pass', '--', 'sh', '-c', 'exit 3']);
-    expect(pass.status, `stderr: ${pass.stderr}`).toBe(3);
-    const passLog = pass.stdout.trim();
-    expect(passLog).toMatch(/ev-pass-[0-9a-f]{12}\.log$/);
-    expect(existsSync(passLog)).toBe(true);
-    const body = readFileSync(passLog, 'utf8');
-    expect(body).toContain('# Evidence: ev-pass');
-    expect(body).toContain('# Command: sh -c exit 3');
-    expect(body).toContain('# ---');
-
-    // failing command: same passthrough (no -- separator)
-    const fail = run(['evtest', 'ev-fail', 'sh', '-c', 'exit 7']);
-    expect(fail.status, `stderr: ${fail.stderr}`).toBe(7);
-    expect(existsSync(fail.stdout.trim())).toBe(true);
-
-    // traversal label rejected by allowlist
-    const evil = run(['evtest', '../evil', 'true']);
-    expect(evil.status, `stderr: ${evil.stderr}`).not.toBe(0);
-    expect(evil.stderr).toContain('invalid label');
-    expect(readdirSync(join(mugiDir, 'results', 'evtest')).some((f) => f.includes('..'))).toBe(false);
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});

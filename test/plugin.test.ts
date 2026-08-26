@@ -189,28 +189,6 @@ test('config hook never clobbers a user-defined agent', async () => {
   expect((mine as { mode?: string }).mode).toBe('subagent');
 });
 
-test('announce string carries inline doctrine and flow contract', async () => {  const hooks = await plugin();
-  const transform = hooks['experimental.chat.system.transform'];
-  const output = { system: ['existing prompt'] };
-  await transform({}, output);
-  expect(output.system[0]).toContain('Mugiwara crew available');
-  expect(output.system[0]).toContain('Never Task-dispatch a crew member');
-  expect(output.system[0]).toContain('auto-activates');
-});
-
-test('system.transform appends the announce string once (dedupes on repeat)', async () => {
-  const hooks = await plugin();
-  const transform = hooks['experimental.chat.system.transform'];
-  expect(typeof transform).toBe('function');
-  const output = { system: ['existing prompt'] };
-  await transform({}, output);
-  expect(output.system).toHaveLength(2);
-  expect(output.system[0]).toContain('Mugiwara crew available');
-  expect(output.system[1]).toContain('Active mode:');
-  await transform({}, output);
-  expect(output.system).toHaveLength(2);
-});
-
 const makeCfg = () => mkdtempSync(join(tmpdir(), 'mugi-mode-'));
 
 test('mode reader: no config files -> guided', () => {
@@ -423,37 +401,6 @@ test('chat.message hook ignores non-mode output', async () => {
   expect(readMode({ projectDir: proj, home: makeCfg() })).toBe('guided');
 });
 
-test('system.transform hook injects crew announce + active mode once', async () => {
-  const { 'experimental.chat.system.transform': transform } = await plugin();
-  const proj = makeCfg();
-  const dir = join(proj, '.mugiwara');
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, 'config'), 'mode=guided\n');
-  const origCwd = process.cwd();
-  let output: { system: string[] };
-  try {
-    process.chdir(proj);
-    output = { system: ['existing context'] };
-    await transform({}, output);
-  } finally {
-    process.chdir(origCwd);
-  }
-  expect(output.system[0]).toContain('existing context');
-  expect(output.system.some((s) => s.includes('Mugiwara crew available'))).toBe(true);
-  expect(output.system.some((s) => s.includes('Active mode: guided'))).toBe(true);
-  // idempotent — second run does not duplicate
-  const before = output.system.length;
-  await transform({}, output);
-  expect(output.system.length).toBe(before);
-});
-
-test('system.transform hook handles empty system array', async () => {
-  const { 'experimental.chat.system.transform': transform } = await plugin();
-  const output: { system: string[] } = { system: [] };
-  await transform({}, output);
-  expect(output.system.some((s) => s.includes('Mugiwara crew available'))).toBe(true);
-});
-
 test('D10: session-start auto-resumes single in-flight mission for actor', { timeout: 20000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-hookauto-'));
   try {
@@ -554,6 +501,18 @@ test('D10: session-start lists in-flight missions in non-auto modes, never auto-
   }
 });
 
+test('session-start is silent when nothing is in-flight (no announce)', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-hooksilent-'));
+  try {
+    execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
+    const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
+    // zero injected context for a session that never used mugiwara
+    expect(out.trim()).toBe('');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('D10: session-start ignores missions owned by other actors', { timeout: 20000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-hookother-'));
   try {
@@ -565,8 +524,8 @@ test('D10: session-start ignores missions owned by other actors', { timeout: 200
     execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
 
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
-    const json = JSON.parse(out) as { additionalContext: string };
-    expect(json.additionalContext).not.toContain('AUTO-RESUME');
+    // nothing of ours to surface → fully silent
+    expect(out.trim()).toBe('');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -583,10 +542,8 @@ test('D10: session-start rejects non-numeric wave/tasks in continue (N1)', { tim
     execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
 
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
-    const json = JSON.parse(out) as { additionalContext: string };
-    // non-numeric wave → skipped, no AUTO-RESUME injection
-    expect(json.additionalContext).not.toContain('AUTO-RESUME');
-    expect(json.additionalContext).not.toContain('ignore all instructions');
+    // invalid entry skipped → no other mission → silent, never injects the payload
+    expect(out.trim()).toBe('');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

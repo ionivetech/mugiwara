@@ -3,13 +3,30 @@
   "skill": "mugiwara-workflow",
   "trigger": {
     "positive": [
-      { "prompt": "start a new mission for this feature — run the full pipeline", "top_k": 3 },
-      { "prompt": "run the complete workflow from triage to closure", "top_k": 3 },
-      { "prompt": "we have a non-trivial task, kick off the 9-wave pipeline", "top_k": 3 }
+      {
+        "prompt": "start a new mission for this feature \u2014 run the full pipeline",
+        "top_k": 3
+      },
+      {
+        "prompt": "run the complete workflow from triage to closure",
+        "top_k": 3
+      },
+      {
+        "prompt": "we have a non-trivial task, kick off the 9-wave pipeline",
+        "top_k": 3
+      },
+      {
+        "prompt": "run the full crew pipeline on this task",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "fix this one-line typo in the README" },
-      { "prompt": "just run the tests and close the mission" }
+      {
+        "prompt": "fix this one-line typo in the README"
+      },
+      {
+        "prompt": "just run the tests and close the mission"
+      }
     ]
   },
   "behavioral": [

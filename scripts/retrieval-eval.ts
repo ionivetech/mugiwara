@@ -18,7 +18,7 @@ function tokenize(text: string): string[] {
   return text.toLowerCase()
     .replace(/[^a-z0-9\s-]/g, ' ')
     .split(/\s+/)
-    .filter(t => t.length > 1 && !['the', 'and', 'for', 'use', 'when', 'that', 'with', 'this', 'from', 'its', 'not', 'are', 'has'].includes(t));
+    .filter(t => t.length > 1 && !['the', 'and', 'for', 'use', 'when', 'that', 'with', 'this', 'from', 'its', 'not', 'are', 'has', 'to', 'is', 'it', 'of', 'in', 'on', 'at', 'be', 'or', 'as', 'an'].includes(t));
 }
 
 function buildIndex(): Index {

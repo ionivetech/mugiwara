@@ -25,11 +25,6 @@ Classify the mission by size first — after Luffy's route — then write the pl
 
 Batch blocking ambiguities into ONE question round; never assume silently. Mode gates per config. Full detail: `references/plan-template.md`.
 
-For team initiatives, add to batch: "Solo or team?" — asked in EVERY mode, never
-defaulted silently. If team: collect assignee + branch per sub-mission; a team
-without member names is a blocking ambiguity — ask before writing, never invent
-assignees. Solo default applies only when the user never mentioned a team.
-
 ## Full context scan
 
 Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. If the mission needs it, scan everything — a plan written without the real code is fiction. Ground every file path and step in what exists; confirm tooling, do not assume. Trust-sort sources (high/medium/low): `references/plan-template.md`.
@@ -93,17 +88,7 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 
 ## Full-level skeleton
 
-Full plan at `.mugiwara/plans/YYYY-MM-DD-<mission>.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## Implementation graph`, `## Task index`, `## Sub-missions` (team only), `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
-
-## Sub-missions (team initiatives)
-
-Team plans add `## Sub-missions` table after task index. Solo missions skip. Status markers: `[ ]` pending, `[~]` in-progress, `[x]` done, `[!]` blocked.
-
-| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |
-|----|------|----------|--------|--------|------------|---------------|
-| sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [ ] | — | src/payment/ |
-
-Plan doc is single source of truth. Update the status cell in the plan doc directly (`mugiwara initiative set-status <plan> --id <id> --status <x>` automates it).
+Full plan at `.mugiwara/plans/YYYY-MM-DD-<mission>.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
 
 ## Mission split (very large) — Lane 3
 

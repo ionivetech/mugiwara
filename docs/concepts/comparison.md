@@ -11,13 +11,13 @@ by whom — and the cost of the process scales to the size of the work.
 - **Lane sizing** — process scales from zero flow stages (typo) to nine (auth
   migration), computed from the diff by `mugiwara run lane.sh`, not guessed.
 - **Evidence trail** — every flow-stage boundary writes computed state to
-  `state/<mission>/[member].json`. No flow stage passes on a spoken claim. `mugiwara run evidence.sh` wraps
-  check commands and captures output.
+  `state/<mission>/[member].json`. No flow stage passes on a spoken claim;
+  check output is captured into `.mugiwara/results/`.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.
 - **15 named agents** in a 9-flow-stage gated pipeline — each flow stage has a defined
   owner, handoff, and verification gate.
-- **26 skills** with skip gates on all of them, progressive disclosure into
+- **21 skills** with skip gates on all of them, progressive disclosure into
   `references/`, and deterministic tooling for lane, evidence, and state.
 
 ## What mugiwara refuses

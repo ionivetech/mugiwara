@@ -7,7 +7,7 @@ using its skill; you can also summon any member directly.
 |-------|-------------|------|------------|
 | `luffy-orchestrator` | Luffy | Captain — 5-way triage, check-ins, decisions, closure | mission start, flow-stage boundaries, escalations |
 | `usopp-brainstorm` | Usopp | Critical friend — interrogates, researches, no rubber-stamps | vague ideas, direction, options |
-| `nami-planner` | Nami | Planner — interview-first, full-context scan, scaled plans, team initiatives | turning an idea into an execution plan |
+| `nami-planner` | Nami | Planner — interview-first, full-context scan, scaled plans | turning an idea into an execution plan |
 | `zoro-execution` | Zoro | Executor — inline sequential tasks, parallel worker batches, evidence per task | executing an approved plan |
 | `chopper-checkpoint` | Chopper | Auditor — verify-everything, deduped re-runs, failure ledger | auditing a flow stage.s results |
 | `sanji-quality` | Sanji | Quality — discover real tooling, format/lint/test/duplication/complexity/attributes | after checkpoint passes |
@@ -46,7 +46,7 @@ check-ins. The harness stays coherent either way.
 
 ## The crew ships whole
 
-Every install gets all 11 agents (+3 internal) and all 26 skills. No project-type selection —
+Every install gets all 11 agents (+3 internal) and all 21 skills. No project-type selection —
 the harness routes each task to the right specialist.
 
 See [skills.md](skills.md) for the 26 techniques, or

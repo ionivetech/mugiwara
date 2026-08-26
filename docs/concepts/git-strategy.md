@@ -62,5 +62,6 @@ template with `{type}` `{issue}` `{title}` (e.g. `commit={issue}: {title}` →
 ## Terminal step
 
 Every mode ends the same way: save-point commit → `git push -u origin <branch>`
-→ PR verdict file written (per `mugiwara-pr`) → branch + verdict handed to you,
+→ PR verdict file written (`.mugiwara/results/<mission>/07-pr-verdict.md`, a
+ready-to-paste PR summary) → branch + verdict handed to you,
 who opens the PR. The crew never creates a PR, merges, or deploys.

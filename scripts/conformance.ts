@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 // scripts/conformance.ts — C1: cross-platform conformance suite.
 // Every installable target: materialize the standard-feature fixture repo,
-// install the target, run the four core scripts, and compare a normalized
-// snapshot (state fields, report sections, evidence header, gitignore block,
-// file count) against test/golden/<target>.json. Exit 1 on any difference
+// install the target, run the core scripts, and compare a normalized
+// snapshot (state fields, gitignore block, file count) against
+// test/golden/<target>.json. Exit 1 on any difference
 // with a diff; --update-golden regenerates. The snapshots are normalized:
 // timestamps, hashes, and random filenames are excluded so a golden is stable
 // across runs.
@@ -114,19 +114,13 @@ function snapshot(targetId: string): Record<string, unknown> {
       writeFileSync(exclude, (existsSync(exclude) ? readFileSync(exclude, 'utf8') : '') + '\n' + untracked.join('\n') + '\n');
     }
 
-    // 3. run the four core scripts + the gitignore write the CLI does post-install
+    // 3. run the core scripts + the gitignore write the CLI does post-install
     sh(`bash "${root}/scripts/lane.sh" main --json`, dir);
     sh(`bash "${root}/scripts/savepoint.sh" ${MISSION} "" 1 auto`, dir);
-    sh(`bash "${root}/scripts/evidence.sh" ${MISSION} lint -- printf 'ok\\n'`, dir);
-    sh(`bash "${root}/scripts/mission-report.sh" ${MISSION}`, dir);
     ensureProjectGitignore(dir, { dryRun: false });
 
     // 4. normalize + collect
     const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', MISSION, 'state.json'), 'utf8'));
-    const reportFile = readdirSync(join(dir, '.mugiwara', 'reports')).find(f => f.endsWith(`-${MISSION}.md`));
-    const report = reportFile ? readFileSync(join(dir, '.mugiwara', 'reports', reportFile), 'utf8') : '';
-    const evFile = readdirSync(join(dir, '.mugiwara', 'results', MISSION)).find(f => f.includes('lint-'));
-    const ev = evFile ? readFileSync(join(dir, '.mugiwara', 'results', MISSION, evFile), 'utf8') : '';
     const gitignore = existsSync(join(dir, '.gitignore')) ? readFileSync(join(dir, '.gitignore'), 'utf8') : '';
 
     const countFiles = (p: string): number => {
@@ -161,11 +155,7 @@ function snapshot(targetId: string): Record<string, unknown> {
         budget_status: state.budget_status,
         sensitive_paths: state.sensitive_paths,
       },
-      report_sections: [...report.matchAll(/^#{2,3} .*$/gm)].map(m => m[0]),
-      evidence: {
-        header: ev.split('\n').filter(l => l.startsWith('# ') && !l.startsWith('# At:') && !/^# (Exit|Verdict):/.test(l)),
-        trailer: ev.split('\n').filter(l => /^# (Exit|Verdict):/.test(l)),
-      },
+      report_sections: [],
       gitignore_block: gitignore.split('\n').filter(l => l.includes('mugiwara') || l.includes('# ---')),
       file_count: {
         skills: countFiles(target.paths({ scope: 'project', projectDir: dir, home: '' }).skillsDir),

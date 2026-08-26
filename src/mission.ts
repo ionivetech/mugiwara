@@ -68,7 +68,7 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
 export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
   const { dryRun = false } = opts;
   const root = join(projectDir, '.mugiwara');
-  // mission allowlist — same as savepoint.sh / mission-report.sh. Dot-only
+  // mission allowlist — same as savepoint.sh. Dot-only
   // names (".", "..") would resolve upward through join(...,"..") and let
   // rmSync reach state.json/config outside the mission dir.
   if (!mission || /[^a-zA-Z0-9._-]/.test(mission) || /^\.+$/.test(mission)) throw new Error(`invalid mission name "${mission}" (allowlist: [a-zA-Z0-9._-], not a dot-path)`);

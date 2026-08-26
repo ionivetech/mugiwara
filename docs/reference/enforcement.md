@@ -39,7 +39,7 @@ never "the harness guarantees".
 | Rule | Stated in | Reality |
 |------|-----------|---------|
 | Lane re-run at each flow stage boundary | orchestration skill, check-ins | `lane.sh` computes honestly *when run*; nothing runs it |
-| Evidence capture over claims | every skill's iron law | `evidence.sh` writes a real log *when invoked*; a spoken "tests pass" is unchecked |
+| Evidence capture over claims | every skill's iron law | captured logs prove a check *ran*; a spoken "tests pass" is unchecked |
 | Heal cap (≤`heal_max_cycles`) | orchestration, healing | `savepoint.sh` computes `heal_halt` (`heal_cycle ≥ heal_max_cycles`, config default 3) into state; no mechanism stops a model that ignores it |
 | Blocker-zero DoD | definition-of-done | verified by a model reading a ledger a model wrote |
 | Lane monotonicity (rise, never drop) | triage-escalation | recorded in state; not enforced against a model that re-sizes downward |

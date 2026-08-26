@@ -18,9 +18,9 @@ vi.mock('../src/run.ts', async (importOriginal) => {
 });
 
 // A real process.exit stops execution. A no-op mock would let a command fall
-// through past its exit point (e.g. initiativeCmd spawning initiative.ts after
-// exit(1)) — so the mock THROWS, preserving real "stop here" semantics while
-// letting the test assert the exit code and keep the process alive.
+// through past its exit point — so the mock THROWS, preserving real "stop
+// here" semantics while letting the test assert the exit code and keep the
+// process alive.
 class ExitSignal extends Error {
   code: number;
   constructor(code: number) { super(`exit ${code}`); this.code = code; }
@@ -161,27 +161,6 @@ describe('run() — continue', () => {
       const { out } = await capture(['continue'], dir);
       expect(out).toContain('No mission in flight');
       expect(exitSpy).toHaveBeenCalledWith(2);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-});
-
-describe('run() — initiative', () => {
-  test('no subcommand prints usage and exits 1', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-init-'));
-    try {
-      const { err } = await capture(['initiative'], dir);
-      expect(err).toContain('usage: mugiwara initiative');
-      expect(exitSpy).toHaveBeenCalledWith(1);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-
-  test('with a subcommand it spawns scripts/initiative.ts against the project dir', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-init2-'));
-    writeFileSync(join(dir, 'plan.md'), '# Plan\n\nSolo mission, no Sub-missions table.\n');
-    try {
-      // sub = 'status' → spawns bun scripts/initiative.ts status plan.md (cwd=dir).
-      // The child exits on its own; cli only process.exit(>0) if the child does.
-      await capture(['initiative', 'status', 'plan.md'], dir);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
@@ -333,79 +312,3 @@ describe('run() — reset with --force removes mission dirs', () => {  test('res
   });
 });
 
-describe('run() — start', () => {
-  test('no mission prints usage and exits 1', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-start-'));
-    try {
-      const { err } = await capture(['start'], dir);
-      expect(err).toContain('usage: mugiwara start <mission>');
-      expect(exitSpy).toHaveBeenCalledWith(1);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-
-  test('solo plan: dispatches savepoint, no plan status update', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-start-solo-'));
-    mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
-    writeFileSync(join(dir, '.mugiwara', 'plans', '2026-08-20-fix-bug.md'), '# Fix bug\n\n## Goal\nFix it.\n');
-    const mockRun = vi.mocked(runScript);
-    mockRun.mockClear();
-    try {
-      const { out } = await capture(['start', 'fix-bug'], dir);
-      expect(out).toContain('begun at Flow 0');
-      // solo → member-less savepoint dispatch
-      expect(mockRun).toHaveBeenCalledTimes(1);
-      expect(mockRun.mock.calls[0][0]).toBe('savepoint.sh');
-      expect(mockRun.mock.calls[0][1]).toEqual(['fix-bug', '', '0', 'auto', 'full']);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-
-  test('team plan: dispatches savepoint with member, marks sub-mission in-progress in plan', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-start-team-'));
-    mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
-    writeFileSync(join(dir, '.mugiwara', 'plans', '2026-08-20-payment-gateway-v2.md'),
-      '# Payment Gateway v2\n\n## Sub-missions\n\n' +
-      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |\n' +
-      '|----|------|----------|--------|--------|------------|---------------|\n' +
-      '| sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [ ] | — | src/payment/ |\n' +
-      '| sub-2 | Refund Flow | Dev B | feat/refund | [ ] | sub-1 | src/payment/ |\n');
-    const mockRun = vi.mocked(runScript);
-    mockRun.mockClear();
-    try {
-      const { out } = await capture(['start', 'payment-gateway-v2', 'sub-1'], dir);
-      expect(out).toContain('begun at Flow 0');
-      // team → member savepoint dispatch
-      expect(mockRun).toHaveBeenCalledTimes(1);
-      expect(mockRun.mock.calls[0][0]).toBe('savepoint.sh');
-      expect(mockRun.mock.calls[0][1]).toEqual(['payment-gateway-v2', 'sub-1', '0', 'auto', 'full']);
-      // plan status cell updated [ ] → [~] (initiative set-status writes the plan)
-      const plan = readFileSync(join(dir, '.mugiwara', 'plans', '2026-08-20-payment-gateway-v2.md'), 'utf8');
-      expect(plan).toContain('| sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [~] |');
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-
-  test('no plan found prints error and exits 1', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-start-noplan-'));
-    mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
-    try {
-      const { err } = await capture(['start', 'nonexistent'], dir);
-      expect(err).toContain('no plan found');
-      expect(exitSpy).toHaveBeenCalledWith(1);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-
-  test('team plan with no matching assignee errors and suggests explicit member', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-start-nomatch-'));
-    mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
-    writeFileSync(join(dir, '.mugiwara', 'plans', '2026-08-20-payment-gateway-v2.md'),
-      '# Payment Gateway v2\n\n## Sub-missions\n\n' +
-      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |\n' +
-      '|----|------|----------|--------|--------|------------|---------------|\n' +
-      '| sub-1 | Payment Gateway | Dev A | feat/payment-gateway | [ ] | — | src/payment/ |\n');
-    try {
-      // git actor in the test repo is "Test <test@test.com>" — no assignee matches
-      const { err } = await capture(['start', 'payment-gateway-v2'], dir);
-      expect(err).toContain('no sub-mission assigned');
-      expect(exitSpy).toHaveBeenCalledWith(1);
-    } finally { rmSync(dir, { recursive: true, force: true }); }
-  });
-});

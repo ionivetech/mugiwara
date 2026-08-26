@@ -184,7 +184,7 @@ mention every agent file. Enforced by `--check-docs`.
 
 ## Skill count
 
-26 is the ceiling. A new skill replaces an old one — never add to grow.
+21 is the ceiling. A new skill replaces an old one — never add to grow.
 
 ## Commit style
 
@@ -193,7 +193,7 @@ Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`.
 ## Directory map
 
 ```
-content/skills/    — 26 skill dirs, each with SKILL.md + optional references/
+content/skills/    — 21 skill dirs, each with SKILL.md + optional references/
 content/agents/    — 14 agent .md files (11 user-facing + 3 internal)
 references/         — shared reference files (definition-of-done, source-grounding, etc.)
 docs/               — user-facing documentation

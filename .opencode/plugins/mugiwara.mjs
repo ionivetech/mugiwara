@@ -1,8 +1,9 @@
 // mugiwara — OpenCode plugin.
 //
 // Registers skills/agents via config hook (superpowers pattern: one plugin,
-// zero file-copy), announces the crew at session start, and handles runtime
-// mode switching. Helpers live in mugiwara-helpers.mjs — this module has a
+// zero file-copy) and handles runtime mode switching. Deliberately silent at
+// session start: mugiwara activates only when its skills/agents are used.
+// Helpers live in mugiwara-helpers.mjs — this module has a
 // single export because OpenCode's legacy loader calls every exported function
 // as a plugin (same constraint ponytail documents).
 //
@@ -64,9 +65,6 @@ function readBannerColors() {
     return {};
   }
 }
-
-const ANNOUNCE =
-  "Mugiwara crew available. The workflow auto-activates for non-trivial requests — no need to call `/using-mugiwara` at session start (it is an optional router). Run the crew pipeline inline in the main conversation: embody ONE crew role at a time using its skill, wait for its report, then move to the next. Never Task-dispatch a crew member — the crew runs in the main thread; subagents only for [PARALLEL] task batches, concurrent review/security, and independent re-run checks. Progress shows as checkpoint reports at wave/stage boundaries, pausing on failure or risk. Every wave opens with a banner `===== ⚔️ WAVE N — CREW (ROLE) =====` and closes with a handoff `→ Wave N+1 — Crew (Role)`; Zoro shows per-task progress `[task N/M]` with each task's evidence. Switch mode with `/mugiwara` (guided|semi|auto). See skills/mugiwara-workflow.";
 
 function parseFrontmatter(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
@@ -171,18 +169,5 @@ export default async () => ({
         if (change) applyModeChange(change);
       }
     }
-  },
-
-  'experimental.chat.system.transform': async (_input, output) => {
-    if (!output?.system || !Array.isArray(output.system)) return;
-    if (!output.system.some((s) => s.includes('Mugiwara crew available'))) {
-      if (output.system.length > 0) {
-        output.system[output.system.length - 1] += '\n\n' + ANNOUNCE;
-      } else {
-        output.system.push(ANNOUNCE);
-      }
-    }
-    const active = `Active mode: ${readMode()} (guided|semi|auto; flip applies next wave).`;
-    if (!output.system.some((s) => s.includes('Active mode:'))) output.system.push(active);
   },
 });

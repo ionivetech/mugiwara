@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,7 +10,6 @@ import { targets, TARGET_IDS } from './targets/index.ts';
 import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission, archiveMission } from './mission.ts';
-import { runOnboard } from './onboard.ts';
 import { runScript, RUNNABLE } from './run.ts';
 import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor } from './continue.ts';
 
@@ -29,13 +27,10 @@ export async function run(argv: string[]): Promise<void> {
     case 'list': return list(flags);
     case 'reset': return resetCmd(flags);
     case 'archive': return archive(flags, _);
-    case 'onboard': return onboardCmd(flags);
     case 'continue': return continueCmd(flags, _);
     case 'status': return statusCmd(flags);
     case 'run': return runCmd(flags, _);
     case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
-    case 'initiative': return initiativeCmd(flags, _);
-    case 'start': return startCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -62,12 +57,6 @@ function archive(flags: Args['flags'], positionals: string[]): void {
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
   if (result.index) console.log(`index updated: ${result.index}`);
-}
-
-async function onboardCmd(flags: Args['flags']): Promise<void> {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
-  if (!existsSync(projectDir)) throw new Error(`Project dir not found: ${projectDir}`);
-  await runOnboard(projectDir);
 }
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
@@ -140,22 +129,8 @@ async function install(flags: Args['flags']): Promise<void> {
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
-  // TASK 8: name exactly one next step, and state the active mode + enforce
-  // value since both change behaviour.
-  if (scope === 'project') {
-    const cfg = join(projectDir, '.mugiwara', 'config');
-    let mode = 'guided', enforce = 'block';
-    if (existsSync(cfg)) {
-      for (const line of readFileSync(cfg, 'utf8').split(/\r?\n/)) {
-        const [k, v] = line.split('=').map((s) => s.trim());
-        if (k === 'mode') mode = v;
-        if (k === 'enforce') enforce = v;
-      }
-    }
-    console.log(`\nNext: run \`mugiwara onboard\` to customise (mode=${mode}, enforce=${enforce} now).`);
-  } else {
-    console.log('\nNext: run `mugiwara onboard` in a project to write its .mugiwara/config.');
-  }
+  // A fresh install writes a default .mugiwara/config — point at it directly.
+  console.log('\nNext: edit .mugiwara/config to customise (mode, branch, coverage, depths).');
 }
 
 async function uninstall(flags: Args['flags']): Promise<void> {
@@ -311,90 +286,6 @@ function runCmd(flags: Args['flags'], positionals: string[]): void {
   if (code !== 0) process.exit(code);
 }
 
-/** `mugiwara initiative <status|conflict-check|set-status> <plan> [args]` — team sub-mission coordination. */
-function initiativeCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
-  const sub = positionals[1];
-  if (!sub) {
-    console.error('usage: mugiwara initiative <status|conflict-check|set-status> <plan-file> [--id <id> --status <s>]');
-    process.exit(1);
-  }
-  const script = join(import.meta.dirname, '..', 'scripts', 'initiative.ts');
-  // initiative.ts is TypeScript — spawn `bun` (which strips types), not node,
-  // which only strips types on >=22.18. engines floor is >=20.11.
-  const bun = process.platform === 'win32' ? 'bun.exe' : 'bun';
-  const r = spawnSync(bun, [script, ...positionals.slice(1)], {
-    cwd: projectDir,
-    stdio: 'inherit',
-    env: process.env,
-  });
-  if (r.error) throw r.error;
-  if (r.status) process.exit(r.status);
-}
-
-/** `mugiwara start <mission> [member]` — begin a mission from its plan. */
-function startCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
-  const mission = positionals[1];
-  if (!mission) {
-    console.error('usage: mugiwara start <mission> [member]');
-    process.exit(1);
-  }
-  // find the plan doc: plans/<mission>.md or plans/YYYY-MM-DD-<mission>.md
-  const plansDir = join(projectDir, '.mugiwara', 'plans');
-  let planFile = '';
-  if (existsSync(plansDir)) {
-    const bare = join(plansDir, `${mission}.md`);
-    if (existsSync(bare)) planFile = bare;
-    else {
-      const dated = readdirSync(plansDir).filter((f) => f.endsWith(`-${mission}.md`)).sort().pop();
-      if (dated) planFile = join(plansDir, dated);
-    }
-  }
-  if (!planFile) {
-    console.error(`mugiwara start: no plan found for "${mission}" in ${plansDir}`);
-    process.exit(1);
-  }
-  const plan = readFileSync(planFile, 'utf8');
-
-  // team plan = has a ## Sub-missions table; solo = none.
-  const subMatch = plan.match(/##\s*Sub-missions/i);
-  let member = positionals[2] ?? '';
-  if (subMatch && !member) {
-    // team: find the row whose Assignee matches this git actor
-    const actor = gitActor(projectDir);
-    const name = actor.split('<')[0].trim();
-    const rowRe = /^\|\s*([\w.-]+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|/gm;
-    let m: RegExpExecArray | null;
-    let found = '';
-    while ((m = rowRe.exec(plan))) {
-      const assignee = m[3].trim();
-      if (assignee === name || assignee === actor) { found = m[1].trim(); break; }
-    }
-    if (!found) {
-      console.error(`mugiwara start: no sub-mission assigned to "${name}" in ${planFile}. Pass a member explicitly: mugiwara start ${mission} <member>`);
-      process.exit(1);
-    }
-    member = found;
-  }
-
-  // write the savepoint: mission [member] flow=0 mode=auto lane=full (start)
-  const code = runScript('savepoint.sh', [mission, member, '0', 'auto', 'full'], projectDir);
-  if (code !== 0) process.exit(code);
-
-  // team plan: mark the sub-mission in-progress in the plan (source of truth)
-  if (subMatch && member) {
-    const init = join(import.meta.dirname, '..', 'scripts', 'initiative.ts');
-    const bun = process.platform === 'win32' ? 'bun.exe' : 'bun';
-    const r = spawnSync(bun, [init, 'set-status', planFile, '--id', member, '--status', 'in-progress'], {
-      cwd: projectDir, stdio: 'inherit', env: process.env,
-    });
-    if (r.status) process.exit(r.status);
-  }
-
-  console.log(`mugiwara start: ${mission}${member ? ` [${member}]` : ''} begun at Flow 0. Resume anytime with: mugiwara continue ${mission}${member ? ` ${member}` : ''}`);
-}
-
 function help(): void {
   console.log(`mugiwara ${VERSION} — the Straw Hat crew for AI agents
 
@@ -406,7 +297,6 @@ Usage:
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (spec/plans/results/review/issues[/logs])
   mugiwara archive <m>    fold a closed mission's evidence into its report, then remove loose files
-  mugiwara onboard       run the zero-LLM onboarding wizard (writes .mugiwara/config)
   mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
   mugiwara continue <m> [member]
                          print the exact resume point for that mission/member
@@ -415,10 +305,6 @@ Usage:
                          run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [wave] [mode]
                          shorthand for: mugiwara run savepoint.sh ...
-  mugiwara initiative <status|conflict-check|set-status> <plan> [args]
-                         team sub-mission coordination (status / conflict-check / set-status)
-  mugiwara start <mission> [member]
-                         begin a mission from its plan (solo, or team sub-mission by git actor)
   mugiwara --help        this help
   mugiwara --version     print version
 

@@ -25,30 +25,7 @@
     "budget_status": "ok",
     "sensitive_paths": []
   },
-  "report_sections": [
-    "## Mission header",
-    "## Token budget",
-    "## Tasks",
-    "## What changed",
-    "## Flow stages",
-    "## Gate & quality",
-    "## Evidence files",
-    "## Review & blockers",
-    "## State",
-    "## Evidence",
-    "## Updated"
-  ],
-  "evidence": {
-    "header": [
-      "# Evidence: lint",
-      "# Command: printf ok\\n",
-      "# ---"
-    ],
-    "trailer": [
-      "# Exit: 0",
-      "# Verdict: PASS"
-    ]
-  },
+  "report_sections": [],
   "gitignore_block": [
     "# >>> mugiwara >>> — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.",
     ".mugiwara/state/",
@@ -58,9 +35,9 @@
     "# <<< mugiwara <<<"
   ],
   "file_count": {
-    "skills": 48,
-    "agents": 48,
+    "skills": 42,
+    "agents": 42,
     "state": 1,
-    "evidence": 1
+    "evidence": 0
   }
 }

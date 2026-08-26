@@ -3,14 +3,25 @@
   "skill": "_no-skill",
   "trigger": {
     "positive": [
-      { "prompt": "correct a misspelled variable name in a comment" },
-      { "prompt": "update a markdown link in the project documentation" },
-      { "prompt": "tell me a joke about programmers" },
-      { "prompt": "translate this document to Japanese" },
-      { "prompt": "schedule a meeting for next Tuesday" }
+      {
+        "prompt": "correct a misspelled variable name in a comment"
+      },
+      {
+        "prompt": "update a markdown link in the project documentation"
+      },
+      {
+        "prompt": "tell me a joke about programmers"
+      },
+      {
+        "prompt": "translate this document to Japanese"
+      },
+      {
+        "prompt": "schedule a meeting for next Tuesday"
+      },
+      {
+        "prompt": "fix a typo in a comment in src/index.ts"
+      }
     ],
-    "negative": [
-      { "prompt": "fix a typo in a comment in src/index.ts" }
-    ]
+    "negative": []
   }
 }

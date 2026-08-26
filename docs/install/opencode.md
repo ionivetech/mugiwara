@@ -29,23 +29,22 @@ Restart OpenCode.
 
 ## How it works
 
-The plugin (`mugiwara.mjs`) does four things:
+The plugin (`mugiwara.mjs`) does three things:
 
 1. **Config hook** — registers `content/skills/` as a skills path and
    `content/agents/` as agents so OpenCode discovers the full crew
-   (26 skills + 11 agents (+3 internal)) without any file copying.
+   (21 skills + 11 agents (+3 internal)) without any file copying.
 
-2. **System transform hook** — injects the crew announce header and active
-   autonomy mode into every session's system prompt.
-
-3. **Chat message hook** — intercepts `/mugiwara` commands and
+2. **Chat message hook** — intercepts `/mugiwara` commands and
    natural-language mode switches, writing `.mugiwara/config`.
 
-4. **Commands** — the file-based installer copies slash commands
-   (`/mugiwara`, `/using-mugiwara`, `/mugiwara-plan`, etc.) to
-   `.opencode/commands/`.
+3. **Commands** — the file-based installer copies slash commands
+   (`/mugiwara`, `/mugiwara-continue`, `/mugiwara-review`,
+   `/mugiwara-security`) to `.opencode/commands/`.
 
-Skills are loaded on-demand via OpenCode's native `skill` tool. Agents appear
+Mugiwara stays silent at session start: nothing is injected until a mugiwara
+skill or agent is used. Skills load on-demand via OpenCode's native `skill`
+tool. Agents appear
 as subagents with full config (color, temperature, step limits). Runtime
 permissions are generated for internal subagent-only agents only
 (skeptic-verifier, eval-runner, memory-keeper); user-facing crew agents get

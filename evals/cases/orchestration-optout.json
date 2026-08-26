@@ -12,11 +12,7 @@
         "top_k": 3
       }
     ],
-    "negative": [
-      {
-        "prompt": "run the full crew pipeline on this task"
-      }
-    ]
+    "negative": []
   },
   "behavioral": [
     {

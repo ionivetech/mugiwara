@@ -5,7 +5,7 @@
 // Why this exists: the skills tell the crew to run `scripts/savepoint.sh`, but
 // the installer only ever copied `content/` and `references/` into a project.
 // That path resolved against the project's cwd, where the file does not exist,
-// so every savepoint / lane / evidence / mission-report call silently did
+// so every savepoint / lane call silently did
 // nothing. Resolving from the package root fixes it for every install target at
 // once.
 import { existsSync, readdirSync } from 'node:fs';
@@ -18,7 +18,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 export const SCRIPTS_DIR = join(here, '..', 'scripts');
 
 /** Scripts a project is meant to call. Anything else stays internal tooling. */
-export const RUNNABLE = ['savepoint.sh', 'lane.sh', 'evidence.sh', 'mission-report.sh'] as const;
+export const RUNNABLE = ['savepoint.sh', 'lane.sh'] as const;
 
 /**
  * Locate a POSIX shell. Windows has none natively, but Git for Windows ships

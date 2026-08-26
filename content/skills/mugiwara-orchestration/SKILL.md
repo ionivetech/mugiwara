@@ -101,7 +101,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Flow 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `mugiwara savepoint <mission>` to write final state, then `mugiwara run mission-report.sh <mission>` to generate the aggregate mission report at `.mugiwara/reports/YYYY-MM-DD-<mission>.md`. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `mugiwara savepoint <mission>` to write final state. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
 
 ## Spirit vs letter
 

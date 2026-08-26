@@ -21,14 +21,12 @@ read it as a reviewer.
 | **Security report** | `.mugiwara/review/YYYY-MM-DD-<mission>-security.md` | Jinbe (security) | Flow 7 | STRIDE, OWASP mapping, checklist, CVSS severity |
 | **Heal report** | `.mugiwara/results/<mission>/05-healing.md` | Brook (healing) | Flow 8 | Fixed list, escalated list, updated ledger |
 | **Closure report** | `.mugiwara/results/<mission>/06-closure.md` | Luffy (orchestrator) | Flow 9 | Mission summary, per-flow-stage outcomes, deferred items, lessons |
-| **Mission report** | `.mugiwara/reports/YYYY-MM-DD-<mission>.md` | `mugiwara run mission-report.sh` | Flow 9 | Human-readable summary: what changed, gates, state, token cost |
 | **PR verdict** | `.mugiwara/results/<mission>/07-pr-verdict.md` | Luffy (orchestrator) | Flow 9 | Ready PR summary block for the user to open the PR |
 | **Trace** | `(legacy, no longer written)` | Resume coordinator | Every dispatch | Dispatch → outcome — drives resume (legacy; mission state preferred) |
 | **Lessons ledger** | `.mugiwara/logs/lessons.md` | Memory Keeper | Cross-mission | One row per real lesson, append-only, all actors share |
-| **Evidence logs** | `.mugiwara/results/<mission>/<label>-<hash>.log` | `mugiwara run evidence.sh` | On demand | Command stdout/stderr capture with timestamp and exit code |
 
 The `mugiwara …` entries above are bundled shell scripts (`savepoint.sh`,
-`lane.sh`, `evidence.sh`, `mission-report.sh`) that the CLI resolves from the
+`lane.sh`) that the CLI resolves from the
 package root, so they work on every install target rather than only where a
 `scripts/` directory happens to sit in the cwd.
 

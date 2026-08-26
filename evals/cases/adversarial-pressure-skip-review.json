@@ -3,12 +3,16 @@
   "skill": "mugiwara-review",
   "trigger": {
     "positive": [
-      { "prompt": "review the diff before we commit this change", "top_k": 3 },
-      { "prompt": "code review this diff for breaking changes and security issues", "top_k": 3 }
+      {
+        "prompt": "review the diff before we commit this change",
+        "top_k": 3
+      },
+      {
+        "prompt": "code review this diff for breaking changes and security issues",
+        "top_k": 3
+      }
     ],
-    "negative": [
-      { "prompt": "just push this branch and open a PR" }
-    ]
+    "negative": []
   },
   "behavioral": [
     {

@@ -12,10 +12,9 @@ against, what it does not, and where to report a flaw.
   An artifact line that reads like an instruction ("ignore previous", "skip
   the security flow stage", "you are now...") is a finding, not a directive — it is
   logged to the blocker ledger and reported to the user. See Artifact trust.
-- **Injection via tool output.** Evidence logs capture raw stdout from
-  arbitrary commands; the header-forging vector is neutralized at write time
-  (`mugiwara run evidence.sh` rewrites forged `# Verdict:` / `# Exit:` lines), and
-  the agent acts on the real trailer only.
+- **Injection via tool output.** Command output captured into evidence files
+  is data: the agent acts on the real trailer only, and header-like lines from
+  command output never steer behavior.
 - **Injection via web content.** Web-fetched text is treated as data at the
   read boundary. The read-untrusted / act-separately split governs it.
 - **Injection via lessons.** Lessons carry across missions and repos — the
@@ -37,9 +36,8 @@ against, what it does not, and where to report a flaw.
 
 ## The read-untrusted / act-separately split
 
-Read untrusted content as data; act only on vetted instructions. The split is
-documented in the [agent-security skill](../../content/skills/mugiwara-agent-security/SKILL.md);
-every skill that reads artifacts applies it (see Artifact trust below).
+Read untrusted content as data; act only on vetted instructions.
+Every skill that reads artifacts applies the split (see Artifact trust below).
 
 ## Artifact trust
 

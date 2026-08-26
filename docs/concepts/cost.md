@@ -16,7 +16,7 @@ Only the **index** is a recurring cost. Body and references pay only when used.
 
 - **Target:** 1.2k tokens (descriptions + agent pointers)
 - **Gate:** 5,500 chars hard CI cap — any skill/agent description that pushes the total over fails validation
-- **Current:** 5,437 chars ≈ 1.36k tokens (26 skills + 14 agents), loaded every session
+- **Current:** 5,437 chars ≈ 1.36k tokens (21 skills + 14 agents), loaded every session
 
 The 5,500-char gate is the tightest in the suite: ~63 chars of headroom. One
 meaningful description edit, or one new skill/agent, blows the budget.
@@ -56,9 +56,9 @@ All numbers below were measured on this repo unless marked as an estimate.
 - **Words-to-warn/stop** (doc words, ignoring LOC; LOC tokens reduce headroom
   at 12 tok/line): lean ~3.7k / ~10.4k, standard ~7.4k / ~21.3k, full ~10.9k /
   ~32.6k.
-- **Static session overhead:** mugiwara catalog ~1,370 tokens (26 skills + 15
+- **Static session overhead:** mugiwara catalog ~1,370 tokens (21 skills + 15
   agents). Compare: ponytail fully injected ~1,300 tokens (5,227 bytes),
-  caveman ~625. Skill bodies (~200 KB across 26 skills) load on demand only —
+  caveman ~625. Skill bodies (~170 KB across 21 skills) load on demand only —
   ~0 until `skill()` fires.
 - **Honest limits:** the estimator counts LOC + doc words — a monotonic proxy,
   not real model-I/O telemetry. The true ceiling is the provider's accounting.

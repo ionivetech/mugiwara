@@ -1,6 +1,6 @@
 # Closure — full reference
 
-Detailed closure summary, terminal step, initiative writeback, and lessons.
+Detailed closure summary, terminal step, and lessons.
 Read after deciding to close a mission — never mid-argument.
 
 ## Detailed closure summary (mandatory, inline)
@@ -15,12 +15,21 @@ Present a detailed summary to the user — never a one-liner:
 - Deferred items + owner.
 - Next steps — PR material pointer, anything the user must do.
 
-## Terminal step + initiative writeback
+## Terminal step
 
 Save-point commit → push branch with plain `git push -u origin <branch>` → write
-`.mugiwara/results/<mission>/07-pr-verdict.md` per `mugiwara-pr` → hand branch +
-verdict to user. Crew never creates PR, never merges, never deploys. On push
-failure, fall back to local closure report.
+`.mugiwara/results/<mission>/07-pr-verdict.md` → hand branch + verdict to user.
+Crew never creates PR, never merges, never deploys. On push failure, fall back
+to local closure report.
+
+**Verdict file = ready PR material.** ONE document the user pastes into their
+PR: Title line (PR title) → Summary (key-point bullets) → What changed
+(compact file inventory paragraph) → Per-flow-stage evidence → Tests → Checks
+→ Verdict. Draw every verdict from captured evidence, never assertion. Scan
+the file for secret patterns before handoff — on a match, redact and log; a
+leaked secret in a pasted PR description is irreversible. Interpolated
+identifiers (branch, owner/repo) come from git config/remote only — validate
+against a safe charset (`[A-Za-z0-9._/-]`) and quote them in shell commands.
 
 **`auto_commit=off` (guided/semi only).** No save-point commit, no push — the
 working tree stays uncommitted. Write the verdict file exactly as usual, then
@@ -30,10 +39,6 @@ hand the user: the branch name, the exact commands to commit and push
 `git commit -m "<suggested message>" && git push -u origin <branch>`), and the
 verdict pointer. In `auto` mode `auto_commit` is ignored — the terminal step
 runs unchanged.
-
-When this mission is a sub-mission of a team initiative, after closure set
-that sub-mission's status cell to `done` in the initiative plan doc (`mugiwara initiative set-status <plan> --id <id> --status done` automates it).
-When all sub-missions show `[x]`, present initiative-level closure summary.
 
 ## Lessons
 

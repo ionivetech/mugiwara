@@ -3,6 +3,6 @@
   "kind": "marketplace-plugin",
   "version_matches_package": true,
   "skills_pointer_resolves": true,
-  "skills_count": 26,
+  "skills_count": 21,
   "agents_metadata_set_equal": true
 }
