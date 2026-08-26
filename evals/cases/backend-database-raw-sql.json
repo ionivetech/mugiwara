@@ -1,0 +1,23 @@
+{
+  "name": "backend-database-raw-sql",
+  "skill": "mugiwara-backend",
+  "trigger": {
+    "positive": [
+      { "prompt": "add a raw SQL query to the backend API endpoint", "top_k": 3 },
+      { "prompt": "write the database migration for invoices with error handling", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "restyle the settings page header" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Add a raw SQL query filtering invoices by customer name taken from the request. State how the value is bound and where constraints live.",
+      "rubric": [
+        "parameterized query or prepared statement, never string concatenation of user input",
+        "constraints enforced in the schema (unique/not-null/FK), not only app validation",
+        "transaction around any multi-row write"
+      ]
+    }
+  ]
+}
