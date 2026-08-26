@@ -213,6 +213,16 @@ if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$CHANGED_FILES" ];
   fi
 fi
 
+# policy as code: mugiwara.policy.yml lanes.force_full raises the
+# lane to full — upward only. Optional: no file or no bun = no-op.
+if command -v bun >/dev/null 2>&1 && { [ -f mugiwara.policy.yml ] || [ -f mugiwara.policy.yaml ]; }; then
+  POLICY_HITS=$(printf '%s\n' "$CHANGED_FILES" | bun "$(dirname "$0")/policy-force.ts" 2>/dev/null || true)
+  if [ -n "$POLICY_HITS" ]; then
+    LANE="full"
+    LANE_REASON="policy force_full ($POLICY_HITS)"
+  fi
+fi
+
 # explicit triage lane (M7) applied as a floor — the computed lane above may
 # raise it, never lower it. Sensitive-path escalation still wins
 # unconditionally: spike is a resize, not a rise, so it never displaces the
