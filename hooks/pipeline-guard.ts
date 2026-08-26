@@ -51,7 +51,7 @@ function readEnforce(): Enforce {
 
 /** Engaged = a mugiwara agent or skill ran in this session. */
 function engaged(sessionId: string): boolean {
-  const file = join(cwd, '.mugiwara', 'state', '.engaged');
+  const file = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(file)) return false;
   try {
     const m = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; touched_at?: string };
@@ -89,7 +89,7 @@ function sourceChanged(): boolean {
  * the write-boundary check (check 2).
  */
 function newestMissionState(): { mission: string; lane: string } | null {
-  const base = join(cwd, '.mugiwara', 'state');
+  const base = join(cwd, '.mugiwara', 'missions');
   if (!existsSync(base)) return null;
   let best: { mission: string; lane: string } | null = null;
   let bestAt = -1;
@@ -97,7 +97,9 @@ function newestMissionState(): { mission: string; lane: string } | null {
     for (const e of readdirSync(base, { withFileTypes: true })) {
       if (!e.isDirectory()) continue;
       for (const f of readdirSync(join(base, e.name))) {
-        if (!f.endsWith('.json')) continue;
+        // state.json (solo) or <member>.json (team) — never continue*.json
+        const stem = f.replace(/\.json$/, '');
+        if (!f.endsWith('.json') || stem === 'continue' || stem.startsWith('continue-')) continue;
         const p = join(base, e.name, f);
         try {
           const s = JSON.parse(readFileSync(p, 'utf8')) as { mission?: unknown; lane?: unknown };
@@ -121,7 +123,7 @@ const LANE_RANK: Record<string, number> = { direct: 0, lean: 1, standard: 2, ful
 
 /** An executor (Zoro/Brook) was dispatched or embodied in this session. */
 function executorDispatched(sessionId: string): boolean {
-  const file = join(cwd, '.mugiwara', 'state', '.engaged');
+  const file = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(file)) return false;
   try {
     const m = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; executor_dispatched_at?: string };
@@ -136,7 +138,7 @@ function executorDispatched(sessionId: string): boolean {
 
 /** A planner (Nami) was dispatched or embodied in this session. */
 function plannerDispatched(sessionId: string): boolean {
-  const file = join(cwd, '.mugiwara', 'state', '.engaged');
+  const file = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(file)) return false;
   try {
     const m = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; planner_dispatched_at?: string };
@@ -150,20 +152,19 @@ function plannerDispatched(sessionId: string): boolean {
 }
 
 /**
- * A plan doc under .mugiwara/plans/ was created or modified in this session.
- * .mugiwara/ is gitignored, so git status cannot see plan files — read the
- * filesystem directly and compare mtimes against the session's first-seen
- * marker. A plan written after the session engaged counts as "touched this
- * session". Only .mugiwara/plans/*.md counts — the plan doc is the artifact
- * only Nami may write.
+ * A plan doc (missions/<mission>/plan.md) was created or modified in this
+ * session. .mugiwara/ is gitignored, so git status cannot see plan files —
+ * read the filesystem directly and compare mtimes against the session's
+ * first-seen marker. Only a mission plan.md counts — the plan doc is the
+ * artifact only Nami may write.
  */
 function planTouched(): boolean {
-  const plansDir = join(cwd, '.mugiwara', 'plans');
-  if (!existsSync(plansDir)) return false;
+  const missionsDir = join(cwd, '.mugiwara', 'missions');
+  if (!existsSync(missionsDir)) return false;
   // session start = the marker's first_seen; anything newer is this session's work.
   // An ABSENT marker means the session never engaged — treat as untouched, never
   // as "every plan counts" (a 0 fallback would flag every pre-existing plan).
-  const markerFile = join(cwd, '.mugiwara', 'state', '.engaged');
+  const markerFile = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(markerFile)) return false;
   let sessionStart = 0;
   try {
@@ -172,11 +173,13 @@ function planTouched(): boolean {
   } catch { /* corrupt marker — treat as untouched */ }
   if (!sessionStart) return false;
   try {
-    for (const e of readdirSync(plansDir)) {
-      if (!e.endsWith('.md')) continue;
-      // lstat, not stat: a symlinked plan pointing outside .mugiwara/plans/
+    for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const plan = join(missionsDir, e.name, 'plan.md');
+      if (!existsSync(plan)) continue;
+      // lstat, not stat: a symlinked plan pointing outside .mugiwara/
       // must not count as a plan write.
-      const at = lstatSync(join(plansDir, e)).mtimeMs;
+      const at = lstatSync(plan).mtimeMs;
       if (at >= sessionStart) return true;
     }
   } catch { /* unreadable — treat as untouched */ }
@@ -232,7 +235,7 @@ async function main(): Promise<void> {
     // across harnesses.
     if (planTouched() && !plannerDispatched(sessionId)) {
       process.stderr.write(
-        '⚠ Mugiwara: a plan doc under .mugiwara/plans/ was written this session, ' +
+        '⚠ Mugiwara: a plan doc (missions/<mission>/plan.md) was written this session, ' +
         'but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. ' +
         'Only Nami writes the plan — dispatch nami-planner, or record the plan as a ' +
         'deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.\n',

@@ -11,7 +11,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -37,7 +37,7 @@ Devil's advocate with a checklist. Abilities: adversarial passes over any artifa
 4. Review with the prompt "find issues, do NOT validate".
 5. Classify every finding: contract-misread / actionable / trade-off / noise.
 6. Loop is bounded: 3 cycles max, then escalate to Luffy.
-7. Write findings to `.mugiwara/review/YYYY-MM-DD-<mission>-verifier.md`.
+7. Write findings to `.mugiwara/missions/<mission>/waves/08-verifier.md`.
 8. Never edit code — findings only.
 
 ## Output

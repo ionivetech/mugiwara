@@ -23,7 +23,6 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
                         Skeptic — adversarial verify
 ```
 
-Flow stages are phases, not files. The plan doc defines them. The harness runs inline.
 
 | # | Flow stage | Crew | Skill | Delivers |
 |---|------|------|-------|----------|
@@ -47,13 +46,9 @@ Flow stages are phases, not files. The plan doc defines them. The harness runs i
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 
-**Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/results/<mission>/01-execution.md`.
+**Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/waves/01-execution.md`.
 
 **Mode flips.** `/mugiwara mode <guided|semi|auto>` applies from the next flow stage, never mid-stage. If a flip arrives mid-stage, say so — "recorded, applies from Flow N+1" — never apply silently, never ignore.
-
-## Workspace
-
-Full layout: `references/workspace-layout.md`.
 
 ## Flow 0 — Triage (always first)
 
@@ -72,15 +67,17 @@ Luffy classifies every request 8 ways:
 
 Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
 
-Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/logs/`. Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
+Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/missions/<mission>/decisions.md`. Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
+
+**Audit-lite (Lane 0/1).** Small trail only: `state.json`, `waves/01-execution.md`, closure `report.md`; plan/spec/blockers appear on these lanes only when a blocker occurs. Big scans may dispatch ONE read-only investigation subagent (never edits) returning a compressed digest; writers stay inline.
 
 ## Session handoff
 
-At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/continue/<mission>/[member].json` before the final text response: mission, member, flow stage, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the flow stage. Next session starts with `/mugiwara continue <mission> [member]` — no re-explanation. `auto` mode continues across sessions via the continue file: one command per session, no re-explanation. State proves what is done; continue says what is next — verify next_action against state, escalate contradictions.
+At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` before the final text response: mission, member, flow stage, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the flow stage. Next session starts with `/mugiwara continue <mission> [member]` — no re-explanation. `auto` mode continues across sessions via the continue file: one command per session, no re-explanation. State proves what is done; continue says what is next — verify next_action against state, escalate contradictions.
 
 ## Blocker protocol
 
-Blocked agent appends to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`:
+Blocked agent appends to `.mugiwara/missions/<mission>/blockers.md`:
 ```
 | flow stage | task | symptom | attempted | help-needed |
 ```
@@ -88,12 +85,12 @@ Brook reads this at Flow 8. Never silently work around a blocker.
 
 ## Cleanup (Flow 9)
 
-Archive, never delete: run `mugiwara archive <mission>` — folds `logs/`, `spec/`, `review/`, `issues/` into the mission report and removes the loose files. Step results `results/<mission>/01..05` + `todos.md` are EVIDENCE — KEEP them in place; they feed `reports/` and closure links. Keep: everything under `results/<mission>/`, `plans/`, `reports/`, `config`, `logs/lessons.md`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec + review + security + blockers + decisions into `report.md`, removes session state (`*.json`). The dir ends as two files: plan.md + report.md. Keep cross-mission: `config`, `lessons.md`. Batch: `mugiwara clean [--all]`. Full layout: `references/workspace-layout.md`.
 
 ## Rules
 
 1. Evidence over claims — run checks, show output.
-2. No flow stage skipped without reason recorded in logs.
+2. No flow stage skipped without a reason recorded in the decision log.
 3. Heal loop: max 3 cycles, then escalate.
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
@@ -102,7 +99,7 @@ Archive, never delete: run `mugiwara archive <mission>` — folds `logs/`, `spec
 
 ## Iron Law
 
-EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact. Step results in results/<mission>/01..05 are EVIDENCE: never deleted at cleanup, they feed the mission report.
+EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.
 
 ## Artifact trust
 

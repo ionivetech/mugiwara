@@ -10,7 +10,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -34,12 +34,12 @@ Flow 7 of `mugiwara-workflow`, in parallel with Jinbe.
 4. Every finding carries path:line and severity (blocker / major / minor); public breaks get a migration path.
 5. Dispute with the implementer → escalate to Luffy; never hold a finding on ego after evidence refutes it.
 6. Deep security concerns are handed to Jinbe via `mugiwara-security` — not duplicated here.
-7. Write findings to `.mugiwara/review/` and route blockers/majors to Brook.
+7. Write findings to `.mugiwara/missions/<mission>/review.md` and route blockers/majors to Brook.
 8. At Flow 7 start, read `review_depth` from `.mugiwara/config`: `full` (breaking-change map + 5-axis + reliability rating + code attributes), `standard` (5-axis only), `quick` (severity-tagged findings only).
 
 ## Output
 
-Severity-tagged findings in `.mugiwara/review/YYYY-MM-DD-<mission>-review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; you may spawn check subagents, never another crew member.
+Severity-tagged findings in `.mugiwara/missions/<mission>/review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; you may spawn check subagents, never another crew member.
 
 ## Return to Luffy
 

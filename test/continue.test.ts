@@ -13,13 +13,22 @@ const SLOW = 30000;
 
 type Rec = Record<string, unknown>;
 
-/** Build a project dir with `.mugiwara/<root>/<mission>/<file>.json` savepoints. */
+/**
+ * Build a project dir with `.mugiwara/missions/<mission>/<file>.json` savepoints.
+ * `root: 'continue'` (default) maps file names to the continue family
+ * (`state` → continue.json, `<member>` → continue-<member>.json);
+ * `root: 'state'` writes the state family (`state` → state.json,
+ * `<member>` → <member>.json).
+ */
 function fixture(files: Array<{ root?: string; mission: string; file: string; body: Rec | string }>): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-continue-'));
   for (const f of files) {
-    const d = join(dir, '.mugiwara', f.root ?? 'continue', f.mission);
+    const d = join(dir, '.mugiwara', 'missions', f.mission);
     mkdirSync(d, { recursive: true });
-    writeFileSync(join(d, `${f.file}.json`), typeof f.body === 'string' ? f.body : JSON.stringify(f.body));
+    const name = f.root === 'state'
+      ? f.file
+      : f.file === 'state' ? 'continue' : `continue-${f.file}`;
+    writeFileSync(join(d, `${name}.json`), typeof f.body === 'string' ? f.body : JSON.stringify(f.body));
   }
   return dir;
 }
@@ -278,9 +287,9 @@ describe('readState — lane / heal / delegate fields', () => {
 describe('scan safety — unsafe mission dirs, unsafe member files, non-json ignored', () => {
   test('mission dirs failing isSafeKey and member files with unsafe names are skipped; non-json ignored', () => {
     const dir = fixture([{ mission: 'safe', file: 'state', body: entry('safe') }]);
-    const base = join(dir, '.mugiwara', 'continue');
+    const base = join(dir, '.mugiwara', 'missions');
     mkdirSync(join(base, 'has space'), { recursive: true });
-    writeFileSync(join(base, 'has space', 'state.json'), JSON.stringify(entry('x')));
+    writeFileSync(join(base, 'has space', 'continue.json'), JSON.stringify(entry('x')));
     mkdirSync(join(base, '.hidden'), { recursive: true });
     writeFileSync(join(base, 'safe', 'bad member.json'), JSON.stringify(entry('safe')));
     writeFileSync(join(base, 'safe', 'notes.txt'), 'not json');

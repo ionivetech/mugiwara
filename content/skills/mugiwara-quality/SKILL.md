@@ -16,6 +16,8 @@ Cook the checks properly; never cut corners to make them pass.
 
 Never assume `npm test`. Detect the project's real commands from package.json scripts, pyproject.toml, Makefile, and CI config. Use the project's own test/lint/build/format commands; do not invent parallel tooling.
 
+Reuse across flow stages: a check whose result is already recorded in `waves/02-audit.md` for an unchanged diff (same flow-base) is cited, not re-run; a changed diff re-runs fresh.
+
 ## Order
 
 1. Formatter — the project's formatter.
@@ -59,7 +61,7 @@ Say so explicitly, propose the minimal standard setup for the stack, and continu
 
 ## Report
 
-Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/results/<mission>/03-quality.md`. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next flow stage, fail → Brook (healing) or Zoro (trivial fix).
+Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/missions/<mission>/waves/03-quality.md`. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next flow stage, fail → Brook (healing) or Zoro (trivial fix).
 
 ## Rationalizations
 

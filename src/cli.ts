@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +27,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'list': return list(flags);
     case 'reset': return resetCmd(flags);
     case 'archive': return archive(flags, _);
+    case 'clean': return cleanCmd(flags);
     case 'continue': return continueCmd(flags, _);
     case 'status': return statusCmd(flags);
     case 'run': return runCmd(flags, _);
@@ -54,9 +55,64 @@ function archive(flags: Args['flags'], positionals: string[]): void {
   if (!mission) { console.error('usage: mugiwara archive <mission> [--project <dir>] [--dry-run]'); process.exit(1); }
   const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun) });
   if (result.report) console.log(`archive target: ${result.report}`);
+  else console.error(`no mission dir for "${mission}" under .mugiwara/missions/`);
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
   if (result.index) console.log(`index updated: ${result.index}`);
+}
+
+/**
+ * `mugiwara clean` — batch-archive every closed mission. A mission is closed
+ * when its dir holds a report.md and no live state.json/<member>.json. With
+ * --all, missions with live state are included too (--force overrides the
+ * safety stop). --before <date> restricts to missions whose state was last
+ * touched before that date.
+ */
+function cleanCmd(flags: Args['flags']): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const dryRun = flag(flags.dryRun);
+  const root = join(projectDir, '.mugiwara', 'missions');
+  if (!existsSync(root)) { console.log('nothing to clean (.mugiwara/missions/ does not exist).'); return; }
+  const before = str(flags.before);
+  const beforeMs = before ? Date.parse(before) : NaN;
+  if (before && !Number.isFinite(beforeMs)) { console.error(`invalid --before date: ${before}`); process.exit(1); }
+
+  let candidates = readdirSync(root, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && /^[A-Za-z0-9._-]+$/.test(e.name) && !/^\.+$/.test(e.name))
+    .map((e) => e.name);
+  // default: CLOSED missions only — a report.md present and no live session
+  // state. --all widens to every mission dir, including in-flight ones.
+  const hasLiveState = (m: string): boolean =>
+    readdirSync(join(root, m)).some((f) => {
+      const stem = f.replace(/\.json$/, '');
+      return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
+    });
+  if (!flag(flags.all)) {
+    candidates = candidates.filter((m) => existsSync(join(root, m, 'report.md')) && !hasLiveState(m));
+  } else if (!flag(flags.force)) {
+    const live = candidates.filter(hasLiveState);
+    if (live.length) {
+      console.error(`✗ in-flight mission(s): ${live.join(', ')}. Use --force to archive them anyway.`);
+      process.exit(1);
+    }
+  }
+  if (Number.isFinite(beforeMs)) {
+    candidates = candidates.filter((m) => {
+      const st = join(root, m, 'state.json');
+      const ts = existsSync(st) ? Date.parse(readStateUpdated(st)) : 0;
+      return ts > 0 ? ts < beforeMs : false;
+    });
+  }
+  if (!candidates.length) { console.log('nothing to clean.'); return; }
+  for (const m of candidates) {
+    const r = archiveMission(projectDir, m, { dryRun });
+    console.log(`${dryRun ? 'would clean' : 'cleaned'} ${m}${r.report ? ` → ${r.report}` : ''}`);
+    if (r.index) console.log(`index updated: ${r.index}`);
+  }
+}
+
+function readStateUpdated(statePath: string): string {
+  try { return JSON.parse(readFileSync(statePath, 'utf8')).updated_at ?? ''; } catch { return ''; }
 }
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
@@ -295,8 +351,10 @@ Usage:
   mugiwara uninstall     remove installed files via manifest
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
-  mugiwara reset         wipe mission state (spec/plans/results/review/issues[/logs])
-  mugiwara archive <m>    fold a closed mission's evidence into its report, then remove loose files
+  mugiwara reset         wipe mission state (missions/ + legacy dirs)
+  mugiwara archive <m>   fold a closed mission's waves into its report, then remove loose files
+  mugiwara clean [--all] [--before <date>]
+                         batch-archive every closed mission (report.md present, no live state)
   mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
   mugiwara continue <m> [member]
                          print the exact resume point for that mission/member
@@ -316,8 +374,10 @@ Flags:
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
   --check                with list: report missing files (health check)
-  --all                  with continue/status: every actor, not just yours
-  --keep-logs            with reset: keep .mugiwara/logs (lessons ledger survives)`);
+   --all                  with continue/status: every actor; with clean: include in-flight missions
+   --force                with clean --all: archive in-flight missions anyway
+   --before <date>        with clean: only missions last touched before this date
+   --keep-logs            with reset: keep lessons.md (lessons ledger survives)`);
 }
 
 const isMain = process.argv[1] !== undefined && fileURLToPath(import.meta.url) === resolve(process.argv[1]);

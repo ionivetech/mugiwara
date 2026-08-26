@@ -23,15 +23,16 @@ For every task in the completed flow stage, in order:
 1. **Per-task audit table.** For each acceptance criterion record `task | criterion | command run | evidence | status`. Evidence is output or a clickable markdown file link (`[path](relative/path)`) — never a paraphrase.
 2. **Dedupe re-runs.** Several criteria often share the same command (a flow stage of tasks all keyed on `npm test`). Run each UNIQUE check command ONCE per flow stage, scope it to the files this flow stage changed, and attach the same evidence row to every criterion it covers. Do not re-run the same suite N times for N tasks.
 3. **Scope by diff.** Before re-running, inspect what actually changed (`git diff --name-only <flow-base>..HEAD`). Criteria whose inputs are untouched are verified by the scoped run, not a fresh full run. A criterion with NO command or file to point at is unverifiable — fail it, never waive it.
-4. **Commit hygiene.** Run `git log --stat <flow-base>..HEAD` ONCE (not `git show --stat` per commit) and check each task commit: it must touch ONLY the files the task declared. Undeclared files added or declared files missing = fail.
-5. **Parallel-conflict check.** Run `git diff --name-only` across parallel task commits: no file may be touched by 2 tasks. A shared file means the parallel claim was false.
-6. **Honest classification.** Classify every failure truthfully as code or env. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code.
+4. **Reuse across flow stages.** If the diff is unchanged since the previous wave's report recorded a check result (same `flow-base`, same command), cite that result instead of re-running it. Changed diff → run fresh. This is the one exception to "never reuse a prior run": the prior run must be your own crew's, on-disk, with an identical diff.
+5. **Commit hygiene.** Run `git log --stat <flow-base>..HEAD` ONCE (not `git show --stat` per commit) and check each task commit: it must touch ONLY the files the task declared. Undeclared files added or declared files missing = fail.
+6. **Parallel-conflict check.** Run `git diff --name-only` across parallel task commits: no file may be touched by 2 tasks. A shared file means the parallel claim was false.
+7. **Honest classification.** Classify every failure truthfully as code or env. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code.
 
 ## Failure ledger
 
 Row schema + worked rows: `references/ledger-format.md`.
 
-Append each failing criterion as one row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`:
+Append each failing criterion as one row to `.mugiwara/missions/<mission>/blockers.md`:
 
 `| flow stage | task | symptom | attempted | help-needed |`
 
@@ -47,7 +48,7 @@ Never edit code. Findings only. Any urge to fix a finding means the audit has st
 
 ## Output
 
-Audit report to `.mugiwara/results/<mission>/02-audit.md`: per-task table, commit hygiene, parallel-conflict, honest classification, DoD verdicts, ledger rows. Show the verdict and the key evidence inline in the conversation — PASS → next flow stage. FAIL → report + ledger to Brook (Flow 8). You never fix a finding yourself; you may spawn check subagents for independent re-runs.
+Audit report to `.mugiwara/missions/<mission>/waves/02-audit.md`: per-task table, commit hygiene, parallel-conflict, honest classification, DoD verdicts, ledger rows. Show the verdict and the key evidence inline in the conversation — PASS → next flow stage. FAIL → report + ledger to Brook (Flow 8). You never fix a finding yourself; you may spawn check subagents for independent re-runs.
 
 ## Common rationalizations
 

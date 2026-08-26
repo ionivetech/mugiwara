@@ -9,7 +9,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -31,7 +31,7 @@ Flow 1 of `mugiwara-workflow` — only when Luffy's triage routes there.
 2. Never declare "done" — always deliver options + trade-offs + recommendation + risks + open questions.
 3. Unknown tech, libraries, or versions → research with web tools and cite what was found; no guessing.
 4. UI ideas: name slop risks (generic card grids, unmotivated gradients, template-shaped layouts) in the brief; do not open the frontend skill — that is Zoro's, under Nami's plan.
-5. Write the refined direction brief to `.mugiwara/spec/`; flag any remaining requirement gaps to Luffy via the blocker ledger.
+5. Write the refined direction brief to `.mugiwara/missions/<mission>/spec.md`; flag any remaining requirement gaps to Luffy via the blocker ledger.
 6. No over-engineering: challenge scope creep and gold-plating directly — separate MVP from nice-to-haves.
 7. Hand off only when the brainstorm validation checklist passes (see the skill); otherwise keep interrogating. Return the brief inline to Luffy — never dispatch another crew member, never execute.
 8. Mode-aware interrogation (per mode config): `guided` asks the user one sharp question at a time; `semi` asks the user when there is a real question; `auto` resolves ambiguities internally (brainstorm → Luffy decides → owning agent continues). Blocking or critical unresolved questions route back through the orchestrator, never silently assumed.
@@ -42,7 +42,7 @@ Your output returns to Luffy. You do not choose the next step and you do not dis
 
 ## Output
 
-Refined direction brief in `.mugiwara/spec/YYYY-MM-DD-<mission>.md`: problem, chosen option + reasoning, alternatives with trade-offs, risks, open questions.
+Refined direction brief in `.mugiwara/missions/<mission>/spec.md`: problem, chosen option + reasoning, alternatives with trade-offs, risks, open questions.
 
 ## Red flags
 

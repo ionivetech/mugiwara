@@ -26,7 +26,7 @@ it embodies a role.
 | `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
 | `mugiwara-testcases` | User-test intake: immutable-gold rule, declarative-AC routing, consent, failure adjudication |
 | `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
-| `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/state/<mission>/[member].json`; never restart |
+| `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/missions/<mission>/[member].json`; never restart |
 | `mugiwara-lessons` | Cross-mission memory: actionable lessons ledger, read at triage, written at closure |
 
 ## Engineering practice

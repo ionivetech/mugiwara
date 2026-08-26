@@ -1,36 +1,44 @@
 // test/mission.test.ts
 import { test, expect } from 'vitest';
-import { mkdtempSync, writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { resetMission, archiveMission } from '../src/mission.ts';
 
-test('resetMission removes mission state, keeps config/manifest/backup', () => {
+test('resetMission removes mission dirs, keeps config/manifest/backup', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-reset-'));
   const root = join(dir, '.mugiwara');
-  for (const sub of ['spec', 'plans', 'results', 'review', 'issues', 'logs', 'backup']) {
-    mkdirSync(join(root, sub), { recursive: true });
-    writeFileSync(join(root, sub, 'x.md'), 'x');
-  }
+  mkdirSync(join(root, 'missions', 'demo', 'waves'), { recursive: true });
+  writeFileSync(join(root, 'missions', 'demo', 'plan.md'), 'plan');
+  writeFileSync(join(root, 'missions', 'demo', 'state.json'), '{"actor":"x"}');
+  writeFileSync(join(root, 'missions', 'demo', 'waves', '01-execution.md'), 'x');
+  mkdirSync(join(root, 'backup'), { recursive: true });
   writeFileSync(join(root, 'config'), 'mode=guided\n');
-  const { removed, kept } = resetMission(dir, false);
-  expect(removed).toContain('plans');
-  expect(removed).toContain('logs');
+  const { removed, kept } = resetMission(dir, false, true);
+  expect(removed).toContain('missions');
   expect(kept).toContain('config');
   expect(kept).toContain('backup');
-  expect(existsSync(join(root, 'plans'))).toBe(false);
+  expect(existsSync(join(root, 'missions'))).toBe(false);
   expect(existsSync(join(root, 'config'))).toBe(true);
 });
 
-test('resetMission --keep-logs preserves logs (lessons ledger)', () => {
+test('resetMission --keep-logs preserves lessons.md (new home and legacy home)', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-resetkl-'));
   const root = join(dir, '.mugiwara');
-  mkdirSync(join(root, 'logs'), { recursive: true });
-  writeFileSync(join(root, 'logs', 'lessons.md'), 'lessons');
-  const { removed, kept } = resetMission(dir, true);
-  expect(removed).not.toContain('logs');
-  expect(kept).toContain('logs');
-  expect(existsSync(join(root, 'logs', 'lessons.md'))).toBe(true);
+  mkdirSync(join(root), { recursive: true });
+  writeFileSync(join(root, 'lessons.md'), 'lessons');
+  const { kept } = resetMission(dir, true);
+  expect(kept).toContain('lessons.md');
+  expect(existsSync(join(root, 'lessons.md'))).toBe(true);
+
+  // legacy pre-0.7 layout: logs/lessons.md survives a keep-logs reset too
+  const dir2 = mkdtempSync(join(tmpdir(), 'mugi-resetkl2-'));
+  const root2 = join(dir2, '.mugiwara');
+  mkdirSync(join(root2, 'logs'), { recursive: true });
+  writeFileSync(join(root2, 'logs', 'lessons.md'), 'lessons');
+  const r2 = resetMission(dir2, true);
+  expect(r2.kept).toContain(join('logs', 'lessons.md'));
+  expect(existsSync(join(root2, 'logs', 'lessons.md'))).toBe(true);
 });
 
 test('resetMission is a no-op without .mugiwara/', () => {
@@ -43,7 +51,7 @@ test('resetMission is a no-op without .mugiwara/', () => {
 test('resetMission removes branch-specific state-*.json files', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-resetbr-'));
   const root = join(dir, '.mugiwara');
-  mkdirSync(join(root, 'logs'), { recursive: true });
+  mkdirSync(join(root, 'missions'), { recursive: true });
   writeFileSync(join(root, 'state.json'), '{"actor":"test"}');
   writeFileSync(join(root, 'state-feat-fix.json'), '{"actor":"other"}');
   writeFileSync(join(root, 'state-other-branch.json'), '{"actor":"third"}');
@@ -60,96 +68,87 @@ test('resetMission removes branch-specific state-*.json files', () => {
 
 function buildArchiveFixture(dir: string): string {
   const root = join(dir, '.mugiwara');
-  const mk = (p: string) => { mkdirSync(join(root, p), { recursive: true }); };
-  mk('reports');
-  mk('results/demo');
-  mk('spec');
-  mk('review');
-  mk('issues');
-  mk('logs');
-  writeFileSync(join(root, 'reports', '2026-01-01-demo.md'), 'report');
-  writeFileSync(join(root, 'results', 'demo', '01-execution.md'), 'exec');
-  writeFileSync(join(root, 'results', 'demo', '02-quality.md'), 'quality');
-  writeFileSync(join(root, 'results', 'demo', '03-checkpoint.md'), 'checkpoint');
-  writeFileSync(join(root, 'results', 'demo', '04-review.md'), 'review');
-  writeFileSync(join(root, 'results', 'demo', '05-healing.md'), 'healing');
-  writeFileSync(join(root, 'results', 'demo', 'todos.md'), 'todos');
-  writeFileSync(join(root, 'results', 'demo', '06-closure.md'), 'closure');
-  writeFileSync(join(root, 'results', 'demo', '07-pr-verdict.md'), 'verdict');
-  writeFileSync(join(root, 'spec', 'demo.md'), 'spec');
-  writeFileSync(join(root, 'spec', '2026-08-13-demo.md'), 'spec');
-  writeFileSync(join(root, 'review', 'demo-review.md'), 'review');
-  writeFileSync(join(root, 'review', '2026-08-13-demo-review.md'), 'review');
-  writeFileSync(join(root, 'issues', 'demo-blockers.md'), 'issues');
-  writeFileSync(join(root, 'logs', 'demo.md'), 'log');
-  writeFileSync(join(root, 'logs', '2026-08-13-demo.md'), 'log');
-  writeFileSync(join(root, 'logs', 'lessons.md'), 'lessons');
-  mk('continue/demo');
-  writeFileSync(join(root, 'continue', 'demo', 'state.json'), '{"mission":"demo","wave":3}\n');
-  mk('state/demo');
-  writeFileSync(join(root, 'state', 'demo', 'state.json'), '{"mission":"demo","wave":3}\n');
+  const mission = join(root, 'missions', 'demo');
+  const mk = (p: string) => { mkdirSync(p, { recursive: true }); };
+  mk(join(mission, 'waves'));
+  writeFileSync(join(mission, 'plan.md'), '# Plan — demo\n\n- [x] T1\n');
+  writeFileSync(join(mission, 'spec.md'), 'spec body');
+  writeFileSync(join(mission, 'decisions.md'), 'decision log body');
+  writeFileSync(join(mission, 'blockers.md'), 'blocker rows');
+  writeFileSync(join(mission, 'review.md'), 'review findings');
+  writeFileSync(join(mission, 'security.md'), 'security findings');
+  writeFileSync(join(mission, 'waves', '01-execution.md'), 'exec evidence');
+  writeFileSync(join(mission, 'waves', '03-quality.md'), 'quality evidence');
+  writeFileSync(join(mission, 'waves', '06-closure.md'), 'closure summary');
+  writeFileSync(join(mission, 'waves', 'todos.md'), '- [x] T1');
+  writeFileSync(join(mission, 'waves', '07-pr-verdict.md'), 'pr verdict');
+  writeFileSync(join(mission, 'state.json'), JSON.stringify({ mission: 'demo', flow: 9 }) + '\n');
+  writeFileSync(join(mission, 'continue.json'), JSON.stringify({ mission: 'demo', flow: 9 }) + '\n');
   writeFileSync(join(root, 'config'), 'mode=guided\n');
-  return root;
+  return mission;
 }
 
-test('archiveMission keeps step results as evidence, removes consumed cross-artifacts', () => {
+test('archiveMission folds waves + findings into report.md, keeps plan.md + report.md', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-'));
-  const root = buildArchiveFixture(dir);
-  const { removed, kept, index } = archiveMission(dir, 'demo');
+  const missionDir = buildArchiveFixture(dir);
+  const root = join(dir, '.mugiwara');
+  const { report, removed, kept, index } = archiveMission(dir, 'demo');
 
-  expect(removed).not.toContain(join('results', 'demo', '01-execution.md'));
-  expect(removed).toContain(join('spec', 'demo.md'));
-  expect(removed).toContain(join('spec', '2026-08-13-demo.md'));
-  expect(removed).toContain(join('review', 'demo-review.md'));
-  expect(removed).toContain(join('review', '2026-08-13-demo-review.md'));
-  expect(removed).toContain(join('issues', 'demo-blockers.md'));
-  expect(removed).toContain(join('logs', 'demo.md'));
-  expect(removed).toContain(join('logs', '2026-08-13-demo.md'));
-  expect(removed).toContain(join('continue', 'demo'));
-  expect(removed).toContain(join('state', 'demo'));
+  // report survives as the fold target
+  expect(report).toBe(join('missions', 'demo', 'report.md'));
+  expect(kept).toContain(join('missions', 'demo', 'plan.md'));
+  expect(kept).toContain(join('missions', 'demo', 'report.md'));
 
-  expect(kept).toContain(join('results', 'demo', '01-execution.md'));
-  expect(kept).toContain(join('results', 'demo', '02-quality.md'));
-  expect(kept).toContain(join('results', 'demo', '03-checkpoint.md'));
-  expect(kept).toContain(join('results', 'demo', '04-review.md'));
-  expect(kept).toContain(join('results', 'demo', '05-healing.md'));
-  expect(kept).toContain(join('results', 'demo', 'todos.md'));
-  expect(kept).toContain(join('results', 'demo', '06-closure.md'));
-  expect(kept).toContain(join('results', 'demo', '07-pr-verdict.md'));
-  expect(kept).toContain(join('reports', '2026-01-01-demo.md'));
-  expect(kept).toContain(join('logs', 'lessons.md'));
-  expect(kept).toContain('config');
+  // everything else was folded then removed
+  expect(removed).toContain(join('missions', 'demo', 'decisions.md'));
+  expect(removed).toContain(join('missions', 'demo', 'blockers.md'));
+  expect(removed).toContain(join('missions', 'demo', 'review.md'));
+  expect(removed).toContain(join('missions', 'demo', 'security.md'));
+  expect(removed).toContain(join('missions', 'demo', 'spec.md'));
+  expect(existsSync(join(missionDir, 'waves'))).toBe(false);
+  expect(existsSync(join(missionDir, 'state.json'))).toBe(false);
+  expect(existsSync(join(missionDir, 'continue.json'))).toBe(false);
 
-  expect(existsSync(join(root, 'results', 'demo', '01-execution.md'))).toBe(true);
-  expect(existsSync(join(root, 'results', 'demo', '05-healing.md'))).toBe(true);
-  expect(existsSync(join(root, 'results', 'demo', 'todos.md'))).toBe(true);
-  expect(existsSync(join(root, 'spec', 'demo.md'))).toBe(false);
-  expect(existsSync(join(root, 'spec', '2026-08-13-demo.md'))).toBe(false);
-  expect(existsSync(join(root, 'review', 'demo-review.md'))).toBe(false);
-  expect(existsSync(join(root, 'review', '2026-08-13-demo-review.md'))).toBe(false);
-  expect(existsSync(join(root, 'logs', 'demo.md'))).toBe(false);
-  expect(existsSync(join(root, 'logs', '2026-08-13-demo.md'))).toBe(false);
-  expect(existsSync(join(root, 'results', 'demo', '06-closure.md'))).toBe(true);
-  expect(existsSync(join(root, 'results', 'demo', '07-pr-verdict.md'))).toBe(true);
-  expect(existsSync(join(root, 'reports', '2026-01-01-demo.md'))).toBe(true);
-  expect(existsSync(join(root, 'logs', 'lessons.md'))).toBe(true);
-  expect(existsSync(join(root, 'config'))).toBe(true);
+  // the dir ends as two durable files
+  const left = readdirSync(missionDir);
+  expect(left.sort()).toEqual(['plan.md', 'report.md']);
 
-  expect(index).toBe(join('reports', 'index.md'));
-  const idx = readFileSync(join(root, 'reports', 'index.md'), 'utf8');
+  // report.md holds closure summary + every folded section, wave files last
+  const rep = readFileSync(join(missionDir, 'report.md'), 'utf8');
+  expect(rep).toContain('closure summary');
+  expect(rep).toContain('## Archived: decisions.md');
+  expect(rep).toContain('decision log body');
+  expect(rep).toContain('## Archived: blockers.md');
+  expect(rep).toContain('## Archived: review.md');
+  expect(rep).toContain('## Archived: security.md');
+  expect(rep).toContain('## Archived: spec.md');
+  expect(rep).toContain('## Archived: 01-execution.md');
+  expect(rep).toContain('exec evidence');
+  expect(rep).toContain('## Archived: 07-pr-verdict.md');
+
+  // index line lands at .mugiwara/index.md
+  expect(index).toBe('index.md');
+  const idx = readFileSync(join(root, 'index.md'), 'utf8');
   expect(idx).toContain('- demo —');
+  expect(existsSync(join(root, 'config'))).toBe(true);
 });
 
-test('archiveMission --dry-run removes nothing', () => {
+test('archiveMission --dry-run folds nothing and writes no index', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-dry-'));
-  const root = buildArchiveFixture(dir);
+  const missionDir = buildArchiveFixture(dir);
+  const root = join(dir, '.mugiwara');
   const { index } = archiveMission(dir, 'demo', { dryRun: true });
 
-  expect(existsSync(join(root, 'results', 'demo', '01-execution.md'))).toBe(true);
-  expect(existsSync(join(root, 'spec', 'demo.md'))).toBe(true);
-  expect(existsSync(join(root, 'logs', 'demo.md'))).toBe(true);
-  expect(existsSync(join(root, 'continue', 'demo', 'state.json'))).toBe(true);
-  expect(existsSync(join(root, 'state', 'demo', 'state.json'))).toBe(true);
+  expect(existsSync(join(missionDir, 'waves', '01-execution.md'))).toBe(true);
+  expect(existsSync(join(missionDir, 'spec.md'))).toBe(true);
+  expect(existsSync(join(missionDir, 'state.json'))).toBe(true);
   expect(index).toBeUndefined();
-  expect(existsSync(join(root, 'reports', 'index.md'))).toBe(false);
+  expect(existsSync(join(root, 'index.md'))).toBe(false);
+});
+
+test('archiveMission returns null report for an unknown mission', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-none-'));
+  const r = archiveMission(dir, 'ghost');
+  expect(r.report).toBeNull();
+  expect(r.removed).toEqual([]);
 });

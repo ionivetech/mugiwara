@@ -89,7 +89,7 @@ Public API changes must be reflected in README/docs/changelog where the repo has
 
 ## Findings format
 
-One line each: `path:line: [blocker|major|minor] problem → fix`. Write findings to `.mugiwara/review/YYYY-MM-DD-<mission>-review.md`. Deep security concerns → hand to Jinbe (`mugiwara-security`), do not duplicate. **Return to Luffy.** Luffy routes: blockers/majors → Brook, minors → Zoro or defer. Never dispatch Brook or Zoro yourself.
+One line each: `path:line: [blocker|major|minor] problem → fix`. Write findings to `.mugiwara/missions/<mission>/review.md`. Deep security concerns → hand to Jinbe (`mugiwara-security`), do not duplicate. **Return to Luffy.** Luffy routes: blockers/majors → Brook, minors → Zoro or defer. Never dispatch Brook or Zoro yourself.
 
 ## Common rationalizations
 

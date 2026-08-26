@@ -43,7 +43,7 @@ Multi-PR scope (>2 days). Split into sub-missions — never one giant plan:
 
 - Each sub-mission: own PR, done-criteria (checkbox list), continuation pointer.
 - Every sub-mission ends in a mergeable state.
-- Continuation via `.mugiwara/continue/<mission>/[member].json` — next sub-mission resumes from the pointer, never restarts.
+- Continuation via `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts.
 - Each sub-mission needs its own wave table.
 
 ## Interview-first & mode (prose detail)
@@ -51,7 +51,7 @@ Multi-PR scope (>2 days). Split into sub-missions — never one giant plan:
 Batch ALL blocking ambiguities into ONE question round before writing. If a
 major decision appears mid-plan, stop and ask then — never assume silently.
 Unanswered question goes back to Luffy, never forward to Zoro. Read the
-mission spec at `.mugiwara/spec/YYYY-MM-DD-<mission>.md` (the Flow 0/1
+mission spec at `.mugiwara/missions/<mission>/spec.md` (the Flow 0/1
 bridge); if none exists, return to Luffy for the spec bridge or brainstorm —
 never plan from an empty spec, that is fiction.
 

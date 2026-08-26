@@ -31,9 +31,13 @@ afterEach(() => exitSpy.mockClear());
 function fixture(files: Array<{ root: string; mission: string; file: string; body: Record<string, unknown> }>): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-'));
   for (const f of files) {
-    const d = join(dir, '.mugiwara', f.root, f.mission);
+    // root 'continue' → continue family names; root 'state' → state family
+    const name = f.root === 'continue'
+      ? f.file === 'state' ? 'continue' : `continue-${f.file}`
+      : f.file;
+    const d = join(dir, '.mugiwara', 'missions', f.mission);
     mkdirSync(d, { recursive: true });
-    writeFileSync(join(d, `${f.file}.json`), JSON.stringify(f.body));
+    writeFileSync(join(d, `${name}.json`), JSON.stringify(f.body));
   }
   return dir;
 }
@@ -234,21 +238,56 @@ describe('run() — no-install command paths', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('archive folds spec into report, keeps evidence, appends the index', async () => {
+  test('archive folds waves + findings into report.md, keeps plan.md, appends the index', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-arch2-'));
     try {
-      mkdirSync(join(dir, '.mugiwara', 'spec'), { recursive: true });
-      mkdirSync(join(dir, '.mugiwara', 'reports'), { recursive: true });
-      mkdirSync(join(dir, '.mugiwara', 'results', 'live-m'), { recursive: true });
-      writeFileSync(join(dir, '.mugiwara', 'spec', 'live-m.md'), '# spec');
-      writeFileSync(join(dir, '.mugiwara', 'reports', '2026-08-19-live-m.md'), '# report');
-      writeFileSync(join(dir, '.mugiwara', 'results', 'live-m', '01.md'), '# step');
+      const m = join(dir, '.mugiwara', 'missions', 'live-m');
+      mkdirSync(join(m, 'waves'), { recursive: true });
+      writeFileSync(join(m, 'plan.md'), '# plan');
+      writeFileSync(join(m, 'spec.md'), '# spec');
+      writeFileSync(join(m, 'decisions.md'), '# decisions');
+      writeFileSync(join(m, 'waves', '01-execution.md'), '# step');
+      writeFileSync(join(m, 'waves', '06-closure.md'), '# closure');
+      writeFileSync(join(m, 'state.json'), '{"mission":"live-m","flow":9}');
       const { out } = await capture(['archive', 'live-m'], dir);
-      expect(out).toContain('archive target: reports/2026-08-19-live-m.md');
-      expect(out).toContain('removed: spec');
-      expect(existsSync(join(dir, '.mugiwara', 'spec', 'live-m.md'))).toBe(false);
-      expect(existsSync(join(dir, '.mugiwara', 'results', 'live-m', '01.md'))).toBe(true);
+      expect(out).toContain('archive target: missions/live-m/report.md');
+      expect(out).toContain('removed:');
+      expect(existsSync(join(m, 'spec.md'))).toBe(false);
+      expect(existsSync(join(m, 'decisions.md'))).toBe(false);
+      expect(existsSync(join(m, 'waves'))).toBe(false);
+      expect(existsSync(join(m, 'plan.md'))).toBe(true);
+      const rep = readFileSync(join(m, 'report.md'), 'utf8');
+      expect(rep).toContain('# closure');
+      expect(rep).toContain('## Archived: 01-execution.md');
+      expect(rep).toContain('## Archived: decisions.md');
       expect(out).toContain('index updated');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('clean batch-archives closed missions, refuses in-flight without --force', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-clean-'));
+    try {
+      const mk = (m: string, live: boolean) => {
+        const d = join(dir, '.mugiwara', 'missions', m);
+        mkdirSync(join(d, 'waves'), { recursive: true });
+        writeFileSync(join(d, 'plan.md'), '# plan');
+        writeFileSync(join(d, 'waves', '06-closure.md'), '# closure');
+        if (!live) writeFileSync(join(d, 'report.md'), '# report');
+        if (live) writeFileSync(join(d, 'state.json'), `{"mission":"${m}","flow":5}`);
+      };
+      mk('done-m', false);
+      mk('live-m', true);
+      // default: only the closed mission is a candidate
+      const { out } = await capture(['clean'], dir);
+      expect(out).toContain('cleaned done-m');
+      expect(out).not.toContain('live-m');
+      expect(existsSync(join(dir, '.mugiwara', 'missions', 'done-m', 'waves'))).toBe(false);
+      expect(readFileSync(join(dir, '.mugiwara', 'missions', 'done-m', 'report.md'), 'utf8')).toContain('## Archived: 06-closure.md');
+      expect(existsSync(join(dir, '.mugiwara', 'index.md'))).toBe(true);
+      // --all without --force: in-flight blocks (process.exit(1))
+      const { err } = await capture(['clean', '--all'], dir);
+      expect(err).toContain('in-flight mission(s): live-m');
+      expect(exitSpy).toHaveBeenCalledWith(1);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
@@ -297,17 +336,16 @@ describe('run() — in-process install + uninstall (temp dir, no system writes)'
   });
 });
 
-describe('run() — reset with --force removes mission dirs', () => {  test('reset --force wipes spec/state and reports the removals', async () => {
+describe('run() — reset with --force removes mission dirs', () => {  test('reset --force wipes missions/ and reports the removals', async () => {
     const dir = fixture([
       { root: 'state', mission: 'live-m', file: 'state', body: state('live-m') },
     ]);
-    mkdirSync(join(dir, '.mugiwara', 'spec'), { recursive: true });
-    writeFileSync(join(dir, '.mugiwara', 'spec', 'live-m.md'), '# x');
+    mkdirSync(join(dir, '.mugiwara', 'missions', 'live-m'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'missions', 'live-m', 'plan.md'), '# x');
     try {
       const { out } = await capture(['reset', '--force'], dir);
       expect(out).toContain('removed:');
-      expect(existsSync(join(dir, '.mugiwara', 'spec'))).toBe(false);
-      expect(existsSync(join(dir, '.mugiwara', 'state'))).toBe(false);
+      expect(existsSync(join(dir, '.mugiwara', 'missions'))).toBe(false);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

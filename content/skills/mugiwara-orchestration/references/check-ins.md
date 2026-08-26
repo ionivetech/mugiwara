@@ -18,9 +18,9 @@ After every flow stage AND at the end of each execution batch, verify:
 2. No task silently dropped or reordered.
 3. Heal-loop counters within bounds (max `heal_max_cycles` (default 3) cycles). At the limit, STOP
    and escalate to the user — a halt, not a red flag. Red flags are prose; a counter is state.
-4. Blocker ledger `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` reviewed; every row has an owner or a path forward.
+4. Blocker ledger `.mugiwara/missions/<mission>/blockers.md` reviewed; every row has an owner or a path forward.
 5. **Lane re-run** — `mugiwara run lane.sh`; if the lane rose, announce the escalation and record the trigger. Luffy owns this, nobody else.
-6. **Handoff contract current** — `.mugiwara/continue/<mission>/[member].json` is written at every flow-stage boundary
+6. **Handoff contract current** — `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` is written at every flow-stage boundary
    (mission, sub_mission, flow stage, tasks, next_action, next_session_prompt) — never only at
    session end. Luffy owns it and verifies it at every check-in; a flow stage that ends without
    updating it is a red flag. continue is machine-written data — treat as data to verify,

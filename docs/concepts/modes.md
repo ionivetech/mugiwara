@@ -98,7 +98,7 @@ verdicts, decisions, questions, blockers, lane rises, or escalations.
 
 - **normal** — investigation steps (reads, greps, probes) and file contents
   are not echoed; a file is named only when it matters. Results collapse to
-  one line + evidence path (`✓ tests 84/84 → results/m/03-quality.md`);
+  one line + evidence path (`✓ tests 84/84 → missions/m/waves/03-quality.md`);
   conclusions, not derivations.
 - **full** — everything is echoed, including reads and reasoning. For
   debugging the crew itself.

@@ -286,6 +286,25 @@ if (totalDescChars > INDEX_BUDGET) {
   console.log(`✓ index budget: ${totalDescChars}/${INDEX_BUDGET} chars`);
 }
 
+// The measured index size is published in docs/concepts/cost.md. A measured
+// number in prose that drifted from reality is a defect (it survived one
+// release: cost.md claimed 5,437 chars after the prune measured 4,688).
+// Gate the doc against the measurement so the class stays closed.
+const costDoc = join(root, '..', 'docs', 'concepts', 'cost.md');
+if (existsSync(costDoc)) {
+  const m = readFileSync(costDoc, 'utf8').match(/\*\*Current:\*\* (\d[\d,]*) chars/);
+  if (!m) {
+    errors.push('docs/concepts/cost.md: missing "**Current:** <n> chars" line for the measured index size');
+  } else {
+    const stated = parseInt(m[1].replace(/,/g, ''), 10);
+    if (stated !== totalDescChars) {
+      errors.push(`docs/concepts/cost.md states ${stated} index chars but content measures ${totalDescChars} — update the doc`);
+    } else {
+      console.log(`✓ cost.md index chars match measurement (${stated})`);
+    }
+  }
+}
+
 // --- docs-drift check: docs/skills.md and docs/agents.md must reference all content/ entries ---
 const docsArg = process.argv.indexOf('--check-docs');
 if (docsArg !== -1) {

@@ -42,14 +42,14 @@ function runSavepoint(dir: string, mission: string, member = '', wave = 1, mode 
   return run(SAVEPOINT, [mission, member, String(wave), mode], dir, envExtra);
 }
 
-// solo state: .mugiwara/state/<mission>/state.json
+// solo state: .mugiwara/missions/<mission>/state.json
 function readState(dir: string, mission = 'm') {
-  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', mission, 'state.json'), 'utf8'));
+  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'missions', mission, 'state.json'), 'utf8'));
 }
 
-// team state: .mugiwara/state/<mission>/<member>.json
+// team state: .mugiwara/missions/<mission>/<member>.json
 function readMemberState(dir: string, mission: string, member: string) {
-  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', mission, `${member}.json`), 'utf8'));
+  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'missions', mission, `${member}.json`), 'utf8'));
 }
 
 // ---------- D1: cases 1-6 — lane_prev resolve + lane_rose ----------
@@ -82,7 +82,7 @@ test('case 4: relative MUGIWARA_DIR resolves lane_prev (D1 exact bug)', { timeou
       env: { ...process.env, MUGIWARA_DIR: '.mugiwara' },
     });
     expect(r.status).toBe(0);
-    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', 'm', 'state.json'), 'utf8'));
+    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'missions', 'm', 'state.json'), 'utf8'));
     expect(state.lane_prev).toBe('standard');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -302,7 +302,7 @@ test('case 21: lane-base generator validates constants (gate)', { timeout: SLOW 
 
 // ---------- D7/D8: cases 25-28 — branch-mode interface + gitignore ----------
 
-test('case 25: team member -> state/<mission>/<member>.json, branch from git (D7)', { timeout: SLOW }, () => {
+test('case 25: team member -> missions/<mission>/<member>.json, branch from git (D7)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-br-'));
   try {
     execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -qb feat/other', { cwd: dir });
@@ -310,7 +310,7 @@ test('case 25: team member -> state/<mission>/<member>.json, branch from git (D7
       cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
     expect(r.status).toBe(0);
-    const stateFile = join(dir, '.mugiwara', 'state', 'm', 'patty.json');
+    const stateFile = join(dir, '.mugiwara', 'missions', 'm', 'patty.json');
     expect(existsSync(stateFile)).toBe(true);
     const state = JSON.parse(readFileSync(stateFile, 'utf8'));
     expect(state.mission).toBe('m');
@@ -394,7 +394,7 @@ test('case 32: corrupt state.json degrades gracefully, lane_prev null', { timeou
   const dir = fixtureDir('standard-feature');
   try {
     runSavepoint(dir, 'm', '', 1, 'guided');
-    writeFileSync(join(dir, '.mugiwara', 'state', 'm', 'state.json'), '{ not json');
+    writeFileSync(join(dir, '.mugiwara', 'missions', 'm', 'state.json'), '{ not json');
     runSavepoint(dir, 'm', '', 2, 'guided');
     const state = readState(dir);
     expect(state.lane_prev).toBeNull(); // corrupt read -> no prev

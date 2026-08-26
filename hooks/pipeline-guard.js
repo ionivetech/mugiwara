@@ -29,7 +29,7 @@ function readEnforce() {
   return "block";
 }
 function engaged(sessionId) {
-  const file = join(cwd, ".mugiwara", "state", ".engaged");
+  const file = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(file))
     return false;
   try {
@@ -51,7 +51,7 @@ function sourceChanged() {
   }
 }
 function newestMissionState() {
-  const base = join(cwd, ".mugiwara", "state");
+  const base = join(cwd, ".mugiwara", "missions");
   if (!existsSync(base))
     return null;
   let best = null;
@@ -61,7 +61,8 @@ function newestMissionState() {
       if (!e.isDirectory())
         continue;
       for (const f of readdirSync(join(base, e.name))) {
-        if (!f.endsWith(".json"))
+        const stem = f.replace(/\.json$/, "");
+        if (!f.endsWith(".json") || stem === "continue" || stem.startsWith("continue-"))
           continue;
         const p = join(base, e.name, f);
         try {
@@ -81,7 +82,7 @@ function newestMissionState() {
 }
 var LANE_RANK = { direct: 0, lean: 1, standard: 2, full: 3, spike: 4 };
 function executorDispatched(sessionId) {
-  const file = join(cwd, ".mugiwara", "state", ".engaged");
+  const file = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(file))
     return false;
   try {
@@ -97,7 +98,7 @@ function executorDispatched(sessionId) {
   }
 }
 function plannerDispatched(sessionId) {
-  const file = join(cwd, ".mugiwara", "state", ".engaged");
+  const file = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(file))
     return false;
   try {
@@ -113,10 +114,10 @@ function plannerDispatched(sessionId) {
   }
 }
 function planTouched() {
-  const plansDir = join(cwd, ".mugiwara", "plans");
-  if (!existsSync(plansDir))
+  const missionsDir = join(cwd, ".mugiwara", "missions");
+  if (!existsSync(missionsDir))
     return false;
-  const markerFile = join(cwd, ".mugiwara", "state", ".engaged");
+  const markerFile = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(markerFile))
     return false;
   let sessionStart = 0;
@@ -127,10 +128,13 @@ function planTouched() {
   if (!sessionStart)
     return false;
   try {
-    for (const e of readdirSync(plansDir)) {
-      if (!e.endsWith(".md"))
+    for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!e.isDirectory())
         continue;
-      const at = lstatSync(join(plansDir, e)).mtimeMs;
+      const plan = join(missionsDir, e.name, "plan.md");
+      if (!existsSync(plan))
+        continue;
+      const at = lstatSync(plan).mtimeMs;
       if (at >= sessionStart)
         return true;
     }
@@ -162,7 +166,7 @@ async function main() {
 `);
     }
     if (planTouched() && !plannerDispatched(sessionId)) {
-      process.stderr.write("\u26A0 Mugiwara: a plan doc under .mugiwara/plans/ was written this session, " + "but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. " + "Only Nami writes the plan \u2014 dispatch nami-planner, or record the plan as a " + `deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.
+      process.stderr.write("\u26A0 Mugiwara: a plan doc (missions/<mission>/plan.md) was written this session, " + "but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. " + "Only Nami writes the plan \u2014 dispatch nami-planner, or record the plan as a " + `deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.
 `);
     }
     return;

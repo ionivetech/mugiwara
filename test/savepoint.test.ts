@@ -1,6 +1,6 @@
 // test/savepoint.test.ts — G3: every state.json field has a non-trivial assertion.
-// Layout: .mugiwara/state/<mission>/<member>.json (solo member=state.json) +
-// .mugiwara/continue/<mission>/<member>.json (D10). Identity = (mission, member).
+// Layout: .mugiwara/missions/<mission>/{state.json|<member>.json} +
+// {continue.json|continue-<member>.json} (D10). Identity = (mission, member).
 import { test, expect } from 'vitest';
 import { execSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
@@ -24,11 +24,11 @@ function setupGit(dir: string) {
 }
 
 function statePath(dir: string, mission: string, member = '') {
-  return join(dir, '.mugiwara', 'state', mission, member ? `${member}.json` : 'state.json');
+  return join(dir, '.mugiwara', 'missions', mission, member ? `${member}.json` : 'state.json');
 }
 
 function continuePath(dir: string, mission: string, member = '') {
-  return join(dir, '.mugiwara', 'continue', mission, member ? `${member}.json` : 'state.json');
+  return join(dir, '.mugiwara', 'missions', mission, member ? `continue-${member}.json` : 'continue.json');
 }
 
 test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', { timeout: 30000 }, () => {
@@ -131,7 +131,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
   const dir = mkdtempSync(join(tmpdir(), 'mugi-heal-'));
   try {
     setupGit(dir);
-    mkdirSync(join(dir, '.mugiwara', 'logs'), { recursive: true });
+    mkdirSync(join(dir, '.mugiwara', 'missions', 'heal-mission'), { recursive: true });
 
     // no decision log → heal_cycle = 1 (no healing happened)
     runSavepoint(dir, 'heal-mission "" 3 guided');
@@ -140,7 +140,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
 
     // one heal cycle section → cycle 2; the word "heal" in prose does not inflate
     writeFileSync(
-      join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
+      join(dir, '.mugiwara', 'missions', 'heal-mission', 'decisions.md'),
       [
         '# Decision log — heal-mission',
         '## Flow 8 — healing (Brook)',
@@ -154,7 +154,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
 
     // two recorded cycles → cycle 3; a "Flow 8b"-style adjacent section does NOT count
     writeFileSync(
-      join(dir, '.mugiwara', 'logs', '2026-08-19-heal-mission.md'),
+      join(dir, '.mugiwara', 'missions', 'heal-mission', 'decisions.md'),
       [
         '# Decision log — heal-mission',
         '## Flow 8 — healing (Brook)',
@@ -246,7 +246,7 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
     writeFileSync(join(dir, 'src', 'a.ts'), src);
     execSync('git add src/a.ts && git commit -m wip', { cwd: dir });
     // known evidence words: exactly 20 words in the mission results dir
-    const evDir = join(dir, '.mugiwara', 'results', 'test-mission');
+    const evDir = join(dir, '.mugiwara', 'missions', 'test-mission', 'waves');
     mkdirSync(evDir, { recursive: true });
     writeFileSync(join(evDir, '01-execution.md'), 'word '.repeat(20));
 

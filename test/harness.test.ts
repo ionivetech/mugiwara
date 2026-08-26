@@ -41,7 +41,7 @@ function runSavepoint(dir: string, args: string, envExtra: Record<string, string
 }
 
 function readState(dir: string, mission = 'm') {
-  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', mission, 'state.json'), 'utf8'));
+  return JSON.parse(readFileSync(join(dir, '.mugiwara', 'missions', mission, 'state.json'), 'utf8'));
 }
 
 const newRepo = (tag: string) => {
@@ -164,7 +164,7 @@ test('savepoint: mission-name allowlist rejects traversal, dots, unicode, metach
       env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
     expect(ok.status).toBe(0);
-    expect(existsSync(join(dir, '.mugiwara', 'state', 'qa-mission_1.v2', 'state.json'))).toBe(true);
+    expect(existsSync(join(dir, '.mugiwara', 'missions', 'qa-mission_1.v2', 'state.json'))).toBe(true);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -193,9 +193,9 @@ test('savepoint: sensitive escalation WINS over docs-only downgrade (twin of lan
 test('savepoint: heal_cycle counts Wave-8 healing sections in the decision log; heal prose does not inflate or error', { timeout: 40000 }, () => {
   const dir = newRepo('heal');
   try {
-    const logDir = join(dir, '.mugiwara', 'logs');
+    const logDir = join(dir, '.mugiwara', 'missions', 'healtest');
     mkdirSync(logDir, { recursive: true });
-    const logFile = join(logDir, '2026-08-19-healtest.md');
+    const logFile = join(logDir, 'decisions.md');
 
     // no decision log -> 1
     runSavepoint(dir, 'healtest "" 1 guided');
@@ -232,10 +232,10 @@ test('savepoint: heal_cycle counts Wave-8 healing sections in the decision log; 
 test('savepoint: blockers_open counts data rows, not header or separator', { timeout: 20000 }, () => {
   const dir = newRepo('blk');
   try {
-    const issuesDir = join(dir, '.mugiwara', 'issues');
+    const issuesDir = join(dir, '.mugiwara', 'missions', 'blktest');
     mkdirSync(issuesDir, { recursive: true });
     writeFileSync(
-      join(issuesDir, 'blktest-blockers.md'),
+      join(issuesDir, 'blockers.md'),
       '| wave | task | symptom | attempted | help-needed |\n|---|---|---|---|---|\n' +
         '| 3 | t1 | segfault | restart | review |\n| 3 | t2 | timeout | retry | owner |\n| 4 | t3 | oom | grow | owner |\n',
     );
@@ -254,18 +254,18 @@ test('savepoint: fully-completed plan reports tasks.done=total (not 0)', { timeo
   // must count every task line in either state.
   const dir = newRepo('tasks');
   try {
-    const plansDir = join(dir, '.mugiwara', 'plans');
+    const plansDir = join(dir, '.mugiwara', 'missions', 'qaplan');
     mkdirSync(plansDir, { recursive: true });
 
     // all checked, zero unchecked
-    writeFileSync(join(plansDir, 'qaplan.md'), '- [x] task 1\n- [x] task 2\n- [x] task 3\n');
+    writeFileSync(join(plansDir, 'plan.md'), '- [x] task 1\n- [x] task 2\n- [x] task 3\n');
     runSavepoint(dir, 'qaplan "" 1 guided');
     let state = readState(dir, 'qaplan');
     expect(state.tasks.done).toBe(3);
     expect(state.tasks.total).toBe(3);
 
     // mixed: 2 checked + 1 unchecked
-    writeFileSync(join(plansDir, 'qaplan.md'), '- [x] task 1\n- [x] task 2\n- [ ] task 3\n');
+    writeFileSync(join(plansDir, 'plan.md'), '- [x] task 1\n- [x] task 2\n- [ ] task 3\n');
     runSavepoint(dir, 'qaplan "" 1 guided');
     state = readState(dir, 'qaplan');
     expect(state.tasks.done).toBe(2);

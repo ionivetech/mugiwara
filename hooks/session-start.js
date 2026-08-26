@@ -50,13 +50,18 @@ var isNum = (s) => /^\d+$/.test(s);
 var isSafeKey = (s) => /^[A-Za-z0-9._-]+$/.test(s);
 var resumeContext = "";
 var actor = gitActor();
-var continueRoot = join(cwd, ".mugiwara", "continue");
+var missionsRoot = join(cwd, ".mugiwara", "missions");
 var active = [];
-if (existsSync(continueRoot)) {
-  const missions = readdirSync(continueRoot, { withFileTypes: true }).filter((e) => e.isDirectory() && isSafeKey(e.name)).map((e) => e.name);
+if (existsSync(missionsRoot)) {
+  const missions = readdirSync(missionsRoot, { withFileTypes: true }).filter((e) => e.isDirectory() && isSafeKey(e.name)).map((e) => e.name);
   for (const mission of missions) {
-    const dir = join(continueRoot, mission);
-    const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
+    const dir = join(missionsRoot, mission);
+    const files = readdirSync(dir).filter((f) => {
+      if (!f.endsWith(".json"))
+        return false;
+      const stem = f.slice(0, -".json".length);
+      return stem === "continue" || stem.startsWith("continue-");
+    });
     for (const f of files) {
       const file = join(dir, f);
       if (!existsSync(file))

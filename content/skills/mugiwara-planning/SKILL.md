@@ -88,15 +88,15 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 
 ## Full-level skeleton
 
-Full plan at `.mugiwara/plans/YYYY-MM-DD-<mission>.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
+Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
 
 ## Mission split (very large) — Lane 3
 
-Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/continue/<mission>/[member].json` — next sub-mission resumes from the pointer, never restarts. Nami writes the split before any task detail.
+Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. Nami writes the split before any task detail.
 
 ## Handoff
 
-STOP after writing. The plan is written to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to Luffy.** Present a 2-3 line summary (waves, task count, key risks) and hand off to Luffy for the GO decision. Luffy decides: approve → Zoro, revise → back to you, or escalate.
+STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to Luffy.** Present a 2-3 line summary (waves, task count, key risks) and hand off to Luffy for the GO decision. Luffy decides: approve → Zoro, revise → back to you, or escalate.
 
 Never hand to Zoro without Luffy's GO. In `guided` mode, Luffy asks the user before delegating to Zoro. In `semi`/`auto`, Luffy may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, Luffy routes.
 

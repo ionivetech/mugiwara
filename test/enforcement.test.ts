@@ -84,7 +84,7 @@ test('guard: Lane 0 with a savepoint recorded → silent', { timeout: 30000 }, (
     touchSource(dir);
     engage(dir);
     spawnSync('bash', [SAVEPOINT, 'trivial-fix', '', '0', 'guided'], { cwd: dir, stdio: 'ignore' });
-    expect(existsSync(join(dir, '.mugiwara', 'state', 'trivial-fix'))).toBe(true);
+    expect(existsSync(join(dir, '.mugiwara', 'missions', 'trivial-fix'))).toBe(true);
     const { out } = hook(GUARD, dir, { session_id: 's1' });
     expect(out).toBe('');
   } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -133,10 +133,10 @@ test('marker: only mugiwara tool use counts as engagement', { timeout: 20000 }, 
   const dir = repo();
   try {
     hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'general-purpose' }, session_id: 's1' });
-    expect(existsSync(join(dir, '.mugiwara', 'state', '.engaged'))).toBe(false);
+    expect(existsSync(join(dir, '.mugiwara', '.engaged'))).toBe(false);
 
     hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'mugiwara:zoro-execution' }, session_id: 's1' });
-    expect(existsSync(join(dir, '.mugiwara', 'state', '.engaged'))).toBe(true);
+    expect(existsSync(join(dir, '.mugiwara', '.engaged'))).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -158,7 +158,7 @@ test('guard: a different session id does not inherit engagement', { timeout: 200
 
 /** Write a savepoint-shaped state file with an explicit lane. */
 function stateWithLane(dir: string, mission: string, lane: string): void {
-  const d = join(dir, '.mugiwara', 'state', mission);
+  const d = join(dir, '.mugiwara', 'missions', mission);
   mkdirSync(d, { recursive: true });
   writeFileSync(join(d, 'state.json'), JSON.stringify({ mission, lane, wave: 3 }) + '\n');
 }
@@ -240,7 +240,7 @@ test('guard: an absent lane is check 1 territory, never a Lane 0 exemption', { t
     // mission on disk but no lane field — malformed, so check 2 has no opinion
     // and must not treat it as `direct`. Check 1 is satisfied (mission exists),
     // so the turn is not blocked; the honest outcome is silence, not a guess.
-    const d = join(dir, '.mugiwara', 'state', 'weird');
+    const d = join(dir, '.mugiwara', 'missions', 'weird');
     mkdirSync(d, { recursive: true });
     writeFileSync(join(d, 'state.json'), JSON.stringify({ mission: 'weird' }) + '\n');
     const { out, err } = hook(GUARD, dir, { session_id: 's1' });
@@ -265,7 +265,8 @@ const planWarned = (err: string): boolean => err.includes('Only Nami writes the 
 
 const touchPlan = (dir: string): void => {
   mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
-  writeFileSync(join(dir, '.mugiwara', 'plans', '2026-08-19-test-mission.md'), '# Plan\n');
+  mkdirSync(join(dir, '.mugiwara', 'missions', 'test-mission'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'missions', 'test-mission', 'plan.md'), '# Plan\n');
 };
 
 const dispatchPlanner = (dir: string, sessionId = 's1'): void => {
@@ -335,7 +336,7 @@ test('marker: a planner dispatch records planner_dispatched_at, not executor', {
   const dir = repo();
   try {
     hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'mugiwara:nami-planner' }, session_id: 's1' });
-    const marker = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', '.engaged'), 'utf8'));
+    const marker = JSON.parse(readFileSync(join(dir, '.mugiwara', '.engaged'), 'utf8'));
     expect(marker.planner_dispatched_at).toBeTruthy();
     expect(marker.executor_dispatched_at).toBeFalsy();
   } finally { rmSync(dir, { recursive: true, force: true }); }

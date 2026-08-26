@@ -23,9 +23,9 @@ Gates are binary: pass or fail, with evidence. No negotiation, no "almost passes
 ## Sonar-style quality gate
 
 Franky reads evidence from prior flow-stage reports (never re-runs
-checks): Jinbe (`.mugiwara/review/YYYY-MM-DD-<mission>-security.md`),
-Robin (`.mugiwara/review/YYYY-MM-DD-<mission>-review.md`), Sanji
-(`.mugiwara/results/<mission>/03-quality.md`).
+checks): Jinbe (`.mugiwara/missions/<mission>/security.md`),
+Robin (`.mugiwara/missions/<mission>/review.md`), Sanji
+(`.mugiwara/missions/<mission>/waves/03-quality.md`).
 Evaluated: Vulnerabilities=0, Bugs=0, Code smells≤project
 threshold, Coverage(new code)≥config threshold,
 Duplications(new code)<3%, Security hotspots reviewed≥80%.
@@ -34,7 +34,7 @@ Missing data → CANNOT pass: report gap, do not fake.
 
 ## Build gate
 
-Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capture the tail of output.
+Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capture the tail of output. Skip when `waves/03-quality.md` already recorded an exit-0 build on an unchanged diff.
 
 ## Optional e2e gate (per `mugiwara-quality`)
 
@@ -51,7 +51,7 @@ A fixed cross-project bar. Full definitions: `_shared/references/definition-of-d
 
 ## Verdict
 
-PASS only when coverage AND sonar AND build AND DoD all pass with evidence. Write verdict to `.mugiwara/results/<mission>/04-gates.md`.
+PASS only when coverage AND sonar AND build AND DoD all pass with evidence. Write verdict to `.mugiwara/missions/<mission>/waves/04-gates.md`.
 PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under threshold + by how much → return to Luffy (routes to Brook). Never dispatch the next flow stage yourself.
 
 ## Red flags

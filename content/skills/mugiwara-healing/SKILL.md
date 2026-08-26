@@ -14,7 +14,7 @@ Fix what failed, minimally, and prove it. One clean retry per cycle.
 
 ## Read the ledger first
 
-Brook's inputs: `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` rows + quality report (Sanji), gate verdict (Franky), review findings (Robin), security report (Jinbe). Process each ledger row — every row is one healing unit. Rows are appended by any agent that hit a blocker; never skip a row.
+Brook's inputs: `.mugiwara/missions/<mission>/blockers.md` rows + quality report (Sanji), gate verdict (Franky), review findings (Robin), security report (Jinbe). Process each ledger row — every row is one healing unit. Rows are appended by any agent that hit a blocker; never skip a row.
 
 ## Stop-the-Line triage (per failure)
 
@@ -55,7 +55,7 @@ Full taxonomy behind the matrix: `references/failure-taxonomy.md`.
 2. Every code fix ships with the failed check now passing (run it, capture output).
 3. Never delete or weaken tests/configs to make a failure disappear.
 4. After healing: update the ledger — mark each healed row with evidence; keep unfixed rows for escalation.
-5. Cycle counter: read `heal_halt` from `.mugiwara/state/<mission>/[member].json` (savepoint writes it as `heal_cycle ≥ heal_max_cycles`, config default 3). After this flow stage the flow returns to Flow 4 (Chopper) for re-audit. **When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past `heal_max_cycles`.
+5. Cycle counter: read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` (savepoint writes it as `heal_cycle ≥ heal_max_cycles`, config default 3). After this flow stage the flow returns to Flow 4 (Chopper) for re-audit. **When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past `heal_max_cycles`.
 
 ## Worker subagents
 

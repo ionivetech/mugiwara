@@ -196,7 +196,7 @@ project config file that overrides the global defaults.
 | 3 · Full | 9+ files, or auth/payment/migration touched | all 9 flow stages | 50k |
 | 4 · Spike | exploratory | brainstorm → re-triage | 3k |
 
-**How to use.** Automatic. View the result in `.mugiwara/state/<mission>/[member].json`
+**How to use.** Automatic. View the result in `.mugiwara/missions/<mission>/[member].json`
 (`lane`, `lane_reason`, `lane_rose`). Machine output:
 
 ```bash
@@ -240,7 +240,7 @@ project.
 ## 8. Savepoint state
 
 **What.** `mugiwara savepoint` writes
-`.mugiwara/state/<mission>/[member].json` at every flow-stage boundary. Every field
+`.mugiwara/missions/<mission>/[member].json` at every flow-stage boundary. Every field
 is **computed from git + file counts**, never model-supplied: mission, member,
 actor, branch, lane, flow stage, mode, base/head SHA, files touched, LOC delta,
 sensitive paths, task counts, open blockers, heal cycle, token estimate,
@@ -309,7 +309,7 @@ and picks up at the exact task — no re-run, no restart.
 relevant past lessons; at closure it appends new ones. Append-only, one
 actionable row per real lesson, platitudes rejected.
 
-**How to use.** Automatic. Inspect `.mugiwara/logs/lessons.md`. Kept by
+**How to use.** Automatic. Inspect `.mugiwara/lessons.md`. Kept by
 `mugiwara reset --keep-logs`.
 
 **Scenario.** Mission A learns "never auto-migrate a DB without a rollback
@@ -528,7 +528,7 @@ writes to `state/<mission>/[member].json` (`tokens_est`, `budget`,
 estimate (LANE_BASE + doc words ×1.35 + changed LOC ×12), not measured usage.
 Surfaced in the mission report as cost delta vs. lane budget.
 
-**How to use.** Automatic. Read `.mugiwara/state/<mission>/[member].json` or
+**How to use.** Automatic. Read `.mugiwara/missions/<mission>/[member].json` or
 the mission report.
 
 **Scenario.** A standard mission's estimated load passes 15k tokens → `warn`

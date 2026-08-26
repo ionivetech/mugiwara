@@ -9,7 +9,7 @@ write-scope: source
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -28,7 +28,7 @@ Flow 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 ## Rules
 
 1. Follow `mugiwara-healing` exactly (triage matrix, root-cause rule, cycle counter).
-2. Read `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` and work each row; mark rows fixed as you clear them.
+2. Read `.mugiwara/missions/<mission>/blockers.md` and work each row; mark rows fixed as you clear them.
 3. Never weaken or delete tests/configs to silence a failure.
 4. Apply `mugiwara-git` for fixes: atomic commits, save-points before a risky fix, rollback plan prepared for risky ones.
 5. Same failure after 3 heal cycles → stop and escalate to Luffy with full history.
@@ -38,7 +38,7 @@ Flow 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 
 ## Output
 
-Fixed list + escalated list in `.mugiwara/results/<mission>/05-healing.md` → summarized inline → back to Flow 4 (Chopper) for re-audit.
+Fixed list + escalated list in `.mugiwara/missions/<mission>/waves/05-healing.md` → summarized inline → back to Flow 4 (Chopper) for re-audit.
 
 ## Return to Luffy
 

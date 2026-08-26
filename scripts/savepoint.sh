@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# scripts/savepoint.sh — write .mugiwara/state/<mission>/<member>.json at every
-# wave boundary. Computed from git + file counts; zero model judgement.
+# scripts/savepoint.sh — write .mugiwara/missions/<mission>/<member>.json at every
+# flow-stage boundary. Computed from git + file counts; zero model judgement.
 # Identity is (mission, member), never branch. Solo = member empty → the file
 # is named state.json. Usage:
-#   savepoint.sh <mission> [member] [wave] [mode] [lane]
+#   savepoint.sh <mission> [member] [flow] [mode] [lane]
 set -u
 
 die() { echo "savepoint: $*" >&2; exit 1; }
@@ -130,15 +130,16 @@ fi
 # (BSD/macOS-safe: no \+ BRE).
 BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
 
-# state + continue live per (mission, member). Solo (member empty) → state.json.
-STATE_DIR="$MUGIWARA_DIR/state/$MISSION"
-CONTINUE_DIR="$MUGIWARA_DIR/continue/$MISSION"
+# state + continue live in the mission dir. Solo (member empty) → state.json
+# + continue.json; team writes <member>.json + continue-<member>.json so
+# parallel members never clobber each other.
+MISSION_DIR="$MUGIWARA_DIR/missions/$MISSION"
 if [ -n "$MEMBER" ]; then
-  STATE_FILE="$STATE_DIR/$MEMBER.json"
-  CONTINUE_FILE="$CONTINUE_DIR/$MEMBER.json"
+  STATE_FILE="$MISSION_DIR/$MEMBER.json"
+  CONTINUE_FILE="$MISSION_DIR/continue-$MEMBER.json"
 else
-  STATE_FILE="$STATE_DIR/state.json"
-  CONTINUE_FILE="$CONTINUE_DIR/state.json"
+  STATE_FILE="$MISSION_DIR/state.json"
+  CONTINUE_FILE="$MISSION_DIR/continue.json"
 fi
 
 [ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [member] [wave] [mode] [lane]"
@@ -255,9 +256,8 @@ if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
   esac
 fi
 
-# task counts from plan doc — plan is written date-prefixed (plans/YYYY-MM-DD-<mission>.md)
-# or bare (plans/<mission>.md); glob both, first match wins.
-PLAN_FILE=$(ls "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md 2>/dev/null | head -1 || true)
+# task counts from plan doc — bare name, one file per mission.
+PLAN_FILE="$MISSION_DIR/plan.md"
 TASKS_DONE=0
 TASKS_TOTAL=0
 if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
@@ -269,11 +269,7 @@ if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
 fi
 
 # blocker count
-# The crew writes the DATED name (`YYYY-MM-DD-<mission>-blockers.md`) — that is
-# what 15 prose sites mandate and what lands on disk. Matching only the bare
-# name made blockers_open structurally 0 forever, and that zero feeds the DoD
-# ship-readiness axis. Accept both; newest wins.
-BLOCKERS_FILE=$(ls -t "$MUGIWARA_DIR/issues/${MISSION}-blockers.md" "$MUGIWARA_DIR"/????-??-??-"${MISSION}"-blockers.md "$MUGIWARA_DIR/issues"/????-??-??-"${MISSION}"-blockers.md 2>/dev/null | head -1 || true)
+BLOCKERS_FILE="$MISSION_DIR/blockers.md"
 BLOCKERS_OPEN=0
 if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
   # data rows start with a wave number; header "| wave |" and separator
@@ -281,27 +277,18 @@ if [ -n "$BLOCKERS_FILE" ] && [ -f "$BLOCKERS_FILE" ]; then
   BLOCKERS_OPEN=$(grep -cE '^\| ?[0-9]+ ?\|' "$BLOCKERS_FILE" 2>/dev/null || true)
 fi
 
-# heal cycle — count Flow-8 (healing) section headings in the DECISION LOG,
-# which every mission writes (luffy-orchestrator rule 10). Not the word "heal"
-# anywhere (heal workers/healing text would inflate the counter and cause a
-# premature halt). Each heal cycle is logged as a "## Flow 8 — healing" section;
-# the [^0-9a-z] guard keeps adjacent "## Flow 8b"-style sections from counting.
-# Aggregate across ALL dated logs (a multi-day mission spans several files) —
-# reading only the newest would undercount earlier days' heal cycles.
+# heal cycle — count Flow-8 (healing) section headings in the DECISION LOG
+# (missions/<mission>/decisions.md), which every mission writes (luffy-
+# orchestrator rule 10). Not the word "heal" anywhere (heal workers/healing
+# text would inflate the counter and cause a premature halt). Each heal cycle
+# is logged as a "## Flow 8 — healing" section; the [^0-9a-z] guard keeps
+# adjacent "## Flow 8b"-style sections from counting.
 HEAL_CYCLE=1
 HEAL_COUNT=0
-# Cap the date prefix to today: a future-dated log (9999-…) must not inflate
-# the heal counter and trigger a premature halt.
-TODAY=$(date +%Y-%m-%d)
-for LOG_FILE in "$MUGIWARA_DIR"/????-??-??-"${MISSION}".md "$MUGIWARA_DIR/logs"/????-??-??-"${MISSION}".md; do
-  [ -f "$LOG_FILE" ] || continue
-  LOG_DATE=$(basename "$LOG_FILE" | cut -c1-10)
-  case "$LOG_DATE" in
-    ''|*[!0-9-]*) continue ;;
-  esac
-  if [ "$LOG_DATE" \> "$TODAY" ]; then continue; fi
-  HEAL_COUNT=$((HEAL_COUNT + $(grep -ciE '^## flow 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)))
-done
+LOG_FILE="$MISSION_DIR/decisions.md"
+if [ -f "$LOG_FILE" ]; then
+  HEAL_COUNT=$(grep -ciE '^## flow 8([^0-9a-z]|$)' "$LOG_FILE" 2>/dev/null || true)
+fi
 if [ "$HEAL_COUNT" -gt 0 ]; then
   HEAL_CYCLE=$((HEAL_COUNT + 1))
 fi
@@ -314,12 +301,12 @@ if [ "$HEAL_CYCLE" -ge "$HEAL_MAX_CYCLES" ] 2>/dev/null; then
   HEAL_HALT=true
 fi
 
-# evidence paths — per-mission results folder (quoted printf, no sed — mission
+# evidence paths — the mission's waves folder (quoted printf, no sed — mission
 # name is allowlisted above, but avoid sed metacharacter semantics entirely)
 EVIDENCE=""
-for evf in "$MUGIWARA_DIR/results/${MISSION}/"*.md; do
+for evf in "$MISSION_DIR/waves/"*.md; do
   [ -f "$evf" ] || continue
-  EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/results/${MISSION}/$(basename "$evf")"
+  EVIDENCE="${EVIDENCE}${EVIDENCE:+,}.mugiwara/missions/${MISSION}/waves/$(basename "$evf")"
 done
 
 # skill version — MUGIWARA's own package.json, resolved from the script
@@ -348,7 +335,7 @@ case "$LANE" in
   full) LANE_BASE=$LANE_BASE_full ;;
   spike) LANE_BASE=$LANE_BASE_spike ;;
 esac
-DOC_WORDS=$(cat "$MUGIWARA_DIR"/results/${MISSION}/*.md "$MUGIWARA_DIR"/plans/${MISSION}.md "$MUGIWARA_DIR"/plans/*-${MISSION}.md "$MUGIWARA_DIR"/spec/${MISSION}.md "$MUGIWARA_DIR"/spec/*-${MISSION}.md "$MUGIWARA_DIR"/logs/${MISSION}.md "$MUGIWARA_DIR"/logs/*-${MISSION}.md 2>/dev/null | wc -w | tr -d ' ')
+DOC_WORDS=$(cat "$MISSION_DIR"/waves/*.md "$MISSION_DIR"/plan.md "$MISSION_DIR"/spec.md "$MISSION_DIR"/decisions.md 2>/dev/null | wc -w | tr -d ' ')
 LOC_TOKENS=$(( LOC_CHURN * 12 ))
 TOKENS_SOURCE="computed"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
@@ -390,7 +377,7 @@ if [ "$BUDGET" -gt 0 ] 2>/dev/null; then
   fi
 fi
 
-mkdir -p "$MUGIWARA_DIR/state/$MISSION" "$MUGIWARA_DIR/continue/$MISSION"
+mkdir -p "$MISSION_DIR"
 
 node -e "
 const data = {
@@ -445,14 +432,14 @@ if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
 fi
 
-# --- continue/<mission>/<member>.json (D10): machine-written resume point ---
+# --- continue.json (D10): machine-written resume point ---
 # Written alongside state.json so an interrupted session (step-limit truncation,
 # crash, new session) can resume without human recall. Same trust as state.json:
 # computed fields, never model judgement. The resume skill treats it as data to
 # verify against the plan/todos, never verbatim instructions.
-# Scoped by (mission, member) like state.json — solo writes state.json, team
-# writes <member>.json, so parallel members never clobber each other. The
-# crew-written next_session_prompt line is preserved across savepoints.
+# Scoped by (mission, member) like state.json — solo writes continue.json, team
+# writes continue-<member>.json. The crew-written next_session_prompt line is
+# preserved across savepoints.
 if [ -n "$MISSION" ]; then
   NEXT_SESSION_PROMPT=""
   if [ -f "$CONTINUE_FILE" ]; then
