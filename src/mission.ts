@@ -136,26 +136,25 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     } catch { return ''; }
   }).filter(Boolean))];
 
-  // Context budget: visible footprint number; over-budget fails
-  // when a ceiling is configured. Unset budget = recorded only.
-  let footprintLine = '';
-  let tokensLine = '';
-  let tokensReportedLine = '';
+  // Cost surface — always readable section for the report (T8)
+  let costSection = '';
   if (!dryRun && state) {
     const chars = measureContextChars(dir);
     const budget = readBudgetConfig(projectDir);
-    footprintLine = formatFootprint(chars, budget);
+    const footprintLine = formatFootprint(chars, budget);
     if (budget && chars > budget) {
       throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
     }
-    // per-mission cost surface (T4/T8): always show total tokens + lane + delta
     const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
     const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
     const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
-    const b = budget || 0;
-    const delta = b ? ` — ${est <= b ? `${b - est} under budget` : `${est - b} over budget`}` : '';
-    tokensLine = `Tokens: ${est} (${src}, lane ${lane}${b ? `, budget ${b}` : ''}${delta})`;
-    // provider-reported rollup (T4): when any stage reported, sum exact usage
+    // lane budgets for readable delta (from lane-base.sh, mirrored here for display only)
+    const laneBudget = lane === 'lean' ? 12000 : lane === 'standard' ? 25000 : lane === 'full' ? 50000 : lane === 'spike' ? 3000 : 0;
+    const effBudget = budget || laneBudget;
+    const pct = effBudget ? Math.round((est / effBudget) * 100) : 0;
+    const delta = effBudget ? (est <= effBudget ? `${(effBudget - est).toLocaleString()} under` : `${(est - effBudget).toLocaleString()} over`) : 'no budget configured';
+    const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator (computed)';
+    // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;
     for (const f of files.filter(isStateFile)) {
@@ -167,11 +166,24 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
         }
       } catch { /* corrupt — skip */ }
     }
-    if (hasReported) tokensReportedLine = `Tokens reported total: ${reportedTotal} (provider-reported)`;
-    // if current state itself is reported but no other stage file yet, ensure rollup still shows
     if (!hasReported && src === 'reported' && est > 0) {
-      tokensReportedLine = `Tokens reported total: ${est} (provider-reported)`;
+      reportedTotal = est;
+      hasReported = true;
     }
+    costSection = [
+      '## Cost',
+      '',
+      '| Metric | Value |',
+      '|--------|-------|',
+      `| **Tokens used** | ${est.toLocaleString()} (${srcLabel}) |`,
+      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? Math.round(effBudget * 1.5).toLocaleString() : '—'} · stop ${effBudget ? (effBudget * 3).toLocaleString() : '—'}) |`,
+      `| **Budget status** | ${effBudget ? `${pct}% of budget · ${delta} · ${est >= effBudget * 3 ? 'STOP' : est >= effBudget * 1.5 ? 'WARN' : 'OK'}` : 'no lane budget'} |`,
+      `| **Context footprint** | ${chars.toLocaleString()} chars${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
+    ].join('\n');
+    if (hasReported) {
+      costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;
+    }
+    costSection += '\n';
   }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).
@@ -216,7 +228,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
             sensitive_paths: Array.isArray(state.sensitive_paths) ? (state.sensitive_paths as string[]) : [],
           } as never), mission)
         : '';
-      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (footprintLine ? `\n${footprintLine}\n` : '') + (tokensLine ? `${tokensLine}\n` : '') + (tokensReportedLine ? `${tokensReportedLine}\n` : '') + '\n');
+      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (costSection ? `\n${costSection}\n` : '') + '\n');
       renameSync(tmp, reportPath);
     }
     for (const f of fold) {
