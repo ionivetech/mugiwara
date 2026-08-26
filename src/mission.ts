@@ -153,7 +153,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const effBudget = budget || laneBudget;
     const pct = effBudget ? Math.round((est / effBudget) * 100) : 0;
     const delta = effBudget ? (est <= effBudget ? `${(effBudget - est).toLocaleString()} under` : `${(est - effBudget).toLocaleString()} over`) : 'no budget configured';
-    const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator (computed)';
+    const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator';
     // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;

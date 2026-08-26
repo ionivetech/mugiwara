@@ -86,7 +86,7 @@ All numbers below were measured on this repo unless marked as an estimate.
 - **Honest limits:** the estimator counts LOC + doc words — a monotonic proxy,
   not real model-I/O telemetry. The true ceiling is the provider's accounting:
   when the harness exposes real usage, feed it back with `MUGIWARA_TOKENS` —
-  the state then records `tokens_source: reported` instead of `computed`, and
+  the state then records `tokens_source: reported` instead of `estimator`, and
   the mission report carries a provider-backed number.
   Superpowers is not installed here, so no measured A/B exists; no fabricated
   numbers. To A/B: install both harnesses, run the same mission in identical
@@ -123,7 +123,7 @@ mugiwara savepoint --tokens-file /tmp/tokens.json <mission> ...
 
 **Tier 2/3 cannot report.** They run agents as markdown (no usage API, no shell
 hook at savepoint time), so there is no provider number to pipe — the state
-stays `tokens_source: computed` and the estimator remains the default. The
+stays `tokens_source: estimator` and the estimator remains the default. The
 rollup line is absent; do not fabricate numbers.
 
 ## Per-mission cost

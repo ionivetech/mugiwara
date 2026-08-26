@@ -397,6 +397,19 @@ fi
 # real usage. Monotonic beats precise — LANE_BASE stands in for the skills
 # loaded this lane (measured from content, validated by scripts/lane-base.ts);
 # loc_churn and written-artifact words scale with growth.
+# auto-detect harness for token reporting (Tier-1: Claude Code / opencode)
+# If --tokens-file not given, try env/file fallbacks so estimator is last resort.
+if [ -z "$TOKENS_FILE" ]; then
+  for _cand in "${MUGIWARA_TOKENS_FILE:-}" "${CLAUDE_TOKENS_FILE:-}" "${OPENCODE_TOKENS_FILE:-}" "/tmp/mugiwara-tokens.json" "$HOME/.cache/mugiwara/tokens.json" ".mugiwara/tokens.json"; do
+    [ -n "$_cand" ] && [ -f "$_cand" ] && TOKENS_FILE="$_cand" && break
+  done
+fi
+# detect harness (for logging / future tier checks)
+HARNESS="unknown"
+if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ] || echo "${ANTHROPIC_MODEL:-}" | grep -qi claude 2>/dev/null; then HARNESS="claude";
+elif [ -n "${OPENCODE:-}" ] || [ -f ".opencode/config.json" ] || [ -n "${OPENCODE_TOKENS_FILE:-}" ]; then HARNESS="opencode";
+elif [ -n "${CURSOR:-}" ] || [ -n "${VSCODE_GIT_ASKPASS_NODE:-}" ]; then HARNESS="cursor/vscode"; fi
+
 # MUGIWARA_TOKENS overrides as the reported value.
 # --tokens-file (T4) is the first-class provider-reported path: JSON {input_tokens, output_tokens}
 LANE_BASE=0
@@ -408,7 +421,7 @@ case "$LANE" in
 esac
 DOC_WORDS=$(cat "$MISSION_DIR"/"$FLOWDIR"/*.md "$MISSION_DIR"/plan.md "$MISSION_DIR"/spec.md "$MISSION_DIR"/decisions.md 2>/dev/null | wc -w | tr -d ' ')
 LOC_TOKENS=$(( LOC_CHURN * 12 ))
-TOKENS_SOURCE="computed"
+TOKENS_SOURCE="estimator"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
 if [ -n "${MUGIWARA_TOKENS:-}" ]; then
   TOKENS_EST="${MUGIWARA_TOKENS}"

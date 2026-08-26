@@ -62,7 +62,7 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
     expect(state.delegate_threshold).toBe(60); // default, no config present
     expect(state.delegate_due).toBe(false); // direct lane → budget 0 → never due
     expect(state.tokens_est).toBeGreaterThanOrEqual(0);
-    expect(['computed', 'reported']).toContain(state.tokens_source);
+    expect(['estimator', 'reported']).toContain(state.tokens_source);
     expect(state.budget).toBeGreaterThanOrEqual(0);
     expect(['ok', 'warn', 'stop']).toContain(state.budget_status);
     expect(typeof state.skill_version).toBe('string');
@@ -151,7 +151,7 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
     expect(typeof state.blockers_open).toBe('number');
     expect(typeof state.heal_cycle).toBe('number');
     expect(typeof state.budget).toBe('number');
-    expect(['computed', 'reported']).toContain(state.tokens_source);
+    expect(['estimator', 'reported']).toContain(state.tokens_source);
     expect(typeof state.skill_version).toBe('string');
     expect(typeof state.updated_at).toBe('string');
   } finally {
@@ -292,7 +292,7 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
     expect(state.lane).toBe('direct');
     expect(state.loc_delta).toBe(10);
     expect(state.tokens_est).toBe(147);
-    expect(state.tokens_source).toBe('computed');
+    expect(state.tokens_source).toBe('estimator');
 
     // override → reported
     runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '12345' });
