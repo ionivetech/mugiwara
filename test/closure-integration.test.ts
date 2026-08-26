@@ -73,7 +73,7 @@ describe('archive closure artifacts', () => {
     const rep = readFileSync(join(dir, '.mugiwara', 'missions', 'demo', 'report.md'), 'utf8');
     expect(rep).toContain('## Review routing');
     expect(rep).toMatch(/1\. `src\/auth\/gate\.ts`[^\n]*sensitive path/);
-    expect(rep).toContain('Context footprint:');
+    expect(rep).toContain('Context footprint');
     // provenance note attaches to branch head (git present)
     expect(readFileSync(join(dir, '.mugiwara', 'missions', 'demo', 'provenance.md'), 'utf8'))
       .not.toContain('Commit: not recorded');
