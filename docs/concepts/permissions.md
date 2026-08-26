@@ -23,7 +23,7 @@ edit code is not an auditor.
 
 **Stated plainly:** on tier 2/3 you do not have enforcement, and nothing in
 mugiwara pretends otherwise. Read your harness's capability row in
-[reference/harness-matrix.md](reference/harness-matrix.md) before relying on
+[reference/harness-matrix.md](../reference/harness-matrix.md) before relying on
 a boundary.
 
 ## Isolation for permission, never for autonomy

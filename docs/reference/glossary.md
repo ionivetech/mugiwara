@@ -19,8 +19,8 @@ page names the preferred one.
 | **Check-in** | Luffy's report at a flow-stage boundary: what happened, evidence links, next route. |
 | **Trail** | Everything a mission leaves under `.mugiwara/`: plans, waves, review/security findings, decisions, blockers. Folds into `report.md` at archive. |
 | **Archive** | `mugiwara archive <mission>` — folds the trail into report.md after the integrity gate passes; leaves durable files behind. |
-| **Provenance** | Per-commit attribution block (agent/model/lane/evidence) attached as a git note + `provenance.md`. See [provenance](provenance.md). |
-| **Policy** | `mugiwara.policy.yml` — org rules that push lanes/thresholds up only. See [policy as code](policy-as-code.md). |
+| **Provenance** | Per-commit attribution block (agent/model/lane/evidence) attached as a git note + `provenance.md`. See [provenance](../concepts/provenance.md). |
+| **Policy** | `mugiwara.policy.yml` — org rules that push lanes/thresholds up only. See [policy as code](../concepts/policy-as-code.md). |
 | **Index budget** | The 5,500-char ceiling on skill+agent descriptions loaded cold every session. Enforced by the validator. |
 
 Counts, single source of truth: **21 skills**, **11 user-facing agents

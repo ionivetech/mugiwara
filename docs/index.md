@@ -30,6 +30,7 @@ claim.
 | [Policy as code](concepts/policy-as-code.md) | `mugiwara.policy.yml`: org rules that push lanes and gates up |
 | [Closure tools](concepts/closure-tools.md) | Integrity gate, rollback map, review routing, context budget, signing |
 | [Permission boundaries](concepts/permissions.md) | Per-persona tool scopes, tier enforcement matrix, harness snippets |
+| [Lessons ledger](concepts/lessons.md) | The crew's cross-mission memory: format, lifecycle, exchange |
 | [Adoption kit](adoption.md) | Template repos, worked-example standard, lessons-ledger exchange |
 | [Enforcement](reference/enforcement.md) | Skip gates, evidence over claims, and capability tiers |
 | [Git discipline](concepts/git-strategy.md) | Commits, branches, save-points — and why the executor commits |
