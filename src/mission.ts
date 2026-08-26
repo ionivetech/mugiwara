@@ -126,6 +126,15 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   const files = readdirSync(dir);
   const state = primaryState(dir, files);
+  // unique models across every stage's state file (A4) — collected HERE,
+  // before the fold deletes the .json files; team members and solo
+  // re-savepoints each record the model that ran their stage.
+  const stageModels = [...new Set(files.filter(isStateFile).map((f) => {
+    try {
+      const s = JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>;
+      return typeof s.model === 'string' ? s.model : '';
+    } catch { return ''; }
+  }).filter(Boolean))];
 
   // Context budget: visible footprint number; over-budget fails
   // when a ceiling is configured. Unset budget = recorded only.
@@ -216,6 +225,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
           tasks_done: Number(state.tasks_done) || 0,
           tasks_total: Number(state.tasks_total) || 0,
           evidence: Array.isArray(state.evidence) ? (state.evidence as string[]) : [],
+          models: stageModels,
         });
         kept.push(join('missions', mission, 'provenance.md'));
       } catch { /* provenance is additive; archive proceeds */ }

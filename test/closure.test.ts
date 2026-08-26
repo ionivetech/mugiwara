@@ -156,6 +156,15 @@ describe('provenance', () => {
     expect(md).toContain('Commit: not recorded');
     expect(md).toContain('```');
   });
+  it('note lists unique models when flow history records a switch', () => {
+    const note = buildNote({ ...state, models: ['claude-x', 'fallback-y', 'claude-x'] });
+    expect(note).toContain('model(s): claude-x, fallback-y');
+    expect(note).not.toMatch(/· claude-x ·/); // single-env snapshot wording gone
+  });
+  it('no recorded models keeps the env-fallback wording', () => {
+    const note = buildNote({ ...state, model: 'solo-model' });
+    expect(note).toMatch(/· solo-model · lane full ·/);
+  });
   it('blame degrades without git or notes', () => {
     expect(blamePath('/nonexistent-repo', 'x.ts')).toContain('not a git repository');
   });

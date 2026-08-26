@@ -75,6 +75,23 @@ test('savepoint writes all state fields with non-trivial values (lane direct, no
   }
 });
 
+test('savepoint records model per stage: MUGIWARA_MODEL > ANTHROPIC_MODEL > unknown', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-model-'));
+  try {
+    setupGit(dir);
+    runSavepoint(dir, 'model-mission "" 1 auto', { MUGIWARA_MODEL: 'claude-x' });
+    expect(JSON.parse(readFileSync(statePath(dir, 'model-mission'), 'utf8')).model).toBe('claude-x');
+
+    runSavepoint(dir, 'model-mission "" 2 auto', { ANTHROPIC_MODEL: 'fallback-y' });
+    expect(JSON.parse(readFileSync(statePath(dir, 'model-mission'), 'utf8')).model).toBe('fallback-y');
+
+    runSavepoint(dir, 'model-mission "" 3 auto', { MUGIWARA_MODEL: '', ANTHROPIC_MODEL: '' });
+    expect(JSON.parse(readFileSync(statePath(dir, 'model-mission'), 'utf8')).model).toBe('unknown');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('savepoint records verbosity from config (full) and defaults to normal', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-verb-'));
   try {

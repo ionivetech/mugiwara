@@ -120,6 +120,14 @@ describe('archive closure artifacts', () => {
     expect(msg).toContain('context budget failed');
   });
 
+  it('provenance note lists unique models from per-stage state files', () => {
+    const m1 = buildMission({ mission: 'alpha', state: { branch: 'feat-a', base_sha: 'unknown', evidence: [], model: 'claude-x' } });
+    writeFileSync(join(m1, 'zoro.json'), JSON.stringify({ mission: 'alpha', member: 'zoro', model: 'fallback-y', branch: 'feat-a', base_sha: 'unknown', evidence: [] }));
+    archiveMission(dir, 'alpha');
+    const prov = readFileSync(join(dir, '.mugiwara', 'missions', 'alpha', 'provenance.md'), 'utf8');
+    expect(prov).toContain('model(s): claude-x, fallback-y');
+  });
+
   it('parallel archives of distinct missions both land in index.md (×20 for flake)', async () => {
     for (let i = 0; i < 20; i++) {
       rmSync(join(dir, '.mugiwara'), { recursive: true, force: true });

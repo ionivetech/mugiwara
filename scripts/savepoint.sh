@@ -99,6 +99,12 @@ esac
 [ "$DELEGATE_THRESHOLD" -gt 100 ] 2>/dev/null && DELEGATE_THRESHOLD=100
 ACTOR="${STATE_ACTOR:-${GIT_AUTHOR_NAME:-${GIT_ID:-${USER:-${USERNAME:-}}}}}"
 BRANCH="$(git branch --show-current 2>/dev/null || echo 'unknown')"
+# Per-stage model attribution (A4): record which model produced THIS stage.
+# MUGIWARA_MODEL wins over ANTHROPIC_MODEL; 'unknown' beats a lie. Closure
+# renders the unique set across stage files so mid-mission switches stay
+# visible in provenance instead of every line attributing to the last value.
+MODEL="${MUGIWARA_MODEL:-${ANTHROPIC_MODEL:-}}"
+[ -n "$MODEL" ] || MODEL="unknown"
 
 # treat the legacy empty-actor placeholder '""' as "no member" (solo). The old
 # interface used '""' for the actor slot; the new (mission, member) interface
@@ -419,6 +425,7 @@ const data = {
   flow: parseInt(process.argv[6], 10),
   mode: process.argv[7],
   verbosity: process.argv[32] || 'normal',
+  model: process.argv[37] || 'unknown',
   base_sha: process.argv[8],
   head_sha: process.argv[9],
   files_touched: parseInt(process.argv[10], 10),
@@ -452,7 +459,8 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
   "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
-  "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE"
+  "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE" \
+  "$MODEL"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
