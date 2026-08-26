@@ -139,6 +139,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   // Context budget: visible footprint number; over-budget fails
   // when a ceiling is configured. Unset budget = recorded only.
   let footprintLine = '';
+  let tokensLine = '';
   let tokensReportedLine = '';
   if (!dryRun && state) {
     const chars = measureContextChars(dir);
@@ -147,6 +148,13 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     if (budget && chars > budget) {
       throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
     }
+    // per-mission cost surface (T4/T8): always show total tokens + lane + delta
+    const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
+    const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
+    const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
+    const b = budget || 0;
+    const delta = b ? ` — ${est <= b ? `${b - est} under budget` : `${est - b} over budget`}` : '';
+    tokensLine = `Tokens: ${est} (${src}, lane ${lane}${b ? `, budget ${b}` : ''}${delta})`;
     // provider-reported rollup (T4): when any stage reported, sum exact usage
     let reportedTotal = 0;
     let hasReported = false;
@@ -160,6 +168,10 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       } catch { /* corrupt — skip */ }
     }
     if (hasReported) tokensReportedLine = `Tokens reported total: ${reportedTotal} (provider-reported)`;
+    // if current state itself is reported but no other stage file yet, ensure rollup still shows
+    if (!hasReported && src === 'reported' && est > 0) {
+      tokensReportedLine = `Tokens reported total: ${est} (provider-reported)`;
+    }
   }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).
@@ -204,7 +216,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
             sensitive_paths: Array.isArray(state.sensitive_paths) ? (state.sensitive_paths as string[]) : [],
           } as never), mission)
         : '';
-      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (footprintLine ? `\n${footprintLine}\n` : '') + (tokensReportedLine ? `${tokensReportedLine}\n` : '') + '\n');
+      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (footprintLine ? `\n${footprintLine}\n` : '') + (tokensLine ? `${tokensLine}\n` : '') + (tokensReportedLine ? `${tokensReportedLine}\n` : '') + '\n');
       renameSync(tmp, reportPath);
     }
     for (const f of fold) {
