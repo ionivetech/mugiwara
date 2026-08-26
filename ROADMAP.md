@@ -285,7 +285,7 @@ _Pillar 2, 5._
 
 ## Far — make the evidence worth something
 
-### 10. Signed attestation — ✅ shipped (optional minisign)
+### 10. Signed attestation — ✅ shipped (optional minisign) (KMS/sigstore path documented)
 
 **Evidence that cannot be fabricated after the fact.**
 
