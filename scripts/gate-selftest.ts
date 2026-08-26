@@ -316,19 +316,19 @@ if (!existsSync(skillsDoc)) {
 
 // --- Index budget ---
 console.log('\nIndex budget');
-const usingSkillFile = join(root, 'content', 'skills', 'using-mugiwara', 'SKILL.md');
-if (!existsSync(usingSkillFile)) {
-  console.log('  ⚠  using-mugiwara not found, skipping');
+const budgetSkillFile = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+if (!existsSync(budgetSkillFile)) {
+  console.log('  ⚠  mugiwara-workflow not found, skipping');
 } else {
-  const original = readFileSync(usingSkillFile, 'utf8');
+  const original = readFileSync(budgetSkillFile, 'utf8');
   try {
     // Push budget way past 5500
     const longDesc = 'A'.repeat(6000);
     const broken = original.replace(/description:.*/, `description: ${longDesc}`);
-    writeFileSync(usingSkillFile, broken);
+    writeFileSync(budgetSkillFile, broken);
     assert('description past budget → exit 1', false, () => run('budget', 'bun scripts/validate-content.ts'));
   } finally {
-    writeFileSync(usingSkillFile, original);
+    writeFileSync(budgetSkillFile, original);
     assert('restored → exit 0', true, () => run('budget', 'bun scripts/validate-content.ts --check-manifest --check-docs'));
   }
 }

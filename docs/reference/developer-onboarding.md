@@ -45,7 +45,7 @@ resolve to `content/` and never diverge.
 ## Validation
 
 ```bash
-bun run validate                # 26 skills + 11 agents (+3 internal): names, descriptions, skip gates, line limits
+bun run validate                # 21 skills + 11 agents (+3 internal): names, descriptions, skip gates, line limits
 bun run validate --check-sync   # symlinks resolve to content/, never diverge
 bun run typecheck               # tsc --noEmit
 bun run test                    # vitest

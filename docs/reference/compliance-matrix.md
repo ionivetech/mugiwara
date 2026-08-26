@@ -22,7 +22,7 @@ Published with failures — the first pack to admit where it breaks.
 | R7 | State written at flow-stage boundary | `mugiwara savepoint`; `hooks/auto-savepoint.ts` on Claude Code | **enforced on `claude`**, aspirational elsewhere | 2 |
 | R8 | Source-backed code (no hallucinated APIs) | `references/source-grounding.md` | aspirational | 4 |
 | R9 | Blocker ledger written on failure | Agent discipline | aspirational | 1 |
-| R10 | Mission report at closure | `mugiwara run mission-report.sh` | aspirational | 1 |
+| R10 | Closure summary at Flow 9 | `mugiwara-orchestration` closure step | aspirational | 1 |
 
 Full split, and why the ✅ marks below are model behaviour rather than
 guarantees: [enforcement.md](enforcement.md).

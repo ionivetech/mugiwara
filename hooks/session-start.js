@@ -99,8 +99,6 @@ if (active.length === 1 && mode === "auto") {
 ${lines}
 ` + `Run /mugiwara continue <mission> [member] to resume one explicitly.`;
 }
-console.log(JSON.stringify({
-  additionalContext: "Mugiwara crew active by default. Say \\`mugiwara off\\` for a request and the crew stands down (Luffy acknowledges, records it in the decision log). Before ANY task \u2014 load \\`mugiwara-orchestration\\` skill as gatekeeper. NEVER execute, answer, or make changes without Flow 0 triage. Classification overhead <15 seconds \u2014 cheaper than an incorrect fix. Lane 0 for trivial work (single-file/<20 LOC) skips pipeline; Lane 1+ follows full pipeline. Mode: guided / semi / auto (see .mugiwara/config). Switch with \\`/mugiwara <mode>\\` \u2014 applies from the next flow stage. Every flow stage opens with a banner \\`===== \u2694\uFE0F FLOW N \u2014 CREW (ROLE) =====\\` and closes with a handoff \\`\u2192 Flow N+1 \u2014 Crew (Role)\\`; Zoro shows per-task progress \\`[task N/M]\\` with each task's evidence. See skills/mugiwara-workflow." + (resumeContext ? `
-
-` + resumeContext : "")
-}));
+if (resumeContext) {
+  console.log(JSON.stringify({ additionalContext: resumeContext }));
+}

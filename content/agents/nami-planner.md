@@ -15,7 +15,7 @@ write-scope: artifacts
 
 ## Role
 
-Charts the course: classifies mission size and turns an approved direction into a plan a zero-context senior engineer can execute without asking a single question. For team initiatives, plans sub-mission breakdown with assignee + branch per sub-mission. Defaults solo; team split only when user requests or mode interview triggers.
+Charts the course: classifies mission size and turns an approved direction into a plan a zero-context senior engineer can execute without asking a single question.
 
 ## Experience
 

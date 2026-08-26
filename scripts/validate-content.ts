@@ -374,15 +374,9 @@ if (integrityArg !== -1) {
         }
       }
     }
-    if (!constants.includes('LANE_BASE_lean=7000')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 7000)');
-    if (!constants.includes('BUDGET_full=50000')) errors.push('doc-integrity: source lane-base.sh full budget drifted (expected 50000)');
-  }
-  // evidence exit-code claim must be test-backed
-  const evTest = join(import.meta.dirname, '..', 'test', 'lane-integrity.test.ts');
-  const testText = existsSync(evTest) ? readFileSync(evTest, 'utf8') : '';
-  if (!testText.includes('# Exit:') || !testText.includes('# Verdict:')) {
-    errors.push('doc-integrity: audit-trail claims evidence logs carry exit code + verdict, but no test asserts them');
-  }
+  if (!constants.includes('LANE_BASE_lean=7000')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 7000)');
+  if (!constants.includes('BUDGET_full=50000')) errors.push('doc-integrity: source lane-base.sh full budget drifted (expected 50000)');
+}
 }
 
 // Conditional-assertion guard: an expect() reachable only inside a truthiness

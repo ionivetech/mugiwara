@@ -120,7 +120,7 @@ Mission runtime (usable from any harness — these are what the crew calls):
 mugiwara status                                   # computed state per mission on disk
 mugiwara status --all                             # every actor, not just yours
 mugiwara continue [mission] [member]              # resolve the resume point (exit 2 = you pick)
-mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh · evidence.sh · mission-report.sh
+mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh
 mugiwara savepoint <mission> [member] [flow stage] [mode]  # shorthand for run savepoint.sh
 ```
 

@@ -103,7 +103,7 @@ After each flow stage: compact task table (status, evidence link, deviations) sh
 
 ## Step budget
 
-Tool calls are finite — harnesses cap them per session; a 9-flow-stage mission that wastes them stalls before closure. Combine evidence runs (`evidence.sh <m> quality -- bash -c "lint && test"` — one call, not two); write flow stage artifacts once at flow-stage end, not incrementally; never re-read what you just wrote; batch reads (one glob beats five reads); open a reference only when its pointer condition triggers.
+Tool calls are finite — harnesses cap them per session; a 9-flow-stage mission that wastes them stalls before closure. Combine evidence runs (`bash -c "lint && test"` — one call, not two); write flow stage artifacts once at flow-stage end, not incrementally; never re-read what you just wrote; batch reads (one glob beats five reads); open a reference only when its pointer condition triggers.
 
 Budget guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. Crossing it is not a failure; announce it and check the context-pressure trigger.
 

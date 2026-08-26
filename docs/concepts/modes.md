@@ -35,7 +35,7 @@ they are created.
 
 Every level ends at push + ready PR summary + verdict file — you open the PR.
 With `auto_commit=off` (guided/semi) the crew pushes nothing: it hands you the
-uncommitted tree with the exact commit + push commands (see [pr-summary.md](pr-summary.md)).
+uncommitted tree with the exact commit + push commands (see [git-strategy.md](git-strategy.md)).
 
 ## Config
 

@@ -11,12 +11,12 @@ What actually differs per harness tier. Every skill and agent file ships to ever
 
 Conformance runs `scripts/conformance.ts` in CI: every installable target
 installs into a scripted fixture repo, runs
-`lane.sh` / `savepoint.sh` / `evidence.sh` / `mission-report.sh`, and asserts
-state fields, report sections, evidence headers, the gitignore block, and
+`lane.sh` / `savepoint.sh`, and asserts
+state fields, the gitignore block, and
 file counts match `test/golden/<target>.json`. Marketplace platforms (Cursor,
 Kimi, Pi) install from the repo itself through the host's plugin system —
 their conformance asserts the plugin manifest parses, its version matches the
-package, its `skills` pointer resolves to all 26 skills, and its
+package, its `skills` pointer resolves to all 21 skills, and its
 `metadata.skills/agents` set-equals `content/`, against
 `test/golden/<platform>.json`. All twelve platforms are covered; anything
 outside them is **untested**.
@@ -48,7 +48,7 @@ outside them is **untested**.
 
 ## What's the same everywhere
 
-- All 26 skill directories ship to every harness.
+- All 21 skill directories ship to every harness.
 - All 15 agent markdown files ship to every harness.
 - `references/` files are always copied.
 - The workflow, lane sizing, and evidence discipline are identical — the difference is in how the model loads them.

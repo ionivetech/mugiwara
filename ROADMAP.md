@@ -28,38 +28,35 @@ that helps an agent write code competes with the next model release. A layer tha
 proves what the agent did becomes more necessary with each one.
 
 Every feature below is chosen against that bet, and against three limits that do
-not move: no runtime, 26 skills, twelve harnesses of uneven capability.
+not move: no runtime, 21 skills, twelve harnesses of uneven capability.
 
 ### Current state
 
-Verified by execution at v0.6.2 (2026-08-14):
+Verified by execution at v0.6.6 (post-prune, 2026-08):
 
 ```
-26 skills · 14 agents (+3 internal) · 33 skill-local references · 12 harness targets
-cold-load index      1.3k tokens, budget-gated
-retrieval accuracy   rank-1 93.5% · top-3 100% · negatives 100%
+21 skills · 14 agents (+3 internal) · 12 harness targets
+cold-load index      ~1.1k tokens, budget-gated
+retrieval accuracy   rank-1 94.3% · top-3 100% · negatives 100%
 determinism          lane · savepoint (hook-driven on claude, crew-driven elsewhere)
-                     evidence + mission-report exist and run, but are called
-                     from prose once each — an optional tip and a closure step
-install coverage     91.6% across 9 targets
+install coverage     verified across 9 targets + 3 marketplace manifests
 ```
 
-**Newly shipped (v0.6.0):**
+Pruned at v0.6.6: onboarding wizard (installer writes the default config),
+session-start announce (crew activates only when its skills/agents are used),
+mugiwara-pr / using-mugiwara / mugiwara-context-budget / mugiwara-sunset /
+mugiwara-agent-security skills, internal-only stage slash commands,
+team-initiative CLI, evidence.sh and mission-report.sh scripts.
+
+**Shipped earlier:**
 - **Sonar-style metrics** — duplication %, complexity scoring, maintainability rating (A–E), code attribute checks per wave
 - **Security hotspots + SCA** — STRIDE-pointed hotspot review, license compliance, dependency audit
-- **Team initiatives** — sub-mission planning and the shared plan format, with
-  status tracked in the plan doc itself. No `mugiwara initiative` CLI shipped:
-  `src/cli.ts` has no such command, and `scripts/initiative.ts` is
-  repo-development-only (not installed)
-- **Onboarding wizard** — `mugiwara onboard`: zero-LLM terminal wizard
-  (6 questions) for branch pattern, mode, review depth, quality checks,
-  coverage, and commit style/template
 
 **Satisfied at v0.6.5:** the hardening suite — assertion integrity
 (conditional-assertion gate + G5 mutation), published threat model
 (`docs/concepts/security.md`), output discipline (`verbosity` config),
-collaboration flows (case-insensitive parsing, loud failures, conflict
-checks), and cross-platform conformance (12/12 platforms,
+collaboration flows (case-insensitive parsing, loud failures), and cross-platform
+conformance (12/12 platforms,
 `scripts/conformance.ts`). Implemented items are removed from the list below —
 everything remaining is future work.
 
@@ -200,7 +197,7 @@ against the PR diff and posts severity-tagged findings. Replies of "fixed" or
 "won't fix" are re-evaluated, and the conversation joins the audit trail instead
 of disappearing into PR history.
 
-**Constraint.** A CI run must produce the same `mission-report.md` as a local run.
+**Constraint.** A CI run must produce the same closure report as a local run.
 If CI needs its own reporting path, the artifact is not canonical and Pillar 1 is
 weaker than claimed.
 
@@ -242,7 +239,7 @@ quarantined and cannot drive routing until sanitised. Every invocation logged �
 server, tool, input and output hash — into the evidence trail.
 
 **Why now.** Tool surfaces are the fastest-growing attack path in agentic systems,
-and `mugiwara-agent-security` already maps the Agentic OWASP Top 10. This makes it
+and the security skill already maps the Agentic OWASP Top 10 for diffs. This makes it
 systematic rather than advisory.
 
 _Pillar 1, 4 · governance that stops at the code is incomplete._
@@ -294,7 +291,7 @@ _Pillar 1 · the logical endpoint of the thesis._
 - **No runtime, no daemon.** Orchestration stays in the harness. Anything needing
   a persistent process ships as a separate optional package, and core keeps
   working without it.
-- **26 skills is the ceiling.** A new skill replaces an old one.
+- **21 skills is the ceiling.** A new skill replaces an old one.
 - **No auto-merge, no auto-deploy.** Human review at the PR is the terminal gate.
 - **Not an unattended-marathon runner.** Hidden subagent work buys autonomy;
   watching the work pays for it. Opposite ends of one axis, and mugiwara chose

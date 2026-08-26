@@ -46,7 +46,6 @@ test('collectContent includes shared references from root references/', () => {
   expect(names).toContain('source-grounding.md');
   expect(names).toContain('definition-of-done.md');
   expect(names).toContain('skill-versioning.md');
-  expect(names).toContain('token-budget.md');
   expect(names).toContain('multi-actor.md');
 });
 
@@ -69,9 +68,6 @@ test('installTo writes references/ into the target refs dir', () => {
   expect(existsSync(checklist)).toBe(true);
   expect(readFileSync(checklist, 'utf8')).toContain('WCAG');
   expect(r.written).toContain(checklist);
-  // agent-security refs land in their own skill-scoped dir (no collision)
-  const agentChecklist = join(dir, 'refs', 'mugiwara-agent-security', 'checklist.md');
-  expect(existsSync(agentChecklist)).toBe(true);
 });
 
 test('claude install writes references under the skill dir', () => {
@@ -90,11 +86,12 @@ test('generic install keeps references outside the rules glob', () => {
   const rulesDir = join(dir, '.gemini', 'mugiwara');
   expect(existsSync(join(rulesDir, 'mugiwara-frontend.md'))).toBe(true);
   // Per-skill refs dir (F2): a flat refs dir let same-named references
-  // collide — agent-security/checklist.md lost to frontend/checklist.md.
+  // collide — contract-first/process.md would be lost to root-cause/process.md.
   expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-frontend', 'checklist.md'))).toBe(true);
-  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-agent-security', 'checklist.md'))).toBe(true);
-  expect(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-agent-security', 'checklist.md'), 'utf8'))
-    .toContain('Agent Security Checklist');
+  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-contract-first', 'process.md'))).toBe(true);
+  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-root-cause', 'process.md'))).toBe(true);
+  expect(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-root-cause', 'process.md'), 'utf8'))
+    .not.toBe(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-contract-first', 'process.md'), 'utf8'));
   expect(existsSync(join(rulesDir, 'mugiwara-frontend', 'references', 'checklist.md'))).toBe(false);
 });
 
@@ -134,12 +131,12 @@ test('removeInstalled deletes exactly manifest files + prunes empty dirs', () =>
   expect(existsSync(join(dir, 'ag'))).toBe(false);
 });
 
-test('session-start hook carries default-on doctrine, directs to mugiwara-orchestration', () => {
+test('session-start hook is silent by default, surfaces in-flight missions only', () => {
   const hook = readFileSync(join(import.meta.dirname, '..', 'hooks', 'session-start.ts'), 'utf8');
-  expect(hook).toContain('mugiwara off');
-  expect(hook).toContain('mugiwara-orchestration');
-  expect(hook).toContain('Flow 0 triage');
-  expect(hook).toContain('Lane 0');
+  // no announce: a session that never used mugiwara gets zero injected context
+  expect(hook).not.toContain('Mugiwara crew active');
+  expect(hook).toContain('Silent unless there is in-flight work');
+  expect(hook).toContain('resumeContext');
 });
 
 test('mode-tracker hook can parse /mugiwara guided|semi|auto via regex', () => {
@@ -189,7 +186,7 @@ test('claude target postInstall wires the SessionStart hook', () => {
   const r = installTo(targets['claude'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
   const hook = join(dir, '.claude', 'hooks', 'session-start.ts');
   expect(existsSync(hook)).toBe(true);
-  expect(readFileSync(hook, 'utf8')).toContain('mugiwara off');
+  expect(readFileSync(hook, 'utf8')).toContain('in-flight');
   expect(r.written).toContain(hook);
   const mode = statSync(hook).mode;
   expect(mode & 0o111).not.toBe(0);

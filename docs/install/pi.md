@@ -15,7 +15,7 @@ pi install git:github.com/ionivetech/mugiwara
 ## How it works
 
 Pi reads `package.json` `pi` field (`skills: ["./content/skills"]`) and
-loads all 26 skills. The Pi extension (`pi-extension/`) registers runtime
+loads all 21 skills. The Pi extension (`pi-extension/`) registers runtime
 hooks if present.
 
 ## Verify

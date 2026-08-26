@@ -9,33 +9,27 @@ This is the companion to the feature table in the
 - [1. The 9-flow-stage crew pipeline](#1-the-9-flow-stage-crew-pipeline)
 - [2. Multi-persona crew agents](#2-multi-persona-crew-agents)
 - [3. Inline execution model](#3-inline-execution-model)
-- [4. Autonomy modes (guided / semi / auto)](#4-autonomy-modes)
+- [4. Autonomy modes](#4-autonomy-modes)
 - [5. Config system](#5-config-system)
 - [6. Lane sizing](#6-lane-sizing)
 - [7. Configurable depth](#7-configurable-depth)
-- [8. Savepoint state (`state/<mission>/`)](#8-savepoint-state)
+- [8. Savepoint state](#8-savepoint-state)
 - [9. Resume & continue](#9-resume--continue)
 - [10. Lessons ledger](#10-lessons-ledger)
 - [11. Sonar-style quality](#11-sonar-style-quality)
-- [12. Gates (coverage / build / DoD)](#12-gates)
-- [13. Security (STRIDE + OWASP)](#13-security)
+- [12. Gates](#12-gates)
+- [13. Security](#13-security)
 - [14. Self-healing](#14-self-healing)
 - [15. Adversarial verification](#15-adversarial-verification)
 - [16. Ship gate](#16-ship-gate)
-- [17. Sunset & deprecation](#17-sunset--deprecation)
-- [18. PR summary handoff](#18-pr-summary-handoff)
-- [19. Team initiatives](#19-team-initiatives)
-- [20. Git discipline](#20-git-discipline)
-- [21. TDD & user tests as oracle](#21-tdd--user-tests-as-oracle)
-- [22. Multi-platform install](#22-multi-platform-install)
-- [23. CLI](#23-cli)
-- [24. Onboarding wizard](#24-onboarding-wizard)
-- [25. Cost tracking](#25-cost-tracking)
-- [26. Eval harness & self-testing gates](#26-eval-harness--self-testing-gates)
-- [27. Enforcement mechanisms](#27-enforcement-mechanisms)
-- [28. Engineering practice skills](#28-engineering-practice-skills)
-
----
+- [17. Git discipline](#17-git-discipline)
+- [18. TDD & user tests as oracle](#18-tdd--user-tests-as-oracle)
+- [19. Multi-platform install](#19-multi-platform-install)
+- [20. CLI](#20-cli)
+- [21. Cost tracking](#21-cost-tracking)
+- [22. Eval harness & self-testing gates](#22-eval-harness--self-testing-gates)
+- [23. Enforcement mechanisms](#23-enforcement-mechanisms)
+- [24. Engineering practice skills](#24-engineering-practice-skills)
 
 ## 1. The 9-flow-stage crew pipeline
 
@@ -178,7 +172,7 @@ config owns writing standards."
 | `review_depth` | full | full / standard / quick |
 | `quality_depth` | full | full / standard / quick |
 
-**How to use.** Edit the file or run `mugiwara onboard`. Unknown keys are
+**How to use.** Edit the file directly. Unknown keys are
 ignored; config is data, never instructions. Missing config on read = `guided`.
 
 **Scenario.** A repo with no commit convention sets `commit=plain`; a team
@@ -392,7 +386,7 @@ failures, fixes **root causes** with minimal diffs, and proves each fix by
 re-running the check that failed. The loop returns to Flow 4 — max 3 cycles,
 then escalation to the human with full history.
 
-**How to use.** Automatic in Flow 8. Manual: `/mugiwara-heal`.
+**How to use.** Automatic in Flow 8 — Luffy routes to Brook when the audit or review leaves failures.
 
 **Scenario.** Chopper's audit surfaces five failures. Brook fixes them in one
 pass with root-cause changes, re-runs each failed check, and hands back to
@@ -426,7 +420,7 @@ method") and the plan is amended before code is written.
 staged rollout, and a mandatory rollback plan. A critical finding or a missing
 rollback plan → NO-GO.
 
-**How to use.** Automatic at closure; manual `/mugiwara-ship`.
+**How to use.** Automatic at closure — the final gate before the terminal step.
 
 **Scenario.** The mission passes all gates but has no rollback plan for the
 DB change. The ship gate says NO-GO; the plan is added before the branch is
@@ -436,70 +430,7 @@ pushed.
 
 ---
 
-## 17. Sunset & deprecation
-
-**What.** Removing code, legacy APIs, or v1 endpoints runs a keep-or-retire
-gate with safe migration and phased cutovers — every removal needs a plan.
-
-**How to use.** Include the deprecation in the mission; Brook applies
-`mugiwara-sunset` when removal is in scope.
-
-**Scenario.** A v1 endpoint is being retired. The crew plans the deprecation
-window, warns callers, and cuts over in phases instead of deleting
-hot-swap.
-
-→ [Sunset skill](../../content/skills/mugiwara-sunset/SKILL.md)
-
----
-
-## 18. PR summary handoff
-
-**What.** At the end of every mission the crew pushes the branch and **stops**.
-It never creates a PR, merges, or deploys — in any mode. What you get is a
-ready-to-paste **PR summary block** in `.mugiwara/results/<mission>/07-pr-verdict.md`.
-
-**How to use.** Let the mission close, then open the PR yourself and paste
-the block. No `gh`, no PR API calls, no auto-reaction to review comments or
-CI.
-
-**Scenario.** Mission closes: branch pushed with `git push -u origin <branch>`,
-verdict file written with title + body + checks. You open the PR, paste, done.
-
-→ [PR summary](pr-summary.md) · [README quick reference](../../README.md#quick-reference)
-
----
-
-## 19. Team initiatives
-
-**What.** One big initiative split into sub-missions, each with an assignee
-and its own branch, sharing one plan doc with status tracking per
-sub-mission.
-
-**How to use.**
-
-```
-> split payment system: gateway, ledger, fraud
-```
-
-Nami interviews and writes an initiative plan; each dev works in their own
-branch; the plan's sub-mission table shows progress; all sub-missions `[x]` →
-initiative-level closure.
-
-`mugiwara initiative <status|conflict-check|set-status> <plan>` ships with the
-installer. `scripts/initiative.ts` backs it: `status` renders the sub-mission
-dashboard, `conflict-check` flags overlapping touched files between in-progress
-sub-missions, `set-status` updates one row. The plan doc is both the source of
-truth and the dashboard.
-
-**Scenario.** Three developers, one payment split. Each owns a file-disjoint
-sub-mission, never colliding; the initiative plan shows green across all three
-before the shared closure.
-
-→ [Initiative script](../../scripts/initiative.ts) · [README example](../../README.md#30-second-try)
-
----
-
-## 20. Git discipline
+## 17. Git discipline
 
 **What.** Atomic commits, one logical task per commit, save-points before
 risky work, commit style matched to the repo's history, multi-commit
@@ -517,7 +448,7 @@ commit lets the crew roll back cleanly.
 
 ---
 
-## 21. TDD & user tests as oracle
+## 18. TDD & user tests as oracle
 
 **What.** Every production-code task is test-first (RED-GREEN-REFACTOR), and
 user-declared tests are the **oracle** — immutable gold. A user test is never
@@ -534,7 +465,7 @@ fixes the root cause, re-runs green, and the test stays untouched end to end.
 
 ---
 
-## 22. Multi-platform install
+## 19. Multi-platform install
 
 **What.** The same crew installs to 12 platforms with no feature gaps: Claude
 Code, opencode, GitHub Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity,
@@ -557,11 +488,11 @@ runs the identical crew with identical behavior.
 
 ---
 
-## 23. CLI
+## 20. CLI
 
 **What.** A small Node CLI for lifecycle management: install wizard, update,
 uninstall via manifest, list + health check, reset with protection, plus the
-mission subcommands `start`, `continue`, `status`, `run`, `savepoint`, and `initiative`.
+mission subcommands `continue`, `status`, `run`, and `savepoint`.
 
 **How to use.**
 
@@ -571,55 +502,25 @@ mugiwara update --target <id> --yes    # overwrite to latest
 mugiwara list --check                  # health check, missing files
 mugiwara uninstall                     # remove installed files
 mugiwara reset --keep-logs             # wipe state, keep lessons
-mugiwara start <mission> [member]      # begin a mission from its plan (solo, or team sub-mission by git actor)
 mugiwara continue                      # list in-flight missions (every mode)
 mugiwara continue <mission> [member]   # exact resume point
 mugiwara status                        # computed state: flow stage, tasks, lane, blockers, budget
-mugiwara run <script.sh> [args]        # run a bundled harness script
+mugiwara run <script.sh> [args]        # run a bundled harness script (savepoint.sh · lane.sh)
 mugiwara savepoint <mission> [member] [flow stage] [mode]
-mugiwara initiative <status|conflict-check|set-status> <plan> [args]
+mugiwara archive <mission>             # fold a closed mission's evidence into its report
 mugiwara --version                     # version
 ```
 
 **Scenario.** A broken install after a manual edit is diagnosed with
 `mugiwara list --check`; the missing files are restored with `mugiwara
 update --force`. Mid-mission, `mugiwara status` shows where the crew is and
-`mugiwara continue` resumes it; a team lead runs `mugiwara initiative
-conflict-check <plan>` before two devs collide on the same files.
+`mugiwara continue` resumes it.
 
 → [CLI reference](../install/cli.md) · [src/cli.ts](../../src/cli.ts)
 
 ---
 
-## 24. Onboarding wizard
-
-**What.** `mugiwara onboard` — a zero-LLM terminal wizard (6 fixed questions:
-branch pattern, autonomy mode, review depth, quality depth, coverage, commit
-style/template). A plain script — no LLM, no network, works on every platform
-and every harness. Writes `.mugiwara/config` only — never
-`.mugiwara/onboard.json`. Unasked keys (`auto_commit`, `delegate_threshold`,
-`heal_max_cycles`, `verbosity`) are preserved from an existing config.
-
-**How to use.**
-
-```
-mugiwara onboard
-```
-
-Or `/mugiwara onboard` in-chat — the command tells you to run the terminal
-wizard; it never asks the questions itself.
-
-First run or re-onboard to reset config.
-
-**Scenario.** Setting up a new repo: answer 6 questions in the terminal, get a
-verified config summary, and the crew knows the mode, depths, thresholds, and
-branch/commit formats from the start — at zero LLM cost.
-
-→ [Config reference](config.md) · [src/onboard.ts](../../src/onboard.ts)
-
----
-
-## 25. Cost tracking
+## 21. Cost tracking
 
 **What.** Per-lane token budgets (lean 12k, standard 25k, full 50k). Status
 writes to `state/<mission>/[member].json` (`tokens_est`, `budget`,
@@ -638,7 +539,7 @@ decision.
 
 ---
 
-## 26. Eval harness & self-testing gates
+## 22. Eval harness & self-testing gates
 
 **What.** The harness proves itself: `run-evals.ts` behavioral evals,
 `retrieval-eval.ts` retrieval ranking with a floor ratchet, and
@@ -661,14 +562,14 @@ case fails under a fresh judge → the skill is fixed, the eval is not touched.
 
 ---
 
-## 27. Enforcement mechanisms
+## 23. Enforcement mechanisms
 
 **What.** What keeps the pipeline honest when markdown alone can't force a
 model: computed mechanisms leave a trace regardless of model cooperation —
-lane sizing, savepoint state, evidence capture
-(`mugiwara run evidence.sh`), index-budget validation, manifest sync, and skill
-format checks. Discipline rules (skip gates, evidence over claims, flow-stage
-banners, bounded heal loop) rely on the model reading and following them.
+lane sizing, savepoint state, index-budget validation, manifest sync, and
+skill format checks. Discipline rules (skip gates, evidence over claims,
+flow-stage banners, bounded heal loop) rely on the model reading and
+following them.
 
 **Machine enforcement added by the seamless-rework mission:**
 - **`enforce` config key** (`off` / `warn` / `block`, default `block`) — the
@@ -689,24 +590,22 @@ banners, bounded heal loop) rely on the model reading and following them.
 in CI on every PR.
 
 **Scenario.** A model skips a flow stage or passes on a claim — savepoint and lane
-still write state, evidence.sh still captures output, so the trace exposes
+still write state, so the trace exposes
 the shortcut even when the model cooperates poorly.
 
 → [Enforcement](../reference/enforcement.md)
 
 ---
 
-## 28. Engineering practice skills
+## 24. Engineering practice skills
 
-**What.** Beyond the pipeline, 26 skills encode portable engineering
+**What.** Beyond the pipeline, the skill catalog encodes portable engineering
 practices the crew loads on demand: `mugiwara-contract-first` (contract-first
-API design, error semantics, backward compatibility), `mugiwara-root-cause`
-(4-phase reproduce → localize → reduce → fix + guard),
-`mugiwara-context-budget` (token/context discipline), and domain skills —
+API design, error semantics, backward compatibility) and `mugiwara-root-cause`
+(4-phase reproduce → localize → reduce → fix + guard), plus domain skills —
 `mugiwara-frontend` (anti-slop UI, design-system extraction, WCAG 2.1 AA),
 `mugiwara-backend` (repo standards first, source-backed code, data
-integrity), `mugiwara-agent-security` (prompt injection, memory poisoning,
-excessive agency, MCP trust, sandboxing).
+integrity).
 
 **How to use.** Automatic — the skill fires when the task matches its
 description. Frontend tasks in Flow 3 always apply `mugiwara-frontend`.
@@ -725,4 +624,4 @@ are decided up front instead of retrofitted.
 - [Getting started](../getting-started.md) — install and first mission
 - [Workflow](workflow.md) — the flow pipeline in detail
 - [Agents](agents.md) — the 12 + 3 crew members
-- [Skills](skills.md) — the 26 techniques
+- [Skills](skills.md) — the 21 techniques

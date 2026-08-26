@@ -17,7 +17,6 @@ const SLOW = 30000;
 const ROOT = join(import.meta.dirname, '..');
 const LANE = join(ROOT, 'scripts', 'lane.sh');
 const SAVEPOINT = join(ROOT, 'scripts', 'savepoint.sh');
-const EVIDENCE = join(ROOT, 'scripts', 'evidence.sh');
 const SETUP = join(ROOT, 'scripts', 'setup-fixtures.ts');
 const INSTALLER = join(ROOT, 'src', 'installer.ts');
 
@@ -299,53 +298,6 @@ test('case 21: lane-base generator validates constants (gate)', { timeout: SLOW 
   const r = spawnSync('bun', [join(ROOT, 'scripts', 'lane-base.ts')], { cwd: ROOT, encoding: 'utf8' });
   expect(r.status).toBe(0);
   expect(r.stdout).toContain('constants match content load');
-});
-
-// ---------- D6: cases 22-24 — evidence exit + verdict ----------
-
-test('case 22: evidence log carries # Exit: and # Verdict: PASS on success', { timeout: SLOW }, () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mugi-ev-'));
-  try {
-    execSync('mkdir -p .mugiwara/results/m', { cwd: dir });
-    const r = spawnSync('bash', [EVIDENCE, 'm', 'pass-check', '--', 'true'], {
-      cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
-    });
-    expect(r.status).toBe(0);
-    const log = readdirSync(join(dir, '.mugiwara', 'results', 'm')).find(f => f.endsWith('.log'))!;
-    const text = readFileSync(join(dir, '.mugiwara', 'results', 'm', log), 'utf8');
-    expect(text).toContain('# Exit: 0');
-    expect(text).toContain('# Verdict: PASS');
-  } finally { rmSync(dir, { recursive: true, force: true }); }
-});
-
-test('case 23: evidence log carries FAIL verdict and preserves exit code', { timeout: SLOW }, () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mugi-ev2-'));
-  try {
-    execSync('mkdir -p .mugiwara/results/m', { cwd: dir });
-    const r = spawnSync('bash', [EVIDENCE, 'm', 'fail-check', '--', 'bash', '-c', 'echo boom; exit 7'], {
-      cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
-    });
-    expect(r.status).toBe(7); // exit code preserved
-    const log = readdirSync(join(dir, '.mugiwara', 'results', 'm')).find(f => f.endsWith('.log'))!;
-    const text = readFileSync(join(dir, '.mugiwara', 'results', 'm', log), 'utf8');
-    expect(text).toContain('# Exit: 7');
-    expect(text).toContain('# Verdict: FAIL');
-  } finally { rmSync(dir, { recursive: true, force: true }); }
-});
-
-test('case 24: evidence stdin pipeline also gets trailer', { timeout: SLOW }, () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mugi-ev3-'));
-  try {
-    execSync('mkdir -p .mugiwara/results/m', { cwd: dir });
-    const r = spawnSync('bash', ['-c', `echo hello | bash "${EVIDENCE}" m pipe-check`], {
-      cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
-    });
-    expect(r.status).toBe(0);
-    const log = readdirSync(join(dir, '.mugiwara', 'results', 'm')).find(f => f.endsWith('.log'))!;
-    const text = readFileSync(join(dir, '.mugiwara', 'results', 'm', log), 'utf8');
-    expect(text).toContain('# Exit: 0');
-    expect(text).toContain('# Verdict: PASS');
-  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 // ---------- D7/D8: cases 25-28 — branch-mode interface + gitignore ----------

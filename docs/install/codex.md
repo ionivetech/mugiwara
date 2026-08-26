@@ -15,7 +15,7 @@ codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mu
 ## How it works
 
 Codex reads `.codex-plugin/plugin.json` which references `content/skills/`.
-All 26 skills are auto-discovered. Agents come from `content/agents/` via the
+All 21 skills are auto-discovered. Agents come from `content/agents/` via the
 `agents/` symlink.
 
 ## Verify

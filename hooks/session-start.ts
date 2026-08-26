@@ -1,9 +1,12 @@
 #!/usr/bin/env bun
-// hooks/session-start.ts — SessionStart hook: reminds the agent the crew is
-// available, and surfaces in-flight missions for the current git actor from
-// the machine-written continue JSON (D10). Listing in-flight work runs in
-// every mode; auto-resume is auto-only. Never auto-resumes when multiple are
-// in-flight — ambiguous resumes are listed, not guessed.
+// hooks/session-start.ts — SessionStart hook: surfaces in-flight missions for
+// the current git actor from the machine-written continue JSON (D10).
+//
+// Deliberately SILENT otherwise: mugiwara must not announce itself or steer a
+// session that never engaged the crew. The only output is the in-flight
+// listing (every mode) and auto-resume (auto mode, single mission). Listing
+// never auto-resumes when multiple are in-flight — ambiguous resumes are
+// listed, not guessed.
 
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -122,10 +125,8 @@ if (active.length === 1 && mode === 'auto') {
     `Run /mugiwara continue <mission> [member] to resume one explicitly.`;
 }
 
-console.log(
-  JSON.stringify({
-    additionalContext:
-      "Mugiwara crew active by default. Say \\`mugiwara off\\` for a request and the crew stands down (Luffy acknowledges, records it in the decision log). Before ANY task — load \\`mugiwara-orchestration\\` skill as gatekeeper. NEVER execute, answer, or make changes without Flow 0 triage. Classification overhead <15 seconds — cheaper than an incorrect fix. Lane 0 for trivial work (single-file/<20 LOC) skips pipeline; Lane 1+ follows full pipeline. Mode: guided / semi / auto (see .mugiwara/config). Switch with \\`/mugiwara <mode>\\` — applies from the next flow stage. Every flow stage opens with a banner \\`===== ⚔️ FLOW N — CREW (ROLE) =====\\` and closes with a handoff \\`→ Flow N+1 — Crew (Role)\\`; Zoro shows per-task progress \\`[task N/M]\\` with each task's evidence. See skills/mugiwara-workflow." +
-      (resumeContext ? "\n\n" + resumeContext : "")
-  })
-);
+// Silent unless there is in-flight work: a session that never used mugiwara
+// gets zero injected context.
+if (resumeContext) {
+  console.log(JSON.stringify({ additionalContext: resumeContext }));
+}

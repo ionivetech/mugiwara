@@ -64,6 +64,3 @@ clobber each other's resume position.
 The session-start hook (auto mode) surfaces only the missions owned by your git
 actor — never another member's. If you hold several in-flight missions it lists
 them and asks, it never guesses.
-
-`mugiwara run mission-report.sh` follows the same convention (`MEMBER` env selects a
-team member's state).

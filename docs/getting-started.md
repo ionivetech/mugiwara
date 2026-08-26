@@ -40,7 +40,7 @@ npx @ionivetech/mugiwara@latest --project ./my-app --target all --yes
 
 Requires **Node.js >= 20.11**. Bun is optional (build-from-source only).
 
-**First time?** Run `mugiwara onboard` in your terminal — a zero-LLM wizard that configures branch pattern, mode, review depth, quality checks, coverage, and commit style.
+**First time?** Install writes `.mugiwara/config` with sensible defaults — edit it directly to set branch pattern, mode, review depth, quality checks, coverage, and commit style.
 
 ## 2. Start a mission
 
@@ -97,9 +97,10 @@ ready PR summary.
 The crew runs **inline** in your main conversation — every flow stage reports as a
 compact checkpoint. Subagents only for parallel task batches.
 
-Prefer to drive stages yourself? Every stage has a slash command:
-`/mugiwara-plan`, `/mugiwara-execute`, `/mugiwara-review`,
-`/mugiwara-security`, `/mugiwara-heal`, `/mugiwara-ship`. Jump into any stage.
+Prefer to drive part of it yourself? A few slash commands exist:
+`/mugiwara` (mode switch), `/mugiwara-continue` (resume),
+`/mugiwara-review`, `/mugiwara-security`. The rest of the pipeline routes
+itself — just ask in plain language.
 
 ## 3. What you do during a mission
 
@@ -160,7 +161,7 @@ six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 ## 6. Next steps
 
 - Meet the [crew](concepts/agents.md) — 11 agents with permission boundaries (+3 internal agents for eval/lessons/verification).
-- Browse the [skills](concepts/skills.md) — 26 skills with the 3-layer disclosure model.
+- Browse the [skills](concepts/skills.md) — 21 skills with the 3-layer disclosure model.
 - Understand the [lanes](concepts/lanes.md) — how work is sized before it runs.
 - Set your [mode](concepts/modes.md) — guided/semi/auto.
 - Read the [audit trail](concepts/audit-trail.md) — every artifact and how to review it.

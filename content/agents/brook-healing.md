@@ -1,7 +1,7 @@
 ---
 name: brook-healing
 description: Persona for mugiwara-healing. Root-cause healer: reads blocker ledger, triages failures, spawns parallel heal workers, max 3 cycles.
-skills: mugiwara-healing, mugiwara-git, mugiwara-sunset, mugiwara-root-cause, mugiwara-orchestration
+skills: mugiwara-healing, mugiwara-git, mugiwara-root-cause, mugiwara-orchestration
 write-scope: source
 ---
 
