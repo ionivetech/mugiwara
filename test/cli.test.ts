@@ -290,6 +290,26 @@ describe('run() — no-install command paths', () => {
       expect(exitSpy).toHaveBeenCalledWith(1);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
+
+  test('clean --before archives stale in-flight missions, keeps fresh ones', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-before-'));
+    try {
+      const mk = (m: string, updatedAt: string) => {
+        const d = join(dir, '.mugiwara', 'missions', m);
+        mkdirSync(d, { recursive: true });
+        writeFileSync(join(d, 'plan.md'), '# plan');
+        writeFileSync(join(d, 'state.json'), JSON.stringify({ mission: m, flow: 3, updated_at: updatedAt }));
+      };
+      mk('stale-m', '2020-01-01T00:00:00Z');
+      mk('fresh-m', new Date().toISOString());
+      const { out } = await capture(['clean', '--before', '2025-01-01'], dir);
+      expect(out).toContain('cleaned stale-m');
+      expect(out).not.toContain('fresh-m');
+      expect(existsSync(join(dir, '.mugiwara', 'missions', 'stale-m', 'report.md'))).toBe(true);
+      expect(existsSync(join(dir, '.mugiwara', 'missions', 'stale-m', 'state.json'))).toBe(false);
+      expect(existsSync(join(dir, '.mugiwara', 'missions', 'fresh-m', 'state.json'))).toBe(true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
 });
 
 describe('run() — in-process install + uninstall (temp dir, no system writes)', () => {

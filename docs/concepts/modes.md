@@ -81,14 +81,15 @@ only on first write). See [config.md](config.md) for the full reference.
 
 ## Switching mid-mission
 
-In-session phrase:
+In-session phrase (say it in chat — there is no CLI subcommand):
 
 ```
 mugiwara mode auto
 ```
 
-Writes the project `.mugiwara/config`, logs the change (level, requester,
-timestamp), and applies from the next flow stage — never mid-flow-stage.
+The mode-tracker hook writes the project `.mugiwara/config` and logs the
+change (level, requester, timestamp); it applies from the next flow stage —
+never mid-flow-stage.
 
 ## Output and step budget
 

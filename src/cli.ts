@@ -82,26 +82,36 @@ function cleanCmd(flags: Args['flags']): void {
     .map((e) => e.name);
   // default: CLOSED missions only — a report.md present and no live session
   // state. --all widens to every mission dir, including in-flight ones.
-  const hasLiveState = (m: string): boolean =>
-    readdirSync(join(root, m)).some((f) => {
+  // --before additionally treats an in-flight mission as closable when its
+  // newest state was last touched before the date: untouched work is safe to
+  // fold even without a report.md yet.
+  const stateFiles = (m: string): string[] =>
+    readdirSync(join(root, m)).filter((f) => {
       const stem = f.replace(/\.json$/, '');
       return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
     });
+  const hasLiveState = (m: string): boolean => stateFiles(m).length > 0;
+  const staleBefore = (m: string): boolean => {
+    if (!Number.isFinite(beforeMs)) return false;
+    for (const f of stateFiles(m)) {
+      try {
+        const ts = Date.parse(JSON.parse(readFileSync(join(root, m, f), 'utf8')).updated_at ?? '') || 0;
+        if (ts === 0 || ts >= beforeMs) return false; // unknown freshness → never assume stale
+      } catch { return false; }
+    }
+    return true;
+  };
   if (!flag(flags.all)) {
-    candidates = candidates.filter((m) => existsSync(join(root, m, 'report.md')) && !hasLiveState(m));
+    candidates = candidates.filter((m) =>
+      (existsSync(join(root, m, 'report.md')) && !hasLiveState(m))
+      || staleBefore(m),
+    );
   } else if (!flag(flags.force)) {
-    const live = candidates.filter(hasLiveState);
+    const live = candidates.filter((m) => hasLiveState(m) && !staleBefore(m));
     if (live.length) {
       console.error(`✗ in-flight mission(s): ${live.join(', ')}. Use --force to archive them anyway.`);
       process.exit(1);
     }
-  }
-  if (Number.isFinite(beforeMs)) {
-    candidates = candidates.filter((m) => {
-      const st = join(root, m, 'state.json');
-      const ts = existsSync(st) ? Date.parse(readStateUpdated(st)) : 0;
-      return ts > 0 ? ts < beforeMs : false;
-    });
   }
   if (!candidates.length) { console.log('nothing to clean.'); return; }
   for (const m of candidates) {
@@ -111,9 +121,7 @@ function cleanCmd(flags: Args['flags']): void {
   }
 }
 
-function readStateUpdated(statePath: string): string {
-  try { return JSON.parse(readFileSync(statePath, 'utf8')).updated_at ?? ''; } catch { return ''; }
-}
+
 
 async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; projectDir: string; targetIds: string[] }> {
   const interactive = !flag(flags.yes);
@@ -376,7 +384,7 @@ Flags:
   --check                with list: report missing files (health check)
    --all                  with continue/status: every actor; with clean: include in-flight missions
    --force                with clean --all: archive in-flight missions anyway
-   --before <date>        with clean: only missions last touched before this date
+   --before <date>        with clean: also archive missions untouched since this date
    --keep-logs            with reset: keep lessons.md (lessons ledger survives)`);
 }
 

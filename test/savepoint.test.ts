@@ -294,6 +294,26 @@ test('savepoint team member writes state to state/<mission>/<member>.json', { ti
   }
 });
 
+test('reserved member names (state, continue) are rejected — they would clobber solo files', { timeout: 20000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-resv-'));
+  try {
+    setupGit(dir);
+    for (const member of ['state', 'continue']) {
+      let threw = false;
+      try {
+        runSavepoint(dir, `resv-${member} ${member} 1 guided`);
+      } catch {
+        threw = true;
+      }
+      expect(threw).toBe(true);
+      // the mission dir must not exist — nothing was written under the collision
+      expect(existsSync(join(dir, '.mugiwara', 'missions', `resv-${member}`))).toBe(false);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('D10: savepoint writes continue JSON position block at wave boundary', { timeout: 20000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-cont-'));
   try {
