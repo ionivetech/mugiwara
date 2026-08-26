@@ -18,13 +18,14 @@ afterAll(() => {
 
 type StateShape = Record<string, unknown>;
 
-function buildMission(opts: { state: StateShape; files?: Record<string, string> }): string {
-  const missionDir = join(dir, '.mugiwara', 'missions', 'demo');
+function buildMission(opts: { mission?: string; state: StateShape; files?: Record<string, string> }): string {
+  const name = opts.mission ?? 'demo';
+  const missionDir = join(dir, '.mugiwara', 'missions', name);
   mkdirSync(join(missionDir, 'flows'), { recursive: true });
   mkdirSync(join(dir, '.mugiwara'), { recursive: true });
   writeFileSync(join(missionDir, 'plan.md'), '# Plan\n');
   writeFileSync(join(missionDir, 'flows', '06-closure.md'), 'closure summary');
-  writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ mission: 'demo', ...opts.state }));
+  writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ mission: name, ...opts.state }));
   for (const [name, body] of Object.entries(opts.files ?? {})) {
     const p = join(missionDir, name);
     mkdirSync(p.slice(0, p.lastIndexOf('/')), { recursive: true });
@@ -118,4 +119,16 @@ describe('archive closure artifacts', () => {
     try { archiveMission(dir, 'demo'); } catch (e) { msg = (e as Error).message; }
     expect(msg).toContain('context budget failed');
   });
+
+  it('parallel archives of distinct missions both land in index.md (×20 for flake)', async () => {
+    for (let i = 0; i < 20; i++) {
+      rmSync(join(dir, '.mugiwara'), { recursive: true, force: true });
+      buildMission({ mission: 'alpha', state: { branch: 'feat-a', base_sha: 'unknown', evidence: [] } });
+      buildMission({ mission: 'beta', state: { branch: 'feat-b', base_sha: 'unknown', evidence: [] } });
+      await Promise.all([archiveMission(dir, 'alpha'), archiveMission(dir, 'beta')]);
+      const idx = readFileSync(join(dir, '.mugiwara', 'index.md'), 'utf8');
+      expect(idx).toContain('- alpha —');
+      expect(idx).toContain('- beta —');
+    }
+  }, 30000);
 });

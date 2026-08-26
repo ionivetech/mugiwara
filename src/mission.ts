@@ -1,6 +1,6 @@
 // src/mission.ts
 // Mission-state helpers for the mugiwara CLI.
-import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync, writeFileSync, renameSync } from 'node:fs';
+import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSync, renameSync, openSync, writeSync, closeSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { checkTrail, formatIssues } from './integrity.ts';
@@ -228,8 +228,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   if (files.includes('handoff.md')) kept.push(join('missions', mission, 'handoff.md'));
   kept.push(join('missions', mission, 'report.md'));
 
-  // summary index: append one line per archived mission (retention aid),
-  // idempotently — never duplicate a line for an already-indexed mission.
+  // summary index: append one line per archived mission (retention aid).
+  // Atomic-append contract (finding A3): the line is written as ONE write()
+  // on an O_APPEND fd — POSIX positions O_APPEND writes atomically, so
+  // concurrent archivers never overwrite each other's bytes, and a small
+  // (<4k) single write does not interleave in practice. The pre-read
+  // idempotency check below still has a benign race window under true
+  // concurrency: two racers may both see the line missing and both append.
+  // That is a duplicate line, not a lost one — duplicates are the preferred
+  // failure mode; any future consumer of index.md must dedupe lines on read.
+  // Header creation stays racy-but-safe: two first-appends may each prepend
+  // "# Mission index\n\n", and header-only-plus-lines remains valid markdown
+  // either way.
   let index: string | undefined;
   const indexFile = join(root, 'index.md');
   const line = `- ${mission} — ${new Date().toISOString().slice(0, 10)}\n`;
@@ -237,7 +247,12 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const existing = existsSync(indexFile) ? readFileSync(indexFile, 'utf8') : '';
     if (!existing.split(/\r?\n/).some(l => l.startsWith(`- ${mission} —`))) {
       const header = existing ? '' : '# Mission index\n\n';
-      appendFileSync(indexFile, header + line);
+      const fd = openSync(indexFile, 'a');
+      try {
+        writeSync(fd, header + line);
+      } finally {
+        closeSync(fd);
+      }
     }
     index = 'index.md';
   }
