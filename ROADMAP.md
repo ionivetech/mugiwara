@@ -159,7 +159,7 @@ today's behavior.
 
 _Pillar 3, 5 · the adoption unlock._
 
-### 4. Token efficiency — measured, not estimated — ◐ context budget shipped; provider telemetry documented, estimator remains default
+### 4. Token efficiency — measured, not estimated — ✅ context budget shipped; provider-reported path shipped (`--tokens-file` + `MUGIWARA_TOKENS`, report rollup)
 
 **The cost users feel daily, made verifiable.**
 

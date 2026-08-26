@@ -139,7 +139,7 @@ pipeline config to write.**
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
 | **Closure integrity**    | Archive fails on dangling links, secrets in the trail, or missing evidence.                     |
 | **Provenance**           | Per-commit attribution — agent, model, lane, evidence. `mugiwara blame`.                        |
-| **Rollback map**         | Executable `rollback.sh` per mission: exact revert commands. Human runs it.                     |
+| **Rollback map**         | Executable `rollback.sh` per mission: exact revert commands. Human runs it. Under squash merges the diff is collapsed — `rollback.sh` contains `UNRESOLVED` guidance with `git log --grep="<mission>"` and `exit 1` instead of a silent "nothing to revert" (measured caveat). |
 | **Review routing**       | Ranked reading order in every report: sensitive paths first, scaffolding last.                  |
 | **Staleness guard**      | Resume warns when main moved past the mission's base.                                           |
 
