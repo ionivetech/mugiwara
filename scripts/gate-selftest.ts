@@ -559,5 +559,19 @@ console.log('\nPOLICY — fail-closed policy parsing');
   }
 }
 
+// --- DOCLINKS: a relative .md link that does not resolve must fail the gate ---
+console.log('\nDOCLINKS — doc link resolution');
+{
+  const probe = join(root, 'docs', 'tmp-doclinks-probe.md');
+  try {
+    writeFileSync(probe, '[missing](./nowhere-at-all.md)\n');
+    assert('broken doc link → exit 1', false, () => run('DL-bad', 'bun scripts/check-doc-links.ts'));
+    unlinkSync(probe);
+    assert('cleaned → exit 0', true, () => run('DL-good', 'bun scripts/check-doc-links.ts'));
+  } finally {
+    if (existsSync(probe)) unlinkSync(probe);
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
