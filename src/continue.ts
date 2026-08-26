@@ -38,6 +38,8 @@ export type StateEntry = ContinueEntry & {
   lane_rose: boolean;
   lane_prev: string;
   lane_peak: string;
+  base_sha: string;
+  sensitive_paths: string[];
   blockers_open: number;
   heal_cycle: number;
   heal_max_cycles: number;
@@ -160,6 +162,8 @@ export function readState(projectDir: string): StateEntry[] {
       lane_rose: r.lane_rose === true,
       lane_prev: text(r.lane_prev),
       lane_peak: text(r.lane_peak),
+      base_sha: text(r.base_sha),
+      sensitive_paths: Array.isArray(r.sensitive_paths) ? r.sensitive_paths.map(text).filter(Boolean) : [],
       next_action: '',
       next_session_prompt: '',
       updated_at: text(r.updated_at),

@@ -1,12 +1,43 @@
 // src/mission.ts
-// Mission-state helpers for the mugiwara CLI (installer + reset only).
+// Mission-state helpers for the mugiwara CLI.
 import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync, writeFileSync, renameSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
+import { checkTrail, formatIssues } from './integrity.ts';
+import { generateRollback } from './rollback.ts';
+import { writeProvenance } from './provenance.ts';
+import { rankFiles, renderRouting } from './routing.ts';
+import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
   const stem = f.replace(/\.json$/, '');
   return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
+}
+
+/** Primary state for closure artifacts: solo state.json wins over members. */
+function primaryState(dir: string, files: string[]): Record<string, unknown> | null {
+  const name = files.includes('state.json') ? 'state.json' : files.find((f) => f.endsWith('.json') && f !== 'continue.json' && !f.startsWith('continue-'));
+  if (!name) return null;
+  try {
+    return JSON.parse(readFileSync(join(dir, name), 'utf8')) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/** Files the mission changed, base..branch. Empty on any git failure — routing is best-effort. */
+function changedFiles(projectDir: string, state: Record<string, unknown> | null): string[] {
+  const base = typeof state?.base_sha === 'string' ? state.base_sha : '';
+  const branch = typeof state?.branch === 'string' ? state.branch : '';
+  if (!base || base === 'unknown' || !branch) return [];
+  try {
+    return execFileSync('git', ['diff', '--name-only', base, branch], {
+      cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    }).split(/\r?\n/).filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 function activeActor(projectDir: string): string | null {
@@ -83,7 +114,30 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   const dir = join(root, 'missions', mission);
   if (!existsSync(dir)) return { report: null, removed, kept };
+
+  // Closure integrity gate: the trail validates itself before it
+  // folds. Dangling links, secrets, or missing evidence fail the archive.
+  if (!dryRun) {
+    const issues = checkTrail(dir, projectDir);
+    if (issues.length) {
+      throw new Error(`closure integrity gate failed — fix these before archiving:\n${formatIssues(issues)}`);
+    }
+  }
+
   const files = readdirSync(dir);
+  const state = primaryState(dir, files);
+
+  // Context budget: visible footprint number; over-budget fails
+  // when a ceiling is configured. Unset budget = recorded only.
+  let footprintLine = '';
+  if (!dryRun && state) {
+    const chars = measureContextChars(dir);
+    const budget = readBudgetConfig(projectDir);
+    footprintLine = formatFootprint(chars, budget);
+    if (budget && chars > budget) {
+      throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
+    }
+  }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).
   const FOLD_TOP = ['decisions.md', 'blockers.md', 'review.md', 'security.md', 'spec.md'];
@@ -115,7 +169,14 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       // target. A crash mid-write must never leave a truncated report — the
       // fold deletes the wave files right after, so a partial write loses them.
       const tmp = `${reportPath}.tmp`;
-      writeFileSync(tmp, report.trimEnd() + sections + '\n');
+      const routingSection = state
+        ? renderRouting(rankFiles(changedFiles(projectDir, state), {
+            mission,
+            evidence: Array.isArray(state.evidence) ? (state.evidence as string[]) : [],
+            sensitive_paths: Array.isArray(state.sensitive_paths) ? (state.sensitive_paths as string[]) : [],
+          } as never), mission)
+        : '';
+      writeFileSync(tmp, report.trimEnd() + sections + (routingSection || '') + (footprintLine ? `\n${footprintLine}\n` : '') + '\n');
       renameSync(tmp, reportPath);
     }
     for (const f of fold) {
@@ -130,6 +191,29 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     // filters on. A stale in-flight mission folds nothing, so seed a stub.
     if (!existsSync(reportPath)) {
       writeFileSync(reportPath, `# Mission: ${mission}\n\nArchived before closure — no wave artifacts were present.\n`);
+    }
+    // Closure artifacts: executable rollback map and the
+    // two-layer provenance record. Best-effort — absent git/base degrades.
+    if (state && typeof state.branch === 'string') {
+      const rb = generateRollback(projectDir, dir, {
+        mission,
+        branch: state.branch,
+        baseSha: typeof state.base_sha === 'string' ? state.base_sha : 'unknown',
+      });
+      if (rb) kept.push(join('missions', mission, rb.file));
+      try {
+        writeProvenance(projectDir, dir, {
+          mission,
+          actor: typeof state.actor === 'string' ? state.actor : '',
+          lane: typeof state.lane === 'string' ? state.lane : '',
+          mode: typeof state.mode === 'string' ? state.mode : '',
+          branch: state.branch,
+          tasks_done: Number(state.tasks_done) || 0,
+          tasks_total: Number(state.tasks_total) || 0,
+          evidence: Array.isArray(state.evidence) ? (state.evidence as string[]) : [],
+        });
+        kept.push(join('missions', mission, 'provenance.md'));
+      } catch { /* provenance is additive; archive proceeds */ }
     }
   } else {
     for (const f of fold) removed.push(join('missions', mission, f));

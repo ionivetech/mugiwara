@@ -503,5 +503,27 @@ if (!existsSync(countAgent)) {
   }
 }
 
+// --- CI: closure integrity gate — a secret in the trail must fail the archive ---
+console.log('\nCI — closure integrity gate');
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'mugi-ci-'));
+  try {
+    const mdir = join(tmp, '.mugiwara', 'missions', 'selftest-mission');
+    mkdirSync(mdir, { recursive: true });
+    const cli = `bun src/cli.ts archive selftest-mission --project ${tmp}`;
+    // A mission with no trail at all archives fine (stub report path).
+    assert('clean stub → exit 0', true, () => run('CI-clean', cli));
+    // A planted secret must turn the gate red.
+    writeFileSync(join(mdir, 'report.md'), 'token = ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456\n');
+    writeFileSync(join(mdir, 'state.json'), JSON.stringify({ mission: 'selftest-mission' }));
+    assert('planted secret → exit 1', false, () => run('CI-secret', cli));
+    unlinkSync(join(mdir, 'report.md'));
+    unlinkSync(join(mdir, 'state.json'));
+    assert('cleaned → exit 0', true, () => run('CI-clean2', cli));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);
