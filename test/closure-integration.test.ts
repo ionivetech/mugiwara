@@ -55,7 +55,7 @@ describe('archive closure artifacts', () => {
 
   it('appends review routing + context footprint to the folded report', async () => {
     // real git repo so changedFiles resolves
-    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w', { cwd: dir });
+    execSync('git init -q -b main && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w', { cwd: dir });
     mkdirSync(join(dir, 'src', 'auth'), { recursive: true });
     writeFileSync(join(dir, 'src', 'auth', 'gate.ts'), 'export {};\n');
     execSync('git add -A && git commit -qm work', { cwd: dir });
@@ -79,7 +79,7 @@ describe('archive closure artifacts', () => {
   }, 20000);
 
   it('rollback.sh is generated with revert list when git history exists', () => {
-    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w', { cwd: dir });
+    execSync('git init -q -b main && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w', { cwd: dir });
     writeFileSync(join(dir, 'a.txt'), 'x\n');
     execSync('git add -A && git commit -qm one', { cwd: dir });
     writeFileSync(join(dir, 'b.txt'), 'y\n');

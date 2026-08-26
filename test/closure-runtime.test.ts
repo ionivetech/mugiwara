@@ -37,7 +37,7 @@ afterEach(() => {
 function gitRepo(): string {
   const repo = mkdtempSync(join(tmpdir(), 'mugi-git-'));
   execSync(
-    'git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base',
+    'git init -q -b main && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base',
     { cwd: repo },
   );
   return repo;

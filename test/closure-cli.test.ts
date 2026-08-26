@@ -15,8 +15,9 @@ const LANE = join(root, 'scripts', 'lane.sh');
 let dir: string;
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'mugi-stale-'));
+  // -b main pins the initial branch: CI runners may default to master
   execSync(
-    'git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w',
+    'git init -q -b main && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w',
     { cwd: dir },
   );
 });
