@@ -24,9 +24,6 @@ LANE_SCOPE_GLOB=""
 if [ -f .mugiwara/config ]; then
   CFG_SCOPE=$(grep -E '^lane_scope_glob=' .mugiwara/config 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
   [ -n "$CFG_SCOPE" ] && LANE_SCOPE_GLOB="$CFG_SCOPE"
-elif [ -f "$MUGIWARA_DIR/config" ] && [ "$MUGIWARA_DIR" != ".mugiwara" ]; then
-  CFG_SCOPE=$(grep -E '^lane_scope_glob=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
-  [ -n "$CFG_SCOPE" ] && LANE_SCOPE_GLOB="$CFG_SCOPE"
 fi
 
 # union of committed + staged + unstaged + untracked (F) — see patterns.sh
