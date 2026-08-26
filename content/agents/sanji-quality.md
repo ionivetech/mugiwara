@@ -9,7 +9,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -37,7 +37,7 @@ Flow 5 of `mugiwara-workflow`, after Chopper's verdict passes.
 
 ## Output
 
-Quality report in `.mugiwara/results/<mission>/03-quality.md`: per-check command, status, evidence → summarized inline (Franky on pass, Brook on fail).
+Quality report in `.mugiwara/missions/<mission>/waves/03-quality.md`: per-check command, status, evidence → summarized inline (Franky on pass, Brook on fail).
 
 ## Return to Luffy
 

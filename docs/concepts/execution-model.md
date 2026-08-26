@@ -84,9 +84,9 @@ commands that load the skill, run the crew role inline, and bridge state from
 
 | Command | Runs | Reads state from |
 |---------|------|------------------|
-| `/mugiwara-review` | Robin | `.mugiwara/results/` + diff |
-| `/mugiwara-security` | Jinbe | `.mugiwara/results/` + diff |
-| `/mugiwara-continue` | Resume coordinator | `.mugiwara/continue/` |
+| `/mugiwara-review` | Robin | `.mugiwara/missions/<mission>/waves/` + diff |
+| `/mugiwara-security` | Jinbe | `.mugiwara/missions/<mission>/waves/` + diff |
+| `/mugiwara-continue` | Resume coordinator | `.mugiwara/missions/<mission>/continue*.json` |
 
 The other flow stages (plan, execute, heal, ship) are driven by the pipeline
 itself — Luffy routes to them at the stage boundary. Ask in plain language and

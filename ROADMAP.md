@@ -4,7 +4,7 @@ Mugiwara is the governance layer for AI-assisted engineering work: every change
 the crew makes carries a human-reviewable trail — which wave, what evidence,
 approved by whom — and the cost of the process scales to the size of the work.
 
-This roadmap projects forward from that sentence. Ten features, each named for
+This roadmap projects forward from that sentence. Twelve items, each named for
 what it does rather than when it lands.
 
 ---
@@ -32,33 +32,25 @@ not move: no runtime, 21 skills, twelve harnesses of uneven capability.
 
 ### Current state
 
-Verified by execution at v0.6.6 (post-prune, 2026-08):
+Verified by execution at v0.7.0 (mission-first layout, 2026-08):
 
 ```
 21 skills · 14 agents (+3 internal) · 12 harness targets
-cold-load index      ~1.1k tokens, budget-gated
+cold-load index      4,741 chars ≈ 1.2k tokens, budget-gated (doc-gated against drift)
+workspace            .mugiwara/missions/<mission>/ — one dir per mission, bare names
 retrieval accuracy   rank-1 94.3% · top-3 100% · negatives 100%
 determinism          lane · savepoint (hook-driven on claude, crew-driven elsewhere)
 install coverage     verified across 9 targets + 3 marketplace manifests
 ```
 
-Pruned at v0.6.6: onboarding wizard (installer writes the default config),
-session-start announce (crew activates only when its skills/agents are used),
-mugiwara-pr / using-mugiwara / mugiwara-context-budget / mugiwara-sunset /
-mugiwara-agent-security skills, internal-only stage slash commands,
-team-initiative CLI, evidence.sh and mission-report.sh scripts.
-
-**Shipped earlier:**
-- **Sonar-style metrics** — duplication %, complexity scoring, maintainability rating (A–E), code attribute checks per wave
-- **Security hotspots + SCA** — STRIDE-pointed hotspot review, license compliance, dependency audit
-
-**Satisfied at v0.6.5:** the hardening suite — assertion integrity
-(conditional-assertion gate + G5 mutation), published threat model
-(`docs/concepts/security.md`), output discipline (`verbosity` config),
-collaboration flows (case-insensitive parsing, loud failures), and cross-platform
-conformance (12/12 platforms,
-`scripts/conformance.ts`). Implemented items are removed from the list below —
-everything remaining is future work.
+Shipped at v0.6.6–0.7.0: the prune (onboarding wizard, session-start announce,
+5 overlapping skills, stage slash commands, team-initiative CLI,
+evidence.sh/mission-report.sh) and the mission-first workspace —
+`missions/<mission>/` with `plan.md`, `waves/`, `report.md`; archive folds the
+trail into one file per mission; `mugiwara clean` batch-archives closed
+missions; audit-lite Lane 0/1 writes three artifacts instead of nine;
+cross-flow check reuse dedupes Flow 4/5/6 runs; `verify_merged=on` collapses
+Flow 5+6 into one verify pass.
 
 Outstanding defects are tracked separately in the fix list, not here. A roadmap
 that contains bug fixes hides how much of it is actually new.
@@ -69,21 +61,19 @@ that contains bug fixes hides how much of it is actually new.
 
 ### 1. Outcome validation
 
-**Prove the thesis outside this repo.**
+**Prove the thesis outside this repo — publish before perfecting.**
 
-Ten external repositories, at least one harness per tier. Record lane accuracy
-against human judgement, gate pass rate, tokens, wall-clock, heal cycles. Fill
-`docs/reference/compliance-matrix.md` with measurements instead of design intent.
+Five external repositories (not ten), at least one harness per tier. Two
+metrics only: gate pass rate against human judgement, and provider-reported
+tokens. Fill `docs/reference/compliance-matrix.md` with measurements instead
+of design intent.
 
 **Then publish the failures.** _"On Gemini tier 2, evidence checks hold 65% — use
 guided mode there."_ Every pack claims success; none publishes where it breaks.
 The first that states plainly where it fails becomes the most trusted, precisely
 because it admitted it. For a governance layer that is not a marketing choice —
-it is the product.
-
-**Why first.** This is the only item that measures whether mugiwara produces
-better work, and features 6 and 10 both depend on it being credible. It cannot
-be accelerated, so it starts before them.
+it is the product. A small study published this quarter beats a complete one
+that slips — items 7 and 11 need it credible, not exhaustive.
 
 _Pillar 1._
 
@@ -99,7 +89,7 @@ note. `git blame` answers _who_; this answers _what verified it_.
 $ mugiwara blame src/auth/invitation.ts:42
   agent   zoro-execution · claude-sonnet-4.6 · lane full
   gate    coverage 94% · security STRIDE clean · DoD 5/5
-  report  .mugiwara/reports/2026-08-11-invitation-accepted.md
+  report  .mugiwara/missions/invitation-accepted/report.md
   human   reviewed by john, PR #412
 ```
 
@@ -164,7 +154,28 @@ today's behavior.
 
 _Pillar 3, 5 · the adoption unlock._
 
-### 5. Cross-model verification
+### 5. Token efficiency — measured, not estimated
+
+**The cost users feel daily, made verifiable.**
+
+Partly shipped: silent session start (zero idle cost), audit-lite Lane 0/1,
+cross-flow check reuse, `verify_merged`, archive compaction. What remains:
+
+- **Real telemetry.** The estimator (`LANE_BASE + words×1.35 + LOC×12`) is a
+  monotonic proxy. Read provider usage where the harness exposes it; the state's
+  `tokens_source: reported` path exists — make it the default where possible.
+- **Context budget as a gate.** Per-flow-stage context ceilings with a visible
+  number in the mission report, so a bloated investigation is caught like a
+  failed test.
+
+**Why now.** A governance layer that doubles the bill gets disabled; one that
+publishes its own cost per mission earns the right to add process elsewhere.
+Efficiency claims must obey the same measured-not-claimed rule as everything
+else.
+
+_Pillar 3 · keeps the tool installed._
+
+### 6. Cross-model verification
 
 **A second model checks the first one's claim.**
 
@@ -188,7 +199,7 @@ _Pillar 1._
 
 ## Mid — governance that holds when nobody is watching
 
-### 6. Enforced merge gate
+### 7. Enforced merge gate
 
 **Mugiwara as a required CI check.**
 
@@ -207,7 +218,7 @@ only in its own repo is the wrong first impression for a governance tool.
 
 _Pillar 1 · governance that is optional is not governance._
 
-### 7. Permission boundaries
+### 8. Permission boundaries
 
 **Personas with teeth.**
 
@@ -228,7 +239,7 @@ they do not have.
 
 _Pillar 1, 4 · an auditor that can edit code is not an auditor._
 
-### 8. Tool-surface governance
+### 9. Tool-surface governance
 
 **Audit what the agent can reach, not only what it wrote.**
 
@@ -244,7 +255,7 @@ systematic rather than advisory.
 
 _Pillar 1, 4 · governance that stops at the code is incomplete._
 
-### 9. Long-running missions
+### 10. Long-running missions
 
 **Work that outlives a session, a model, or a person.**
 
@@ -266,7 +277,7 @@ _Pillar 2, 5._
 
 ## Far — make the evidence worth something
 
-### 10. Signed attestation
+### 11. Signed attestation
 
 **Evidence that cannot be fabricated after the fact.**
 
@@ -283,6 +294,18 @@ something an auditor outside the team can rely on.
 user-supplied keys. No keys means today's behavior. Never a hard dependency.
 
 _Pillar 1 · the logical endpoint of the thesis._
+
+---
+
+### 12. Adoption kit
+
+**Make the second mission as easy as the first.**
+
+Template repositories per stack (next-auth+prisma, fastapi+sqlmodel, …) with mugiwara preinstalled and one worked example mission each; marketplace listings with screenshots of the trail; an anonymized, opt-in lessons-ledger exchange so one team's captured lesson ships to everyone.
+
+**Why now.** The roadmap is all governance; nothing in it shortens the path from `npm install` to the first closed mission. Adoption is a workstream like verification — without it the trail has no audience.
+
+_Pillar 5 · the trail needs readers._
 
 ---
 

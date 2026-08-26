@@ -101,7 +101,7 @@ describe('a real savepoint.sh run through runScript', () => {
       const code = runScript('savepoint.sh', ['run-fixture', '', '3', 'auto'], repo);
       expect(code).toBe(0);
 
-      const statePath = join(repo, '.mugiwara', 'state', 'run-fixture', 'state.json');
+      const statePath = join(repo, '.mugiwara', 'missions', 'run-fixture', 'state.json');
       expect(existsSync(statePath), 'savepoint wrote no state file').toBe(true);
 
       const state = JSON.parse(readFileSync(statePath, 'utf8'));
@@ -113,7 +113,7 @@ describe('a real savepoint.sh run through runScript', () => {
       expect(state.base_sha).not.toBe('');
 
       // the same run must leave a resume point continue.ts can read back
-      const contPath = join(repo, '.mugiwara', 'continue', 'run-fixture', 'state.json');
+      const contPath = join(repo, '.mugiwara', 'missions', 'run-fixture', 'continue.json');
       expect(existsSync(contPath), 'savepoint wrote no continue file').toBe(true);
       expect(JSON.parse(readFileSync(contPath, 'utf8')).mission).toBe('run-fixture');
     } finally { rmSync(repo, { recursive: true, force: true }); }
@@ -131,9 +131,9 @@ describe('a real savepoint.sh run through runScript', () => {
       git('commit', '-qm', 'seed');
 
       runScript('savepoint.sh', ['cwd-fixture'], repo);
-      expect(existsSync(join(repo, '.mugiwara', 'state', 'cwd-fixture', 'state.json'))).toBe(true);
+      expect(existsSync(join(repo, '.mugiwara', 'missions', 'cwd-fixture', 'state.json'))).toBe(true);
       // never in the mugiwara checkout itself
-      expect(existsSync(join(process.cwd(), '.mugiwara', 'state', 'cwd-fixture'))).toBe(false);
+      expect(existsSync(join(process.cwd(), '.mugiwara', 'missions', 'cwd-fixture'))).toBe(false);
     } finally { rmSync(repo, { recursive: true, force: true }); }
   });
 });

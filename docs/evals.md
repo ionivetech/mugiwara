@@ -84,14 +84,14 @@ as a prompt to read the skill, not as a verdict.
 2. A failing case means **fix the skill, never the eval.** Rewriting a rubric
    to match a degraded skill is the one thing this harness cannot survive.
 3. Re-run. **Bound: 3 cycles.** Still failing after the third → stop, write the
-   row to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` with category
+   row to `.mugiwara/missions/<mission>/blockers.md` with category
    `eval-fail`, and escalate to Brook (healing) via Luffy.
 4. Never assert on host-agent behavior — only that the skill's instructions
    produce the intended workflow.
 
 ## Reporting
 
-Write the pass/fail table to `.mugiwara/results/<mission>/eval.md`, summarize
+Write the pass/fail table to `.mugiwara/missions/<mission>/waves/eval.md`, summarize
 inline for Luffy, and route failures through the blocker ledger.
 
 ## When to run

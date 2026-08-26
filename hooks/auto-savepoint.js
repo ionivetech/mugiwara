@@ -39,16 +39,22 @@ var root = join2(dirname2(fileURLToPath2(import.meta.url)), "..");
 var cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 var SAFE = /^[A-Za-z0-9._-]+$/;
 function bootstrapMission() {
-  for (const dir of ["plans", "spec", "logs"]) {
-    const d = join2(cwd, ".mugiwara", dir);
-    if (!existsSync2(d))
+  const base = join2(cwd, ".mugiwara", "missions");
+  if (!existsSync2(base))
+    return null;
+  for (const e of readdirSync2(base, { withFileTypes: true })) {
+    if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name))
       continue;
-    const files = readdirSync2(d).filter((f) => f.endsWith(".md") && f !== "lessons.md").sort().reverse();
-    for (const f of files) {
-      const name = f.replace(/\.md$/, "").replace(/^\d{4}-\d{2}-\d{2}-/, "");
-      if (name && SAFE.test(name) && !/^\.+$/.test(name)) {
-        return { mission: name, member: "", wave: "0", mode: readMode(), updated: 0 };
-      }
+    const files = readdirSync2(join2(base, e.name));
+    const hasState = files.some((f) => {
+      if (!f.endsWith(".json"))
+        return false;
+      const stem = f.slice(0, -5);
+      return stem !== "continue" && !stem.startsWith("continue-");
+    });
+    const hasArtifacts = ["plan.md", "spec.md", "decisions.md"].some((f) => files.includes(f));
+    if (!hasState && hasArtifacts) {
+      return { mission: e.name, member: "", wave: "0", mode: readMode(), updated: 0 };
     }
   }
   return null;
@@ -65,7 +71,7 @@ function readMode() {
   return "guided";
 }
 function activeMission() {
-  const base = join2(cwd, ".mugiwara", "state");
+  const base = join2(cwd, ".mugiwara", "missions");
   if (!existsSync2(base))
     return bootstrapMission();
   let best = null;
@@ -76,6 +82,8 @@ function activeMission() {
       if (!f.endsWith(".json"))
         continue;
       const stem = f.slice(0, -5);
+      if (stem === "continue" || stem.startsWith("continue-"))
+        continue;
       const member = stem === "state" ? "" : stem;
       if (member && (!SAFE.test(member) || /^\.+$/.test(member)))
         continue;

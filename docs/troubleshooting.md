@@ -52,7 +52,7 @@ correctly. There is no config key for the lane.
 ### A flow stage is skipped silently
 
 Not by design. Luffy records every omitted flow stage and its reason in the decision
-log (`.mugiwara/logs/`). If a flow stage vanished with no record, it is a harness bug —
+log (`.mugiwara/missions/<mission>/decisions.md`). If a flow stage vanished with no record, it is a harness bug —
 report it with the mission log.
 
 ### Context grows too large over a long mission
@@ -68,12 +68,12 @@ from `.mugiwara/`.
 ### I lost context mid-mission
 
 Do not restart. Say "where were we?" — the crew rebuilds from
-`.mugiwara/plans/`, results, and the decision log.
+the mission dir `.mugiwara/missions/<mission>/` (plan, waves, decisions).
 
 ### I want to start clean
 
 ```bash
-mugiwara reset            # wipe spec/plans/results/review/issues/logs
+mugiwara reset            # wipe missions/ (all mission state)
 mugiwara reset --keep-logs  # keep the lessons ledger
 ```
 
@@ -87,5 +87,5 @@ branch; the crew never force-pushes or rewrites pushed history.
 ## Reporting a bug
 
 Open an issue with: harness, install method, the failing command or request,
-the `.mugiwara/logs/` decision log, and the relevant `.mugiwara/results/`
+the mission decision log (`.mugiwara/missions/<mission>/decisions.md`) and the relevant wave files under `.mugiwara/missions/<mission>/waves/`
 output.

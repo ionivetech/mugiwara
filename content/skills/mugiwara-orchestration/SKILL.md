@@ -6,7 +6,7 @@ description: Gatekeeper + captain for any task: triage, classify, coordinate, ro
 
 ## Skip when
 
-- Mid-flow continuation with route already recorded in `.mugiwara/logs/`. Captain duties: triage, check-ins, decisions, closure — Luffy coordinates, never implements; returns decisions, no dispatch.
+- Mid-flow continuation with route already recorded in `.mugiwara/missions/<mission>/decisions.md`. Captain duties: triage, check-ins, decisions, closure — Luffy coordinates, never implements; returns decisions, no dispatch.
 
 ## Delegation pillars (Flow 0)
 
@@ -26,7 +26,7 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 
 Team repos — per-(mission, member) isolation, no collisions: `_shared/references/multi-actor.md`.
 
-The plan doc (`.mugiwara/plans/YYYY-MM-DD-<mission>.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/logs/YYYY-MM-DD-<mission>.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/results/<mission>/06-closure.md`.
+The plan doc (`.mugiwara/missions/<mission>/plan.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/missions/<mission>/decisions.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/missions/<mission>/waves/06-closure.md`.
 
 ## Actor attribution (every .mugiwara write)
 
@@ -49,7 +49,7 @@ Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Sta
 
 ## Spec bridge (Flow 0 → Flow 2)
 
-Flow 1 (Usopp) writes the brainstorm output to `.mugiwara/spec/YYYY-MM-DD-<mission>.md` — the bridge Nami reads. A route straight to Flow 2 (Trivial / Explicit) skips Flow 1, so it MUST still write a spec file before planning: a short but complete statement of the goal, the acceptance criteria as given, and any constraints — taken from the user's request, not invented. Never start Flow 2 with `.mugiwara/spec/` empty: if no spec exists, write one from the request first. The spec is input to Nami, never the plan itself.
+Flow 1 (Usopp) writes the brainstorm output to `.mugiwara/missions/<mission>/spec.md` — the bridge Nami reads. A route straight to Flow 2 (Trivial / Explicit) skips Flow 1: on Lane 2+ write a short spec bridge first (goal, acceptance criteria as given, constraints — from the user's request, not invented). On Lane 0/1 the bridge is optional — the user's request itself is the spec; record the goal in one line in the plan or decisions. Never start Flow 2 on Lane 2+ without a spec. The spec is input to Nami, never the plan itself.
 
 ## Direct calls
 
@@ -58,7 +58,7 @@ User may summon crew members directly. Luffy records the route + reason. Zoro/Br
 ## Periodic check-ins
 Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** the continue file at every flow-stage boundary — never only session end (rule #6).
 **Auto never drops:** in `auto` mode the crew runs every flow stage autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause. **Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Flow 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
-**Heal halt:** read `heal_halt` from `.mugiwara/state/<mission>/[member].json`. savepoint computes it (`heal_cycle ≥ heal_max_cycles`, config default 3); when it reads `true`, STOP and escalate to the user.
+**Heal halt:** read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json`. savepoint computes it (`heal_cycle ≥ heal_max_cycles`, config default 3); when it reads `true`, STOP and escalate to the user.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
 ## Rationalizations (pressure resistance)
@@ -93,7 +93,7 @@ When a flow stage has many independent tasks, instruct Zoro to parallelize — o
 
 ## Q&A hub
 
-Any agent routes a question to Luffy (via the main thread). Answer with: decision + reason + impact on the plan. Log every decision to `.mugiwara/logs/YYYY-MM-DD-<mission>.md`; do NOT touch the plan doc.
+Any agent routes a question to Luffy (via the main thread). Answer with: decision + reason + impact on the plan. Log every decision to `.mugiwara/missions/<mission>/decisions.md`; do NOT touch the plan doc.
 
 ## Override (in-session)
 
@@ -101,7 +101,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Flow 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Step results `results/<mission>/01..05` are evidence — kept, never deleted; only consumed cross-artifacts (`logs/`, `spec/`, `review/`, `issues/`) are removed. Run `mugiwara savepoint <mission>` to write final state. Write the closure summary to `.mugiwara/results/<mission>/06-closure.md`. The plan doc stays untouched. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Write the closure summary to `.mugiwara/missions/<mission>/report.md` (seeded from `waves/06-closure.md`). Run `mugiwara savepoint <mission>` for final state, then `mugiwara archive <mission>` — waves, review, security, blockers, decisions fold into report.md; plan.md stays. The mission dir ends as two files: plan.md + report.md. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
 
 ## Spirit vs letter
 

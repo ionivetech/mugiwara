@@ -23,9 +23,9 @@ that passes on first run has proven nothing.
 
 ## Batch-resume protocol
 
-- Before starting a flow stage: if `.mugiwara/continue/<mission>/[member].json` exists, resume from its
+- Before starting a flow stage: if `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` exists, resume from its
   next_action — never re-run completed tasks; verify against todos `[x]` marks.
-- After each batch: update `.mugiwara/continue/<mission>/[member].json` next_action to the next task.
+- After each batch: update `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` next_action to the next task.
 - `[PARALLEL]` batches stay per sub-mission — a batch never crosses a
   sub-mission boundary.
 - continue is the handoff contract: state proves what is done,

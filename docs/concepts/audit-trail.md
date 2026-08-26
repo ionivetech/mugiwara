@@ -3,70 +3,73 @@
 Every artifact the Mugiwara crew produces — what writes it, when, and how to
 read it as a reviewer.
 
+One directory per mission: `.mugiwara/missions/<mission>/`. Bare file names,
+no date prefixes — the date lives in `state.json` (`updated_at`) and in git
+history.
+
 ## The artifacts
 
 | Artifact | Path | Written by | When | For |
 |----------|------|-----------|------|-----|
-| **Plan doc** | `.mugiwara/plans/YYYY-MM-DD-<mission>.md` | Nami (planning) | Flow 2 | Zero-context executor — plan waves, tasks, criteria, risk |
-| **Spec** | `.mugiwara/spec/YYYY-MM-DD-<mission>.md` | Usopp (brainstorm) / Luffy (spec bridge) | Flow 0–1 | Bridge from idea to plan — goal, acceptance, constraints |
-| **State** | `.mugiwara/state/<mission>/[member].json` | `mugiwara savepoint` | Every flow-stage boundary | Computed mission state: lane + lane_peak (clamp), flow stage, files, loc_ins/del/churn, sensitive paths, blockers, token budget, evidence paths. Identity = (mission, member); solo = state.json |
-| **Continue** | `.mugiwara/continue/<mission>/[member].json` | `mugiwara savepoint` | Every flow-stage boundary | Machine-written resume point: mission, member, flow stage, tasks done/total, mode, next action |
-| **Decision log** | `.mugiwara/logs/YYYY-MM-DD-<mission>.md` | Luffy (orchestrator) | Every flow stage | Route reason, check-in verdicts, mode flips, decisions |
-| **Blocker ledger** | `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` | Any agent | On blocker hit | Row per blocker: flow stage, task, symptom, attempted, help-needed |
-| **Todo list** | `.mugiwara/results/<mission>/todos.md` | Zoro (execution) | Flow 3 | Checkbox per task, checked with evidence pointer |
-| **Audit report** | `.mugiwara/results/<mission>/02-audit.md` | Chopper (checkpoint) | Flow 4 | Per-task evidence, commit hygiene, parallel-conflict, honest classification |
-| **Quality report** | `.mugiwara/results/<mission>/03-quality.md` | Sanji (quality) | Flow 5 | Formatter/linter/unit/user-test results |
-| **Gate verdict** | `.mugiwara/results/<mission>/04-gates.md` | Franky (gates) | Flow 6 | Coverage thresholds from config, build exit, DoD verdict |
-| **Review findings** | `.mugiwara/review/YYYY-MM-DD-<mission>-review.md` | Robin (review) | Flow 7 | Severity-tagged: path:line → problem → fix |
-| **Security report** | `.mugiwara/review/YYYY-MM-DD-<mission>-security.md` | Jinbe (security) | Flow 7 | STRIDE, OWASP mapping, checklist, CVSS severity |
-| **Heal report** | `.mugiwara/results/<mission>/05-healing.md` | Brook (healing) | Flow 8 | Fixed list, escalated list, updated ledger |
-| **Closure report** | `.mugiwara/results/<mission>/06-closure.md` | Luffy (orchestrator) | Flow 9 | Mission summary, per-flow-stage outcomes, deferred items, lessons |
-| **PR verdict** | `.mugiwara/results/<mission>/07-pr-verdict.md` | Luffy (orchestrator) | Flow 9 | Ready PR summary block for the user to open the PR |
-| **Trace** | `(legacy, no longer written)` | Resume coordinator | Every dispatch | Dispatch → outcome — drives resume (legacy; mission state preferred) |
-| **Lessons ledger** | `.mugiwara/logs/lessons.md` | Memory Keeper | Cross-mission | One row per real lesson, append-only, all actors share |
+| **Plan doc** | `missions/<mission>/plan.md` | Nami (planning) | Flow 2 | Zero-context executor — plan waves, tasks, criteria, risk |
+| **Spec** | `missions/<mission>/spec.md` | Usopp (brainstorm) / Luffy (spec bridge) | Flow 0–1 | Bridge from idea to plan — goal, acceptance, constraints |
+| **Decision log** | `missions/<mission>/decisions.md` | Luffy (orchestrator) | Every flow stage | Route reason, check-in verdicts, mode flips, decisions |
+| **Blocker ledger** | `missions/<mission>/blockers.md` | Any agent | On blocker hit | Row per blocker: flow stage, task, symptom, attempted, help-needed |
+| **State** | `missions/<mission>/state.json` or `<member>.json` | `mugiwara savepoint` | Every flow-stage boundary | Computed mission state: lane + lane_peak (clamp), flow stage, files, loc_ins/del/churn, sensitive paths, blockers, token budget, evidence paths. Identity = (mission, member); solo = state.json |
+| **Continue** | `missions/<mission>/continue.json` or `continue-<member>.json` | `mugiwara savepoint` | Every flow-stage boundary | Machine-written resume point: mission, member, flow stage, tasks done/total, mode, next action |
+| **Todo list** | `missions/<mission>/waves/todos.md` | Zoro (execution) | Flow 3 | Checkbox per task, checked with evidence pointer |
+| **Audit report** | `missions/<mission>/waves/02-audit.md` | Chopper (checkpoint) | Flow 4 | Per-task evidence, commit hygiene, parallel-conflict, honest classification |
+| **Quality report** | `missions/<mission>/waves/03-quality.md` | Sanji (quality) | Flow 5 | Formatter/linter/unit/user-test results |
+| **Gate verdict** | `missions/<mission>/waves/04-gates.md` | Franky (gates) | Flow 6 | Coverage thresholds from config, build exit, DoD verdict |
+| **Review findings** | `missions/<mission>/review.md` | Robin (review) | Flow 7 | Severity-tagged: path:line → problem → fix |
+| **Security report** | `missions/<mission>/security.md` | Jinbe (security) | Flow 7 | STRIDE, OWASP mapping, checklist, CVSS severity |
+| **Heal report** | `missions/<mission>/waves/05-healing.md` | Brook (healing) | Flow 8 | Fixed list, escalated list, updated ledger |
+| **Closure report** | `missions/<mission>/waves/06-closure.md` → seeds `report.md` | Luffy (orchestrator) | Flow 9 | Mission summary, per-flow-stage outcomes, deferred items, lessons |
+| **PR verdict** | `missions/<mission>/waves/07-pr-verdict.md` | Luffy (orchestrator) | Flow 9 | Ready PR summary block for the user to open the PR |
+| **Mission report** | `missions/<mission>/report.md` | `mugiwara archive <mission>` at closure | Flow 9 | The durable one-file trail: closure summary with every wave file, review, security, blockers, decisions folded in |
+| **Lessons ledger** | `.mugiwara/lessons.md` | Memory Keeper | Cross-mission | One row per real lesson, append-only, all actors share |
+| **Mission index** | `.mugiwara/index.md` | `mugiwara archive` / `clean` | Per archive | One line per archived mission |
 
 The `mugiwara …` entries above are bundled shell scripts (`savepoint.sh`,
-`lane.sh`) that the CLI resolves from the
-package root, so they work on every install target rather than only where a
-`scripts/` directory happens to sit in the cwd.
+`lane.sh`) that the CLI resolves from the package root, so they work on every
+install target rather than only where a `scripts/` directory happens to sit
+in the cwd.
+
+**Lane 0/1 (audit-lite).** Small work writes the small trail: `state.json`,
+`waves/01-execution.md`, and the closure `report.md`. Plan, spec, blockers,
+and per-flow-stage wave files appear on Lane 0/1 only when a blocker actually
+occurs.
 
 ## How to read as a reviewer
 
-1. **Start with the mission report** (`reports/`) — one file, what changed, gates, token cost.
-2. **Check the gate verdict** (`results/<mission>/04-gates.md`) — coverage from config, build, DoD. Any FAIL needs explanation.
-3. **Spot-check the audit report** (`results/<mission>/02-audit.md`) — did Chopper re-run checks or accept claims? Every criterion gets a command run + evidence row.
-4. **Review findings count** (`review/`) — how many blocker/major/minor? Were they healed? Check the heal report for closure.
-5. **State.json** for raw numbers — lane, flow stage, files, blockers open, heal cycle, token budget status (ok/warn/stop).
+1. **Start with `report.md`** — one file: what changed, gates, token cost, and
+   (after archive) every wave artifact folded inside.
+2. **Check the gate verdict** (`waves/04-gates.md`) — coverage from config,
+   build, DoD. Any FAIL needs explanation.
+3. **Spot-check the audit report** (`waves/02-audit.md`) — did Chopper re-run
+   checks or accept claims? Every criterion gets a command run + evidence row.
+4. **Review findings count** (`review.md`, `security.md`) — how many
+   blocker/major/minor? Were they healed? Check the heal report for closure.
+5. **State.json** for raw numbers — lane, flow stage, files, blockers open,
+   heal cycle, token budget status (ok/warn/stop).
 
-## What stays after cleanup
+## What stays after closure
 
-After Flow 9 closure (run via `mugiwara-ship` cleanup procedure):
+After Flow 9, run `mugiwara archive <mission>`:
 
-**Kept** (audit trail + PR material):
-- `config` — runtime config
-- `plans/<mission>.md` — clean plan doc
-- `results/<mission>/06-closure.md` — closure report
-- `results/<mission>/07-pr-verdict.md` — PR material
-- `reports/YYYY-MM-DD-<mission>.md` — mission report
-- `state/<mission>/` — final mission state (unless another actor's mission is active)
-- `logs/lessons.md` — cross-mission lessons
-- `backup/`, `manifest.json` — harness config
+- It folds `waves/*.md`, `spec.md`, `review.md`, `security.md`,
+  `blockers.md`, `decisions.md` into `report.md` (each as an
+  `## Archived: <file>` section), then removes them.
+- Session state (`state.json`, `continue*.json`) is deleted with it.
+- The mission dir ends as two durable files: **plan.md + report.md**.
 
-**Deleted** (consumed/superseded):
-- `spec/<mission>.md` — consumed by planning
-- `results/<mission>/todos.md` — consumed
-- `results/<mission>/02-audit.md` — superseded by closure
-- `results/<mission>/03-quality.md` — consumed
-- `results/<mission>/04-gates.md` — consumed
-- `results/<mission>/05-healing.md` — consumed
-- `results/<mission>/trace.md (legacy)` — consumed (mission state is canonical)
-- `review/<mission>-review.md` — consumed
-- `review/<mission>-security.md` — consumed
-- `issues/<mission>-blockers.md` — consumed
-- `logs/<mission>.md` — decision log, per-mission
+Batch form for several closed missions:
+`mugiwara clean [--all] [--before <date>]` — archives everything with a
+`report.md` and no live session state; `--all --force` includes in-flight
+missions. Both commands append a line to `.mugiwara/index.md`.
 
-Cleanup lists candidates first (dry-run), then deletes. A mission is only
-closed after cleanup runs.
+Kept forever: `config`, `lessons.md`, `index.md`, and per mission
+`plan.md` + `report.md`.
 
 ## Git: what to commit
 
@@ -75,11 +78,11 @@ block that splits `.mugiwara/`:
 
 | Path | Git fate | Why |
 |------|----------|-----|
-| `reports/`, `results/`, `logs/` | **commit** | the trail itself — mission reports, gate evidence, decision logs |
-| `spec/`, `plans/` | **commit** | decisions, not scratch |
-| `state/`, `continue/` | ignore | session state + resume point, recomputed each flow stage |
-| `config` | ignore | runtime mode; per-developer, not per-repo |
-| `refs/` | ignore | regenerated by install |
+| `missions/*/{plan.md, spec.md, decisions.md, blockers.md, review.md, security.md}` | **commit** | decisions, not scratch |
+| `missions/*/waves/` | **commit** | flow-stage evidence until archived into report.md |
+| `missions/*/report.md` | **commit** | the durable consolidated trail |
+| `missions/**/*.json` | ignore | session state + resume points, recomputed each flow stage |
+| `index.md`, `config`, `refs/` | index commits; config + refs ignored | index is history aid; config is per-developer; refs regenerate |
 
 An audit trail that does not survive the merge is not an audit trail. If your
 repo ignores `.mugiwara/` wholesale, the mission report, evidence, and decision
@@ -89,9 +92,9 @@ log vanish when the branch merges.
 
 The trail is real files, not promises. Three representative examples.
 
-### Mission report (`reports/YYYY-MM-DD-<mission>.md`)
+### Mission report (`missions/<mission>/report.md`)
 
-    # Mission: invitation-accepted-flow . 2026-08-11
+    # Mission: invitation-accepted-flow
 
     **Lane** full . **Mode** guided . **Actor** john . **Branch** feature/MKR-412
 
@@ -99,8 +102,8 @@ The trail is real files, not promises. Three representative examples.
 
     | Flow stage | Artifact | Verdict |
     |------|----------|---------|
-    | Quality (Flow 5) | `03-quality.md` | PASS |
-    | Gates (Flow 6) | `04-gates.md` | PASS |
+    | Quality (Flow 5) | `waves/03-quality.md` | PASS |
+    | Gates (Flow 6) | `waves/04-gates.md` | PASS |
 
     ## State
 
@@ -110,17 +113,17 @@ The trail is real files, not promises. Three representative examples.
     | Heal cycles | 1 |
     | Tokens used | 14,200 / 20,000 |
 
-### Blocker ledger row (`issues/<mission>-blockers.md`)
+### Blocker ledger row (`missions/<mission>/blockers.md`)
 
     | flow stage | task | symptom | attempted | help-needed |
     |------|------|---------|-----------|-------------|
     | 3 | T4 | no e2e setup in repo | searched for playwright/cypress config | user: run e2e manually? |
 
-### Review finding (`review/<mission>-review.md`)
+### Review finding (`missions/<mission>/review.md`)
 
     src/auth/invitation.ts:47 — 🔴 blocker: redirect uses the unvalidated `flow`
     param → open redirect. Validate against an allowlist before `res.redirect`.
 
-These three — report, blocker row, review finding — are what a reviewer opens to
-trust the mission. If the report is missing or the findings are gone, the trail
-did not survive, and the claim is empty.
+These three — report, blocker row, review finding — are what a reviewer opens
+to trust the mission. If the report is missing or the findings are gone, the
+trail did not survive, and the claim is empty.

@@ -1,18 +1,24 @@
 // src/mission.ts
 // Mission-state helpers for the mugiwara CLI (installer + reset only).
-import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync } from 'node:fs';
+import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, appendFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+function isStateFile(f: string): boolean {
+  // state.json (solo) or <member>.json (team) — never continue*.json
+  const stem = f.replace(/\.json$/, '');
+  return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
+}
+
 function activeActor(projectDir: string): string | null {
-  // state now lives at .mugiwara/state/<mission>/[member].json — scan the
+  // state now lives at .mugiwara/missions/<mission>/[member].json — scan the
   // latest state file for its actor
-  const stateDir = join(projectDir, '.mugiwara', 'state');
-  if (!existsSync(stateDir)) return null;
-  const missions = readdirSync(stateDir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name);
+  const missionsDir = join(projectDir, '.mugiwara', 'missions');
+  if (!existsSync(missionsDir)) return null;
+  const missions = readdirSync(missionsDir, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name);
   let latest: { actor: string; updated: number } | null = null;
   for (const mission of missions) {
-    const d = join(stateDir, mission);
-    for (const f of readdirSync(d).filter(f => f.endsWith('.json'))) {
+    const d = join(missionsDir, mission);
+    for (const f of readdirSync(d).filter(isStateFile)) {
       try {
         const s = JSON.parse(readFileSync(join(d, f), 'utf8'));
         const t = Date.parse(s.updated_at || '') || 0;
@@ -37,12 +43,9 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
 
   const removed: string[] = [];
   const kept: string[] = [];
-  for (const dir of ['spec', 'plans', 'results', 'review', 'issues', 'reports']) {
-    const p = join(root, dir);
-    if (existsSync(p)) { rmSync(p, { recursive: true, force: true }); removed.push(dir); }
-  }
-  // mission state + continue folders — state/<mission>/, continue/<mission>/
-  for (const dir of ['state', 'continue']) {
+  // current layout: everything lives in missions/. Legacy pre-0.7 dirs are
+  // removed too so an upgraded project ends up with one layout, not two.
+  for (const dir of ['missions', 'spec', 'plans', 'results', 'review', 'issues', 'reports', 'state', 'continue']) {
     const p = join(root, dir);
     if (existsSync(p)) { rmSync(p, { recursive: true, force: true }); removed.push(dir); }
   }
@@ -53,11 +56,14 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
       if (existsSync(p)) { rmSync(p); removed.push(f); }
     }
   }
+  // lessons.md moved to the .mugiwara root; legacy home was logs/
   if (!keepLogs) {
-    const p = join(root, 'logs');
-    if (existsSync(p)) { rmSync(p, { recursive: true, force: true }); removed.push('logs'); }
-  } else if (existsSync(join(root, 'logs'))) {
-    kept.push('logs');
+    for (const p of [join(root, 'lessons.md'), join(root, 'logs')]) {
+      if (existsSync(p)) { rmSync(p, { recursive: true, force: true }); removed.push(p.startsWith(join(root, 'logs')) ? 'logs' : 'lessons.md'); }
+    }
+  } else {
+    if (existsSync(join(root, 'lessons.md'))) kept.push('lessons.md');
+    else if (existsSync(join(root, join('logs', 'lessons.md')))) kept.push(join('logs', 'lessons.md'));
   }
   for (const f of ['config', 'manifest.json', 'backup']) {
     if (existsSync(join(root, f))) kept.push(f);
@@ -75,101 +81,65 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   const removed: string[] = [];
   const kept: string[] = [];
 
-  // A file belongs to this mission when stripping the optional YYYY-MM-DD-
-  // prefix leaves `<mission>.md` or `<mission>-<suffix>.md`. Covers both the
-  // bare names and the date-prefixed names the prose writes (audit-trail.md).
-  const belongs = (f: string): boolean => {
-    const base = f.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-    return base === `${mission}.md` || base.startsWith(`${mission}-`);
-  };
+  const dir = join(root, 'missions', mission);
+  if (!existsSync(dir)) return { report: null, removed, kept };
+  const files = readdirSync(dir);
 
-  // locate the report (the archive target that must survive). Reports are
-  // date-prefixed (`reports/YYYY-MM-DD-<mission>.md`); compare the stripped
-  // mission name so `bar-foo.md` is not mistaken for mission `foo`.
-  let report: string | null = null;
-  const reportsDir = join(root, 'reports');
-  if (existsSync(reportsDir)) {
-    const f = readdirSync(reportsDir).find(n => {
-      const m = n.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
-      return !!m && m[2] === mission;
-    });
-    if (f) report = join('reports', f);
+  // Fold order: narrative artifacts first, wave evidence last (chronological).
+  const FOLD_TOP = ['decisions.md', 'blockers.md', 'review.md', 'security.md', 'spec.md'];
+  const fold: string[] = [];
+  for (const f of FOLD_TOP) {
+    if (files.includes(f)) fold.push(f);
+  }
+  const wavesDir = join(dir, 'waves');
+  if (existsSync(wavesDir)) {
+    for (const f of readdirSync(wavesDir).sort()) fold.push(join('waves', f));
   }
 
-  // step results 01..05 + todos.md are evidence — kept; archive removes
-  // step results 01..05 + todos.md are evidence — kept; archive removes
-  // only spec/review/issues/logs + continue/<mission>/ + state/<mission>/
-  const resultsDir = join(root, 'results', mission);
-  if (existsSync(resultsDir)) {
-    for (const f of readdirSync(resultsDir)) {
-      kept.push(join('results', mission, f));
+  // The report survives: an existing report.md wins; otherwise the closure
+  // wave seeds it; otherwise it starts empty.
+  let report = '';
+  const reportPath = join(dir, 'report.md');
+  if (files.includes('report.md')) report = readFileSync(reportPath, 'utf8');
+  else if (existsSync(join(wavesDir, '06-closure.md'))) report = readFileSync(join(wavesDir, '06-closure.md'), 'utf8');
+
+  if (!dryRun) {
+    mkdirSync(dir, { recursive: true });
+    if (fold.length) {
+      const sections = fold.map((f) => {
+        const body = readFileSync(join(dir, f), 'utf8').trim();
+        const name = f.includes('/') ? (f.split('/').pop() ?? f) : f;
+        return `\n\n## Archived: ${name}\n\n${body}`;
+      }).join('');
+      writeFileSync(reportPath, report.trimEnd() + sections + '\n');
     }
-  }
-
-  // spec, review, issues, per-mission decision log — bare + date-prefixed
-  const specDir = join(root, 'spec');
-  if (existsSync(specDir)) {
-    for (const f of readdirSync(specDir)) {
-      if (!belongs(f)) continue;
-      const p = join(specDir, f);
-      if (!dryRun) rmSync(p);
-      removed.push(join('spec', f));
+    for (const f of fold) {
+      rmSync(join(dir, f), { force: true, recursive: true });
+      removed.push(join('missions', mission, f));
     }
+    // session state dies with the mission
+    for (const f of files.filter((f) => f.endsWith('.json'))) rmSync(join(dir, f), { force: true });
+    // waves/ may now be empty — remove the folder
+    if (existsSync(wavesDir) && readdirSync(wavesDir).length === 0) rmSync(wavesDir, { recursive: true, force: true });
+  } else {
+    for (const f of fold) removed.push(join('missions', mission, f));
   }
-
-  for (const dir of ['review', 'issues']) {
-    const d = join(root, dir);
-    if (!existsSync(d)) continue;
-    for (const f of readdirSync(d)) {
-      if (!belongs(f)) continue;
-      const p = join(d, f);
-      if (!dryRun) rmSync(p, { force: true });
-      removed.push(join(dir, f));
-    }
-  }
-
-  const logsDir = join(root, 'logs');
-  if (existsSync(logsDir)) {
-    for (const f of readdirSync(logsDir)) {
-      if (!belongs(f)) continue;
-      const p = join(logsDir, f);
-      if (!dryRun) rmSync(p);
-      removed.push(join('logs', f));
-    }
-  }
-
-  // continue/<mission>/ is a session handoff — remove this mission's folder
-  const contDir = join(root, 'continue', mission);
-  if (existsSync(contDir)) {
-    if (!dryRun) rmSync(contDir, { recursive: true, force: true });
-    removed.push(join('continue', mission));
-  }
-  // state/<mission>/ — remove this mission's computed state (archived)
-  const stateDir = join(root, 'state', mission);
-  if (existsSync(stateDir)) {
-    if (!dryRun) rmSync(stateDir, { recursive: true, force: true });
-    removed.push(join('state', mission));
-  }
-
-  // kept: report + the audit-trail survivors
-  if (report) kept.push(report);
-  for (const k of ['plans', 'config', join('logs', 'lessons.md')]) {
-    if (existsSync(join(root, k))) kept.push(k);
-  }
+  removed.push(join('missions', mission, '<session state>'));
+  if (files.includes('plan.md')) kept.push(join('missions', mission, 'plan.md'));
+  kept.push(join('missions', mission, 'report.md'));
 
   // summary index: append one line per archived mission (retention aid),
   // idempotently — never duplicate a line for an already-indexed mission.
   let index: string | undefined;
-  const indexFile = join(root, 'reports', 'index.md');
-  const line = `- ${mission} — ${new Date().toISOString().slice(0, 10)}${report ? ` → ${report}` : ''}\n`;
+  const indexFile = join(root, 'index.md');
+  const line = `- ${mission} — ${new Date().toISOString().slice(0, 10)}\n`;
   if (!dryRun) {
-    mkdirSync(join(root, 'reports'), { recursive: true });
     const existing = existsSync(indexFile) ? readFileSync(indexFile, 'utf8') : '';
     if (!existing.split(/\r?\n/).some(l => l.startsWith(`- ${mission} —`))) {
       const header = existing ? '' : '# Mission index\n\n';
       appendFileSync(indexFile, header + line);
     }
-    index = join('reports', 'index.md');
+    index = 'index.md';
   }
-  return { report, removed, kept, index };
+  return { report: join('missions', mission, 'report.md'), removed, kept, index };
 }

@@ -52,7 +52,7 @@ outside them is **untested**.
 - All 15 agent markdown files ship to every harness.
 - `references/` files are always copied.
 - The workflow, lane sizing, and evidence discipline are identical — the difference is in how the model loads them.
-- The `.mugiwara/continue/<mission>/[member].json` handoff is harness-agnostic (works across every tier in this matrix). Step caps are per-platform and do not break the protocol — one `/mugiwara continue` per session restores the exact resume point on any harness.
+- The `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` handoff is harness-agnostic (works across every tier in this matrix). Step caps are per-platform and do not break the protocol — one `/mugiwara continue` per session restores the exact resume point on any harness.
 
 ## Write-boundary enforcement (honest limits)
 
@@ -118,7 +118,7 @@ Full ENFORCED / ASPIRATIONAL split: [enforcement.md](enforcement.md).
 | Claude Code | `TaskCreate` / `TaskUpdate` / `TaskList` | `TodoWrite` deprecated since v2.1.142 |
 | Copilot / tier 2 / tier 3 | none | plan doc `todos.md` is the only mirror |
 
-The plan doc `.mugiwara/results/<mission>/todos.md` stays the source of truth
+The plan doc `.mugiwara/missions/<mission>/waves/todos.md` stays the source of truth
 on every host; host tools mirror it. Mirror timing is hard: seed at Flow 2
 (tasks + flow-stage list), update in the SAME response each task's evidence lands,
 one transition per call, never batched at flow-stage end. Wave banners use the crew

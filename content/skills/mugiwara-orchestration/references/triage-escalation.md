@@ -88,7 +88,7 @@ been; Luffy owns the lane decision.
 
 ## Heal bound — halt, not a red flag
 
-Read `heal_halt` from `.mugiwara/state/<mission>/[member].json` (savepoint computes it as `heal_cycle ≥ heal_max_cycles`, config default 3). When it reads
+Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` (savepoint computes it as `heal_cycle ≥ heal_max_cycles`, config default 3). When it reads
 `true`, STOP and escalate to the user with full history. This is a halt, not a red
 flag: red flags are prose, a counter is state. Nothing re-runs Flow 8 past
 `heal_max_cycles`.

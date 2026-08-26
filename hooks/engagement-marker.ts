@@ -49,7 +49,7 @@ async function main(): Promise<void> {
   // inline, which is escape #2: only Nami writes the plan.
   const planned = /nami-planner|mugiwara-planning|mugiwara-plan/.test(agentField);
 
-  const dir = join(cwd, '.mugiwara', 'state');
+  const dir = join(cwd, '.mugiwara');
   const file = join(dir, '.engaged');
   // session_id scopes the marker when the payload carries one. Its presence on
   // every hook event is NOT verified, so the guard also accepts a recent mtime

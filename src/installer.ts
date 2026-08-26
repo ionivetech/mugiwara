@@ -181,6 +181,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
         'coverage_modified=80',
         'review_depth=full',
         'quality_depth=full',
+        'verify_merged=off',
         'delegate_threshold=60',
         'heal_max_cycles=3',
         'verbosity=normal',
@@ -223,13 +224,14 @@ function assertNotSymlink(file: string): void {
 
 const GITIGNORE_BLOCK_START = '# >>> mugiwara >>>';
 const GITIGNORE_BLOCK_END = '# <<< mugiwara <<<';
-// legacy marker from v0.6.2 — block was undelimited, single '# mugiwara'
-// header. Kept for detection so an old install is not double-appended.
-const GITIGNORE_MARKER = '# mugiwara';
-const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.
-# Ignore session state and regenerated files.
-.mugiwara/state/
-.mugiwara/continue/
+// legacy markers — pre-0.7 blocks ignored per-type dirs (.mugiwara/state/,
+// .mugiwara/continue/) instead of the mission-first layout. Kept for
+// detection so an old install is upgraded, not double-appended.
+const GITIGNORE_LEGACY = ['.mugiwara/state/', '# mugiwara'];
+const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: commit plan.md, waves/, review.md,
+# decisions.md, blockers.md, report.md under .mugiwara/missions/. Ignore session state.
+.mugiwara/missions/**/*.json
+.mugiwara/index.md
 .mugiwara/config
 .mugiwara/refs/
 # <<< mugiwara <<<
@@ -242,14 +244,14 @@ export function ensureProjectGitignore(projectDir: string, opts: { dryRun?: bool
   let existing = existsSync(path) ? readFileSync(path, 'utf8') : '';
   if (existing) {
     // Delimited block present with the current entries → nothing to do.
-    if (existing.includes(GITIGNORE_BLOCK_START) && existing.includes('.mugiwara/state/')) {
+    if (existing.includes(GITIGNORE_BLOCK_START) && existing.includes('.mugiwara/missions/**/*.json')) {
       return { appended: false, notes: [] };
     }
-    // Legacy (v0.6.2) or outdated delimited block → upgrade in place:
-    // strip the old mugiwara entries (both forms), then append the new block.
+    // Legacy (pre-0.7) or outdated delimited block → upgrade in place:
+    // strip the old mugiwara entries, then append the new block.
     // Without this, upgraded projects keep committing per-wave state/continue
     // JSON to git — session state must stay ignored (Robin MAJOR, Jinbe Low).
-    const hadOld = existing.includes(GITIGNORE_MARKER) || existing.includes(GITIGNORE_BLOCK_START);
+    const hadOld = GITIGNORE_LEGACY.some((m) => existing.includes(m)) || existing.includes(GITIGNORE_BLOCK_START);
     if (hadOld) {
       const clean = removeProjectGitignore(projectDir, { dryRun });
       existing = clean.removed ? (existsSync(path) ? readFileSync(path, 'utf8') : '') : existing;
@@ -281,20 +283,22 @@ export function removeProjectGitignore(projectDir: string, { dryRun = false }: {
     const end = current.indexOf(GITIGNORE_BLOCK_END);
     if (end < start) return { removed: false, notes: ['delimiter mismatch — .gitignore left untouched'] };
     cleaned = current.slice(0, start) + current.slice(end + GITIGNORE_BLOCK_END.length);
-  } else if (current.includes(GITIGNORE_MARKER)) {
-    // legacy (v0.6.2): strip the exact undelimited block — the header, the
-    // explanatory comment, and the five known lines. Prefix-matching would
+  } else if (current.includes('# mugiwara')) {
+    // legacy (pre-0.7): strip the exact undelimited block — the header, the
+    // explanatory comment, and the known lines. Prefix-matching would
     // delete user-owned lines that merely start with a mugiwara path.
     const LEGACY_LINES = new Set([
       '.mugiwara/state.json',
       '.mugiwara/state-*.json',
       '.mugiwara/config',
+      '.mugiwara/state/',
+      '.mugiwara/continue/',
       '.mugiwara/continue.md',
       '.mugiwara/refs/',
     ]);
     const lines = current.split('\n').filter(l => {
       const t = l.trim();
-      if (t.startsWith(GITIGNORE_MARKER)) return false; // header + comment
+      if (t.startsWith('# mugiwara')) return false; // header + comment
       return !LEGACY_LINES.has(t);
     });
     cleaned = lines.join('\n');

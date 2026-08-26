@@ -31,8 +31,8 @@ and sizes it to a **lane**:
 | Ambiguous | requirements, APIs, scope unclear | Flow 1 first |
 
 A clear-work route straight to Flow 2 still writes a short **spec bridge** to
-`.mugiwara/spec/` before planning — Nami reads that file, so it is
-never empty. The decision + reason is logged in `.mugiwara/logs/`. Risk
+`.mugiwara/missions/<mission>/spec.md` before planning — Nami reads that file, so it is
+never empty. The decision + reason is logged in `.mugiwara/missions/<mission>/decisions.md`. Risk
 (money/security/data/public API) always triggers the full pipeline and the
 lane escalates automatically when the work outgrows the estimate — it never
 auto-drops. See [lanes.md](lanes.md).
@@ -47,8 +47,15 @@ criterion — but efficiently:
 - **Scoped by diff**: `git diff --name-only <flow-base>..HEAD` decides what
   actually needs re-verification.
 - **Commit hygiene**: one `git log --stat` pass, not per-commit.
-- Failures land in the blocker ledger `.mugiwara/issues/` with honest
+- Failures land in the blocker ledger `.mugiwara/missions/<mission>/blockers.md` with honest
   code-vs-env classification.
+
+## Flow 5 + 6 — Quality and Gates
+
+Sanji runs format/lint/test/duplication/complexity/attributes; Franky then
+evaluates coverage, build, DoD, and the sonar-style gate from Sanji's evidence.
+With `verify_merged=on` in config (and never on Lane 3), the two flow stages
+run as ONE verify pass that writes both artifacts — one check run, two verdicts.
 
 ## Flow 7 — Review
 
@@ -92,7 +99,7 @@ of truth; the host tool is a mirror.
    runs the checks and shows output. "Subagents lie. No evidence = not
    complete." A skipped flow stage is recorded in the decision log, never silent.
 2. **The plan is the source of truth.** From Flow 2 on, the plan doc in
-   `.mugiwara/plans/` holds the clean execution plan; the decision log holds the
+   `.mugiwara/missions/<mission>/plan.md` holds the clean execution plan; the decision log (`decisions.md`) holds the
    who-and-why trace.
 
 **Every skill has a skip gate.** A `## Skip when` block (≤4 bullets, numeric

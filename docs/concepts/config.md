@@ -25,6 +25,7 @@ coverage_new=90
 coverage_modified=80
 review_depth=full
 quality_depth=full
+verify_merged=off
 delegate_threshold=60
 heal_max_cycles=3
 verbosity=normal
@@ -42,6 +43,7 @@ verbosity=normal
 | `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Flow 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only). **Advisory-only** — read by the crew, not by code. |
 | `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Flow 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only). **Advisory-only** — read by the crew, not by code. |
+| `verify_merged` | on / off | off | Merge Flow 5 (quality) and Flow 6 (gates) into ONE verify pass that writes both artifacts (`waves/03-quality.md` + `waves/04-gates.md`) from a single check run. Intended for strong models and small lanes where three separate verification passes are redundant; Lane 3 (sensitive) always keeps them separate. **Advisory-only** — read by the crew from this file at Flow 5 start. |
 | `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers. **Read by `scripts/savepoint.sh`** — it computes `delegate_due` (`tokens_est ≥ threshold% of budget`) into `state.json`; the execution skill reads that flag, never the raw value. |
 | `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation. **Read by `scripts/savepoint.sh`** — recorded in `state.json` and used to compute `heal_halt` (`heal_cycle ≥ max`), which the crew reads. |
 | `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. **Read by `scripts/savepoint.sh`** — recorded in `state.json`. |
@@ -62,6 +64,7 @@ but no gate fails and no computation changes:
   decisions, so these keys are advisory by design.
 - `review_depth`, `quality_depth` — depth selection for Robin (Flow 7) and
   Sanji (Flow 5); the crew reads them from this file at stage start.
+- `verify_merged` — collapses the Flow 5/6 check passes into one on `on`.
 
 An advisory key is documented, never silently inert: its consumer (the crew
 via prose) and its effect are stated here so a reader knows who acts on it.

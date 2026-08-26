@@ -1,25 +1,26 @@
 # Cleanup (after the terminal step)
 
-Once the branch is pushed and the PR material is written, clean `.mugiwara/` of
-consumed intermediates. Never touch anything outside `.mugiwara/`.
+Once the branch is pushed and the PR material is written, compact the mission
+dir to its durable core. Never touch anything outside `.mugiwara/`.
 
 **KEEP** (the audit trail and PR material):
 
-- `config`
-- `plans/YYYY-MM-DD-<mission>.md` — the clean plan doc
-- `results/<mission>/06-closure.md` — closure report
-- `results/<mission>/07-pr-verdict.md` — PR material
-- `reports/YYYY-MM-DD-<mission>.md` — the mission report (the consolidated evidence)
-- `logs/lessons.md` and any cross-mission state (`backup/`, `manifest.json`)
+- `config`, `lessons.md` — cross-mission
+- `missions/<mission>/plan.md` — the clean plan doc
+- `missions/<mission>/report.md` — the consolidated evidence: closure report
+  with every wave file, review, security, blockers, and decisions folded in
+- any cross-mission state (`backup/`, `manifest.json`)
 
-**ARCHIVE, then remove** (fold into the mission report first, never delete outright):
+**FOLDED, then removed by archive**:
 
-- `results/<mission>/01-execution.md` … `05-healing.md`, `todos.md` — flow-stage artifacts, folded
-- `spec/YYYY-MM-DD-<mission>.md` — consumed by planning
-- `review/`, `issues/` per-mission findings — folded into the report
-- `logs/YYYY-MM-DD-<mission>.md` and mode-flip logs — folded
-- `.mugiwara/continue/<mission>/[member].json` — consumed once closed (delete by exact name, never a glob)
+- `missions/<mission>/waves/01-execution.md` … `08-verifier.md`, `todos.md`
+- `missions/<mission>/spec.md` — consumed by planning
+- `missions/<mission>/review.md`, `security.md`, `blockers.md`, `decisions.md`
+- `missions/<mission>/state.json | <member>.json`,
+  `continue.json | continue-<member>.json` — session state dies with the mission
 
-Procedure: run `mugiwara archive <mission>` (dry-run first), which folds evidence
-into the report, removes the loose files, and appends a summary-index line.
+Procedure: run `mugiwara archive <mission>` (dry-run first) — it folds the wave
+files into `report.md`, removes the loose files, and appends an index line to
+`.mugiwara/index.md`. Batch form for several closed missions:
+`mugiwara clean [--all] [--before <date>]`.
 A mission is only closed after the archive runs — the trail must survive the merge.

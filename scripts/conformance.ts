@@ -120,7 +120,7 @@ function snapshot(targetId: string): Record<string, unknown> {
     ensureProjectGitignore(dir, { dryRun: false });
 
     // 4. normalize + collect
-    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'state', MISSION, 'state.json'), 'utf8'));
+    const state = JSON.parse(readFileSync(join(dir, '.mugiwara', 'missions', MISSION, 'state.json'), 'utf8'));
     const gitignore = existsSync(join(dir, '.gitignore')) ? readFileSync(join(dir, '.gitignore'), 'utf8') : '';
 
     const countFiles = (p: string): number => {

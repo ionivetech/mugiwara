@@ -87,13 +87,13 @@ for (const id of TARGET_IDS) {
 const RUNTIME_SHAPES: RegExp[] = [
   /^\.mugiwara\/?(\*\*)?$/,                                       // bare mention of the dir
   /^~?\/?\.mugiwara\/config$/,                                    // project + global config
-  /^\.mugiwara\/(state|continue)\/<mission>\/(\[member\]|state|<member>)\.json$/,
-  /^\.mugiwara\/issues\/(YYYY-MM-DD-<mission>-blockers\.md)?$/,
-  /^\.mugiwara\/logs\/(YYYY-MM-DD-<mission>\.md|lessons\.md)?$/,
-  /^\.mugiwara\/(plans|spec|reports)\/(YYYY-MM-DD-<mission>\.md)?$/,
-  /^\.mugiwara\/review\/(YYYY-MM-DD-<mission>-(review|security|verifier)\.md)?$/,
-  /^\.mugiwara\/results\/<mission>\/([0-9]{2}-[a-z-]+|eval|resume|todos)\.md$/,
-  /^\.mugiwara\/results\/?$/,
+  /^\.mugiwara\/lessons\.md$/,
+  /^\.mugiwara\/index\.md$/,
+  /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/(plan|spec|decisions|blockers|review|security|report)\.md$/,
+  /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/waves\/([0-9]{2}-[a-z-]+|eval|resume|todos)\.md$/,
+  /^\.mugiwara\/missions\/<mission>\/waves\/?$/,
+  /^\.mugiwara\/missions\/<mission>\/(state\.json|<member>\.json)$/,
+  /^\.mugiwara\/missions\/<mission>\/(continue\.json|continue-<member>\.json)$/,
 ];
 
 // Shape violations that exist today and are NOT fixed in this mission because

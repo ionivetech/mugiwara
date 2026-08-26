@@ -14,7 +14,7 @@ The crew's institutional memory. Every mission writes what it learned so the nex
 
 ## The ledger
 
-`.mugiwara/logs/lessons.md` — append-only, shared across all missions in this repo.
+`.mugiwara/lessons.md` — append-only, shared across all missions in this repo.
 
 ```
 | YYYY-MM-DD | mission | area | lesson |
@@ -47,7 +47,7 @@ A lesson that can't change future behavior is noise. Skip it.
 
 ## Memory hygiene
 
-Lessons are cross-mission but per-repo. The ledger lives in `.mugiwara/logs/` so it never pollutes the codebase. Read the whole file, apply only the rows touching this mission's area.
+Lessons are cross-mission but per-repo. The ledger lives at `.mugiwara/lessons.md` so it never pollutes the codebase. Read the whole file, apply only the rows touching this mission's area.
 
 ## Common rationalizations
 

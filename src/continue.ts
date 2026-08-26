@@ -6,9 +6,10 @@
 // in one process spawn.
 //
 // Reads what scripts/savepoint.sh writes:
-//   .mugiwara/continue/<mission>/state.json    (solo)
-//   .mugiwara/continue/<mission>/<member>.json (team)
-//   .mugiwara/state/<mission>/...              (same shape, more fields)
+//   .mugiwara/missions/<mission>/state.json              (solo state)
+//   .mugiwara/missions/<mission>/<member>.json           (team state)
+//   .mugiwara/missions/<mission>/continue.json           (solo resume point)
+//   .mugiwara/missions/<mission>/continue-<member>.json  (team resume point)
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -81,9 +82,14 @@ export function gitActor(cwd: string): string {
   return name || process.env.USER || process.env.USERNAME || '';
 }
 
-/** Read every JSON under `.mugiwara/<root>/<mission>/*.json`. Corrupt files are skipped. */
-function scan<T>(projectDir: string, root: string, map: (raw: Record<string, unknown>, member: string | null) => T): T[] {
-  const base = join(projectDir, '.mugiwara', root);
+/**
+ * Read every mission dir under `.mugiwara/missions/<mission>/`, picking the
+ * files this reader owns: state readers take `state.json` / `<member>.json`,
+ * continue readers take `continue.json` / `continue-<member>.json`. Corrupt
+ * files are skipped.
+ */
+function scan<T>(projectDir: string, kind: 'state' | 'continue', map: (raw: Record<string, unknown>, member: string | null) => T): T[] {
+  const base = join(projectDir, '.mugiwara', 'missions');
   if (!existsSync(base)) return [];
   const out: T[] = [];
   const missions = readdirSync(base, { withFileTypes: true })
@@ -93,9 +99,18 @@ function scan<T>(projectDir: string, root: string, map: (raw: Record<string, unk
   for (const mission of missions) {
     const dir = join(base, mission);
     for (const f of readdirSync(dir).filter((n) => n.endsWith('.json')).sort()) {
-      // state.json is the solo (member-less) file; <member>.json is a team member
       const stem = f.slice(0, -'.json'.length);
-      const member = stem === 'state' ? null : stem;
+      // state files: `state` (solo) or `<member>`; continue files: `continue`
+      // (solo) or `continue-<member>`. Each scan ignores the other kind.
+      let member: string | null;
+      if (kind === 'state') {
+        if (stem === 'continue' || stem.startsWith('continue-')) continue;
+        member = stem === 'state' ? null : stem;
+      } else {
+        if (stem === 'continue') member = null;
+        else if (stem.startsWith('continue-')) member = stem.slice('continue-'.length);
+        else continue;
+      }
       if (member !== null && !isSafeKey(member)) continue;
       try {
         const raw = JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>;

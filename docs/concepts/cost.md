@@ -6,20 +6,22 @@ Three-layer token architecture. Every layer has a cost and a purpose.
 
 | Layer | Loaded | Purpose | Current size |
 |-------|--------|---------|:---:|
-| **Index** — description frontmatter | Every session, every harness | Skill retrieval | ~1.37k tokens |
-| **Body** — SKILL.md content | When the skill triggers | Capability — how it performs | ~200 KB, ~0 until used |
+| **Index** — description frontmatter | Every session, every harness | Skill retrieval | ~1.17k tokens |
+| **Body** — SKILL.md content | When the skill triggers | Capability — how it performs | ~170 KB, ~0 until used |
 | **References** — references/*.md | On demand, when opened | Depth — worked examples, checklists | ~0 (to build) |
 
 Only the **index** is a recurring cost. Body and references pay only when used.
 
 ## Index budget
 
-- **Target:** 1.2k tokens (descriptions + agent pointers)
+- **Target:** ≤1.2k tokens (descriptions + agent pointers)
 - **Gate:** 5,500 chars hard CI cap — any skill/agent description that pushes the total over fails validation
-- **Current:** 5,437 chars ≈ 1.36k tokens (21 skills + 14 agents), loaded every session
+- **Current:** 4,741 chars ≈ 1.18k tokens (21 skills + 14 agents), loaded every session
 
-The 5,500-char gate is the tightest in the suite: ~63 chars of headroom. One
-meaningful description edit, or one new skill/agent, blows the budget.
+The 5,500-char gate leaves ~780 chars of headroom after the v0.7 prune
+(26 → 21 skills). The validator prints the measured total on every run and
+fails when this doc's stated number drifts from the measurement; keep the
+remaining headroom in reserve — it is the budget's lock, not free space.
 
 ## Cost per lane
 
@@ -40,7 +42,7 @@ reflected in the budgets. Lean/standard/full were rescaled from the old
 Spike stays a deliberate floor — a resize lane, not a content-loaded one.
 
 Budgets warn at exactly 1.5× budget, stop at exactly 3×, both boundaries
-inclusive (`>=`). Write state to `.mugiwara/state/<mission>/[member].json` before stopping.
+inclusive (`>=`). Write state to `.mugiwara/missions/<mission>/[member].json` before stopping.
 
 ## Measured benchmark (2026-08-13 QA mission)
 
@@ -56,12 +58,15 @@ All numbers below were measured on this repo unless marked as an estimate.
 - **Words-to-warn/stop** (doc words, ignoring LOC; LOC tokens reduce headroom
   at 12 tok/line): lean ~3.7k / ~10.4k, standard ~7.4k / ~21.3k, full ~10.9k /
   ~32.6k.
-- **Static session overhead:** mugiwara catalog ~1,370 tokens (21 skills + 15
+- **Static session overhead:** mugiwara catalog ~1,170 tokens (21 skills + 14
   agents). Compare: ponytail fully injected ~1,300 tokens (5,227 bytes),
   caveman ~625. Skill bodies (~170 KB across 21 skills) load on demand only —
   ~0 until `skill()` fires.
 - **Honest limits:** the estimator counts LOC + doc words — a monotonic proxy,
-  not real model-I/O telemetry. The true ceiling is the provider's accounting.
+  not real model-I/O telemetry. The true ceiling is the provider's accounting:
+  when the harness exposes real usage, feed it back with `MUGIWARA_TOKENS` —
+  the state then records `tokens_source: reported` instead of `computed`, and
+  the mission report carries a provider-backed number.
   Superpowers is not installed here, so no measured A/B exists; no fabricated
   numbers. To A/B: install both harnesses, run the same mission in identical
   sessions, compare provider token accounting.

@@ -75,10 +75,10 @@ const baseArg = process.argv.indexOf('--base');
 let base = baseArg !== -1 ? process.argv[baseArg + 1] : process.env.MUGIWARA_COVERAGE_BASE;
 if (!base) {
   // the mission's own recorded base_sha is the truthful diff origin
-  const stateDir = join(root, '.mugiwara', 'state');
-  if (existsSync(stateDir)) {
-    for (const m of readdirSync(stateDir)) {
-      const f = join(stateDir, m, 'state.json');
+  const missionsDir = join(root, '.mugiwara', 'missions');
+  if (existsSync(missionsDir)) {
+    for (const m of readdirSync(missionsDir)) {
+      const f = join(missionsDir, m, 'state.json');
       if (!existsSync(f)) continue;
       const sha = JSON.parse(readFileSync(f, 'utf8')).base_sha;
       if (sha) { base = sha; break; }

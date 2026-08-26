@@ -9,7 +9,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -35,13 +35,13 @@ Flow 2 of `mugiwara-workflow`.
 6. Parallel-proof waves: `[PARALLEL]` only with file- AND interface-disjoint proof stated in the wave header; else `[SEQUENTIAL, depends-on]`.
 7. Very-large missions (>2 days, multi-PR scope): MUST emit `## Mission split` — sub-missions with own PR, done-criteria, continuation pointer; never one giant plan.
 8. Every wave ends in a verified, reviewable state.
-9. Write the plan to `.mugiwara/plans/YYYY-MM-DD-<mission>.md` — CLEAN: no agent names, no log, no closure. Then: `guided`/`semi` STOP and ASK the user — approve now / revise / continue later (new session via resume-coordinator); record their GO in the decision log, never hand to Zoro without an explicit user GO. `auto` delegates straight to Zoro — no user GO. Unclear requirements in `auto` are resolved before planning by brainstorming with Usopp + Luffy's decision, never guessed.
+9. Write the plan to `.mugiwara/missions/<mission>/plan.md` — CLEAN: no agent names, no log, no closure. Then: `guided`/`semi` STOP and ASK the user — approve now / revise / continue later (new session via resume-coordinator); record their GO in the decision log, never hand to Zoro without an explicit user GO. `auto` delegates straight to Zoro — no user GO. Unclear requirements in `auto` are resolved before planning by brainstorming with Usopp + Luffy's decision, never guessed.
 10. Map user ACs in the context scan (per `mugiwara-testcases`): read the declared test source, map each user AC to ≥1 per-task criterion — executable user test → the project test command scoped to that file; declarative AC → "translate to a project test file + run" or a literal command check; cross-cutting user ACs become plan-level criteria. Never invent an integration test as a criterion.
 11. Refuse anti-pattern plans: TBD, uncheckable criterion, assumed tooling, silent reordering, unproven parallel, missing dependency edge, gold-plating, missing rollback. Goes back to Luffy/Usopp, never into the plan.
 
 ## Output
 
-`.mugiwara/plans/YYYY-MM-DD-<mission>.md` — clean plan (waves + task tables + detail tasks + risks), single source of truth from Flow 2; user-approved before Flow 3.
+`.mugiwara/missions/<mission>/plan.md` — clean plan (waves + task tables + detail tasks + risks), single source of truth from Flow 2; user-approved before Flow 3.
 
 ## Return to Luffy
 

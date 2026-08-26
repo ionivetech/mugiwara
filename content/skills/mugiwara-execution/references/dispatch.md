@@ -15,7 +15,7 @@ T2: ✅ | 7 pointers rewritten | grep refs/ → clean
 T3: ✅ | 38/38 tests | bun run test
 ```
 
-Full logs go to `.mugiwara/results/<mission>/01-execution.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output.
+Full logs go to `.mugiwara/missions/<mission>/waves/01-execution.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output.
 
 ## Delegation format (parallel workers only)
 

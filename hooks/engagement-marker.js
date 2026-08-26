@@ -22,7 +22,7 @@ async function main() {
     return;
   const dispatched = /zoro-execution|brook-healing|mugiwara-execution|mugiwara-healing|mugiwara-execute|mugiwara-heal/.test(agentField);
   const planned = /nami-planner|mugiwara-planning|mugiwara-plan/.test(agentField);
-  const dir = join(cwd, ".mugiwara", "state");
+  const dir = join(cwd, ".mugiwara");
   const file = join(dir, ".engaged");
   const sessionId = typeof payload.session_id === "string" ? payload.session_id : "";
   try {

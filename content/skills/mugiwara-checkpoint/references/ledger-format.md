@@ -31,4 +31,4 @@ Blocker ledger row format used by Chopper (flow-audit) and Brook (healing).
 - Every blocker gets one row. Never combine two failures into one row.
 - Category goes in `symptom` or `help-needed` — whichever is more specific.
 - `env` classification must be proven (reproduce on clean checkout). Unproven = `test-fail`.
-- File at `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md`. Create if absent.
+- File at `.mugiwara/missions/<mission>/blockers.md`. Create if absent.

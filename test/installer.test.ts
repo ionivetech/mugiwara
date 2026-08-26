@@ -400,8 +400,8 @@ test('parseFrontmatter rejects bad line', () => {
 
 test('resetMission blocks when active actor exists without force', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-mission-'));
-  mkdirSync(join(dir, '.mugiwara', 'state', 'm1'), { recursive: true });
-  writeFileSync(join(dir, '.mugiwara', 'state', 'm1', 'state.json'),
+  mkdirSync(join(dir, '.mugiwara', 'missions', 'm1'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'missions', 'm1', 'state.json'),
     JSON.stringify({ actor: 'testuser', updated_at: '2026-08-14T00:00:00Z' }));
   const result = resetMission(dir, false);
   expect(result.blocked).toContain('testuser');
@@ -412,8 +412,8 @@ test('resetMission with force bypasses actor guard', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-missionf-'));
   mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
   writeFileSync(join(dir, '.mugiwara', 'plans', 'dummy.md'), 'plan');
-  mkdirSync(join(dir, '.mugiwara', 'state', 'm1'), { recursive: true });
-  writeFileSync(join(dir, '.mugiwara', 'state', 'm1', 'state.json'),
+  mkdirSync(join(dir, '.mugiwara', 'missions', 'm1'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'missions', 'm1', 'state.json'),
     JSON.stringify({ actor: 'testuser', updated_at: '2026-08-14T00:00:00Z' }));
   const result = resetMission(dir, false, true);
   expect(result.blocked).toBeUndefined();
@@ -435,8 +435,8 @@ describe('ensureProjectGitignore', () => {
       expect(r.appended).toBe(true);
       const text = readFileSync(join(dir, '.gitignore'), 'utf8');
       expect(text).toContain('.mugiwara/refs/');
-      expect(text).toContain('.mugiwara/state/');
-      expect(text).toContain('.mugiwara/continue/');
+      expect(text).toContain('.mugiwara/missions/**/*.json');
+      expect(text).toContain('.mugiwara/config');
       expect(text).not.toContain('.mugiwara/state.json');
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -580,7 +580,7 @@ describe('ensureProjectGitignore', () => {
     }
   });
 
-  test('ensureProjectGitignore upgrades legacy block to state/ + continue/ folders', () => {
+  test('ensureProjectGitignore upgrades legacy block to the mission-first block', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-gi11-'));
     try {
       // v0.6.2 undelimited legacy block
@@ -591,8 +591,8 @@ describe('ensureProjectGitignore', () => {
       const r = ensureProjectGitignore(dir);
       expect(r.appended).toBe(true);
       const text = readFileSync(join(dir, '.gitignore'), 'utf8');
-      expect(text).toContain('.mugiwara/state/');
-      expect(text).toContain('.mugiwara/continue/');
+      expect(text).toContain('.mugiwara/missions/**/*.json');
+      expect(text).toContain('.mugiwara/config');
       expect(text).not.toContain('.mugiwara/state.json');
       expect(text).not.toContain('.mugiwara/continue.md');
       // idempotent: second call detects the new block, appends nothing
@@ -604,11 +604,11 @@ describe('ensureProjectGitignore', () => {
   });
 });
 
-test('resetMission preserve keeps logs when keepLogs is true', () => {
+test('resetMission preserve keeps lessons.md when keepLogs is true', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-missionk-'));
-  mkdirSync(join(dir, '.mugiwara', 'logs'), { recursive: true });
-  writeFileSync(join(dir, '.mugiwara', 'logs', 'lessons.md'), 'learned');
+  mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'lessons.md'), 'learned');
   const result = resetMission(dir, true, true);
-  expect(result.kept).toContain('logs');
-  expect(result.removed).not.toContain('logs');
+  expect(result.kept).toContain('lessons.md');
+  expect(result.removed).not.toContain('lessons.md');
 });

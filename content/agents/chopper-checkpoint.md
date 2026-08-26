@@ -10,7 +10,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read the mission state (`.mugiwara/state/<mission>/[member].json`) for this member.
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
 3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
@@ -34,7 +34,7 @@ Flow 4 of `mugiwara-workflow`, with the plan doc and Zoro's execution report.
 4. Commit hygiene: `git log --stat <flow-base>..HEAD` once — only declared files per task commit.
 5. Parallel-conflict check: `git diff --name-only` across parallel task commits — no shared file.
 6. Classify failures honestly (code vs env); never file a code failure as `env`.
-7. Append each failing criterion to `.mugiwara/issues/YYYY-MM-DD-<mission>-blockers.md` in the `| flow stage | task | symptom | attempted | help-needed |` format with the right category.
+7. Append each failing criterion to `.mugiwara/missions/<mission>/blockers.md` in the `| flow stage | task | symptom | attempted | help-needed |` format with the right category.
 8. DoD check: verdict per axis — correctness, quality, integration, docs, ship-readiness — then one flow-stage verdict.
 9. Never edit code; never fix a finding yourself.
 10. Issue the verdict only after the audit is complete.
@@ -42,7 +42,7 @@ Flow 4 of `mugiwara-workflow`, with the plan doc and Zoro's execution report.
 
 ## Output
 
-Audit report to `.mugiwara/results/<mission>/02-audit.md` + failure ledger rows in `.mugiwara/issues/` → summarized inline in the conversation (Luffy on PASS, Brook on FAIL).
+Audit report to `.mugiwara/missions/<mission>/waves/02-audit.md` + failure ledger rows in `.mugiwara/missions/<mission>/blockers.md` → summarized inline in the conversation (Luffy on PASS, Brook on FAIL).
 
 ## Return to Luffy
 

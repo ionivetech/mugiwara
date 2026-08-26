@@ -12,7 +12,7 @@ by whom — and the cost of the process scales to the size of the work.
   migration), computed from the diff by `mugiwara run lane.sh`, not guessed.
 - **Evidence trail** — every flow-stage boundary writes computed state to
   `state/<mission>/[member].json`. No flow stage passes on a spoken claim;
-  check output is captured into `.mugiwara/results/`.
+  check output is captured into `.mugiwara/missions/<mission>/waves/`.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.
 - **15 named agents** in a 9-flow-stage gated pipeline — each flow stage has a defined

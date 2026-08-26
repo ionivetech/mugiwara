@@ -27,9 +27,10 @@
   },
   "report_sections": [],
   "gitignore_block": [
-    "# >>> mugiwara >>> — audit trail is the product: commit reports/, results/, logs/, spec/, plans/.",
-    ".mugiwara/state/",
-    ".mugiwara/continue/",
+    "# >>> mugiwara >>> — audit trail is the product: commit plan.md, waves/, review.md,",
+    "# decisions.md, blockers.md, report.md under .mugiwara/missions/. Ignore session state.",
+    ".mugiwara/missions/**/*.json",
+    ".mugiwara/index.md",
     ".mugiwara/config",
     ".mugiwara/refs/",
     "# <<< mugiwara <<<"
@@ -37,7 +38,7 @@
   "file_count": {
     "skills": 42,
     "agents": 42,
-    "state": 1,
+    "state": 0,
     "evidence": 0
   }
 }

@@ -84,7 +84,7 @@ ready PR summary.
 
 ```
   Flow 0  Luffy   triage → route: full pipe (auth/ touched)
-  Flow 2  Nami    plan   → .mugiwara/plans/2026-08-10-rbac.md (2 plan waves, 5 tasks)
+  Flow 2  Nami    plan   → .mugiwara/missions/rbac/plan.md (2 plan waves, 5 tasks)
   Flow 3  Zoro    execute→ 5 tasks, evidence per task
   Flow 4  Chopper audit  → PASS: all criteria met, commit hygiene clean
   Flow 5  Sanji   quality → PASS: lint 0, 312 tests green
@@ -124,22 +124,27 @@ Every mission writes to `.mugiwara/` at the repo root:
 
 ```
 .mugiwara/
-├── config          # mode, branch, commit, coverage thresholds
-├── state/<mission>/   # computed at every flow-stage boundary by mugiwara savepoint (solo state.json / team member.json)
-├── continue/<mission>/ # machine-written resume point per (mission, member)
-├── spec/           # brainstorm output
-├── plans/          # clean execution plan (source of truth from Flow 2)
-├── results/        # per-mission folders: results/<mission>/ (01-execution … 07-pr-verdict + todos)
-├── reports/        # human-readable mission reports
-├── review/         # review + security findings
-├── issues/         # blocker ledger
-├── refs/           # full skill/agent bodies for glob-loading harnesses
-└── logs/           # decision log + cross-mission lessons
+├── config                    # mode, branch, commit, coverage thresholds
+├── lessons.md                # cross-mission lessons ledger
+├── index.md                  # one line per archived mission
+├── refs/                     # full skill/agent bodies for glob-loading harnesses
+└── missions/<mission>/       # ONE dir per mission, bare names
+    ├── plan.md               # clean execution plan (source of truth from Flow 2)
+    ├── spec.md               # brainstorm output / spec bridge
+    ├── decisions.md          # Luffy's decision + check-in log
+    ├── blockers.md           # blocker ledger
+    ├── review.md / security.md  # Robin's and Jinbe's findings
+    ├── report.md             # closure report; archive folds the trail into it
+    ├── state.json            # computed at every flow-stage boundary (team: <member>.json)
+    ├── continue.json         # machine-written resume point (team: continue-<member>.json)
+    └── waves/                # per-flow-stage artifacts: 01-execution … 07-pr-verdict + todos
 ```
 
 **Savepoint** runs at every flow-stage boundary — the mission state carries lane, flow stage,
 files, blockers, heal cycle, and token budget. Resume reads one file instead of
-six. See [audit-trail.md](concepts/audit-trail.md) for the full artifact map.
+six. **Archive** (`mugiwara archive <mission>`) folds waves + findings into
+`report.md`, leaving plan.md + report.md. See
+[audit-trail.md](concepts/audit-trail.md) for the full artifact map.
 
 ## 5. Configuration
 

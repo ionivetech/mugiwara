@@ -27,8 +27,7 @@ every agent, every skill, every rule is static markdown.
 
 ## See the evidence
 
-A closed mission leaves a closure report you can actually read. This is the
-shape of `.mugiwara/results/<mission>/06-closure.md`:
+A closed mission leaves a report you can actually read — and after `mugiwara archive <mission>`, the whole trail folds INTO it. This is the shape of `.mugiwara/missions/<mission>/report.md`:
 
     # Mission: invitation-accepted-flow . 2026-08-11
 
@@ -43,16 +42,16 @@ shape of `.mugiwara/results/<mission>/06-closure.md`:
 
     | Flow stage | Artifact | Verdict |
     |------|----------|---------|
-    | Execute (Flow 3) | `01-execution.md` | PASS |
-    | Checkpoint (Flow 4) | `02-audit.md` | PASS |
-    | Quality (Flow 5) | `03-quality.md` | PASS |
-    | Gates (Flow 6) | `04-gates.md` | PASS |
-    | Healing (Flow 8) | `05-healing.md` | PASS |
-    | Closure (Flow 9) | `06-closure.md` | GO |
+    | Execute (Flow 3) | `waves/01-execution.md` | PASS |
+    | Checkpoint (Flow 4) | `waves/02-audit.md` | PASS |
+    | Quality (Flow 5) | `waves/03-quality.md` | PASS |
+    | Gates (Flow 6) | `waves/04-gates.md` | PASS |
+    | Healing (Flow 8) | `waves/05-healing.md` | PASS |
+    | Closure (Flow 9) | `waves/06-closure.md` | GO |
 
     ## Review & blockers
 
-    Review + security files: invitation-accepted-flow-review.md, invitation-accepted-flow-security.md
+    Review + security findings: review.md, security.md
     Findings: 3
     Blocker ledger rows: 1
 
@@ -78,7 +77,7 @@ all nine flow stages. Mugiwara itself is free; token usage depends on the lane:
 | Standard (feature)  |  5–7  |      ~13k      | 25k    |
 | Full (architecture) | 9–11  |      ~23k      | 50k    |
 
-Usage tracked in `.mugiwara/state/<mission>/[member].json` per mission. Budget warns at 1.5×,
+Usage tracked in `.mugiwara/missions/<mission>/[member].json` per mission. Budget warns at 1.5×,
 pauses at 3×. Lane bases are measured from the skills/agents loaded per lane
 by `scripts/lane-base.ts` — the constants fail CI if they drift from content
 load.
@@ -138,7 +137,7 @@ pipeline config to write.**
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
 | **Team collaboration**   | One shared plan, per-(mission, member) state + resume. Any number of engineers, zero collisions. |
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
-| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/state/<mission>/` + machine-written `continue/<mission>/`. Continues, never restarts. Auto surfaces in-flight work (lists when ambiguous). |
+| **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/missions/<mission>/` state.json + continue.json. Continues, never restarts. Auto surfaces in-flight work (lists when ambiguous). |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
 → All features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
@@ -196,11 +195,12 @@ colliding, and one engineer can juggle several missions.
 
 ```
 .mugiwara/
-├── state/<mission>/state.json        # solo state
-├── state/<mission>/<member>.json     # your team member state
-├── continue/<mission>/state.json     # solo resume point
-├── continue/<mission>/<member>.json  # your resume point
-└── plans/<mission>.md                # ONE shared plan (source of truth)
+└── missions/<mission>/
+    ├── plan.md                  # ONE shared plan (source of truth)
+    ├── state.json               # solo state
+    ├── <member>.json            # per-member state
+    ├── continue.json            # solo resume point
+    └── continue-<member>.json   # per-member resume point
 ```
 
 Quick start for a team:
@@ -248,6 +248,7 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `coverage_modified` | 80                              | Coverage threshold for modified files (%)      |
 | `review_depth`      | full                            | full / standard / quick — Robin's review depth |
 | `quality_depth`     | full                            | full / standard / quick — Sanji's check depth  |
+| `verify_merged`     | off                             | on merges Flow 5+6 into one verify pass (never Lane 3) |
 | `delegate_threshold`| 60                              | % of token budget at which remaining tasks dispatch to workers |
 | `heal_max_cycles`   | 3                               | Max heal-loop cycles before human escalation    |
 | `verbosity`         | normal                          | normal / full — how much the crew echoes. `normal` hides investigation steps (reads, greps) and file contents; edits, results, decisions stay visible. `full` echoes everything. Never suppresses decisions, questions, blockers, or lane rises |
@@ -277,6 +278,8 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
 | See mission position    | `mugiwara status` (flow stage, tasks, lane, blockers, budget) |
+| Close out a mission     | `mugiwara archive <mission>` — folds the trail into report.md |
+| Tidy closed missions    | `mugiwara clean` (batch; `--all --force` includes in-flight) |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
 | Check gate locally      | `bun run gate`                           |
 | All docs                | [docs/](docs/)                           |
@@ -446,6 +449,10 @@ mugiwara update --target <id> --yes           # overwrite to latest
 mugiwara uninstall                            # remove installed files
 mugiwara list                                 # show installations
 mugiwara list --check                         # health check
+mugiwara status                               # computed mission state
+mugiwara continue [mission] [member]          # resume / list in-flight
+mugiwara archive <mission>                    # fold the trail into report.md
+mugiwara clean [--all] [--before <date>]      # batch-archive closed missions
 mugiwara reset --keep-logs                    # wipe state, keep lessons
 ```
 
@@ -469,8 +476,9 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 | Claim | Status |
 |---|---|
-| Retrieval routing rank-1 | **93.5%**, 181 probes, offline, in CI |
+| Retrieval routing rank-1 | **94.3%**, 150 probes, offline, in CI |
 | Reference pointers resolve | **66/66**, 3 tiers, in CI |
+| Index size published vs measured | **doc-gated** — validator fails on drift, in CI |
 | Lane constants match content load | **verified**, in CI |
 | Write-scope enforcement | **opencode only** — rules-based elsewhere |
 | Cross-harness mission behavior | **12/12 platforms** — 9 rules-dir installs + 3 marketplace manifests, in CI |
