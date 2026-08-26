@@ -96,15 +96,47 @@ All numbers below were measured on this repo unless marked as an estimate.
   inside bash (lane.sh, savepoint.sh) are unaffected: rtk hooks only agent bash
   tool calls. rtk tee saves full raw output on failure, so evidence survives.
 
+## Provider-reported tokens (first-class path)
+
+The estimator is effortless, but it is not telemetry. Where the harness
+exposes real usage, pipe it in — the state's `tokens_source` flips to
+`reported` and the report carries a provider-backed number:
+
+```bash
+# legacy: single number
+MUGIWARA_TOKENS=128400 mugiwara savepoint <mission> ...
+
+# first-class: JSON {input_tokens, output_tokens} — works on every harness
+# that can run a shell (T4)
+echo '{"input_tokens": 42000, "output_tokens": 86400}' > /tmp/tokens.json
+mugiwara savepoint --tokens-file /tmp/tokens.json <mission> ...
+# state: tokens_source=reported, tokens_est=128400 (= input+output)
+# report: "Tokens reported total: 128400 (provider-reported)" when any stage reported
+```
+
+**Recipes — tier 1 (can report):**
+
+| Harness | How to capture | How to pipe |
+|---------|---------------|-------------|
+| **Claude Code** | Usage in statusline / API (`/cost` or `anthropic-usage` header) — `input_tokens` + `output_tokens` per turn | `MUGIWARA_TOKENS=$((input+output))` or write the JSON and `--tokens-file /tmp/tokens.json` at each savepoint |
+| **opencode** | `cost` field from the session's `usage` payload (input + output) | Same — `echo '{"input_tokens":..., "output_tokens":...}' > /tmp/tokens.json` then `savepoint --tokens-file` |
+
+**Tier 2/3 cannot report.** They run agents as markdown (no usage API, no shell
+hook at savepoint time), so there is no provider number to pipe — the state
+stays `tokens_source: computed` and the estimator remains the default. The
+rollup line is absent; do not fabricate numbers.
+
 ## Per-mission cost
 
 the mission state carries `tokens_est` — the estimated token load for this
-mission (LANE_BASE + doc words ×1.35 + changed LOC ×12), or the user-supplied
-`MUGIWARA_TOKENS` value when set. At closure, the mission report surfaces:
+mission (LANE_BASE + doc words ×1.35 + changed LOC ×12), the user-supplied
+`MUGIWARA_TOKENS` value when set, or the `--tokens-file` sum (`input+output`)
+when that first-class path is used. At closure, the mission report surfaces:
 
 - Total tokens for the mission
 - Lane it ran on
 - Cost delta vs. lane budget
+- `Tokens reported total: N (provider-reported)` when any stage reported
 
 This turns lane sizing from "process efficiency" into a number an engineering
 manager can act on. No other skills pack produces this because no other pack

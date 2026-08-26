@@ -10,6 +10,18 @@ die() { echo "savepoint: $*" >&2; exit 1; }
 
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
+# optional provider-reported tokens file (T4): --tokens-file <path> JSON {input_tokens, output_tokens}
+TOKENS_FILE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tokens-file) TOKENS_FILE="${2:-}"; [ -n "$TOKENS_FILE" ] || die "--tokens-file requires a path"; shift 2 ;;
+    --tokens-file=*) TOKENS_FILE="${1#*=}"; shift ;;
+    --) shift; break ;;
+    -*) die "unknown flag \"$1\"" ;;
+    *) break ;;
+  esac
+done
+
 # shared path patterns — single source of truth (D3)
 # shellcheck source=scripts/lib/patterns.sh
 source "$(dirname "$0")/lib/patterns.sh"
@@ -360,6 +372,7 @@ fi
 # loaded this lane (measured from content, validated by scripts/lane-base.ts);
 # loc_churn and written-artifact words scale with growth.
 # MUGIWARA_TOKENS overrides as the reported value.
+# --tokens-file (T4) is the first-class provider-reported path: JSON {input_tokens, output_tokens}
 LANE_BASE=0
 case "$LANE" in
   lean) LANE_BASE=$LANE_BASE_lean ;;
@@ -373,6 +386,11 @@ TOKENS_SOURCE="computed"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
 if [ -n "${MUGIWARA_TOKENS:-}" ]; then
   TOKENS_EST="${MUGIWARA_TOKENS}"
+  TOKENS_SOURCE="reported"
+fi
+if [ -n "$TOKENS_FILE" ]; then
+  [ -f "$TOKENS_FILE" ] || die "tokens file not found: $TOKENS_FILE"
+  TOKENS_EST=$(node -e "try{const j=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));const i=Number(j.input_tokens)||0;const o=Number(j.output_tokens)||0;console.log(i+o)}catch(e){console.log(0)}" "$TOKENS_FILE" 2>/dev/null || echo 0)
   TOKENS_SOURCE="reported"
 fi
 

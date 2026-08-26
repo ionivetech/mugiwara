@@ -92,6 +92,21 @@ test('savepoint records model per stage: MUGIWARA_MODEL > ANTHROPIC_MODEL > unkn
   }
 });
 
+test('savepoint --tokens-file flips source to reported with exact sum (T4)', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-tokens-'));
+  try {
+    setupGit(dir);
+    const tokensFile = join(dir, 'tokens.json');
+    writeFileSync(tokensFile, JSON.stringify({ input_tokens: 40000, output_tokens: 86400 }));
+    runSavepoint(dir, `--tokens-file ${tokensFile} tokens-mission "" 1 auto`);
+    const state = JSON.parse(readFileSync(statePath(dir, 'tokens-mission'), 'utf8'));
+    expect(state.tokens_source).toBe('reported');
+    expect(state.tokens_est).toBe(126400);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('savepoint records verbosity from config (full) and defaults to normal', { timeout: 30000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-verb-'));
   try {
