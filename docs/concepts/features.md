@@ -618,6 +618,75 @@ are decided up front instead of retrofitted.
 
 ---
 
+## 25. Provenance ledger
+
+**What.** Every archived mission attaches a provenance block — agent, model,
+lane, tasks, evidence paths — to its branch head as a git note
+(`refs/notes/mugiwara`) and writes a PR-paste-ready `provenance.md` beside
+the report. `mugiwara blame <path>` answers "what verified this file".
+
+**How to use.** Automatic at archive; `mugiwara blame <path>` to query after
+fetching notes.
+
+**Scenario.** An AI-usage policy asks _which of this was AI-written?_ The
+answer is one command, not an archaeology dig.
+
+→ [Provenance](provenance.md)
+
+---
+
+## 26. Policy as code
+
+**What.** `mugiwara.policy.yml` at the repo root: force_full lane globs,
+coverage threshold raises, human-approval paths, required evidence kinds.
+Upward only; absent means default behavior.
+
+**How to use.** Commit the file; `lane.sh`, `savepoint.sh`, and the coverage
+gate read it on their next run.
+
+**Scenario.** Security team declares migrations always run the full
+pipeline — encoded once, enforced on every mission, no prose to remember.
+
+→ [Policy as code](policy-as-code.md)
+
+---
+
+## 27. Closure tools
+
+**What.** Five deterministic mechanisms at archive: the integrity gate
+(dangling links, secrets, missing evidence fail the archive), an executable
+rollback map, review routing (ranked reading order in the report), a context
+footprint line with optional ceiling, and optional minisign attestation.
+Plus staleness warnings on resume and `mugiwara handoff`.
+
+**How to use.** Automatic at archive/continue; `mugiwara sign <mission>
+[--verify]`, `mugiwara handoff <mission>` opt-in.
+
+**Scenario.** A reviewer opens the report and reads 40 ranked lines instead
+of skimming 2,000; when the deploy misbehaves at 2am, rollback.sh has the
+exact revert commands.
+
+→ [Closure tools](closure-tools.md)
+
+---
+
+## 28. Permission boundaries & tool-surface governance
+
+**What.** Per-persona tool scopes declared in agent files (auditors
+read-only, healer no-network), with a tier enforcement matrix and harness
+deny-config snippets. Flow 0 records a tool-surface inventory — every MCP
+server visible to the session — into the decision log before any dispatch.
+
+**How to use.** Automatic declaration; tier-1 teams wire the deny snippets
+from [permissions](permissions.md).
+
+**Scenario.** Robin finds something suspicious but cannot mutate the tree to
+"check quickly" — the finding goes through Jinbe instead.
+
+→ [Permission boundaries](permissions.md)
+
+---
+
 ## Where to go next
 
 - [README — all features table](../../README.md#all-features)

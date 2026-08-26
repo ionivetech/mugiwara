@@ -24,6 +24,11 @@ claim.
 | [The flow pipeline](concepts/workflow.md) | How a mission flows Flow 0 → Flow 9 |
 | [Execution model](concepts/execution-model.md) | Inline-by-default: why the crew runs in your main conversation |
 | [Lanes & sizing](concepts/lanes.md) | How Luffy sizes work at triage: Lane 0–4, escalation, budget |
+| [Provenance](concepts/provenance.md) | Who wrote what, verified by what — git notes + PR-ready record |
+| [Policy as code](concepts/policy-as-code.md) | `mugiwara.policy.yml`: org rules that push lanes and gates up |
+| [Closure tools](concepts/closure-tools.md) | Integrity gate, rollback map, review routing, context budget, signing |
+| [Permission boundaries](concepts/permissions.md) | Per-persona tool scopes, tier enforcement matrix, harness snippets |
+| [Adoption kit](adoption.md) | Template repos, worked-example standard, lessons-ledger exchange |
 | [Enforcement](reference/enforcement.md) | Skip gates, evidence over claims, and capability tiers |
 | [Git discipline](concepts/git-strategy.md) | Commits, branches, save-points — and why the executor commits |
 

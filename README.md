@@ -135,12 +135,20 @@ pipeline config to write.**
 | ------------------------ | ----------------------------------------------------------------------------------------------- |
 | **Lane sizing**          | Work auto-sized from `git diff`. Typo = instant fix. Auth migration = full pipeline.            |
 | **Evidence trail**       | `.mugiwara/` workspace: plans, audit reports, quality reports, review findings, blocker ledger. |
+| **Provenance**           | Per-commit attribution — agent, model, lane, evidence — as a git note + PR-ready record. `mugiwara blame`. |
+| **Policy as code**       | `mugiwara.policy.yml`: force lanes up, raise coverage gates, flag paths for human approval.     |
+| **Closure integrity**    | Archive fails on dangling links, secrets in the trail, or missing evidence.                     |
+| **Rollback map**         | Executable `rollback.sh` per mission: exact revert commands, newest-first. Human runs it.       |
+| **Review routing**       | Ranked reading order in every report: sensitive paths first, scaffolding last.                  |
+| **Staleness guard**      | Resume warns when main moved past the mission's base; `mugiwara handoff` for engineer hand-off. |
+| **Context budget**       | Trail size measured at closure; optional ceiling fails the archive like a test.                 |
+| **Signed attestation**   | Optional minisign signing of the report — evidence that cannot be edited after the fact.        |
 | **Team collaboration**   | One shared plan, per-(mission, member) state + resume. Any number of engineers, zero collisions. |
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
 | **Resume from anywhere** | Session lost? Rebuilds from `.mugiwara/missions/<mission>/` state.json + continue.json. Continues, never restarts. Auto surfaces in-flight work (lists when ambiguous). |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
 
-→ All features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md)
+→ All features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md) · [Provenance](docs/concepts/provenance.md) · [Policy](docs/concepts/policy-as-code.md) · [Closure tools](docs/concepts/closure-tools.md) · [Permissions](docs/concepts/permissions.md)
 
 ## The pipeline
 
@@ -451,8 +459,11 @@ mugiwara list                                 # show installations
 mugiwara list --check                         # health check
 mugiwara status                               # computed mission state
 mugiwara continue [mission] [member]          # resume / list in-flight
-mugiwara archive <mission>                    # fold the trail into report.md
+mugiwara archive <mission>                    # fold the trail into report.md (integrity-gated)
 mugiwara clean [--all] [--before <date>]      # batch-archive closed missions
+mugiwara blame <path>                         # provenance note on the last commit touching path
+mugiwara handoff <mission>                    # engineer-to-engineer handoff report
+mugiwara sign <mission> [--verify]            # optional minisign attestation of report.md
 mugiwara reset --keep-logs                    # wipe state, keep lessons
 ```
 
@@ -460,7 +471,9 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 **Start here:** [Getting started](docs/getting-started.md) · [What mugiwara replaces](docs/concepts/comparison.md)
 
-**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md) · [Security](docs/concepts/security.md)
+**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md) · [Security](docs/concepts/security.md) · [Provenance](docs/concepts/provenance.md) · [Policy as code](docs/concepts/policy-as-code.md) · [Closure tools](docs/concepts/closure-tools.md) · [Permissions](docs/concepts/permissions.md)
+
+**Adopt:** [Adoption guide](docs/reference/adoption-guide.md) · [Adoption kit](docs/adoption.md)
 
 **Crew:** [Agents](docs/concepts/agents.md) · [Skills](docs/concepts/skills.md)
 

@@ -61,7 +61,15 @@ After Flow 9, run `mugiwara archive <mission>`:
   `blockers.md`, `decisions.md` into `report.md` (each as an
   `## Archived: <file>` section), then removes them.
 - Session state (`state.json`, `continue*.json`) is deleted with it.
-- The mission dir ends as two durable files: **plan.md + report.md**.
+- Closure adds, when derivable: **provenance.md** (who/what/lane/evidence,
+  PR-paste-ready — see [provenance](provenance.md)) and **rollback.sh**
+  (executable revert map — see [closure tools](closure-tools.md)).
+  The report also gains a **Review routing** section and a **Context
+  footprint** line.
+- The mission dir ends as durable files: **plan.md + report.md** plus the
+  closure artifacts above when they could be derived. The archive itself is
+  gated: dangling links, secrets, or missing evidence fail it (see
+  [closure tools](closure-tools.md)).
 
 Batch form for several closed missions:
 `mugiwara clean [--all] [--before <date>]` — archives everything with a
