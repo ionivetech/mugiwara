@@ -559,6 +559,25 @@ console.log('\nPOLICY — fail-closed policy parsing');
   }
 }
 
+// --- T7: evidence-thin — fabricated PASS wave with empty body must fail ---
+console.log('\nT7 — evidence-thin gate');
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'mugi-thin-'));
+  try {
+    const mdir = join(tmp, '.mugiwara', 'missions', 'selftest-thin');
+    mkdirSync(join(mdir, 'flows'), { recursive: true });
+    const cli = `bun src/cli.ts archive selftest-thin --project ${tmp}`;
+    writeFileSync(join(mdir, 'state.json'), JSON.stringify({ mission: 'selftest-thin', evidence: ['flows/04-gates.md'] }));
+    writeFileSync(join(mdir, 'report.md'), 'Verdict: PASS see [evidence](flows/04-gates.md)');
+    writeFileSync(join(mdir, 'flows', '04-gates.md'), 'all good'); // no command shape → thin
+    assert('fabricated PASS with empty body → exit 1', false, () => run('T7-thin', cli));
+    writeFileSync(join(mdir, 'flows', '04-gates.md'), 'ran `bun run test` → 2 passed, exit 0');
+    assert('with command output → exit 0', true, () => run('T7-good', cli));
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 // --- DOCLINKS: a relative .md link that does not resolve must fail the gate ---
 console.log('\nDOCLINKS — doc link resolution');
 {

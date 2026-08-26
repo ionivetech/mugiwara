@@ -99,6 +99,18 @@ describe('closure integrity gate', () => {
     writeFileSync(join(dir, 'src', 'auth', 'gate.md'), 'real');
     expect(checkTrail(dir, dir).filter((i) => i.kind === 'dangling-path')).toEqual([]);
   });
+
+  it('evidence-thin: PASS-cited evidence without command output is flagged', () => {
+    writeFileSync(join(dir, 'report.md'), 'Verdict: PASS see [evidence](flows/04-gates.md)');
+    mkdirSync(join(dir, 'flows'), { recursive: true });
+    writeFileSync(join(dir, 'flows', '04-gates.md'), 'all good, no commands');
+    writeFileSync(join(dir, 'state.json'), JSON.stringify({ evidence: ['flows/04-gates.md'] }));
+    expect(checkTrail(dir, dir).some((i) => i.kind === 'evidence-thin')).toBe(true);
+
+    // with backticked command or status token it passes
+    writeFileSync(join(dir, 'flows', '04-gates.md'), 'ran `bun run test` → 3 passed, exit 0');
+    expect(checkTrail(dir, dir).some((i) => i.kind === 'evidence-thin')).toBe(false);
+  });
 });
 
 describe('rollback map', () => {

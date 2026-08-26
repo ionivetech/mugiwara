@@ -11,7 +11,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 
-export type IntegrityIssue = { kind: 'dangling-path' | 'secret' | 'evidence'; detail: string };
+export type IntegrityIssue = { kind: 'dangling-path' | 'secret' | 'evidence' | 'evidence-thin'; detail: string };
 
 const SECRET_PATTERNS: Array<[RegExp, string]> = [
   [/AKIA[0-9A-Z]{16}/, 'AWS access key id'],
@@ -64,6 +64,28 @@ function linkedPaths(md: string): string[] {
   return out.filter(Boolean);
 }
 
+function hasCommandOutputShape(body: string): boolean {
+  return /`[^`]+`/.test(body) || /\b(exit\s+[01]|✓|✗|\bPASS\b|\bFAIL\b|passed|failed|\d+\s+(passed|failed))\b/i.test(body);
+}
+
+function collectPassCitedPaths(missionDir: string): string[] {
+  const out: string[] = [];
+  for (const f of trailFiles(missionDir)) {
+    let body: string;
+    try { body = readFileSync(f, 'utf8'); } catch { continue; }
+    for (const line of body.split(/\r?\n/)) {
+      if (!/\bPASS\b/.test(line)) continue;
+      for (const p of linkedPaths(line)) out.push(p);
+      // also catch bare repo-path mentions like flows/04-gates.md or evidence/foo.md
+      for (const m of line.matchAll(/(?:^|[\s"'(])([a-zA-Z0-9._\/-]+\.(?:md|txt|log|json))\b/g)) {
+        const cand = m[1];
+        if (cand.includes('/')) out.push(cand);
+      }
+    }
+  }
+  return [...new Set(out)];
+}
+
 export function checkTrail(missionDir: string, projectRoot: string): IntegrityIssue[] {
   const issues: IntegrityIssue[] = [];
   const files = trailFiles(missionDir);
@@ -92,6 +114,7 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
   }
 
   // 3: evidence entries recorded as repo paths must exist
+  const evidencePaths: string[] = [];
   const evidenceFile = join(missionDir, 'state.json');
   if (existsSync(evidenceFile)) {
     try {
@@ -99,6 +122,7 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
       if (Array.isArray(s.evidence)) {
         for (const e of s.evidence) {
           if (typeof e !== 'string' || !e.trim()) continue;
+          evidencePaths.push(e);
           const cand = join(projectRoot, e);
           if (!isAbsolute(e) && !existsSync(cand) && !existsSync(join(missionDir, e))) {
             issues.push({ kind: 'evidence', detail: `state.json evidence "${e}" does not exist` });
@@ -106,6 +130,24 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
         }
       }
     } catch { /* corrupt state — the state reader owns that error */ }
+  }
+
+  // 4: evidence-content spot check (T7): a PASS verdict that cites an evidence
+  // path must point at a file that exists AND contains command-output shape
+  // (backticked command or exit-status token). Fake-but-consistent trails
+  // defeat existence-only checks — this raises the bar cheaply.
+  const passCited = collectPassCitedPaths(missionDir);
+  for (const e of passCited) {
+    if (!e.trim() || isAbsolute(e)) continue;
+    const candMission = join(missionDir, e);
+    const candRoot = join(projectRoot, e);
+    const resolved = existsSync(candMission) ? candMission : existsSync(candRoot) ? candRoot : null;
+    if (!resolved) continue; // already reported as evidence/dangling elsewhere
+    let body: string;
+    try { body = readFileSync(resolved, 'utf8'); } catch { continue; }
+    if (!hasCommandOutputShape(body)) {
+      issues.push({ kind: 'evidence-thin', detail: `evidence "${e}" exists but lacks command output (no backticked command or exit-status token)` });
+    }
   }
 
   return issues;
