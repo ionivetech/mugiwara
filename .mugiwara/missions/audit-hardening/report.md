@@ -135,6 +135,7 @@ Ranked reading order for `audit-hardening` (heuristic ordering — it decides wh
 | **Lane** | full (budget 50,000 · warn 75,000 · stop 150,000) |
 | **Budget status** | 62% of budget · 18,971 under · OK |
 | **Context footprint** | 14,698 chars (no context budget configured) |
+| **Provider total** | 240,000 (provider-reported — sum of reported stages, opencode 240k) |
 
 
 
