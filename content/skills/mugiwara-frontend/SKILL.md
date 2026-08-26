@@ -85,14 +85,15 @@ Non-negotiable baseline. Full checklist: `references/checklist.md`.
 
 ## Testability and verification
 
-Add stable `data-testid` to interactive elements per the repo's testing convention. Never test by CSS class or by text that changes. Then compare the result against the reference side by side; list remaining deltas before calling it done.
+Add stable `data-testid` to every interactive element per the repo's testing convention; async states (loading/error/empty) get testids too. Never test by CSS class or by text that changes. Prefer role/label queries (`getByRole`) in tests — an accessible name doubles as an accessibility assertion. Keyboard paths for non-trivial interactions (menu, modal, form) are asserted, not assumed. Then compare the result against the reference side by side; list remaining deltas before calling it done.
 
 ## Performance
 
+- Core Web Vitals are the bar: LCP <2.5s, CLS <0.1, INP <200ms. Images carry width/height or aspect-ratio (CLS); the LCP asset is preloaded and fonts ship `font-display` (LCP); input handlers stay off the main thread (INP).
 - No layout thrash: batch DOM reads/writes; heavy work off the scroll path; animate only transform/opacity.
 - Assets: no giant images/font payloads; lazy-load below the fold; no whole icon library for two icons.
 - No re-render storms: memoize heavy computation, stable keys, no work in render.
-- Measure before optimizing; do not guess the bottleneck.
+- Repo has Lighthouse or lighthouse-ci? Run it — performance and accessibility scores meet the repo's budgets, deltas explained. Measure before optimizing; do not guess the bottleneck.
 
 ## Frontend security
 

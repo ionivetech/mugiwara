@@ -23,7 +23,8 @@ Reuse across flow stages: a check whose result is already recorded in `waves/02-
 1. Formatter — the project's formatter.
 2. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass.
 3. Duplication — scan changed files for near-identical blocks ≥10 lines. Compute `duplicated_lines_density` %. Flag files above 3%. # ponytail: AI heuristic, not AST-level. For precision use SonarScanner or jscpd.
-4. Complexity — measure cyclomatic per changed function (McCabe: 1 + decision points: if/for/while/case/&&/||/??/ternary). Flag >10, major >20. Method + thresholds: `_shared/references/complexity.md`. # ponytail: manual counting is the baseline; prefer ESLint `complexity` rule or SonarScanner when the repo has them.
+4. Complexity — cyclomatic AND cognitive per changed function. Cyclomatic (McCabe): 1 + decision points, flag >10, major >20. Cognitive: nesting-weighted, flag >15, major >25 — it catches deep nesting a branch count misses.
+   Method + thresholds: `_shared/references/complexity.md`. # ponytail: manual counting is the baseline; prefer ESLint `complexity`/SonarJS `cognitive-complexity` or SonarScanner when the repo has them.
 5. Maintainability rating — compute technical debt from remediation effort of all issues above. Calculate ratio against code size. Map to A-E per Sonar scale: A≤5%, B<10%, C<20%, D<50%, E≥50%.
 6. Code attributes (quantitative) — consistency (formatting drift count, naming convention violations), intentionality (dead code %, unreachable branches count), adaptability (files with >1 responsibility). Metrics only — Robin does qualitative deep review in Flow 7.
 7. Unit tests — full suite, capture output.

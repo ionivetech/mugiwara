@@ -29,6 +29,9 @@ Robin (`.mugiwara/missions/<mission>/review.md`), Sanji
 Evaluated: Vulnerabilities=0, Bugs=0, Code smells≤project
 threshold, Coverage(new code)≥config threshold,
 Duplications(new code)<3%, Security hotspots reviewed≥80%.
+These mirror Sonar's default gate on new code; its AI-Code variant adds
+security rating A and reliability rating C on new code with hotspots 100%
+reviewed — adopt when the team asks for it.
 PASS when ALL pass — list each with actual + threshold.
 Missing data → CANNOT pass: report gap, do not fake.
 

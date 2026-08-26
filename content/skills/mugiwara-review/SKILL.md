@@ -53,7 +53,8 @@ Rating E = won't merge. Rating D = review with caution + mitigation plan require
 
 - Duplication: 3+ near-identical blocks that should be one function.
 - Unused code: dead functions, unreachable branches, orphaned imports/vars.
-- Complexity: measure cyclomatic per changed function (McCabe: 1 + decision points). Flag >10, major >20. Method + thresholds + evidence format: `_shared/references/complexity.md`. Every flagged function lists its counted branches.
+- Complexity: cyclomatic AND cognitive per changed function. Cyclomatic (1 + decision points): flag >10, major >20. Cognitive (nesting-weighted): flag >15, major >25 — catches deep nesting a branch count misses.
+- Method + thresholds + evidence format: `_shared/references/complexity.md`. Every flagged function lists its counted branches / nesting levels.
 - Naming: names that lie about behavior, deviation from repo conventions.
 - Comments: commented-out code, stale comments contradicting the code.
 

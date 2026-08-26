@@ -35,3 +35,17 @@ Run before calling a view done. Every box must check; unchecked boxes are not do
 - [ ] Dynamic updates announced via `aria-live` with appropriate `polite`/`assertive`.
 - [ ] `prefers-reduced-motion` respected; motion scales, never disables content.
 - [ ] No interaction reachable only by mouse; nothing requires drag to operate.
+
+## Testability
+
+- [ ] Stable `data-testid` on every interactive element and on each async state (loading/error/empty).
+- [ ] Tests query by role/label, never by CSS class or mutable text.
+- [ ] Keyboard paths asserted in tests for non-trivial interactions (menu, modal, form submit).
+
+## Performance (Core Web Vitals)
+
+- [ ] Every image has width/height or aspect-ratio — no layout shift on load.
+- [ ] LCP asset preloaded; fonts use `font-display: swap`; nothing above the fold lazy-loaded.
+- [ ] Below-fold media and routes lazy-loaded; no whole icon/font library imported for a few glyphs.
+- [ ] Input handlers free of long tasks; heavy work deferred or chunked (INP).
+- [ ] Lighthouse/lighthouse-ci run when the repo has it: performance and accessibility at/above budget, deltas listed.

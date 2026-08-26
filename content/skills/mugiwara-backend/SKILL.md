@@ -36,6 +36,8 @@ Match it. Never invent a parallel architecture, a second error model, or a secon
 
 ## Data integrity
 
+Raw SQL vs ORM decisions, concurrency, migrations, indexes: `references/database.md`.
+
 - Transactions where a request writes multiple rows/records. Partial writes are data loss.
 - Enforce constraints in the DB (unique, not-null, FK), not only in app validation.
 - Handle races: unique conflicts, optimistic locking, lost updates.
