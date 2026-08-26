@@ -46,7 +46,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
 
-**Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/waves/01-execution.md`.
+**Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/flows/01-execution.md`.
 
 **Mode flips.** `/mugiwara mode <guided|semi|auto>` applies from the next flow stage, never mid-stage. If a flip arrives mid-stage, say so — "recorded, applies from Flow N+1" — never apply silently, never ignore.
 
@@ -69,7 +69,7 @@ Precedence: class decides whether there is work; lane decides how much process �
 
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/missions/<mission>/decisions.md`. Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
 
-**Audit-lite (Lane 0/1).** Small trail only: `state.json`, `waves/01-execution.md`, closure `report.md`; plan/spec/blockers appear on these lanes only when a blocker occurs. Big scans may dispatch ONE read-only investigation subagent (never edits) returning a compressed digest; writers stay inline.
+**Audit-lite (Lane 0/1).** Small trail only: `state.json`, `flows/01-execution.md`, closure `report.md`; plan/spec/blockers appear on these lanes only when a blocker occurs. Big scans may dispatch ONE read-only investigation subagent (never edits) returning a compressed digest; writers stay inline.
 
 ## Session handoff
 

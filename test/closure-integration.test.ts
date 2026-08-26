@@ -20,10 +20,10 @@ type StateShape = Record<string, unknown>;
 
 function buildMission(opts: { state: StateShape; files?: Record<string, string> }): string {
   const missionDir = join(dir, '.mugiwara', 'missions', 'demo');
-  mkdirSync(join(missionDir, 'waves'), { recursive: true });
+  mkdirSync(join(missionDir, 'flows'), { recursive: true });
   mkdirSync(join(dir, '.mugiwara'), { recursive: true });
   writeFileSync(join(missionDir, 'plan.md'), '# Plan\n');
-  writeFileSync(join(missionDir, 'waves', '06-closure.md'), 'closure summary');
+  writeFileSync(join(missionDir, 'flows', '06-closure.md'), 'closure summary');
   writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ mission: 'demo', ...opts.state }));
   for (const [name, body] of Object.entries(opts.files ?? {})) {
     const p = join(missionDir, name);
@@ -38,7 +38,7 @@ describe('archive closure artifacts', () => {
     buildMission({
       state: {
         branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto',
-        actor: 'tester', tasks_done: 1, tasks_total: 2, evidence: ['waves/06-closure.md'],
+        actor: 'tester', tasks_done: 1, tasks_total: 2, evidence: ['flows/06-closure.md'],
       },
     });
     const r = archiveMission(dir, 'demo');

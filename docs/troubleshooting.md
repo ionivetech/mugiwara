@@ -137,5 +137,5 @@ silently ignored — a typo'd rule must not disable itself. Fix the key (known:
 ## Reporting a bug
 
 Open an issue with: harness, install method, the failing command or request,
-the mission decision log (`.mugiwara/missions/<mission>/decisions.md`) and the relevant wave files under `.mugiwara/missions/<mission>/waves/`
+the mission decision log (`.mugiwara/missions/<mission>/decisions.md`) and the relevant flow files under `.mugiwara/missions/<mission>/flows/`
 output.

@@ -42,12 +42,12 @@ A closed mission leaves a report you can actually read — and after `mugiwara a
 
     | Flow stage | Artifact | Verdict |
     |------|----------|---------|
-    | Execute (Flow 3) | `waves/01-execution.md` | PASS |
-    | Checkpoint (Flow 4) | `waves/02-audit.md` | PASS |
-    | Quality (Flow 5) | `waves/03-quality.md` | PASS |
-    | Gates (Flow 6) | `waves/04-gates.md` | PASS |
-    | Healing (Flow 8) | `waves/05-healing.md` | PASS |
-    | Closure (Flow 9) | `waves/06-closure.md` | GO |
+    | Execute (Flow 3) | `flows/01-execution.md` | PASS |
+    | Checkpoint (Flow 4) | `flows/02-audit.md` | PASS |
+    | Quality (Flow 5) | `flows/03-quality.md` | PASS |
+    | Gates (Flow 6) | `flows/04-gates.md` | PASS |
+    | Healing (Flow 8) | `flows/05-healing.md` | PASS |
+    | Closure (Flow 9) | `flows/06-closure.md` | GO |
 
     ## Review & blockers
 

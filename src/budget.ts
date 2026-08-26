@@ -29,7 +29,7 @@ export function readBudgetConfig(projectDir: string): number {
   return 0; // unset — measurement still recorded, never enforced
 }
 
-/** Sum of bytes across the trail: top-level *.md + waves/*.*. */
+/** Sum of bytes across the trail: top-level *.md + flows/* (legacy waves/* counts too). */
 export function measureContextChars(missionDir: string): number {
   let total = 0;
   const add = (p: string): void => {
@@ -38,9 +38,11 @@ export function measureContextChars(missionDir: string): number {
   for (const f of readdirSync(missionDir)) {
     if (/\.md$/.test(f)) add(join(missionDir, f));
   }
-  const waves = join(missionDir, 'waves');
-  if (existsSync(waves)) {
-    for (const f of readdirSync(waves)) add(join(waves, f));
+  for (const sub of ['flows', 'waves']) {
+    const dir = join(missionDir, sub);
+    if (existsSync(dir)) {
+      for (const f of readdirSync(dir)) add(join(dir, f));
+    }
   }
   return total;
 }

@@ -8,7 +8,7 @@ Read after deciding to close a mission — never mid-argument.
 Present a detailed summary to the user — never a one-liner:
 
 - Mission summary — goal, mode, flow stages, task count.
-- Per-flow-stage outcome table — flow stage, tasks, status, evidence link (clickable `[path](relative/path)`). Wave files under `missions/<mission>/waves/` are evidence — archive folds them into report.md rather than deleting them.
+- Per-flow-stage outcome table — flow stage, tasks, status, evidence link (clickable `[path](relative/path)`). Flow files under `missions/<mission>/flows/` are evidence — archive folds them into report.md rather than deleting them.
 - Gate verdicts — quality, gates (coverage/build/DoD), review + security findings with dispositions, e2e (run / skipped + why).
 - Tests — unit/integration results; ATDD oracle verdict when user tests were declared.
 - Risks / rollback — remaining risk and the rollback path (revert commit / feature flag).
@@ -18,7 +18,7 @@ Present a detailed summary to the user — never a one-liner:
 ## Terminal step
 
 Save-point commit → push branch with plain `git push -u origin <branch>` → write
-`.mugiwara/missions/<mission>/waves/07-pr-verdict.md` → hand branch + verdict to user.
+`.mugiwara/missions/<mission>/flows/07-pr-verdict.md` → hand branch + verdict to user.
 Crew never creates PR, never merges, never deploys. On push failure, fall back
 to local closure report.
 

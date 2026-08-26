@@ -466,7 +466,7 @@ Usage:
   mugiwara sign <m>      optional attestation: minisign-sign report.md (--verify to check)
   mugiwara run <script> [args...]
                          run a bundled harness script here (${RUNNABLE.join(', ')})
-  mugiwara savepoint <mission> [member] [wave] [mode]
+  mugiwara savepoint <mission> [member] [flow] [mode]
                          shorthand for: mugiwara run savepoint.sh ...
   mugiwara --help        this help
   mugiwara --version     print version

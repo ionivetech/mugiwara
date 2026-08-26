@@ -56,7 +56,7 @@ policy-as-code,closure-tools,permissions}.md and docs/adoption.md.
 Shipped at v0.6.6–0.7.0: the prune (onboarding wizard, session-start announce,
 5 overlapping skills, stage slash commands, team-initiative CLI,
 evidence.sh/mission-report.sh) and the mission-first workspace —
-`missions/<mission>/` with `plan.md`, `waves/`, `report.md`; archive folds the
+`missions/<mission>/` with `plan.md`, `flows/`, `report.md`; archive folds the
 trail into one file per mission; `mugiwara clean` batch-archives closed
 missions; audit-lite Lane 0/1 writes three artifacts instead of nine;
 cross-flow check reuse dedupes Flow 4/5/6 runs; `verify_merged=on` collapses
@@ -186,7 +186,7 @@ _Pillar 3 · keeps the tool installed._
 
 Before `mugiwara archive` folds a mission's trail into `report.md`, a
 deterministic script checks three things: every path cited in the report and
-wave files exists; no file in the trail matches secret patterns (keys, tokens,
+flow files exists; no file in the trail matches secret patterns (keys, tokens,
 credentials); and every gate verdict the report cites has a matching entry in
 the ledger. A violation fails the archive with an actionable message instead of
 shipping a broken or leaking artifact.

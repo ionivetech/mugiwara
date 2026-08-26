@@ -162,7 +162,7 @@ Every mission writes to `.mugiwara/` at the repo root:
     ├── report.md             # closure report; archive folds the trail into it
     ├── state.json            # computed at every flow-stage boundary (team: <member>.json)
     ├── continue.json         # machine-written resume point (team: continue-<member>.json)
-    └── waves/                # per-flow-stage artifacts: 01-execution … 07-pr-verdict + todos
+    └── flows/                # per-flow-stage artifacts: 01-execution … 07-pr-verdict + todos
 ```
 
 **Savepoint** runs at every flow-stage boundary — the mission state carries lane, flow stage,

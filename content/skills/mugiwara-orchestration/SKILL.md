@@ -26,7 +26,7 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 
 Team repos — per-(mission, member) isolation, no collisions: `_shared/references/multi-actor.md`.
 
-The plan doc (`.mugiwara/missions/<mission>/plan.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/missions/<mission>/decisions.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/missions/<mission>/waves/06-closure.md`.
+The plan doc (`.mugiwara/missions/<mission>/plan.md`) is Nami's clean execution plan — NEVER write coordination into it. Your decisions, route reasons, and check-in verdicts go to `.mugiwara/missions/<mission>/decisions.md` (append-only, deletable at cleanup). The closure report goes to `.mugiwara/missions/<mission>/flows/06-closure.md`.
 
 ## Actor attribution (every .mugiwara write)
 
@@ -101,7 +101,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Flow 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Write the closure summary to `.mugiwara/missions/<mission>/report.md` (seeded from `waves/06-closure.md`); report and summary prose follow `_shared/references/prose-style.md`. Run `mugiwara savepoint <mission>` for final state, then `mugiwara archive <mission>` — waves, review, security, blockers, decisions fold into report.md; plan.md stays. The mission dir ends as two files: plan.md + report.md. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Write the closure summary to `.mugiwara/missions/<mission>/report.md` (seeded from `flows/06-closure.md`); report and summary prose follow `_shared/references/prose-style.md`. Run `mugiwara savepoint <mission>` for final state, then `mugiwara archive <mission>` — waves, review, security, blockers, decisions fold into report.md; plan.md stays. The mission dir ends as two files: plan.md + report.md. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
 
 ## Spirit vs letter
 

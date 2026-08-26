@@ -12,7 +12,7 @@ At `mugiwara archive`, the mission's state produces one provenance block:
 mission: invitation-accepted
 agent: zoro <z@team> · claude-sonnet-4.6 · lane full · mode auto
 tasks: 5/5
-gates/evidence: waves/04-gates.md · review.md · security.md
+gates/evidence: flows/04-gates.md · review.md · security.md
 branch: feat/invitation-accepted
 human review: pending (PR review is the terminal gate)
 ```

@@ -45,7 +45,7 @@ Agents follow a fixed skeleton so every member reads the same way:
 3. **When dispatched** — which flow stage of `mugiwara-workflow` and with what inputs.
 4. **Rules** — numbered, each an action bound to its reason, deferring to the
    held skill for the full protocol.
-5. **Output** — where the artifact lands (`.mugiwara/missions/<mission>/waves/...`) and how it
+5. **Output** — where the artifact lands (`.mugiwara/missions/<mission>/flows/...`) and how it
    routes.
 6. **Red flags** — behaviors that mean the member stopped doing its job.
 

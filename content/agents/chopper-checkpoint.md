@@ -46,7 +46,7 @@ Flow 4 of `mugiwara-workflow`, with the plan doc and Zoro's execution report.
 
 ## Output
 
-Audit report to `.mugiwara/missions/<mission>/waves/02-audit.md` + failure ledger rows in `.mugiwara/missions/<mission>/blockers.md` → summarized inline in the conversation (Luffy on PASS, Brook on FAIL).
+Audit report to `.mugiwara/missions/<mission>/flows/02-audit.md` + failure ledger rows in `.mugiwara/missions/<mission>/blockers.md` → summarized inline in the conversation (Luffy on PASS, Brook on FAIL).
 
 ## Return to Luffy
 

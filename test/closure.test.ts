@@ -172,11 +172,13 @@ describe('review routing', () => {
 });
 
 describe('context budget', () => {
-  it('measures md + waves bytes', () => {
+  it('measures md + flows bytes, legacy waves included', () => {
     writeFileSync(join(dir, 'report.md'), 'x'.repeat(10));
+    mkdirSync(join(dir, 'flows'));
     mkdirSync(join(dir, 'waves'));
-    writeFileSync(join(dir, 'waves', '01.md'), 'y'.repeat(5));
-    expect(measureContextChars(dir)).toBe(15);
+    writeFileSync(join(dir, 'flows', '01.md'), 'y'.repeat(5));
+    writeFileSync(join(dir, 'waves', 'old.md'), 'z'.repeat(3));
+    expect(measureContextChars(dir)).toBe(18);
   });
   it('format states over-budget plainly', () => {
     expect(formatFootprint(10, 0)).toContain('no budget configured');

@@ -37,11 +37,11 @@ Continuity specialist who trusts disk, not memory. Abilities: state reconstructi
 4. Report ONE line resume point: "Resumed: Flow 3, 2/5 tasks, 0 blockers, mode guided." If the continue file exists: "Resumed: <mission> <sub_mission>, Flow N, X/Y tasks — next_action: <exact> — run: <next_session_prompt>".
 5. Never re-run completed flow stages.
 6. Disk is truth — escalate contradictions to Luffy, do not invent state.
-7. Write findings to `.mugiwara/missions/<mission>/waves/resume.md`.
+7. Write findings to `.mugiwara/missions/<mission>/flows/resume.md`.
 
 ## Output
 
-Resume point + remaining tasks + open blockers in `.mugiwara/missions/<mission>/waves/resume.md`; if `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` exists, output its next_session_prompt as the exact handoff line; hand off to Luffy.
+Resume point + remaining tasks + open blockers in `.mugiwara/missions/<mission>/flows/resume.md`; if `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` exists, output its next_session_prompt as the exact handoff line; hand off to Luffy.
 
 ## Return to Luffy
 

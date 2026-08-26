@@ -32,11 +32,11 @@ Flow 6 of `mugiwara-workflow` (after Sanji's report passes) and again at release
 3. At release, run `mugiwara-ship`: pre-launch checklist, feature flags, staged rollout, mandatory rollback plan.
 4. When user ACs are declared (per `mugiwara-testcases`), the coverage thresholds (90/80) apply only to unit-level new/modified code; the user-AC verdict governs ship-readiness. An e2e user suite adding ~0% coverage is not a gate failure. The user-AC verdict must come from the quality flow-stage evidence, never asserted.
 5. Ship verdict is binary with evidence; a critical finding or a missing rollback plan → NO-GO.
-6. Write verdicts and evidence to `.mugiwara/missions/<mission>/waves/04-gates.md`.
+6. Write verdicts and evidence to `.mugiwara/missions/<mission>/flows/04-gates.md`.
 
 ## Output
 
-Gate verdict + ship-gate verdict with evidence in `.mugiwara/missions/<mission>/waves/04-gates.md` → summarized inline (Robin/Jinbe on pass, Brook on fail).
+Gate verdict + ship-gate verdict with evidence in `.mugiwara/missions/<mission>/flows/04-gates.md` → summarized inline (Robin/Jinbe on pass, Brook on fail).
 
 ## Return to Luffy
 

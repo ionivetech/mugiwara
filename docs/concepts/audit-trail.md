@@ -17,16 +17,16 @@ history.
 | **Blocker ledger** | `missions/<mission>/blockers.md` | Any agent | On blocker hit | Row per blocker: flow stage, task, symptom, attempted, help-needed |
 | **State** | `missions/<mission>/state.json` or `<member>.json` | `mugiwara savepoint` | Every flow-stage boundary | Computed mission state: lane + lane_peak (clamp), flow stage, files, loc_ins/del/churn, sensitive paths, blockers, token budget, evidence paths. Identity = (mission, member); solo = state.json |
 | **Continue** | `missions/<mission>/continue.json` or `continue-<member>.json` | `mugiwara savepoint` | Every flow-stage boundary | Machine-written resume point: mission, member, flow stage, tasks done/total, mode, next action |
-| **Todo list** | `missions/<mission>/waves/todos.md` | Zoro (execution) | Flow 3 | Checkbox per task, checked with evidence pointer |
-| **Audit report** | `missions/<mission>/waves/02-audit.md` | Chopper (checkpoint) | Flow 4 | Per-task evidence, commit hygiene, parallel-conflict, honest classification |
-| **Quality report** | `missions/<mission>/waves/03-quality.md` | Sanji (quality) | Flow 5 | Formatter/linter/unit/user-test results |
-| **Gate verdict** | `missions/<mission>/waves/04-gates.md` | Franky (gates) | Flow 6 | Coverage thresholds from config, build exit, DoD verdict |
+| **Todo list** | `missions/<mission>/flows/todos.md` | Zoro (execution) | Flow 3 | Checkbox per task, checked with evidence pointer |
+| **Audit report** | `missions/<mission>/flows/02-audit.md` | Chopper (checkpoint) | Flow 4 | Per-task evidence, commit hygiene, parallel-conflict, honest classification |
+| **Quality report** | `missions/<mission>/flows/03-quality.md` | Sanji (quality) | Flow 5 | Formatter/linter/unit/user-test results |
+| **Gate verdict** | `missions/<mission>/flows/04-gates.md` | Franky (gates) | Flow 6 | Coverage thresholds from config, build exit, DoD verdict |
 | **Review findings** | `missions/<mission>/review.md` | Robin (review) | Flow 7 | Severity-tagged: path:line → problem → fix |
 | **Security report** | `missions/<mission>/security.md` | Jinbe (security) | Flow 7 | STRIDE, OWASP mapping, checklist, CVSS severity |
-| **Heal report** | `missions/<mission>/waves/05-healing.md` | Brook (healing) | Flow 8 | Fixed list, escalated list, updated ledger |
-| **Closure report** | `missions/<mission>/waves/06-closure.md` → seeds `report.md` | Luffy (orchestrator) | Flow 9 | Mission summary, per-flow-stage outcomes, deferred items, lessons |
-| **PR verdict** | `missions/<mission>/waves/07-pr-verdict.md` | Luffy (orchestrator) | Flow 9 | Ready PR summary block for the user to open the PR |
-| **Mission report** | `missions/<mission>/report.md` | `mugiwara archive <mission>` at closure | Flow 9 | The durable one-file trail: closure summary with every wave file, review, security, blockers, decisions folded in |
+| **Heal report** | `missions/<mission>/flows/05-healing.md` | Brook (healing) | Flow 8 | Fixed list, escalated list, updated ledger |
+| **Closure report** | `missions/<mission>/flows/06-closure.md` → seeds `report.md` | Luffy (orchestrator) | Flow 9 | Mission summary, per-flow-stage outcomes, deferred items, lessons |
+| **PR verdict** | `missions/<mission>/flows/07-pr-verdict.md` | Luffy (orchestrator) | Flow 9 | Ready PR summary block for the user to open the PR |
+| **Mission report** | `missions/<mission>/report.md` | `mugiwara archive <mission>` at closure | Flow 9 | The durable one-file trail: closure summary with every flow file, review, security, blockers, decisions folded in |
 | **Lessons ledger** | `.mugiwara/lessons.md` | Memory Keeper | Cross-mission | One row per real lesson, append-only, all actors share |
 | **Mission index** | `.mugiwara/index.md` | `mugiwara archive` / `clean` | Per archive | One line per archived mission |
 
@@ -36,18 +36,18 @@ install target rather than only where a `scripts/` directory happens to sit
 in the cwd.
 
 **Lane 0/1 (audit-lite).** Small work writes the small trail: `state.json`,
-`waves/01-execution.md`, and the closure `report.md`. Plan, spec, blockers,
-and per-flow-stage wave files appear on Lane 0/1 only when a blocker actually
+`flows/01-execution.md`, and the closure `report.md`. Plan, spec, blockers,
+and per-flow-stage files appear on Lane 0/1 only when a blocker actually
 occurs.
 
 ## How to read as a reviewer
 
 1. **Start with `report.md`** — one file: what changed, gates, token cost,
    the **Review routing** section (ranked reading order — read those files
-   first), and (after archive) every wave artifact folded inside.
-2. **Check the gate verdict** (`waves/04-gates.md`) — coverage from config
+   first), and (after archive) every flow artifact folded inside.
+2. **Check the gate verdict** (`flows/04-gates.md`) — coverage from config
    (+ any policy raise), build, DoD. Any FAIL needs explanation.
-3. **Spot-check the audit report** (`waves/02-audit.md`) — did Chopper re-run
+3. **Spot-check the audit report** (`flows/02-audit.md`) — did Chopper re-run
    checks or accept claims? Every criterion gets a command run + evidence row.
 4. **Review findings count** (`review.md`, `security.md`) — how many
    blocker/major/minor? Were they healed? Check the heal report for closure.
@@ -61,7 +61,7 @@ occurs.
 
 After Flow 9, run `mugiwara archive <mission>`:
 
-- It folds `waves/*.md`, `spec.md`, `review.md`, `security.md`,
+- It folds `flows/*.md`, `spec.md`, `review.md`, `security.md`,
   `blockers.md`, `decisions.md` into `report.md` (each as an
   `## Archived: <file>` section), then removes them.
 - Session state (`state.json`, `continue*.json`) is deleted with it.
@@ -91,7 +91,7 @@ block that splits `.mugiwara/`:
 | Path | Git fate | Why |
 |------|----------|-----|
 | `missions/*/{plan.md, spec.md, decisions.md, blockers.md, review.md, security.md}` | **commit** | decisions, not scratch |
-| `missions/*/waves/` | **commit** | flow-stage evidence until archived into report.md |
+| `missions/*/flows/` | **commit** | flow-stage evidence until archived into report.md |
 | `missions/*/report.md` | **commit** | the durable consolidated trail |
 | `missions/**/*.json` | ignore | session state + resume points, recomputed each flow stage |
 | `index.md`, `config`, `refs/` | index commits; config + refs ignored | index is history aid; config is per-developer; refs regenerate |
@@ -114,8 +114,8 @@ The trail is real files, not promises. Three representative examples.
 
     | Flow stage | Artifact | Verdict |
     |------|----------|---------|
-    | Quality (Flow 5) | `waves/03-quality.md` | PASS |
-    | Gates (Flow 6) | `waves/04-gates.md` | PASS |
+    | Quality (Flow 5) | `flows/03-quality.md` | PASS |
+    | Gates (Flow 6) | `flows/04-gates.md` | PASS |
 
     ## State
 

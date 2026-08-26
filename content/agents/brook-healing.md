@@ -42,7 +42,7 @@ Flow 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 
 ## Output
 
-Fixed list + escalated list in `.mugiwara/missions/<mission>/waves/05-healing.md` → summarized inline → back to Flow 4 (Chopper) for re-audit.
+Fixed list + escalated list in `.mugiwara/missions/<mission>/flows/05-healing.md` → summarized inline → back to Flow 4 (Chopper) for re-audit.
 
 ## Return to Luffy
 

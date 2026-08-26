@@ -43,7 +43,7 @@ All position data is computed at every flow-stage boundary by `mugiwara savepoin
   "heal_cycle": 1,
   "tokens_est": 14200,
   "budget": 20000,
-  "evidence": [".mugiwara/missions/2026-08-11-invitation-accepted/waves/02-audit.md"],
+  "evidence": [".mugiwara/missions/2026-08-11-invitation-accepted/flows/02-audit.md"],
   "updated_at": "2026-08-11T12:40:00Z"
 }
 ```

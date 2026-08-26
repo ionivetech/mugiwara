@@ -7,6 +7,8 @@ page names the preferred one.
 |------|---------|
 | **Mission** | One unit of governed work. Lives in `.mugiwara/missions/<name>/`. Starts at triage, ends at closure + archive. |
 | **Flow stage** (aka "wave") | One step of the pipeline: Flow 0 triage → 1 brainstorm → 2 plan → 3 execute → 4 checkpoint → 4.5 claim-audit → 5 quality → 6 gates → 7 review+security → 8 heal → 9 closure. Older texts say "wave"; prefer **flow stage**. |
+| **flows/** | The mission's flow-artifact directory (`missions/<mission>/flows/NN-name.md`). Legacy missions may still keep `waves/` — readers accept both, and a legacy mission stays on its existing directory so an in-flight trail never splits. |
+| **Wave** (planning) | An execution batch in a *plan document* ("Wave table", parallel-proof waves) — unrelated to the pipeline's flow stages and not a directory name. |
 | **Lane** | How much process the change gets: `direct` (no pipeline) / `lean` / `standard` / `full` / `spike` (resize). Computed from the git diff; sensitive paths force full. |
 | **Mode** | Autonomy level: `guided` (asks first) / `semi` / `auto`. Set in `.mugiwara/config`. |
 | **Savepoint** | State written to `<mission>/state.json` (+ `continue*.json`) at each flow-stage boundary. Powers resume and every computed command. |

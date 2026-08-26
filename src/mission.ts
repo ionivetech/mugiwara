@@ -145,9 +145,14 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   for (const f of FOLD_TOP) {
     if (files.includes(f)) fold.push(f);
   }
-  const wavesDir = join(dir, 'waves');
-  if (existsSync(wavesDir)) {
-    for (const f of readdirSync(wavesDir).sort()) fold.push(join('waves', f));
+  // Flow artifacts: flows/ is the current layout; a legacy mission that still
+  // keeps waves/ folds from there so an upgrade never strands a trail.
+  const flowsDir = join(dir, 'flows');
+  const legacyWavesDir = join(dir, 'waves');
+  const artDir = existsSync(flowsDir) ? flowsDir : existsSync(legacyWavesDir) ? legacyWavesDir : flowsDir;
+  const artRel = artDir === legacyWavesDir ? 'waves' : 'flows';
+  if (existsSync(artDir)) {
+    for (const f of readdirSync(artDir).sort()) fold.push(join(artRel, f));
   }
 
   // The report survives: an existing report.md wins; otherwise the closure
@@ -155,7 +160,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   let report = '';
   const reportPath = join(dir, 'report.md');
   if (files.includes('report.md')) report = readFileSync(reportPath, 'utf8');
-  else if (existsSync(join(wavesDir, '06-closure.md'))) report = readFileSync(join(wavesDir, '06-closure.md'), 'utf8');
+  else if (existsSync(join(artDir, '06-closure.md'))) report = readFileSync(join(artDir, '06-closure.md'), 'utf8');
 
   if (!dryRun) {
     mkdirSync(dir, { recursive: true });
@@ -185,8 +190,8 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     }
     // session state dies with the mission
     for (const f of files.filter((f) => f.endsWith('.json'))) rmSync(join(dir, f), { force: true });
-    // waves/ may now be empty — remove the folder
-    if (existsSync(wavesDir) && readdirSync(wavesDir).length === 0) rmSync(wavesDir, { recursive: true, force: true });
+    // flows/ may now be empty — remove the folder
+    if (existsSync(artDir) && readdirSync(artDir).length === 0) rmSync(artDir, { recursive: true, force: true });
     // report.md must exist after archive — the closed marker `mugiwara clean`
     // filters on. A stale in-flight mission folds nothing, so seed a stub.
     if (!existsSync(reportPath)) {

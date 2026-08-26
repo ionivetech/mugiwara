@@ -9,7 +9,7 @@ exceptions. Comments in source code should be English. This conversation is the
 only place Indonesian is acceptable.
 
 **`.mugiwara/` artifacts are English too.** Every file the crew writes —
-Every `.mugiwara/missions/<mission>/` artifact — `plan.md`, `waves/*`,
+Every `.mugiwara/missions/<mission>/` artifact — `plan.md`, `flows/*`,
 `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`,
 state and continue JSON — is written in English, one language only. A mission
 artifact in any other language is a defect, not a style choice. The audit

@@ -228,7 +228,7 @@ const GITIGNORE_BLOCK_END = '# <<< mugiwara <<<';
 // .mugiwara/continue/) instead of the mission-first layout. Kept for
 // detection so an old install is upgraded, not double-appended.
 const GITIGNORE_LEGACY = ['.mugiwara/state/', '# mugiwara'];
-const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: commit plan.md, waves/, review.md,
+const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: commit plan.md, flows/, review.md,
 # decisions.md, blockers.md, report.md under .mugiwara/missions/. Ignore session state.
 .mugiwara/missions/**/*.json
 .mugiwara/index.md
