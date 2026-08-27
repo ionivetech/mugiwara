@@ -21,7 +21,7 @@
     "heal_halt": false,
     "delegate_threshold": 60,
     "delegate_due": false,
-    "tokens_source": "computed",
+    "tokens_source": "estimator",
     "budget_status": "ok",
     "sensitive_paths": []
   },
