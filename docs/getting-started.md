@@ -185,8 +185,11 @@ six. **Archive** (`mugiwara archive <mission>`) folds waves + findings into
 | `coverage_modified` | 80 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |
 | `quality_depth` | full | Sanji's quality depth: full/standard/quick |
+| `verify_merged` | off | on merges Flow 5+6 into one verify pass (never Lane 3) |
 | `delegate_threshold` | 60 | % of budget at which sequential tasks dispatch to workers |
 | `heal_max_cycles` | 3 | Max heal-loop cycles before escalation |
+| `verbosity` | normal | normal / full — how much the crew echoes |
+| `context_budget_chars` | unset | Ceiling on trail size; over fails `mugiwara archive` (see [config](concepts/config.md)) |
 
 ## 6. Next steps
 

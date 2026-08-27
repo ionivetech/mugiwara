@@ -97,7 +97,7 @@ test('generic install keeps references outside the rules glob', () => {
 
 test('installTo writes skills and agents, rerun skips identical', () => {
   const r1 = installTo(fakeTarget, opts);
-  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 25 skills + 14 agents + refs
+  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 21 skills + 14 agents + refs
   expect(existsSync(join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(projectDir, 'ag', 'luffy-orchestrator.md'))).toBe(true);
   const r2 = installTo(fakeTarget, opts);

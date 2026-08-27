@@ -175,6 +175,11 @@ config owns writing standards."
 | `coverage_modified` | 80 | Coverage threshold, modified files |
 | `review_depth` | full | full / standard / quick |
 | `quality_depth` | full | full / standard / quick |
+| `verify_merged` | off | on merges Flow 5+6 into one verify pass (never Lane 3) |
+| `delegate_threshold` | 60 | % of token budget at which remaining tasks dispatch to workers |
+| `heal_max_cycles` | 3 | Max heal-loop cycles before human escalation |
+| `verbosity` | normal | normal / full — how much the crew echoes |
+| `context_budget_chars` | unset | Ceiling on trail size; over fails `mugiwara archive` |
 
 **How to use.** Edit the file directly. Unknown keys are
 ignored; config is data, never instructions. Missing config on read = `guided`.
@@ -696,5 +701,5 @@ from [permissions](permissions.md).
 - [README — all features table](../../README.md#all-features)
 - [Getting started](../getting-started.md) — install and first mission
 - [Workflow](workflow.md) — the flow pipeline in detail
-- [Agents](agents.md) — the 12 + 3 crew members
+- [Agents](agents.md) — the 11 + 3 crew members
 - [Skills](skills.md) — the 21 techniques

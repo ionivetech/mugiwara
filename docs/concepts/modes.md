@@ -51,9 +51,11 @@ coverage_new=90
 coverage_modified=80
 review_depth=full
 quality_depth=full
+verify_merged=off
 delegate_threshold=60
 heal_max_cycles=3
 verbosity=normal
+# context_budget_chars=150000  # optional: fail archive if trail exceeds this
 ```
 
 | Key | Values | Default |
@@ -66,9 +68,11 @@ verbosity=normal
 | coverage_modified | 0-100 | 80 |
 | review_depth | full / standard / quick | full |
 | quality_depth | full / standard / quick | full |
+| verify_merged | on / off | off |
 | delegate_threshold | 1-100 | 60 |
 | heal_max_cycles | number | 3 |
 | verbosity | normal / full | normal |
+| context_budget_chars | number (bytes) | unset |
 
 `auto_commit=off` disables per-task commits and the final push in `guided`
 and `semi` — changes stay in the working tree and you commit/push manually.

@@ -252,6 +252,7 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `delegate_threshold`| 60                              | % of token budget at which remaining tasks dispatch to workers |
 | `heal_max_cycles`   | 3                               | Max heal-loop cycles before human escalation    |
 | `verbosity`         | normal                          | normal / full — how much the crew echoes. `normal` hides investigation steps (reads, greps) and file contents; edits, results, decisions stay visible. `full` echoes everything. Never suppresses decisions, questions, blockers, or lane rises |
+| `context_budget_chars` | unset (optional)             | Ceiling on trail size (bytes); over fails `mugiwara archive` like a test |
 
 Set via edit directly (`.mugiwara/config`). Unknown keys ignored. Project
 config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).

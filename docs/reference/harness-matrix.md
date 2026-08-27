@@ -49,7 +49,7 @@ outside them is **untested**.
 ## What's the same everywhere
 
 - All 21 skill directories ship to every harness.
-- All 15 agent markdown files ship to every harness.
+- All 14 agent markdown files ship to every harness.
 - `references/` files are always copied.
 - The workflow, lane sizing, and evidence discipline are identical — the difference is in how the model loads them.
 - The `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` handoff is harness-agnostic (works across every tier in this matrix). Step caps are per-platform and do not break the protocol — one `/mugiwara continue` per session restores the exact resume point on any harness.
