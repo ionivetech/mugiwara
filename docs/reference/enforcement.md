@@ -43,7 +43,7 @@ never "the harness guarantees".
 | Heal cap (≤`heal_max_cycles`) | orchestration, healing | `savepoint.sh` computes `heal_halt` (`heal_cycle ≥ heal_max_cycles`, config default 3) into state; no mechanism stops a model that ignores it |
 | Blocker-zero DoD | definition-of-done | verified by a model reading a ledger a model wrote |
 | Lane monotonicity (rise, never drop) | triage-escalation | recorded in state; not enforced against a model that re-sizes downward |
-| Config keys | `.mugiwara/config` | `verbosity`, `delegate_threshold`, `heal_max_cycles` are read by `savepoint.sh` (recorded/computed into `state.json`). The rest (`mode`, `branch`, `commit`, `auto_commit`, `review_depth`, `quality_depth`) are read by models only. |
+| Config keys | `.mugiwara/config` | `verbosity`, `delegate_threshold`, `heal_max_cycles` are read by `savepoint.sh` (recorded/computed into `state.json`), `coverage_new`/`coverage_modified` by the coverage gate, and `context_budget_chars` by the closure pipeline (`src/budget.ts`). The rest (`mode`, `branch`, `commit`, `auto_commit`, `review_depth`, `quality_depth`, `verify_merged`) are read by models only. |
 
 ## Per-target enforcement capability
 

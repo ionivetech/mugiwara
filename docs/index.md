@@ -2,7 +2,7 @@
 
 The Straw Hat crew of AI agents and skills. These docs cover what the crew is,
 how to adopt it, and how each harness installs it. The crew is markdown plus a
-small Node CLI (`mugiwara`) — no daemons, nothing to host. It ships **15
+small Node CLI (`mugiwara`) — no daemons, nothing to host. It ships **14
 agents (11 + 3 internal)** and **21 skills**. Mugiwara activates only when its
 skills or agents are used — nothing runs in the background. Work is **sized to a lane**
 before it runs: small fixes skip the pipeline, sensitive changes run the full

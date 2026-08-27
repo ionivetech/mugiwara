@@ -15,7 +15,7 @@ by whom — and the cost of the process scales to the size of the work.
   check output is captured into `.mugiwara/missions/<mission>/flows/`.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.
-- **15 named agents** in a 9-flow-stage gated pipeline — each flow stage has a defined
+- **14 named agents (11 + 3 internal)** in a 9-flow-stage gated pipeline — each flow stage has a defined
   owner, handoff, and verification gate.
 - **21 skills** with skip gates on all of them, progressive disclosure into
   `references/`, and deterministic tooling for lane, evidence, and state.
@@ -26,7 +26,7 @@ by whom — and the cost of the process scales to the size of the work.
 - **Auto-merge or auto-deploy.** Human review at the PR is the terminal gate.
 - **Unattended marathon mode.** Mugiwara runs inline by default — you watch
   every flow stage. Subagents only for parallel work.
-- **Skill-count growth.** 26 is the ceiling; a new skill replaces an old one.
+- **Skill-count growth.** 21 is the ceiling; a new skill replaces an old one.
 - **Head-to-head feature scorecards.** The compliance matrix replaces them.
 
 ## When to use something else
@@ -47,11 +47,11 @@ Generated from `content/` and `scripts/validate-content.ts`:
 
 | Metric | Value |
 |--------|:-----:|
-| Skills | 26 |
-| Agents | 15 |
-| Index (all descriptions) | ~10k chars (~2.5k tokens) |
+| Skills | 21 |
+| Agents | 14 (11 + 3 internal) |
+| Index (all descriptions) | ~4.7k chars (~1.2k tokens) |
 | Avg skill size | ~1.2k tokens |
-| Skills with skip gate | 26/26 |
+| Skills with skip gate | 21/21 |
 | References/ files | growing |
 | Evals | 11 cases |
 
