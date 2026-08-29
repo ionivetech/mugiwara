@@ -1,16 +1,16 @@
 {
   "mission": "native-cost-governor",
   "member": null,
-  "actor": "AI: deepseek-v4-flash",
+  "actor": "AI: muse-spark-1.2-contributor-free",
   "branch": "feat/native-cost-governor",
   "flow": 1,
-  "phase": 5,
+  "phase": 6,
   "mode": "auto",
   "tasks_done": 0,
   "tasks_total": 0,
   "lane": "full",
   "lane_prev": "full",
-  "updated_at": "2026-08-29T10:31:31.000Z",
-  "next_action": "Phase 4 (Scope & Code Governor) closed (GO, pushed to feat/native-cost-governor, b5f86c7 head). Start Phase 5 (Cognitive & Output Governor, spec §51 Phase 5): focused reasoning policy, investigation termination, alternative limitation, output compression, duplicate explanation detection, mission-focused output structure. Consumes the Phase-1 cost + Phase-2 context + Phase-3 work + Phase-4 scope/code primitives. Nami: extend plan.md with Phase 5 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1-4 unmerged; open Phase 1-4 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F2/F3 (Low) to harden at Phase 8.",
-  "next_session_prompt": "Resume native-cost-governor campaign: Phase 5 Cognitive & Output Governor. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 4 closure). Run Flow 0/2 for Phase 5 on branch feat/native-cost-governor."
+  "updated_at": "2026-08-29T10:57:01Z",
+  "next_action": "Phase 5 (Cognitive & Output Governor) closed (GO, pushed to feat/native-cost-governor, 165b669 head). Start Phase 6 (Stop-Slop, spec \u00a751 Phase 6): slop taxonomy, detection signals, progress measurement, work-to-cost anomaly, intervention rules, retry/healing/scope/context/investigation/code slop detection. Consumes Phase-1 cost + Phase-2 context + Phase-3 work + Phase-4 scope/code + Phase-5 cognition/output primitives. Nami: extend plan.md with Phase 6 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1-5 unmerged; open Phase 1-5 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F2/F3 (Low) to harden at Phase 8.",
+  "next_session_prompt": "Resume native-cost-governor campaign: Phase 6 Stop-Slop. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 5 closure). Run Flow 0/2 for Phase 6 on branch feat/native-cost-governor."
 }

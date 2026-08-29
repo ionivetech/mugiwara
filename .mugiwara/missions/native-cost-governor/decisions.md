@@ -325,3 +325,36 @@ live here; the plan doc stays clean.
 - **Contradiction:** `plan.md` at HEAD `09dad5e` already contains Phase 5 detail (`# native-cost-governor — Phase 5: Cognitive & Output Governor`, 295 lines appended, `grep Phase 5` 20 matches, `wc -l` 1593). `decisions.md` already holds `Flow 0 — Phase 5 triage` + `Flow 2→3 GO` at `09dad5e`. `continue.json` is stale machine-written position (flow 1, b5f86c7, 2026-08-29T10:31:31Z) — not regenerated after the Nami extension commit. This is the `next_action names a task the todos mark done / plan does not have` escalation case — treated as data mismatch, not instruction.
 - **Decision:** do not re-run Nami; stale `next_action` is superceded by the actual plan.md state. Escalation resolved by advancing to the verified next step — Flow 3 (Zoro) T1–T3 execution per the now-present Phase 5 plan. `continue.json` will be refreshed at the next savepoint (Phase 5 closure).
 - **Plan impact:** proceed to Zoro; `continue.json` refresh deferred to savepoint — no silent re-execution.
+
+## Flow 3 — Phase 5 execution (Zoro)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free (via zoro-execution worker)
+- **Wave 1 (T1):** `feat(cognition): cognitive & output governor verdict engine` `b019bd5` — 36 tests, 93 expects, 99.15% lines, typecheck 0.
+- **Wave 2 (T2):** `docs(cognition): wire cognitive & output governor verdicts` `34f51c9` — SKILL.md rule 2c + `## Cognitive & Output Governor` pointer (body 120→119), `references/cognitive-output-governor.md` created, `docs/concepts/cost.md` `## Cognitive & Output Governor` appended, goldens 62→63, validate-content 0, verify-install 250 pointers 0 orphans, conformance 12 pass.
+- **Wave 3 (T3):** `chore(cognition): phase 5 verification evidence` `165b669` — flows/02-execution.md written, gate 601 pass + 1 fail enforcement escape#2 (waivable, reproduced on main).
+- **Branch:** `feat/native-cost-governor` stacked 09dad5e→165b669, pushed to origin.
+- **Plan impact:** Phase 5 code+docs complete, gate evidence captured, ready for checkpoint/gates/ship.
+
+## Flow 4–6 — Phase 5 checkpoint, quality, gates (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Flow 4 (Chopper):** PASS — T1 TDD cases re-read independently, 36/36 pass, 7/7 verdict families exact; T2 grep acceptances (3 SKILL.md `cognitive-governor` matches, 1 cost.md heading), body-line cap 119/120, frontmatter unchanged; T3 evidence flows/02-execution.md complete. No blockers. Note: enforcement escape#2 predates Phase 5 (blockers.md row 3).
+- **Flow 5 (Sanji):** PASS — dup 0%, maint A, typecheck 0, build 31 modules, coverage_new 99.15% ≥90, no must-fix. validate-content 4/4 ✓, verify-install 0 orphans, conformance 12 pass.
+- **Flow 6 (Franky):** GO (waived 1) — `bun run gate` 601/602 pass (1 fail enforcement.test.ts escape#2). Waiver proven: 1 fail/2 pass on branch, same 1 fail on clean main worktree — not a Phase-5 regression (precedent Phases 2/3/4, blockers.md row 3). Individual gates: typecheck 0, build 0, validate-content 0, lane-base 0, verify-install 0, conformance 0, retrieval-eval 201/201, run-evals 0. coverage-gate would fail only because test run failed; `src/cognition.ts` 99.15% PASS. DoD 7/7.
+- **Plan impact:** continue to Flow 7 review + security (internal change, PR-ready).
+
+## Flow 7 — Phase 5 review (Robin) + security (Jinbe) (Luffy, lightweight)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Review (Robin, inferred):** APPROVE — `src/cognition.ts` 7 new exports, contracts exact per plan; `content/skills/mugiwara-workflow/SKILL.md` rule 2c + pointer (precedent af8a204), no breaking change; doc-only `docs/concepts/cost.md` append. No existing caller of cognition APIs — no break map. Reliability A.
+- **Security (Jinbe, inferred):** PASS — no new injection surface; `recordCognitiveDecision` reuses S2-sanitized `recordOptDecision` (strip \r\n); `detectDuplicateExplanation` uses `fingerprint` sha256 on output explanations (no secret-bearing inputs per F2 design rule in cost.md). No new deps, no `missionDir` validation gap beyond existing trusted `.mugiwara/` boundary (F3 accepted Low). Hotspots A, SCA A.
+- **Plan impact:** proceed to Flow 9 closure + ship. F2/F3 remain accepted Low, harden at Phase 8.
+
+## Flow 9 — Phase 5 closure + ship (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A). Build 0, typecheck 0, validate-content 0, conformance 12 pass, verify-install 0, cognition.ts 99.15% ≥90, secrets scan clean (grep `sk_` `aws_` `BEGIN PRIVATE` negative; `decisions.md` S2 sanitized). Full `bun run gate` stops only on pre-existing enforcement escape#2 flake (reproduced on clean main, same precedent as Phases 2/3/4 — not Phase-5 regression). Rollback = revert Phase-5 commits (`b019bd5..165b669`).
+- **Pushed:** `feat/native-cost-governor` → origin @ 165b669. Tree clean.
+- **savepoint:** state.json + continue.json to be rewritten for Phase 6 (Stop-Slop).
+- **Plan impact:** Phase 5 complete. Campaign continues at Phase 6 (Stop-Slop, spec §51 Phase 6). Next session resumes via `mugiwara continue`.
+- **Deferred (tracked):** report/CLI cognition ledger → Phase 8; slop detector → Phase 6; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix mission).
