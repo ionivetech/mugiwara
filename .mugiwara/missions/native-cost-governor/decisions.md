@@ -591,5 +591,33 @@ live here; the plan doc stays clean.
 ## Flow 3 — Phase 9 execution (Zoro)
 
 - **Actor:** AI: muse-spark-1.2-contributor-free (via zoro-execution)
-- **Mode:** auto — branch feat/native-cost-governor, auto-commit per task (conventional). auto_commit=on.
+- **Wave 1 (T1):** `feat(benchmark): cost + Stop-Slop benchmark harness, thresholds, large/long/runaway stress fixtures` `81354f7` — 16 tests, 34 expects, harness PASS (4 workloads, 12 scenarios, 3 stress), typecheck 0, build 0.
+- **Wave 2 (T2):** `docs(benchmark): wire benchmark & hardening into workflow skill, cost docs, CI gate + selftest + cross-platform` `7e76206` — SKILL.md rule 2g + pointer (body 120/120), references/benchmark-governor.md created, docs/concepts/cost.md ## Benchmark & Hardening appended, docs/cost-governor.md hub created, package.json gate + gate-selftest benchmark mutation, goldens 65→66, validate-content 0, verify-install 262 pointers 0 orphans, conformance 12 pass, gate-selftest 60 pass.
+- **Wave 3 (T3):** `chore(benchmark): phase 9 verification evidence` `95cf12e` — flows/02-execution.md written, gate 723 pass + 1 fail enforcement escape#2 (waivable, reproduced on main).
+- **Branch:** `feat/native-cost-governor` stacked 77bdf1c→95cf12e, pending push to origin at closure.
+- **Plan impact:** Phase 9 code+docs complete, gate evidence captured, ready for checkpoint/gates/ship.
+
+## Flow 4–6 — Phase 9 checkpoint, quality, gates (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Flow 4 (Chopper):** PASS — T1 TDD cases re-read independently, 16/16 pass, 5/5 verdict families exact; T2 grep acceptances (SKILL.md benchmark-governor 2, cost.md heading 2), body-line cap 120/120, frontmatter unchanged; T3 evidence flows/02-execution.md complete. No blockers. Note: enforcement escape#2 predates Phase 9 (blockers.md row 3, heal_halt true).
+- **Flow 5 (Sanji):** PASS — dup 0%, maint A, typecheck 0, build 32 modules, coverage_new harness pure helpers ≥90, no must-fix. validate-content 4/4 ✓ (4741/5500), verify-install 0 orphans 262 pointers, conformance 12 pass (66).
+- **Flow 6 (Franky):** GO (waived 1) — `bun run gate` 723/724 pass (1 fail enforcement.test.ts escape#2). Waiver proven: same 1 fail on clean main worktree — not a Phase-9 regression (precedent Phases 2–8, blockers.md row 3). Individual gates: typecheck 0, build 0, validate-content 0, lane-base 0, benchmark-governor PASS, verify-install 0, conformance 0, gate-selftest 0, retrieval-eval 201/201, run-evals 42 cases. coverage-gate would fail only because test run failed; harness pure helpers PASS. DoD 9/9. G3 satisfied.
+- **Plan impact:** continue to Flow 7 review + security (internal change, PR-ready).
+
+## Flow 7 — Phase 9 review (Robin) + security (Jinbe) (Luffy, lightweight)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Review (Robin, inferred):** APPROVE — `scripts/benchmark-governor.ts` 4 pure helpers + harness main, contracts exact per plan; `scripts/benchmark-thresholds.json` ratchet fixture; `test/benchmark.test.ts` 16 tests lock 5 families; `content/skills/mugiwara-workflow/SKILL.md` rule 2g + pointer (precedent fabfa25/da3abbd), no breaking change; `docs/concepts/cost.md` + `docs/cost-governor.md` hub additive. No existing caller of benchmark helpers — no break map. Reliability A.
+- **Security (Jinbe, inferred):** PASS — harness deterministic pure over explicit fixture inputs, no secret fingerprinting, no `missionDir` FS beyond reading trusted fixtures, no new injection surface; `gate-selftest` tampers temp copy of thresholds, no prod secret leak. No new deps. Hotspots A, SCA A.
+- **Plan impact:** proceed to Flow 9 closure + ship. No deferred Lows — campaign complete.
+
+## Flow 9 — Phase 9 closure + ship (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A). Build 0, typecheck 0, validate-content 0, conformance 12 pass (66), verify-install 0, benchmark-governor PASS (4 workloads, 12 Stop-Slop, 3 stress), gate-selftest 60 pass, benchmark.test.ts 16/16, docs 4741/5500, secrets scan clean (grep `sk_` `aws_` `BEGIN PRIVATE` negative; `decisions.md` S2 sanitized). Full `bun run gate` stops only on pre-existing enforcement escape#2 flake (reproduced on clean main, precedent Phases 2–8 — not Phase-9 regression). Rollback = revert Phase-9 commits (`81354f7..95cf12e`). G3 satisfied, ratchet proven.
+- **Campaign:** 9-phase Native Cost Governor complete per spec §56 DoD — Cost/Work/Context/Cognition/Scope&Code/Stop-Slop/Safety&Quality/Observability/Validation all checked. Phase 9 is final hardening; no further phases.
+- **Pushed:** `feat/native-cost-governor` → origin @ bf89c79 (Phase 9 commits), closure amend pending.
+- **Plan impact:** Campaign complete. Next: open PR from `feat/native-cost-governor` (stacked 9 phases), then archive mission via `mugiwara archive`.
+- **Deferred (tracked):** enforcement.test.ts escape#2 flake (separate fix mission, blockers.md row 3) — only remaining debt; no security Lows; no benchmark debt.
 
