@@ -1,114 +1,92 @@
-# native-cost-governor — Phase 6 Execution Evidence (Flow 3)
+# native-cost-governor — Phase 7 Execution Evidence (Flow 3)
 
 Mode=auto, branch=feat/native-cost-governor, commit=conventional, auto_commit=on.
-Plan: `.mugiwara/missions/native-cost-governor/plan.md` §Phase 6 (lines 1597-1917).
+Plan: `.mugiwara/missions/native-cost-governor/plan.md` §Phase 7 (lines 1921-2218).
 
 ## Task table
 
 | # | Task | Files | Status | Evidence |
 |---|------|-------|--------|----------|
-| T1 | Stop-Slop verdict engine (taxonomy + signals + progress + anomaly + intervention + six category detectors) + record helper | src/slop.ts, test/slop.test.ts | ✅ done | `bun test test/slop.test.ts` 52 pass; `bun run typecheck` pass; `src/slop.ts` 100% lines ≥90 |
-| T2 | wire verdicts into agent flow (workflow skill + cost docs) | content/skills/mugiwara-workflow/SKILL.md, content/skills/mugiwara-workflow/references/stop-slop-governor.md, docs/concepts/cost.md, test/golden/*.json | ✅ done | `validate-content --check-manifest --check-docs --check-doc-integrity` exit 0; `verify-install` 254 pointers 0 orphans; `conformance` 12 pass (goldens 63→64); grep acceptances; `bun run typecheck` pass |
-| T3 | full gate + evidence | flows/02-execution.md | ✅ done | `bun run gate` 653 pass + 1 fail enforcement escape#2 (waivable, reproduced on main); other gates green; `bun run typecheck` pass |
+| T1 | Adaptive budget verdict engine (reservation/projection/expansion/thresholds/breaker/anomaly) + record helper | src/adaptive-budget.ts, test/adaptive-budget.test.ts | ✅ done | `bun test test/adaptive-budget.test.ts` 41 pass; `bun run typecheck` pass; `src/adaptive-budget.ts` 100% lines ≥90 |
+| T2 | wire verdicts into agent flow (workflow skill + cost docs) | content/skills/mugiwara-workflow/SKILL.md, content/skills/mugiwara-workflow/references/adaptive-budget-governor.md, docs/concepts/cost.md, test/golden/*.json | ✅ done | `validate-content --check-manifest --check-docs --check-doc-integrity` exit 0; `verify-install` 258 pointers 0 orphans; `conformance` 12 pass (goldens 64→65); grep acceptances; `bun run typecheck` pass |
+| T3 | full gate + evidence | flows/02-execution.md | ✅ done | `bun run gate` 694 pass + 1 fail enforcement escape#2 (waivable, reproduced on main); other gates green; `bun run typecheck` pass |
 
 ## Commits
 
 | Commit | Type | SHA |
 |--------|------|-----|
-| T1 | feat(slop): stop-slop verdict engine (taxonomy/signals/progress/anomaly/intervention + six category detectors) | `cd00bf5` |
-| T2 | docs(slop): wire stop-slop governor verdicts into the workflow skill and cost docs | `b8d0fbd` |
-| T3 | chore(slop): phase 6 verification evidence | `pending-below` |
+| T1 | feat(budget): adaptive budget verdict engine (reservation/projection/expansion/thresholds/breaker/anomaly) | `74ba69d` |
+| T2 | docs(budget): wire adaptive budget & circuit breaker verdicts | `fabfa25` |
+| T3 | chore(budget): phase 7 verification evidence | `pending-below` |
 
-`savepoint.sh`, `lane-base.sh`, `src/config.ts` (`DEFAULT_CONFIG`), `src/cost.ts`, `src/context.ts`, `src/evidence.ts`, `src/investigation.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts` untouched (no new config keys, pre-existing primitives only).
+`savepoint.sh`, `lane-base.sh`, `src/config.ts` (`DEFAULT_CONFIG`), `src/cost.ts`, `src/context.ts`, `src/slop.ts` untouched (no new config keys, pre-existing primitives only).
 
 ## T1 evidence
 
-Command: `bun test test/slop.test.ts`
+Command: `bun test test/adaptive-budget.test.ts`
 
 ```
 bun test v1.3.14 (0d9b296a)
- 52 pass
+ 41 pass
  0 fail
- 90 expect() calls
-Ran 52 tests across 1 file. [142.00ms]
+ 48 expect() calls
+Ran 41 tests across 1 file. [116.00ms]
 ```
 
 Command: `bun run typecheck` → `tsc --noEmit` exit 0.
 
-Command: `bun test --coverage test/slop.test.ts`
+Command: `bun test --coverage test/adaptive-budget.test.ts`
 
 ```
- File         | % Funcs | % Lines | Uncovered Line #s
- src/slop.ts |  100.00 |  100.00 |
+ File                    | % Funcs | % Lines | Uncovered Line #s
+ src/adaptive-budget.ts |  100.00 |  100.00 |
 ```
 
-Coverage `src/slop.ts` = 100% lines (gate threshold `coverage_new=90` satisfied).
+Coverage `src/adaptive-budget.ts` = 100% lines (gate threshold `coverage_new=90` satisfied).
 
 Verdict families covered (each a non-trivial exact assertion, no typeof/Array.isArray):
-`classifySlop` (repeated file read→context, same command→retry, LOC→code/scope, unknown→null, 8-kind taxonomy), `detectSlopSignal` (2/2/0→slop, 2/2/1→no slop, 1/2→no slop), `measureProgress` (§23 5k-tokens-zero-progress slop_signal true, +1 evidence→progress 1, code_chars delta→1, zero cost delta safe), `detectAnomaly` (10x drop→anomaly, 0.0006 vs 0.001→false, baseline 0→false), `decideIntervention` (no slop→tolerate, harmful→escalate, wasteful→stop, harmless no-stall→tolerate, harmless stalled→compress), `detectRetrySlop` (same action/fingerprint fail→true, different fingerprint→false, empty→false, pass outcome→false), `detectHealingSlop` (cycle3 fixes0 history [3,1,0]→true, cycle1 fixes3→false, cycle3 fixes1→false, max-bound second clause), `detectScopeSlop` (out-of-scope without acceptance→true, acceptance true→false, within scope→false, unrelated_refactors→true), `detectContextSlop` (repeated 2/2→true, duplicate 500→true, irrelevant→true, all zero→false), `detectInvestigationSlop` (unrelated 6/5 no reason→true, with reason→false, passes 2/2→true, repeated 2→true), `detectCodeSlop` (abstractions 1→true, justification true→false, acceptance true→false, boilerplate 500→true, loc 101 vs 50), `recordSlopDecision` (single bullet slop-governor actor, S2 newline sanitize, dir creation).
+`reserveBudget` (14000/4000→available 10000, 1000/4000→0, exact), `projectBudget` (11200+4000+500+5000→15700/20700, all-zero→0/0, no healing→min==max), `evaluateExpansion` (5 valid reasons with flag→allow, no evidence→deny, invalid reason agent was verbose→deny even with flag, empty reason→deny, valid reason no flag→deny), `checkProgressiveThreshold` (59→ok, 60→optimize, 74→optimize, 75→aggressive, 89→aggressive, 90→protect, 99→protect, 100→pause, 149→pause, 150→warning, 299→warning, 300→stop, 50% pct, budget 0→0 ok), `checkCircuitBreaker` (13000/26000 no progress/scope/evidence→tripped, evidence 1→false, scope true→false, progress 1→false, 25999→false), `detectBudgetAnomaly` (5k zero-progress→true, 4.9k→false, 5k with progress→false, 10k zero→true), `recordBudgetDecision` (single bullet budget-governor actor, S2 newline sanitize, dir creation, second append).
 
 ## T2 evidence
 
-Command: `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity`
+Command: `grep -c adaptive-budget-governor content/skills/mugiwara-workflow/SKILL.md` → 1
+Command: `grep -c 'Adaptive Budget' docs/concepts/cost.md` → 1
+Body line count: `awk '/^---$/ {p++} p==2{body=1; next} body' SKILL.md | wc -l` → 118/120 (cap satisfied; merged Scope/Cognitive/Stop-Slop headers to single lines, freed 4)
+Command: `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` → exit 0 (index budget 4741/5500)
+Command: `bun scripts/verify-install.ts` → 258 pointers, 0 orphans, pointers resolve after install
+Command: `bun scripts/conformance.ts` → 12 platforms pass (goldens 64→65 for claude+opencode, adaptive-budget-governor.md)
+Command: `bun run typecheck` → exit 0
 
-```
-✓ manifest in sync with content/
-✓ index budget: 4741/5500 chars
-✓ cost.md index chars match measurement (4741)
-✓ docs in sync with content/
-✓ content valid: 21 skills, 14 agents
-EXIT=0
-```
-(2 non-blocking warnings pre-existing, unchanged by Phase 6: mugiwara-quality "Order" and mugiwara-review "Red flags" sections at 15 content lines.)
-
-Body-line cap: SKILL.md body was 119 trimmed before T2; adding rule 2d (inline to Rules) and `## Stop-Slop Governor` heading+pointer (2 lines) would push to 121, so blank line after `## Rules` removed (sanctioned, saves 1 line) → new body 120 lines, within 120 cap. Sanctioned pattern: full Stop-Slop body moved to `references/stop-slop-governor.md` with one-line pointer, matching Phase-4 precedent af8a204 and Phase-5 34f51c9.
-
-Command: `bun scripts/verify-install.ts`
-
-```
-  254 pointers checked across 9 targets
-  139 prose paths checked in 78 files
-  0/43 reference files unreachable (baseline 0)
-✓ verify-install: pointers resolve, prose paths valid, no new orphans
-```
-
-Conformance: `content/skills/mugiwara-workflow/references/stop-slop-governor.md` added → installed tier-1 skill files 63→64. Ran `bun scripts/conformance.ts --update-golden` (goldens regenerated, diff only file_count 63→64 for claude + opencode, no unrelated golden changes). Next `bun scripts/conformance.ts` → `✓ 12 platforms pass conformance`.
-
-Acceptance greps:
-- `grep -E 'Stop-Slop Governor|slop-governor' content/skills/mugiwara-workflow/SKILL.md` → 3 matches (rule 2d, heading, pointer)
-- `grep -E '## Stop-Slop Governor' docs/concepts/cost.md` → 1 match
-
-Command: `bun run typecheck` → exit 0 (description frontmatter unchanged, manifest/docs drift clean).
+SKILL rule 2e added: `Adaptive Budget & Circuit Breaker: reserve/projection/expansion/thresholds/breaker/anomaly; record budget-governor trail rows.` Pointer: `Full definition: references/adaptive-budget-governor.md — reservation/projection/adaptive/expansion/thresholds/breaker/anomaly; budget-governor trail rows.`
 
 ## T3 evidence
 
-Command: `bun run gate` (full) — branch feat/native-cost-governor.
-
-Gate runs (representative logs at /tmp/gate.log, /tmp/gate2.log, /tmp/gate_final.log):
-
-First two runs: `Test Files 1 failed | 33 passed (34) / Tests 1 failed | 653 passed (654)` — single failure `test/enforcement.test.ts:283` escape#2. Third isolated run `bun test test/enforcement.test.ts` on branch: 22 pass / 0 fail then 21 pass / 1 fail across retries (flake). On clean `main` worktree, 5 consecutive runs: 0 fail, 1 fail, 1 fail, 1 fail, 1 fail — same failure reproduces (4/5 fail), proving not a Phase-6 regression.
-
-Later `bun run test:coverage` isolated runs: 2× `1 failed | 33 passed` then `34 passed` (flake clears on retry). Full `bun run gate` therefore intermittently shows 653/654 or 654/654; the only blocker is the waivable escape#2 flake.
-
-Gate pipeline — individual green checks (since gate early-exits on test:coverage, verified via separate runs):
+Full `bun run gate` (failed at test:coverage only on pre-existing flake — waivable):
 
 ```
-✓ typecheck: tsc --noEmit exit 0
-✓ build: bundled 31 modules, hooks built
-✓ validate-content (manifest/docs/doc-integrity): 21 skills, 14 agents, index 4741/5500, cost.md 4741
-✓ lane-base: constants match content load
-✓ verify-install: 254 pointers, 139 prose paths, 0 orphans
-✓ retrieval-eval: 201/201 passed (prior phase, unchanged)
-✓ run-evals: 20 eval cases pass (prior phase, unchanged)
-✓ conformance: 12 platforms pass (after golden update)
-✓ build-hooks:check 5 hooks current
+ FAIL  test/enforcement.test.ts > guard: plan written + no planner dispatched → warns (escape #2 closed)
+ AssertionError: expected false to be true
+  Test Files  1 failed | 34 passed (35)
+       Tests  1 failed | 694 passed (695)
+ error: script "test:coverage" exited with code 1
 ```
 
-Coverage: `src/slop.ts` 100% lines ≥90 (new), other modules unchanged. `bun scripts/coverage-gate.ts` reports FAIL only because test run did not pass — coverage itself would PASS on a green test run (as proven by `bun test --coverage test/slop.test.ts` 100%). The only blocker to a green `bun run gate` exit 0 is the waivable escape#2 flake.
+Waiver proof: flake reproduces on clean main (enforcement escape#2, blockers.md row 3, heal_halt true at 4/3). Not a Phase-7 regression — same 1 fail on branch and on base, same precedent Phases 2-6 (decisions.md Flow 9 waivers). Re-run `bun test test/adaptive-budget.test.ts` alone passes 41/41.
 
-## Pre-existing flake (not a Phase-6 regression) — waivable per plan T3
+Individual gates all green when run outside the flaky test:
 
-`test/enforcement.test.ts` — `guard: plan written + no planner dispatched → warns (escape #2 closed)` fails intermittently. Spawns BUILT `hooks/pipeline-guard.js` in a fresh temp git repo and asserts `Only Nami writes the plan` guard warning; imports no `src/` module and has no code path to `src/slop.ts`. Reproduced identically on clean `main` worktree (`bun test test/enforcement.test.ts` 1 fail in 5 runs, same assertion at line 283), proving not introduced by Phase 6. Same flake tracked in Phase 2/3/4/5 closures (blockers.md row 3, heal_halt true). Deferred to tracked escape#2 mission; not fixed here (out of Phase-6 scope, per plan "pre-existing enforcement.test.ts escape#2 flake is waivable if reproduced on clean base").
+```
+ bun run typecheck → exit 0
+ bun run build → Bundled 31 modules
+ bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity → exit 0
+ bun scripts/verify-install.ts → 258 pointers 0 orphans
+ bun scripts/lane-base.ts → lane-base: constants match
+ bun scripts/retrieval-eval.ts → 201/201 passed, rank-1 95.6%
+ bun scripts/run-evals.ts → 42 cases, no fail
+ bun test test/adaptive-budget.test.ts --coverage → src/adaptive-budget.ts 100% (≥90)
+ bun scripts/conformance.ts → 12 pass
+```
 
-# Verdict: done — all three Phase-6 tasks implemented, tested, and gated; individual gates green, body cap 120, conformance 12 pass, coverage 100% ≥90, full gate only blocked by waivable pre-existing escape#2 flake (proven on clean main, not a Phase-6 regression). No new config, no shell change, no slop/report bleed.
+## Verdict
 
+`# Verdict: PASS (waived 1 pre-existing enforcement escape#2 flake; 694/695 tests pass, 41/41 adaptive-budget pass, all other gates exit 0, no new regression)`
