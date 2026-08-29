@@ -675,3 +675,322 @@ closure event (TS-side).
 - `src/mission.ts`: closure event `status` gates on the **lane token budget** (C2 fixed); `status` computed once (Q2); Cost section renders via `costEnvelope` (Q1) and surfaces a `Context efficiency` row; context metrics in the closure event.
 - `savepoint.sh` and `lane-base.sh` untouched; no runtime savepoint behavior changed.
 - `bun run gate` passes fully; every pre-existing test passes unchanged.
+
+---
+
+# native-cost-governor — Phase 3: Work Governor
+
+**Scope:** Phase 3 of the Native Cost Governor initiative (plan §51), mission
+split row 3 (`native-cost-governor-phase3`). Phase 3 delivers the **Work
+Governor** — the six capabilities §51 Phase 3 enumerates (required/conditional/
+optional stage classification, evidence-backed stage skipping, agent invocation
+control, skill loading control, delegation optimization, completion detection).
+It **wires the Phase-2 signals into the agent flow**: Phase 2 was measurement-only
+(the verdicts existed but nothing consumed them); Phase 3 is the consumer that
+turns those verdicts into auditable skip/avoid/delegate/complete decisions.
+
+**Primary goal:** make *work* efficient — skip what the evidence says is
+unnecessary, invoke only the agents and skills that earn their cost, delegate
+only when parallelism beats overhead, and know when a mission is genuinely done.
+Every optimization decision lands in the trail (§41) so the crew's agent-flow
+choices are machine-checkable, not vibe.
+
+## What Phase 3 consumes (Phase-2 signals) and what it enforces
+
+| Phase-2 signal | Module | Phase-3 consumer |
+|----------------|--------|------------------|
+| Investigation verdict | `src/investigation.ts` `evaluateInvestigation` | evidence-backed stage skipping (investigation stopped → skip the stage that needed it) |
+| Repeated-read / reuse detection | `src/evidence.ts` `findRepeats`, `loadRegistry`, `registerRead` | skip when evidence already answers; dedup reads; completion evidence present |
+| Context budget status | `src/context.ts` `contextStatus` | guard before a conditional/optional stage (over budget → tighten, don't expand) |
+| Investigation config limits | `src/config.ts` `readInvestigationConfig` | bounds the skip/continue decision with real policy |
+| Delegation threshold | `src/cost.ts` `delegateAt` (Q1 remainder — deferred from Phase 2) | delegation optimization: the budget ceiling below which delegation is refused |
+| Per-invocation overhead | `src/cost.ts` `laneBaseForLane` (Q1 remainder — deferred from Phase 2) | delegation overhead floor: one delegate ≈ one agent's context load |
+| Decision trail | `src/cost.ts` `recordOptDecision` | records every skip/avoid/delegate/complete verdict (§41) |
+
+Phase 3 **enforces**: a stage is never skipped without a recorded reason; an
+agent/skill is only loaded when it earns its cost; delegation only fires when
+parallelism value exceeds overhead AND budget is inside the delegate threshold;
+a mission is marked complete only when all five §19 conditions hold.
+
+## Key decisions
+
+1. **The Work Governor is a pure TS module (`src/work.ts`), like Phase 2.** Same
+   architecture as `investigation.ts`: verdict functions take explicit inputs
+   (so they are unit-testable and the parity is locked by fixtures), and a
+   separate record helper persists the verdict through the sanitized
+   `recordOptDecision` (§41 trail). `savepoint.sh`/`lane-base.sh` stay untouched;
+   the shell runtime has no work-classification role and Phase 3 does not migrate
+   it.
+2. **Honest boundary — the module produces and records; the crew acts.** The
+   LLM crew (workflow skill) is the only thing that can actually skip a flow
+   stage or avoid an agent. Phase 3 makes the *decision* a structured, recorded,
+   auditable verdict the crew is instructed to follow (T4 wiring) — it does not
+   pretend a TS function can force the model. This is the same honest boundary
+   Phase 2 drew for `investigation.ts` inputs.
+3. **`DEFAULT_CONFIG` untouched.** Delegation already has a key
+   (`delegate_threshold=60`) and the investigation limits were added in Phase 2.
+   Phase 3 needs no new config (§52 — no micromanaging every optimization
+   decision; policy boundaries already exist). No runtime config behavior change.
+4. **Report/cost-ledger work rows defer to Phase 8.** The `stages_executed /
+   skipped`, `agents_invoked / avoided` ledger block (§39) and the `mugiwara cost`
+   CLI (§42) are Phase 8 Reporting. Phase 3 records the *decisions* (§41) but does
+   not build the report work-section — that is Phase 8's surface. Avoids gold-plating.
+5. **Security F1 closes here (required by Phase-2 DoD).** `loadRegistry` shape
+   validation: drop lines that fail shape (string `reads` → string-concat risk),
+   coerce `reads` to a bounded integer. F2/F3 remain accepted Low (documented
+   trust boundary + secret-fingerprint design rule noted in `docs/concepts/cost.md`).
+6. **Quality nit closes here.** `CostEvent.context_metrics` inline shape is
+   replaced by an import of `ContextMetrics` from `context.ts` (single type
+   definition — the LOW review nit deferred to Phase-3 wiring).
+7. **Delegation consumes the Phase-2 Q1 remainder.** `delegateAt` and
+   `laneBaseForLane` were explicitly deferred to Phase 3 (plan Phase 2 T6
+   deferred note); they are wired inside `evaluateDelegation`.
+
+## Architecture overview
+
+```
+  Phase-2 signals (all shipped, interfaces unchanged by Phase 3)
+  src/investigation.ts  src/evidence.ts  src/context.ts
+  src/config.ts         src/cost.ts
+       │                    │
+       ▼                    ▼
+  src/work.ts ← NEW (T1): the Work Governor verdict engine — classifyStage,
+       │       shouldSkipStage, evaluateInvocation, shouldLoadSkill,
+       │       evaluateDelegation (consumes delegateAt + laneBaseForLane),
+       │       completionCheck + recordWorkDecision (→ recordOptDecision §41)
+       │
+       ├──────────────────────────┐
+       ▼                          ▼
+  decisions.md (## Cost governor decisions)      content/skills/mugiwara-workflow
+       (every skip/avoid/delegate/complete)      SKILL.md (T4 wiring: crew consults
+                                                 the recorded verdicts before each
+                                                 flow stage) + docs/concepts/cost.md
+```
+
+Pure verdict functions are unit-tested (T1); the security hardening (T2) and
+type-dedup (T3) are self-contained hygiene on `evidence.ts`/`cost.ts`; the
+agent-flow wiring (T4) is the workflow-skill + docs surface; T5 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `src/work.ts` | NEW — Work Governor verdict engine (six capabilities) + `recordWorkDecision` |
+| `src/evidence.ts` | MODIFY — security F1: `loadRegistry` shape validation (drop malformed lines; coerce `reads` to bounded integer) |
+| `src/cost.ts` | MODIFY — quality nit: `context_metrics` typed via imported `ContextMetrics` (drop inline dup) |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — reference the Work Governor: classify each stage before running it; record skip/avoid decisions via the decision trail (rule 2 already demands it — this makes it structured) |
+| `docs/concepts/cost.md` | MODIFY — Work Governor section (six capabilities, verdict contracts, honesty boundary, F2/F3 design rules) |
+| `test/work.test.ts` | NEW |
+| `test/evidence.test.ts` | MODIFY — F1 shape-validation cases |
+| `test/cost.test.ts` | MODIFY — only if a pinned assertion breaks (expected: none — type-only change) |
+| `scripts/savepoint.sh`, `scripts/lib/lane-base.sh`, `src/config.ts` (`DEFAULT_CONFIG`) | UNCHANGED — no new config, no shell change |
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Work Governor module + security/type hygiene on two disjoint files | T1–T3 | `bun test test/work.test.ts test/evidence.test.ts test/cost.test.ts` green |
+| 2 | Wire the verdicts into the agent flow + docs | T4 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` green |
+| 3 | Full verification | T5 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 work.ts ────────────────┐
+T2 evidence.ts (F1) ──────┐│  [PARALLEL] — 3 disjoint files; the
+T3 cost.ts (type dedup) ─┐││  interfaces T1 consumes (evidence.ts
+                         ▼▼▼  loadRegistry/findRepeats, cost.ts
+T4 workflow skill + docs  (consumes T1)   delegateAt/laneBaseForLane/
+                                              recordOptDecision) are UNCHANGED
+                         ▼                     by T2/T3
+T5 full gate (consumes all)
+```
+
+**Wave 1 `[PARALLEL]` proof (T1–T3):** file-disjoint — T1 creates
+`src/work.ts`+`test/work.test.ts`, T2 modifies `src/evidence.ts`+`test/evidence.test.ts`,
+T3 modifies `src/cost.ts`+`test/cost.test.ts`; no two touch the same file.
+Interface-disjoint — T1 consumes `evidence.ts` (`loadRegistry`, `findRepeats`),
+`investigation.ts`, `context.ts`, `config.ts`, and `cost.ts` (`delegateAt`,
+`laneBaseForLane`, `recordOptDecision`) with their **pre-existing signatures**;
+T2 is a robustness change to `loadRegistry` (drops malformed lines, coerces
+`reads`) with **no signature change** — T1's tests feed well-formed registry
+entries, so T1 never depends on T2's new behavior; T3 is a **type-only** change
+(imported `ContextMetrics`) with no runtime signature change. Genuine independence.
+
+No other parallel sets exist: T4 consumes T1 (wiring documents the real
+verdicts); T5 consumes everything. Every edge either shares a file or consumes a
+not-yet-shipped interface.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | Work Governor verdict engine (six capabilities) + record helper | src/work.ts, test/work.test.ts | L | — | `bun test test/work.test.ts` green; `bun run typecheck` passes |
+| T2 | security F1: loadRegistry shape validation | src/evidence.ts, test/evidence.test.ts | S | — | `bun test test/evidence.test.ts` green |
+| T3 | cost.ts type dedup (ContextMetrics import) | src/cost.ts, test/cost.test.ts | S | — | `bun test test/cost.test.ts` green; `bun run typecheck` passes |
+| T4 | wire verdicts into agent flow (workflow skill + docs) | content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md | S | T1 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exit 0; workflow description unchanged |
+| T5 | full gate + evidence | flows/02-execution.md | S | all | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: Work Governor verdict engine** (§7, §8, §9, §19, §30, §41)
+- Files: create `src/work.ts`, `test/work.test.ts`
+- Interfaces: consumes `src/investigation.ts` `evaluateInvestigation` (+ `InvestigationStatus`), `src/evidence.ts` `findRepeats`/`loadRegistry`/`registerRead`, `src/context.ts` `contextStatus`, `src/config.ts` `readInvestigationConfig`, `src/cost.ts` `delegateAt`/`laneBaseForLane`/`recordOptDecision` (Q1 remainder — now consumed). Produces `src/work.ts` (consumed by T4) and structured decisions via `recordOptDecision` (§41).
+- Size: L
+- Steps:
+  - [ ] Write `test/work.test.ts` first (TDD — see acceptance)
+  - [ ] Implement `src/work.ts`:
+    - **Stage classification (§7/§34):** `export type StageClass = 'required'|'conditional'|'optional'`; `export type StageClassifyInput = { stage: string; requirement_kind: 'explicit'|'exploratory'|'ambiguous'; uncertainty_high: boolean; provides_required_evidence: boolean; protects_quality_security: boolean }`; `classifyStage(input): { stage; class: StageClass; reason: string }` — `required` when `protects_quality_security || provides_required_evidence`; else `conditional` when `uncertainty_high || requirement_kind !== 'explicit'`; else `optional`. Pure.
+    - **Evidence-backed skipping (§7/§34/§13):** `export type SkipInput = { stage: string; classification: StageClass; evidence_present: boolean; investigation_stopped: boolean; context_over: boolean }`; `shouldSkipStage(input): { stage; skip: boolean; reason: string; evidence?: string }` — `required` → never skip (`skip:false`, reason `'required — protects quality/security'`); `conditional` → skip when `evidence_present` OR `investigation_stopped` (reason names the deciding signal); `optional` → skip when `evidence_present` OR `context_over` (reason names it) else run. Always emits a reason (every skip is explicit, §7).
+    - **Agent invocation control (§8):** `export type InvocationInput = { agent: string; unique_responsibility: boolean; evidence_answers: boolean; stage_can_perform: boolean; expected_value_gt_cost: boolean }`; `evaluateInvocation(input): { agent; invoke: boolean; reason: string }` — invoke only when `unique_responsibility && !evidence_answers && !stage_can_perform && expected_value_gt_cost`; else `invoke:false` with the first failing clause named. Never invokes merely because the agent exists in the crew.
+    - **Skill loading control (§9):** `export type SkillInput = { skill: string; required_by_task: boolean; required_by_policy: boolean; required_by_dependency: boolean; failing_verification: boolean }`; `shouldLoadSkill(input): { skill; load: boolean; reason: string }` — load only when any of the four "load only when" conditions holds (§9); else `load:false` reason `'not required by task/policy/dependency/verification'`. Minimum sufficient set.
+    - **Delegation optimization (§30, consumes `delegateAt` + `laneBaseForLane`):** `export type DelegationInput = { lane: string; budget: number; tokens_used: number; threshold_pct: number; independent_tasks: number; parallel_value: number; estimated_overhead: number }`; `evaluateDelegation(input): { delegate: boolean; reason: string; budget_at: number; lane_base: number; parallel_value: number; overhead: number }` — `budget_at = delegateAt(budget, threshold_pct)`; `lane_base = laneBaseForLane(lane)`; `overhead = max(estimated_overhead, lane_base)` (one delegate costs at least one agent's context load); delegate only when `independent_tasks >= 2 && parallel_value > overhead && tokens_used <= budget_at` — else `delegate:false` with the failing clause named. Closes the Phase-2 Q1 remainder.
+    - **Completion detection (§19):** `export type CompletionInput = { acceptance_satisfied: boolean; implementation_complete: boolean; tests_complete: boolean; quality_gates_complete: boolean; evidence_collected: boolean }`; `completionCheck(input): { complete: boolean; missing: string[]; reason: string }` — complete iff all five; `missing` lists the false ones; `reason` = `'ready for closure'` or `'missing: a, b'`.
+    - **Decision trail (§41):** `recordWorkDecision(missionDir: string, d: { decision: string; reason: string; evidence?: string }): void` — thin wrapper over `recordOptDecision` with `actor: 'work-governor'` (reuses the S2 sanitizer). Callers call it with the reason/evidence from any verdict with `skip`/`invoke:false`/`load:false`/`delegate:false`/`complete:true`.
+  - [ ] `docs/concepts/cost.md` (in T4, not here — T4 owns docs) — T1 writes only code + tests
+  - [ ] Commit `feat(work): work governor verdict engine (stage/skip/agent/skill/delegation/completion)`
+- Acceptance:
+  - `bun test test/work.test.ts` passes. Cases (each a non-trivial exact assertion):
+    - `classifyStage`: security-protecting stage → `'required'` even when evidence present; evidence-providing → `'required'`; uncertainty_high → `'conditional'`; `explicit` + no-evidence + no-protection + no-uncertainty → `'optional'`
+    - `shouldSkipStage`: `required` never skips (reason contains 'required'); `conditional` + `evidence_present` → skip; `conditional` + `investigation_stopped` → skip; `optional` + `context_over` → skip; `optional` + no signals → run (`skip:false`); every skip has a non-empty reason
+    - `evaluateInvocation`: unique+evidence-answers → `invoke:false` (evidence clause); unique+no-evidence+stage-can-perform → `invoke:false`; all four pass → `invoke:true`; no unique responsibility → `invoke:false`
+    - `shouldLoadSkill`: each of the four §9 conditions alone → `load:true`; none → `load:false`
+    - `evaluateDelegation`: `independent_tasks:1` → never delegate regardless of value; `parallel_value:5000, overhead:4000, lane_base:22016` → `overhead===22016` (floor) and delegate:false (value not > floor); `parallel_value:40000, overhead:5000, tokens_used:6000, budget:25000, threshold_pct:60` → `budget_at===15000`, delegate:true; same but `tokens_used:16000` (> budget_at) → delegate:false (over threshold)
+    - `completionCheck`: all five true → `complete:true`, `missing:[]`; one false → `complete:false` with that item in `missing`; multiple false → all listed
+    - `recordWorkDecision` writes a single `## Cost governor decisions` bullet with `work-governor` actor, sanitized (newline-stripped) reason
+  - `bun run typecheck` passes
+  - Coverage: `src/work.ts` ≥90% (config `coverage_new=90`; verified at T5 gate)
+- Risk: medium — a new L module must meet the 90% coverage bar; TDD-first with the acceptance cases above is the safety net. Rollback: revert the single commit.
+- Deferred: none in T1 — delegation Q1 remainder closes here.
+
+**Task 2: security F1 — loadRegistry shape validation** (§? security F1)
+- Files: modify `src/evidence.ts`; extend `test/evidence.test.ts`
+- Interfaces: consumes `src/evidence.ts` `loadRegistry` (self-contained; signature unchanged — a parsed entry failing shape is dropped, valid entries pass through exactly)
+- Size: S
+- Steps:
+  - [ ] Extend `test/evidence.test.ts` with cases (below) — TDD
+  - [ ] In `src/evidence.ts` `loadRegistry`: after `JSON.parse`, validate each parsed entry — drop the line when any of `typeof e.fingerprint !== 'string'`, `typeof e.kind !== 'string'`, `typeof e.file !== 'string'`, `typeof e.id !== 'string'`, `typeof e.ref !== 'string'`, or `typeof e.reads !== 'number' || !Number.isFinite(e.reads) || e.reads < 0`; coerce `e.reads` to `Math.floor(e.reads)`. Entries that fail shape are skipped (never crash the reader). Comment: fixes F1 — a malformed/`string reads` line (string-concat risk) can no longer reach consumers.
+  - [ ] Run `bun test test/evidence.test.ts` — existing cases must stay green
+  - [ ] Commit `fix(evidence): validate registry shape on load (security F1)`
+- Acceptance:
+  - `bun test test/evidence.test.ts` passes. Cases:
+    - a JSONL line with `reads: "3"` (string) is dropped (not coerced-by-concat); the rest load intact
+    - a line missing `ref` is dropped; valid lines before/after it load
+    - `reads: 2.7` loads as `2` (floored); `reads: -1` is dropped
+    - existing round-trip + empty-registry cases still pass unchanged
+  - `bun run typecheck` passes
+- Risk: low — existing tests unchanged; F1 behavior is additive (drops only malformed lines). Rollback: revert the commit.
+- Deferred: none — this closes F1 as required by the Phase-2 DoD.
+
+**Task 3: cost.ts type dedup — import ContextMetrics** (quality LOW nit)
+- Files: modify `src/cost.ts`; `test/cost.test.ts` (expected: no change, run to confirm)
+- Interfaces: consumes `src/context.ts` `ContextMetrics` (type-only import); `CostEvent.context_metrics` gains the imported type instead of the inline duplicate. No runtime signature change.
+- Size: S
+- Steps:
+  - [ ] In `src/cost.ts`: `import type { ContextMetrics } from './context.ts';` and change the `context_metrics?: { files_loaded; repeated_reads; duplicate_chars; reuse_rate; read_avoidance_chars }` inline shape to `context_metrics?: ContextMetrics` (single type definition). Type-only import — no runtime edge on the module graph.
+  - [ ] Run `bun test test/cost.test.ts` and `bun run typecheck` — all green (type-only change)
+  - [ ] Commit `refactor(cost): type context_metrics via imported ContextMetrics (quality nit)`
+- Acceptance:
+  - `bun test test/cost.test.ts` passes unchanged (no assertion on the inline shape); `bun run typecheck` passes
+  - `grep -n 'ContextMetrics' src/cost.ts` returns a match (import + usage); no inline `context_metrics?: {` duplicate remains in `src/cost.ts`
+- Risk: none — type-only. Rollback: revert the commit.
+- Deferred: none.
+
+**Task 4: wire the verdicts into the agent flow** (§7, §8, §9, §19, §34)
+- Files: modify `content/skills/mugiwara-workflow/SKILL.md`; `docs/concepts/cost.md`
+- Interfaces: consumes `src/work.ts` verdicts (T1) — documents them as the decision trail the crew follows; no code import (the skill is prose the agent reads; the trail is the machine-checkable artifact via `recordOptDecision`)
+- Size: S
+- Steps:
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md`, under `## Rules` (after rule 2), add one rule line (≤120 chars) and a short "Work Governor" subsection:
+    - Rule: `2a. Work Governor: before each flow stage classify it required/conditional/optional (Work Governor §7) and record any skip/avoid decision — `work-governor` entry in the decision trail; never skip a required stage.`
+    - Subsection `## Work Governor` (3–5 lines): every stage is classified `required`/`conditional`/`optional`; a stage is skipped only with a recorded reason (§7); an agent is invoked only when it has unique responsibility and evidence cannot answer (§8); skills load only when required (§9); a mission is ready for closure only when §19's five conditions all hold — `completionCheck` verdict recorded in the decision trail. The decision trail is the machine-checkable record (`.mugiwara/.../decisions.md` → `## Cost governor decisions`). `savepoint.sh`/`lane-base.sh`/config untouched.
+    - Ensure description frontmatter is byte-unchanged (validate-content requires it).
+  - [ ] In `docs/concepts/cost.md`, append a `## Work Governor (src/work.ts)` section: the six capabilities + their verdict contracts (`classifyStage`, `shouldSkipStage`, `evaluateInvocation`, `shouldLoadSkill`, `evaluateDelegation`, `completionCheck`, `recordWorkDecision`), that delegation consumes `delegateAt`/`laneBaseForLane`, the honest boundary (module records — crew acts via the workflow skill), and the security design rules (F2: do not `registerRead` secret-bearing files such as `.env`/keys; F3: `.mugiwara/` is local trusted state — validate `missionDir` if writers ever open).
+  - [ ] Run `bun run validate-content --check-manifest --check-docs --check-doc-integrity`
+  - [ ] Commit `docs(work): wire work governor verdicts into the workflow skill and cost docs`
+- Acceptance:
+  - `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exits 0 (skill description unchanged, manifest/docs drift clean)
+  - `grep -E 'Work Governor|work-governor' content/skills/mugiwara-workflow/SKILL.md` returns 2+ matches
+  - `grep -E '## Work Governor' docs/concepts/cost.md` returns a match
+  - `bun run typecheck` passes (docs-only, still confirmed)
+- Risk: low — a skill body change could trip validate-content if a line exceeds 120 chars or the description drifts; acceptance locks both. Rollback: revert the commit.
+- Deferred: the report/CLI work ledger (§39/§42) stays Phase 8.
+
+**Task 5: full gate + evidence**
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T4
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output
+  - [ ] If any gate fails: fix within scope, re-run. No gate waived.
+  - [ ] Write `flows/02-execution.md`: task table (T1–T5), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(work): phase 3 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New `src/work.ts` misses the 90% coverage bar | medium | CI red | TDD-first; acceptance cases lock every verdict family; gate catches at T5 |
+| Skill-body edit trips validate-content | low | CI red | T4 acceptance locks description-unchanged + ≤120-char lines; run validator in T4 |
+| `loadRegistry` F1 change drops a legit line | low | lost registry entry | validation is conservative (drops only malformed shape); existing round-trip tests stay green |
+| Parallel-proof edge between T1 and T2/T3 breaks | low | false [PARALLEL] | proof in graph: T1 consumes pre-existing signatures only; T2 robustness + T3 type-only change neither signature |
+| Delegation floor (`lane_base`) makes delegation look never-worthwhile | medium | over-conservative | floor is the honest per-invocation context cost; `evaluateDelegation` exposes `parallel_value`/`overhead`/`budget_at` so the trade is auditable, not hidden |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers row 3); not a Phase-3 regression — proven by reproduction on clean main in Phase-2 closure |
+
+Rollback plan: each task is one revertible commit; T5 evidence lists exact
+commits. Worst case: `git revert` the Phase-3 commits. `savepoint.sh`,
+`lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint +
+config behavior is preserved by construction.
+
+## Phase-3 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Work (user acceptance) maps to Phase-3 tasks; each user AC has ≥1
+per-task command-verifiable criterion:
+
+| User AC (spec DoD Work) | Capability (§51/§spec) | Deliverable |
+|--------------------------|------------------------|-------------|
+| unnecessary stages can be skipped | 1+2 (stage classification + evidence-backed skipping) | T1 `classifyStage` + `shouldSkipStage`; T4 workflow-skill rule 2a |
+| every skipped stage has an explicit reason (§7) | 1+2 | T1 every skip verdict carries a non-empty `reason` (test-locked); T4 rule 2a |
+| unnecessary agents can be avoided | 3 (agent invocation control) | T1 `evaluateInvocation` (test-locked: evidence-answers / stage-can-perform refuse invocation) |
+| unnecessary skills can be avoided | 4 (skill loading control) | T1 `shouldLoadSkill` (test-locked: load only when §9 condition holds) |
+| delegation considers overhead | 5 (delegation optimization) | T1 `evaluateDelegation` consumes `delegateAt` + `laneBaseForLane` (Q1 remainder); parallel_value > overhead gate test-locked |
+| completion detection prevents unnecessary continuation | 6 (completion detection) | T1 `completionCheck` (five §19 conditions; `missing[]` lists gaps); T4 workflow-skill readiness note |
+| optimization decisions auditable (§41) | all | T1 `recordWorkDecision` → `recordOptDecision` (test-locked bullet shape + actor) |
+
+## Definition of Done (Phase 3)
+
+- `src/work.ts` exists: `classifyStage`, `shouldSkipStage`, `evaluateInvocation`,
+  `shouldLoadSkill`, `evaluateDelegation`, `completionCheck`, `recordWorkDecision` —
+  all pure, unit-tested, ≥90% coverage.
+- Delegation consumes the Phase-2 Q1 remainder: `evaluateDelegation` calls
+  `delegateAt(budget, threshold_pct)` and `laneBaseForLane(lane)` (Q1 closed).
+- `loadRegistry` validates entry shape on load (security F1 closed): string/negative/
+  non-finite `reads` and malformed entries are dropped, never reach consumers.
+- `src/cost.ts` types `context_metrics` via imported `ContextMetrics` (quality
+  nit closed); no inline duplicate.
+- `content/skills/mugiwara-workflow/SKILL.md` wires the Work Governor: stage
+  classification before each flow stage + recorded skip/avoid decisions (rule 2a);
+  description unchanged; validate-content green.
+- `docs/concepts/cost.md` documents the Work Governor verdicts, the honest
+  boundary, and the F2/F3 security design rules.
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` runtime
+  behavior — no new config keys.
+- `bun run gate` passes fully; every pre-existing test passes unchanged.
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `src/work.ts` produces and records verdicts; the LLM crew
+  (workflow skill, T4) is the only thing that acts on them. The module does not
+  pretend to force the model — it makes the decision structured, auditable, and
+  instructed.
+- **F2/F3 accepted Low (unchanged):** secret-bearing files should not be
+  `registerRead`-ed (F2) and `.mugiwara/` is local trusted state (F3) — both
+  documented as design rules in `docs/concepts/cost.md` (T4), not code-forced.
+- **Report/CLI work ledger deferred to Phase 8:** `stages_executed/skipped`,
+  `agents_invoked/avoided` (§39 ledger) and `mugiwara cost` (§42) are Phase 8
+  Reporting — Phase 3 records the decisions only, avoiding gold-plating.
+- **Enforcement flake (escape #2) tracked separately:** not a Phase-3 regression.
+- **No new config:** delegation reuses `delegate_threshold`; investigation limits
+  came in Phase 2 — Phase 3 adds nothing to `DEFAULT_CONFIG`.

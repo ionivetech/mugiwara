@@ -169,3 +169,27 @@ live here; the plan doc stays clean.
 - **Deferred (tracked):** enforcement.test.ts escape#2 flake (separate fix
   mission); security F1/F2/F3 harden at Phase-3 wiring; quality nits
   (context_metrics inline shape).
+
+## Flow 0 — Phase 3 triage (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Request (resumed via `mugiwara continue`):** Phase 3 (Work Governor), plan
+  §51: required/conditional/optional stage classification, evidence-backed
+  stage skipping, agent invocation control, skill loading control, delegation
+  optimization, completion detection. Wire the Phase-2 signals into the agent
+  flow (Phase 2 was measurement-only).
+- **Class:** explicit — spec §51 Phase 3 enumerates the six deliverable
+  capabilities; consumed signals are Phase-2 verdicts.
+- **Lane:** Full — spans cost governor domain, agent-flow wiring, state
+  schema, tests, docs.
+- **Mode:** auto (from `.mugiwara/config`) — campaign runs to completion.
+- **Route:** Flow 0 → Flow 2 (Nami, extend plan.md with Phase 3 detail +
+  waves) → Flow 3 (Zoro, execute). Flow 1 (brainstorm) skipped — same reason
+  as Phase 1/2: spec §51 is explicit, options already in spec + plan.
+- **Branch:** continue on `feat/native-cost-governor` (stacked, Phase 1+2
+  unmerged).
+- **Deferred security hardening:** F1 (loadRegistry shape validation) + F4
+  (context-registry fold — actually closed by H1 `17b4c7c`) resolved during
+  Phase-3 wiring; F2/F3 (Low) accepted.
+- **Plan impact:** plan.md gains a Phase 3 section (Nami); tasks wired from
+  §51 + Phase-2 signals.

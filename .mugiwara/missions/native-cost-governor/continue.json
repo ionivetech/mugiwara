@@ -4,13 +4,13 @@
   "actor": "AI: deepseek-v4-flash",
   "branch": "feat/native-cost-governor",
   "flow": 1,
-  "phase": 3,
+  "phase": 4,
   "mode": "auto",
   "tasks_done": 0,
   "tasks_total": 0,
   "lane": "full",
   "lane_prev": "full",
   "updated_at": "2026-08-29T00:00:00.000Z",
-  "next_action": "Phase 2 (Context Governor) closed (GO, pushed to feat/native-cost-governor, dfc7982). Start Phase 3 (Work Governor, plan §51 Phase 3): required/conditional/optional stage classification, evidence-backed stage skipping, agent invocation control, skill loading control, delegation optimization, completion detection. Wire the Phase-2 signals into the agent flow (phase 2 was measurement-only). Nami: extend plan.md with Phase 3 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1+2 unmerged; open Phase 1/2 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F1/F2/F3 to harden at Phase-3 wiring.",
-  "next_session_prompt": "Resume native-cost-governor campaign: Phase 3 Work Governor. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 2 closure). Run Flow 0/2 for Phase 3 on branch feat/native-cost-governor."
+  "next_action": "Phase 3 (Work Governor) closed (GO, pushed to feat/native-cost-governor, 4dc2490 head). Start Phase 4 (Scope & Code Governor, spec §51 Phase 4): scope drift detection, existing-code reuse checks, abstraction justification, dependency justification, minimum sufficient implementation policy, code waste detection, change-surface measurement. Consumes the Phase-1 cost + Phase-2 context + Phase-3 work governor primitives. Nami: extend plan.md with Phase 4 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1+2+3 unmerged; open Phase 1/2/3 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F2/F3 (Low) to harden at Phase 8.",
+  "next_session_prompt": "Resume native-cost-governor campaign: Phase 4 Scope & Code Governor. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 3 closure). Run Flow 0/2 for Phase 4 on branch feat/native-cost-governor."
 }

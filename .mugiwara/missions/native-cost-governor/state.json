@@ -9,23 +9,23 @@
   "lane_peak": "full",
   "lane_rose": false,
   "flow": 1,
-  "mode": "guided",
+  "mode": "auto",
   "verbosity": "normal",
   "model": "unknown",
   "base_sha": "075bd69ea7702212fe7352f52cc8d453f8c65c91",
-  "head_sha": "dfc7982d0950395e011465fd875a1f9cc9b5994a",
-  "files_touched": 16,
-  "loc_delta": 3575,
-  "loc_ins": 3586,
-  "loc_del": 11,
-  "loc_churn": 3597,
+  "head_sha": "4dc2490e329314203b8843777c28cc5258ec243f",
+  "files_touched": 22,
+  "loc_delta": 9049,
+  "loc_ins": 9049,
+  "loc_del": 12,
+  "loc_churn": 9061,
   "sensitive_paths": [],
   "tasks": {
     "done": 0,
     "total": 50
   },
   "blockers_open": 0,
-  "heal_cycle": 2,
+  "heal_cycle": 1,
   "heal_max_cycles": 3,
   "heal_halt": false,
   "delegate_threshold": 60,
@@ -40,6 +40,7 @@
     ".mugiwara/missions/native-cost-governor/flows/02-audit.md",
     ".mugiwara/missions/native-cost-governor/flows/02-execution.md",
     ".mugiwara/missions/native-cost-governor/flows/03-quality-phase2.md",
+    ".mugiwara/missions/native-cost-governor/flows/03-quality-phase3.md",
     ".mugiwara/missions/native-cost-governor/flows/03-quality.md",
     ".mugiwara/missions/native-cost-governor/flows/04-gates.md",
     ".mugiwara/missions/native-cost-governor/flows/05-healing.md",
@@ -47,5 +48,5 @@
     ".mugiwara/missions/native-cost-governor/flows/07-pr-verdict.md",
     ".mugiwara/missions/native-cost-governor/flows/todos.md"
   ],
-  "updated_at": "2026-08-29T09:23:36Z"
+  "updated_at": "2026-08-29T00:00:00Z"
 }

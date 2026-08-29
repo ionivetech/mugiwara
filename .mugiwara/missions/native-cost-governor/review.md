@@ -135,3 +135,42 @@ enforcement) is what keeps it from 9–10.
 
 **Blockers/majors routed to Brook:** C1 (High), S1 + S2 (Med security).
 **Security handoff to Jinbe:** S1, S2, S3 via `mugiwara-security`.
+
+---
+
+# Robin — Phase 3 Work Governor review (`3ca5d23..HEAD`)
+
+Diff: `src/work.ts` (new), `src/evidence.ts` (F1), `src/cost.ts` (type dedup), `test/work.test.ts` (new), `test/evidence.test.ts`, `content/skills/mugiwara-workflow/SKILL.md`, `docs/concepts/cost.md`. Depth: `full`.
+
+## Verdict: **GO — no blockers.** Two majors to track (unwired module + F1 whole-registry-loss edge). All six §51 capabilities match spec; verdict math verified against `src/cost.ts` (delegateAt/laneBaseForLane) and `LANE_BASE`.
+
+## Breaking-change map
+
+| Symbol | File | Type | Callers | Class |
+|--------|------|------|---------|-------|
+| `classifyStage`, `shouldSkipStage`, `evaluateInvocation`, `shouldLoadSkill`, `evaluateDelegation`, `completionCheck`, `recordWorkDecision` (+ 6 input/verdict types) | `src/work.ts` | NEW module | none — only `test/work.test.ts` imports it | additive, safe |
+| `loadRegistry` | `src/evidence.ts` | signature unchanged; behavior hardened | `src/mission.ts:173` | internal-safe (well-formed registries pass through exactly; only malformed lines change) |
+| `CostEvent.context_metrics` | `src/cost.ts` | type-only (`import type ContextMetrics`) | cost-event constructors | internal-safe, behavior identical |
+
+No public break. `test/cost.test.ts` unchanged → no pinned assertion broke (confirmed type-only). Migration path: none required.
+
+## Findings
+
+- **MAJOR `src/work.ts` — zero runtime consumers.** Only the test imports it. Plan architecture claims it "consumes evaluateInvestigation / findRepeats / contextStatus / readInvestigationConfig"; code imports **only** `cost.ts` and takes raw booleans. Phase 3 as delivered *documents* verdicts but *enforces/records nothing at runtime* — the crew is told in prose (SKILL.md rule 2a) to "record skip/avoid verdicts as work-governor trail rows" with **no tool to do so** (skills are markdown; no CLI/adapter). This is consistent with the plan's declared honest boundary (decision 2), so not a blocker — but plan's "enforces" language overstates it. Fix suggestion: either add a thin adapter that assembles the real signal booleans (`findRepeats`→evidence_present, `contextStatus`→context_over, `evaluateInvestigation`→investigation_stopped) and a CLI/helper the skill can invoke, or soften plan "enforces" → "instructs".
+- **MAJOR `src/evidence.ts:118-131` — one corrupt line empties the whole registry.** A `null` JSON line (`typeof e.fingerprint` throws) or any unparseable-JSON line throws inside the chain → outer `try/catch` returns `[]`, silently discarding **all** valid dedup entries for `mission.ts`. Defeats F1's "drop malformed lines *selectively*" intent — the documented cases (string `reads`, missing `ref`, negative/fractional `reads`) work, but a single corrupt line nukes everything. Fix suggestion: guard each entry before property access (`e !== null && typeof e === 'object'`) and wrap each line's parse in its own try so only that line is dropped.
+- **MINOR `src/work.ts:150,160` — `evidence` field set to `input.stage`, not evidence.** `shouldSkipStage` returns `evidence: input.stage` (the stage name), which is not evidence. Misleads downstream trail readers. Fix suggestion: drop the field or pass a real `E###` ref.
+- **MINOR `content/skills/mugiwara-workflow/SKILL.md:98` — rules list mangled.** Rules 7 and 8 collapsed onto one line (155 chars); line 93 inserts "2a." inside a numbered list (227 chars). Not a gate failure (validator enforces 120 *lines*, not chars; long lines pre-existed) but a real list-structure regression. Fix suggestion: restore each rule to its own numbered line.
+- **MINOR `test/evidence.test.ts` F1 cases — no null/unparseable-line case.** Would have caught the MAJOR above. Fix suggestion: add a `null`-line and a non-JSON-line case.
+
+## Five-axis
+
+- **Correctness: PASS.** All six capabilities match §51/§7/§8/§9/§19/§30. Verified `delegateAt(25000,60)=15000`, `laneBaseForLane('full')=22016`, overhead floor `max(est, lane_base)`, delegate gating order (tasks≥2, value>overhead, tokens≤budget_at) — all exact. F1 shape coercion (`floor`, drop negative/non-finite/string) correct for object lines. Type dedup exact (ContextMetrics = 5 same fields).
+- **Design/architecture: WEAK.** Verdict functions are clean and pure, but the phase ships an unwired library (see MAJOR #1). Honest boundary is documented well in both `work.ts` header and `docs/concepts/cost.md`.
+- **Maintainability: GOOD.** Pure functions, explicit input types, single type source (dedup landed), clear per-function doc comments. `COMPLETION_FIELDS` array avoids duplication.
+- **Test quality: STRONG.** Exact non-trivial assertions (`toBe(22016)`, `toBe(15000)`, `toEqual(['tests_complete'])`), no `expect` inside conditional, delegation/completion/record-path well covered, S2 sanitizer tested with injected `\n## fake`. Missing the one F1 edge case (minor above). Coverage of work.ts appears ≥90%.
+- **Docs: GOOD.** `docs/concepts/cost.md` Work Governor section is honest about the boundary and carries the F2/F3 security design rules (handoff to Jinbe lane — not duplicated here). Workflow skill description unchanged (plan T4 acceptance met). Minor: rules-list mangling + plan's "consumes Phase-2 signals" not reflected in code.
+
+## Reliability rating: **B** — verdict logic is correct and well-tested, but the module has no runtime consumer, so the verified behavior has no production effect yet.
+
+## Handoff to Brook
+No blockers. **MAJOR #1** (unwired module) and **MAJOR #2** (F1 whole-registry loss) recommended before Phase 8 consumes these signals. Security handoff: F2/F3 rules documented in `docs/concepts/cost.md` — no new Jinbe lane work required this phase.

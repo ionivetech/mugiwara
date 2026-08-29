@@ -2,6 +2,74 @@
 
 # Verdict: PASS (coverage + build + DoD) — sonar-quality verdict after Flow 7
 
+---
+
+# Phase 3 (Work Governor) — Flow 6 gates report (Franky)
+
+Read-only gate run. Branch `feat/native-cost-governor`, scope commits
+`0d1bf3e 7736227 bc4346e 1bf7568 3331762` (base `3ca5d23`). No code fixed, no
+commits.
+
+## Per-PR gate table (exact exit codes)
+
+| Gate | Command | Exit | Result |
+|------|---------|------|--------|
+| Typecheck | `bun run typecheck` (`tsc --noEmit`) | 0 | ✅ PASS |
+| Test | `bun run test` (`vitest run`) | 1* | ✅ PASS (see flake note) |
+| Build | `bun run build` | 0 | ✅ PASS |
+| Content validation | `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` | 0 | ✅ PASS |
+| Lane base | `bun scripts/lane-base.ts` | 0 | ✅ PASS |
+| Evals | `bun scripts/run-evals.ts` | 0 | ✅ PASS |
+| Retrieval eval | `bun scripts/retrieval-eval.ts` | 0 | ✅ PASS (201/201, rank-1 95.6%, top-3 100%) |
+| Verify-install (G1) | `bun scripts/verify-install.ts` | 0 | ✅ PASS (242 pointers, 0/40 unreachable) |
+| Coverage gate | `bun scripts/coverage-gate.ts` | 0 | ✅ PASS |
+
+\* `bun run test` exited 1: **only** `test/enforcement.test.ts > "guard: plan
+written + no planner dispatched → warns (escape #2 closed)"` failed (523/524
+pass). This is the documented pre-existing intermittent flake (~2–3/4 on clean
+main, reproduced in Phase 2, tracked as a separate fix mission). Same flake
+interrupted the first coverage measurement; a clean `vitest run --coverage`
+re-run passed all 524 and the flake did not recur. Classified as pre-existing
+env flake — NOT a Phase-3 regression. No other gate red.
+
+Content validation emitted 2 pre-existing non-scope advisories
+(`mugiwara-quality` / `mugiwara-review` section ≥15 lines) — non-blocking, not
+in Phase-3 scope.
+
+## Coverage gate
+
+Thresholds from `.mugiwara/config`: coverage_new=90, coverage_modified=80.
+
+Fresh `npx vitest run --coverage` → `coverage/coverage-summary.json`:
+
+| File | Kind | Lines | Threshold | Status |
+|------|------|-------|-----------|--------|
+| `src/work.ts` | new | 100.00% (50/50) | ≥90 | ✅ |
+| `src/cost.ts` | new/mod | 100.00% (33/33) | ≥90 | ✅ |
+| `src/evidence.ts` | new/mod | 100.00% (34/34) | ≥90 | ✅ |
+| `src/mission.ts` | modified | 94.41% (169/179) | ≥80 | ✅ |
+
+`coverage-gate.ts`: base `075bd69`, thresholds new≥90 modified≥80 → **PASS**.
+
+## Definition of Done checks
+
+| Check | Evidence | Status |
+|-------|----------|--------|
+| `savepoint.sh` untouched | `git diff 075bd69..HEAD -- scripts/savepoint.sh` = 0 lines | ✅ |
+| `lane-base.sh` untouched | `git diff 075bd69..HEAD -- scripts/lib/lane-base.sh` = 0 lines | ✅ |
+| `DEFAULT_CONFIG` untouched | `src/config.ts` not in scope diff (`3ca5d23..3331762`) | ✅ |
+| No new prod defect without a gate | Phase-3 source: new `src/work.ts` (273 ln) → `test/work.test.ts` (273 ln, 100% cov); `src/evidence.ts` security F1 (registry shape validation) → 4 new dedicated tests in `test/evidence.test.ts`; `src/cost.ts` → existing `cost.test.ts`. Every production change has a regression gate. | ✅ |
+
+## Verdict
+
+**GO** — Phase 3 (Work Governor) passes every gate with evidence. The single
+`bun run test` red is the documented pre-existing escape-#2 flake, tracked
+separately, not a Phase-3 regression.
+
+---
+
+# Verdict: PASS (coverage + build + DoD) — sonar-quality verdict after Flow 7
+
 ## Coverage gate
 
 `bun scripts/coverage-gate.ts` — fresh run:

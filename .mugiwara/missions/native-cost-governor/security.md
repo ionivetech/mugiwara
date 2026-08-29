@@ -138,3 +138,115 @@ No existing control weakened: mission allowlist, integrity gates (`checkTrail`, 
 
 ## Return
 PASS — no Critical/High. Findings F1/F2 are Low and not reachable in the current diff; F3/F4 are Nit. Cost Governor Phase 1 security posture is sound. No reroute to Brook required.
+
+---
+
+# Phase 3 — Work Governor Security Audit
+
+Auditor: Jinbe (mugiwara-security)
+Diff: `3ca5d23..HEAD` — `0d1bf3e` (work.ts), `7736227` (evidence F1), `bc4346e` (cost.ts type dedup), `1bf7568` (docs), `3331762` (evidence)
+Scope: `src/work.ts` (new), `src/evidence.ts` (F1 validation), `src/cost.ts` (type-only), `content/skills/mugiwara-workflow/SKILL.md`, `docs/concepts/cost.md`, tests. Mode: read-only.
+Run in parallel with Robin (review.md). Reviewer MAJORs cross-checked below.
+
+## Verdict: PASS (no Critical/High) — one Major must-fix gated to Phase 8
+
+Readiness: **Mergeable**. No reachable hostile surface this phase — `work.ts` has **zero runtime consumers** (only `test/work.test.ts` imports it; no CLI/pipeline wiring). One **Major** security-control defect (F1 whole-registry loss) is not exploitable today but **must land before Phase 8** consumes the registry signals. Hotspots rating A, SCA A.
+
+---
+
+## 1. Threat model FIRST (STRIDE) — Phase 3 surfaces
+
+| # | Surface | Data crossing | Trust level |
+|---|---------|--------------|-------------|
+| S6 | `work.ts` verdict functions (`classifyStage`, `shouldSkipStage`, `evaluateInvocation`, `shouldLoadSkill`, `evaluateDelegation`, `completionCheck`) | booleans/numbers/strings — pure, no I/O | in-process, no external input |
+| S7 | `recordWorkDecision` → `recordOptDecision` decisions.md write | actor `work-governor`, decision, reason, evidence | local fs write |
+| S8 | `loadRegistry` context-registry.jsonl read (F1 validation) | fingerprint/kind/file/id/reads/ref | local fs read |
+
+Every surface has a row. No modeling gap.
+
+### STRIDE per surface
+
+| Surface | Spoofing | Tampering | Repudiation | Info disclosure | DoS | Elevation |
+|---------|----------|-----------|-------------|-----------------|-----|-----------|
+| S6 | n/a — no identity | n/a — pure funcs | n/a | n/a | n/a | n/a |
+| S7 | actor fixed `work-governor` | **S2 sanitizer strips CR/LF** → no markdown/line injection (Phase-1 F2 now closed) | decision/reason/evidence traceable (ts+actor) | no secrets; reason text only | one append/call, bounded | `missionDir` passed unvalidated (Low F3 design rule, not reachable) |
+| S8 | n/a | **W1: one malformed/null line empties whole registry** | n/a | `file` paths + sha256 fingerprints (F2 design rule: never registerRead secrets) | **W1: whole-registry loss = dedup availability** | read-only under allowlisted dir |
+
+### Cross-cutting blast radius
+All writes land under `.mugiwara/missions/<mission>/` via `recordOptDecision`, which already exists and is sanitized. `work.ts` introduces **no new I/O surface** — only `recordWorkDecision` writes, through the audited S2 path. `loadRegistry` read-only. No new trust boundary.
+
+---
+
+## 2. Checklist
+
+### 1. Secrets — PASS (negative confirmed)
+Scanned full diff: no keys, tokens, passwords, `.env`, or hardcoded credentials. `work.ts` holds no constants; `recordWorkDecision` forwards reason/evidence text only. `fingerprint()` emits sha256 hex of content — a **content hash, not a secret** (F2 design rule below). **Negative expected → negative confirmed.**
+
+### 2. Injection — PASS
+- **Path traversal (S7)**: `missionDir` flows to `recordOptDecision` unvalidated (F3), but the **only** reachable path in the codebase is `mission.ts` → `archiveMission` allowlist (`/[^a-zA-Z0-9._-]/` + dot-path reject, mission.ts:115). `work.ts` has no caller in production. No new traversal surface.
+- **Markdown/line injection (S7)**: **closed.** Phase-1 F2 finding is mitigated at the writer: `recordOptDecision` `flat()` strips CR/LF (`cost.ts:166`). Test-locked — `work.test.ts:258` injects `\n## fake` and asserts it is flattened. No header/bullet injection reaches decisions.md.
+- **JSONL (S8)**: read-only path. W1 edge below.
+- **No RBAC/authz surface** — local CLI tool, single-user trust model. No authz removed or weakened.
+
+### 3. Untrusted-data doctrine
+`work.ts` takes typed booleans/numbers from the (future) caller — no string parsing, no external input reaches it today. No external data treated as instructions. **Crew-consumed, not CLI-wired: confirmed no reachable hostile input.**
+
+### 4. Dependencies — PASS (SCA A)
+No dependencies added/modified (`node:crypto`, `node:fs`, `node:path` stdlib only). License compliance A.
+
+### 5. Deserialization — W1 (see below)
+`loadRegistry` `JSON.parse` is the only deserialization. Object-line shape is filtered, but the parse/null edge is defective.
+
+---
+
+## 3. Findings (Phase 3)
+
+| # | Sev | STRIDE | Location | Attack scenario | Mitigation |
+|---|-----|--------|----------|-----------------|------------|
+| **W1** | **Major** | Tampering + DoS (integrity/availability) | `src/evidence.ts` `loadRegistry` | ~~A `null` JSON line or any unparseable/non-JSON line throws inside the `.map` chain → whole registry silently discarded~~. **HEALED by `4dc2490`** (heal cycle 1): per-line `JSON.parse` in own try/catch, `null`/non-object skip, malformed line drops itself, valid entries preserved. Test-locked (16 pass). | ~~Wrap each line's `JSON.parse` in its own `try` + null-guard so only the offending line drops; add null-line + non-JSON-line tests.~~ **Closed.** Was not exploitable today (trusted `persistRegistry`, allowlisted dir); now hardened before Phase 8 consumption. |
+| **W2** | Low | Repudiation (audit-trail integrity) | `src/work.ts:74,83` `shouldSkipStage` | `evidence` field returned as `input.stage` (the stage name), not a real `E###` ref. A reader of the `work-governor` trail sees "evidence: security" and misreads it as a dedup ref — undermines the audit trail's meaning. Matches reviewer MINOR. Not reachable (no runtime consumer). | Return `undefined`/drop the field, or thread a real `E###` ref from `loadRegistry`. Cosmetic until wired. |
+| **W3** | Low | Tampering/Elevation (future) | `src/work.ts:263` `recordWorkDecision` → `recordOptDecision` | `missionDir` unvalidated at the helper boundary. A future adapter assembling signals from git/state-derived paths could pass a `missionDir` that escapes `.mugiwara/missions/<mission>/` and write `decisions.md` elsewhere. **Not reachable today** — sole reachable path is allowlisted; `work.ts` unwired. | Reuse the mission allowlist inside the record helper, or document + enforce "trusted caller, validate upstream" at the future adapter. Acceptable as a documented design rule (F3) this phase. |
+
+### Confirmed deferrals
+- **F1 (registry shape validation) — closed by T2, except W1.** For object lines the filter correctly drops string `reads` (string-concat risk), missing `ref`, fractional (floored), negative and non-finite `reads`. The null/unparseable-line edge (**W1**) means F1 is *partially* closed — the documented shape cases hold; the whole-registry-loss case does not.
+- **F2 (sha256 fingerprint of potentially secret-bearing files) — acceptable design rule, not a regression.** `fingerprint(content)` hashes content; if a caller ever `registerRead`s a `.env`/key file, the sha256 hash + char length persist in the trail. Documented rule (cost.md:222): never `registerRead` secrets. No `registerRead` call exists in this diff — rule only. Accept.
+- **F3 (unvalidated missionDir) — acceptable design rule, not a regression.** Same Low as Phase-1 F1. Sole reachable path allowlisted. Documented (cost.md:223). Accept.
+
+---
+
+## 4. Secrets scan
+Negative across the full diff — no keys/tokens/.env/hardcoded credentials. No new logging of sensitive values.
+
+## 5. Hotspots & review rating
+
+| Hotspot | Status | Notes |
+|---------|--------|-------|
+| S6 work.ts verdict funcs | **Reviewed → Safe** | pure, no I/O, no reachable input |
+| S7 recordWorkDecision → recordOptDecision | **Reviewed → Safe** | S2 sanitizer strips CR/LF (F2 closed); actor fixed |
+| S8 loadRegistry (F1) | **Reviewed → Fix → HEALED** (W1) | W1 closed by `4dc2490`: per-line JSON.parse in own try/catch, null/non-object skip, malformed line drops itself; 16 evidence tests pass; see 05-healing.md |
+| Secrets | **Reviewed → Safe** | negative confirmed |
+| Dependency/SCA | **Reviewed → Safe** | no new deps, license A |
+
+Hotspots reviewed 5/5 = 100% → **Rating A**. One hotspot (`S8`) marked **Reviewed → Fix** (W1) — W1 now **HEALED** by `4dc2490` (see heal cycle 1), non-blocking this phase.
+
+## 6. SCA license compliance — Rating A
+No dependencies added or modified. Zero violations.
+
+## 7. Responsibility code attribute
+Lawful (no dep change), Trustworthy (no secrets), Respectful (no offensive terms in new code/comments).
+
+---
+
+## OWASP mapping (lightweight — no payments/health/PII)
+| OWASP | Area | Status |
+|-------|------|--------|
+| A01 Broken Access Control | no new access surface; missionDir confinement holds (F3 Low design rule) | Safe |
+| A02 Cryptographic Failures | sha256 fingerprint — not crypto for secrecy; no keys | n/a |
+| A03 Injection | JSONL read (W1 whole-registry, no injection); markdown injection closed (S2) | Safe |
+| A07 Identification/Auth Failures | n/a — no auth surface | n/a |
+| A09 Logging/Monitoring | decision trail improves auditability | Positive |
+
+---
+
+## Return
+PASS — no Critical/High; no reachable hostile input this phase (`work.ts` unwired, registry read-only under allowlist). One **Major** must-fix (**W1**: `loadRegistry` whole-registry loss on a null/unparseable line) gated to land **before Phase 8** — it is a defect in the F1 security control itself, not exploitable today (local trusted registry; `mission.ts` handles empty gracefully). No Brook reroute required now. W2/W3 Low design notes, consistent with F2/F3 documented rules.

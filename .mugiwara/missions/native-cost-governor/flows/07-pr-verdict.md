@@ -1,3 +1,83 @@
+# PR verdict — Phase 3: Work Governor
+
+**Branch:** `feat/native-cost-governor` (base: `main` @ 075bd69; stacked on Phase 1 + 2)
+
+## Title
+
+feat(work): Work Governor — required/conditional/optional stage classification, evidence-backed skipping, agent/skill/delegation control, completion detection
+
+## Summary
+
+Phase 3 of the Native Cost Governor initiative (spec §51 Phase 3; consumes
+the Phase-2 measurement signals). Adds `src/work.ts`, a pure verdict engine
+with six capabilities: `classifyStage` (required/conditional/optional),
+`shouldSkipStage` (evidence-backed stage skipping), `evaluateInvocation`
+(agent invocation control), `shouldLoadSkill` (skill loading control),
+`evaluateDelegation` (delegation optimization — consumes `delegateAt` +
+`laneBaseForLane`, closing the Phase-2 Q1 remainder), and `completionCheck`
+(completion detection), plus `recordWorkDecision` → `recordOptDecision`
+(work-governor actor). `src/evidence.ts` closes security F1 (`loadRegistry`
+shape validation) and heal W1 (per-line JSON.parse so one corrupt line drops
+itself, not the whole registry). `src/cost.ts` closes the quality nit
+(`context_metrics` typed via imported `ContextMetrics`). The workflow skill
+and cost docs wire the verdicts into the agent flow — honest boundary: the
+module records verdicts, the crew acts (no forced TS hook). `savepoint.sh`/
+`lane-base.sh`/`DEFAULT_CONFIG` untouched — runtime preserved.
+
+## What changed
+
+| File | Change |
+|------|--------|
+| `src/work.ts` | NEW — work governor verdict engine + recordWorkDecision (6 capabilities) |
+| `src/evidence.ts` | F1 shape validation on load; W1 per-line parse (corrupt line drops itself, valid entries preserved) |
+| `src/cost.ts` | context_metrics via imported ContextMetrics type (quality nit) |
+| `content/skills/mugiwara-workflow/SKILL.md` | wire work-governor verdicts into the agent flow (rule 2a + WG subsection) |
+| `docs/concepts/cost.md` | Work Governor section: classification, skipping, invocation/skill/delegation control, completion; F2/F3 design rules |
+| `test/work.test.ts` | NEW suite (34 tests, exact-value assertions) |
+| `test/evidence.test.ts` | +4 F1 cases + W1 null/unparseable-line regression |
+
+## Per-flow-stage evidence
+
+- Execution: `[flows/02-execution.md](.mugiwara/missions/native-cost-governor/flows/02-execution.md)` — T1–T5, all done
+- Audit: `[flows/02-audit.md](.mugiwara/missions/native-cost-governor/flows/02-audit.md)` — PASS
+- Quality: `[flows/03-quality-phase3.md](.mugiwara/missions/native-cost-governor/flows/03-quality-phase3.md)` — PASS (dup none, complexity ≤7, maint A)
+- Gates: `[flows/04-gates.md](.mugiwara/missions/native-cost-governor/flows/04-gates.md)` — GO (all 8 + coverage green)
+- Review: `[review.md](.mugiwara/missions/native-cost-governor/review.md)` — GO, no blockers; 2 majors (1 healed as W1)
+- Security: `[security.md](.mugiwara/missions/native-cost-governor/security.md)` — PASS (no Crit/High, Hotspots A; W1 healed)
+- Heal: `[flows/05-healing.md](.mugiwara/missions/native-cost-governor/flows/05-healing.md)` — cycle 1, W1 healed `4dc2490`
+
+## Tests
+
+`bun run gate`: **525 tests / 31 files** — all green except the documented
+pre-existing `enforcement.test.ts` "escape #2" flake (fails ~2–3/4 on clean
+`main`, reproduced Phase 2, tracked separately; all other 524 pass). Coverage
+PASS: work/evidence/cost 100% new ≥ 90; mission 94.41% modified ≥ 80. build
+exit 0. validate-content, lane-base, run-evals, retrieval-eval,
+verify-install — all green.
+
+## Checks
+
+- Commit hygiene: T1–T5 source commits + 1 heal commit, each touching only
+  declared files (audit-verified). Wave 1 (T1/T2/T3) file-disjoint, executed
+  inline.
+- Secrets: no keys/tokens/credentials in diff or trail (scanned).
+- Runtime preserved: `savepoint.sh`, `lane-base.sh`, `DEFAULT_CONFIG` untouched.
+- F1 closed (registry shape validation); W1 healed (per-line parse, test-locked).
+- Q1 closed (evaluateDelegation consumes delegateAt + laneBaseForLane).
+
+## Verdict
+
+**GO** — ready for PR. User opens the PR (crew never creates/merges/deploys).
+
+## Known pre-existing debt (not introduced by this PR)
+
+- Enforcement timing flake (`test/enforcement.test.ts` escape #2) — FS mtime
+  lag vs `.engaged` first_seen. Proven pre-existing (reproduced on clean
+  `main`), tracked as separate fix mission.
+- F2/F3 (Low) security design rules deferred to Phase 8 (registry signals get
+  consumed); accepted, documented.
+
+---
 # PR verdict — Phase 2: Context Governor
 
 **Branch:** `feat/native-cost-governor` (base: `main` @ 075bd69; stacked on Phase 1)
