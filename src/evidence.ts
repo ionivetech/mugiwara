@@ -32,6 +32,8 @@ export type RegistryEntry = {
   range?: string;
   id: string; // stable `E<zero-padded seq>`, monotonic, never reused (§11)
   reads: number;
+  chars?: number; // content length held by this entry — real char payload basis
+                  // for duplicate_chars/read_avoidance_chars (§12 efficiency)
   ref: string; // full stable reference, e.g. `E013 src/auth/middleware.ts:42-91`
 };
 
@@ -80,6 +82,7 @@ export function registerRead(
     ...(e.range ? { range: e.range } : {}),
     id,
     reads: 1,
+    chars: e.content.length,
     ref,
   });
   return { ref, repeated: false };

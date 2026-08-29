@@ -176,17 +176,30 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const registry = loadRegistry(dir);
     const reads_total = registry.reduce((s, e) => s + e.reads, 0);
     const repeated_reads = registry.reduce((s, e) => s + Math.max(e.reads - 1, 0), 0);
+    // M1: honest char accounting — each registered entry carries the content
+    // length it holds (chars). total_chars = chars actually loaded (each entry
+    // × its reads); unique_chars = distinct payload bytes. computeContextMetrics
+    // derives duplicate_chars = total − unique (bytes re-read) and
+    // read_avoidance_chars = same (bytes not reloaded by reuse). When a
+    // registry exists but carries no char payloads (legacy/absent field), the
+    // char fields render as n/a — never fabricated 0 — so reuse_rate > 0 never
+    // sits beside a false "read_avoidance_chars: 0".
+    const unique_chars = registry.reduce((s, e) => s + (e.chars ?? 0), 0);
+    const total_chars = registry.reduce((s, e) => s + (e.chars ?? 0) * e.reads, 0);
+    const charTracked = registry.length > 0 && total_chars > 0;
     const metrics = registry.length
       ? computeContextMetrics({
           files_loaded: registry.length,
           reads_total,
           reads_reused: repeated_reads,
-          unique_chars: 0, // registry tracks reads, not char payloads
-          total_chars: 0,
+          unique_chars,
+          total_chars,
           repeated_reads,
         })
       : { files_loaded: 0, repeated_reads: 0, duplicate_chars: 0, reuse_rate: 0, read_avoidance_chars: 0 };
-    const ctxNote = registry.length ? '' : ' (no registry — reads not tracked)';
+    const ctxNote = registry.length
+      ? (charTracked ? '' : ' (char data not tracked)')
+      : ' (no registry — reads not tracked)';
     // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;
@@ -213,7 +226,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       `| **Budget status** | ${effBudget ? `${env.pct}% of budget · ${delta} · ${statusLabel}` : 'no lane budget'} |`,
       `| **Context footprint** | ${chars.toLocaleString()} chars${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
       `| **Context budget status** | ${ctxStatus.toUpperCase()}${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
-      `| **Context efficiency** | files_loaded: ${metrics.files_loaded} · repeated_reads: ${metrics.repeated_reads} · duplicate_chars: ${metrics.duplicate_chars} · reuse_rate: ${metrics.reuse_rate} · read_avoidance_chars: ${metrics.read_avoidance_chars}${ctxNote} |`,
+      `| **Context efficiency** | files_loaded: ${metrics.files_loaded} · repeated_reads: ${metrics.repeated_reads} · duplicate_chars: ${charTracked ? metrics.duplicate_chars : 'n/a'} · reuse_rate: ${metrics.reuse_rate} · read_avoidance_chars: ${charTracked ? metrics.read_avoidance_chars : 'n/a'}${ctxNote} |`,
     ].join('\n');
     if (hasReported) {
       costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;

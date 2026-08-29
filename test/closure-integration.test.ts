@@ -250,8 +250,9 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
       state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 1000, tasks_done: 1, tasks_total: 1, evidence: [] },
       files: {
         'context-registry.jsonl': [
-          JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'src/a.ts', id: 'E001', reads: 2, ref: 'E001 src/a.ts' }),
-          JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'src/b.ts', id: 'E002', reads: 1, ref: 'E002 src/b.ts' }),
+          // E001 read twice, 100 chars each → duplicate/avoided = 100; E002 read once, 50 chars
+          JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'src/a.ts', id: 'E001', reads: 2, chars: 100, ref: 'E001 src/a.ts' }),
+          JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'src/b.ts', id: 'E002', reads: 1, chars: 50, ref: 'E002 src/b.ts' }),
         ].join('\n') + '\n',
       },
     });
@@ -259,7 +260,31 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
     expect(rep).toContain('Context efficiency');
-    // 2 reads total, 1 repeat (E001 read twice) → reuse 1/2
-    expect(rep).toContain('repeated_reads');
+    // unique = 150, total = 250 → duplicate = read_avoidance = 100; reuse 1/3
+    expect(rep).toContain('duplicate_chars: 100');
+    expect(rep).toContain('read_avoidance_chars: 100');
+    expect(rep).toContain('reuse_rate: 0.3333333333333333');
+    // M1: reuse_rate > 0 must not coexist with a hardcoded read_avoidance_chars: 0
+    expect(rep).not.toContain('read_avoidance_chars: 0');
+    expect(rep).not.toContain('char data not tracked');
+  });
+
+  // M1 fallback: a registry without char payloads must show n/a for the char
+  // fields, never a fabricated 0 — so it can't be misread as "measured zero".
+  it('renders n/a for char fields when registry carries no char payloads', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 1000, tasks_done: 1, tasks_total: 1, evidence: [] },
+      files: {
+        'context-registry.jsonl': [
+          JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'src/a.ts', id: 'E001', reads: 2, ref: 'E001 src/a.ts' }),
+        ].join('\n') + '\n',
+      },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    expect(rep).toContain('duplicate_chars: n/a');
+    expect(rep).toContain('read_avoidance_chars: n/a');
+    expect(rep).toContain('char data not tracked');
   });
 });
