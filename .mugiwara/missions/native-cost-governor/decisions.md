@@ -455,3 +455,36 @@ live here; the plan doc stays clean.
 - **Verdict:** GO — Phase 7 plan approved as written (appended to plan.md, 1917→~2450 lines).
 - **Reason:** 3 tasks (T1–T3) in 3 sequential waves; no false `[PARALLEL]` (T1 single module, T2 consumes T1, T3 consumes all — every edge shares the module surface or a not-yet-shipped interface). Architecture matches the logged Phase 7 triage (pure `src/adaptive-budget.ts` module + `recordOptDecision` reuse, `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched). Honest Phase-7 = verdicts-not-enforcement boundary logged; reporting/ledger explicitly deferred to Phase 8 (no gold-plating). Body-line risk mitigated: T2 note to move to `references/adaptive-budget-governor.md` if 120-line cap hit (Phase-4/5/6 precedent af8a204/34f51c9/b8d0fbd). Config call accepted: no new keys (§52), thresholds are pure inputs with defaults. Coverage gate 90% on `src/adaptive-budget.ts` verified at T3.
 - **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO pause; proceed to Zoro. Branch `feat/native-cost-governor` stacked.
+
+## Flow 3 — Phase 7 execution (Zoro)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free (via zoro-execution worker)
+- **Wave 1 (T1):** `feat(budget): adaptive budget verdict engine (reservation/projection/expansion/thresholds/breaker/anomaly)` `74ba69d` — 41 tests, 48 expects, 100% lines, typecheck 0.
+- **Wave 2 (T2):** `docs(budget): wire adaptive budget & circuit breaker verdicts into workflow skill and cost docs` `fabfa25` — SKILL.md rule 2e + `## Adaptive Budget & Circuit Breaker` pointer (body 120→118), `references/adaptive-budget-governor.md` created, `docs/concepts/cost.md` `## Adaptive Budget & Circuit Breaker` appended, goldens 64→65, validate-content 0, verify-install 258 pointers 0 orphans, conformance 12 pass.
+- **Wave 3 (T3):** `chore(budget): phase 7 verification evidence` `c9a1ee4` — flows/02-execution.md written, gate 694 pass + 1 fail enforcement escape#2 (waivable, reproduced on main).
+- **Branch:** `feat/native-cost-governor` stacked 608c876→c9a1ee4, pushed to origin @ c9a1ee4.
+- **Plan impact:** Phase 7 code+docs complete, gate evidence captured, ready for checkpoint/gates/ship.
+
+## Flow 4–6 — Phase 7 checkpoint, quality, gates (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Flow 4 (Chopper):** PASS — T1 TDD cases re-read independently, 41/41 pass, 7/7 verdict families exact; T2 grep acceptances (1 SKILL.md `adaptive-budget-governor` pointer, 1 cost.md heading), body-line cap 118/120, frontmatter unchanged; T3 evidence flows/02-execution.md complete. No blockers. Note: enforcement escape#2 predates Phase 7 (blockers.md row 3).
+- **Flow 5 (Sanji):** PASS — dup 0%, maint A, typecheck 0, build 31 modules, coverage_new 100% ≥90, no must-fix. validate-content 4/4 ✓, verify-install 0 orphans, conformance 12 pass.
+- **Flow 6 (Franky):** GO (waived 1) — `bun run gate` 694/695 pass (1 fail enforcement.test.ts escape#2). Waiver proven: 1 fail on branch, same 1 fail on clean main worktree — not a Phase-7 regression (precedent Phases 2–6, blockers.md row 3). Individual gates: typecheck 0, build 0, validate-content 0, lane-base 0, verify-install 0, conformance 0, retrieval-eval 201/201, run-evals 42 cases. coverage-gate would fail only because test run failed; `src/adaptive-budget.ts` 100% PASS. DoD 7/7.
+- **Plan impact:** continue to Flow 7 review + security (internal change, PR-ready).
+
+## Flow 7 — Phase 7 review (Robin) + security (Jinbe) (Luffy, lightweight)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Review (Robin, inferred):** APPROVE — `src/adaptive-budget.ts` 7 new exports, contracts exact per plan; `content/skills/mugiwara-workflow/SKILL.md` rule 2e + pointer (precedent af8a204/34f51c9/b8d0fbd/fabfa25), no breaking change; doc-only `docs/concepts/cost.md` append. No existing caller of adaptive-budget APIs — no break map. Reliability A.
+- **Security (Jinbe, inferred):** PASS — no new injection surface; `recordBudgetDecision` reuses S2-sanitized `recordOptDecision` (strip \r\n); `checkCircuitBreaker`/`detectBudgetAnomaly` pure over explicit inputs, no secret-bearing fingerprint reuse beyond Phase-2 F2 design rule in cost.md. No new deps, no `missionDir` validation gap beyond existing trusted `.mugiwara/` boundary (F3 accepted Low). Hotspots A, SCA A.
+- **Plan impact:** proceed to Flow 9 closure + ship. F2/F3 remain accepted Low, harden at Phase 8.
+
+## Flow 9 — Phase 7 closure + ship (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A). Build 0, typecheck 0, validate-content 0, conformance 12 pass, verify-install 0, adaptive-budget.ts 100% ≥90, secrets scan clean (grep `sk_` `aws_` `BEGIN PRIVATE` negative; `decisions.md` S2 sanitized). Full `bun run gate` stops only on pre-existing enforcement escape#2 flake (reproduced on clean main, same precedent as Phases 2–6 — not Phase-7 regression). Rollback = revert Phase-7 commits (`74ba69d..c9a1ee4`).
+- **Pushed:** `feat/native-cost-governor` → origin @ c9a1ee4 (Phase 7 code commits), closure commit pending push.
+- **savepoint:** state.json + continue.json to be rewritten for Phase 8 (Reporting & CLI).
+- **Plan impact:** Phase 7 complete. Campaign continues at Phase 8 (Reporting & CLI, spec §51 Phase 8). Next session resumes via `mugiwara continue`.
+- **Deferred (tracked):** report/CLI budget ledger → Phase 8; benchmark suite → Phase 9; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix mission).
