@@ -264,3 +264,24 @@ live here; the plan doc stays clean.
 - **Plan impact:** T3 gate requires conformance goldens regenerated; verify
   `bun run gate` exit 0.
 - **Heal counter:** heal_cycle=2 (two `## Flow 8 — healing` sections logged).
+
+## Flow 9 — Phase 4 closure + ship (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A).
+  Build exit 0, typecheck exit 0, validate-content exit 0, conformance 12
+  platforms exit 0, verify-install exit 0, scope.ts 100% coverage ≥90, secrets
+  scan clean. Full `bun run gate` stops only on the known pre-existing
+  enforcement escape#2 flake (reproduced on clean base 3490284, same precedent
+  as Phases 2/3 — not a Phase-4 regression). Rollback = revert Phase-4 commits
+  (`0ae9dd7..ff14f57`). Evidence: flows/06-closure.md, flows/07-pr-verdict.md.
+- **Review:** Robin APPROVE (reliability A, 0 breaks, 8 new exports, contracts
+  exact). Security: Jinbe PASS (no new surface; S2 sanitizer reused).
+- **Pushed:** `feat/native-cost-governor` → origin @ HEAD (Phase 4 commits
+  `0ae9dd7..aa2c126`). Tree clean.
+- **savepoint:** state.json + continue.json rewritten for Phase 5.
+- **Plan impact:** Phase 4 complete. Campaign continues at Phase 5 (Cognitive &
+  Output Governor). Next session resumes via `mugiwara continue`.
+- **Deferred (tracked):** report/CLI code ledger → Phase 8; slop detection →
+  Phase 6; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix
+  mission); review nits N1/N2/N3.

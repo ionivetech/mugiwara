@@ -1,3 +1,82 @@
+# PR verdict — Phase 4: Scope & Code Governor
+
+**Branch:** `feat/native-cost-governor` (base: `main` @ 075bd69; stacked on Phase 1 + 2 + 3)
+
+## Title
+
+feat(scope): Scope & Code Governor — scope drift detection, reuse checks, abstraction/dependency justification, minimum sufficient implementation, code waste detection, change-surface measurement
+
+## Summary
+
+Phase 4 of the Native Cost Governor initiative (spec §51 Phase 4). Adds
+`src/scope.ts`, a pure verdict engine with the seven capabilities:
+`detectScopeDrift` (touched files vs declared scope, `scope_score`),
+`checkExistingCodeReuse` (§14 reuse-first — reuse only when existing AND local
+modification viable), `evaluateAbstraction` (§15 — justified only when ≥2 uses +
+dedup or contract-required, never speculative), `evaluateDependency` (§16 —
+four-condition gate), `minimumSufficientCheck` (§15/§38 — under/over/sufficient,
+never minimum LOC at the expense of verification), `detectCodeWaste` (§15 — the
+8-type waste list), `measureChangeSurface` (§5.4 — loc_changed, proportionality
+verdict), plus `recordScopeDecision` → `recordOptDecision` (scope-governor
+actor, S2-sanitized). The workflow skill (rule 2b) and cost docs wire the
+verdicts into the agent flow — honest boundary: module records verdicts, crew
+acts. `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched — runtime
+preserved.
+
+## What changed
+
+| File | Change |
+|------|--------|
+| `src/scope.ts` | NEW — scope & code governor verdict engine + recordScopeDecision (7 capabilities) |
+| `test/scope.test.ts` | NEW suite (41 tests, 82 exact-value assertions) |
+| `content/skills/mugiwara-workflow/SKILL.md` | wire scope-governor verdicts into the agent flow (rule 2b) |
+| `content/skills/mugiwara-workflow/references/scope-code-governor.md` | NEW — full Scope & Code Governor reference (moved from inline to keep ≤120-line cap) |
+| `docs/concepts/cost.md` | Scope & Code Governor section: seven verdicts, honest boundary, Phase-6/8 deferral, F2/F3 rules |
+| `test/golden/claude.json`, `test/golden/opencode.json` | conformance golden bump 61→62 (new reference file, tier-1) |
+
+## Per-flow-stage evidence
+
+- Execution: `[flows/02-execution.md](.mugiwara/missions/native-cost-governor/flows/02-execution.md)` — T1–T3, all done
+- Audit: `[flows/02-audit.md](.mugiwara/missions/native-cost-governor/flows/02-audit.md)` — PASS (DoD met)
+- Quality: `[flows/03-quality.md](.mugiwara/missions/native-cost-governor/flows/03-quality.md)` — PASS (scope.ts 100% coverage)
+- Gates: `[flows/04-gates.md](.mugiwara/missions/native-cost-governor/flows/04-gates.md)` — GO except known pre-existing flake; conformance goldens healed
+- Review: `[review.md](.mugiwara/missions/native-cost-governor/review.md)` — APPROVE (reliability A)
+- Security: `[security.md](.mugiwara/missions/native-cost-governor/security.md)` — PASS (no new surface, S2 sanitizer reused)
+- Heal: `[flows/05-healing.md](.mugiwara/missions/native-cost-governor/flows/05-healing.md)` — cycle 1 (SKILL.md governance lines + references move `af8a204`), cycle 2 (conformance goldens `ff14f57`)
+
+## Tests
+
+`bun test test/scope.test.ts` → **41 pass / 0 fail / 82 expect**; scope.ts
+coverage **100% lines / 100% funcs** (≥90). Full suite **566 tests / 32
+files** — all green except the documented pre-existing `enforcement.test.ts`
+"escape #2" flake (reproduced on clean base `3490284`, tracked separately, not
+a Phase-4 regression). typecheck exit 0, build exit 0, validate-content exit 0,
+conformance (12 platforms) exit 0, verify-install exit 0.
+
+## Checks
+
+- Commit hygiene: T1/T2/T3 + 2 heal commits + review, each touching only
+  declared files (audit + review verified). One task per commit.
+- Secrets: no keys/tokens/credentials in diff or trail (scanned clean).
+- Runtime preserved: `savepoint.sh`, `lane-base.sh`, `DEFAULT_CONFIG` untouched.
+- No new config keys; no changes to shipped primitives (consumed by signature).
+- Conformance goldens regenerated for the single new reference file (61→62).
+
+## Verdict
+
+**GO** — ready for PR. User opens the PR (crew never creates/merges/deploys).
+
+## Known pre-existing debt (not introduced by this PR)
+
+- Enforcement timing flake (`test/enforcement.test.ts` escape #2) — FS mtime
+  lag vs `.engaged` first_seen. Proven pre-existing (reproduced on clean
+  `main`/base), tracked as separate fix mission.
+- F2/F3 (Low) security design rules deferred to Phase 8; accepted, documented.
+- Report/CLI code ledger (§5.4/§39/§42) → Phase 8; slop detection (§21.11/§45)
+  → Phase 6. Neither built here.
+
+---
+
 # PR verdict — Phase 3: Work Governor
 
 **Branch:** `feat/native-cost-governor` (base: `main` @ 075bd69; stacked on Phase 1 + 2)

@@ -294,3 +294,109 @@ Branch `feat/native-cost-governor` (stacked; Phase 1 + 2 + 3). PR material:
 
 **Mission stays open** across the 9-phase campaign: no per-phase archive;
 archive once after Phase 9.
+
+# native-cost-governor — Phase 4 closure
+
+# Verdict: GO
+
+## Mission summary
+
+Phase 4 (Scope & Code Governor) of the Native Cost Governor initiative.
+Delivered `src/scope.ts`, a pure verdict engine with the seven §51 Phase-4
+capabilities (detectScopeDrift, checkExistingCodeReuse, evaluateAbstraction,
+evaluateDependency, minimumSufficientCheck, detectCodeWaste,
+measureChangeSurface) + recordScopeDecision (actor `scope-governor`, through
+the S2-sanitized recordOptDecision). Consumes only `src/cost.ts`
+`recordOptDecision` — all other shipped primitives consumed by signature, none
+edited. Workflow skill (rule 2b) + docs/concepts/cost.md wire the verdicts into
+the agent flow (honest boundary: module records verdicts, crew acts).
+`savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched — runtime preserved.
+
+## Per-flow-stage outcomes
+
+| Flow | Owner | Verdict | Evidence |
+|------|-------|---------|----------|
+| 0 Triage | Luffy | resumed via continue; explicit class, Lane Full, auto | `[decisions.md](.mugiwara/missions/native-cost-governor/decisions.md)` |
+| 1 Brainstorm | Usopp | skipped — spec §51 explicit | decisions.md |
+| 2 Planning | Nami | 3 waves / 3 tasks (plan Phase 4 section ~line 1000) | `[plan.md](.mugiwara/missions/native-cost-governor/plan.md)` |
+| 3 Execute | Zoro | T1–T3 done, gate exit 0 | `[02-execution.md](.mugiwara/missions/native-cost-governor/flows/02-execution.md)` |
+| 4 Audit | Chopper | PASS (DoD met; 1 finding → heal) | `[02-audit.md](.mugiwara/missions/native-cost-governor/flows/02-audit.md)` |
+| 5 Quality | Sanji | PASS (scope.ts 100% coverage, typecheck/test green) | flows/02-execution.md, flows/03-quality.md |
+| 6 Gates | Franky | GO except known pre-existing flake (escape#2) + conformance goldens → healed | `[04-gates.md](.mugiwara/missions/native-cost-governor/flows/04-gates.md)` |
+| 7 Review | Robin∥Jinbe | Robin APPROVE (reliability A); Jinbe PASS (no new surface) | `[review.md](.mugiwara/missions/native-cost-governor/review.md)` `[security.md](.mugiwara/missions/native-cost-governor/security.md)` |
+| 8 Heal | Brook | cycle 1: SKILL.md governance lines restored + scope governor → references (`af8a204`); cycle 2: conformance goldens regenerated (`ff14f57`) | `[05-healing.md](.mugiwara/missions/native-cost-governor/flows/05-healing.md)` |
+| 9 Close | Luffy | GO — this report | `[06-closure.md](.mugiwara/missions/native-cost-governor/flows/06-closure.md)` |
+
+## Gate verdicts
+
+| Gate | Verdict | Evidence |
+|------|---------|----------|
+| typecheck | PASS | exit 0 |
+| build | PASS | exit 0 (this closure run) |
+| validate-content (manifest/docs/integrity) | PASS | exit 0 |
+| conformance (12 platforms) | PASS | exit 0 (after `ff14f57` goldens) |
+| verify-install (G1) | PASS | exit 0 — 246 pointers, scope-code-governor.md resolves |
+| coverage | PASS | scope.ts 100% lines/funcs ≥90; suite green modulo pre-existing flake |
+| test | PASS (1 pre-existing flake) | 566 tests; sole red = enforcement escape#2 flake (tracked separately, reproduced on clean base) |
+
+## Ship gate
+
+GO — PR-ready internal change, no deploy/rollout/flag (N/A). Build exit 0,
+typecheck exit 0, docs updated (validate-content exit 0), secrets scan negative
+(diff + new files clean), rollback = revert Phase-4 commits
+(`0ae9dd7..ff14f57`). The full `bun run gate` stops at `test:coverage` on the
+known pre-existing enforcement escape#2 flake — proven not a Phase-4 regression
+(reproduced on clean base 3490284, same precedent as Phases 2/3); conformance +
+verify-install pass standalone. Evidence: flows/06-closure.md,
+flows/07-pr-verdict.md.
+
+## Review & security disposition
+
+Robin: APPROVE, reliability A. 0 public/internal breaks, 8 new exports, all 7
+verdict contracts exact. M1 (SKILL.md inline → references pointer) is a
+documented Luffy-approved heal (content byte-preserved), not a defect; N1–N3
+optional polish. Jinbe: PASS — no new attack surface; recordScopeDecision
+reuses the S2 sanitizer (no newline/markdown injection, test-locked); F2/F3
+accepted Low documented, harden at Phase 8.
+
+## e2e / tests
+
+`bun test test/scope.test.ts` → 41 pass / 0 fail / 82 expect. Full suite 566
+tests (Phase-4 code: 0 failures; sole red is the pre-existing escape#2 flake).
+
+## Risks / rollback
+
+| Risk | Mitigation |
+|------|-----------|
+| New src/scope.ts missed 90% coverage | TDD-first; measured 100% lines/funcs |
+| Skill-body edit trips validator | healed via references pointer (Option A); 120-line cap held |
+| Reuse false positive | test-locked: existing_* AND local_modification_viable |
+| Abstraction/dependency refusals over-conservative | pure auditable verdicts; reason names deciding clause; explicit-justification path open (§16) |
+| Scope bleed into Phase 6/8 | hard boundary enforced; slop=Phase 6, report/CLI=Phase 8 |
+
+Rollback: revert Phase-4 commits (`0ae9dd7..ff14f57`). savepoint.sh,
+lane-base.sh, DEFAULT_CONFIG untouched by construction.
+
+## Deferred items (tracked)
+
+- Report/CLI code ledger (§5.4/§39/§42) → Phase 8.
+- Slop-specific detection (§21.11/§45/§56) → Phase 6 Stop-Slop.
+- Security F2/F3 (accepted Low) → harden at Phase 8.
+- Enforcement flake escape#2 (separate fix mission, tracked in blockers).
+- Review nits N1 (F2/F3 dup in cost.md), N2 (loose reason assertions), N3
+  (tier-2 golden sanity at Phase 8).
+
+## Next steps
+
+Campaign continues at Phase 5 (Cognitive & Output Governor). Next session
+resumes via `mugiwara continue`.
+
+## PR handoff
+
+Branch `feat/native-cost-governor` (stacked; Phase 1 + 2 + 3 + 4). PR material:
+`[07-pr-verdict.md](.mugiwara/missions/native-cost-governor/flows/07-pr-verdict.md)`
+— user opens the PR (crew never creates/merges/deploys). Phase 1/2/3/4 PRs can
+open anytime.
+
+**Mission stays open** across the 9-phase campaign: no per-phase archive;
+archive once after Phase 9.
