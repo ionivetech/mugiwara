@@ -51,7 +51,7 @@ and printed only.
 ## Signed attestation (optional)
 
 `mugiwara sign <mission>` signs the mission report; `--verify` checks it. The
-backend comes from `sign_backend` in `.mugiwara/config`
+backend comes from `sign` in `.mugiwara/config`
 (`auto` | `minisign` | `pure` | `off`; default `auto`):
 
 - **auto (default)** — uses `minisign` if installed and keyed, else falls back

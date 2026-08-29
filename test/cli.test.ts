@@ -698,12 +698,12 @@ describe('run() — usage errors + stalenessLine', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('sign on a mission with sign_backend=off reports signing disabled', async () => {
+  test('sign on a mission with sign=off reports signing disabled', async () => {
     const dir = fixture([
       { root: 'state', mission: 's', file: 'state', body: state('s') },
     ]);
     writeFileSync(join(dir, '.mugiwara', 'missions', 's', 'report.md'), '# Report');
-    writeFileSync(join(dir, '.mugiwara', 'config'), 'sign_backend=off\n');
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'sign=off\n');
     try {
       const { out } = await capture(['sign', 's'], dir);
       expect(out).toContain('signing disabled');

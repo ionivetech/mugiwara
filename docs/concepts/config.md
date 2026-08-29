@@ -55,7 +55,7 @@ verbosity=normal
 | `investigation_max_passes` | number (≥1) | 2 | Max exploration passes the Investigation Governor allows before it flags unbounded exploration as slop (§13). **Read by `readInvestigationConfig`** (`src/investigation.ts`). |
 | `investigation_max_unrelated_files` | number (≥1) | 5 | Max unrelated files opened during investigation before the governor flags it (§13). **Read by `readInvestigationConfig`**. |
 | `investigation_repeated_read_threshold` | number (≥1) | 2 | Repeated reads of the same file before the governor flags context slop (§13). **Read by `readInvestigationConfig`**. |
-| `sign_backend` | auto / minisign / pure / off | auto | Report attestation backend. `auto` = minisign if installed+keyed, else the built-in `pure` ed25519 backend; `pure` = internal node:crypto (keys via `mugiwara sign --gen-key`); `off` = unsigned. **Read by `src/sign.ts`**. See [Signed attestation](closure-tools.md#signed-attestation-optional). |
+| `sign` | auto / minisign / pure / off | auto | Report attestation backend. `auto` = minisign if installed+keyed, else the built-in `pure` ed25519 backend; `pure` = internal node:crypto (keys via `mugiwara sign --gen-key`); `off` = unsigned. **Read by `src/sign.ts`**. See [Signed attestation](closure-tools.md#signed-attestation-optional). |
 | `enforce` | off / warn / block | block | How strictly the pipeline-guard hook enforces the lane/consent rules (e.g. skipping the pipeline on non-trivial work, out-of-scope mutation). `block` fails, `warn` logs, `off` disables. **Read by `hooks/pipeline-guard.ts`**. |
 
 ## Policy file interplay
@@ -73,7 +73,7 @@ Code reads five keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`
 `state.json`), `coverage_new`/`coverage_modified` (read by the coverage
 gate), `context_budget_chars` (read by the closure pipeline), the three
 `investigation_*` keys (read by `readInvestigationConfig` into the
-Investigation Governor), `sign_backend` (read by `src/sign.ts`), and
+Investigation Governor), `sign` (read by `src/sign.ts`), and
 `enforce` (read by `hooks/pipeline-guard.ts`). Everything else is **advisory-only** — read by the crew from this prose,
 never by a validator or hook. Changing an advisory key changes crew behavior
 but no gate fails and no computation changes:
