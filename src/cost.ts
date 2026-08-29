@@ -115,6 +115,16 @@ export type CostEvent = {
   budget: number;
   status: string;
   context_chars?: number;
+  // Phase 2 (T6): context budget status (chars gate) + efficiency metrics,
+  // kept apart from the token `status` — C2 never conflates the two budgets.
+  context_status?: 'ok' | 'over';
+  context_metrics?: {
+    files_loaded: number;
+    repeated_reads: number;
+    duplicate_chars: number;
+    reuse_rate: number;
+    read_avoidance_chars: number;
+  };
 };
 
 const COST_EVENTS_FILE = 'cost-events.jsonl';

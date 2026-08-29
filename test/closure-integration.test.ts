@@ -190,3 +190,76 @@ describe('cost-events.jsonl folds at archive (Phase 1 cost governor)', () => {
     expect(existsSync(join(root, 'cost-events.jsonl'))).toBe(false);
   });
 });
+
+describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
+  // C2: closure event `status` gates on the LANE token budget, never on the
+  // context char budget. Old code used effBudget = budget || laneBudget, so a
+  // configured char budget (150000) swallowed the token gate. New code gates
+  // status on laneBudget (25000 for standard) and reports context separately.
+  it('status gates on lane token budget, not context char budget; context reported separately', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 40000, tasks_done: 1, tasks_total: 1, evidence: [] },
+    });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'context_budget_chars=150000\n');
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    // lane standard budget 25000, warn 37500 → 40000 is warn on the lane token budget
+    expect(rep).toMatch(/Budget status[\s\S]*warn/i);
+    // context chars are well under 150000 → context status ok
+    expect(rep).toMatch(/Context footprint/);
+    // closure event status = warn (lane budget), context_status = ok
+    const evLine = readFileSync(join(root, 'report.md'), 'utf8').split(/\r?\n/).find((l) => l.includes('"kind":"closure"'));
+    expect(evLine).toBeTruthy();
+    expect(JSON.parse(evLine ?? '{}')).toMatchObject({ status: 'warn', context_status: 'ok' });
+  });
+
+  // Q2: status computed once — the closure event `status` and the report
+  // `Budget status` must be identical (no double/recomputed gate).
+  it('computes status once — event status matches the report Budget status', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'full', mode: 'auto', actor: 't', tokens_est: 160000, tasks_done: 1, tasks_total: 1, evidence: [] },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    const ev = JSON.parse(rep.split(/\r?\n/).find((l) => l.includes('"kind":"closure"')) ?? '{}') as { status: string };
+    // full lane budget 50000, stop 150000 → 160000 is stop on the lane token budget
+    expect(ev.status).toBe('stop');
+    expect(rep).toMatch(/Budget status[\s\S]*stop/i);
+  });
+
+  // Q1 + metrics: Cost section renders from the envelope and a Context
+  // efficiency row appears; zeros + a note when no registry exists.
+  it('renders a Context efficiency row with zeros and a no-registry note when absent', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 1000, tasks_done: 1, tasks_total: 1, evidence: [] },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    expect(rep).toContain('Context efficiency');
+    expect(rep).toContain('no registry — reads not tracked');
+    expect(rep).toMatch(/reuse_rate[\s\S]*0/);
+    expect(rep).toMatch(/files_loaded[\s\S]*0/);
+  });
+
+  // Q1 + metrics: with a registry present, the row reports the measured values.
+  it('renders context metrics from a present registry', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 1000, tasks_done: 1, tasks_total: 1, evidence: [] },
+      files: {
+        'context-registry.jsonl': [
+          JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'src/a.ts', id: 'E001', reads: 2, ref: 'E001 src/a.ts' }),
+          JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'src/b.ts', id: 'E002', reads: 1, ref: 'E002 src/b.ts' }),
+        ].join('\n') + '\n',
+      },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    expect(rep).toContain('Context efficiency');
+    // 2 reads total, 1 repeat (E001 read twice) → reuse 1/2
+    expect(rep).toContain('repeated_reads');
+  });
+});

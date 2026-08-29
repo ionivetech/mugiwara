@@ -9,7 +9,9 @@ import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
 import { rankFiles, renderRouting } from './routing.ts';
 import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
-import { budgetForLane, budgetStatus, warnAt, stopAt, appendCostEvent } from './cost.ts';
+import { budgetForLane, costEnvelope, appendCostEvent } from './cost.ts';
+import { loadRegistry } from './evidence.ts';
+import { computeContextMetrics, contextStatus } from './context.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -156,14 +158,35 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
     const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
     const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
-    // lane budgets for readable delta — single source: src/cost.ts (mirrors
-    // lane-base.sh, parity-enforced by test/cost.test.ts)
+    // C2: `status` gates on the LANE token budget (what savepoint.sh enforces),
+    // never on the context char budget. `contextStatus` below is its own gate.
     const laneBudget = budgetForLane(lane);
-    const effBudget = budget || laneBudget;
-    const pct = effBudget ? Math.round((est / effBudget) * 100) : 0;
+    // Q1/Q2: the normalized envelope computes planned/used/remaining/pct/status
+    // on the lane token budget — ONE computation (Q2), reused at render and for
+    // the closure event. `effBudget` stays only for the readable delta display.
+    const env = costEnvelope({ lane, budget: laneBudget, tokens_est: est });
+    const effBudget = budget || laneBudget; // display-only delta basis — never for status (C2)
     const delta = effBudget ? (est <= effBudget ? `${(effBudget - est).toLocaleString()} under` : `${(est - effBudget).toLocaleString()} over`) : 'no budget configured';
     const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator';
-    const status = budgetStatus(effBudget, est).toUpperCase();
+    const statusLabel = env.status.toUpperCase(); // derived from the single computation, not recomputed
+    // context status on context_budget_chars — separate gate, never token `est` (C2)
+    const ctxStatus = contextStatus(budget, chars);
+    // context-efficiency metrics from the evidence registry (reads), else all-zero
+    // with a note — a zero row must not be misread as "efficient" (risk row).
+    const registry = loadRegistry(dir);
+    const reads_total = registry.reduce((s, e) => s + e.reads, 0);
+    const repeated_reads = registry.reduce((s, e) => s + Math.max(e.reads - 1, 0), 0);
+    const metrics = registry.length
+      ? computeContextMetrics({
+          files_loaded: registry.length,
+          reads_total,
+          reads_reused: repeated_reads,
+          unique_chars: 0, // registry tracks reads, not char payloads
+          total_chars: 0,
+          repeated_reads,
+        })
+      : { files_loaded: 0, repeated_reads: 0, duplicate_chars: 0, reuse_rate: 0, read_avoidance_chars: 0 };
+    const ctxNote = registry.length ? '' : ' (no registry — reads not tracked)';
     // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;
@@ -186,9 +209,11 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       '| Metric | Value |',
       '|--------|-------|',
       `| **Tokens used** | ${est.toLocaleString()} (${srcLabel}) |`,
-      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? warnAt(effBudget).toLocaleString() : '—'} · stop ${effBudget ? stopAt(effBudget).toLocaleString() : '—'}) |`,
-      `| **Budget status** | ${effBudget ? `${pct}% of budget · ${delta} · ${status}` : 'no lane budget'} |`,
+      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? env.warn_at.toLocaleString() : '—'} · stop ${effBudget ? env.stop_at.toLocaleString() : '—'}) |`,
+      `| **Budget status** | ${effBudget ? `${env.pct}% of budget · ${delta} · ${statusLabel}` : 'no lane budget'} |`,
       `| **Context footprint** | ${chars.toLocaleString()} chars${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
+      `| **Context budget status** | ${ctxStatus.toUpperCase()}${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
+      `| **Context efficiency** | files_loaded: ${metrics.files_loaded} · repeated_reads: ${metrics.repeated_reads} · duplicate_chars: ${metrics.duplicate_chars} · reuse_rate: ${metrics.reuse_rate} · read_avoidance_chars: ${metrics.read_avoidance_chars}${ctxNote} |`,
     ].join('\n');
     if (hasReported) {
       costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;
@@ -202,9 +227,11 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       kind: 'closure',
       mission,
       tokens_est: est,
-      budget: effBudget,
-      status: budgetStatus(effBudget, est),
+      budget: laneBudget,
+      status: env.status, // Q2: the single lane-token-budget computation
       context_chars: chars,
+      context_status: ctxStatus,
+      context_metrics: metrics,
     });
   }
 
