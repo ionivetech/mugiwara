@@ -1,5 +1,5 @@
 // src/posture.ts
-// Mugiwara 2.0 Phase B — deterministic posture selection matrix. Maps existing
+// Mugiwara Phase B — deterministic posture selection matrix. Maps existing
 // lane/risk/dependency/context/governor inputs to an execution posture with a
 // concrete reason + evidence refs — never an opaque score. Pure, testable.
 //

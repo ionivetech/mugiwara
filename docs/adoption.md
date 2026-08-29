@@ -61,9 +61,10 @@ is not shipped. Consumers import into their own ledger with
 
 ## Adaptive execution — migration & rollback
 
-Mugiwara 2.0 introduces the three-decision model (control mode / execution
-model-posture / Cost Governor). Posture is chosen deterministically at flow
-boundaries and recorded in the decision trail; it is independent of control mode.
+Mugiwara's three-decision model (control mode / execution model-posture /
+Cost Governor) is the adaptive-execution foundation. Posture is chosen
+deterministically at flow boundaries and recorded in the decision trail; it is
+independent of control mode.
 
 - **Backwards compatible:** existing missions/configs default to
   `inline-sequential` — no migration to resume them.

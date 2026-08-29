@@ -118,7 +118,7 @@ attributes it to the crew member that caused it, and a `mugiwara cost` ledger.
 
 → [Cost model](docs/concepts/cost.md)
 
-### New in 2.0 — adaptive execution
+### Adaptive execution
 Three decisions stay **independent**: your **control mode** (how much you
 approve), the **execution posture** (how work runs — inline / parallel /
 context-relief / phase / team), and the **Cost Governor** (what is safe to
