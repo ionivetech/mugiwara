@@ -1,6 +1,7 @@
 ---
 name: mugiwara-execution
 description: Use when executing an approved plan — todo list first, sequential inline + parallel worker batches, commit per logical task, evidence per task.
+gate_artifact: flows/01-execution.md task table — execution evidence
 ---
 
 # Execution (Zoro)
@@ -19,7 +20,7 @@ Execute the plan exactly. No silent reordering, no skipping steps, no "close eno
 - `auto`: auto-create the branch and auto-commit per task ALWAYS — `auto_commit=off` has no effect in auto mode.
 Record mode + branch + commit style + `auto_commit` in the decision log (`.mugiwara/missions/<mission>/decisions.md`) and in `.mugiwara/missions/<mission>/flows/todos.md` — every mode.
 
-Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`. The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode. One-task-one-commit, save-points, and atomic-commit rules hold unchanged in every mode.
+Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`. The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode.
 
 ## Todo list first
 
@@ -45,25 +46,14 @@ Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<memb
 
 1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
 2. **Context pressure** — when `delegate_due` reads `true` in
-   `.mugiwara/missions/<mission>/state.json | <member>.json` (savepoint computes it as
-   `tokens_est ≥ delegate_threshold% of budget`, config default 60), remaining
-   SEQUENTIAL tasks dispatch to workers — one at a time, in plan order.
-   Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.`
-
-Computed, never manual: savepoint emits `delegate_due` (relative
-`tokens_est ≥ delegate_threshold% × budget`, default 60), never an absolute
-`tokens_est > 80,000` (obsolete in six months). A bigger budget raises the bar; it does not remove it.
+   `.mugiwara/missions/<mission>/state.json | <member>.json`: savepoint computes
+   `tokens_est ≥ delegate_threshold% × budget` (default 60), never an absolute
+   `tokens_est > 80,000`. Remaining SEQUENTIAL tasks dispatch to workers — one
+   at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it.
 
 ## Tier gating & fallback
 
-Real worker dispatch exists only where the harness has subagents — tier 1
-(Claude Code, opencode) plus Copilot. Gate the context-pressure trigger on
-that capability: if the harness cannot dispatch, do not promise fresh workers.
-
-Where workers are unavailable and `delegate_due` is true:
-write a savepoint, run the checkpoint, and suggest a fresh session via
-`resume`. Announce: `⚠ context — no worker dispatch on this harness;
-savepoint written, resume in a fresh session (plan order unchanged).`
+Real worker dispatch exists only where the harness has subagents — tier 1 (Claude Code, opencode) plus Copilot. Gate the context-pressure trigger on that capability: if the harness cannot dispatch, do not promise fresh workers. Where workers are unavailable and `delegate_due` is true: write a savepoint, run the checkpoint, and suggest a fresh session via `resume`. Announce: `⚠ context — no worker dispatch on this harness; savepoint written, resume in a fresh session (plan order unchanged).`
 
 ## Batch resume
 
@@ -71,31 +61,37 @@ After each batch, update `.mugiwara/missions/<mission>/continue.json | continue-
 
 ## Task batching & delegation format (parallel workers only)
 
-Full protocol: `references/dispatch.md` — output rule, batch report format,
-six-field worker prompt. Thin prompts cause thin results.
+Full protocol: `references/dispatch.md` — output rule, batch report format, six-field worker prompt. Thin prompts cause thin results.
 
 ## Surfacing rule
 
 > **Delegated work is not hidden work.** A worker may run out of view; its
-> result may not. Every worker returns a flow stage banner, a one-line verdict, and an
-> evidence link into the main thread. The user never clicks into a subagent to
-> know what happened.
-> Isolation is for context and permission, never for autonomy.
+> result may not. Every worker returns a flow stage banner, a one-line verdict,
+> and an evidence link into the main thread. The user never clicks into a
+> subagent to know what happened. Isolation is for context and permission,
+> never for autonomy.
 
 ## TDD discipline & user tests
+
 Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule. One task end to end, RED through commit: `references/worked-example.md`.
 
 ## One logical task, one commit
 
-Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verify every acceptance criterion, commit only the task's declared files. Report done (with evidence) or blocked (with reason).
+Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verify every acceptance criterion, commit only the task's declared files. Report done (with evidence) or blocked (with reason). Message: `feat(scope):` / `fix(scope):` — one subject line, body only for the why. One commit = one task; a flow stage of micro-commits is a defect. A TDD task commits its test with the code it proves (`references/tdd.md` verification) — never orphaned.
 
 ## Blockers → issues ledger
 
 Blocked → one row `| flow stage | task | symptom | attempted | help-needed |` to `.mugiwara/missions/<mission>/blockers.md`, then escalate to Luffy. Never work around a blocker silently.
 
+## Code quality floor
+
+Boy Scout rule — every touched file leaves cleaner than found: one refactor per touch, done while green, its own commit, never bundled into another task.
+
+TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`.
+
 ## Frontend tasks
 
-Any task touching UI markup, styling, or components applies `mugiwara-frontend` in the same pass.
+Any task touching UI markup, styling, or components applies `mugiwara-frontend` in the same pass. Every interactive element — button, link, input, form — carries a `data-testid`, asserted by the task's test, not merely present in markup.
 
 ## Report
 
@@ -120,5 +116,6 @@ Budget guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. Crossing it is
 - A commit containing files beyond its declared task, or a flow stage of micro-commits with no logical grouping.
 - Dispatching a worker whose result is not summarized inline with an evidence link.
 - Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Flow 2.
+- `strict:false`, dead code reported by ts-prune/knip, or an interactive element missing `data-testid`.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

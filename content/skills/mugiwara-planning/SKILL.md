@@ -1,16 +1,17 @@
 ---
 name: mugiwara-planning
 description: Use for turning an approved spec into an implementation plan — interview-first, full context scan, scaled Quick/Standard/Full plans, parallel-proof waves.
+gate_artifact: plan.md Waves/Task index — planning evidence
 ---
 
-# Planning (Nami)
+# Planning
 
 ## Skip when
 
 - Lane 0 direct work: no plan needed for a typo or single-file fix.
 - A plan already exists and is approved — execute, don't re-plan.
 
-Classify the mission by size first — after Luffy's route — then write the plan at the matching level. Quality bar: a zero-context senior engineer executes every task without asking one question.
+Classify the mission by size first — after the route decision — then write the plan at the matching level. Quality bar: a zero-context senior engineer executes every task without asking one question. Rule: never plan above or below the measured size (file count + days from the spec) — a 40-file spec is never Quick.
 
 ## Classify mission size
 
@@ -27,17 +28,25 @@ Batch blocking ambiguities into ONE question round; never assume silently. Mode 
 
 ## Full context scan
 
-Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. If the mission needs it, scan everything — a plan written without the real code is fiction. Ground every file path and step in what exists; confirm tooling, do not assume. Trust-sort sources (high/medium/low): `references/plan-template.md`.
+Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. If the mission needs it, scan everything — a plan written without the real code is fiction. Ground every file path and step in what exists; confirm tooling, do not assume. Trust-sort sources (high/medium/low): `references/plan-template.md`. Rule: every file path in the plan must be verified to exist in the scan — an unverified path fails the plan.
 
 **User AC mapping (per `mugiwara-testcases`).** In the context scan, read the declared test source (none = no user tests) and map each user AC to ≥1 per-task criterion: executable user test → the project test command scoped to that file; declarative AC → "translate to a project test file + run" or a literal command check. Cross-cutting user ACs (an e2e flow spanning tasks) become plan-level criteria re-run at the checkpoint against the whole diff; never invent an integration test as a criterion — user tests are the only integration-class criteria.
 
 ## Zero-question standard
 
-A senior principal's plan leaves nothing to the executor's judgment. Every task specifies: exact file paths (never "the component"), the exact commands to run (TDD steps with the test command), an acceptance criterion that is a literal command or file check ("works correctly" is banned), and the dependency edge. If you cannot write it that specifically, scan again before the task goes in.
+A senior principal's plan leaves nothing to the executor's judgment. Every task specifies: exact file paths (never "the component"), the exact commands to run (TDD steps with the test command), an acceptance criterion that is a literal command or file check ("works correctly" is banned), and the dependency edge. If you cannot write it that specifically, scan again before the task goes in. Rule: a stranger must read each task once and run the acceptance verbatim.
+
+## CODEOWNERS per area
+
+Map every task to a codebase area before parallelizing. Each area (e.g. `src/auth/`, `api/`, `docs/`) lists the task(s) that own it; two tasks in the SAME area are never `[PARALLEL]`, disjoint areas are the only parallel proof. Route review per area from the same table. Rule: every task in the task index appears in exactly one area row of its wave — an unowned file is a planning defect.
+
+| Area | Owner task(s) |
+|------|---------------|
+| <path prefix> | T1, T2 |
 
 ## Plan tables (wave + task index)
 
-Before the detail blocks, add two markdown tables so Zoro can read the shape at a glance and parallelize safely:
+Before the detail blocks, add two markdown tables so the executor can read the shape at a glance and parallelize safely:
 
 | Wave | Focus | Tasks | Gate |
 |------|-------|-------|------|
@@ -60,10 +69,13 @@ Before the detail blocks, add two markdown tables so Zoro can read the shape at 
 - Risk: none | <rollback plan>
 ```
 
-**Task size = commit granularity.** Zoro commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task should be folded into its neighboring logical task, never standalone. If the plan is full of XS tasks, merge them up before writing: a plan sliced into a dozen one-line commits is a plan that will litter the history. Few, well-sized tasks → few, meaningful commits.
+**Task size = commit granularity.** The executor commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task folds into its neighboring logical task, never standalone. A plan full of XS tasks is a history-littering plan; merge them up before writing. Rule: one task = one commit, no exceptions.
 
 ## Waves
-Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALLEL]` ONLY when tasks share no file AND no interface dependency (state the proof); otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption. Per-wave gate: acceptance checks run with evidence; a wave starts only when its dependencies are proven done.
+
+Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALLEL]` ONLY when tasks share no file AND no interface dependency AND no shared CODEOWNERS area (state the proof); otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption. Per-wave gate: acceptance checks run with evidence; a wave starts only when its dependencies are proven done.
+
+**Rollback per wave.** Every wave names its rollback point — a tag at the last proven-good commit — in the wave table. Rule: wave N starts only when wave N-1's rollback point is recorded; a failed wave gate means revert (`git revert <wave-N-tag>`), fix, re-run the gate. A wave with no named rollback point is a planning defect.
 
 ## Implementation graph
 
@@ -88,20 +100,20 @@ Any anti-pattern fails the quality bar — fix the plan before handoff. Never sh
 
 ## Full-level skeleton
 
-Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
+Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## CODEOWNERS`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
 
 ## Mission split (very large) — Lane 3
 
-Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. Nami writes the split before any task detail.
+Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. The planner writes the split before any task detail.
 
 ## Handoff
 
-STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to Luffy.** Present a 2-3 line summary (waves, task count, key risks) and hand off to Luffy for the GO decision. Luffy decides: approve → Zoro, revise → back to you, or escalate.
+STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to the orchestrator.** Present a 2-3 line summary (waves, task count, key risks) and hand off for the GO decision. The orchestrator decides: approve → executor, revise → back to you, or escalate.
 
-Never hand to Zoro without Luffy's GO. In `guided` mode, Luffy asks the user before delegating to Zoro. In `semi`/`auto`, Luffy may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, Luffy routes.
+Never hand to the executor without a GO. In `guided` mode, the orchestrator asks the user before delegating. In `semi`/`auto`, the orchestrator may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, the orchestrator routes.
 
 ## Red flags
 - Shipping a plan with a known anti-pattern (TBD, "works correctly", assumed tooling).
 - Marking [PARALLEL] without file- AND interface-disjoint proof.
 - Missing file-level dependency edges or a Break point on an 8+ file task.
-- Handing the plan to Zoro without Luffy's GO.
+- Handing the plan to the executor without a GO.
