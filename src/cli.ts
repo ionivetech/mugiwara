@@ -15,6 +15,7 @@ import { runScript, RUNNABLE } from './run.ts';
 import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor } from './continue.ts';
 import { blamePath } from './provenance.ts';
 import { signReport, verifyReport } from './sign.ts';
+import { ensureConfig } from './config.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -23,6 +24,12 @@ export async function run(argv: string[]): Promise<void> {
   const { command, flags, _ } = parseArgs(argv);
   if (flag(flags.help) || command === 'help') return help();
   if (flag(flags.version)) { console.log(`mugiwara ${VERSION}`); return; }
+  // A command on a fresh project must be immediately usable — bootstrap the
+  // default .mugiwara/config when it is missing (not only at install time).
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  if (ensureConfig(projectDir)) {
+    console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
+  }
   switch (command) {
     case 'install': return install(flags);
     case 'update': return install({ ...flags, force: true });
