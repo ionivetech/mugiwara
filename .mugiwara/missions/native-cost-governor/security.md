@@ -250,3 +250,74 @@ Lawful (no dep change), Trustworthy (no secrets), Respectful (no offensive terms
 
 ## Return
 PASS — no Critical/High; no reachable hostile input this phase (`work.ts` unwired, registry read-only under allowlist). One **Major** must-fix (**W1**: `loadRegistry` whole-registry loss on a null/unparseable line) gated to land **before Phase 8** — it is a defect in the F1 security control itself, not exploitable today (local trusted registry; `mission.ts` handles empty gracefully). No Brook reroute required now. W2/W3 Low design notes, consistent with F2/F3 documented rules.
+
+---
+
+# Phase 4 — Scope & Code Governor Security Audit
+
+Diff `3490284..HEAD`, key commit `0ae9dd7` (`src/scope.ts` + `test/scope.test.ts`). T2 `eb8229d` + heal `af8a204` are workflow-skill/reference/docs only. Read-only audit — no source modified.
+
+## Verdict: PASS (no Critical/High)
+
+No new attack surface. `scope.ts` is a pure verdict engine; the only I/O path is the shared, previously-audited `recordOptDecision` (S2 sanitizer). All seven verdict functions do zero I/O. No secrets, no injection, no path traversal, no new dependency.
+
+## 1. Threat model FIRST (STRIDE) — Phase 4 surfaces
+
+| Surface | STRIDE | Analysis |
+|---------|--------|----------|
+| `recordScopeDecision` (scope.ts → cost.ts `recordOptDecision`) | T/I/D | Writes to `decisions.md` via shared S2 sanitizer (CR/LF stripped → no markdown/line injection). Same boundary as Phase-3 `recordWorkDecision`. `actor` is a hardcoded constant `'scope-governor'`, not attacker input. |
+| Seven verdict functions (`detectScopeDrift`, `checkExistingCodeReuse`, `evaluateAbstraction`, `evaluateDependency`, `minimumSufficientCheck`, `detectCodeWaste`, `measureChangeSurface`) | T | Pure over explicit inputs. No fs, no path construction, no I/O. `detectScopeDrift` substring-match on file names is string comparison only — no path op, no traversal. |
+| `missionDir` param → `join()/mkdirSync/appendFileSync` | E/T | Same documented boundary as Phases 1–3. `.mugiwara/` local trusted state (F3). No new elevation — a hostile `missionDir` is pre-existing, documented risk, unchanged by this diff. |
+
+No surface with a missing row.
+
+## 2. Checklist (all run, in order)
+
+1. **Secrets**: none in `scope.ts` (hardcoded actor only). No `.env`/key/token. **Safe.**
+2. **Injection**: `recordScopeDecision` reuses the Phase-3 S2 `flat()` sanitizer inside `recordOptDecision` — CR/LF stripped from `decision`/`reason`/`evidence`; no markdown injection into `decisions.md → report.md`. Newline injection explicitly unit-tested (scope.test.ts:383-392). **Safe.**
+3. **Authn/Authz**: no access surface. `scope.ts` unwired — nothing consumes verdicts yet; LLM crew (rule 2b) acts on them. No fail-open authz. **n/a.**
+4. **Data exposure**: writes to local `.mugiwara` trail only. No PII, no new response shape. **Safe.**
+5. **Dependencies**: `git diff 3490284..HEAD --stat` shows zero changes to `package.json`, lockfile, or `src/cost.ts`. Sole import in `scope.ts`: `recordOptDecision` from `./cost.ts` (confirmed — no others). No new dependency → no SCA delta. **Safe.**
+6. **Deserialization & file handling**: no parse of untrusted input in `scope.ts`. Only file op is the pre-existing `recordOptDecision` append (allowlist `decisions.md`, path confined to `missionDir`). No crypto added/weakened. **Safe.**
+
+## 3. Findings (Phase 4)
+
+| # | Severity | Location | Attack scenario | Fix |
+|---|----------|----------|-----------------|-----|
+| S4-1 | Low (design note, unchanged surface) | `scope.ts:315` `recordScopeDecision` → `recordOptDecision` passes `missionDir` to `join()` | If a future caller feeds an attacker-controlled `missionDir` (e.g. from untrusted input), arbitrary path write under that dir. | Pre-existing F3 rule already documents: validate `missionDir` before passing to record helpers. Not new; no reachable hostile input today. No action this phase. |
+| S4-2 | Low (design note) | `scope.ts:43` `detectScopeDrift` substring match `f.includes(tok)` | A declared-scope token matching a sibling directory could miscount drift (false positive/negative on scope_score). Pure metric, no security impact — misclassification only, not exploitable. | None. Informational; verdict consumed by LLM crew. |
+
+No Critical/High/Medium. No security regression: `recordScopeDecision` matches `recordWorkDecision` sanitizer-for-sanitizer (S2 parity), no sanitizer dropped.
+
+## 4. Hotspots & review rating
+
+| Hotspot | Status |
+|---------|--------|
+| Decision-trail write path (markdown/line injection via reason/evidence) | Reviewed → Safe (S2 `flat()` confirmed; test asserts no `\n`/`\r` leaks) |
+| `missionDir` path confinement | Reviewed → Safe (unchanged pre-existing F3 boundary, no new exposure) |
+| Verdict purity (no I/O) | Reviewed → Safe (all seven functions pure, confirmed) |
+| Secrets handling | Reviewed → Safe (no secret path added; F2/F3 documented) |
+| Dependency surface | Reviewed → Safe (sole import, no lockfile change) |
+
+Hotspots reviewed: 5/5 = 100% → **Rating A**.
+
+## 5. SCA license compliance — Rating A
+
+No new dependencies introduced (diff touches no `package.json`/lockfile). Zero license violations. **Rating A.**
+
+## 6. Responsibility code attribute
+
+Lawful: **A** (no new deps, no license change). Trustworthy: **A** (no hardcoded secrets). Respectful: **A** (English-only, no offensive terms). All three signals clean.
+
+## OWASP mapping (lightweight — no payments/health/PII)
+
+| OWASP | Area | Status |
+|-------|------|--------|
+| A03 Injection | markdown/line injection into `decisions.md` — closed by shared S2 `flat()` (reused, test-covered) | Safe |
+| A08 Software/Data Integrity | append-only decision trail, no read-modify-write; verdicts pure over inputs | Safe |
+| A09 Logging/Monitoring | `scope-governor` trail rows improve auditability | Positive |
+
+---
+
+## Return
+PASS — no Critical/High; no new surface. `scope.ts` is a pure verdict engine; `recordScopeDecision` reuses the Phase-3 S2 sanitizer unchanged (parity confirmed), all seven verdict functions do zero I/O, no secrets, no new dependency, no path traversal. S4-1/S4-2 are Low design notes consistent with documented F2/F3 rules. No Brook reroute required.

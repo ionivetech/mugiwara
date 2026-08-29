@@ -994,3 +994,301 @@ per-task command-verifiable criterion:
 - **Enforcement flake (escape #2) tracked separately:** not a Phase-3 regression.
 - **No new config:** delegation reuses `delegate_threshold`; investigation limits
   came in Phase 2 — Phase 3 adds nothing to `DEFAULT_CONFIG`.
+
+---
+
+# native-cost-governor — Phase 4: Scope & Code Governor
+
+**Scope:** Phase 4 of the Native Cost Governor initiative (plan §51), mission
+split row 4 (`native-cost-governor-phase4`). Phase 4 delivers the **Scope &
+Code Governor** — the seven capabilities §51 Phase 4 enumerates (scope drift
+detection, existing-code reuse checks, abstraction justification, dependency
+justification, minimum sufficient implementation policy, code waste detection,
+change-surface measurement). It **prefers the smallest correct scope and
+actively prevents unnecessary implementation** (§14/§15/§16): before a change
+grows, the governor asks the §14 scope questions (can existing code solve it /
+can a utility be reused / can a component be modified / can this remain local /
+is a new abstraction or dependency actually required) and records the answer.
+
+**Primary goal:** make the *code and scope* a change touches efficient — detect
+scope drift before it lands, reuse what already exists over introducing new
+architecture, reject speculative abstractions and unjustified dependencies,
+prefer minimum sufficient implementation over incidental complexity, surface
+code waste, and measure the change surface so the Phase-8 ledger has the §5.4
+metrics. Every scope/code verdict lands in the trail (§41) so the crew's
+build decisions are machine-checkable, not vibe.
+
+## What Phase 4 consumes (shipped Phase 1/2/3 primitives) and what it enforces
+
+| Shipped primitive | Module | Phase-4 consumer |
+|-------------------|--------|-------------------|
+| Optimization decision trail | `src/cost.ts` `recordOptDecision` | records every scope/code verdict with the `scope-governor` actor (§41) |
+| Work Governor verdict engine | `src/work.ts` `classifyStage`/`shouldSkipStage`/`completionCheck` | scope decisions stay consistent with stage classification (scope drift is the code-side mirror of the work-side stage skip) |
+| Context Governor metrics | `src/context.ts` `computeContextMetrics` | reuse checks align with `read_avoidance_chars` — reusing existing code is the code-side analog of context reuse |
+| Investigation bounds | `src/config.ts` `readInvestigationConfig` | scope drift detection bounds the investigation surface (unrelated files opened) — same §13 limit ethos |
+| Cost envelope | `src/cost.ts` `costEnvelope` | change-surface measurement feeds the code-cost dimension of the mission cost profile (§5.4) |
+
+Phase 4 **enforces**: a change never expands beyond the declared scope without a
+recorded drift verdict; new code is only introduced when §14's reuse checks say
+existing code cannot solve it; an abstraction is only built when used in ≥2
+places or required by contract — never speculatively; a dependency is only added
+with explicit justification (§16); an implementation is never "minimum LOC" at
+the expense of verification/quality (§15/§38); code waste (unnecessary helper/
+wrapper/interface/config/generated code/refactor) is named; the change surface
+(files/LOC/new abstractions/deps/boilerplate) is measured and judged proportional.
+
+## Key decisions
+
+1. **The Scope & Code Governor is a pure TS module (`src/scope.ts`), like
+   `src/work.ts`.** Same architecture as Phase 3: verdict functions take explicit
+   inputs (unit-testable, parity locked by fixtures), plus a separate record
+   helper persists the verdict through the sanitized `recordOptDecision` (§41).
+   `savepoint.sh`/`lane-base.sh` stay untouched; the shell runtime has no
+   scope/code-classification role and Phase 4 does not migrate it.
+2. **Honest boundary — the module produces and records verdicts; the crew acts.**
+   The LLM crew (workflow skill) is the only thing that can actually refuse a
+   speculative abstraction or reject a dependency. Phase 4 makes the *decision*
+   a structured, recorded, auditable verdict the crew is instructed to follow
+   (T2 wiring) — it does not pretend a TS function can force the model. Same
+   honest boundary Phase 3 drew for `src/work.ts`.
+3. **`DEFAULT_CONFIG` untouched — no new config keys (§52).** Scope & code
+   governance needs no policy boundary beyond the primitives already shipped
+   (investigation limits, delegation threshold). The §6 cost-profile
+   `scope.mode` belongs to the adaptive-budget phases (7/8), not here. All
+   verdict thresholds are pure function inputs with internal defaults — nothing
+   reads config. No runtime config behavior change.
+4. **Defer report/CLI surface to Phase 8.** The code-cost ledger block (§5.4/§39
+   code rows: `files_changed`, `LOC added/removed`, `new abstractions/
+   dependencies`) and the `mugiwara cost` CLI (§42) are Phase 8 Reporting.
+   Phase 4 records the *decisions* and *produces the pure `measureChangeSurface`
+   metrics* (§41 trail) but does not build the report surface. Avoids gold-plating.
+5. **Defer slop-specific detection to Phase 6 (Stop-Slop).** The §21.11 code-slop
+   taxonomy, §45 scenarios 6/7 (unnecessary abstraction/dependency) with
+   detect→classify→intervene, and the §56 "code slop is detected" DoD item are
+   Stop-Slop (Phase 6). Phase 4 is scope & **code** governance: it *detects* the
+   §15 waste types as verdicts and records them, but does not build the slop
+   detector/intervention machinery — that is Phase 6's surface. No gold-plating
+   of Phase 4 into slop.
+6. **Security F2/F3 stay accepted Low (carried to Phase 8).** The Phase-4
+   record helper reuses the same S2-sanitized `recordOptDecision`, so no new
+   injection surface. F2 (don't `registerRead` secret-bearing files) and F3
+   (`.mugiwara/` is local trusted state) remain documented design rules in
+   `docs/concepts/cost.md` (T2); harden at Phase 8 per decisions.md.
+
+## Architecture overview
+
+```
+  Shipped primitives (unchanged interfaces)
+  src/cost.ts (recordOptDecision, costEnvelope)
+  src/work.ts (stage classification — scope mirror)
+  src/context.ts (metrics)      src/config.ts (investigation limits)
+       │
+       ▼
+  src/scope.ts ← NEW (T1): the Scope & Code Governor verdict engine —
+       │       detectScopeDrift, checkExistingCodeReuse,
+       │       evaluateAbstraction, evaluateDependency,
+       │       minimumSufficientCheck, detectCodeWaste, measureChangeSurface
+       │       + recordScopeDecision (→ recordOptDecision §41)
+       │
+       ├──────────────────────────┐
+       ▼                          ▼
+  decisions.md (## Cost governor decisions)   content/skills/mugiwara-workflow
+       (every drift/reuse/abstraction/dependency/    SKILL.md (T2 wiring: crew
+        sufficient/waste/surface verdict)             consults the verdicts before
+                                                      adding code/abstractions/
+                                                      deps) + docs/concepts/cost.md
+```
+
+Pure verdict functions are unit-tested (T1); the agent-flow wiring (T2) is the
+workflow-skill + docs surface; T3 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `src/scope.ts` | NEW — Scope & Code Governor verdict engine (seven capabilities) + `recordScopeDecision` |
+| `test/scope.test.ts` | NEW |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — reference the Scope & Code Governor: check reuse before adding code, justify abstractions/dependencies, prefer minimum sufficient implementation; record scope verdicts in the decision trail |
+| `docs/concepts/cost.md` | MODIFY — Scope & Code Governor section (seven capabilities, verdict contracts, honesty boundary, F2/F3 design rules) |
+| `src/cost.ts`, `src/work.ts`, `src/context.ts`, `src/investigation.ts`, `src/config.ts` | UNCHANGED — consumed with pre-existing signatures; no edits |
+| `scripts/savepoint.sh`, `scripts/lib/lane-base.sh`, `src/config.ts` (`DEFAULT_CONFIG`) | UNCHANGED — no new config, no shell change |
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Scope & Code Governor module + tests | T1 | `bun test test/scope.test.ts` green |
+| 2 | Wire the verdicts into the agent flow + docs | T2 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` green |
+| 3 | Full verification | T3 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 scope.ts ────────────────┐
+                             ▼
+T2 workflow skill + docs  (consumes T1)   [SEQUENTIAL, depends-on T1]
+                             ▼
+T3 full gate (consumes all) [SEQUENTIAL, depends-on all]
+```
+
+**No `[PARALLEL]` set in Phase 4.** T1 is a single new module + test file with
+no disjoint sibling hygiene task (Phase 3 had T2/T3 because it carried F1 + a
+quality nit from Phase 2; Phase 4 carries no code-hygiene debt — F2/F3 are
+docs-only design rules and defer to Phase 8). T2 consumes T1 (wiring documents
+the real verdicts); T3 consumes everything. Every edge either shares the module
+surface or consumes a not-yet-shipped interface — parallel-proof would be
+false.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | Scope & Code Governor verdict engine (seven capabilities) + record helper | src/scope.ts, test/scope.test.ts | L | — | `bun test test/scope.test.ts` green; `bun run typecheck` passes |
+| T2 | wire verdicts into agent flow (workflow skill + docs) | content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md | S | T1 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exit 0; workflow description unchanged |
+| T3 | full gate + evidence | flows/02-execution.md | S | all | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: Scope & Code Governor verdict engine** (§5.4, §14, §15, §16, §38, §41)
+- Files: create `src/scope.ts`, `test/scope.test.ts`
+- Interfaces: consumes `src/cost.ts` `recordOptDecision` (the S2-sanitized trail
+  helper) — that is the only imported primitive; the seven verdict functions are
+  pure over explicit inputs (no other module dependency). Produces `src/scope.ts`
+  (consumed by T2) and structured decisions via `recordScopeDecision` → `recordOptDecision` (§41).
+- Size: L
+- Steps:
+  - [ ] Write `test/scope.test.ts` first (TDD — see acceptance)
+  - [ ] Implement `src/scope.ts`:
+    - **Scope drift detection (§14/§51-1):** `export type ScopeDriftInput = { change: string; declared_scope: string[]; touched_files: string[] }`; `detectScopeDrift(input): { change; drift: boolean; reason: string; scope_score: number }` — a touched file is in scope when it includes any `declared_scope` token (substring match); `scope_score = outside_files / touched_files.length` (0 when none); `drift = scope_score > 0`; reason names the outside files or `'within declared scope'`. Pure.
+    - **Existing-code reuse checks (§14/§51-2):** `export type ReuseInput = { change: string; existing_symbol: boolean; existing_component: boolean; existing_utility: boolean; existing_module: boolean; local_modification_viable: boolean }`; `checkExistingCodeReuse(input): { change; reuse: boolean; reason: string }` — `reuse:true` when any existing_* holds AND local modification is viable (the §14 default: prefer reuse + local modification over new architecture); else `reuse:false` naming whether the gap is "no existing code solves this" vs "existing present but local modification not viable". Never returns `reuse:true` just because *some* code exists — it must be usable via local modification.
+    - **Abstraction justification (§15/§51-3):** `export type AbstractionInput = { abstraction: string; used_in_places: number; reduces_duplication: boolean; required_by_contract: boolean; speculative: boolean }`; `evaluateAbstraction(input): { abstraction; justified: boolean; reason: string; use_count: number }` — `justified` only when `!speculative && ((used_in_places >= 2 && reduces_duplication) || required_by_contract)`; rejects speculative abstraction for hypothetical future requirements (§15/§17); single-use abstraction with no contract and no duplication benefit → `justified:false`. Reason names the deciding clause.
+    - **Dependency justification (§16/§51-4):** `export type DependencyInput = { dependency: string; equivalent_available: boolean; solvable_with_existing: boolean; long_term_value: boolean; maintenance_cost: number; removed_cost: number }`; `evaluateDependency(input): { dependency; justified: boolean; reason: string }` — `justified` only when `!equivalent_available && !solvable_with_existing && long_term_value && maintenance_cost <= removed_cost`; else `justified:false` naming the first failing clause (§16: a new dependency requires explicit justification). Never justified merely because it is convenient.
+    - **Minimum sufficient implementation policy (§15/§38/§51-5):** `export type SufficientInput = { change: string; necessary_complexity: number; incidental_complexity: number; verifiable: boolean; coverage_satisfied: boolean }`; `minimumSufficientCheck(input): { change; status: 'under'|'over'|'sufficient'; sufficient: boolean; reason: string }` — `under` when `!verifiable || !coverage_satisfied` (never sacrifice required verification/quality — §38; sufficient always preserves quality); `over` when `incidental_complexity > 0` (complexity added without need — §15 waste); else `sufficient`. Reason names the status driver. Does NOT optimize for minimum LOC at the expense of maintainability (necessary complexity is not penalized).
+    - **Code waste detection (§15/§51-6):** `export type WasteInput = { change: string; unnecessary_helper: boolean; unnecessary_abstraction: boolean; unnecessary_wrapper: boolean; unnecessary_interface: boolean; unnecessary_config: boolean; unnecessary_dependency: boolean; unnecessary_generated_code: boolean; unnecessary_refactor: boolean }`; `detectCodeWaste(input): { change; waste: boolean; reason: string; waste_types: string[] }` — `waste_types` lists every true flag's name (the §15 detect list: helper/abstraction/wrapper/interface/config/dependency/generated code/refactor); `waste = waste_types.length > 0`; reason joins the types. Pure.
+    - **Change-surface measurement (§5.4/§51-7):** `export type SurfaceInput = { change: string; files_changed: number; loc_added: number; loc_removed: number; new_abstractions: number; new_dependencies: number; new_files: number; generated_boilerplate: number; within_declared_scope: boolean }`; `measureChangeSurface(input): { change; surface: ChangeSurface; justified: boolean; reason: string }` where `ChangeSurface = { files_changed; loc_added; loc_removed; loc_changed; new_abstractions; new_dependencies; new_files; generated_boilerplate; within_declared_scope }` and `loc_changed = loc_added + loc_removed`; `justified` when `within_declared_scope && new_abstractions === 0 && new_dependencies === 0`; reason names proportionality (or the driver of injustice). Produces the §5.4 metric block the Phase-8 ledger consumes — this task measures, Phase 8 renders.
+    - **Decision trail (§41):** `recordScopeDecision(missionDir: string, d: { decision: string; reason: string; evidence?: string }): void` — thin wrapper over `recordOptDecision` with `actor: 'scope-governor'` (reuses the S2 sanitizer). Callers call it with the reason/evidence from any verdict with `drift:true`/`reuse:false`/`justified:false`/`status !== 'sufficient'`/`waste:true`/`justified:false`.
+  - [ ] `docs/concepts/cost.md` (in T2, not here — T2 owns docs) — T1 writes only code + tests
+  - [ ] Commit `feat(scope): scope & code governor verdict engine (drift/reuse/abstraction/dependency/sufficient/waste/surface)`
+- Acceptance:
+  - `bun test test/scope.test.ts` passes. Cases (each a non-trivial exact assertion):
+    - `detectScopeDrift`: all files within declared_scope → `drift:false`, `scope_score:0`; one file outside → `drift:true`, `scope_score:0.5` (2 files, 1 outside); empty `touched_files` → `scope_score:0`, `drift:false`; outside file name appears in `reason`
+    - `checkExistingCodeReuse`: existing_utility + local_modification_viable → `reuse:true`; existing_symbol but NOT viable → `reuse:false` with reason containing 'not viable'; no existing_* → `reuse:false` with reason containing 'no existing'
+    - `evaluateAbstraction`: used_in_places:2 + reduces_duplication → `justified:true`; required_by_contract → `justified:true`; speculative → `justified:false`; single-use no-contract no-dup → `justified:false`; `use_count` echoes input exactly
+    - `evaluateDependency`: equivalent_available → `justified:false`; solvable_with_existing → `justified:false`; `maintenance_cost > removed_cost` → `justified:false`; all four §16 conditions → `justified:true`
+    - `minimumSufficientCheck`: `!verifiable` → `status:'under'`, `sufficient:false`; `incidental_complexity:5` → `status:'over'`, `sufficient:false`; necessary_complexity:10 + incidental:0 + verifiable + coverage → `status:'sufficient'`, `sufficient:true`
+    - `detectCodeWaste`: one true flag → `waste:true`, `waste_types` equals that one name; multiple → all named; none → `waste:false`, `waste_types:[]`
+    - `measureChangeSurface`: `loc_added:100, loc_removed:20` → `loc_changed:120`; within_declared_scope + 0 new abstractions/deps → `justified:true`; `new_dependencies:1` → `justified:false`; `new_abstractions:2` → `justified:false`
+    - `recordScopeDecision` writes a single `## Cost governor decisions` bullet with `scope-governor` actor, sanitized (newline-stripped) reason
+  - `bun run typecheck` passes
+  - Coverage: `src/scope.ts` ≥90% (config `coverage_new=90`; verified at T3 gate)
+- Risk: medium — a new L module must meet the 90% coverage bar; TDD-first with the acceptance cases above is the safety net. Rollback: revert the single commit.
+- Deferred: none in T1 — report/CLI surface (§5.4/§39/§42) is Phase 8; slop machinery (§21.11/§45/§56) is Phase 6. Both noted in the honesty section.
+
+**Task 2: wire the verdicts into the agent flow** (§14, §15, §16, §38, §41)
+- Files: modify `content/skills/mugiwara-workflow/SKILL.md`; `docs/concepts/cost.md`
+- Interfaces: consumes `src/scope.ts` verdicts (T1) — documents them as the decision trail the crew follows; no code import (the skill is prose the agent reads; the trail is the machine-checkable artifact via `recordOptDecision`)
+- Size: S
+- Steps:
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md`, under `## Rules` (after rule 2a), add one rule line (≤120 chars) and a short "Scope & Code Governor" subsection:
+    - Rule: `2b. Scope & Code Governor: before adding code, check §14 reuse; justify new abstractions (§15) and dependencies (§16); prefer minimum sufficient implementation; record scope verdicts as scope-governor trail rows.`
+    - Subsection `## Scope & Code Governor` (3–5 lines): prefer the smallest correct scope — reuse existing code + local modification over new architecture (§14); an abstraction is justified only when used in ≥2 places or required by contract, never speculatively (§15); a dependency is added only with explicit justification (§16); an implementation is minimum sufficient — never minimum LOC at the expense of verification/quality (§15/§38); code waste (unnecessary helper/abstraction/wrapper/interface/config/dependency/generated code/refactor) is named; the change surface is measured. Every scope verdict lands as a `scope-governor` trail row in `.mugiwara/.../decisions.md` → `## Cost governor decisions`. `savepoint.sh`/`lane-base.sh`/config untouched.
+    - Ensure description frontmatter is byte-unchanged (validate-content requires it).
+  - [ ] In `docs/concepts/cost.md`, append a `## Scope & Code Governor (src/scope.ts)` section: the seven capabilities + their verdict contracts (`detectScopeDrift`, `checkExistingCodeReuse`, `evaluateAbstraction`, `evaluateDependency`, `minimumSufficientCheck`, `detectCodeWaste`, `measureChangeSurface`, `recordScopeDecision`), that Phase 4 records decisions but the report/CLI surface (§5.4/§39/§42) is Phase 8 and slop detection (§21.11/§45) is Phase 6, the honest boundary (module records — crew acts via the workflow skill), and the security design rules (F2: do not `registerRead` secret-bearing files such as `.env`/keys; F3: `.mugiwara/` is local trusted state — validate `missionDir` if writers ever open).
+  - [ ] Run `bun run validate-content --check-manifest --check-docs --check-doc-integrity`
+  - [ ] Commit `docs(scope): wire scope & code governor verdicts into the workflow skill and cost docs`
+- Acceptance:
+  - `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exits 0 (skill description unchanged, manifest/docs drift clean)
+  - `grep -E 'Scope & Code Governor|scope-governor' content/skills/mugiwara-workflow/SKILL.md` returns 2+ matches
+  - `grep -E '## Scope & Code Governor' docs/concepts/cost.md` returns a match
+  - `bun run typecheck` passes (docs-only, still confirmed)
+- Risk: low — a skill body change could trip validate-content if a line exceeds 120 chars or the description drifts; acceptance locks both. Rollback: revert the commit.
+- Deferred: the report/CLI code ledger (§5.4/§39/§42) stays Phase 8; slop detection (§21.11/§45) stays Phase 6.
+
+**Task 3: full gate + evidence**
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T2
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output
+  - [ ] If any gate fails: fix within scope, re-run. No gate waived.
+  - [ ] Write `flows/02-execution.md`: task table (T1–T3), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(scope): phase 4 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New `src/scope.ts` misses the 90% coverage bar | medium | CI red | TDD-first; acceptance cases lock every verdict family; gate catches at T3 |
+| Skill-body edit trips validate-content | low | CI red | T2 acceptance locks description-unchanged + ≤120-char lines; run validator in T2 |
+| Reuse check returns `reuse:true` when existing code is not usable | low | false positive | test-locked: existing_* must AND with `local_modification_viable`; reason names the gap otherwise |
+| Abstraction/dependency refusals block legitimate work | medium | over-conservative | verdicts are pure and auditable; reason names the deciding clause so the crew can record a justification override (still audited); §16 keeps the explicit-justification path open |
+| Slop/ledger scope bleed (gold-plating into Stop-Slop or Reporting) | low | scope slop | hard boundary: Phase 4 records decisions + measures surface only; slop machinery = Phase 6, report/CLI = Phase 8 (honesty section) |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers row 3); not a Phase-4 regression — proven by reproduction on clean main in Phase-2 closure |
+
+Rollback plan: each task is one revertible commit; T3 evidence lists exact
+commits. Worst case: `git revert` the Phase-4 commits. `savepoint.sh`,
+`lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint +
+config behavior is preserved by construction.
+
+## Phase-4 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Scope & Code (user acceptance) maps to Phase-4 tasks; each user AC has
+≥1 per-task command-verifiable criterion:
+
+| User AC (spec DoD Scope & Code) | Capability (§51/§spec) | Deliverable |
+|----------------------------------|------------------------|-------------|
+| scope drift is detected | 1 (scope drift detection) | T1 `detectScopeDrift` (test-locked: `scope_score` exact, outside files named); T2 workflow-skill rule 2b |
+| unnecessary abstractions are detected | 3 (abstraction justification) | T1 `evaluateAbstraction` (test-locked: speculative + single-use refuse) |
+| unnecessary dependencies are discouraged | 4 (dependency justification) | T1 `evaluateDependency` (test-locked: §16 four-condition gate) |
+| minimum sufficient implementation is preferred | 5 (minimum sufficient policy) | T1 `minimumSufficientCheck` (test-locked: `under`/`over`/`sufficient` exact) |
+| unnecessary code can be detected | 6 (code waste detection) | T1 `detectCodeWaste` (test-locked: §15 waste-type list exact) |
+| optimization decisions auditable (§41) | all | T1 `recordScopeDecision` → `recordOptDecision` (test-locked bullet shape + actor) |
+| code cost measurable (§5.4) | 7 (change-surface measurement) | T1 `measureChangeSurface` (test-locked `loc_changed`, proportionality verdict) — metrics feed Phase-8 ledger |
+
+## Definition of Done (Phase 4)
+
+- `src/scope.ts` exists: `detectScopeDrift`, `checkExistingCodeReuse`,
+  `evaluateAbstraction`, `evaluateDependency`, `minimumSufficientCheck`,
+  `detectCodeWaste`, `measureChangeSurface`, `recordScopeDecision` — all pure,
+  unit-tested, ≥90% coverage.
+- The seven §51 Phase-4 capabilities are covered by verdict functions with
+  explicit reasons on every refusal.
+- `content/skills/mugiwara-workflow/SKILL.md` wires the Scope & Code Governor:
+  reuse-first, justification for abstractions/dependencies, minimum sufficient
+  implementation + recorded scope verdicts (rule 2b); description unchanged;
+  validate-content green.
+- `docs/concepts/cost.md` documents the Scope & Code Governor verdicts, the
+  honest boundary, the Phase-8/Phase-6 deferral boundaries, and the F2/F3
+  security design rules.
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` runtime
+  behavior — no new config keys.
+- `bun run gate` passes fully; every pre-existing test passes unchanged.
+- Phase 4 records decisions and measures surface only — no report/CLI surface
+  (Phase 8) and no slop machinery (Phase 6) built here.
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `src/scope.ts` produces and records verdicts; the LLM
+  crew (workflow skill, T2) is the only thing that acts on them. The module does
+  not pretend to force the model — it makes the scope/code decision structured,
+  auditable, and instructed.
+- **Report/CLI code ledger deferred to Phase 8:** `files_changed`, `LOC
+  added/removed/changed`, `new abstractions/dependencies/files`, `generated
+  boilerplate` (§5.4/§39) and `mugiwara cost` (§42) are Phase 8 Reporting —
+  Phase 4 produces the pure `measureChangeSurface` metrics and records the
+  decisions only, avoiding gold-plating.
+- **Slop-specific detection deferred to Phase 6 (Stop-Slop):** code-slop
+  taxonomy (§21.11), §45 scenarios 6/7 (unnecessary abstraction/dependency) with
+  detect→classify→intervene, and the §56 "code slop is detected" DoD item are
+  Phase 6 — Phase 4 detects the §15 waste types as verdicts, not the slop
+  detector/intervention machinery.
+- **F2/F3 accepted Low (unchanged):** secret-bearing files should not be
+  `registerRead`-ed (F2) and `.mugiwara/` is local trusted state (F3) — both
+  documented as design rules in `docs/concepts/cost.md` (T2), hardened at
+  Phase 8 per decisions.md.
+- **Enforcement flake (escape #2) tracked separately:** not a Phase-4 regression.
+- **No new config:** Phase 4 adds nothing to `DEFAULT_CONFIG` — scope & code
+  verdicts are pure over explicit inputs; the §6 `scope.mode` profile belongs to
+  the adaptive-budget phases (7/8).

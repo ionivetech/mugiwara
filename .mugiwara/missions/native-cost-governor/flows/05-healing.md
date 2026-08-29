@@ -211,3 +211,58 @@ sanctioned references pattern:
 ### Untouched
 No `src/*.ts`, `savepoint.sh`, `lane-base.sh`, `DEFAULT_CONFIG`, `plan.md`,
 `decisions.md`, or `state.json` changed.
+
+---
+
+## HEAL CYCLE 2 — conformance golden drift (Phase-4 regression from af8a204)
+
+**Status: HEALED. Commit `ff14f57`.**
+
+Franky's gate found `bun scripts/conformance.ts` failing `.file_count.skills:
+62 ≠ 61` for claude + opencode (tier 1). Root cause: heal-1 (`af8a204`) added
+`content/skills/mugiwara-workflow/references/scope-code-governor.md`, bumping
+installed tier-1 skill reference files 61→62, but `test/golden/*.json` were
+not regenerated.
+
+### Fix
+Ran `bun scripts/conformance.ts --update-golden`. The regenerated golden diff
+was **minimal and isolated**:
+
+- **claude.json** — `file_count.skills: 61 → 62` only
+- **opencode.json** — `file_count.skills: 61 → 62` only
+- All other 10 goldens (copilot, gemini, codex, windsurf, cline, kilo,
+  antigravity, cursor, kimi, pi) — **no change** (their tier-2/3/pointer
+  installs don't materialize the new tier-1 reference file).
+
+No unrelated drift: no drifted skill descriptions, no `agents`/`state`/
+`evidence` count changes, no other platform counts changed. `--update-golden`
+rewrote all 12 files but only 2 produced a diff — the rest re-serialized
+byte-identical.
+
+### Verification
+- `bun scripts/conformance.ts` (no flag) → **exit 0**, "12 platforms pass
+  conformance" (claude + opencode tier-1 conform).
+- `bun scripts/verify-install.ts` → **exit 0** — 246 pointers across 9 targets,
+  137 prose paths, 0/41 reference files unreachable; the
+  `references/scope-code-governor.md` pointer resolves after install.
+- `bun run gate` — **exit 1 on all 3 attempts**, blocked exclusively by the
+  **known pre-existing enforcement flake** `test/enforcement.test.ts` "guard:
+  plan written + no planner dispatched → warns (escape #2 closed)" (timing/
+  mtime class). Identical failure, same test, all 3 runs; tracked in
+  blockers.md rows 1+6 as a separate fix mission. No green gate capture
+  obtained in 3 attempts — reported honestly. No non-flake gate red; the `&&`
+  chain stops at `test:coverage` before conformance/verify-install, both of
+  which pass standalone (verified above).
+
+### Commit
+`chore(scope): regenerate conformance goldens for scope-code-governor reference`
+— SHA **ff14f57**, new commit on top of 7a42652 (af8a204). Staged ONLY
+`test/golden/claude.json` + `test/golden/opencode.json` (2 files,
++2/-2). No `src/*.ts`, `savepoint.sh`, `lane-base.sh`, `DEFAULT_CONFIG`,
+`plan.md`, `decisions.md`, or `state.json` touched. plan.md/decisions.md remain
+dirty and uncommitted per Luffy's instruction.
+
+### Blocker ledger update
+Phase-4 golden-drift blocker cleared. The `enforcement.test.ts` escape#2 flake
+remains the single pre-existing blocker between this branch and a green gate —
+separate tracked mission, not a Phase-4/heal-cycle-2 defect.

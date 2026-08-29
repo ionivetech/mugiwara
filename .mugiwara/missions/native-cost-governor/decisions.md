@@ -193,3 +193,74 @@ live here; the plan doc stays clean.
   Phase-3 wiring; F2/F3 (Low) accepted.
 - **Plan impact:** plan.md gains a Phase 3 section (Nami); tasks wired from
   §51 + Phase-2 signals.
+
+## Flow 0 — Phase 4 triage (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Request (resumed via `mugiwara continue`):** Phase 4 (Scope & Code
+  Governor), spec §51 Phase 4: scope drift detection, existing-code reuse
+  checks, abstraction justification, dependency justification, minimum
+  sufficient implementation policy, code waste detection, change-surface
+  measurement. Consumes Phase-1 cost + Phase-2 context + Phase-3 work governor
+  primitives.
+- **Class:** explicit — spec §51 Phase 4 enumerates the seven deliverable
+  capabilities; consumed signals are the shipped Phase 1/2/3 primitives
+  (`src/cost.ts`, `src/context.ts`, `src/work.ts`, `src/investigation.ts`).
+- **Lane:** Full — spans scope-governor domain, code-governor analysis,
+  wiring, tests, docs.
+- **Mode:** auto (from `.mugiwara/config`) — campaign runs to completion.
+- **Route:** Flow 0 → Flow 2 (Nami, extend plan.md with Phase 4 detail +
+  waves) → Flow 3 (Zoro, execute). Flow 1 (brainstorm) skipped — same reason
+  as Phases 1–3: spec §51 is explicit, options already in spec + plan.
+- **Branch:** continue on `feat/native-cost-governor` (stacked, Phase 1+2+3
+  unmerged).
+- **Heal debt carried forward:** enforcement.test.ts escape#2 flake (separate
+  mission); security F2/F3 (Low) accepted, harden at Phase 8.
+- **Plan impact:** plan.md gains a Phase 4 section (Nami); tasks wired from
+  §51 + the shipped primitives.
+
+## Flow 8 — Phase 4 heal cycle 1 (Brook + Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Blocker (Chopper checkpoint):** T2 (eb8229d) removed two governance lines
+  from `content/skills/mugiwara-workflow/SKILL.md` — `Precedence: class decides
+  whether there is work; lane decides how much process — class first, lane
+  second.` and `Brook reads this at Flow 8. Never silently work around a
+  blocker.` — not declared in plan. Zoro claimed "120-line validator cap"
+  forced it; Chopper read the cap as chars/line.
+- **Root cause (Brook verified):** the real validator (`validate-content.ts:19`)
+  caps body at **120 LINES**, not chars. Base + HEAD both sit at exactly 120
+  body lines. Zoro's deletion WAS necessary to fit Phase-4's `## Scope & Code
+  Governor` section. Chopper's char-per-line premise was false. Restoring the 2
+  lines + keeping the section = 123 lines → gate red (proven, then reverted).
+- **Luffy scope call — Option A:** move the `## Scope & Code Governor` body to
+  `content/skills/mugiwara-workflow/references/scope-code-governor.md` with a
+  one-line pointer in SKILL.md (the repo's sanctioned pattern for sections >
+  budget; zero content loss; needs `verify-install` green). Restores the 2
+  governance lines, keeps all Phase-4 content, stays ≤120 lines.
+- **Plan impact:** T2 deliverable shape changes from inline section to
+  references pointer. `bun run gate` + `verify-install` must stay green.
+- **Heal counter:** heal_cycle=1 (one `## Flow 8 — healing` section logged).
+
+## Flow 8 — Phase 4 heal cycle 2 (Franky gate + Brook)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Blocker (Franky gates, Flow 6):** `bun run gate` exit 1. Two failures over
+  two attempts: (1) the known pre-existing enforcement escape#2 flake
+  (reproduced on clean base, NOT a Phase-4 regression — waivable, attempt 2
+  cleared it), and (2) a **genuine Phase-4 regression** — conformance:
+  `test/conformance.ts` `.file_count.skills: 62 ≠ 61` for claude + opencode.
+  Phase 4 added `content/skills/mugiwara-workflow/references/scope-code-governor.md`
+  (af8a204), bumping installed tier-1 skill files 61→62, but
+  `test/golden/*.json` were not regenerated. Verified base 3490284 conformance
+  passes (61/61); HEAD regression is Phase-4-caused. Not waivable.
+- **Root cause:** the heal fix (Option A, af8a204) added a new reference file
+  without running the conformance golden update. Missing regression gate: any
+  file-count/install-surface change must regenerate goldens.
+- **Fix (Brook):** run `bun scripts/conformance.ts --update-golden`, review the
+  diff (must be only the file-count delta 61→62 for the new reference file, no
+  unrelated golden changes), commit the goldens, re-run `bun run gate` to
+  confirm green.
+- **Plan impact:** T3 gate requires conformance goldens regenerated; verify
+  `bun run gate` exit 0.
+- **Heal counter:** heal_cycle=2 (two `## Flow 8 — healing` sections logged).
