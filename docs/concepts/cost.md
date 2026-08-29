@@ -281,3 +281,28 @@ Seven capabilities + record helper:
 **Phase boundaries (honesty):** Phase 5 records the decisions and produces pure verdicts only. The report/CLI cognition ledger (`reasoning focused vs slop`, `output compressed chars`, `duplicate explanations avoided` — §39/§43) is Phase 8 Reporting; the §21.3/§21.4 reasoning/output slop taxonomy and §45 detect→classify→intervene machinery is Phase 6 Stop-Slop. **Honest boundary:** `src/cognition.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2c) is the only thing that acts on them. The module makes the cognitive/output decision structured, auditable, and instructed — it does not force the model.
 
 **Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
+
+## Stop-Slop Governor (`src/slop.ts`)
+
+Phase 6 delivers the **Stop-Slop Governor** — slop taxonomy, detection signals, progress measurement, work-to-cost anomaly, intervention rules, and six category detectors (retry, healing, scope, context, investigation, code). `src/slop.ts` is a pure verdict engine over explicit inputs, each decision recorded via `recordSlopDecision` → `recordOptDecision` (`## Cost governor decisions` trail, `slop-governor` actor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Twelve capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Slop taxonomy (§21) | `SLOP_TAXONOMY` + `classifySlop` | eight §21 kinds; keyword match → `SlopKind` or `null` |
+| Detection signals (§22) | `detectSlopSignal` | `slop` when `count ≥ threshold` with no evidence gain |
+| Progress measurement (§23) | `measureProgress` | `progress` + `cost_delta` + `progress_per_cost`; `slop_signal` when cost grows without progress |
+| Work-to-cost anomaly (§24) | `detectAnomaly` | `anomaly` when `progress_per_cost < baseline * drop_threshold` (default 0.5) |
+| Intervention rules (§20) | `decideIntervention` | `tolerate`/`stop`/`compress`/`escalate` by `severity` + `progress_stalled` |
+| Retry slop (§21.6/§31) | `detectRetrySlop` | `slop` when same action + same evidence + same failure → STOP |
+| Healing slop (§21.7/§32) | `detectHealingSlop` | `slop` when no fixes with previous zero-fix or `cycle ≥ max` |
+| Scope slop (§21.8) | `detectScopeSlop` | `slop` when out-of-scope file or unrelated refactor without `acceptance_expanded` |
+| Context slop (§21.2/§12) | `detectContextSlop` | `slop` when repeated reads ≥ threshold or duplicate chars or irrelevant files |
+| Investigation slop (§21.1/§13) | `detectInvestigationSlop` | `slop` when any limit breached without `has_concrete_reason` |
+| Code slop (§21.5/§15) | `detectCodeSlop` | `slop` when abstraction/dependency/boilerplate/LOC>100 without acceptance or justification |
+| Decision trail (§41) | `recordSlopDecision` | persists any verdict as a `slop-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 6 records the decisions and produces pure verdicts only. The report/CLI slop ledger (`slop.events_detected`, `stopped`, `compressed` — §39) and Cost-section slop rows (§43) and `mugiwara cost` slop section (§42) are Phase 8 Reporting; the §45 benchmark suite is Phase 9. **Honest boundary:** `src/slop.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2d) is the only thing that acts on them. The module makes the slop decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
