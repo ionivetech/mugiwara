@@ -1292,3 +1292,302 @@ Spec DoD Scope & Code (user acceptance) maps to Phase-4 tasks; each user AC has
 - **No new config:** Phase 4 adds nothing to `DEFAULT_CONFIG` — scope & code
   verdicts are pure over explicit inputs; the §6 `scope.mode` profile belongs to
   the adaptive-budget phases (7/8).
+
+---
+
+# native-cost-governor — Phase 5: Cognitive & Output Governor
+
+**Scope:** Phase 5 of the Native Cost Governor initiative (plan §51), mission
+split row 5 (`native-cost-governor-phase5`). Phase 5 delivers the **Cognitive &
+Output Governor** — the six capabilities §51 Phase 5 enumerates (focused
+reasoning policy, investigation termination, alternative limitation, output
+compression, duplicate explanation detection, mission-focused output structure).
+It **makes cognition and output efficient** (§17/§18): reasoning stays on the
+Question→Evidence→Decision→Action path, stops when evidence is sufficient,
+considers only justified alternatives, and output is compressed, deduplicated,
+and structured for the mission. Every cognitive/output verdict lands in the
+trail (§41) so the crew's reasoning and output choices are machine-checkable,
+not vibe.
+
+**Primary goal:** make *reasoning and output* efficient — keep reasoning
+focused on the mission, terminate investigation when the acceptance/surface/path
+triad is met, limit alternatives to evidence-backed options, compress output to
+Decision/Action/Result/Evidence/Blocker, detect duplicate explanations, and
+enforce a mission-focused output structure. Every verdict is recorded so the
+crew's cognitive choices are auditable and the interactive output stays
+concise while the full trail remains for audit (§18).
+
+## What Phase 5 consumes (shipped Phase 1–4 primitives) and what it enforces
+
+| Shipped primitive | Module | Phase-5 consumer |
+|-------------------|--------|-------------------|
+| Investigation verdicts | `src/investigation.ts` `evaluateInvestigation` | investigation termination — cognitive stop reuses the §13 triad (acceptance_mapped + surface_understood + path_established) but at the reasoning layer |
+| Evidence registry | `src/evidence.ts` `fingerprint`/`registerRead`/`findRepeats` | duplicate explanation detection — fingerprint output explanations and reuse the §12 dedup machinery |
+| Context metrics | `src/context.ts` `computeContextMetrics`/`estContextTokens` | output compression — chars/token cost of verbose output is measurable, not guessed |
+| Work verdicts | `src/work.ts` `classifyStage`/`completionCheck` | mission-focused structure — required evidence and completion conditions bound what output must contain |
+| Cost envelope | `src/cost.ts` `costEnvelope`/`recordOptDecision` | records every cognitive/output verdict with the `cognitive-governor` actor (§41) |
+| Scope surface | `src/scope.ts` `measureChangeSurface` | scope-aware output — output describes only the declared-scope change, not unrelated surfaces |
+
+Phase 5 **enforces**: reasoning never speculates without evidence; investigation
+never continues after the triad is met without a concrete reason; only
+evidence-backed alternatives are considered (bounded); output is never verbose
+when concise carries the same signal; duplicate explanations are detected via
+fingerprints; every output follows the mission-focused Decision/Action/Result/
+Evidence/Blocker structure (§18).
+
+## Key decisions
+
+1. **The Cognitive & Output Governor is a pure TS module (`src/cognition.ts`),
+   like `src/work.ts`/`src/scope.ts`.** Same architecture: verdict functions
+   take explicit inputs (unit-testable, fixtures lock the thresholds), plus a
+   separate record helper persists the verdict through the sanitized
+   `recordOptDecision` (§41). `savepoint.sh`/`lane-base.sh` stay untouched; the
+   shell runtime has no cognition/output role and Phase 5 does not migrate it.
+2. **Honest boundary — the module produces and records verdicts; the crew acts.**
+   The LLM crew (workflow + output) is the only thing that can actually stop
+   reconsidering or compress its next message. Phase 5 makes the *decision* a
+   structured, recorded, auditable verdict the crew is instructed to follow (T2
+   wiring) — it does not pretend a TS function can force the model. Same honest
+   boundary Phases 3/4 drew.
+3. **`DEFAULT_CONFIG` untouched — no new config keys (§52).** Cognitive/output
+   governance needs no policy boundary beyond the primitives already shipped
+   (investigation limits, delegation threshold). Thresholds for alternatives,
+   reconsideration, and compression are pure function inputs with internal
+   defaults — nothing reads config. No runtime config behavior change. The §6
+   `output.mode` profile belongs to the adaptive-budget phases (7/8), not here.
+4. **Defer slop-specific intervention to Phase 6 (Stop-Slop).** The §21.3
+   reasoning slop and §21.4 output slop taxonomy, §45 scenarios 5/9 (repeated
+   reasoning/verbose output) with detect→classify→intervene, and the §56 slop
+   signals are Stop-Slop (Phase 6). Phase 5 is cognition & **output** governance:
+   it *detects* speculative/repetitive/verbose output as verdicts and records
+   them, but does not build the slop detector/intervention machinery — that is
+   Phase 6's surface.
+5. **Defer reporting/CLI cognition rows to Phase 8.** The ledger's reasoning/
+   output efficiency rows (§39/§43: reasoning focused vs slop, output compressed
+   chars) and the `mugiwara cost` CLI's cognition section (§42) are Phase 8
+   Reporting. Phase 5 records the *decisions* and *produces pure verdicts* (§41
+   trail) but does not build the report surface. Avoids gold-plating.
+6. **Security F2/F3 stay accepted Low (carried to Phase 8).** The Phase-5
+   record helper reuses the same S2-sanitized `recordOptDecision`, so no new
+   injection surface. F2/F3 remain documented design rules in `docs/concepts/
+   cost.md` (T2); harden at Phase 8 per decisions.md.
+
+## Architecture overview
+
+```
+  Shipped primitives (unchanged interfaces)
+  src/investigation.ts (evaluateInvestigation)
+  src/evidence.ts (fingerprint, findRepeats)
+  src/context.ts (estContextTokens)   src/work.ts (completionCheck)
+  src/cost.ts (recordOptDecision)      src/scope.ts (measureChangeSurface)
+       │
+       ▼
+  src/cognition.ts ← NEW (T1): the Cognitive & Output Governor verdict engine —
+       │       isFocusedReasoning, shouldTerminateInvestigation,
+       │       limitAlternatives, compressOutput, detectDuplicateExplanation,
+       │       structureOutput + recordCognitiveDecision (→ recordOptDecision §41)
+       │
+       ├──────────────────────────┐
+       ▼                          ▼
+  decisions.md (## Cost governor decisions)   content/skills/mugiwara-workflow
+       (every reasoning/alternative/output   SKILL.md (T2 wiring: crew
+        verdict)                              consults the verdicts before
+                                              reasoning deeply / writing verbose
+                                              output) + docs/concepts/cost.md
+```
+
+Pure verdict functions are unit-tested (T1); the agent-flow wiring (T2) is the
+workflow-skill + docs surface; T3 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `src/cognition.ts` | NEW — Cognitive & Output Governor verdict engine (six capabilities) + `recordCognitiveDecision` |
+| `test/cognition.test.ts` | NEW |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — reference the Cognitive & Output Governor: Question→Evidence→Decision→Action, bounded alternatives, compressed deduplicated mission-focused output; record cognitive verdicts in the decision trail |
+| `docs/concepts/cost.md` | MODIFY — Cognitive & Output Governor section (six capabilities, verdict contracts, honesty boundary, F2/F3 design rules) |
+| `src/cost.ts`, `src/work.ts`, `src/scope.ts`, `src/context.ts`, `src/investigation.ts`, `src/evidence.ts` | UNCHANGED — consumed with pre-existing signatures; no edits |
+| `scripts/savepoint.sh`, `scripts/lib/lane-base.sh`, `src/config.ts` (`DEFAULT_CONFIG`) | UNCHANGED — no new config, no shell change |
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Cognitive & Output Governor module + tests | T1 | `bun test test/cognition.test.ts` green |
+| 2 | Wire the verdicts into the agent flow + docs | T2 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` green |
+| 3 | Full verification | T3 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 cognition.ts ────────────────┐
+                                ▼
+T2 workflow skill + docs  (consumes T1)   [SEQUENTIAL, depends-on T1]
+                                ▼
+T3 full gate (consumes all) [SEQUENTIAL, depends-on all]
+```
+
+**No `[PARALLEL]` set in Phase 5.** T1 is a single new module + test file with
+no disjoint sibling hygiene task (no carry-over F1/nit from Phase 4 — Phase 4
+closed clean; F2/F3 docs-only defer to Phase 8). T2 consumes T1 (wiring
+documents the real verdicts); T3 consumes everything. Every edge either shares
+the module surface or consumes a not-yet-shipped interface — parallel-proof
+would be false.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | Cognitive & Output Governor verdict engine (six capabilities) + record helper | src/cognition.ts, test/cognition.test.ts | L | — | `bun test test/cognition.test.ts` green; `bun run typecheck` passes |
+| T2 | wire verdicts into agent flow (workflow skill + docs) | content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md | S | T1 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exit 0; workflow description unchanged |
+| T3 | full gate + evidence | flows/02-execution.md | S | all | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: Cognitive & Output Governor verdict engine** (§17, §18, §13, §41)
+- Files: create `src/cognition.ts`, `test/cognition.test.ts`
+- Interfaces: consumes `src/cost.ts` `recordOptDecision` (the S2-sanitized trail
+  helper) and `src/evidence.ts` `fingerprint` (for duplicate explanation
+  detection) — the only imported primitives; the six verdict functions are pure
+  over explicit inputs (no other module dependency). Produces `src/cognition.ts`
+  (consumed by T2) and structured decisions via `recordCognitiveDecision` →
+  `recordOptDecision` (§41).
+- Size: L
+- Steps:
+  - [ ] Write `test/cognition.test.ts` first (TDD — see acceptance)
+  - [ ] Implement `src/cognition.ts`:
+    - **Focused reasoning policy (§17):** `export type ReasoningInput = { question: string; evidence_available: boolean; speculative_paths: number; reconsiderations: number; hypothetical_requirements: boolean; unrelated_implementations: number }`; `isFocusedReasoning(input): { focused: boolean; reason: string; slop_types: string[] }` — `slop_types` lists every §17 slop present (speculative_architecture when `speculative_paths > 0`, repeated_reconsideration when `reconsiderations >= 2`, hypothetical_requirements, unrelated_implementations when `>0`); `focused = slop_types.length === 0`; when `!evidence_available && slop_types.length>0` reason names the slop, else `'Question→Evidence→Decision→Action — reasoning is focused'`. Pure.
+    - **Investigation termination (§13 re-consumed at the cognition layer, §17):** `export type CognitiveTerminationInput = { acceptance_mapped: boolean; surface_understood: boolean; path_established: boolean; passes: number; max_passes: number; unrelated_files_opened: number; repeated_reads: number; has_concrete_reason: boolean }`; `shouldTerminateInvestigation(input): { terminate: boolean; reason: string }` — terminate when `acceptance_mapped && surface_understood && path_established` → reason `'triad complete — terminate'` (objective met, §13); else when `passes >= max_passes` without `has_concrete_reason` → `'max passes — terminate'`; else when `unrelated_files_opened > 5` or `repeated_reads >= 2` (reuses Phase-2 thresholds as defaults, caller may override via `max_passes`) without concrete reason → terminate naming the signal; else `terminate:false` with `'continue — concrete reason present'` or `'continue — triad incomplete'`. Pure, mirrors `investigation.ts` triad but at the cognitive-reasoning boundary.
+    - **Alternative limitation (§17):** `export type AlternativeInput = { alternatives: string[]; evidence_backed: boolean[]; max_alternatives: number }` where `evidence_backed[i]` parallels `alternatives[i]`; `limitAlternatives(input): { alternatives: string[]; limited: boolean; reason: string; dropped: string[] }` — `dropped` are alternatives beyond `max_alternatives` (default 3) OR without evidence backing when at least one backed alternative exists; `limited = dropped.length>0`; reason names `'bounded to N evidence-backed alternatives'` or `'all alternatives within bound'`. Pure.
+    - **Output compression (§18):** `export type CompressionInput = { output: string; essential_sections: string[] }` where `essential_sections` are the Decision/Action/Result/Evidence/Blocker headings present; `compressOutput(input): { compressed: string; saved_chars: number; reason: string; well_structured: boolean }` — `compressed` keeps only lines that contain an essential heading or are within 2 lines of one (mission-focused slimming); `saved_chars = output.length - compressed.length`; `well_structured = essential_sections.length >= 2` (at least Decision+Evidence per §18); reason names the compression. Pure, no LLM call.
+    - **Duplicate explanation detection (§17/§18, reuses `fingerprint`):** `export type DuplicateInput = { explanations: string[] }`; `detectDuplicateExplanation(input): { duplicate: boolean; reason: string; duplicate_groups: string[][] }` — fingerprint each explanation via `fingerprint` (sha256 hex), group by fingerprint; `duplicate_groups` lists groups with ≥2 identical fingerprints (exact duplicates); `duplicate = duplicate_groups.length>0`; reason joins the duplicate count or `'no duplicate explanations'`. Pure, deterministic.
+    - **Mission-focused output structure (§18):** `export type StructureInput = { output: string; has_decision: boolean; has_action: boolean; has_result: boolean; has_evidence: boolean; has_blocker: boolean }`; `structureOutput(input): { well_structured: boolean; missing: string[]; reason: string }` — `missing` lists false headings among Decision/Action/Result/Evidence/Blocker filtered to required (Decision+Evidence always required; Action/Result required when `has_action`/`has_result` expected by the mission); `well_structured = missing.length===0`; reason names missing headings or `'Decision/Action/Result/Evidence/Blocker — mission-focused'`. Pure.
+    - **Decision trail (§41):** `recordCognitiveDecision(missionDir: string, d: { decision: string; reason: string; evidence?: string }): void` — thin wrapper over `recordOptDecision` with `actor: 'cognitive-governor'` (reuses the S2 sanitizer). Callers call it with the reason/evidence from any verdict with `focused:false`/`terminate:true`/`limited:true`/`duplicate:true`/`well_structured:false`.
+  - [ ] `docs/concepts/cost.md` (in T2, not here — T2 owns docs) — T1 writes only code + tests
+  - [ ] Commit `feat(cognition): cognitive & output governor verdict engine (reasoning/termination/alternatives/compression/duplicate/structure)`
+- Acceptance:
+  - `bun test test/cognition.test.ts` passes. Cases (each a non-trivial exact assertion):
+    - `isFocusedReasoning`: `speculative_paths:1` → `focused:false`, `slop_types` contains `'speculative_architecture'`, reason names it; `reconsiderations:2` → `focused:false` with `'repeated_reconsideration'`; `hypothetical_requirements:true` → `focused:false`; `unrelated_implementations:1` → `focused:false`; all zero/false + `evidence_available:true` → `focused:true`, `slop_types:[]`
+    - `shouldTerminateInvestigation`: triad all true → `terminate:true` with `'triad complete'`; `passes:2/max_passes:2` without concrete reason → `terminate:true`; same with `has_concrete_reason:true` → `terminate:false`; `unrelated_files_opened:6` → `terminate:true`; `repeated_reads:2` → `terminate:true`; triad incomplete + under limits + no concrete reason → `terminate:false`
+    - `limitAlternatives`: 5 alternatives, `max_alternatives:3`, 2 evidence-backed among first 3 → `dropped` is the 2 beyond bound + any non-backed beyond first backed set, `limited:true`; 2 alternatives within bound all backed → `limited:false`, `dropped:[]`
+    - `compressOutput`: output with Decision/Evidence headings + verbose filler lines 10 lines away → `compressed` drops the filler, `saved_chars > 0`, `well_structured:true`; output with only one heading → `well_structured:false`
+    - `detectDuplicateExplanation`: `['fix X','fix X','fix Y']` → `duplicate:true`, `duplicate_groups` contains `['fix X','fix X']`; all unique → `duplicate:false`, `duplicate_groups:[]`
+    - `structureOutput`: `has_decision:true, has_evidence:true, has_action:false, has_result:false, has_blocker:false` but Decision+Evidence present → `well_structured:true`; missing Decision → `well_structured:false`, `missing` contains `'Decision'`
+    - `recordCognitiveDecision` writes a single `## Cost governor decisions` bullet with `cognitive-governor` actor, sanitized (newline-stripped) reason
+  - `bun run typecheck` passes
+  - Coverage: `src/cognition.ts` ≥90% (config `coverage_new=90`; verified at T3 gate)
+- Risk: medium — a new L module must meet the 90% coverage bar; TDD-first with the acceptance cases above is the safety net. Rollback: revert the single commit.
+- Deferred: none in T1 — report/CLI cognition rows (§39/§43) are Phase 8; slop machinery (§21.3/§21.4/§45) is Phase 6.
+
+**Task 2: wire the verdicts into the agent flow** (§17, §18, §41)
+- Files: modify `content/skills/mugiwara-workflow/SKILL.md`; `docs/concepts/cost.md`
+- Interfaces: consumes `src/cognition.ts` verdicts (T1) — documents them as the decision trail the crew follows; no code import (the skill is prose the agent reads; the trail is the machine-checkable artifact via `recordOptDecision`)
+- Size: S
+- Steps:
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md`, under `## Rules` (after rule 2b), add one rule line (≤120 chars) and a short "Cognitive & Output Governor" subsection. If body would exceed 120 lines (validator caps body at 120 lines, not chars), move the body to `content/skills/mugiwara-workflow/references/cognitive-output-governor.md` with a one-line pointer (sanctioned pattern, Phase-4 precedent af8a204):
+    - Rule: `2c. Cognitive & Output Governor: keep reasoning Question→Evidence→Decision→Action; bound alternatives; compress output to Decision/Action/Result/Evidence/Blocker; dedup explanations; record cognitive verdicts as cognitive-governor trail rows.`
+    - Subsection `## Cognitive & Output Governor` (3–5 lines): reasoning stays focused — Question→Evidence→Decision→Action, no speculative architecture/hypothetical requirements/repeated reconsideration/unrelated implementations (§17); investigation terminates when acceptance_mapped+surface_understood+path_established or limits hit without concrete reason (§13); alternatives bounded to evidence-backed options (default 3); output compressed to mission-focused structure (Decision/Action/Result/Evidence/Blocker, §18), duplicate explanations fingerprinted; every cognitive verdict lands as a `cognitive-governor` trail row. `savepoint.sh`/`lane-base.sh`/config untouched.
+    - Ensure description frontmatter is byte-unchanged (validate-content requires it).
+  - [ ] In `docs/concepts/cost.md`, append a `## Cognitive & Output Governor (src/cognition.ts)` section: the six capabilities + their verdict contracts (`isFocusedReasoning`, `shouldTerminateInvestigation`, `limitAlternatives`, `compressOutput`, `detectDuplicateExplanation`, `structureOutput`, `recordCognitiveDecision`), that Phase 5 records decisions but the report/CLI cognition surface (§39/§43) is Phase 8 and slop detection (§21.3/§21.4/§45) is Phase 6, the honest boundary (module records — crew acts via the workflow skill), and the security design rules (F2/F3).
+  - [ ] Run `bun run validate-content --check-manifest --check-docs --check-doc-integrity`
+  - [ ] Commit `docs(cognition): wire cognitive & output governor verdicts into the workflow skill and cost docs`
+- Acceptance:
+  - `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exits 0 (skill description unchanged, manifest/docs drift clean)
+  - `grep -E 'Cognitive & Output Governor|cognitive-governor' content/skills/mugiwara-workflow/SKILL.md` returns 2+ matches
+  - `grep -E '## Cognitive & Output Governor' docs/concepts/cost.md` returns a match
+  - `bun run typecheck` passes (docs-only, still confirmed)
+- Risk: low — a skill body change could trip validate-content if a line exceeds 120 chars or the description drifts OR the 120-line body cap is exceeded (Phase-4 precedent: move to `references/` with a pointer); acceptance locks all three. Rollback: revert the commit.
+- Deferred: the report/CLI cognition ledger (§39/§43) stays Phase 8; slop detection (§21.3/§21.4/§45) stays Phase 6.
+
+**Task 3: full gate + evidence**
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T2
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output
+  - [ ] If any gate fails: fix within scope, re-run. No gate waived. Known pre-existing `enforcement.test.ts` escape#2 flake (blockers.md row 3, heal_halt true) is waivable — re-run or prove on clean base is not a Phase-5 regression.
+  - [ ] Write `flows/02-execution.md`: task table (T1–T3), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(cognition): phase 5 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`; pre-existing flake not counted as Phase-5 regression when reproduced on base)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New `src/cognition.ts` misses the 90% coverage bar | medium | CI red | TDD-first; acceptance cases lock every verdict family; gate catches at T3 |
+| Skill-body edit trips validate-content (description drift, 120-line cap, 120-char line cap) | low | CI red | T2 acceptance locks all three; Phase-4 precedent: move to `references/` with pointer |
+| Cognitive verdicts over-conservative (reject legitimate reasoning) | medium | false terminate/limit | verdicts are pure and auditable; reason names the deciding clause so crew can record a concrete-reason override (still audited); `has_concrete_reason` escape hatch test-locked |
+| Investigation termination duplicates `src/investigation.ts` logic | low | confusion | Phase-5 `shouldTerminateInvestigation` is the cognitive-layer re-consumption of the §13 triad with a `has_concrete_reason` override — documented as re-consumption, not a fork; investigation.ts stays the file-investigation limit, cognition.ts is the reasoning-investigation limit |
+| Duplicate detection false positives (fingerprint collision) | negligible | missed dedup | sha256 hex — collision negligible; exact-match grouping only, not fuzzy |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers row 3); not a Phase-5 regression — proven by reproduction on clean main |
+| Slop/ledger scope bleed (gold-plating into Stop-Slop or Reporting) | low | scope slop | hard boundary: Phase 5 records decisions + pure verdicts only; slop machinery = Phase 6, report/CLI = Phase 8 (honesty section) |
+
+Rollback plan: each task is one revertible commit; T3 evidence lists exact
+commits. Worst case: `git revert` the Phase-5 commits. `savepoint.sh`,
+`lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint +
+config behavior is preserved by construction.
+
+## Phase-5 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Cognitive & Output (user acceptance) maps to Phase-5 tasks; each user AC has ≥1
+per-task command-verifiable criterion:
+
+| User AC (spec DoD) | Capability (§51/§spec) | Deliverable |
+|---------------------|------------------------|-------------|
+| reasoning stays focused | 1 (focused reasoning policy) | T1 `isFocusedReasoning` (test-locked: speculative/reconsideration/hypothetical/unrelated slop_types exact) |
+| investigation terminates when sufficient | 2 (investigation termination) | T1 `shouldTerminateInvestigation` (test-locked: triad + limits + concrete-reason override) |
+| alternatives bounded | 3 (alternative limitation) | T1 `limitAlternatives` (test-locked: max 3, evidence-backed filter, dropped list exact) |
+| output compressed | 4 (output compression) | T1 `compressOutput` (test-locked: saved_chars, well_structured) |
+| duplicate explanations detected | 5 (duplicate explanation detection) | T1 `detectDuplicateExplanation` (test-locked: fingerprint grouping exact) |
+| output mission-focused | 6 (mission-focused output structure) | T1 `structureOutput` + T1 `compressOutput` (test-locked: Decision/Action/Result/Evidence/Blocker) |
+| optimization decisions auditable (§41) | all | T1 `recordCognitiveDecision` → `recordOptDecision` (test-locked bullet shape + actor) |
+
+## Definition of Done (Phase 5)
+
+- `src/cognition.ts` exists: `isFocusedReasoning`, `shouldTerminateInvestigation`,
+  `limitAlternatives`, `compressOutput`, `detectDuplicateExplanation`,
+  `structureOutput`, `recordCognitiveDecision` — all pure, unit-tested, ≥90% coverage.
+- The six §51 Phase-5 capabilities are covered by verdict functions with
+  explicit reasons on every refusal/terminate/limit/compress/duplicate verdict.
+- `content/skills/mugiwara-workflow/SKILL.md` wires the Cognitive & Output Governor:
+  Question→Evidence→Decision→Action, bounded alternatives, compressed
+  deduplicated mission-focused output + recorded cognitive verdicts (rule 2c);
+  description unchanged; body ≤120 lines (or references pointer); validate-content green.
+- `docs/concepts/cost.md` documents the Cognitive & Output Governor verdicts, the
+  honest boundary, the Phase-8/Phase-6 deferral boundaries, and the F2/F3
+  security design rules.
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` runtime
+  behavior — no new config keys.
+- `bun run gate` passes fully; every pre-existing test passes unchanged (pre-existing
+  escape#2 flake not counted when reproduced on base).
+- Phase 5 records decisions and pure verdicts only — no report/CLI surface
+  (Phase 8) and no slop machinery (Phase 6) built here.
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `src/cognition.ts` produces and records verdicts; the LLM
+  crew (workflow skill, T2) is the only thing that acts on them. The module does
+  not pretend to force the model — it makes the cognitive/output decision
+  structured, auditable, and instructed.
+- **Report/CLI cognition ledger deferred to Phase 8:** `reasoning focused` vs
+  `slop`, `output compressed chars`, `duplicate explanations avoided` (§39/§43)
+  and `mugiwara cost` cognition section (§42) are Phase 8 Reporting — Phase 5
+  produces the pure verdicts and records the decisions only.
+- **Slop-specific detection deferred to Phase 6 (Stop-Slop):** reasoning/output
+  slop taxonomy (§21.3/§21.4), §45 scenarios 5/9 (repeated reasoning/verbose
+  output) with detect→classify→intervene, and the §56 slop signals are Phase 6
+  — Phase 5 detects the §17/§18 slop types as verdicts, not the slop
+  detector/intervention machinery.
+- **F2/F3 accepted Low (unchanged):** secret-bearing files should not be
+  fingerprinted/registered (F2) and `.mugiwara/` is local trusted state (F3) —
+  both documented as design rules in `docs/concepts/cost.md` (T2), hardened at
+  Phase 8 per decisions.md.
+- **No new config:** Phase 5 adds nothing to `DEFAULT_CONFIG` — cognitive &
+  output verdicts are pure over explicit inputs; the §6 `output.mode` profile
+  belongs to the adaptive-budget phases (7/8).
+- **Re-consumption note:** `shouldTerminateInvestigation` re-consumes the §13
+  triad at the cognition layer with a `has_concrete_reason` override — it does
+  not fork `src/investigation.ts`; file-investigation limits stay in
+  investigation.ts, reasoning-investigation limits live in cognition.ts.
