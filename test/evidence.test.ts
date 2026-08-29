@@ -184,6 +184,27 @@ describe('loadRegistry — F1 shape validation (security hardening)', () => {
     expect(loaded[0].reads).toBe(2);
   });
 
+  it('drops a null line and an unparseable-JSON line; valid entries before and after load intact (W1)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
+    writeFileSync(
+      join(dir, 'context-registry.jsonl'),
+      [
+        JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'a.ts', id: 'E001', reads: 1, ref: 'E001 a.ts' }),
+        'null',
+        JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'b.ts', id: 'E002', reads: 1, ref: 'E002 b.ts' }),
+        '{ this is not valid json',
+        JSON.stringify({ fingerprint: 'f3', kind: 'file', file: 'c.ts', id: 'E003', reads: 2, ref: 'E003 c.ts' }),
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    const loaded = loadRegistry(dir);
+    expect(loaded).toHaveLength(3);
+    expect(loaded.map((e) => e.id)).toEqual(['E001', 'E002', 'E003']);
+    // valid entries keep their exact reads (null/unparseable lines dropped, not floor/alter others)
+    expect(loaded[2].reads).toBe(2);
+  });
+
   it('drops a line with non-finite reads', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
     writeFileSync(

@@ -110,27 +110,35 @@ export function persistRegistry(missionDir: string, registry: RegistryEntry[]): 
 export function loadRegistry(missionDir: string): RegistryEntry[] {
   const file = join(missionDir, REGISTRY_FILE);
   try {
-    return readFileSync(file, 'utf8')
-      .split(/\r?\n/)
-      .filter(Boolean)
-      .map((l) => JSON.parse(l) as RegistryEntry)
-      // F1 — validate entry shape on load: drop malformed lines, never crash
-      // the reader, and coerce `reads` to a bounded integer. A malformed or
-      // `string reads` line (string-concat risk) can no longer reach consumers.
-      .filter((e): e is RegistryEntry => {
-        const ok =
-          typeof e.fingerprint === 'string' &&
-          typeof e.kind === 'string' &&
-          typeof e.file === 'string' &&
-          typeof e.id === 'string' &&
-          typeof e.ref === 'string' &&
-          typeof e.reads === 'number' &&
-          Number.isFinite(e.reads) &&
-          e.reads >= 0;
-        if (!ok) return false;
-        e.reads = Math.floor(e.reads);
-        return true;
-      });
+    const out: RegistryEntry[] = [];
+    // F1 — validate entry shape on load: drop malformed lines, never crash the
+    // reader, and coerce `reads` to a bounded integer. A malformed or `string
+    // reads` line (string-concat risk) can no longer reach consumers.
+    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      let e: unknown;
+      try {
+        e = JSON.parse(line);
+      } catch {
+        continue; // W1 — unparseable line drops only itself, never the rest
+      }
+      // W1 — a JSON literal like `null` parses but is not a registry entry.
+      if (e === null || typeof e !== 'object') continue;
+      const entry = e as RegistryEntry;
+      const ok =
+        typeof entry.fingerprint === 'string' &&
+        typeof entry.kind === 'string' &&
+        typeof entry.file === 'string' &&
+        typeof entry.id === 'string' &&
+        typeof entry.ref === 'string' &&
+        typeof entry.reads === 'number' &&
+        Number.isFinite(entry.reads) &&
+        entry.reads >= 0;
+      if (!ok) continue;
+      entry.reads = Math.floor(entry.reads);
+      out.push(entry);
+    }
+    return out;
   } catch {
     return [];
   }

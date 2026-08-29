@@ -1,7 +1,31 @@
 # Flow 8 — Healing (cycle 1) — Phase 2 must-fix defects
 
-Fixes applied to the three review must-fix findings (`review-phase2.md` H1/M1/M2).
+Fixes applied to the three review must-fix findings (`review-phase2.md` H1/M1/M2)
+plus Phase 3 security **W1** (reviewer MAJOR #2).
 TDD: each fix's test was written first, run red, then the fix landed green.
+
+## W1 (Major, security S8) — one malformed/null line empties whole registry
+
+- **Root cause:** `src/evidence.ts` `loadRegistry` parsed every JSONL line via
+  `.map(JSON.parse)` inside one chain, wrapped by a single outer try/catch. A
+  `null` literal line (`typeof e.fingerprint` throws on `null`) or any
+  unparseable-JSON line threw inside the map → the outer catch returned `[]` →
+  the **entire registry** (all valid dedup entries + E### refs) was silently
+  discarded for the session, defeating F1's "drop malformed lines *selectively*"
+  intent. Real caller: `mission.ts:173`.
+- **Fix (one guard in the shared function):** replaced the map/filter chain with
+  a per-line loop. Each line's `JSON.parse` is wrapped in its own try/catch
+  (unparseable line drops itself and continues), and a guard
+  (`e === null || typeof e !== 'object'`) skips JSON literals like `null`.
+  All existing valid-entry handling is preserved exactly: drop non-string/missing
+  `ref`, non-string/negative/fractional/non-finite `reads`, floor `reads` to int.
+- **Tests (TDD, red → green):** added to `test/evidence.test.ts` F1 block —
+  "drops a null line and an unparseable-JSON line; valid entries before and after
+  load intact (W1)". Writes `E001`, `null`, `E002`, `{ not valid json`, `E003`
+  (reads 2) → asserts exactly 3 entries `['E001','E002','E003']` and the last
+  entry's `reads === 2`. Red before fix (1 fail / 15 pass), green after
+  (16 pass). This closes the reviewer MINOR ("F1 tests lack a null-line case").
+- **Commit:** `fix(evidence): drop corrupt registry lines without discarding valid entries (W1)`
 
 ## H1 (High) — `context-registry.jsonl` survives archive loose
 

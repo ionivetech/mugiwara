@@ -6,6 +6,7 @@
 ## Healed (Flow 8)
 | flow stage | task | symptom | attempted | help-needed |
 |-----------|------|---------|----------|-------------|
+| 7 (review) | S8 W1 [Major] | `loadRegistry` one null/unparseable-JSON line → outer catch returns `[]` → whole registry silently discarded (defeats F1 selective-drop) | per-line try/catch JSON.parse + null/object guard; valid entries before/after load intact; W1 test red→green; evidence.test.ts 16 pass | HEALED — `fix(evidence): drop corrupt registry lines without discarding valid entries (W1)` |
 | 7 (review) | R1 [High] | gate-math parity vs savepoint.sh not test-enforced (constants-only) | added savepoint.sh formula parser + bash-evaluated parity tests (warnAt/stopAt/delegateAt per lane) + budgetStatus branch-order test — 75 pass | HEALED — 2339f86 |
 | 7 (review) | R2 [Med] | cost-events.jsonl (ext .jsonl) outside TRAIL_EXTS → bypasses closure secret-scan | added .jsonl to TRAIL_EXTS; regression test: secret in cost-events.jsonl flagged | HEALED — 2339f86 |
 | 7 (review) | H1 [High] | context-registry.jsonl not folded/removed at archive → survives loose; parity broken with cost-events.jsonl | added registry to fold+removal path; integration test: archived registry in report.md + file gone | HEALED — 17b4c7c |
