@@ -122,6 +122,7 @@ mugiwara archive <mission>                        # fold the trail into missions
 mugiwara clean [--all] [--before <date>]          # batch-archive closed missions
 mugiwara status --all                             # every actor, not just yours
 mugiwara continue [mission] [member]              # resolve the resume point (exit 2 = you pick)
+mugiwara cost [--mission <id>] [--json]           # cost ledger, avoided work, live slop, trail
 mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh
 mugiwara savepoint <mission> [member] [flow stage] [mode]  # shorthand for run savepoint.sh
 ```
