@@ -110,3 +110,46 @@ live here; the plan doc stays clean.
   in-scope). Honest Phase-2 = measurement-not-enforcement boundary logged.
 - **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO
   pause; proceed to Zoro.
+
+## Flow 4–6 — Phase 2 checkpoint, quality, gates (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Flow 4 (Chopper):** PASS — every acceptance criterion re-run independently,
+  7/7 tasks, no blockers. Note: `bun test <file>` shim fails closure family
+  (`vi.setConfig is not a function`) predates Phase 2; real gate runner is
+  `vitest run` and passes.
+- **Flow 5 (Sanji):** PASS — dup 0%, maint A, typecheck clean, no must-fix.
+  Two LOW nits deferred to Phase 3: (a) `CostEvent.context_metrics` shape
+  duplicated inline vs importing `ContextMetrics`; (b) archive metrics row can
+  show `duplicate_chars:0` when a registry exists (misread risk).
+- **Flow 6 (Franky):** GO — `bun run gate` exit 0 (483/483 tests), coverage
+  PASS (mission.ts 94.28% ≥80), DoD 8/8, savepoint.sh/lane-base.sh untouched.
+- **Plan impact:** continue to Flow 7 review + security.
+
+## Flow 7 — Phase 2 review (Robin) + security (Jinbe)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Review (Robin):** FAIL with must-fix. H1 High — `context-registry.jsonl`
+  not folded into report nor removed → survives loose, parity broken with
+  cost-events.jsonl. M1 Med — efficiency row shows `duplicate_chars:0`/
+  `read_avoidance_chars:0` (hardcoded 0) beside real `reuse_rate>0`
+  (contradictory). M2 Med — `context_status:'over'` unreachable (archive throws
+  first → every persisted closure event is 'ok'). Reliability 6.5/10.
+- **Security (Jinbe):** PASS — no Crit/High, Hotspots A, SCA A. S1 (.jsonl in
+  TRAIL_EXTS) and S2 (recordOptDecision sanitize) confirmed fixed; zero new
+  deps. F4 (context-registry.jsonl missing from archive fold) corroborates
+  Robin's H1 — not a blocker now (no production writer) but must close.
+- **Heal routing:** H1, M1, M2 → Brook (Flow 8, cycle 1). Security F1
+  (loadRegistry shape validation) deferred to Phase 3 wiring. F2/F3 (Low)
+  accepted.
+- **Plan impact:** enter Flow 8 healing. heal_cycle → 1.
+
+## Flow 8 — heal cycle 1 (Brook) + re-verification (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Brook healed all 3 must-fix, root-cause, proven by test:**
+  - H1 `17b4c7c` — context-registry.jsonl now folded into report.md + removed at archive (survival parity with cost-events.jsonl).
+  - M1 `115785a` — registry entries carry `chars`; real duplicate_chars/read_avoidance_chars accounting; `n/a (char data not tracked)` fallback so reuse_rate>0 never coexists with fabricated 0.
+  - M2 `5ca71bb` — over-budget closure now records `context_status:'over'` event BEFORE the gate throws (ledger captures the condition, doesn't erase it).
+- **Re-verification (Luffy):** heal commits verified in git log; `bun run gate` re-run — **exit 0** (coverage PASS, mission.ts 94.41%). The only intermittent red (enforcement.test.ts "escape #2") is the documented pre-existing flake: reproduced on clean `main` (2/3 fail) in this session — proven NOT a Phase-2 regression, tracked as separate fix mission (blockers row 3), Phase-1 shipped with same caveat. Not burning Phase-2 heal cycles on it.
+- **Plan impact:** Phase 2 code clean, gates green. Proceed to Flow 9 closure + ship.
