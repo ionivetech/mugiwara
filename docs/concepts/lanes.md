@@ -8,10 +8,10 @@ The crew sizes a mission before it runs. Lane is computed from the diff by
 | Lane | Picks when | Flow stages | Token budget |
 |------|-----------|-------|:------:|
 | **0 · Direct** | typo, rename, 1 file <20 LOC | none | ~0 |
-| **1 · Lean** | bug in 1-2 files, <50 LOC | execute → quality | ~7k / 12k |
+| **1 · Lean** | bug in 1-2 files, <50 LOC | execute → quality | ~8k / 12k |
 | **2 · Standard** | feature, 3-8 files | plan → execute → audit → review | ~13k / 25k |
-| **3 · Full** | architecture, migration, 9+ files, or auth/payment/API touched | all 9 flow stages | ~23k / 50k |
-| **4 · Spike** | exploratory, needs direction | brainstorm → re-triage | ~1k / 3k |
+| **3 · Full** | architecture, migration, 9+ files, or auth/payment/API touched | all 9 flow stages | ~22k / 50k |
+| **4 · Spike** | exploratory, needs direction | brainstorm → re-triage | ~5k / 3k |
 
 The "typical" column is the measured LANE_BASE — the token load of the skills
 and agents that lane loads, computed by `scripts/lane-base.ts` from content

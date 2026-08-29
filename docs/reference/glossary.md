@@ -12,7 +12,7 @@ page names the preferred one.
 | **Lane** | How much process the change gets: `direct` (no pipeline) / `lean` / `standard` / `full` / `spike` (resize). Computed from the git diff; sensitive paths force full. |
 | **Mode** | Autonomy level: `guided` (asks first) / `semi` / `auto`. Set in `.mugiwara/config`. Mode is one of three independent decisions (see Control mode). |
 | **Control mode** | The "how much do you participate" decision. One of three independent dimensions (control mode / execution posture / Cost Governor) — it never implies a topology or cost tier. |
-| **Execution posture** | The "how is work performed" decision: `inline-sequential` (default) / `parallel-workers` / `context-relief` / `phase-isolated` / `team-scoped`. Chosen deterministically at flow boundaries, recorded in the decision trail. Never implies a control mode. |
+| **Execution posture** | The "how is work performed" decision: `inline-sequential` (default) / `inline-batched` / `parallel-workers` / `context-relief` / `phase-isolated` / `team-scoped`. Chosen deterministically at flow boundaries, recorded in the decision trail. Never implies a control mode. |
 | **Cost Governor** | The "what is safe to spend" decision. Supplies reserve / project / avoid / stop verdicts, measures context, and records an optimization trail. Recommends and records — never silently skips a safety stage or replaces consent. |
 | **Slop** | Wasted cost the governor flags: repeated reads, useless abstraction/boilerplate, healing spin, out-of-scope work. Detected live and attributed per crew member. |
 | **Savepoint** | State written to `<mission>/state.json` (+ `continue*.json`) at each flow-stage boundary. Powers resume and every computed command. |

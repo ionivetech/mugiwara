@@ -113,7 +113,7 @@ decisions — one never quietly drives another:
 
 - **Control mode** (guided/semi/auto) decides how much you approve.
 - **Execution posture** decides *how* work runs: `inline-sequential` (default),
-  `parallel-workers`, `context-relief`, `phase-isolated`, `team-scoped`.
+  `inline-batched`, `parallel-workers`, `context-relief`, `phase-isolated`, `team-scoped`.
 - **Cost Governor** decides what is safe to spend (reserve / project / avoid / stop).
 
 Luffy records an initial posture at Flow 0 (ordinary work defaults to
@@ -129,7 +129,7 @@ default to inline. See [execution-model.md](execution-model.md).
 
 ## Large campaigns — sub-plan
 
-Missions >3 phases or >1500-line plans split via `sub-plan/` — master `plan.md` is the index, `sub-plan/01-phase01-<slug>.md` slices hold detail, `flows/phase-NN/` isolates execution per phase, `mugiwara archive --merge` folds all into `report.md`. Precedent: `native-cost-governor` (9 phases, 2688-line plan → single `report.md`).
+Missions >3 phases or >1500-line plans split via `sub-plan/` — master `plan.md` is the index, `sub-plan/01-phase01-<slug>.md` slices hold detail, `flows/phase-NN/` isolates execution per phase, `mugiwara archive` folds all into `report.md`. Precedent: `native-cost-governor` (9 phases, 2688-line plan → single `report.md`).
 
 ## Blocker protocol
 

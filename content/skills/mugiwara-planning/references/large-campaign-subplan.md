@@ -17,7 +17,7 @@ Master `plan.md` never exceeds 1500 lines — detail lives in sub-plan slices.
 Two distinct decisions — do not conflate:
 
 - **Phase isolation** (sub-plan) = ONE mission, one plan. `sub-plan/NN-phaseNN-*.md`
-  slices detail; `flows/phase-NN/` owns evidence; archive `--merge` folds the
+  slices detail; `flows/phase-NN/` owns evidence; archive folds the
   trail. Phase-local posture lives in the slice.
 - **True sub-mission** = a SEPARATE, independently mergeable unit: own branch,
   done-criteria, continuation pointer, and mergeable end state. Only Nami

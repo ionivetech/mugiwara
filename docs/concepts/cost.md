@@ -28,9 +28,9 @@ remaining headroom in reserve — it is the budget's lock, not free space.
 | Lane | Flow stages | LANE_BASE (measured) | Budget | Warn / Stop (1.5× / 3× budget) |
 |------|-------|:---:|:---:|:---:|
 | 0 Direct | none | ~0 | — | — |
-| 1 Lean | execute → quality | 7,000 | 12,000 | warn 18k / stop 36k |
+| 1 Lean | execute → quality | 8,000 | 12,000 | warn 18k / stop 36k |
 | 2 Standard | plan → execute → audit → review | 13,000 | 25,000 | warn 37.5k / stop 75k |
-| 3 Full | all 9 flow stages | 23,000 | 50,000 | warn 75k / stop 150k |
+| 3 Full | all 9 flow stages | 22,000 | 50,000 | warn 75k / stop 150k |
 | 4 Spike | brainstorm → re-triage | 1,000 | 3,000 | warn 4.5k / stop 9k |
 
 LANE_BASE is **not a hand-written estimate** — `scripts/lane-base.ts`
@@ -52,9 +52,9 @@ Two numbers are computed, gate-validated constants — not guesses:
 |------|---------------------------|--------|-------------|-----------|
 | direct | 0 (no pipeline) | — | — | — |
 | spike | 1,000 | 3k | 4.5k | 9k |
-| lean | 7,000 | 12k | 18k | 36k |
+| lean | 8,000 | 12k | 18k | 36k |
 | standard | 13,000 | 25k | 37.5k | 75k |
-| full | 23,000 | 50k | 75k | 150k |
+| full | 22,000 | 50k | 75k | 150k |
 
 ¹ `LANE_BASE_*` from `scripts/lib/lane-base.sh` — the sum of skill+agent body
 word-counts × 1.35 for that lane's flow stages; `scripts/lane-base.ts` fails

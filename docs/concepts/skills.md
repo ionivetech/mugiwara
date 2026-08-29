@@ -14,7 +14,7 @@ it embodies a role.
 | `mugiwara-execution` | Todo list, sequential inline + parallel worker batches, 6-field delegation, one commit per task |
 | `mugiwara-checkpoint` | Verify-everything audit — deduped re-runs scoped to flow-stage diff; failure rows to blocker ledger |
 | `mugiwara-quality` | Discover project tooling; formatter, linter, duplication detection, complexity scoring, maintainability rating (A–E), code attribute checks, unit tests |
-| `mugiwara-gates` | Coverage ≥90% new / ≥80% modified, build, DoD, granular sonar gate: vulnerabilities, bugs, code smells, duplications — per-condition thresholds |
+| `mugiwara-gates` | Coverage ≥85% new / ≥90% modified, build, DoD, granular sonar gate: vulnerabilities, bugs, code smells, duplications — per-condition thresholds |
 | `mugiwara-review` | Doubt-driven review: breaking-change map, five-axis, reliability rating (A–E), code attribute deep review, severity-tagged findings |
 | `mugiwara-security` | STRIDE-first security review, OWASP Top 10, security hotspots, SCA license, authn/authz, secrets, responsibility attribute |
 | `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |

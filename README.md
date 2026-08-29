@@ -100,9 +100,9 @@ nine stages. Lanes: `direct` / `lean` / `standard` / `full` / `spike`.
 | Lane | Flow stages | Typical tokens | Budget |
 | ---- | :---: | :---: | :---: |
 | Direct (typo) | 0 | ~0 | — |
-| Lean (small bug) | 2 | ~7k | 12k |
+| Lean (small bug) | 2 | ~8k | 12k |
 | Standard (feature) | 5–7 | ~13k | 25k |
-| Full (architecture) | 9–11 | ~23k | 50k |
+| Full (architecture) | 9–11 | ~22k | 50k |
 
 → [Lanes](docs/concepts/lanes.md)
 
@@ -352,7 +352,7 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 | Lane constants match content load | **verified**, in CI |
 | Write-scope enforcement | **opencode only** — rules-based elsewhere |
 | Cross-harness mission behavior | **12/12 platforms**, in CI |
-| Outcome vs other approaches | **not measured** — see roadmap |
+| Outcome vs other approaches | **not measured** |
 
 Numbers here are produced by `bun run gate`. Nothing in this table is an estimate.
 

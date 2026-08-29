@@ -25,6 +25,8 @@ export const DEFAULT_CONFIG = [
   '# investigation_max_passes=2  # optional: cap investigation passes (spec §13)',
   '# investigation_max_unrelated_files=5',
   '# investigation_repeated_read_threshold=2',
+  '# sign_backend=auto            # optional: auto | minisign | pure | off — report attestation',
+  '# enforce=block                # optional: off | warn | block — pipeline-guard policy',
 ].join('\n') + '\n';
 
 /** Config file path candidates: project first, then user home. */

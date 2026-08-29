@@ -53,7 +53,7 @@ Hooks are the only no-model mechanism, and hooks are not portable.
 |--------|----------------------|-------|
 | `claude` | **enforced** | `Stop` + `SubagentStop` hooks run `auto-savepoint` |
 | `opencode` | advisory only | no verified turn-end event to bind to |
-| `codex`, `cursor`, `gemini`, `kimi`, `windsurf`, `cline`, `generic` | advisory only | no hook mechanism at all |
+| `copilot`, `gemini`, `codex`, `windsurf`, `cline`, `kilo`, `antigravity`, `cursor`, `kimi`, `pi` | advisory only | no hook mechanism at all |
 
 A documented gap beats a fake guarantee. If a rule matters on a target in the
 bottom two rows, it has to be checked by a human or by CI — not assumed.

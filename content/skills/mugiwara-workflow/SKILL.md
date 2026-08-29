@@ -93,7 +93,7 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 ## Governors
 Work (§7), Scope/Code (§14-16), Cognitive, Stop-Slop (§45), Budget (§43), Reporting/CLI, Benchmark (§48-49) — full checklists: `references/scope-code-governor.md`, `references/cognitive-output-governor.md`, `references/stop-slop-governor.md`, `references/adaptive-budget-governor.md`, `references/benchmark-governor.md`; trail rows; savepoint/lane-base/config untouched.
 ## Large campaign — sub-plan & archive merge
-Full checklist: `references/large-campaign-subplan.md` — 12 items; `sub-plan/` when `>3 phases` or `>1500 lines`, `flows/phase-NN/` isolation, `mugiwara archive --merge` folds into `report.md`.
+Full checklist: `references/large-campaign-subplan.md` — 12 items; `sub-plan/` when `>3 phases` or `>1500 lines`, `flows/phase-NN/` isolation, `mugiwara archive` folds into `report.md`.
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.

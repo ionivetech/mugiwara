@@ -6,7 +6,7 @@ This is the companion to the feature table in the
 
 ## Table of contents
 
-- [1. The 9-flow-stage crew pipeline](#1-the-9-flow-stage-crew-pipeline)
+- [1. The Flow 0–9 crew pipeline](#1-the-9-flow-stage-crew-pipeline)
 - [2. Multi-persona crew agents](#2-multi-persona-crew-agents)
 - [3. Inline execution model](#3-inline-execution-model)
 - [4. Autonomy modes](#4-autonomy-modes)
@@ -36,7 +36,7 @@ This is the companion to the feature table in the
 - [28. Permission boundaries & tool-surface governance](#28-permission-boundaries--tool-surface-governance)
 - [29. Adaptive execution & three-decision model](#29-adaptive-execution--three-decision-model)
 
-## 1. The 9-flow-stage crew pipeline
+## 1. The Flow 0–9 crew pipeline
 
 **What.** Non-trivial work runs a ten-flow pipeline (Flow 0 triage + Flow stages
 1-9). Each flow stage is owned by one crew member, and every flow stage passes only on
@@ -352,7 +352,7 @@ the check stays green.
 ## 12. Gates
 
 **What.** Franky issues binary verdicts backed by evidence: coverage
-(≥90% new / ≥80% modified by default), build, Definition of Done, and a
+(≥85% new / ≥90% modified by default), build, Definition of Done, and a
 granular sonar gate with per-condition thresholds (vulnerabilities, bugs,
 code smells, duplications). Missing coverage tooling is a reported gap, never
 a silent pass.
@@ -592,7 +592,7 @@ following them.
   pipeline guard reads it; `off` disables the hooks, `warn` reports, `block`
   fails the turn.
 - **Coverage thresholds** (`coverage_new` / `coverage_modified` in
-  `.mugiwara/config`, default 90/80) are gate-enforced on the diff by
+  `.mugiwara/config`, default 85/90) are gate-enforced on the diff by
   `scripts/coverage-gate.ts`; `0` disables a threshold; no test suite = SKIP
   with a reason, never a fake pass.
 - **Five hooks** (Claude Code only): `session-start`, `mugiwara-mode-tracker`,

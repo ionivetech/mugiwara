@@ -57,7 +57,6 @@ is not shipped. Consumers import into their own ledger with
 - Screenshot of a closed mission report (the trail IS the product)
 - One sentence on lanes: process scales with change size
 - Supported-harness table copied from docs/reference/harness-matrix.md
-- Link to ROADMAP.md — the honest state of what works where
 
 ## Adaptive execution — migration & rollback
 

@@ -376,7 +376,7 @@ if (integrityArg !== -1) {
     const constants = readFileSync(src, 'utf8');
     const docs = ['docs/concepts/cost.md', 'docs/concepts/lanes.md', 'README.md'];
     const expected: [string, string][] = [
-      ['lean', '7,000'], ['standard', '13,000'], ['full', '23,000'],
+      ['lean', '8,000'], ['standard', '13,000'], ['full', '22,000'],
       ['lean', '12,000'], ['standard', '25,000'], ['full', '50,000'],
     ];
     for (const doc of docs) {
