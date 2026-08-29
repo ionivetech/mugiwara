@@ -148,6 +148,16 @@ describe('run() — status', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
+  test('bootstrap: install --dry-run does not write config (no mutation)', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-dryrun-'));
+    try {
+      const cfg = join(dir, '.mugiwara', 'config');
+      expect(existsSync(cfg)).toBe(false);
+      await expect(capture(['install', '--dry-run'], dir)).rejects.toThrow(/Not a terminal/);
+      expect(existsSync(cfg)).toBe(false);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
   test('prints computed state for an in-flight mission', async () => {
     const dir = fixture([{ root: 'state', mission: 'seamless', file: 'state', body: state('seamless') }]);
     try {

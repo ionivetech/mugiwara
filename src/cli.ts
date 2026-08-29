@@ -26,9 +26,14 @@ export async function run(argv: string[]): Promise<void> {
   if (flag(flags.version)) { console.log(`mugiwara ${VERSION}`); return; }
   // A command on a fresh project must be immediately usable — bootstrap the
   // default .mugiwara/config when it is missing (not only at install time).
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
-  if (ensureConfig(projectDir)) {
-    console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
+  // Skipped for install/update --dry-run: a dry run must not mutate the
+  // project (the installer writes the config itself on a real install).
+  const isDryRunInstall = (command === 'install' || command === 'update') && flag(flags.dryRun);
+  if (!isDryRunInstall) {
+    const projectDir = resolve(str(flags.project) ?? process.cwd());
+    if (ensureConfig(projectDir)) {
+      console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
+    }
   }
   switch (command) {
     case 'install': return install(flags);
