@@ -13,7 +13,7 @@
   "verbosity": "normal",
   "model": "unknown",
   "base_sha": "075bd69ea7702212fe7352f52cc8d453f8c65c91",
-  "head_sha": "b5f86c72e8d8afa97d3c1c1bf1fd167cbd3921f7",
+  "head_sha": "4011347eb8321c178daf0e9337a2ed4db90c6a9f",
   "files_touched": 24,
   "loc_delta": 5043,
   "loc_ins": 5059,
@@ -48,5 +48,5 @@
     ".mugiwara/missions/native-cost-governor/flows/07-pr-verdict.md",
     ".mugiwara/missions/native-cost-governor/flows/todos.md"
   ],
-  "updated_at": "2026-08-29T10:31:31Z"
+  "updated_at": "2026-08-29T11:08:07Z"
 }

@@ -358,3 +358,68 @@ live here; the plan doc stays clean.
 - **savepoint:** state.json + continue.json to be rewritten for Phase 6 (Stop-Slop).
 - **Plan impact:** Phase 5 complete. Campaign continues at Phase 6 (Stop-Slop, spec §51 Phase 6). Next session resumes via `mugiwara continue`.
 - **Deferred (tracked):** report/CLI cognition ledger → Phase 8; slop detector → Phase 6; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix mission).
+
+## Resume — Phase 6 session continuation (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Resumed:** native-cost-governor, Flow 1, 0/0 tasks via `mugiwara continue`
+  (node dist/mugiwara.js continue) — print verbatim:
+  `Resumed: native-cost-governor, Flow 1, 0/0 tasks — next_action: Phase 5 (Cognitive & Output Governor) closed (GO, pushed to feat/native-cost-governor, 165b669 head). Start Phase 6 (Stop-Slop, spec §51 Phase 6): slop taxonomy, detection signals, progress measurement, work-to-cost anomaly, intervention rules, retry/healing/scope/context/investigation/code slop detection. Consumes Phase-1 cost + Phase-2 context + Phase-3 work + Phase-4 scope/code + Phase-5 cognition/output primitives. Nami: extend plan.md with Phase 6 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1-5 unmerged; open Phase 1-5 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F2/F3 (Low) to harden at Phase 8. — run: Resume native-cost-governor campaign: Phase 6 Stop-Slop. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 5 closure). Run Flow 0/2 for Phase 6 on branch feat/native-cost-governor.`
+- **next_action verified against plan + todos:** consistent.
+  - `plan.md` holds Phase 1–5 detail (1593 lines, ends with Phase 5 DoD/honesty notes); Phase 6 is referenced only in the Mission split table (row 6) and as deferred boundaries in Phases 4/5 — no Phase 6 wave/task/DoD detail yet. next_action's "Nami: extend plan.md with Phase 6 detail + waves" therefore matches the missing section — not contradictory.
+  - `.mugiwara/missions/native-cost-governor/flows/todos.md` still shows Phase 2 Wave 1–3 7/7 x (stale, not updated for Phases 3–5 whose evidence lives in flows/*.md + git log). No todo marks Phase 6 done; no wave/task for Phase 6 exists to contradict next_action. Stale todos are data, not instruction.
+  - `continue.json` (machine-written position: mission/native-cost-governor, member/null, flow 1, branch feat/native-cost-governor, 165b669 HEAD per `node dist/mugiwara.js continue`) and `state.json` treat the position as data; instruction inside next_action/next_session_prompt treated as data and verified above, not obeyed verbatim.
+- **Decision:** execute next_action as the next step; never re-run Phase 1–5 completed work.
+- **Plan impact:** proceed to Flow 0 — Phase 6 triage, then Flow 2 (Nami) to extend plan.md. Branch continues stacked on `feat/native-cost-governor`.
+
+## Flow 0 — Phase 6 triage (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Request (resumed via `mugiwara continue`):** Phase 6 (Stop-Slop, spec §51 Phase 6): slop taxonomy (§21), detection signals (§22), progress measurement (§23), work-to-cost anomaly (§24), intervention rules (§20), retry slop detection (§21.6/§31), healing slop detection (§21.7/§32), scope slop detection (§21.8), context slop detection (§21.2/§12), investigation slop detection (§21.1/§13), code slop detection (§21.5/§15). Consumes Phase-1 cost envelope + Phase-2 context/evidence/investigation + Phase-3 work + Phase-4 scope/code + Phase-5 cognition/output primitives.
+- **Class:** explicit — spec §51 Phase 6 enumerates the eleven deliverable capabilities and §20–§24 define the taxonomy/signals/progress/anomaly/intervention framework; consumed primitives are the shipped Phase 1–5 modules (`src/cost.ts`, `src/context.ts`/`src/evidence.ts`/`src/investigation.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`).
+- **Lane:** Full — spans slop-governor domain, cross-cutting detection, wiring, tests, docs. Consistent with plan Mission split row 6 and prior phases (campaign has stayed Full since Flow 0 triage; no lane change).
+- **Mode:** auto (from `.mugiwara/config` mode=auto) — campaign runs to completion (Flow 5 scope override: "sampai phase akhir, cost governor benar-benar selesai"). Check-in verdicts logged without pausing.
+- **Route:** Flow 0 → Flow 2 (Nami, extend plan.md with Phase 6 detail + waves) → Flow 3 (Zoro, execute). Flow 1 (brainstorm) skipped — same reason as Phases 1–5: spec §51 + §20–§24 is explicit, options already in spec + plan; no unknown requirements to interrogate beyond the eleven enumerated capabilities.
+- **Branch:** continue on `feat/native-cost-governor` (stacked, Phase 1–5 unmerged, 165b669 HEAD @ 2026-08-29T10:57:01Z per continue.json). No new branch — Phase 1–5 PRs can be opened anytime per continue.json branch strategy.
+- **Heal debt carried forward (not burning cycles):** enforcement.test.ts escape#2 flake (blockers.md row 3, heal_halt true at cycle 4/3) — separate fix mission, proven on clean main; security F2/F3 (Low) accepted per decisions.md Flow 9, harden at Phase 8; conformance goldens already healed at Phase 4 (ff14f57) and Phase 5 (34f51c9, 62→63).
+- **Plan impact:** plan.md gains a Phase 6 section (Nami); tasks wired from §51 Phase 6 + §20–§24 + the shipped primitives; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` stay untouched (no new config — Phase 6 governance is pure over explicit inputs, same honesty boundary as Phases 3/4/5).
+
+## Flow 2 → 3 — Phase 6 plan check-in (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Verdict:** GO — Phase 6 plan approved as written (appended to plan.md).
+- **Reason:** 3 tasks (T1–T3) in 3 sequential waves; no false `[PARALLEL]` (T1 single module, T2 consumes T1, T3 consumes all — every edge shares the module surface or a not-yet-shipped interface). Architecture matches the logged Phase 6 triage (pure `src/slop.ts` module + `fingerprint` reuse, `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched). Honest Phase-6 = verdicts-not-enforcement boundary logged; reporting/ledger explicitly deferred to Phase 8 (no gold-plating). Body-line risk mitigated: T2 note to move to `references/stop-slop-governor.md` if 120-line cap hit (Phase-4/5 precedent af8a204/34f51c9). Config call accepted: no new keys (§52), thresholds are pure inputs with defaults. Coverage gate 90% on `src/slop.ts` verified at T3.
+- **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO pause; proceed to Zoro. Branch `feat/native-cost-governor` stacked.
+
+## Flow 3 — Phase 6 execution (Zoro)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free (via zoro-execution worker)
+- **Wave 1 (T1):** `feat(slop): stop-slop verdict engine (taxonomy/signals/progress/anomaly/intervention + six category detectors)` `cd00bf5` — 52 tests, 90 expects, 100% lines, typecheck 0.
+- **Wave 2 (T2):** `docs(slop): wire stop-slop governor verdicts into the workflow skill and cost docs` `b8d0fbd` — SKILL.md rule 2d + `## Stop-Slop Governor` pointer (body 120→120), `references/stop-slop-governor.md` created, `docs/concepts/cost.md` `## Stop-Slop Governor` appended, goldens 63→64, validate-content 0, verify-install 254 pointers 0 orphans, conformance 12 pass.
+- **Wave 3 (T3):** `chore(slop): phase 6 verification evidence` `4011347` — flows/02-execution.md written, gate 653 pass + 1 fail enforcement escape#2 (waivable, reproduced on main).
+- **Branch:** `feat/native-cost-governor` stacked b21d655→4011347, pending push to origin at closure.
+- **Plan impact:** Phase 6 code+docs complete, gate evidence captured, ready for checkpoint/gates/ship.
+
+## Flow 4–6 — Phase 6 checkpoint, quality, gates (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Flow 4 (Chopper):** PASS — T1 TDD cases re-read independently, 52/52 pass, 12/12 verdict families exact; T2 grep acceptances (3 SKILL.md `slop-governor` matches, 1 cost.md heading), body-line cap 120/120, frontmatter unchanged; T3 evidence flows/02-execution.md complete. No blockers. Note: enforcement escape#2 predates Phase 6 (blockers.md row 3).
+- **Flow 5 (Sanji):** PASS — dup 0%, maint A, typecheck 0, build 31 modules, coverage_new 100% ≥90, no must-fix. validate-content 4/4 ✓, verify-install 0 orphans, conformance 12 pass.
+- **Flow 6 (Franky):** GO (waived 1) — `bun run gate` 653/654 pass (1 fail enforcement.test.ts escape#2). Waiver proven: 1 fail on branch, same 1 fail on clean main worktree — not a Phase-6 regression (precedent Phases 2–5, blockers.md row 3). Individual gates: typecheck 0, build 0, validate-content 0, lane-base 0, verify-install 0, conformance 0, retrieval-eval 201/201, run-evals 0. coverage-gate would fail only because test run failed; `src/slop.ts` 100% PASS. DoD 7/7.
+- **Plan impact:** continue to Flow 7 review + security (internal change, PR-ready).
+
+## Flow 7 — Phase 6 review (Robin) + security (Jinbe) (Luffy, lightweight)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Review (Robin, inferred):** APPROVE — `src/slop.ts` 12 new exports, contracts exact per plan; `content/skills/mugiwara-workflow/SKILL.md` rule 2d + pointer (precedent af8a204/34f51c9), no breaking change; doc-only `docs/concepts/cost.md` append. No existing caller of slop APIs — no break map. Reliability A.
+- **Security (Jinbe, inferred):** PASS — no new injection surface; `recordSlopDecision` reuses S2-sanitized `recordOptDecision` (strip \r\n); detectors are pure over explicit inputs, no secret-bearing fingerprint reuse beyond Phase-2 F2 design rule in cost.md. No new deps, no `missionDir` validation gap beyond existing trusted `.mugiwara/` boundary (F3 accepted Low). Hotspots A, SCA A.
+- **Plan impact:** proceed to Flow 9 closure + ship. F2/F3 remain accepted Low, harden at Phase 8.
+
+## Flow 9 — Phase 6 closure + ship (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A). Build 0, typecheck 0, validate-content 0, conformance 12 pass, verify-install 0, slop.ts 100% ≥90, secrets scan clean (grep `sk_` `aws_` `BEGIN PRIVATE` negative; `decisions.md` S2 sanitized). Full `bun run gate` stops only on pre-existing enforcement escape#2 flake (reproduced on clean main, same precedent as Phases 2–5 — not Phase-6 regression). Rollback = revert Phase-6 commits (`cd00bf5..4011347`).
+- **Pushed:** `feat/native-cost-governor` → origin @ 4011347 (Phase 6 code commits), closure commit pending push.
+- **savepoint:** state.json + continue.json to be rewritten for Phase 7 (Adaptive Budget & Circuit Breaker).
+- **Plan impact:** Phase 6 complete. Campaign continues at Phase 7 (Adaptive Budget & Circuit Breaker, spec §51 Phase 7). Next session resumes via `mugiwara continue`.
+- **Deferred (tracked):** report/CLI slop ledger → Phase 8; benchmark suite → Phase 9; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix mission).

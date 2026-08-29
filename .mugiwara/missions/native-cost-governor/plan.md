@@ -1591,3 +1591,327 @@ per-task command-verifiable criterion:
   triad at the cognition layer with a `has_concrete_reason` override — it does
   not fork `src/investigation.ts`; file-investigation limits stay in
   investigation.ts, reasoning-investigation limits live in cognition.ts.
+
+---
+
+# native-cost-governor — Phase 6: Stop-Slop
+
+**Scope:** Phase 6 of the Native Cost Governor initiative (plan §51), mission
+split row 6 (`native-cost-governor-phase6`). Phase 6 delivers the **Stop-Slop**
+governor — the eleven capabilities §51 Phase 6 enumerates (slop taxonomy,
+detection signals, progress measurement, work-to-cost anomaly, intervention
+rules, retry slop, healing slop, scope slop, context slop, investigation slop,
+code slop). It **turns the spec §20–§24 framework into auditable verdicts**:
+every loop, drift, retry, or waste signal is detected, classified, and
+recorded with a stop/compress/tolerate intervention — without enforcing
+behavior that only the LLM crew can act on.
+
+**Primary goal:** make *waste* visible and stoppable — detect when work
+consumes cost without producing progress, classify the slop kind, measure
+progress-to-cost anomaly, and emit a recorded intervention (stop, compress,
+tolerate, escalate) for each of the six concrete slop categories. Every
+verdict lands in the trail (§41) so the crew's waste-control choices are
+machine-checkable, not vibe. The ledger/report surface stays Phase 8.
+
+## What Phase 6 consumes (shipped Phase 1–5 primitives) and what it enforces
+
+| Shipped primitive | Module | Phase-6 consumer |
+|-------------------|--------|------------------|
+| Cost envelope + thresholds | `src/cost.ts` `costEnvelope`/`budgetStatus`/`delegateAt`/`recordOptDecision` | progress vs cost anomaly — `costEnvelope` is the cost side of the ratio; `recordOptDecision` is the §41 trail |
+| Context metrics + dedup | `src/context.ts` `computeContextMetrics`/`contextStatus` + `src/evidence.ts` `fingerprint`/`findRepeats`/`loadRegistry` | context slop detection (§21.2/§12) — repeated reads, duplicate content, irrelevant files |
+| Investigation limits | `src/investigation.ts` `evaluateInvestigation` + `src/config.ts` `readInvestigationConfig` | investigation slop detection (§21.1/§13) — re-consumes the pass/unrelated/repeated-read triad as a slop signal |
+| Work stage classification | `src/work.ts` `classifyStage`/`completionCheck`/`shouldDelegate` | scope slop detection via stage drift; work-to-cost anomaly uses stage counts |
+| Change surface | `src/scope.ts` `measureChangeSurface`/`detectScopeDrift`/`detectCodeWaste` | scope/code slop — `detectScopeDrift` and `detectCodeWaste` are the scope/code slop signals re-consumed as taxonomy rows |
+| Cognitive verdicts | `src/cognition.ts` `isFocusedReasoning`/`shouldTerminateInvestigation`/`detectDuplicateExplanation`| reasoning/output slop overlap — Phase 6 reuses the cognition verdicts as slop taxonomy inputs but owns the slop-specific intervention layer |
+| Retry/healing history | caller-supplied history arrays (explicit inputs) | retry slop (§21.6/§31) and healing slop (§21.7/§32) — same evidence + same failure without new hypothesis → STOP |
+
+Phase 6 **enforces**: every slop signal is classified into the §21 taxonomy
+(investigation/context/reasoning/output/code/retry/healing/scope); progress
+is measured against cost (evidence gained / criteria satisfied / tests fixed
+vs tokens consumed); a work-to-cost anomaly is flagged when tokens grow
+without progress; each of the six concrete slop categories emits a
+tolerate/stop/compress/escalate intervention with an explicit reason;
+retry/healing without new evidence is stopped; scope expansion without
+acceptance expansion is rejected; all verdicts are recorded via
+`recordSlopDecision` → `recordOptDecision` (§41).
+
+## Key decisions
+
+1. **The Stop-Slop Governor is a pure TS module (`src/slop.ts`), like
+   `src/work.ts`/`src/scope.ts`/`src/cognition.ts`.** Same architecture:
+   verdict functions take explicit inputs (unit-testable, fixtures lock the
+   thresholds), plus a separate record helper persists the verdict through the
+   sanitized `recordOptDecision` (§41). `savepoint.sh`/`lane-base.sh` stay
+   untouched; the shell runtime has no slop role and Phase 6 does not migrate
+   it.
+2. **Honest boundary — the module produces and records verdicts; the crew acts.**
+   The LLM crew (workflow skill) is the only thing that can actually stop
+   retrying, stop healing, or reject a scope expansion. Phase 6 makes the
+   *decision* a structured, recorded, auditable verdict the crew is instructed
+   to follow (T2 wiring) — it does not pretend a TS function can force the
+   model. Same honest boundary Phases 3/4/5 drew.
+3. **`DEFAULT_CONFIG` untouched — no new config keys (§52).** Slop governance
+   needs no policy boundary beyond the primitives already shipped
+   (investigation limits, delegate threshold, context budget). All slop
+   thresholds (repeated-read N, retry history window, healing progress floor,
+   anomaly ratio) are pure function inputs with internal defaults — nothing
+   reads config. No runtime config behavior change. The §6 `slop.detection`
+   profile belongs to adaptive phases (7/8), not here.
+4. **Re-consumption, not forking.** `detectInvestigationSlop` re-consumes
+   `evaluateInvestigation`'s pass/unrelated/repeated-read triad as a taxonomy
+   row; `detectScopeSlop` re-consumes `detectScopeDrift`; `detectCodeSlop`
+   re-consumes `detectCodeWaste`. The source modules stay the single definition;
+   slop wraps them with the §21 classification + intervention layer. No logic
+   fork.
+5. **Defer reporting/CLI slop rows to Phase 8.** The ledger's slop counts
+   (§39: `slop.events_detected/stopped/compressed`, §43 Cost section slop rows,
+   §42 `mugiwara cost` slop section) and the §45 benchmark scenarios are
+   Phase 8/9 Reporting & Benchmark. Phase 6 records the *decisions* and *produces
+   pure verdicts* (§41 trail) but does not build the report surface. Avoids
+   gold-plating.
+6. **Security F2/F3 stay accepted Low (carried to Phase 8).** The Phase-6
+   record helper reuses the same S2-sanitized `recordOptDecision`, so no new
+   injection surface. F2 (do not fingerprint secret-bearing files) and F3
+   (`.mugiwara/` is local trusted state) remain documented design rules in
+   `docs/concepts/cost.md` (T2); harden at Phase 8 per decisions.md.
+
+## Architecture overview
+
+```
+  Shipped primitives (unchanged interfaces)
+  src/cost.ts (costEnvelope, recordOptDecision)
+  src/context.ts (computeContextMetrics)  src/evidence.ts (fingerprint, findRepeats)
+  src/investigation.ts (evaluateInvestigation)  src/work.ts (classifyStage)
+  src/scope.ts (detectScopeDrift, detectCodeWaste)  src/cognition.ts (isFocusedReasoning)
+       │
+       ▼
+  src/slop.ts ← NEW (T1): the Stop-Slop verdict engine —
+       │       slop taxonomy (§21), detection signals (§22),
+       │       progress measurement (§23), work-to-cost anomaly (§24),
+       │       intervention rules (§20), + 6 concrete detectors:
+       │       detectRetrySlop, detectHealingSlop, detectScopeSlop,
+       │       detectContextSlop, detectInvestigationSlop, detectCodeSlop
+       │       + recordSlopDecision (→ recordOptDecision §41)
+       │
+       ├──────────────────────────┐
+       ▼                          ▼
+  decisions.md (## Cost governor decisions)   content/skills/mugiwara-workflow
+       (every slop verdict)                   SKILL.md (T2 wiring: crew
+                                              consults slop verdicts before
+                                              retrying/healing/expanding scope
+                                              /re-reading/over-investigating)
+                                              + docs/concepts/cost.md
+```
+
+Pure verdict functions are unit-tested (T1); the agent-flow wiring (T2) is the
+workflow-skill + docs surface; T3 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `src/slop.ts` | NEW — Stop-Slop verdict engine (taxonomy, signals, progress, anomaly, intervention + 6 category detectors) + `recordSlopDecision` |
+| `test/slop.test.ts` | NEW |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — reference the Stop-Slop Governor: taxonomy, signals, progress vs cost, intervention rules, six slop detectors; record slop verdicts in the decision trail |
+| `docs/concepts/cost.md` | MODIFY — Stop-Slop Governor section (eleven capabilities, verdict contracts, honesty boundary, F2/F3 design rules) |
+| `src/cost.ts`, `src/context.ts`, `src/evidence.ts`, `src/investigation.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts` | UNCHANGED — consumed with pre-existing signatures; no edits |
+| `scripts/savepoint.sh`, `scripts/lib/lane-base.sh`, `src/config.ts` (`DEFAULT_CONFIG`) | UNCHANGED — no new config, no shell change |
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Stop-Slop module + tests | T1 | `bun test test/slop.test.ts` green |
+| 2 | Wire the verdicts into the agent flow + docs | T2 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` green |
+| 3 | Full verification | T3 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 slop.ts ──────────────────────┐
+                                 ▼
+T2 workflow skill + docs  (consumes T1)   [SEQUENTIAL, depends-on T1]
+                                 ▼
+T3 full gate (consumes all) [SEQUENTIAL, depends-on all]
+```
+
+**No `[PARALLEL]` set in Phase 6.** T1 is a single new module + test file with
+no disjoint sibling hygiene task (no carry-over F1/nit from Phase 5 — Phase 5
+closed GO; F2/F3 docs-only defer to Phase 8). T2 consumes T1 (wiring
+documents the real verdicts); T3 consumes everything. Every edge either shares
+the module surface or consumes a not-yet-shipped interface — parallel-proof
+would be false.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | Stop-Slop verdict engine (taxonomy + signals + progress + anomaly + intervention + 6 category detectors) + record helper | src/slop.ts, test/slop.test.ts | L | — | `bun test test/slop.test.ts` green; `bun run typecheck` passes |
+| T2 | wire verdicts into agent flow (workflow skill + docs) | content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md | S | T1 | `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exit 0; workflow description unchanged |
+| T3 | full gate + evidence | flows/02-execution.md | S | all | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: Stop-Slop verdict engine** (§20–§24, §21.1–§21.8, §31/§32, §41)
+- Files: create `src/slop.ts`, `test/slop.test.ts`
+- Interfaces: consumes `src/cost.ts` `recordOptDecision` (the S2-sanitized trail
+  helper) and `src/evidence.ts` `fingerprint` (for dedup/context signals) — the
+  only imported primitives; all verdict functions are pure over explicit inputs
+  (no other module dependency). Produces `src/slop.ts` (consumed by T2) and
+  structured decisions via `recordSlopDecision` → `recordOptDecision` (§41).
+- Size: L
+- Steps:
+  - [ ] Write `test/slop.test.ts` first (TDD — see acceptance)
+  - [ ] Implement `src/slop.ts`:
+    - **Slop taxonomy (§21):** `export type SlopKind = 'investigation' | 'context' | 'reasoning' | 'output' | 'code' | 'retry' | 'healing' | 'scope'` (the eight §21 categories; reasoning/output map to the cognition module's §17/§18 signals and are included for completeness even though their *detection* lives in `src/cognition.ts` — the slop module classifies them, not re-detects them); `export const SLOP_TAXONOMY: Record<SlopKind, string>` — one-line description per kind (e.g. `investigation: 'reading unrelated files / searching without narrowing / repeated exploration'`); `classifySlop(signal: string): SlopKind | null` — keyword match against the taxonomy descriptions (e.g. `'repeated file read'` → `context`, `'same command repeated'` → `retry`, `'LOC increases without acceptance expansion'` → `code`/`scope`). Pure.
+    - **Detection signals (§22):** `export type SlopSignal = { kind: SlopKind; signal: string; count: number; threshold: number }`; `detectSlopSignal(input: { kind: SlopKind; count: number; threshold: number; evidence_delta?: number }): { slop: boolean; reason: string }` — `slop = count >= threshold && (evidence_delta === undefined || evidence_delta === 0)` ; reason names `'slop: <kind> — count <N> ≥ threshold <T> with no evidence gain'` or `'no slop: <kind> — <reason>'`. Pure. Thresholds are caller-supplied (no config read); defaults mirror spec examples (repeated-read 2, repeated-command 2, LOC-without-acceptance 1).
+    - **Progress measurement (§23):** `export type ProgressSnapshot = { tokens_used: number; evidence_items: number; criteria_mapped: number; files_understood: number; tests_fixed: number; code_chars: number }`; `measureProgress(before: ProgressSnapshot, after: ProgressSnapshot): { progress: number; cost_delta: number; progress_per_cost: number; slop_signal: boolean; reason: string }` — `progress = (evidence_items_delta + criteria_mapped_delta + tests_fixed_delta + (code_chars_delta>0?1:0))` (evidence-gain weighted progress); `cost_delta = after.tokens_used - before.tokens_used`; `progress_per_cost = cost_delta>0 ? progress/cost_delta : 0`; `slop_signal = cost_delta>0 && progress===0` (spec §23 example: +5k tokens, +0 evidence/criteria/code → slop). Pure.
+    - **Work-to-cost anomaly (§24):** `export type AnomalyInput = { progress_per_cost: number; baseline_per_cost: number; drop_threshold?: number }` (`drop_threshold` default 0.5 = 50% drop); `detectAnomaly(input): { anomaly: boolean; reason: string }` — `anomaly = progress_per_cost < baseline_per_cost * drop_threshold` when `baseline_per_cost>0`; else `false` (division-by-zero safe). Reason names the drop percentage or `'no anomaly — baseline 0 or above threshold'`. Pure. Not a quality score — documented as anomaly signal (§24).
+    - **Intervention rules (§20):** `export type Intervention = 'tolerate' | 'stop' | 'compress' | 'escalate'`; `export type InterventionInput = { kind: SlopKind; slop: boolean; severity: 'harmless' | 'wasteful' | 'harmful'; progress_stalled: boolean }`; `decideIntervention(input): { intervention: Intervention; reason: string }` — `!slop → tolerate`; `slop && severity==='harmful' → escalate` (stop+escalate per §20); `slop && severity==='wasteful' → stop`; `slop && severity==='harmless' → tolerate` unless `progress_stalled` then `compress`. Pure. Tolerance rule: no single signal auto-classifies legitimate work as harmful.
+    - **Retry slop detection (§21.6/§31):** `export type RetryInput = { action: string; evidence_fingerprint: string; outcome: 'fail' | 'pass'; history: { action: string; evidence_fingerprint: string; outcome: string }[] }`; `detectRetrySlop(input): { slop: boolean; reason: string; kind: SlopKind }` — `slop = history.some(h => h.action===action && h.evidence_fingerprint===evidence_fingerprint && h.outcome==='fail') && outcome==='fail'` (same action + same evidence + same failure → STOP per §31); else `slop:false`. `kind='retry'` always when returned. Pure.
+    - **Healing slop detection (§21.7/§32):** `export type HealingInput = { cycle: number; fixes_in_cycle: number; history_fixes: number[]; max_cycles?: number }`; `detectHealingSlop(input): { slop: boolean; reason: string; kind: SlopKind }` — `slop = fixes_in_cycle===0 && history_fixes.some(n=>n===0)` OR `cycle >= (max_cycles??3) && fixes_in_cycle===0` (no progress in previous cycle → stop, §32). `kind='healing'`. Pure.
+    - **Scope slop detection (§21.8):** `export type ScopeSlopInput = { files_changed: string[]; declared_scope: string[]; acceptance_expanded: boolean; unrelated_refactors: string[] }`; `detectScopeSlop(input): { slop: boolean; reason: string; kind: SlopKind }` — `slop = (files_changed.some(f=>!declared_scope.includes(f)) || unrelated_refactors.length>0) && !acceptance_expanded`; reason names the out-of-scope files or `'no scope slop — within declared scope or acceptance expanded'`. `kind='scope'`. Pure. Re-consumes the `detectScopeDrift` idea as a verdict without importing it (same file-list logic, avoids a runtime import).
+    - **Context slop detection (§21.2/§12):** `export type ContextSlopInput = { repeated_reads: number; repeated_read_threshold: number; duplicate_chars: number; irrelevant_files: string[] }`; `detectContextSlop(input): { slop: boolean; reason: string; kind: SlopKind }` — `slop = repeated_reads >= repeated_read_threshold || duplicate_chars>0 || irrelevant_files.length>0`; reason joins the present signals. `kind='context'`. Pure. Re-consumes the Phase-2 repeated-read / duplicate_chars signals.
+    - **Investigation slop detection (§21.1/§13):** `export type InvestigationSlopInput = { unrelated_files_opened: number; max_unrelated_files: number; repeated_reads: number; repeated_read_threshold: number; exploration_passes: number; max_passes: number; acceptance_mapped: boolean; has_concrete_reason: boolean }`; `detectInvestigationSlop(input): { slop: boolean; reason: string; kind: SlopKind }` — `slop = (unrelated_files_opened > max_unrelated_files || repeated_reads >= repeated_read_threshold || exploration_passes >= max_passes) && !has_concrete_reason && acceptance_mapped` is insufficient alone — slop when any limit breached without concrete reason, or when `acceptance_mapped && exploration_passes>max_passes` (investigation continues after triad met). `kind='investigation'`. Pure. Re-consumes the §13 triad without importing `evaluateInvestigation`.
+    - **Code slop detection (§21.5/§15):** `export type CodeSlopInput = { new_abstractions: number; new_dependencies: number; loc_added: number; acceptance_expanded: boolean; justification_provided: boolean; boilerplate_chars: number }`; `detectCodeSlop(input): { slop: boolean; reason: string; kind: SlopKind }` — `slop = (new_abstractions>0 || new_dependencies>0 || boilerplate_chars>0 || loc_added>100) && !acceptance_expanded && !justification_provided`; reason names the waste type. `kind='code'`. Pure. Re-consumes `detectCodeWaste`'s LOC/abstraction/dependency signals.
+    - **Decision trail (§41):** `recordSlopDecision(missionDir: string, d: { decision: string; reason: string; evidence?: string; kind?: SlopKind }): void` — thin wrapper over `recordOptDecision` with `actor: 'slop-governor'` (reuses the S2 sanitizer). Callers call it with the reason/evidence from any detector that returned `slop:true` or `anomaly:true`.
+  - [ ] Commit `feat(slop): stop-slop verdict engine (taxonomy/signals/progress/anomaly/intervention + six category detectors)`
+- Acceptance:
+  - `bun test test/slop.test.ts` passes. Cases (each a non-trivial exact assertion):
+    - `classifySlop`: `'repeated file read'` → `'context'`; `'same command repeated'` → `'retry'`; `'LOC increases without acceptance'` → `'code'` or `'scope'`; unknown signal → `null`
+    - `detectSlopSignal`: `count:2/threshold:2/evidence_delta:0` → `slop:true`; same with `evidence_delta:1` → `slop:false`; `count:1/threshold:2` → `slop:false`
+    - `measureProgress`: before `{tokens_used:8000,evidence_items:4,criteria_mapped:2,files_understood:3,tests_fixed:1,code_chars:1000}` after `{tokens_used:13000,evidence_items:4,criteria_mapped:2,files_understood:3,tests_fixed:1,code_chars:1000}` → `progress:0, cost_delta:5000, slop_signal:true` (spec §23 example); with +1 evidence → `progress:1, slop_signal:false`
+    - `detectAnomaly`: `progress_per_cost:0.0001, baseline:0.001, drop_threshold:0.5` → `anomaly:true` (10x drop); `progress_per_cost:0.0006, baseline:0.001` → `anomaly:false`; `baseline:0` → `anomaly:false`
+    - `decideIntervention`: `slop:false` → `tolerate`; `slop:true, severity:'harmful'` → `escalate`; `slop:true, severity:'wasteful'` → `stop`; `slop:true, severity:'harmless', progress_stalled:false` → `tolerate`; same with `progress_stalled:true` → `compress`
+    - `detectRetrySlop`: history `[{action:'test', fingerprint:'abc', outcome:'fail'}]` + same action/fingerprint/fail → `slop:true`; different fingerprint → `slop:false`; history empty → `slop:false`
+    - `detectHealingSlop`: `cycle:3, fixes_in_cycle:0, history_fixes:[3,1,0]` → `slop:true`; `cycle:1, fixes_in_cycle:3` → `slop:false`; `cycle:3, fixes_in_cycle:1` → `slop:false`
+    - `detectScopeSlop`: `files_changed:['src/a.ts','src/unrelated.ts'], declared_scope:['src/a.ts'], acceptance_expanded:false` → `slop:true`; same with `acceptance_expanded:true` → `slop:false`; within scope → `slop:false`
+    - `detectContextSlop`: `repeated_reads:2/threshold:2` → `slop:true`; `duplicate_chars:500` → `slop:true`; `irrelevant_files:['tmp/foo']` → `slop:true`; all zero/empty → `slop:false`
+    - `detectInvestigationSlop`: `unrelated_files_opened:6/max:5` without concrete reason → `slop:true`; same with `has_concrete_reason:true` → `slop:false`; `exploration_passes:2/max:2` without reason → `slop:true`
+    - `detectCodeSlop`: `new_abstractions:1, acceptance_expanded:false, justification:false` → `slop:true`; same with `justification:true` → `slop:false`; `acceptance_expanded:true` → `slop:false`; `boilerplate_chars:500` without acceptance → `slop:true`
+    - `recordSlopDecision` writes a single `## Cost governor decisions` bullet with `slop-governor` actor, sanitized (newline-stripped) reason
+  - `bun run typecheck` passes
+  - Coverage: `src/slop.ts` ≥90% (config `coverage_new=90`; verified at T3 gate)
+- Risk: medium — a new L module must meet the 90% coverage bar; TDD-first with the acceptance cases above is the safety net. Rollback: revert the single commit.
+- Deferred: none in T1 — report/CLI slop rows (§39/§43) are Phase 8; benchmark suite (§45) is Phase 9.
+
+**Task 2: wire the verdicts into the agent flow** (§20–§24, §41)
+- Files: modify `content/skills/mugiwara-workflow/SKILL.md`; `docs/concepts/cost.md`
+- Interfaces: consumes `src/slop.ts` verdicts (T1) — documents them as the decision trail the crew follows; no code import (the skill is prose the agent reads; the trail is the machine-checkable artifact via `recordOptDecision`)
+- Size: S
+- Steps:
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md`, under `## Rules` (after rule 2c), add one rule line (≤120 chars) and a short "Stop-Slop Governor" subsection. If body would exceed 120 lines (validator caps body at 120 lines, not chars), move the body to `content/skills/mugiwara-workflow/references/stop-slop-governor.md` with a one-line pointer (sanctioned pattern, Phase-4 precedent af8a204):
+    - Rule: `2d. Stop-Slop Governor: detect slop via taxonomy/signals; measure progress vs cost; flag anomaly; intervene (tolerate/stop/compress/escalate); detect retry/healing/scope/context/investigation/code slop; record slop verdicts as slop-governor trail rows.`
+    - Subsection `## Stop-Slop Governor` (3–5 lines): slop taxonomy (§21 eight kinds); detection signals (§22: repeated reads/commands, token-without-evidence, LOC-without-acceptance, abstraction-without-justification); progress measurement (§23: evidence/criteria/tests/code vs cost delta, slop when cost grows without progress); work-to-cost anomaly (§24 drop signal); intervention rules (§20 tolerate/stop/compress/escalate by severity); six category detectors (retry §21.6/§31 same-action-same-evidence-same-failure→STOP, healing §21.7/§32 no-progress→stop, scope §21.8 out-of-scope-without-acceptance→reject, context §21.2 duplicate/irrelevant→discard/compress, investigation §21.1 unbounded-exploration→stop, code §21.5 unnecessary abstraction/dependency/boilerplate→remove/simplify); every slop verdict lands as a `slop-governor` trail row. `savepoint.sh`/`lane-base.sh`/config untouched.
+    - Ensure description frontmatter is byte-unchanged (validate-content requires it).
+  - [ ] In `docs/concepts/cost.md`, append a `## Stop-Slop Governor (src/slop.ts)` section: the eleven capabilities + their verdict contracts (`classifySlop`, `detectSlopSignal`, `measureProgress`, `detectAnomaly`, `decideIntervention`, `detectRetrySlop`, `detectHealingSlop`, `detectScopeSlop`, `detectContextSlop`, `detectInvestigationSlop`, `detectCodeSlop`, `recordSlopDecision`), that Phase 6 records decisions but the report/CLI slop surface (§39/§43) is Phase 8 and the benchmark suite (§45) is Phase 9, the honest boundary (module records — crew acts via the workflow skill), and the security design rules (F2/F3).
+  - [ ] Run `bun run validate-content --check-manifest --check-docs --check-doc-integrity`
+  - [ ] Commit `docs(slop): wire stop-slop governor verdicts into the workflow skill and cost docs`
+- Acceptance:
+  - `bun run validate-content --check-manifest --check-docs --check-doc-integrity` exits 0 (skill description unchanged, manifest/docs drift clean)
+  - `grep -E 'Stop-Slop Governor|slop-governor' content/skills/mugiwara-workflow/SKILL.md` returns 2+ matches
+  - `grep -E '## Stop-Slop Governor' docs/concepts/cost.md` returns a match
+  - `bun run typecheck` passes (docs-only, still confirmed)
+- Risk: low — a skill body change could trip validate-content if a line exceeds 120 chars or the description drifts OR the 120-line body cap is exceeded (Phase-4/5 precedent: move to `references/` with a pointer); acceptance locks all three. Rollback: revert the commit.
+- Deferred: the report/CLI slop ledger (§39/§43) stays Phase 8; benchmark suite (§45) stays Phase 9.
+
+**Task 3: full gate + evidence**
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T2
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output
+  - [ ] If any gate fails: fix within scope, re-run. No gate waived. Known pre-existing `enforcement.test.ts` escape#2 flake (blockers.md row 3, heal_halt true) is waivable — re-run or prove on clean base is not a Phase-6 regression.
+  - [ ] Write `flows/02-execution.md`: task table (T1–T3), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(slop): phase 6 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`; pre-existing flake not counted as Phase-6 regression when reproduced on base)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New `src/slop.ts` misses the 90% coverage bar | medium | CI red | TDD-first; acceptance cases lock every verdict family; gate catches at T3 |
+| Skill-body edit trips validate-content (description drift, 120-line cap, 120-char line cap) | low | CI red | T2 acceptance locks all three; Phase-4/5 precedent: move to `references/` with pointer |
+| Slop verdicts over-sensitive (flag legitimate work as slop) | medium | false stop/compress | every detector is threshold-gated and requires "without new evidence/acceptance/justification" — reason names the clause so crew can record a concrete-reason override (still audited); no single signal classifies as harmful automatically (§22) |
+| Investment investigation re-detection duplicates `src/investigation.ts` logic | low | confusion | Phase-6 `detectInvestigationSlop` re-consumes the §13 triad as a slop taxonomy row — documented as re-consumption, not a fork; investigation.ts stays the file-investigation limit, slop.ts adds the classification+intervention layer |
+| Scope/code re-consumption drift vs `src/scope.ts` | low | inconsistent verdicts | both use the same file-list / LOC / justification signals; slop.ts does not import scope.ts at runtime (avoids circular), same pure logic documented as re-consumption with identical thresholds |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers row 3); not a Phase-6 regression — proven by reproduction on clean main |
+| Slop/ledger scope bleed (gold-plating into Reporting) | low | scope slop | hard boundary: Phase 6 records decisions + pure verdicts only; report/CLI (`mugiwara cost`, §39/§42/§43) = Phase 8, benchmark = Phase 9 (honesty section) |
+
+Rollback plan: each task is one revertible commit; T3 evidence lists exact
+commits. Worst case: `git revert` the Phase-6 commits. `savepoint.sh`,
+`lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint +
+config behavior is preserved by construction.
+
+## Phase-6 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Slop (user acceptance) maps to Phase-6 tasks; each user AC has ≥1
+per-task command-verifiable criterion:
+
+| User AC (spec DoD) | Capability (§51/§spec) | Deliverable |
+|---------------------|------------------------|-------------|
+| slop taxonomy exists | 1 (slop taxonomy) | T1 `SLOP_TAXONOMY` + `classifySlop` (test-locked: context/retry/code classifications exact) |
+| detection signals work | 2 (detection signals) | T1 `detectSlopSignal` (test-locked: threshold + evidence_delta gating) |
+| progress measured | 3 (progress measurement) | T1 `measureProgress` (test-locked: §23 5k-tokens-zero-progress slop_signal) |
+| work-to-cost anomaly flagged | 4 (anomaly) | T1 `detectAnomaly` (test-locked: drop vs baseline, division-by-zero safe) |
+| intervention decided | 5 (intervention rules) | T1 `decideIntervention` (test-locked: all four interventions) |
+| retry slop stopped | 6 (retry slop) | T1 `detectRetrySlop` (§21.6/§31 same-action-same-evidence→STOP, test-locked) |
+| healing slop stopped | 7 (healing slop) | T1 `detectHealingSlop` (§21.7/§32 no-progress→stop, test-locked) |
+| scope slop rejected | 8 (scope slop) | T1 `detectScopeSlop` (§21.8 out-of-scope without acceptance → slop) |
+| context slop discarded | 9 (context slop) | T1 `detectContextSlop` (§21.2/§12 repeated-read/duplicate/irrelevant) |
+| investigation slop stopped | 10 (investigation slop) | T1 `detectInvestigationSlop` (§21.1/§13 unbounded exploration without reason) |
+| code slop removed | 11 (code slop) | T1 `detectCodeSlop` (§21.5/§15 abstraction/dependency/boilerplate without justification) |
+| optimization decisions auditable (§41) | all | T1 `recordSlopDecision` → `recordOptDecision` (test-locked bullet shape + actor) |
+
+## Definition of Done (Phase 6)
+
+- `src/slop.ts` exists: `SLOP_TAXONOMY`, `classifySlop`, `detectSlopSignal`,
+  `measureProgress`, `detectAnomaly`, `decideIntervention`, `detectRetrySlop`,
+  `detectHealingSlop`, `detectScopeSlop`, `detectContextSlop`,
+  `detectInvestigationSlop`, `detectCodeSlop`, `recordSlopDecision` — all pure,
+  unit-tested, ≥90% coverage.
+- The eleven §51 Phase-6 capabilities are covered by verdict functions with
+  explicit reasons on every slop/intervention verdict.
+- `content/skills/mugiwara-workflow/SKILL.md` wires the Stop-Slop Governor:
+  taxonomy/signals/progress/anomaly/intervention + six category detectors +
+  recorded slop verdicts (rule 2d); description unchanged; body ≤120 lines (or
+  references pointer); validate-content green.
+- `docs/concepts/cost.md` documents the Stop-Slop Governor verdicts, the honest
+  boundary, the Phase-8/Phase-9 deferral boundaries, and the F2/F3 security
+  design rules.
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` runtime
+  behavior — no new config keys.
+- `bun run gate` passes fully; every pre-existing test passes unchanged
+  (pre-existing escape#2 flake not counted when reproduced on base).
+- Phase 6 records decisions and pure verdicts only — no report/CLI surface
+  (Phase 8) and no benchmark suite (Phase 9) built here.
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `src/slop.ts` produces and records verdicts; the LLM crew
+  (workflow skill, T2) is the only thing that acts on them. The module does not
+  pretend to force the model — it makes the slop decision structured, auditable,
+  and instructed.
+- **Report/CLI slop ledger deferred to Phase 8:** `slop.events_detected`,
+  `stopped`, `compressed` (§39) and `mugiwara cost` slop section (§42) and
+  the Cost section slop rows (§43) are Phase 8 Reporting — Phase 6 produces
+  the pure verdicts and records the decisions only.
+- **Benchmark deferred to Phase 9:** the twelve §45 Stop-Slop scenarios
+  (endless exploration, repeated reads/commands/tests/reasoning, unnecessary
+  abstraction/dependency, unrelated refactor, verbose output, no-progress
+  healing, premature completion, excessive context) with detect→classify→
+  intervene are Phase 9 benchmark — Phase 6's unit fixtures cover the verdicts.
+- **F2/F3 accepted Low (unchanged):** secret-bearing files should not be
+  fingerprinted/registered (F2) and `.mugiwara/` is local trusted state (F3) —
+  both documented as design rules in `docs/concepts/cost.md` (T2), hardened at
+  Phase 8 per decisions.md.
+- **No new config:** Phase 6 adds nothing to `DEFAULT_CONFIG` — slop verdicts
+  are pure over explicit inputs; the §6 `slop.detection` profile belongs to the
+  adaptive-budget phases (7/8).
+- **Re-consumption note:** `detectInvestigationSlop`/`detectScopeSlop`/
+  `detectCodeSlop` re-consume the §13/`detectScopeDrift`/`detectCodeWaste`
+  signals as taxonomy rows with the §21 classification + intervention layer —
+  they do not fork the source modules; file-investigation limits stay in
+  investigation.ts, scope/code waste signals stay in scope.ts, slop.ts adds
+  the slop-specific intervention.
