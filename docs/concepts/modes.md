@@ -9,6 +9,12 @@ run automatically is decided by the mode — except one config lever: `auto_comm
 manually; `auto` ignores it). The config shapes HOW artifacts are written when
 they are created.
 
+**Mode is not an execution posture and not a cost tier.** Mode is one of three
+independent decisions (control mode, execution posture, Cost Governor). A
+Guided mission can run fully inline; an Auto mission can be sequential; the
+posture adapts to evidence at flow boundaries while the mode only changes when
+you flip it. See [execution-model.md](execution-model.md).
+
 ## The three levels
 
 | Level | Plan | Execution | Ambiguities | Check-ins |
@@ -47,8 +53,8 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 auto_commit=on
-coverage_new=90
-coverage_modified=80
+coverage_new=85
+coverage_modified=90
 review_depth=full
 quality_depth=full
 verify_merged=off
@@ -64,8 +70,8 @@ verbosity=normal
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain / template | conventional |
 | auto_commit | on / off | on |
-| coverage_new | 0-100 | 90 |
-| coverage_modified | 0-100 | 80 |
+| coverage_new | 0-100 | 85 |
+| coverage_modified | 0-100 | 90 |
 | review_depth | full / standard / quick | full |
 | quality_depth | full / standard / quick | full |
 | verify_merged | on / off | off |

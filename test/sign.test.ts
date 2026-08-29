@@ -145,9 +145,9 @@ describe('signReport end-to-end (pure backend)', () => {
     void key; void pub;
   });
 
-  it('sign_backend=off refuses to sign', () => {
+  it('sign=off refuses to sign', () => {
     mkdirSync(join(project, '.mugiwara'), { recursive: true });
-    writeFileSync(join(project, '.mugiwara', 'config'), 'sign_backend=off\n');
+    writeFileSync(join(project, '.mugiwara', 'config'), 'sign=off\n');
     const mdir = join(project, '.mugiwara', 'missions', 'demo');
     mkdirSync(mdir, { recursive: true });
     writeFileSync(join(mdir, 'report.md'), '# demo\n');
@@ -156,15 +156,15 @@ describe('signReport end-to-end (pure backend)', () => {
     expect(r.message).toContain('signing disabled');
   });
 
-  it('sign_backend=minisign without minisign → loud failure', () => {
+  it('sign=minisign without minisign → loud failure', () => {
     mkdirSync(join(project, '.mugiwara'), { recursive: true });
-    writeFileSync(join(project, '.mugiwara', 'config'), 'sign_backend=minisign\n');
+    writeFileSync(join(project, '.mugiwara', 'config'), 'sign=minisign\n');
     const mdir = join(project, '.mugiwara', 'missions', 'demo');
     mkdirSync(mdir, { recursive: true });
     writeFileSync(join(mdir, 'report.md'), '# demo\n');
     const r = signReport(project, mdir);
     expect(r.ok).toBe(false);
-    expect(r.message).toContain('sign_backend=minisign but minisign not installed');
+    expect(r.message).toContain('sign=minisign but minisign not installed');
   });
 
   it('verify: .mugisig verifies even when minisign binary is absent (tries both)', () => {

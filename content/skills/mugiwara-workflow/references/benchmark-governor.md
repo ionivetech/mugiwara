@@ -33,7 +33,7 @@ Tracks `scripts/benchmark-governor.ts` harness (deterministic, no network).
 - `tokens > projected + overhead` → harness fails workload
 - `context_chars > context_max` → fail
 - Thresholds only move on explicit fixture update (reviewed diff), never silently
-- `ponytail: thresholds are fixture constants, not config — ratchet like retrieval-eval`
+- `note: thresholds are fixture constants, not config — ratchet like retrieval-eval`
 
 ## Regression (§49)
 - `checkRegression`: cost down but correctness/evidence/security/quality/scope down → fail
@@ -46,7 +46,7 @@ Tracks `scripts/benchmark-governor.ts` harness (deterministic, no network).
 ## CI Enforcement
 - `package.json:gate` includes `bun scripts/benchmark-governor.ts` (extend existing gate)
 - `scripts/gate-selftest.ts` tampers thresholds → harness must exit 1 (G3 — gate that cannot fail is not a gate)
-- ponytail: harness measures, does not enforce — no runtime gate
+- note: harness measures, does not enforce — no runtime gate
 
 ## Docs
 - `docs/concepts/cost.md` ## Benchmark & Hardening documents harness/threshold/stress contracts

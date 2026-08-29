@@ -10,7 +10,11 @@ page names the preferred one.
 | **flows/** | The mission's flow-artifact directory (`missions/<mission>/flows/NN-name.md`). Legacy missions may still keep `waves/` — readers accept both, and a legacy mission stays on its existing directory so an in-flight trail never splits. |
 | **Wave** (planning) | An execution batch in a *plan document* ("Wave table", parallel-proof waves) — unrelated to the pipeline's flow stages and not a directory name. |
 | **Lane** | How much process the change gets: `direct` (no pipeline) / `lean` / `standard` / `full` / `spike` (resize). Computed from the git diff; sensitive paths force full. |
-| **Mode** | Autonomy level: `guided` (asks first) / `semi` / `auto`. Set in `.mugiwara/config`. |
+| **Mode** | Autonomy level: `guided` (asks first) / `semi` / `auto`. Set in `.mugiwara/config`. Mode is one of three independent decisions (see Control mode). |
+| **Control mode** | The "how much do you participate" decision. One of three independent dimensions (control mode / execution posture / Cost Governor) — it never implies a topology or cost tier. |
+| **Execution posture** | The "how is work performed" decision: `inline-sequential` (default) / `inline-batched` / `parallel-workers` / `context-relief` / `phase-isolated` / `team-scoped`. Chosen deterministically at flow boundaries, recorded in the decision trail. Never implies a control mode. |
+| **Cost Governor** | The "what is safe to spend" decision. Supplies reserve / project / avoid / stop verdicts, measures context, and records an optimization trail. Recommends and records — never silently skips a safety stage or replaces consent. |
+| **Slop** | Wasted cost the governor flags: repeated reads, useless abstraction/boilerplate, healing spin, out-of-scope work. Detected live and attributed per crew member. |
 | **Savepoint** | State written to `<mission>/state.json` (+ `continue*.json`) at each flow-stage boundary. Powers resume and every computed command. |
 | **Continue** | Deterministic resume: prints the exact point to pick work back up (`mugiwara continue`). |
 | **Evidence** | A recorded artifact — command output, file, commit — that a claim points at. Claims without evidence do not pass flow stages. |

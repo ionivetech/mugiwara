@@ -22,6 +22,10 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 - Franky → return gates → Luffy routes pass/fail
 - Robin/Jinbe → return findings → Luffy routes to Brook/Zoro/defer
 
+**Control commands (pre-flow):** `mugiwara continue`/`status` are read-only,
+pre-flow — never create config, never start a flow stage; exit 2 = user selects.
+Full: `references/control-commands.md`.
+
 ## Coordination files
 
 Team repos — per-(mission, member) isolation, no collisions: `_shared/references/multi-actor.md`.
@@ -45,7 +49,7 @@ Classify every incoming request. 5-way table (Trivial/Explicit/Exploratory/Open-
 
 ## Lane routing + precedence (Flow 0, size before process)
 
-Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** A pasted Explicit spec still sizes the lane from its file list before Flow 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k inline vs ~132k measured per dispatch); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
+Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** Record the initial execution posture + rationale (default `inline-sequential`) per `_shared/references/posture-routing.md`. A pasted Explicit spec still sizes the lane from its file list before Flow 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k inline vs ~132k measured per dispatch); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
 
 ## Spec bridge (Flow 0 → Flow 2)
 
@@ -90,10 +94,6 @@ Rendered examples: `references/output-contract.md` — match the shape.
 ## Work splitting
 
 When a flow stage has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
-
-## Q&A hub
-
-Any agent routes a question to Luffy (via the main thread). Answer with: decision + reason + impact on the plan. Log every decision to `.mugiwara/missions/<mission>/decisions.md`; do NOT touch the plan doc.
 
 ## Override (in-session)
 

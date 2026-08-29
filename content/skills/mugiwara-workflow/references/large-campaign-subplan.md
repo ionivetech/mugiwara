@@ -18,7 +18,7 @@ Large campaigns (>3 phases or >1500-line plans) split into isolated phase slices
 
 ## Archive merge (Luffy)
 
-- `mugiwara archive --merge` folds `sub-plan/*.md` + `flows/phase-*/` + `decisions.md` sections + `blockers.md` + `review.md`/`security.md` into single `report.md` seeded from `flows/06-closure.md`
+- `mugiwara archive` folds `sub-plan/*.md` + `flows/phase-*/` + `decisions.md` sections + `blockers.md` + `review.md`/`security.md` into single `report.md` seeded from `flows/06-closure.md`
 - Final layout: `plan.md` (index) + `report.md` + `pr-verdict.md`/`provenance.md`/`rollback.sh`
 - Idempotent — second run is no-op
 - If code needs extend `src/mission.ts:archiveMission` with `sub-plan/` + `flows/phase-*/` allowlist; otherwise Luffy manual `cat flows/phase-*/... >> report.md` suffices

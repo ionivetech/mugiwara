@@ -130,7 +130,7 @@ describe('signReport / verifyReport with stubbed minisign', () => {
     const prevHome = process.env.HOME;
     process.env.HOME = home;
     try {
-      // no .mugiwara/config → sign_backend unset → auto → minisign absent → pure
+      // no .mugiwara/config → sign unset → auto → minisign absent → pure
       const r = signReport(dir, mdir);
       expect(r.ok).toBe(true);
       expect(r.message).toContain('mugisig');
@@ -145,13 +145,13 @@ describe('signReport / verifyReport with stubbed minisign', () => {
     }
   });
 
-  it('sign succeeds with stub and key (sign_backend=minisign); verify detects tampering via failing stub', () => {
+  it('sign succeeds with stub and key (sign=minisign); verify detects tampering via failing stub', () => {
     const mdir = join(dir, 'm');
     mkdirSync(mdir, { recursive: true });
     writeFileSync(join(mdir, 'report.md'), 'body\n');
     // force the minisign backend so the stub is exercised (auto would pick pure)
     mkdirSync(join(dir, '.mugiwara'), { recursive: true });
-    writeFileSync(join(dir, '.mugiwara', 'config'), 'sign_backend=minisign\n');
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'sign=minisign\n');
     process.env.MUGIWARA_SIGN_KEY = '/keys/secret.key';
     stubMinisign(0);
     const signed = signReport(dir, mdir);

@@ -18,6 +18,7 @@ import {
   detectInvestigationSlop,
   detectCodeSlop,
   recordSlopDecision,
+  computeLiveSlop,
 } from '../src/slop.ts';
 
 describe('classifySlop — slop taxonomy (§21)', () => {
@@ -395,5 +396,30 @@ describe('recordSlopDecision — decision trail (§41)', () => {
     const nested = join(dir, 'missions', 'demo');
     recordSlopDecision(nested, { decision: 'compress', reason: 'verbose output' });
     expect(existsSync(join(nested, 'decisions.md'))).toBe(true);
+  });
+});
+
+describe('computeLiveSlop — live wiring (§3.3)', () => {
+  it('returns zero interventions on a clean mission', () => {
+    const r = computeLiveSlop({ heal_cycle: 0, repeated_reads: 1 });
+    expect(r.interventions).toBe(0);
+    expect(r.rows).toHaveLength(0);
+  });
+  it('flags healing slop → Brook when heal_cycle hits the limit', () => {
+    const r = computeLiveSlop({ heal_cycle: 3, repeated_reads: 0, max_heal_cycles: 3 });
+    expect(r.interventions).toBeGreaterThan(0);
+    expect(r.rows.some((x) => x.role === 'Brook' && x.kind === 'healing')).toBe(true);
+    expect(r.perRole['Brook']).toBeGreaterThanOrEqual(1);
+  });
+  it('flags context slop → all on repeated reads over threshold', () => {
+    const r = computeLiveSlop({ heal_cycle: 0, repeated_reads: 5, repeated_read_threshold: 3 });
+    expect(r.rows.some((x) => x.role === 'all' && x.kind === 'context')).toBe(true);
+    expect(r.perRole['all']).toBeGreaterThanOrEqual(1);
+  });
+  it('aggregates both signals into one intervention count', () => {
+    const r = computeLiveSlop({ heal_cycle: 4, repeated_reads: 6, max_heal_cycles: 3 });
+    expect(r.interventions).toBe(2);
+    expect(Object.keys(r.perRole)).toContain('Brook');
+    expect(Object.keys(r.perRole)).toContain('all');
   });
 });

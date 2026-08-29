@@ -15,7 +15,7 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/**/*.d.ts'],
       // No GLOBAL threshold by design. `.mugiwara/config` declares
-      // coverage_new=90 / coverage_modified=80 and those apply to the files in
+      // coverage_new=85 / coverage_modified=90 and those apply to the files in
       // the DIFF, not to a project-wide number — enforced by
       // `scripts/coverage-gate.ts` (`bun run coverage-gate`, wired into
       // `bun run gate`). A global percentage would let an untested new file

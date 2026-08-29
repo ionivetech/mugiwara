@@ -2,7 +2,7 @@
 // Phase 8 Reporting & CLI — cost ledger, avoided work, efficiency, trail (§39/§41–§43).
 // Pure view over existing persisted files: cost-events.jsonl (Phase 1),
 // context-registry.jsonl (Phase 2), decisions.md trail (§41). No new store.
-// ponytail: ledger is a view over existing files, no new store
+// note: ledger is a view over existing files, no new store
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CostEvent } from './cost.ts';
@@ -92,7 +92,7 @@ export function computeAvoidedMetrics(input: {
   const contexts_avoided = dup + rep;
   const stages_avoided = input.workMetrics?.stagesAvoided ?? 0;
   const slop_interventions = input.slopMetrics?.interventions ?? 0;
-  // ponytail: heuristic 150 tokens per avoided read, tune with §39 if needed
+  // note: heuristic 150 tokens per avoided read, tune with §39 if needed
   const tokens_avoided_est = contexts_avoided * 150;
   return { stages_avoided, contexts_avoided, slop_interventions, tokens_avoided_est };
 }
@@ -179,7 +179,7 @@ export function renderCostSection(ledger: CostLedger): string {
     '|-----------|-------|',
     `| Budget | ${env.status} ${env.pct}% (${env.used}/${env.planned}) |`,
     `| Context | ${env.planned} chars, reuse ${ledger.efficiency.reuse_rate} |`,
-    `| Avoided | ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ${ledger.avoided.tokens_avoided_est} tokens est |`,
+    `| Avoided | ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ${ledger.avoided.slop_interventions} slop, ~${ledger.avoided.tokens_avoided_est} tokens est |`,
     `| Efficiency | reuse ${ledger.efficiency.reuse_rate}, dup ${ledger.efficiency.duplicate_avoidance_chars} chars, budget ${ledger.efficiency.budget_efficiency_pct}% |`,
     `| Trail | ${ledger.trail.length} decisions |`,
   ];
@@ -201,4 +201,25 @@ export function toCostJSON(ledger: CostLedger): string {
     null,
     2,
   );
+}
+
+// ── adaptation summary (Phase E) ──
+// Posture decisions are recorded in decisions.md (via Phase C). Summarize them
+// from the existing trail — no second store.
+export function summarizeAdaptation(missionDir: string): { count: number; rows: { ts: string; decision: string; reason: string }[] } {
+  const trail = parseDecisionTrail(missionDir);
+  const postureRe = /posture|switch|adapt|pause|parallel-workers|context-relief|phase-isolated|team-scoped/i;
+  const rows = trail
+    .filter((t) => postureRe.test(`${t.decision} ${t.reason}`))
+    .map((t) => ({ ts: t.ts, decision: t.decision, reason: t.reason }));
+  return { count: rows.length, rows };
+}
+
+export function renderAdaptationSection(missionDir: string): string {
+  const { count, rows } = summarizeAdaptation(missionDir);
+  if (count === 0) return '';
+  const lines = ['', '## Adaptation', '', '| Time | Decision | Reason |', '|---|---|---|'];
+  for (const r of rows) lines.push(`| ${r.ts} | ${r.decision} | ${r.reason} |`);
+  if (rows.length === 0) lines.push('| — | (posture rows recorded in decisions.md) | |');
+  return lines.join('\n');
 }

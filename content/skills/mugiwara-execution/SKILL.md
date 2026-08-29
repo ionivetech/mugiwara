@@ -55,6 +55,14 @@ Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<memb
 
 After each batch, update `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
 
+## Posture switching (boundaries)
+
+Re-evaluate posture only at a flow-stage/task-batch boundary, never mid-task:
+retain/switch/avoid/pause from lane/risk/governor/context evidence, recorded with
+reason + evidence ref in `decisions.md` (matrix: `_shared/references/posture-routing.md`). A
+switch never changes mode/roles; workers only for Nami-declared independent tasks.
+On halt, emit state + continue with exact next action incl. posture verification.
+
 ## Task batching & delegation format (parallel workers only)
 
 Full protocol: `references/dispatch.md` — output rule, batch report format, six-field worker prompt. Thin prompts cause thin results.

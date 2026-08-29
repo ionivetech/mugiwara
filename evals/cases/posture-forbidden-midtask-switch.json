@@ -1,0 +1,25 @@
+{
+  "name": "posture-forbidden-midtask-switch",
+  "skill": "mugiwara-execution",
+  "type": "negative",
+  "trigger": {
+    "positive": [
+      { "prompt": "executing an approved plan: todo list, commit per logical task, evidence per task", "top_k": 3 },
+      { "prompt": "parallel worker batches executing approved plan tasks with evidence", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "explain the high-level architecture of this feature" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Posture is inline-sequential. Mid-task a new dependency appears and context is high.",
+      "rubric": [
+        "switches posture mid-task",
+        "flips control mode silently",
+        "gives a worker a role's authority",
+        "reorders plan tasks"
+      ]
+    }
+  ]
+}

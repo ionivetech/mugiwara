@@ -21,8 +21,8 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 auto_commit=on
-coverage_new=90
-coverage_modified=80
+coverage_new=85
+coverage_modified=90
 review_depth=full
 quality_depth=full
 verify_merged=off
@@ -30,6 +30,9 @@ delegate_threshold=60
 heal_max_cycles=3
 verbosity=normal
 # context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)
+# investigation_max_passes=2            # optional: Investigation Governor exploration-pass cap
+# investigation_max_unrelated_files=5   # optional: unrelated files cap before slop flag
+# investigation_repeated_read_threshold=2  # optional: repeated-read cap before slop flag
 ```
 
 ## Keys
@@ -40,8 +43,8 @@ verbosity=normal
 | `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata (see [Branch and commit templates](#branch-and-commit-templates)). **Advisory-only** — the crew reads it to name branches; the harness never creates branches. |
 | `commit` | conventional / gitmoji / plain / template | conventional | Commit message style, or a template with placeholders (see below). **Advisory-only** — the crew reads it to format commit messages; the harness never writes commits. |
 | `auto_commit` | on / off | on | Auto-commit per task + final push. Off disables both in `guided` and `semi` — changes stay in the working tree for the user to commit and push manually. Has no effect in `auto` mode, which always commits. **Advisory-only** — commit/push are model decisions; no validator or hook reads this. |
-| `coverage_new` | number (0-100) | 90 | Coverage threshold for new files |
-| `coverage_modified` | number (0-100) | 80 | Coverage threshold for modified files |
+| `coverage_new` | number (0-100) | 85 | Coverage threshold for new files |
+| `coverage_modified` | number (0-100) | 90 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Flow 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only). **Advisory-only** — read by the crew, not by code. |
 | `quality_depth` | full / standard / quick | full | Quality check depth for Sanji (Flow 5): full (format+lint+test+duplication+complexity+attributes), standard (format+lint+test+duplication), quick (format+lint+test only). **Advisory-only** — read by the crew, not by code. |
 | `verify_merged` | on / off | off | Merge Flow 5 (quality) and Flow 6 (gates) into ONE verify pass that writes both artifacts (`flows/03-quality.md` + `flows/04-gates.md`) from a single check run. Intended for strong models and small lanes where three separate verification passes are redundant; Lane 3 (sensitive) always keeps them separate. **Advisory-only** — read by the crew from this file at Flow 5 start. |
@@ -49,6 +52,11 @@ verbosity=normal
 | `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation. **Read by `scripts/savepoint.sh`** — recorded in `state.json` and used to compute `heal_halt` (`heal_cycle ≥ max`), which the crew reads. |
 | `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. **Read by `scripts/savepoint.sh`** — recorded in `state.json`. |
 | `context_budget_chars` | number (bytes) | unset | Ceiling on the mission trail's total size (top-level `*.md` + `flows/*`), measured at archive. Over the ceiling fails the archive like a failed test; unset = measured and printed in the report only. **Read by the closure pipeline** (`src/budget.ts`). |
+| `investigation_max_passes` | number (≥1) | 2 | Max exploration passes the Investigation Governor allows before it flags unbounded exploration as slop (§13). **Read by `readInvestigationConfig`** (`src/investigation.ts`). |
+| `investigation_max_unrelated_files` | number (≥1) | 5 | Max unrelated files opened during investigation before the governor flags it (§13). **Read by `readInvestigationConfig`**. |
+| `investigation_repeated_read_threshold` | number (≥1) | 2 | Repeated reads of the same file before the governor flags context slop (§13). **Read by `readInvestigationConfig`**. |
+| `sign` | auto / minisign / pure / off | auto | Report attestation backend. `auto` = minisign if installed+keyed, else the built-in `pure` ed25519 backend; `pure` = internal node:crypto (keys via `mugiwara sign --gen-key`); `off` = unsigned. **Read by `src/sign.ts`**. See [Signed attestation](closure-tools.md#signed-attestation-optional). |
+| `enforce` | off / warn / block | block | How strictly the pipeline-guard hook enforces the lane/consent rules (e.g. skipping the pipeline on non-trivial work, out-of-scope mutation). `block` fails, `warn` logs, `off` disables. **Read by `hooks/pipeline-guard.ts`**. |
 
 ## Policy file interplay
 
@@ -63,7 +71,10 @@ never lower. See [policy-as-code](policy-as-code.md). An invalid policy file
 Code reads five keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`
 (read by `scripts/savepoint.sh`, which records or computes them into
 `state.json`), `coverage_new`/`coverage_modified` (read by the coverage
-gate), and `context_budget_chars` (read by the closure pipeline). Everything else is **advisory-only** — read by the crew from this prose,
+gate), `context_budget_chars` (read by the closure pipeline), the three
+`investigation_*` keys (read by `readInvestigationConfig` into the
+Investigation Governor), `sign` (read by `src/sign.ts`), and
+`enforce` (read by `hooks/pipeline-guard.ts`). Everything else is **advisory-only** — read by the crew from this prose,
 never by a validator or hook. Changing an advisory key changes crew behavior
 but no gate fails and no computation changes:
 

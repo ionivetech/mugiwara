@@ -13,8 +13,8 @@ export const DEFAULT_CONFIG = [
   'branch=feature/{type}-{issue}-{slug}',
   'commit=conventional',
   'auto_commit=on',
-  'coverage_new=90',
-  'coverage_modified=80',
+  'coverage_new=85',
+  'coverage_modified=90',
   'review_depth=full',
   'quality_depth=full',
   'verify_merged=off',
@@ -25,6 +25,8 @@ export const DEFAULT_CONFIG = [
   '# investigation_max_passes=2  # optional: cap investigation passes (spec §13)',
   '# investigation_max_unrelated_files=5',
   '# investigation_repeated_read_threshold=2',
+  '# sign=auto            # optional: auto | minisign | pure | off — report attestation',
+  '# enforce=block                # optional: off | warn | block — pipeline-guard policy',
 ].join('\n') + '\n';
 
 /** Config file path candidates: project first, then user home. */

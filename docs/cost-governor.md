@@ -2,6 +2,11 @@
 
 The Native Cost Governor (Phases 1–9) makes cost visible, measurable, and auditable — it never forces the model at runtime (measures, not enforces).
 
+The Cost Governor is one of **three independent decisions** per mission, alongside
+**control mode** and **execution posture** — it supplies reserve / project /
+avoid / stop verdicts, and never implies a mode change or a crew-role change.
+See [execution-model.md](concepts/execution-model.md).
+
 ## What it does
 - **Budgets** — lane budgets (lean 12k / standard 25k / full 50k) + warn at 1.5× + stop at 3× (`src/cost.ts`, `scripts/lib/lane-base.sh` source of truth)
 - **Context** — chars + est tokens + budget gate (`src/context.ts` / `src/evidence.ts` / `src/investigation.ts`)

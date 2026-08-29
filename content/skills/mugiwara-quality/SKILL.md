@@ -26,7 +26,7 @@ Reuse across flow stages: a check whose result is already recorded in `flows/02-
 3. Complexity — per changed function, both metrics:
    - Cyclomatic (McCabe): 1 + decision points; flag >10, major >20. When ESLint drives the repo, run its `complexity` rule at max 10 — docs: https://eslint.org/docs/latest/rules/complexity.
    - Cognitive: nesting-weighted; flag >15, major >25. Where an ESLint `cognitive-complexity` plugin or SonarJS/SonarScanner metrics exist, read them directly; record the measured value.
-   Method + thresholds: `_shared/references/complexity.md`. # ponytail: manual counting is the baseline; a scanner result outranks it.
+   Method + thresholds: `_shared/references/complexity.md`. # note: manual counting is the baseline; a scanner result outranks it.
 4. Duplication — scan changed files for near-identical blocks ≥10 lines. Compute `duplicated_lines_density` % = duplicated lines / total lines. Flag any file ≥3%. When the repo ships a scanner (SonarScanner, jscpd, Simian), read its density directly.
 5. File health — changed files ≤300 LOC, functions ≤30 LOC. Flag exceeded. Thresholds fixed; do not inflate.
 6. Maintainability rating — sum remediation effort (estimated minutes per issue severity) into technical debt; divide by code size for debt ratio. Map A-E per Sonar scale: A ≤5%, B <10%, C <20%, D <50%, E ≥50%. C or worse fails the gate.

@@ -122,6 +122,12 @@ ready PR summary.
 The crew runs **inline** in your main conversation — every flow stage reports as a
 compact checkpoint. Subagents only for parallel task batches.
 
+Execution is **adaptive**: the crew picks an execution posture (inline / parallel /
+context-relief / phase / team) from evidence at each flow boundary, and a Cost
+Governor keeps spend measured and bounded (see
+[adaptive execution](concepts/execution-model.md)). Inline stays the default;
+parallel only when the plan proves independent tasks.
+
 Prefer to drive part of it yourself? A few slash commands exist:
 `/mugiwara` (mode switch), `/mugiwara-continue` (resume),
 `/mugiwara-review`, `/mugiwara-security`. The rest of the pipeline routes
@@ -181,8 +187,8 @@ six. **Archive** (`mugiwara archive <mission>`) folds waves + findings into
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | Commit style: conventional/gitmoji/plain, or a template like `{issue}: {title}` |
 | `auto_commit` | on | on/off — off: guided/semi never commit+push, you do |
-| `coverage_new` | 90 | Coverage % for new files |
-| `coverage_modified` | 80 | Coverage % for modified files |
+| `coverage_new` | 85 | Coverage % for new files |
+| `coverage_modified` | 90 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |
 | `quality_depth` | full | Sanji's quality depth: full/standard/quick |
 | `verify_merged` | off | on merges Flow 5+6 into one verify pass (never Lane 3) |

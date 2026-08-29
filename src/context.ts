@@ -19,7 +19,7 @@ export const measureContextChars = budgetMeasureContextChars;
 
 /**
  * Estimate chars→tokens at a documented 4 chars / token ratio.
- * ponytail: coarse fixed ratio; refine when the harness exposes provider
+ * note: coarse fixed ratio; refine when the harness exposes provider
  * token telemetry for the actual loaded context.
  */
 export function estContextTokens(chars: number): number {

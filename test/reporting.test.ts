@@ -13,6 +13,8 @@ import {
   renderCostSection,
   toCostJSON,
   loadCostEvents,
+  summarizeAdaptation,
+  renderAdaptationSection,
 } from '../src/reporting.ts';
 import { costEnvelope } from '../src/cost.ts';
 import { loadRegistry, persistRegistry } from '../src/evidence.ts';
@@ -179,5 +181,31 @@ describe('archive integration — reporting enriches report.md', () => {
     expect(report).toContain('## Archived: context-registry.jsonl');
     expect(existsSync(join(dir, 'cost-events.jsonl'))).toBe(false);
     expect(existsSync(join(dir, 'context-registry.jsonl'))).toBe(false);
+  });
+});
+
+describe('summarizeAdaptation / renderAdaptationSection (Phase E)', () => {
+  it('returns zero rows when no posture decisions recorded', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-adapt-empty-'));
+    const { count, rows } = summarizeAdaptation(dir);
+    expect(count).toBe(0);
+    expect(rows).toHaveLength(0);
+    expect(renderAdaptationSection(dir)).toBe('');
+  });
+
+  it('summarizes posture switch rows from the decisions trail', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-adapt-'));
+    writeFileSync(
+      join(dir, 'decisions.md'),
+      '## Cost governor decisions\n' +
+        '- 2026-08-29T00:00:00Z — AI: luffy: posture switch inline-sequential → parallel-workers — reason: 2 independent tasks per Nami dependency map — evidence: plan.md\n',
+    );
+    const { count, rows } = summarizeAdaptation(dir);
+    expect(count).toBe(1);
+    expect(rows[0].decision).toContain('posture switch');
+    expect(rows[0].decision).toContain('parallel-workers');
+    const section = renderAdaptationSection(dir);
+    expect(section).toContain('## Adaptation');
+    expect(section).toContain('parallel-workers');
   });
 });

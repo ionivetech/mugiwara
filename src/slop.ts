@@ -277,3 +277,30 @@ export function recordSlopDecision(
     evidence: d.evidence,
   });
 }
+
+// ── Live wiring (§3.3) ──
+// Runs the existing detectors over state already available at ledger-build time
+// (state.json heal cycle, context-registry repeated reads). One call site feeds
+// the ledger's slopMetrics.interventions so it stops reading 0. Per-crew
+// attribution: healing → Brook (Flow 8), context → all.
+export type LiveSlopResult = {
+  interventions: number;
+  perRole: Record<string, number>;
+  rows: { role: string; kind: SlopKind; reason: string }[];
+};
+
+export function computeLiveSlop(input: {
+  heal_cycle: number;
+  repeated_reads: number;
+  repeated_read_threshold?: number;
+  max_heal_cycles?: number;
+}): LiveSlopResult {
+  const rows: { role: string; kind: SlopKind; reason: string }[] = [];
+  const thr = input.repeated_read_threshold ?? 3;
+  const heal = detectHealingSlop({ cycle: input.heal_cycle, fixes_in_cycle: 0, history_fixes: [], max_cycles: input.max_heal_cycles ?? 3 });
+  if (heal.slop) rows.push({ role: 'Brook', kind: 'healing', reason: heal.reason });
+  if (input.repeated_reads >= thr) rows.push({ role: 'all', kind: 'context', reason: `repeated reads ${input.repeated_reads} ≥ ${thr}` });
+  const perRole: Record<string, number> = {};
+  for (const r of rows) perRole[r.role] = (perRole[r.role] ?? 0) + 1;
+  return { interventions: rows.length, perRole, rows };
+}

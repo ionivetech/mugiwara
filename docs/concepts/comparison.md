@@ -15,7 +15,7 @@ by whom — and the cost of the process scales to the size of the work.
   check output is captured into `.mugiwara/missions/<mission>/flows/`.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.
-- **14 named agents (11 + 3 internal)** in a 9-flow-stage gated pipeline — each flow stage has a defined
+- **14 named agents (11 + 3 internal)** in a Flow 0–9 gated pipeline — each flow stage has a defined
   owner, handoff, and verification gate.
 - **21 skills** with skip gates on all of them, progressive disclosure into
   `references/`, and deterministic tooling for lane, evidence, and state.

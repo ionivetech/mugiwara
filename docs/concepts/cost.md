@@ -28,9 +28,9 @@ remaining headroom in reserve — it is the budget's lock, not free space.
 | Lane | Flow stages | LANE_BASE (measured) | Budget | Warn / Stop (1.5× / 3× budget) |
 |------|-------|:---:|:---:|:---:|
 | 0 Direct | none | ~0 | — | — |
-| 1 Lean | execute → quality | 7,000 | 12,000 | warn 18k / stop 36k |
+| 1 Lean | execute → quality | 8,000 | 12,000 | warn 18k / stop 36k |
 | 2 Standard | plan → execute → audit → review | 13,000 | 25,000 | warn 37.5k / stop 75k |
-| 3 Full | all 9 flow stages | 23,000 | 50,000 | warn 75k / stop 150k |
+| 3 Full | all 9 flow stages | 22,000 | 50,000 | warn 75k / stop 150k |
 | 4 Spike | brainstorm → re-triage | 1,000 | 3,000 | warn 4.5k / stop 9k |
 
 LANE_BASE is **not a hand-written estimate** — `scripts/lane-base.ts`
@@ -52,9 +52,9 @@ Two numbers are computed, gate-validated constants — not guesses:
 |------|---------------------------|--------|-------------|-----------|
 | direct | 0 (no pipeline) | — | — | — |
 | spike | 1,000 | 3k | 4.5k | 9k |
-| lean | 7,000 | 12k | 18k | 36k |
+| lean | 8,000 | 12k | 18k | 36k |
 | standard | 13,000 | 25k | 37.5k | 75k |
-| full | 23,000 | 50k | 75k | 150k |
+| full | 22,000 | 50k | 75k | 150k |
 
 ¹ `LANE_BASE_*` from `scripts/lib/lane-base.sh` — the sum of skill+agent body
 word-counts × 1.35 for that lane's flow stages; `scripts/lane-base.ts` fails
@@ -80,8 +80,8 @@ All numbers below were measured on this repo unless marked as an estimate.
   at 12 tok/line): lean ~3.7k / ~10.4k, standard ~7.4k / ~21.3k, full ~10.9k /
   ~32.6k.
 - **Static session overhead:** mugiwara catalog ~1,170 tokens (21 skills + 14
-  agents). Compare: ponytail fully injected ~1,300 tokens (5,227 bytes),
-  caveman ~625. Skill bodies (~170 KB across 21 skills) load on demand only —
+  agents). Compare: a fully-injected terse-mode skill pack ~1,300 tokens (5,227
+  bytes). Skill bodies (~170 KB across 21 skills) load on demand only —
   ~0 until `skill()` fires.
 - **Honest limits:** the estimator counts LOC + doc words — a monotonic proxy,
   not real model-I/O telemetry. The true ceiling is the provider's accounting:
@@ -167,7 +167,7 @@ trail on disk + the evidence registry.
   implementation, test-locked): the total byte footprint of the trail's
   markdown artifacts, i.e. the context a future reader must load.
 - **Est-token ratio** — `estContextTokens(chars) = round(chars / 4)`, a coarse
-  documented estimate (`ponytail:` comment — refine when provider token
+  documented estimate (`note:` comment — refine when provider token
   telemetry exists).
 - **Budget gate** — `contextStatus` gates on `context_budget_chars` (chars),
   never on tokens: chars > budget → 'over', else 'ok'. Budget 0 → 'ok'. This
@@ -320,7 +320,7 @@ Seven capabilities + record helper:
 | Adaptive budget (§27) | `evaluateExpansion` | `allowed` only when `has_evidence` + one valid flag (scope/security/test-surface/arch-dependency/healing) |
 | Evidence-backed expansion (§27) | `evaluateExpansion` | `deny` on invalid reason (verbosity/reread/repeat/code) even with evidence |
 | Progressive thresholds (§28) | `checkProgressiveThreshold` | `ok <60 → optimize ≥60 → aggressive ≥75 → protect ≥90 → pause ≥100 → warning ≥150 → stop ≥300` |
-| Cost circuit breaker (§29) | `checkCircuitBreaker` | `tripped` when `actual ≥ 2× expected` with no progress/scope/evidence (ponytail: double-threshold) |
+| Cost circuit breaker (§29) | `checkCircuitBreaker` | `tripped` when `actual ≥ 2× expected` with no progress/scope/evidence (note: double-threshold) |
 | Anomaly detection (§24) | `detectBudgetAnomaly` | `anomaly` when `tokens_delta ≥ 5000` with zero progress (re-consumes slop signal) |
 | Decision trail (§41) | `recordBudgetDecision` | persists any verdict as a `budget-governor` trail row |
 
@@ -340,7 +340,7 @@ Seven capabilities + ledger view:
 | `mugiwara cost` CLI (§42) | `src/cli.ts:costCmd` | `mugiwara cost [--mission <id>] [--json] [--ledger]` — human (`Cost envelope / Avoided / Efficiency / Trail`) or `toCostJSON` JSON |
 | JSON output (§42) | `toCostJSON` | `JSON.stringify(ledger, null, 2)` with stable key order |
 | Cost section in reports (§43) | `renderCostSection` + `src/mission.ts` archive | `archives/mission/report.md` `## Cost` now includes `Budget / Context / Avoided / Efficiency / Trail` rows (ledger view) |
-| Avoided work accounting (§39/§43) | `computeAvoidedMetrics` | `contexts_avoided = dup+repeated`, `stages_avoided`, `slop_interventions`, `tokens_avoided_est = contexts*150` (ponytail heuristic) |
+| Avoided work accounting (§39/§43) | `computeAvoidedMetrics` | `contexts_avoided = dup+repeated`, `stages_avoided`, `slop_interventions`, `tokens_avoided_est = contexts*150` (note heuristic) |
 | Cost efficiency metrics (§39) | `computeEfficiencyMetrics` | `reuse_rate`, `duplicate_avoidance_chars`, `budget_efficiency_pct` |
 | Optimization decision trail (§41) | `parseDecisionTrail` + `recordOptDecision` | bullets under `## Cost governor decisions` parsed, rendered (truncated to 5 + `… n more`), folded at archive |
 
@@ -359,10 +359,10 @@ Phase 9 delivers **Benchmark & Hardening** — cost suite (§48), Stop-Slop suit
 | Large repo stress | 50 files within declared scope → `detectScopeSlop` negative | pass |
 | Long mission stress | 9 flow stages `projectBudget` max ≤ full budget 50k | pass |
 | Runaway stress (§29) | actual 2× expected with no progress/scope/evidence → `checkCircuitBreaker` tripped | harness reports `breaker: tripped` (measures, not enforces) |
-| Thresholds (ratchet) | `scripts/benchmark-thresholds.json` holds `projected+overhead/context_max/evidence_min` per workload + `slop_floors` + `regression` baselines | thresholds only move on explicit diff, never silently; `ponytail: thresholds are fixture constants, not config — ratchet like retrieval-eval` |
+| Thresholds (ratchet) | `scripts/benchmark-thresholds.json` holds `projected+overhead/context_max/evidence_min` per workload + `slop_floors` + `regression` baselines | thresholds only move on explicit diff, never silently; `note: thresholds are fixture constants, not config — ratchet like retrieval-eval` |
 | Regression (§49) | `checkRegression` — cost down but correctness/evidence/security/quality/scope down → fail | hard regression, same as retrieval-eval floor |
 | Cross-platform | harness deterministic (pure inputs); `scripts/conformance.ts` 12-platform parity | no per-OS branching |
-| CI enforcement | `package.json:gate` runs `bun scripts/benchmark-governor.ts`; `scripts/gate-selftest.ts` tampers thresholds to prove red (G3) | gate that cannot fail is not a gate; `ponytail: harness measures, does not enforce — no runtime gate` |
+| CI enforcement | `package.json:gate` runs `bun scripts/benchmark-governor.ts`; `scripts/gate-selftest.ts` tampers thresholds to prove red (G3) | gate that cannot fail is not a gate; `note: harness measures, does not enforce — no runtime gate` |
 | Docs | `docs/cost-governor.md` hub + this section | honest boundary: measures, not enforces — LLM crew (workflow skill rule 2g) acts on signals |
 
 **Honest boundary:** `scripts/benchmark-governor.ts` measures cost/slop/regression and fails CI when thresholds are violated; it does not add a runtime `savepoint.sh` gate or pretend a benchmark script can force the model to be efficient. The LLM crew (workflow skill, rule 2g) is the only thing that acts on the signals — the harness proves whether the crew was efficient on the representative workloads. Thresholds are the ratchet fixture `scripts/benchmark-thresholds.json` (like `retrieval-eval` floor); 12-platform `conformance.ts` is the cross-platform proof.

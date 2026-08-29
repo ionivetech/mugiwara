@@ -12,7 +12,7 @@ import { formatFootprint, measureContextChars, readBudgetConfig } from './budget
 import { budgetForLane, costEnvelope, appendCostEvent } from './cost.ts';
 import { loadRegistry } from './evidence.ts';
 import { computeContextMetrics, contextStatus } from './context.ts';
-import { buildCostLedger } from './reporting.ts';
+import { buildCostLedger, renderAdaptationSection } from './reporting.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -244,6 +244,10 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       }
     } catch { /* ledger best-effort — trail parse failure never blocks archive */ }
     costSection += '\n';
+    // Phase E — adaptation summary from the posture decision trail
+    try {
+      costSection += renderAdaptationSection(dir);
+    } catch { /* best-effort */ }
 
     // Cost Governor: record the closure cost event — the mission's final
     // cost snapshot, folded into report.md with the rest of the trail.

@@ -5,7 +5,7 @@
 // Dual backend (roadmap v0.8 item 1):
 //  - minisign: external binary when installed + user supplies keys (legacy)
 //  - pure:     internal node:crypto ed25519, zero binary, zero deps
-// Backend chosen via sign_backend in .mugiwara/config (auto|minisign|pure|off).
+// Backend chosen via sign in .mugiwara/config (auto|minisign|pure|off).
 // Detached signature lives beside the report (report.md.minisig | .mugisig).
 import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -133,7 +133,7 @@ export function pureVerify(content: string, sig: PureSig): boolean {
 export type BackendChoice = 'off' | 'minisign' | 'minisign-fail' | 'pure';
 
 /**
- * Resolve the effective signing backend from config sign_backend + runtime
+ * Resolve the effective signing backend from config sign + runtime
  * facts. Unknown values fall back to pure — never a silent off.
  */
 export function resolveBackend(
@@ -150,9 +150,9 @@ export function resolveBackend(
   }
 }
 
-/** Read sign_backend from config (project then home). */
+/** Read sign from config (project then home). */
 export function configuredBackend(projectDir: string): string | undefined {
-  return readConfig(projectDir).sign_backend;
+  return readConfig(projectDir).sign;
 }
 
 function missionMeta(projectDir: string, mission: string): { commit: string; ts: string } {
@@ -167,8 +167,8 @@ export function signReport(projectDir: string, missionDir: string): { ok: boolea
   const mission = missionDir.split(join('.mugiwara', 'missions', '')).pop() ?? 'unknown';
   const backend = resolveBackend(configuredBackend(projectDir), { hasMinisign: hasMinisign(), hasKey: existsSync(defaultKey('secret')) });
 
-  if (backend === 'off') return { ok: false, message: 'signing disabled (sign_backend=off)' };
-  if (backend === 'minisign-fail') return { ok: false, message: 'sign_backend=minisign but minisign not installed — install it or set sign_backend=pure' };
+  if (backend === 'off') return { ok: false, message: 'signing disabled (sign=off)' };
+  if (backend === 'minisign-fail') return { ok: false, message: 'sign=minisign but minisign not installed — install it or set sign=pure' };
   if (backend === 'minisign') {
     const secretKey = process.env.MUGIWARA_SIGN_KEY?.trim() || defaultKey('secret');
     try {

@@ -57,4 +57,17 @@ is not shipped. Consumers import into their own ledger with
 - Screenshot of a closed mission report (the trail IS the product)
 - One sentence on lanes: process scales with change size
 - Supported-harness table copied from docs/reference/harness-matrix.md
-- Link to ROADMAP.md — the honest state of what works where
+
+## Adaptive execution — migration & rollback
+
+Mugiwara's three-decision model (control mode / execution model-posture /
+Cost Governor) is the adaptive-execution foundation. Posture is chosen
+deterministically at flow boundaries and recorded in the decision trail; it is
+independent of control mode.
+
+- **Backwards compatible:** existing missions/configs default to
+  `inline-sequential` — no migration to resume them.
+- **Downgrade / rollback:** set the posture to `inline-sequential` (the safe
+  operational fallback) to disable parallel/relief dispatch.
+- **No Control Plane / Trust Layer:** posture records are local markdown +
+  state, no remote runtime required.
