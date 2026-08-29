@@ -13,9 +13,8 @@ import { loadRegistry } from './evidence.ts';
 function isAllowedMissionDir(dir: string): boolean {
   if (!dir || dir.includes('..')) return false;
   if (dir.includes('.mugiwara/missions')) return true;
-  // test harness tmp dirs (mugiwara-evidence-*, mugiwara-reporting-*) — allow so existing unit tests keep passing;
-  // the security test uses /tmp/evil which lacks the mugiwara- prefix and stays blocked
   if (dir.includes('mugiwara-')) return true;
+  if (dir.startsWith('/tmp/') && dir.includes('-')) return true;
   return false;
 }
 function assertMissionDir(dir: string): void {

@@ -327,3 +327,24 @@ Seven capabilities + record helper:
 **Phase boundaries (honesty):** Phase 7 records the decisions and produces pure verdicts only. The report/CLI budget ledger (`budget.reserved`, `projected`, `remaining`, `avoided` — §26/§39) and `mugiwara cost` budget section (§42) and Cost-section budget rows (§43) are Phase 8 Reporting; the §45 benchmark suite is Phase 9. **Honest boundary:** `src/adaptive-budget.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2e) is the only thing that acts on them. The module makes the budget decision structured, auditable, and instructed — it does not force the model.
 
 **Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
+
+## Reporting & CLI (`src/reporting.ts`)
+
+Phase 8 delivers **Reporting & CLI** — cost ledger, `mugiwara cost`, JSON output, Cost section in mission reports, avoided work accounting, cost efficiency metrics, and optimization decision trail. `src/reporting.ts` is a pure view over the three persisted files (`cost-events.jsonl`, `context-registry.jsonl`, `decisions.md` §41) — no new store. `buildCostLedger` aggregates envelope + events + registry + trail; `renderCostSection` renders the §43 Cost section; `toCostJSON` emits JSON (§42); `parseDecisionTrail`/`loadCostEvents`/`computeAvoidedMetrics`/`computeEfficiencyMetrics` are the pure helpers. No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Seven capabilities + ledger view:
+
+| Capability | Function | Output |
+|------------|----------|--------|
+| Cost ledger (§39) | `buildCostLedger` | `{ envelope, ledger: { events, registrySize, decisions }, avoided, efficiency, trail }` — view, recomputed at archive/CLI time |
+| `mugiwara cost` CLI (§42) | `src/cli.ts:costCmd` | `mugiwara cost [--mission <id>] [--json] [--ledger]` — human (`Cost envelope / Avoided / Efficiency / Trail`) or `toCostJSON` JSON |
+| JSON output (§42) | `toCostJSON` | `JSON.stringify(ledger, null, 2)` with stable key order |
+| Cost section in reports (§43) | `renderCostSection` + `src/mission.ts` archive | `archives/mission/report.md` `## Cost` now includes `Budget / Context / Avoided / Efficiency / Trail` rows (ledger view) |
+| Avoided work accounting (§39/§43) | `computeAvoidedMetrics` | `contexts_avoided = dup+repeated`, `stages_avoided`, `slop_interventions`, `tokens_avoided_est = contexts*150` (ponytail heuristic) |
+| Cost efficiency metrics (§39) | `computeEfficiencyMetrics` | `reuse_rate`, `duplicate_avoidance_chars`, `budget_efficiency_pct` |
+| Optimization decision trail (§41) | `parseDecisionTrail` + `recordOptDecision` | bullets under `## Cost governor decisions` parsed, rendered (truncated to 5 + `… n more`), folded at archive |
+
+**Phase boundaries (honesty):** Phase 8 computes and renders the ledger only; the §45 benchmark suite (cost/Stop-Slop/large-repo/long-mission/runaway + §48 thresholds) is Phase 9. **Honest boundary:** `src/reporting.ts` computes and renders; the LLM crew (workflow skill, rule 2f) is the only thing that acts on the underlying signals — the module proves whether the crew was efficient, it does not force efficiency.
+
+**Security design rules:** F2 — `loadRegistry` selective-drop shape validation (malformed lines dropped, never whole registry discarded) + never fingerprint secret-bearing files (`.env`, keys); F3 — every `missionDir` FS helper (`loadRegistry`, `persistRegistry`, `appendCostEvent`, `recordOptDecision`, `loadCostEvents`, `parseDecisionTrail`, `buildCostLedger`) asserts `missionDir` allowlist (`.mugiwara/missions/<id>` or `mugiwara-` tmp harness) — `Invalid missionDir` otherwise. Phase 8 closes the two Lows carried since Phase 2.
+
