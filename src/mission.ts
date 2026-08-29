@@ -12,6 +12,7 @@ import { formatFootprint, measureContextChars, readBudgetConfig } from './budget
 import { budgetForLane, costEnvelope, appendCostEvent } from './cost.ts';
 import { loadRegistry } from './evidence.ts';
 import { computeContextMetrics, contextStatus } from './context.ts';
+import { buildCostLedger } from './reporting.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -228,6 +229,20 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     if (hasReported) {
       costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;
     }
+    // Phase 8 Reporting — ledger/avoided/efficiency/trail rows (§39/§43)
+    try {
+      const ledger = buildCostLedger({ missionDir: dir, envelope: env });
+      costSection += `\n| Budget | ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned}) |`;
+      costSection += `\n| Context | ${chars.toLocaleString()} chars, reuse ${ledger.efficiency.reuse_rate} |`;
+      costSection += `\n| Avoided | ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ${ledger.avoided.tokens_avoided_est} tokens est |`;
+      costSection += `\n| Efficiency | reuse ${ledger.efficiency.reuse_rate}, dup ${ledger.efficiency.duplicate_avoidance_chars} chars, budget ${ledger.efficiency.budget_efficiency_pct}% |`;
+      costSection += `\n| Trail | ${ledger.trail.length} decisions |`;
+      if (ledger.trail.length) {
+        const show = ledger.trail.slice(0, 5);
+        for (const t of show) costSection += `\n- ${t.ts} — ${t.actor}: ${t.decision} — reason: ${t.reason}${t.evidence ? ` — evidence: ${t.evidence}` : ''}`;
+        if (ledger.trail.length > 5) costSection += `\n… ${ledger.trail.length - 5} more`;
+      }
+    } catch { /* ledger best-effort — trail parse failure never blocks archive */ }
     costSection += '\n';
 
     // Cost Governor: record the closure cost event — the mission's final

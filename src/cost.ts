@@ -124,12 +124,23 @@ export type CostEvent = {
 
 const COST_EVENTS_FILE = 'cost-events.jsonl';
 
+function isAllowedMissionDir(dir: string): boolean {
+  if (!dir || dir.includes('..')) return false;
+  if (dir.includes('.mugiwara/missions')) return true;
+  if (dir.includes('mugiwara-')) return true;
+  return false;
+}
+function assertMissionDir(dir: string): void {
+  if (!isAllowedMissionDir(dir)) throw new Error(`Invalid missionDir: ${dir}`);
+}
+
 /**
  * Append one cost event as a single JSON line. Append-only: no
  * read-modify-write, so concurrent writers never clobber each other. The
  * file lives next to the mission state and folds into report.md at archive.
  */
 export function appendCostEvent(missionDir: string, event: Omit<CostEvent, 'ts'>): void {
+  assertMissionDir(missionDir);
   mkdirSync(missionDir, { recursive: true });
   const line: CostEvent = Object.assign({ ts: new Date().toISOString() }, event);
   appendFileSync(join(missionDir, COST_EVENTS_FILE), JSON.stringify(line) + '\n', 'utf8');
@@ -154,6 +165,7 @@ const OPT_SECTION = '## Cost governor decisions';
  * never modified — only appended to. Creates the section header on first use.
  */
 export function recordOptDecision(missionDir: string, d: Omit<OptDecision, 'ts'>): void {
+  assertMissionDir(missionDir);
   mkdirSync(missionDir, { recursive: true });
   const file = join(missionDir, DECISIONS_FILE);
   let hasSection = false;

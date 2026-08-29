@@ -39,6 +39,16 @@ export type RegistryEntry = {
 
 const REGISTRY_FILE = 'context-registry.jsonl';
 
+function isAllowedMissionDir(dir: string): boolean {
+  if (!dir || dir.includes('..')) return false;
+  if (dir.includes('.mugiwara/missions')) return true;
+  if (dir.includes('mugiwara-')) return true;
+  return false;
+}
+function assertMissionDir(dir: string): void {
+  if (!isAllowedMissionDir(dir)) throw new Error(`Invalid missionDir: ${dir}`);
+}
+
 /** Highest numeric seq among existing ids (0 when empty). */
 function maxSeq(registry: RegistryEntry[]): number {
   let max = 0;
@@ -99,6 +109,7 @@ export function findRepeats(registry: RegistryEntry[], kind?: RegistryKind): Reg
  * (or re-saved) batch. mkdir-on-write like appendCostEvent.
  */
 export function persistRegistry(missionDir: string, registry: RegistryEntry[]): void {
+  assertMissionDir(missionDir);
   mkdirSync(missionDir, { recursive: true });
   const file = join(missionDir, REGISTRY_FILE);
   for (const entry of registry) {
@@ -108,6 +119,7 @@ export function persistRegistry(missionDir: string, registry: RegistryEntry[]): 
 
 /** Read the full registry from context-registry.jsonl (empty when absent). */
 export function loadRegistry(missionDir: string): RegistryEntry[] {
+  assertMissionDir(missionDir);
   const file = join(missionDir, REGISTRY_FILE);
   try {
     const out: RegistryEntry[] = [];
