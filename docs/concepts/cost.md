@@ -261,3 +261,23 @@ force the model.
 (`.env`, keys, tokens); fingerprints of secrets would persist in the trail. F3 —
 `.mugiwara/` is local trusted state; if writers ever open `missionDir` to
 untrusted input, validate it before passing to the record helpers.
+
+## Cognitive & Output Governor (`src/cognition.ts`)
+
+Phase 5 delivers the **Cognitive & Output Governor** — focused reasoning policy, investigation termination, alternative limitation, output compression, duplicate explanation detection, and mission-focused output structure. `src/cognition.ts` is a pure verdict engine over explicit inputs, each decision recorded via `recordCognitiveDecision` → `recordOptDecision` (`## Cost governor decisions` trail, `cognitive-governor` actor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Seven capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Focused reasoning policy (§17) | `isFocusedReasoning` | `focused` + `slop_types` (speculative_architecture/repeated_reconsideration/hypothetical_requirements/unrelated_implementations); reason names the slop |
+| Investigation termination (§13/§17) | `shouldTerminateInvestigation` | `terminate` on triad complete or limits hit without concrete reason; `has_concrete_reason` overrides |
+| Alternative limitation (§17) | `limitAlternatives` | `limited` + `dropped` when beyond `max_alternatives` (default 3) or without evidence backing; `bounded to N` |
+| Output compression (§18) | `compressOutput` | `compressed` + `saved_chars` keeps only lines within 2 of an essential heading; `well_structured` ≥2 headings |
+| Duplicate explanation detection (§17/§18) | `detectDuplicateExplanation` | `duplicate` + `duplicate_groups` via `fingerprint` grouping; exact duplicates only |
+| Mission-focused structure (§18) | `structureOutput` | `well_structured` + `missing` (Decision/Evidence required); reason names missing or mission-focused |
+| Decision trail (§41) | `recordCognitiveDecision` | persists any verdict as a `cognitive-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 5 records the decisions and produces pure verdicts only. The report/CLI cognition ledger (`reasoning focused vs slop`, `output compressed chars`, `duplicate explanations avoided` — §39/§43) is Phase 8 Reporting; the §21.3/§21.4 reasoning/output slop taxonomy and §45 detect→classify→intervene machinery is Phase 6 Stop-Slop. **Honest boundary:** `src/cognition.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2c) is the only thing that acts on them. The module makes the cognitive/output decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.

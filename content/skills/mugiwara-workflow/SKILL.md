@@ -88,19 +88,18 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 ## Rules
 
 1. Evidence over claims — run checks, show output.
-2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage. 2b. Scope & Code Governor: before adding code, check §14 reuse; justify new abstractions (§15) and dependencies (§16); prefer minimum sufficient implementation; record scope verdicts as scope-governor trail rows.
+2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage. 2b. Scope & Code Governor: before adding code, check §14 reuse; justify new abstractions (§15) and dependencies (§16); prefer minimum sufficient implementation; record scope verdicts as scope-governor trail rows. 2c. Cognitive & Output Governor: keep reasoning Question→Evidence→Decision→Action; bound alternatives; compress output to Decision/Action/Result/Evidence/Blocker; dedup explanations; record cognitive verdicts as cognitive-governor trail rows.
 3. Heal loop: max 3 cycles, then escalate.
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
 6. Resume via `resume-coordinator` before any flow stage — never restart.
 7. Push branch + hand verdict to user; crew never merges or deploys. 8. Host todo mirrors the plan doc every task + flow stage — same response as evidence.
 ## Work Governor
-
-Stages classify required/conditional/optional (§7); skip only with a recorded reason.
-Agents/skills load only when they earn cost (§8/§9); mission complete only when §19's five conditions hold.
-Verdicts land as `work-governor` trail rows. savepoint/lane-base/config untouched.
+Stages classify required/conditional/optional (§7); skip only with a recorded reason; agents/skills load only when they earn cost (§8/§9); mission complete only when §19's five conditions hold; verdicts as `work-governor` trail rows. savepoint/lane-base/config untouched.
 ## Scope & Code Governor
 Full definition: `references/scope-code-governor.md` — reuse-first, justification for abstractions/dependencies, minimum sufficient implementation.
+## Cognitive & Output Governor
+Full definition: `references/cognitive-output-governor.md` — Question→Evidence→Decision→Action, bounded alternatives, compressed deduplicated mission-focused output.
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.
