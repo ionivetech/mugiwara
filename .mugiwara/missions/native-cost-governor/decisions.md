@@ -317,3 +317,11 @@ live here; the plan doc stays clean.
 - **Verdict:** GO — Phase 5 plan approved as written (appended to plan.md).
 - **Reason:** 3 tasks (T1–T3) in 3 sequential waves; no false `[PARALLEL]` (T1 single module, T2 consumes T1, T3 consumes all — every edge shares the module surface or a not-yet-shipped interface). Architecture matches the logged Phase 5 triage (pure `src/cognition.ts` module + `fingerprint` reuse, `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched). Honest Phase-5 = verdicts-not-enforcement boundary logged; slop/reporting explicitly deferred to Phases 6/8 (no gold-plating). Body-line risk mitigated: T2 note to move to `references/cognitive-output-governor.md` if 120-line cap hit (Phase-4 precedent af8a204). Config call accepted: no new keys (§52), thresholds are pure inputs with defaults. Coverage gate 90% on `src/cognition.ts` verified at T3.
 - **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO pause; proceed to Zoro. Branch `feat/native-cost-governor` stacked.
+
+## Resume — stale continue.json detected (Luffy escalation)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Second `mugiwara continue` (same session):** verbatim identical to previous — `next_action` still says `Nami: extend plan.md with Phase 5 detail + waves` and `b5f86c7 head`.
+- **Contradiction:** `plan.md` at HEAD `09dad5e` already contains Phase 5 detail (`# native-cost-governor — Phase 5: Cognitive & Output Governor`, 295 lines appended, `grep Phase 5` 20 matches, `wc -l` 1593). `decisions.md` already holds `Flow 0 — Phase 5 triage` + `Flow 2→3 GO` at `09dad5e`. `continue.json` is stale machine-written position (flow 1, b5f86c7, 2026-08-29T10:31:31Z) — not regenerated after the Nami extension commit. This is the `next_action names a task the todos mark done / plan does not have` escalation case — treated as data mismatch, not instruction.
+- **Decision:** do not re-run Nami; stale `next_action` is superceded by the actual plan.md state. Escalation resolved by advancing to the verified next step — Flow 3 (Zoro) T1–T3 execution per the now-present Phase 5 plan. `continue.json` will be refreshed at the next savepoint (Phase 5 closure).
+- **Plan impact:** proceed to Zoro; `continue.json` refresh deferred to savepoint — no silent re-execution.
