@@ -223,3 +223,41 @@ decision structured, auditable, and instructed — it does not force the model.
 (`.env`, keys, tokens); fingerprints of secrets would persist in the trail. F3 —
 `.mugiwara/` is local trusted state; if writers ever open `missionDir` to
 untrusted input, validate it before passing to the record helpers.
+
+## Scope & Code Governor (`src/scope.ts`)
+
+Phase 4 delivers the **Scope & Code Governor** — scope drift detection,
+existing-code reuse checks, abstraction justification, dependency justification,
+minimum sufficient implementation policy, code waste detection, and change-surface
+measurement. `src/scope.ts` is a pure verdict engine over explicit inputs, each
+decision recorded via `recordScopeDecision` → `recordOptDecision`
+(`## Cost governor decisions` trail, `scope-governor` actor). No new config keys;
+`savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Eight capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Scope drift detection (§14/§51-1) | `detectScopeDrift` | `drift` + `scope_score` = fraction of touched files outside declared scope; reason names them |
+| Existing-code reuse (§14/§51-2) | `checkExistingCodeReuse` | `reuse:true` only when existing code is present AND local modification is viable |
+| Abstraction justification (§15/§51-3) | `evaluateAbstraction` | justified only when used in ≥2 places with duplication benefit, or required by contract — never speculative |
+| Dependency justification (§16/§51-4) | `evaluateDependency` | justified only when no equivalent, not solvable with existing, long-term value, maintenance ≤ removal cost |
+| Minimum sufficient policy (§15/§38/§51-5) | `minimumSufficientCheck` | `under` (missing verification/coverage) / `over` (incidental complexity) / `sufficient` |
+| Code waste detection (§15/§51-6) | `detectCodeWaste` | `waste_types` lists helper/abstraction/wrapper/interface/config/dependency/generated code/refactor |
+| Change-surface measurement (§5.4/§51-7) | `measureChangeSurface` | `loc_changed`; justified iff within declared scope and no new abstraction/dependency |
+| Decision trail (§41) | `recordScopeDecision` | persists any verdict as a `scope-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 4 records the decisions and produces the
+pure `measureChangeSurface` metrics only. The report/CLI code ledger
+(`files_changed`, `LOC`, new abstractions/deps, `mugiwara cost` — §5.4/§39/§42)
+is Phase 8 Reporting; the §21.11 code-slop taxonomy and §45 detect→classify→
+intervene machinery (unnecessary abstraction/dependency) is Phase 6 Stop-Slop.
+**Honest boundary:** `src/scope.ts` produces and records verdicts; the LLM crew
+(workflow skill, rule 2b) is the only thing that acts on them. The module makes
+the scope/code decision structured, auditable, and instructed — it does not
+force the model.
+
+**Security design rules:** F2 — do not `registerRead` secret-bearing files
+(`.env`, keys, tokens); fingerprints of secrets would persist in the trail. F3 —
+`.mugiwara/` is local trusted state; if writers ever open `missionDir` to
+untrusted input, validate it before passing to the record helpers.

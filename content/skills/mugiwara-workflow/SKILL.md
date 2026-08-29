@@ -23,7 +23,6 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
                         Skeptic — adversarial verify
 ```
 
-
 | # | Flow stage | Crew | Skill | Delivers |
 |---|------|------|-------|----------|
 | 0 | Triage | Luffy | `orchestration` | 5-way class + lane |
@@ -65,8 +64,6 @@ Luffy classifies every request 8 ways:
 | Refuse | deploy / migration / key rotation / merge | decline at Flow 0, offer branch handoff |
 | Hotfix | production broken | Lane 1, gates deferred with owner |
 
-Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
-
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/missions/<mission>/decisions.md`. Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
 
 **Audit-lite (Lane 0/1).** Small trail only: `state.json`, `flows/01-execution.md`, closure `report.md`; plan/spec/blockers appear on these lanes only when a blocker occurs. Big scans may dispatch ONE read-only investigation subagent (never edits) returning a compressed digest; writers stay inline.
@@ -81,7 +78,6 @@ Blocked agent appends to `.mugiwara/missions/<mission>/blockers.md`:
 ```
 | flow stage | task | symptom | attempted | help-needed |
 ```
-Brook reads this at Flow 8. Never silently work around a blocker.
 
 ## Cleanup (Flow 9)
 
@@ -90,7 +86,7 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 ## Rules
 
 1. Evidence over claims — run checks, show output.
-2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage.
+2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage. 2b. Scope & Code Governor: before adding code, check §14 reuse; justify new abstractions (§15) and dependencies (§16); prefer minimum sufficient implementation; record scope verdicts as scope-governor trail rows.
 3. Heal loop: max 3 cycles, then escalate.
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
@@ -101,6 +97,10 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 Stages classify required/conditional/optional (§7); skip only with a recorded reason.
 Agents/skills load only when they earn cost (§8/§9); mission complete only when §19's five conditions hold.
 Verdicts land as `work-governor` trail rows. savepoint/lane-base/config untouched.
+## Scope & Code Governor
+
+Prefer the smallest correct scope — reuse existing code + local modification over new architecture (§14). An abstraction is justified only when used in ≥2 places or required by contract, never speculatively (§15); a dependency is added only with explicit justification (§16); implementations are minimum sufficient, never minimum LOC at the expense of verification/quality (§15/§38).
+Code waste (unnecessary helper/abstraction/wrapper/interface/config/dependency/generated code/refactor) is named; the change surface is measured; every scope verdict lands as a `scope-governor` trail row in `.mugiwara/missions/<mission>/decisions.md` → `## Cost governor decisions`. savepoint/lane-base/config untouched.
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.
