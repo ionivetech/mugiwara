@@ -135,7 +135,7 @@ function planTouched() {
       if (!existsSync(plan))
         continue;
       const at = lstatSync(plan).mtimeMs;
-      if (at >= sessionStart)
+      if (at + 1000 >= sessionStart)
         return true;
     }
   } catch {}

@@ -106,6 +106,10 @@ of truth; the host tool is a mirror.
 threshold) tells the agent when the skill does not apply — recorded in the
 decision log, never silent.
 
+## Large campaigns — sub-plan
+
+Missions >3 phases or >1500-line plans split via `sub-plan/` — master `plan.md` is the index, `sub-plan/01-phase01-<slug>.md` slices hold detail, `flows/phase-NN/` isolates execution per phase, `mugiwara archive --merge` folds all into `report.md`. Precedent: `native-cost-governor` (9 phases, 2688-line plan → single `report.md`).
+
 ## Blocker protocol
 
 Any agent that hits a blocker appends a row

@@ -51,10 +51,6 @@ Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<memb
    `tokens_est > 80,000`. Remaining SEQUENTIAL tasks dispatch to workers — one
    at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it.
 
-## Tier gating & fallback
-
-Real worker dispatch exists only where the harness has subagents — tier 1 (Claude Code, opencode) plus Copilot. Gate the context-pressure trigger on that capability: if the harness cannot dispatch, do not promise fresh workers. Where workers are unavailable and `delegate_due` is true: write a savepoint, run the checkpoint, and suggest a fresh session via `resume`. Announce: `⚠ context — no worker dispatch on this harness; savepoint written, resume in a fresh session (plan order unchanged).`
-
 ## Batch resume
 
 After each batch, update `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
@@ -89,6 +85,8 @@ Boy Scout rule — every touched file leaves cleaner than found: one refactor pe
 
 TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`.
 
+## Large campaign — phase-isolated flows
+Full checklist: `references/execution-phase-flows.md` — 4 items; `flows/phase-NN/02-execution.md` per phase, `flows/todos.md` with `## Phase NN` sections, no flat overwrite.
 ## Frontend tasks
 
 Any task touching UI markup, styling, or components applies `mugiwara-frontend` in the same pass. Every interactive element — button, link, input, form — carries a `data-testid`, asserted by the task's test, not merely present in markup.
@@ -98,10 +96,7 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 After each flow stage: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Flow 4). Write detailed execution log to `.mugiwara/missions/<mission>/flows/01-execution.md`. Never dispatch another crew member.
 
 ## Step budget
-
-Tool calls are finite — harnesses cap them per session; a 9-flow-stage mission that wastes them stalls before closure. Combine evidence runs (`bash -c "lint && test"` — one call, not two); write flow stage artifacts once at flow-stage end, not incrementally; never re-read what you just wrote; batch reads (one glob beats five reads); open a reference only when its pointer condition triggers.
-
-Budget guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. Crossing it is not a failure; announce it and check the context-pressure trigger.
+Tool calls finite — cap per session (Lane1 ≤15, Lane2 ≤35, Lane3 ≤60). Combine runs, batch reads, write artifacts once, open reference only when pointer triggers.
 
 ## Red flags
 
