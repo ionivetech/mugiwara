@@ -152,9 +152,6 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const chars = measureContextChars(dir);
     const budget = readBudgetConfig(projectDir);
     const footprintLine = formatFootprint(chars, budget);
-    if (budget && chars > budget) {
-      throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
-    }
     const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
     const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
     const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
@@ -246,6 +243,12 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       context_status: ctxStatus,
       context_metrics: metrics,
     });
+    // M2: the closure event (with context_status possibly 'over') is recorded
+    // BEFORE the hard gate throws — an over-budget closure still leaves a
+    // ledger row so the over-budget condition is observable, never erased.
+    if (budget && chars > budget) {
+      throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
+    }
   }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).

@@ -287,4 +287,21 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     expect(rep).toContain('read_avoidance_chars: n/a');
     expect(rep).toContain('char data not tracked');
   });
+
+  // M2: an over-budget closure records a cost event with context_status 'over'
+  // BEFORE the archive throws — the ledger keeps the row, it does not erase it.
+  it('over-budget closure records a cost event with context_status "over" before the gate throws', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 1000, tasks_done: 1, tasks_total: 1, evidence: [] },
+      files: { 'notes.md': 'x'.repeat(500) },
+    });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'context_budget_chars=10\n');
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    let msg = '';
+    try { archiveMission(dir, 'demo'); } catch (e) { msg = (e as Error).message; }
+    expect(msg).toContain('context budget failed');
+    // the ledger row is persisted BEFORE the throw — 'over' is observable
+    const events = readFileSync(join(root, 'cost-events.jsonl'), 'utf8');
+    expect(events).toContain('"context_status":"over"');
+  });
 });
