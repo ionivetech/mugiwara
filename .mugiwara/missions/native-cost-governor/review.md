@@ -174,3 +174,66 @@ No public break. `test/cost.test.ts` unchanged → no pinned assertion broke (co
 
 ## Handoff to Brook
 No blockers. **MAJOR #1** (unwired module) and **MAJOR #2** (F1 whole-registry loss) recommended before Phase 8 consumes these signals. Security handoff: F2/F3 rules documented in `docs/concepts/cost.md` — no new Jinbe lane work required this phase.
+
+---
+
+# Robin — Phase 4 Scope & Code Governor review (`eb8229d..HEAD`)
+
+Diff: `src/scope.ts` (new), `test/scope.test.ts` (new), `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-workflow/references/scope-code-governor.md` (new), `docs/concepts/cost.md`, `test/golden/claude.json`, `test/golden/opencode.json`. Depth: `full`.
+
+## Verdict: **APPROVE** — reliability **A**. Zero public/internal breaks (8 additive exports, none consumed by runtime). All seven verdict functions match plan contracts exactly; `recordScopeDecision` correctly wraps `recordOptDecision` with the `scope-governor` actor + S2 sanitizer. Four findings (M1 + N1–N3), all minor/non-blocking. Two heal cycles closed the real blockers (SKILL.md governance-line loss → references move; conformance golden drift 61→62).
+
+## Scope read
+
+Phase 4 = the seven §51 capabilities: scope drift detection, existing-code reuse, abstraction justification, dependency justification, minimum sufficient implementation, code waste detection, change-surface measurement — plus the `recordScopeDecision` trail helper. Consumes the shipped Phase 1/2/3 primitives; adds **no** config keys; `savepoint.sh` / `lane-base.sh` / `DEFAULT_CONFIG` untouched. Same honest boundary as Phase 3: the module *produces and records* verdicts; the crew acts via the workflow skill (rule 2b). Docs (`cost.md:250-258`) state the Phase-6/Phase-8 boundary (slop machinery / report+CLI ledger) explicitly. Matches plan §Phase 4 and `decisions.md` triage.
+
+## Breaking-change map
+
+| Symbol | File | Type | Callers | Class |
+|--------|------|------|---------|-------|
+| `detectScopeDrift` | `src/scope.ts:41` | NEW export | none — `test/scope.test.ts` only | additive, safe |
+| `checkExistingCodeReuse` | `src/scope.ts:76` | NEW export | none | additive, safe |
+| `evaluateAbstraction` | `src/scope.ts:114` | NEW export | none | additive, safe |
+| `evaluateDependency` | `src/scope.ts:146` | NEW export | none | additive, safe |
+| `minimumSufficientCheck` | `src/scope.ts:186` | NEW export | none | additive, safe |
+| `detectCodeWaste` | `src/scope.ts:231` | NEW export | none | additive, safe |
+| `measureChangeSurface` | `src/scope.ts:279` | NEW export | none | additive, safe |
+| `recordScopeDecision` | `src/scope.ts:311` | NEW export | none | additive, safe |
+
+`scope.ts` imports only `recordOptDecision` from `cost.ts` (grep: no `src/` module imports `scope.ts`). **0 public breaks, 0 internal breaks, 8 new exports.** Migration path: none required. As with Phase 3, the module is unwired at runtime — consistent with the plan's declared honest boundary (records, doesn't enforce), so not a blocker.
+
+## Eight-export contract verification
+
+| # | Export | Plan/spec contract | Verified |
+|---|--------|--------------------|----------|
+| 1 | `detectScopeDrift` | drift iff any touched file outside declared scope; `scope_score` = fraction outside; 0 files → 0 | **MATCH** — substring token match; reason names outside files; empty-array guard at `:45`. |
+| 2 | `checkExistingCodeReuse` | reuse only when existing code present AND local modification viable | **MATCH** — three-way reason (`no existing` / `not viable` / reusable); never `reuse:true` on code-exists alone. |
+| 3 | `evaluateAbstraction` | justified only when not speculative AND (required by contract OR used ≥2 + duplication benefit) | **MATCH** — speculative short-circuits; single-use/no-contract refused (`:114-125`). |
+| 4 | `evaluateDependency` | justified only when no equivalent, not solvable with existing, long-term value, maintenance ≤ removal cost | **MATCH** — first-failing-clause reason; never justified merely for convenience. |
+| 5 | `minimumSufficientCheck` | `under` (missing verification/coverage) / `over` (incidental complexity) / `sufficient`; never min-LOC at expense of quality | **MATCH** — verif/coverage fail first; incidental-complexity → over (`:186-197`). |
+| 6 | `detectCodeWaste` | name every true §15 waste type | **MATCH** — `WASTE_TYPES` table (8 flags) maps to names; empty → `no code waste`. |
+| 7 | `measureChangeSurface` | `loc_changed = loc_added + loc_removed`; justified iff within scope and no new abstraction/dependency | **MATCH** — full §5.4 metric block; reason names first failing clause. |
+| 8 | `recordScopeDecision` | persist any verdict via sanitized `recordOptDecision` with `scope-governor` actor | **MATCH** — wraps `recordOptDecision` (`scope.ts:315-320`), `actor: 'scope-governor'`, optional evidence spread, S2 sanitizer inherited from cost.ts (newline/CR stripped — tested at `scope.test.ts:383`). |
+
+## Five-axis
+
+- **Correctness: PASS.** All 8 contracts verified above against the plan's §14/§15/§16/§38/§41/§5.4 contracts. Edge guards present (empty touched-files → score 0, empty waste → `waste:false`). `recordScopeDecision` S2 injection case (`\n## fake` reason) explicitly tested — sanitizer holds.
+- **Design/architecture: PASS.** Pure verdict engine, explicit input types, thin wrapper over the sanctioned `recordOptDecision` trail — no new persistence path, no reinvention. `WASTE_TYPES` table removes 8-way flag duplication. Honest boundary documented in both module header and `cost.md`. Consistent with Phase 3 `work.ts` pattern.
+- **Readability: PASS.** Per-function doc comments state the §-contract and the failure semantics; block-section comments mirror the §51 capability ordering; naming matches plan symbols.
+- **Security: PASS** (confirming Jinbe's lane, not duplicating it). `recordScopeDecision` routes through the S2-sanitized `recordOptDecision`; no new file writes, no new deps, no `registerRead`. F2/F3 design rules documented in `cost.md`. No injection surface beyond the already-sanitized decision bullet.
+- **Performance: PASS.** All verdicts are O(n) linear scans over explicit input arrays; no IO in the pure functions; `recordScopeDecision` appends one line. No concern.
+
+## Findings
+
+- **M1 (minor, not a defect)** — `content/skills/mugiwara-workflow/SKILL.md` — Phase-4 heal moved the `## Scope & Code Governor` body to `references/scope-code-governor.md` (`af8a204`) with a one-line pointer, restoring the two governance lines Chopper flagged as lost. Documented Luffy-approved Option A in `decisions.md:222-243`; content byte-preserved (verified pointer + 14-line reference); SKILL.md back to ≤120 body lines. This is the sanctioned >budget pattern, not a regression.
+- **N1 (minor)** — `docs/concepts/cost.md:222-224` and `:260-262` — the F2/F3 security design rules are duplicated verbatim (pre-existing Work-Governor section + new Phase-4 section). Same text, two copies. Harmless but drifts if one is edited. Fix: Phase 4 section can reference the existing F2/F3 block instead of restating it.
+- **N2 (minor)** — `test/scope.test.ts` — several `reason` assertions are loose (`toContain('2')` at `:130`, `toMatch(/equivalent/)`/`/existing/`/`/verif/`/`/dependenc/` at `:178,184,190,196,206,223,230,237,338,344,350`, `toContain('not viable')`/`'no existing'` at `:97,103`). The boolean verdict fields are all asserted exactly; only the human-readable reason strings are fuzzy-matched. Defensible (reason is prose), but the reason contract is not pinned — a wording drift passes green. Fix (optional): assert full reason strings on the fixed-verdict cases.
+- **N3 (minor / sanity-verify)** — `test/golden/claude.json:39` + `test/golden/opencode.json:39` — golden `skills` bumped 61→62 for the new `references/scope-code-governor.md` (tier-1 install surface). Tier-2 target goldens unchanged (43/29). Correct: the reference is a tier-1 shared-reference install, not a tier-2 file. Sanity-verify at Phase 8 that the conformance `.file_count` stays green if any later phase adds another tier-1 reference — the golden-bump regression gate (heal cycle 2, `ff14f57`) is now the guard.
+
+## Reliability rating: **A**
+
+All 8 verdict functions are pure, contract-exact, and tested; `recordScopeDecision` correctly reuses the sanctioned sanitized trail. Zero breaking changes (all additive, none runtime-wired). Both heal cycles (governance-line restore + conformance golden regen) were root-caused, proven, and left the tree green. Deductions: −0.5 for N1 (F2/F3 duplication) and the loose reason assertions (N2); no functional, security, or integrity risk in the shipped surface.
+
+## Final verdict: **APPROVE**
+
+No blockers, no majors. M1 is a documented heal, not a defect. N1–N3 are minor and none block merge. Security lane owned by Jinbe (F2/F3 confirmed documented; S2 reuse verified — no new Jinbe work). Same honest-boundary caveat as Phase 3 carries forward: the module records/measures but has no runtime consumer until Phase 6/8 — expected per plan, not a blocker. Route to Brook for merge of the Phase-4 branch.
