@@ -188,6 +188,7 @@ export function verifyReport(projectDir: string, missionDir: string): { ok: bool
   }
 
   if (existsSync(minisig)) {
+    // minisig wins when both signatures exist — deterministic, documented.
     if (!hasMinisign()) return { ok: false, message: 'minisig present but minisign not installed — cannot verify that signature' };
     const pubKey = existsSync(defaultKey('public')) ? defaultKey('public') : null;
     try {
