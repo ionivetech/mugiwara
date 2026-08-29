@@ -2216,3 +2216,232 @@ per-task command-verifiable criterion:
   progress measurement stays in slop.ts, budget anomaly detection lives in
   adaptive-budget.ts.
 
+
+---
+
+# native-cost-governor — Phase 8: Reporting & CLI
+
+**Scope:** Phase 8 of the Native Cost Governor initiative (plan §51), mission split row 8 (`native-cost-governor-phase8`). Phase 8 delivers **Reporting & CLI** — the seven capabilities §51 Phase 8 enumerates (cost ledger §39, `mugiwara cost` CLI §42, JSON output §42, Cost section in mission reports §43, avoided work accounting §39/§43, cost efficiency metrics §39/§43, optimization decision trail §41). It **turns the Phases 1–7 pure verdicts into observable, CLI-queryable, report-surfaced cost intelligence**: the ledger aggregates every cost/context/slop/budget signal, the CLI surfaces it, the report renders it, and the trail proves every optimization decision — without pretending the ledger enforces behavior (verdicts-not-enforcement boundary, same as Phases 3–7).
+
+**Primary goal:** make cost *visible and auditable* — every mission's cost envelope, avoided work, efficiency, and optimization decision is ledgered, CLI-queryable (human + JSON), and report-rendered, so the crew's efficiency claims are machine-checkable and the user can run `mugiwara cost` to see them.
+
+## What Phase 8 consumes (shipped Phase 1–7 primitives) and what it surfaces
+
+| Shipped primitive | Module | Phase-8 consumer |
+|-------------------|--------|------------------|
+| Cost envelope + events + decision trail | `src/cost.ts` `costEnvelope`/`budgetStatus`/`appendCostEvent`/`recordOptDecision` + `cost-events.jsonl` + `decisions.md` §41 | ledger aggregates the envelope + events + trail; CLI/report render them; `recordOptDecision` remains the §41 trail |
+| Context metrics + registry | `src/context.ts` `computeContextMetrics` + `src/evidence.ts` `context-registry.jsonl` + `src/investigation.ts` | ledger context rows (chars, reuse, duplicate avoidance); report Cost→Context subsection |
+| Work/Scope/Code verdicts | `src/work.ts` + `src/scope.ts` | ledger work/scope rows (stages avoided, scope expansions denied/allowed); report Cost→Work/Scope rows |
+| Cognition/Output verdicts | `src/cognition.ts` | ledger cognition rows; report Cost→Cognition rows (if any) |
+| Slop signals | `src/slop.ts` `measureProgress`/`detectAnomaly`/slop detectors | ledger slop rows + avoided slop accounting; report Cost→Slop rows; anomaly → ledger warning |
+| Adaptive budget | `src/adaptive-budget.ts` `reserveBudget`/`projectBudget`/`checkProgressiveThreshold`/`checkCircuitBreaker`/`detectBudgetAnomaly` | ledger budget rows (reserved/projected/threshold/breaker/anomaly) + efficiency metrics; report Cost→Budget subsection |
+
+Phase 8 **surfaces**: a unified **cost ledger** read from the on-disk `cost-events.jsonl` + `context-registry.jsonl` + `decisions.md` (no new persistence beyond the ledger view); a **`mugiwara cost` CLI** (`--json`, `--mission <id>`, `--ledger`) that prints the ledger human-readable or JSON; a **Cost section in `report.md`** (§43) with budget/context/work/slop/avoided/efficiency/trail rows; **avoided-work accounting** (§39: contexts avoided, stages avoided, slop interventions avoided); **cost efficiency metrics** (§39: reuse_rate, duplicate avoidance, budget efficiency); and the **optimization decision trail** (§41, already in `decisions.md`, now also rendered in the report).
+
+## Key decisions
+
+1. **The reporting governor is a pure TS module (`src/reporting.ts`), like `src/work.ts`/`src/scope.ts`/`src/cognition.ts`/`src/slop.ts`/`src/adaptive-budget.ts`.** Same architecture: pure functions take explicit ledger inputs (no FS beyond reading the three ledger files), compute the report/CLI view, return JSON-serializable structures. `savepoint.sh`/`lane-base.sh` stay untouched; the shell runtime has no reporting role and Phase 8 does not migrate it.
+2. **Honest boundary — the module computes and renders; the crew reports.** The LLM crew (workflow skill) is the only thing that can actually avoid work or act on slop/budget signals. Phase 8 makes the *cost outcome* observable: the ledger is computed, the CLI surfaces it, the report renders it, the trail proves it. It does not pretend a TS function can force the model to be efficient — it proves whether the model was. Same honest boundary Phases 3–7 drew.
+3. **`DEFAULT_CONFIG` untouched — no new config keys (§52).** Reporting needs no policy boundary beyond the lane budgets and thresholds already shipped. All ledger/report thresholds are pure function inputs with internal defaults — nothing reads config. No runtime config behavior change. The §6 `budget.max_tokens`/`slop.detection` profile belongs to future policy phases, not here.
+4. **Re-consumption, not forking.** `buildCostLedger` re-consumes `cost.ts:costEnvelope` for the envelope math, `context.ts:computeContextMetrics` shape for context rows, `slop.ts`/`adaptive-budget.ts` verdict shapes for slop/budget rows — the source modules stay the single definition; reporting wraps them into ledger/report/CLI views. No logic fork. `renderCostSection` is the only new renderer (markdown Cost section).
+5. **Ledger is a *view* over existing persisted files, not a new store.** `cost-events.jsonl` (Phase 1), `context-registry.jsonl` (Phase 2), `decisions.md` `## Cost governor decisions` (Phases 1–7) already persist the trail. `buildCostLedger` reads those three files (when present) and returns a typed `CostLedger` — no new file written except the rendered `report.md` Cost section (which already exists from Phases 1–7, now enriched with ledger rows) and the CLI output. Avoids a second source of truth.
+6. **Security F2/F3 closed here (carried from Phases 2–7).** Phase 8 hardens the two accepted Lows: F2 (do not fingerprint secret-bearing files) — `loadRegistry` now validates each entry shape before fingerprint reuse and `reporting.ts` never fingerprints raw secret content; F3 (`.mugiwara/` is local trusted state) — every `missionDir` FS read is allowlisted to `.mugiwara/missions/<id>` (same pattern as `mission.ts`). Both fixed with tests in this phase (explicit heal of the accepted debt).
+7. **Defer benchmark to Phase 9.** The §45 cost/Stop-Slop/large-repo/long-mission/runaway benchmarks and §48 cost-benchmark thresholds are Phase 9. Phase 8's unit fixtures cover ledger/CLI/report/efficiency/avoided/trail. Avoids gold-plating.
+
+## Architecture overview
+
+```
+  Shipped primitives (unchanged interfaces)
+  src/cost.ts (costEnvelope, cost-events.jsonl, recordOptDecision → decisions.md)
+  src/context.ts + src/evidence.ts (context-registry.jsonl)
+  src/work.ts / src/scope.ts / src/cognition.ts / src/slop.ts / src/adaptive-budget.ts
+       │
+       ▼
+  src/reporting.ts ← NEW (T1): the reporting verdict engine —
+       │       buildCostLedger({ missionDir, envelope, contextMetrics, work/scope/cognition/slop/budget verdicts })
+       │       — cost ledger §39 (envelope + reserved/projected/remaining/avoided + context + work + slop + budget + efficiency)
+       │       — avoided work accounting (stages/contexts/slop interventions avoided)
+       │       — cost efficiency metrics (reuse_rate, duplicate avoidance %, budget efficiency %)
+       │       — optimization decision trail (parsed decisions.md §41)
+       │       — renderCostSection(ledger): markdown Cost section §43
+       │       — toCostJSON(ledger): JSON output §42
+       │
+       ├──────────────────────────┬──────────────────────────┐
+       ▼                          ▼                          ▼
+  src/mission.ts (T1 integration)  src/cli.ts (T2)         content/skills/mugiwara-workflow
+  archiveMission renders            mugiwara cost            SKILL.md (T2 wiring: crew
+  renderCostSection(ledger)        --json/--mission/        records every optimization
+  into report.md §43               --ledger                 + docs/concepts/cost.md
+```
+
+Pure ledger/report functions are unit-tested (T1); the CLI + wiring (T2) is the workflow-skill + docs surface; T3 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `src/reporting.ts` | NEW — Reporting engine: `CostLedger` type, `buildCostLedger`, `renderCostSection`, `toCostJSON`, `parseDecisionTrail`, `computeAvoidedMetrics`, `computeEfficiencyMetrics` |
+| `test/reporting.test.ts` | NEW |
+| `src/mission.ts` | MODIFY — archive path calls `buildCostLedger` + `renderCostSection` to enrich the Cost section (§43) |
+| `src/cli.ts` | MODIFY — `mugiwara cost [--mission <id>] [--json] [--ledger]` command (reads ledger files, prints human or JSON) |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — reference Reporting & CLI: cost ledger, `mugiwara cost`, JSON output, report Cost section, avoided/efficiency/trail |
+| `docs/concepts/cost.md` | MODIFY — Reporting & CLI section (seven capabilities, ledger/CLI/report contracts, honesty boundary, F2/F3 hardening) |
+| `src/cost.ts`, `src/evidence.ts` | MODIFY — F2/F3 hardening: `loadRegistry` shape validation + `missionDir` allowlist (small, tested) |
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Build the reporting engine + ledger + trail hardening | T1 | `bun test test/reporting.test.ts` green |
+| 2 | Wire reporting into CLI/skill/docs | T2 | `grep` SKILL.md + cost.md, body ≤120, validate-content + verify-install + conformance green |
+| 3 | Full verification | T3 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 reporting.ts ──consumes: cost.ts, context.ts, evidence.ts, work.ts, scope.ts, slop.ts, adaptive-budget.ts (read-only)──► T2 SKILL.md + cost.md + cli.ts
+                                                                                                                    │  (CLI + docs)
+                                                                                                                    ▼
+                                                                                                                 T3 full gate
+```
+
+No `[PARALLEL]` set in Phase 8: T1 is a single new module + test file with no cross-file edges (hardening is inside the same module/files); T2 consumes T1's surface (docs + CLI reference the new exports); T3 consumes all. Every edge shares the module surface or a not-yet-shipped interface — genuine sequentiality.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | reporting engine (ledger/avoided/efficiency/trail + F2/F3 + mission integration) | src/reporting.ts, test/reporting.test.ts, src/mission.ts, src/cost.ts, src/evidence.ts | M | — | `bun test test/reporting.test.ts` green; ≥90% coverage |
+| T2 | wire reporting into CLI + workflow skill + docs | src/cli.ts, content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md, content/skills/mugiwara-workflow/references/reporting-governor.md (if >120 lines) | S | T1 | `mugiwara cost --help` shows command; SKILL.md pointer, cost.md section, body ≤120, goldens updated if needed, validate-content + verify-install + conformance green |
+| T3 | full gate + evidence | flows/02-execution.md | S | T1, T2 | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: reporting engine — ledger, avoided, efficiency, trail + F2/F3 hardening + mission integration** (§39, §41–§43)
+
+- Files: create `src/reporting.ts`, `test/reporting.test.ts`; modify `src/mission.ts` (archive Cost section), `src/cost.ts` (record helper already exists — no new cost file), `src/evidence.ts` (F2 shape validation + F3 allowlist)
+- Interfaces: produces `src/reporting.ts` (consumed by T2 CLI/docs + mission.ts report rendering); consumes `src/cost.ts` `costEnvelope`/`recordOptDecision`, `src/context.ts` `computeContextMetrics` shape, `src/evidence.ts` registry, plus work/scope/cognition/slop/adaptive-budget verdict shapes (read-only, no import cycles beyond pure types)
+- Size: M
+- Steps:
+  - [ ] Write `test/reporting.test.ts` first (TDD — see acceptance for the full case list)
+  - [ ] Harden `src/evidence.ts` for F2/F3 (small, in-scope — the two accepted Lows, now closed):
+    - F2: `loadRegistry(missionDir)` validates each parsed JSON line — must be object with string `hash`, string `path`, number `chars` (when present); malformed lines are dropped with a `recordOptDecision` warning (never throw, never silently discard the whole registry — same selective-drop contract as W1 fix `fix(evidence): drop corrupt registry lines`). Test: registry with one corrupt line + two valid lines → loads 2 valid entries.
+    - F3: every `missionDir` FS helper (`loadRegistry`, `appendCostEvent`, `recordOptDecision` wrappers, and the new `reporting.ts` readers `loadCostEvents`/`loadDecisionTrail`) asserts `missionDir` starts with `.mugiwara/missions/` or is an absolute path under the project `.mugiwara/missions/` — otherwise throw `Invalid missionDir`. Test: `buildCostLedger({ missionDir: '/tmp/evil' })` throws; `buildCostLedger({ missionDir: '.mugiwara/missions/foo' })` does not.
+  - [ ] Implement `src/reporting.ts` (pure, no config, FS only for the three ledger files):
+    - `type CostLedger = { envelope: ReturnType<typeof costEnvelope>; ledger: { events: CostEvent[]; registrySize: number; decisions: OptDecision[] }; avoided: { stages_avoided: number; contexts_avoided: number; slop_interventions: number; tokens_avoided_est: number }; efficiency: { reuse_rate: number; duplicate_avoidance_chars: number; budget_efficiency_pct: number }; trail: OptDecision[] }` — shape mirrors §39/§43 (§39 cost ledger, §43 report rows). `ponytail:` ledger is a view — no new persisted file, just the typed aggregation.
+    - `buildCostLedger(input: { missionDir: string; envelope: Envelope; contextMetrics?: ContextMetrics; workSummary?: WorkSummary; slopSummary?: SlopSummary; budgetSummary?: BudgetSummary }): CostLedger` — reads `cost-events.jsonl` (via `loadCostEvents`), `context-registry.jsonl` (via `loadRegistry`), `decisions.md` `## Cost governor decisions` (via `parseDecisionTrail`); computes `avoided` from the summaries (when absent → 0), `efficiency` as `reuse_rate = registry reuse hits / total reads` (0 when no reads), `duplicate_avoidance_chars = registry duplicate_chars`, `budget_efficiency_pct = round(used/budget*100)` when budget>0 else 0. Pure aggregation — never writes.
+    - `parseDecisionTrail(missionDir: string): OptDecision[]` — reads `decisions.md`, extracts bullets under `## Cost governor decisions` + `## Budget` patterns (fallback: whole file). Each bullet parsed as `{ actor, decision, reason, evidence?, ts }` via the same `recordOptDecision` bullet regex. Missing file → `[]`.
+    - `computeAvoidedMetrics(input: { registryMetrics?: { duplicateCount: number; repeatedReads: number }; workMetrics?: { stagesAvoided: number }; slopMetrics?: { interventions: number } }): Avoided` — `contexts_avoided = duplicateCount + repeatedReads`, `stages_avoided = workMetrics.stagesAvoided`, `slop_interventions = slopMetrics.interventions`, `tokens_avoided_est = contexts_avoided * 150` (heuristic: avg 150 tokens per avoided read — `ponytail:` heuristic, tune with §39 if needed). Pure.
+    - `computeEfficiencyMetrics(input: { totalReads: number; reuseHits: number; duplicateChars: number; budget: number; used: number }): Efficiency` — `reuse_rate = totalReads>0 ? round(reuseHits/totalReads*100)/100 : 0`, `duplicate_avoidance_chars = duplicateChars`, `budget_efficiency_pct = budget>0 ? round(used/budget*100) : 0`. Pure.
+    - `renderCostSection(ledger: CostLedger): string` — markdown Cost section §43: `## Cost` header + `| Dimension | Value |` table with rows: `Budget | <status> <pct>% (<used>/<budget>)`, `Context | <chars> chars, reuse <reuse_rate>`, `Avoided | <stages> stages, <contexts> contexts, <tokens> tokens est`, `Efficiency | reuse <rate>, dup <chars> chars, budget <pct>%`, `Trail | <n> decisions` + bullet list of trail entries (at most 5, truncated with `… <n> more`). Deterministic, no FS.
+    - `toCostJSON(ledger: CostLedger): string` — `JSON.stringify(ledger, null, 2)` with stable key order (envelope, ledger, avoided, efficiency, trail). Used by `mugiwara cost --json`. Pure.
+    - `loadCostEvents(missionDir: string): CostEvent[]` — reads `cost-events.jsonl` line-by-line, JSON-parses each, drops malformed lines (selective-drop, same as registry). Missing file → `[]`. Allowlisted `missionDir` (F3).
+  - [ ] Wire `src/mission.ts` archive: after computing `costEnvelope` + `contextMetrics` (already computed for the Cost section), call `buildCostLedger({ missionDir, envelope, contextMetrics, ... })` and replace the existing Cost section render with `renderCostSection(ledger)` (enrich, not replace — keep existing envelope rows, add ledger/avoided/efficiency/trail rows). No new persisted file — the ledger is rendered into `report.md` at archive time, folded like `cost-events.jsonl`/`context-registry.jsonl`.
+  - [ ] Commit `feat(reporting): cost ledger, avoided work, efficiency metrics, decision trail + F2/F3 hardening`
+- Acceptance:
+  - `bun test test/reporting.test.ts` passes. Cases (≥90% coverage, every family):
+    - `buildCostLedger` — empty missionDir (no files) → `{ envelope, ledger: { events: [], registrySize: 0, decisions: [] }, avoided: { stages_avoided:0, contexts_avoided:0, slop_interventions:0, tokens_avoided_est:0 }, efficiency: { reuse_rate:0, duplicate_avoidance_chars:0, budget_efficiency_pct: <from envelope> }, trail: [] }`
+    - `buildCostLedger` with one `cost-events.jsonl` event + one registry entry + one decisions.md bullet → `ledger.events.length===1`, `registrySize===1`, `trail.length===1`
+    - `parseDecisionTrail` — decisions.md with `## Cost governor decisions` + 2 bullets → parses 2; missing file → `[]`
+    - `computeAvoidedMetrics` — `{ duplicateCount: 3, repeatedReads: 2, stagesAvoided: 1, interventions: 4 }` → `{ contexts_avoided:5, stages_avoided:1, slop_interventions:4, tokens_avoided_est: 750 }` (5*150)
+    - `computeEfficiencyMetrics` — `{ totalReads: 10, reuseHits: 3, duplicateChars: 400, budget: 50000, used: 12500 }` → `{ reuse_rate:0.3, duplicate_avoidance_chars:400, budget_efficiency_pct:25 }`; zero reads → `reuse_rate:0` (no div-by-zero); zero budget → `budget_efficiency_pct:0`
+    - `renderCostSection` — given a ledger → string contains `## Cost`, `| Budget |`, `| Context |`, `| Avoided |`, `| Efficiency |`, `| Trail |`; trail truncated to 5 bullets + `…` when >5
+    - `toCostJSON` — round-trips via `JSON.parse`, has keys `envelope`, `ledger`, `avoided`, `efficiency`, `trail`
+    - `loadCostEvents` — file with one valid JSON line + one corrupt line → loads 1 valid event (selective-drop)
+    - F2: registry with one corrupt line (bad JSON) + two valid entries → `loadRegistry` loads 2 valid entries (not 0, not throw)
+    - F3: `buildCostLedger({ missionDir: '/tmp/evil' })` throws `Invalid missionDir`; `buildCostLedger({ missionDir: '.mugiwara/missions/test-foo' })` does not (when dir exists)
+    - `src/mission.ts` archive integration: temp mission dir with one cost event + registry + decisions bullet → `archiveMission` produces `report.md` containing `## Cost` + `Avoided` + `Efficiency` + `Trail` rows; `cost-events.jsonl` + `context-registry.jsonl` folded into report (`## Archived: cost-events.jsonl` + `## Archived: context-registry.jsonl`) and removed
+  - `bun run typecheck` passes; `bun run build` passes
+- Risk: medium (touches `evidence.ts` F2/F3 + `mission.ts` report rendering — both have existing closure integration tests as safety net; new reporting tests lock the new behavior). Rollback: revert the single commit.
+- Ponytail marks: `ponytail: heuristic 150 tokens per avoided read, tune with §39 if needed` on `computeAvoidedMetrics`; `ponytail: ledger is a view over existing files, no new store` on `CostLedger`.
+
+**Task 2: wire reporting into CLI + workflow skill + docs**
+
+- Files: modify `src/cli.ts`, `content/skills/mugiwara-workflow/SKILL.md`, `docs/concepts/cost.md`; create `content/skills/mugiwara-workflow/references/reporting-governor.md` only if body would exceed 120 lines (Phase-4/5/6/7 precedent: `af8a204`/`34f51c9`/`b8d0fbd`/`fabfa25`)
+- Interfaces: consumes `src/reporting.ts` exports from T1 (CLI + docs reference only — no new runtime import beyond the ledger readers)
+- Size: S
+- Steps:
+  - [ ] In `src/cli.ts`, add `mugiwara cost` command (before the `default` case, same pattern as `mugiwara status`/`mugiwara archive`):
+    - `mugiwara cost [--mission <id>] [--json] [--ledger]` — resolves `missionDir` from `--mission` (or current mission when omitted — `findActiveMission` pattern from `mugiwara status`), calls `buildCostLedger({ missionDir, envelope: costEnvelope(state) })` (envelope from `state.json` when present, else budgetForLane fallback), then either `console.log(toCostJSON(ledger))` when `--json`, or prints human-readable: `Cost envelope: <status> <pct>% (<used>/<budget>)`, `Avoided: <stages> stages, <contexts> contexts, ~<tokens> tokens`, `Efficiency: reuse <rate>, dup <chars> chars, budget <pct>%`, `Trail: <n> decisions` + bullet list when `--ledger`. Exit 0 on success, exit 1 with `No cost ledger found for mission <id>` when missionDir missing. No new deps.
+    - Add `cost` to help text (`--help` lists `cost — show cost ledger, avoided work, efficiency, trail`).
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md` (respect the 120 body-line cap — `validate-content.ts:19`):
+    - Add rule 2f under the `## Cost Governor` section (sequential after Phase-7's 2e Adaptive Budget): `Reporting & CLI (Phase 8)` — cost ledger aggregates envelope + events + registry + trail; `mugiwara cost` surfaces the ledger (human + `--json`); `report.md` Cost section renders ledger + avoided + efficiency + trail (§43); every optimization decision is recorded in `decisions.md` §41 and rendered in the report. Always one-line pointer to the references file if the body is at the cap; otherwise inline the rule. Keep `description` (20–220 chars), `name` matching dir, `## Skip when` block, and frontmatter untouched.
+    - If the body would exceed 120 lines (base + HEAD sit at 118 after Phase 7), move the body to `content/skills/mugiwara-workflow/references/reporting-governor.md` with a one-line pointer in SKILL.md (sanctioned pattern: `Full checklist: references/reporting-governor.md — N items;` never a bare filename) — zero content loss, needs `verify-install` green.
+  - [ ] In `docs/concepts/cost.md`, append a `## Reporting & CLI (src/reporting.ts)` section — one paragraph per capability (ledger, CLI, JSON, report Cost section, avoided, efficiency, trail) with ledger/CLI/report contracts + inputs, the honest boundary (computes and renders, does not enforce), the F2/F3 hardening notes (shape validation + allowlist), and the Phase-9 benchmark deferral.
+  - [ ] If a new reference file was added, run `bun scripts/conformance.ts --update-golden` and review the diff (must be only the file-count delta for the new reference file, no unrelated golden changes — Phase-4 precedent `ff14f57`).
+  - [ ] Run `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity`, `bun scripts/verify-install.ts`, `bun test test/reporting.test.ts`, `node dist/mugiwara.js cost --help` — all green
+  - [ ] Commit `docs(reporting): wire reporting & CLI into the workflow skill, cost docs, and mugiwara cost command`
+- Acceptance:
+  - `node dist/mugiwara.js cost --help` contains `cost` and `--json` and `--mission`
+  - `node dist/mugiwara.js cost --json --mission <tmp-empty-mission>` prints valid JSON with keys `envelope`, `ledger`, `avoided`, `efficiency`, `trail` (even when ledger files missing → empty ledger, not throw)
+  - `grep -c reporting-governor content/skills/mugiwara-workflow/SKILL.md` ≥ 1 (pointer) OR `grep -c 'Reporting & CLI' content/skills/mugiwara-workflow/SKILL.md` ≥ 1 (inline); body line count `awk '/^---$/ {p++} p==2{body=1; next} body' content/skills/mugiwara-workflow/SKILL.md | wc -l` ≤ 120
+  - `grep -c 'Reporting & CLI' docs/concepts/cost.md` ≥ 1
+  - `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` exit 0
+  - `bun scripts/verify-install.ts` exit 0 (0 orphans, pointers resolve after install)
+  - `bun test test/reporting.test.ts` green; `bun run typecheck` green
+- Risk: low (CLI + docs-only, pattern proven in Phases 4/5/6/7). Rollback: revert the single commit.
+
+**Task 3: full gate + evidence**
+
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T2
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output (this runs build-hooks:check, typecheck, test:coverage, build, validate-content, lane-base, run-evals, retrieval-eval, verify-install — per AGENTS.md)
+  - [ ] If any gate fails: fix within scope, re-run. No gate may be waived except the known pre-existing `enforcement.test.ts` escape#2 flake (blockers.md row 3, heal_halt true) — re-run or prove on clean base is not a Phase-8 regression (precedent Phases 2–7).
+  - [ ] Write `flows/02-execution.md`: task table (T1–T3), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(reporting): phase 8 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`; pre-existing flake not counted as Phase-8 regression when reproduced on base)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New `src/reporting.ts` misses the 90% coverage bar | medium | CI red | TDD-first; acceptance cases lock every ledger/avoided/efficiency/trail family; gate catches at T3 |
+| Skill-body edit trips validate-content (description drift, 120-line cap, 120-char line cap) | low | CI red | T2 acceptance locks all three; Phase-4/5/6/7 precedent: move to `references/` with pointer |
+| CLI `mugiwara cost` flag parsing conflicts with existing commands | low | CLI red | add before `default` case, same pattern as `status`/`archive`; `--help` test locks |
+| F2/F3 hardening breaks existing registry loading (valid entries dropped) | low | regression | F2 is selective-drop (only malformed lines dropped, same contract as W1); existing evidence tests re-run in T1 acceptance |
+| Report Cost section regression (existing report.md tests fail on new rows) | low | CI red | report rendering is additive (new rows appended, existing envelope rows kept); existing mission/archive tests re-run in T1 |
+| Ledger view drift vs source files (stale ledger after direct file edit) | low | stale report | ledger is recomputed at archive/CLI time from the three files — never cached, always fresh |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers row 3); not a Phase-8 regression — proven by reproduction on clean main |
+| Benchmark scope bleed (gold-plating benchmark into reporting) | low | scope slop | hard boundary: Phase 8 computes and renders the ledger only; benchmark suite (§45/§48) = Phase 9 (honesty section) |
+
+Rollback plan: each task is one revertible commit; T3 evidence lists exact commits. Worst case: `git revert` the Phase-8 commits. `savepoint.sh`, `lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint + config behavior is preserved by construction.
+
+## Phase-8 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Observability (user acceptance) maps to Phase-8 tasks; each user AC has ≥1 per-task command-verifiable criterion:
+
+| User AC (spec §56 Observability) | Capability (§51/§spec) | Deliverable |
+|-----------------------------------|------------------------|-------------|
+| cost ledger exists | ledger §39 | T1 `buildCostLedger` + `loadCostEvents`/`loadRegistry`/`parseDecisionTrail` (test-locked empty + populated ledger) |
+| optimization decisions are auditable | trail §41 | T1 `parseDecisionTrail` + `recordOptDecision` reuse + T1 `renderCostSection` trail bullets (test-locked 2-bullet parse + 5-bullet truncation) |
+| avoided work is measurable | avoided §39/§43 | T1 `computeAvoidedMetrics` (test-locked 5 contexts → 750 tokens) + `buildCostLedger.avoided` + T1 report `Avoided` row |
+| `mugiwara cost` exists | CLI §42 | T2 `mugiwara cost [--json] [--mission] [--ledger]` (test-locked `--help` + `--json` valid JSON) |
+| mission reports contain cost information | report §43 | T1 `renderCostSection` (test-locked `## Cost` + Budget/Context/Avoided/Efficiency/Trail rows) + T1 `src/mission.ts` archive integration (test-locked report.md contains `Avoided` + `Efficiency` + `Trail`) |
+| JSON output | JSON §42 | T1 `toCostJSON` (test-locked round-trip) + T2 `--json` flag (test-locked CLI JSON output) |
+| cost efficiency metrics | efficiency §39 | T1 `computeEfficiencyMetrics` (test-locked reuse_rate 0.3 + budget pct 25) + `buildCostLedger.efficiency` + T1 report `Efficiency` row |
+
+## Definition of Done (Phase 8)
+
+- `src/reporting.ts` exists: `CostLedger`, `buildCostLedger`, `parseDecisionTrail`, `computeAvoidedMetrics`, `computeEfficiencyMetrics`, `renderCostSection`, `toCostJSON`, `loadCostEvents` — all pure (except the three ledger file reads), unit-tested, ≥90% coverage.
+- The seven §51 Phase-8 capabilities are covered with explicit ledger/avoided/efficiency/trail contracts and are CLI + report surfaced.
+- `src/mission.ts` archive enriches the Cost section with ledger/avoided/efficiency/trail rows via `renderCostSection`; `cost-events.jsonl` + `context-registry.jsonl` still fold into `report.md` and are removed (existing fold contract preserved, now with richer Cost section).
+- `src/cli.ts` adds `mugiwara cost [--mission <id>] [--json] [--ledger]` — human + JSON output, ledger view, help text; `mugiwara cost --help` green.
+- `content/skills/mugiwara-workflow/SKILL.md` wires Reporting & CLI (rule 2f); description unchanged; body ≤120 lines (or references pointer); validate-content green.
+- `docs/concepts/cost.md` documents Reporting & CLI (seven capabilities, ledger/CLI/report contracts, honesty boundary, F2/F3 hardening, Phase-9 benchmark deferral).
+- F2/F3 accepted Lows are closed: `loadRegistry` selective-drop shape validation + `missionDir` allowlist (tested, including the `buildCostLedger` throw on `/tmp/evil`).
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` runtime behavior — no new config keys.
+- `bun run gate` passes fully; every pre-existing test passes unchanged (pre-existing escape#2 flake not counted when reproduced on base).
+- Phase 8 computes and renders the ledger only — no benchmark suite (Phase 9) built here.
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `src/reporting.ts` computes and renders the ledger/report/CLI view; the LLM crew (workflow skill, T2) is the only thing that acts on the underlying signals. The module does not pretend to force efficiency — it proves whether the crew was efficient.
+- **Ledger is a view:** `CostLedger` is recomputed at archive/CLI time from the three persisted files (`cost-events.jsonl`, `context-registry.jsonl`, `decisions.md`). No new persisted ledger file — avoids a second source of truth. The report's Cost section is the durable snapshot.
+- **Benchmark deferred to Phase 9:** the §45 cost/Stop-Slop/large-repo/long-mission/runaway benchmarks and §48 cost-benchmark thresholds are Phase 9. Phase 8's unit fixtures cover ledger/CLI/report/efficiency/avoided/trail.
+- **F2/F3 closed here:** secret-bearing files are not fingerprinted (shape validation guards the registry), and `.mugiwara/` is local trusted state with an allowlist on every `missionDir` read — both documented in `docs/concepts/cost.md` (T2), verified by the `Invalid missionDir` and selective-drop tests.
+- **No new config:** Phase 8 adds nothing to `DEFAULT_CONFIG` — reporting is pure over explicit ledger/trail inputs; the §6 `budget.*`/`slop.*` profile belongs to future policy phases, not here.
+- **Re-consumption note:** `buildCostLedger` re-consumes `cost.ts:costEnvelope` envelope math, `evidence.ts:loadRegistry` registry, and `cost.ts:recordOptDecision` trail — it does not fork them; `renderCostSection`/`toCostJSON` are the only new renderers.
+

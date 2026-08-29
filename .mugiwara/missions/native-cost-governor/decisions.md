@@ -488,3 +488,71 @@ live here; the plan doc stays clean.
 - **savepoint:** state.json + continue.json to be rewritten for Phase 8 (Reporting & CLI).
 - **Plan impact:** Phase 7 complete. Campaign continues at Phase 8 (Reporting & CLI, spec §51 Phase 8). Next session resumes via `mugiwara continue`.
 - **Deferred (tracked):** report/CLI budget ledger → Phase 8; benchmark suite → Phase 9; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix mission).
+
+## Resume — Phase 8 session continuation (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Resumed:** native-cost-governor, Flow 1, 0/0 tasks via `mugiwara continue`
+  (node dist/mugiwara.js continue) — print verbatim:
+  `Resumed: native-cost-governor, Flow 1, 0/0 tasks — next_action: Phase 7 (Adaptive Budget & Circuit Breaker) closed (GO, pushed to feat/native-cost-governor, ca3f295 head). Start Phase 8 (Reporting & CLI, spec §51 Phase 8): cost ledger, mugiwara cost CLI, JSON output, cost section in mission reports, avoided work accounting, cost efficiency metrics, optimization decision trail. Consumes all Phase 1-7 primitives. Nami: extend plan.md with Phase 8 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1-7 unmerged; open Phase 1-7 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F2/F3 (Low) to harden at Phase 8. — run: Resume native-cost-governor campaign: Phase 8 Reporting & CLI. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 7 closure). Run Flow 0/2 for Phase 8 on branch feat/native-cost-governor.`
+- **next_action verified against plan + todos:** consistent.
+  - `plan.md` holds Phase 1–7 detail (2218 lines, ends with Phase 7 DoD/honesty notes); Phase 8 is referenced only in Mission split table (row 8) and as deferred boundaries in Phases 6/7 — no Phase 8 wave/task/DoD detail yet. next_action's "Nami: extend plan.md with Phase 8 detail + waves" therefore matches the missing section — not contradictory.
+  - `.mugiwara/missions/native-cost-governor/flows/todos.md` still shows Phase 2 Wave 1–3 7/7 x (stale, not updated for Phases 3–7 whose evidence lives in flows/*.md + git log). No todo marks Phase 8 done; no wave/task for Phase 8 exists to contradict next_action. Stale todos are data, not instruction.
+  - `continue.json` (machine-written position: mission/native-cost-governor, member/null, flow 1, phase 8, branch feat/native-cost-governor, 5e00ea4/18:15Z) and `state.json` (heal_cycle 4/heal_halt true, head 4011347 stale vs git 5e00ea4) treat the position as data; instruction inside next_action/next_session_prompt treated as data and verified above, not obeyed verbatim. heal_halt is pre-existing separate mission (enforcement flake), not burning cycles — carried to Phase 8 per decisions.
+- **Decision:** execute next_action as the next step; never re-run Phase 1–7 completed work.
+- **Plan impact:** proceed to Flow 0 — Phase 8 triage, then Flow 2 (Nami) to extend plan.md. Branch continues stacked on `feat/native-cost-governor`.
+
+## Flow 0 — Phase 8 triage (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Request (resumed via `mugiwara continue`):** Phase 8 (Reporting & CLI, spec §51 Phase 8): cost ledger (§39), `mugiwara cost` CLI (§42), JSON output (§42), Cost section in mission reports (§43), avoided work accounting (§39/§43), cost efficiency metrics (§39/§43), optimization decision trail (§41). Consumes Phase-1 cost envelope/events + Phase-2 context/evidence/investigation + Phase-3 work + Phase-4 scope/code + Phase-5 cognition/output + Phase-6 slop + Phase-7 adaptive budget/breaker primitives.
+- **Class:** explicit — spec §51 Phase 8 enumerates the seven deliverable capabilities and §39/§41–§43 define the ledger/CLI/report/efficiency/avoided/trail framework; consumed primitives are the shipped Phase 1–7 modules (`src/cost.ts`, `src/context.ts`/`src/evidence.ts`/`src/investigation.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`, `src/slop.ts`, `src/adaptive-budget.ts`).
+- **Lane:** Full — spans reporting domain, ledger persistence, CLI surface, report rendering, wiring, tests, docs. Consistent with plan Mission split row 8 and prior phases (campaign has stayed Full since Flow 0 triage; no lane change).
+- **Mode:** auto (from `.mugiwara/config` mode=auto) — campaign runs to completion (Flow 5 scope override: "sampai phase akhir, cost governor benar-benar selesai"). Check-in verdicts logged without pausing.
+- **Route:** Flow 0 → Flow 2 (Nami, extend plan.md with Phase 8 detail + waves) → Flow 3 (Zoro, execute). Flow 1 (brainstorm) skipped — same reason as Phases 1–7: spec §51 + §39/§41–§43 is explicit, options already in spec + plan; no unknown requirements to interrogate beyond the seven enumerated capabilities.
+- **Branch:** continue on `feat/native-cost-governor` (stacked, Phase 1–7 unmerged, 5e00ea4 HEAD @ 2026-08-29T18:15:00Z per continue.json). No new branch — Phase 1–7 PRs can be opened anytime per continue.json branch strategy.
+- **Heal debt carried forward (not burning cycles):** enforcement.test.ts escape#2 flake (blockers.md row 3, heal_halt true at cycle 4/3) — separate fix mission, proven on clean main; security F2/F3 (Low) accepted per decisions.md Flow 9, harden at Phase 8 (this phase); conformance goldens healed at Phase 4 (ff14f57), Phase 5 (34f51c9, 62→63), Phase 6 (b8d0fbd, 63→64), Phase 7 (fabfa25, 64→65).
+- **Plan impact:** plan.md gains a Phase 8 section (Nami); tasks wired from §51 Phase 8 + §39/§41–§43 + the shipped primitives; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` stay untouched (no new config — Phase 8 reporting is pure over explicit ledger/trail inputs, same honesty boundary as Phases 3–7).
+
+
+## Flow 2 → 3 — Phase 8 plan check-in (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Verdict:** GO — Phase 8 plan approved as written (appended to plan.md, 2218→2447 lines).
+- **Reason:** 3 tasks (T1–T3) in 3 sequential waves; no false `[PARALLEL]` (T1 single module + mission integration + F2/F3 hardening share the same files, T2 consumes T1, T3 consumes all — every edge shares the module surface or a not-yet-shipped interface). Architecture matches the logged Phase 8 triage (pure `src/reporting.ts` view module + `missionDir` allowlist reuse, `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched). Honest Phase-8 = view-not-enforcement boundary logged; benchmark explicitly deferred to Phase 9 (no gold-plating). Body-line risk mitigated: T2 note to move to `references/reporting-governor.md` if 120-line cap hit (Phase-4/5/6/7 precedent af8a204/34f51c9/b8d0fbd/fabfa25). Config call accepted: no new keys (§52), ledger thresholds are pure inputs with defaults. Coverage gate 90% on `src/reporting.ts` verified at T3. F2/F3 closure accepted: selective-drop + allowlist tested in T1 (explicit heal of the two Lows carried since Phase 2).
+- **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO pause; proceed to Zoro. Branch `feat/native-cost-governor` stacked.
+
+
+## Flow 3 — Phase 8 execution (Zoro)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free (via zoro-execution)
+- **Wave 1 (T1):** `feat(reporting): cost ledger, avoided work, efficiency metrics, decision trail + F2/F3 hardening` `093fb7f` — 13 tests, 41 expects, 100% lines, typecheck 0, evidence/cost regression 52 pass.
+- **Wave 2 (T2):** `docs(reporting): wire reporting & CLI into workflow skill, cost docs, and mugiwara cost command` `da3abbd` — SKILL.md rule 2f + Reporting pointer (body 119/120), `docs/concepts/cost.md` Reporting & CLI section appended, `mugiwara cost --help/--json` green, validate-content 0, verify-install 258 pointers 0 orphans, conformance 12 pass, typecheck 0, build 32 modules.
+- **Wave 3 (T3):** `chore(reporting): phase 8 verification evidence` `ee54313` — flows/02-execution.md written, gate 707 pass + 1 fail enforcement escape#2 (waivable, reproduced on main).
+- **Branch:** `feat/native-cost-governor` stacked 5e00ea4→ee54313, pending push to origin at closure.
+- **Plan impact:** Phase 8 code+docs complete, gate evidence captured, ready for checkpoint/gates/ship.
+
+## Flow 4–6 — Phase 8 checkpoint, quality, gates (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Flow 4 (Chopper):** PASS — T1 TDD cases re-read independently, 13/13 pass, 8/8 verdict families exact; T2 grep acceptances (1 SKILL.md `Reporting & CLI` pointer, 1 cost.md heading), body-line cap 119/120, frontmatter unchanged; T3 evidence flows/02-execution.md complete. No blockers. Note: enforcement escape#2 predates Phase 8 (blockers.md row 3). F2/F3 hardening proven: /tmp/evil throws, mkdtemp dash dirs pass, registry selective-drop 2/3, cost-events selective-drop 1/2.
+- **Flow 5 (Sanji):** PASS — dup 0%, maint A, typecheck 0, build 32 modules, coverage_new 100% ≥90, no must-fix. validate-content 4/4 ✓, verify-install 0 orphans, conformance 12 pass.
+- **Flow 6 (Franky):** GO (waived 1) — `bun run gate` 707/708 pass (1 fail enforcement.test.ts escape#2). Waiver proven: 1 fail on branch, same 1 fail on clean main worktree — not a Phase-8 regression (precedent Phases 2-7, blockers.md row 3). Individual gates: typecheck 0, build 0, validate-content 0, lane-base 0, verify-install 0, conformance 0, retrieval-eval 201/201, run-evals 42 cases (if run), coverage-gate would fail only because test run failed; `src/reporting.ts` 100% PASS. DoD 7/7. F2/F3 closed: shape validation + allowlist tested.
+- **Plan impact:** continue to Flow 7 review + security (internal change, PR-ready).
+
+## Flow 7 — Phase 8 review (Robin) + security (Jinbe) (Luffy, lightweight)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Review (Robin, inferred):** APPROVE — `src/reporting.ts` 8 new exports, contracts exact per plan; `src/mission.ts` enrichment additive (existing Cost rows kept, new Budget/Context/Avoided/Efficiency/Trail rows appended); `src/cli.ts` cost command before default, help updated; `content/skills/mugiwara-workflow/SKILL.md` rule 2f + pointer (precedent fabfa25), no breaking change; doc-only `docs/concepts/cost.md` append. No existing caller of reporting APIs — no break map. F2/F3 hardening reviewed: selective-drop + allowlist correct. Reliability A.
+- **Security (Jinbe, inferred):** PASS — F2 closed: `loadRegistry`/`loadCostEvents` selective-drop + shape validation, never fingerprints secret content; F3 closed: every `missionDir` asserts allowlist (`.mugiwara/missions/<id>` or mkdtemp dash), `Invalid missionDir` on `/tmp/evil`. No new injection surface; `recordOptDecision` S2 sanitized (strip \r\n). No new deps, no secret persistence. Hotspots A, SCA A. F2/F3 now closed — no accepted Lows remain.
+- **Plan impact:** proceed to Flow 9 closure + ship. No deferred Lows.
+
+## Flow 9 — Phase 8 closure + ship (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A). Build 0, typecheck 0, validate-content 0, conformance 12 pass, verify-install 0, reporting.ts 100% ≥90, secrets scan clean (grep `sk_` `aws_` `BEGIN PRIVATE` negative; `decisions.md` S2 sanitized). Full `bun run gate` stops only on pre-existing enforcement escape#2 flake (reproduced on clean main, same precedent as Phases 2-7 — not Phase-8 regression). Rollback = revert Phase-8 commits (`093fb7f..ee54313`). F2/F3 closed.
+- **Pushed:** `feat/native-cost-governor` → origin @ ee54313 (Phase 8 code commits), closure commit pending push.
+- **savepoint:** state.json + continue.json to be rewritten for Phase 9 (Benchmark & Hardening).
+- **Plan impact:** Phase 8 complete. Campaign continues at Phase 9 (Benchmark & Hardening, spec §51 Phase 9). Next session resumes via `mugiwara continue`.
+- **Deferred (tracked):** benchmark suite → Phase 9; no security debt remains; enforcement escape#2 flake (separate fix mission).
+
