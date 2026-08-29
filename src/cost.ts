@@ -18,6 +18,7 @@
 // tokens — token telemetry stays in savepoint.sh (estimator or reported).
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { ContextMetrics } from './context.ts';
 
 // ── Lane constants (MUST equal scripts/lib/lane-base.sh — enforced by test) ──
 
@@ -118,13 +119,7 @@ export type CostEvent = {
   // Phase 2 (T6): context budget status (chars gate) + efficiency metrics,
   // kept apart from the token `status` — C2 never conflates the two budgets.
   context_status?: 'ok' | 'over';
-  context_metrics?: {
-    files_loaded: number;
-    repeated_reads: number;
-    duplicate_chars: number;
-    reuse_rate: number;
-    read_avoidance_chars: number;
-  };
+  context_metrics?: ContextMetrics;
 };
 
 const COST_EVENTS_FILE = 'cost-events.jsonl';
