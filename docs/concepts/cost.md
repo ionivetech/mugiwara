@@ -141,3 +141,16 @@ when that first-class path is used. At closure, the mission report surfaces:
 This turns lane sizing from "process efficiency" into a number an engineering
 manager can act on. No other skills pack produces this because no other pack
 sizes work.
+
+## Cost Governor module (`src/cost.ts`)
+
+Phase 1 of the Native Cost Governor initiative centralizes the budget math
+that used to live in two places. `scripts/lib/lane-base.sh` remains the
+single source of truth for the shell runtime (`savepoint.sh` reads it and
+cannot import TypeScript); `src/cost.ts` is the TS-side mirror —
+`budgetForLane`, `laneBaseForLane`, `warnAt`/`stopAt` (1.5×/3× thresholds),
+`budgetStatus`, `delegateAt`, and the normalized `costEnvelope` read model.
+`src/mission.ts` (archive cost section) consumes it instead of hardcoding
+lane budgets. Drift between the two sides is a CI failure, not a display
+nit: `test/cost.test.ts` asserts every constant against `lane-base.sh`
+(parity — same D5 pattern as `scripts/lane-base.ts`).

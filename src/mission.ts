@@ -9,6 +9,7 @@ import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
 import { rankFiles, renderRouting } from './routing.ts';
 import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
+import { budgetForLane, budgetStatus, warnAt, stopAt } from './cost.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -155,12 +156,14 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
     const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
     const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
-    // lane budgets for readable delta (from lane-base.sh, mirrored here for display only)
-    const laneBudget = lane === 'lean' ? 12000 : lane === 'standard' ? 25000 : lane === 'full' ? 50000 : lane === 'spike' ? 3000 : 0;
+    // lane budgets for readable delta — single source: src/cost.ts (mirrors
+    // lane-base.sh, parity-enforced by test/cost.test.ts)
+    const laneBudget = budgetForLane(lane);
     const effBudget = budget || laneBudget;
     const pct = effBudget ? Math.round((est / effBudget) * 100) : 0;
     const delta = effBudget ? (est <= effBudget ? `${(effBudget - est).toLocaleString()} under` : `${(est - effBudget).toLocaleString()} over`) : 'no budget configured';
     const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator';
+    const status = budgetStatus(effBudget, est).toUpperCase();
     // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;
@@ -183,8 +186,8 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       '| Metric | Value |',
       '|--------|-------|',
       `| **Tokens used** | ${est.toLocaleString()} (${srcLabel}) |`,
-      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? Math.round(effBudget * 1.5).toLocaleString() : '—'} · stop ${effBudget ? (effBudget * 3).toLocaleString() : '—'}) |`,
-      `| **Budget status** | ${effBudget ? `${pct}% of budget · ${delta} · ${est >= effBudget * 3 ? 'STOP' : est >= effBudget * 1.5 ? 'WARN' : 'OK'}` : 'no lane budget'} |`,
+      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? warnAt(effBudget).toLocaleString() : '—'} · stop ${effBudget ? stopAt(effBudget).toLocaleString() : '—'}) |`,
+      `| **Budget status** | ${effBudget ? `${pct}% of budget · ${delta} · ${status}` : 'no lane budget'} |`,
       `| **Context footprint** | ${chars.toLocaleString()} chars${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
     ].join('\n');
     if (hasReported) {
