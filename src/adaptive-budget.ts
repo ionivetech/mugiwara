@@ -127,7 +127,7 @@ export type CircuitBreakerInput = {
 export type CircuitBreakerVerdict = { tripped: boolean; reason: string };
 
 export function checkCircuitBreaker(input: CircuitBreakerInput): CircuitBreakerVerdict {
-  // ponytail: double-threshold (actual >= expected*2), tune if §29 needs finer signal
+  // note: double-threshold (actual >= expected*2), tune if §29 needs finer signal
   const doubled = input.expected * 2;
   const noProgress = input.progress_delta === 0;
   const noScopeOrEvidence = !input.scope_expanded && input.evidence_delta === 0;

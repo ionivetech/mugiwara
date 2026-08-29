@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 // scripts/benchmark-governor.ts — Phase 9 Benchmark & Hardening harness
 // Deterministic, no network, no Date.now/Math.random. Measures cost/slop/regression.
-// ponytail: thresholds are fixture constants, not config — ratchet like retrieval-eval
-// ponytail: harness measures, does not enforce — no runtime gate
+// note: thresholds are fixture constants, not config — ratchet like retrieval-eval
+// note: harness measures, does not enforce — no runtime gate
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -132,7 +132,7 @@ export function evaluateStopSlopScenario(scenario: StopSlopScenario): {
   intervention: string;
   reason: string;
 } {
-  // ponytail: concrete reason short-circuits — tolerate without slop
+  // note: concrete reason short-circuits — tolerate without slop
   if (scenario.has_concrete_reason) {
     return { slop: false, intervention: 'tolerate', reason: `tolerate — ${scenario.id} has concrete reason` };
   }
@@ -484,7 +484,7 @@ function main(): void {
     printHelp();
     process.exit(0);
   }
-  // ponytail: harness measures, does not enforce — no runtime gate
+  // note: harness measures, does not enforce — no runtime gate
   const result = runHarness();
   const thresholds = loadThresholds();
   console.log(`\nbenchmark-governor — ${result.ok ? 'PASS' : 'FAIL'}`);

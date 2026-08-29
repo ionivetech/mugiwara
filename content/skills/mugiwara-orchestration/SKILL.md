@@ -8,15 +8,6 @@ description: Gatekeeper + captain for any task: triage, classify, coordinate, ro
 
 - Mid-flow continuation with route already recorded in `.mugiwara/missions/<mission>/decisions.md`. Captain duties: triage, check-ins, decisions, closure — Luffy coordinates, never implements; returns decisions, no dispatch.
 
-## Control commands (pre-flow)
-
-`mugiwara continue` / `mugiwara status` are read-only control commands, not flow
-work: they dispatch before Flow 0 and crew dispatch, run the deterministic
-state/continue lookup, and never create config or start a flow stage. Treat a
-`continue`/`status` invocation as the resume gate — the CLI picks the resume
-point, exit 2 stops for the user to select, and only then does Flow 0 re-entry
-(or plan verification) begin.
-
 ## Delegation pillars (Flow 0)
 
 Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.
@@ -30,6 +21,10 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 - Sanji → return quality → Luffy routes pass/fail
 - Franky → return gates → Luffy routes pass/fail
 - Robin/Jinbe → return findings → Luffy routes to Brook/Zoro/defer
+
+**Control commands (pre-flow):** `mugiwara continue`/`status` are read-only,
+pre-flow — never create config, never start a flow stage; exit 2 = user selects.
+Full: `references/control-commands.md`.
 
 ## Coordination files
 
@@ -99,10 +94,6 @@ Rendered examples: `references/output-contract.md` — match the shape.
 ## Work splitting
 
 When a flow stage has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
-
-## Q&A hub
-
-Any agent routes a question to Luffy (via the main thread). Answer with: decision + reason + impact on the plan. Log every decision to `.mugiwara/missions/<mission>/decisions.md`; do NOT touch the plan doc.
 
 ## Override (in-session)
 

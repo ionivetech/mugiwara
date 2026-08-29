@@ -46,6 +46,28 @@ Multi-PR scope (>2 days). Split into sub-missions — never one giant plan:
 - Continuation via `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts.
 - Each sub-mission needs its own wave table.
 
+## Execution posture (Standard+, proportional smaller on Quick/Lane 0-1)
+
+Expose the adaptive contract before execution without turning plan.md into a
+decision log:
+
+```markdown
+## Execution posture
+Control mode: semi
+Initial model: inline-sequential
+Re-evaluate at: before Flow 3; after each execution batch; Flow 4/6/7
+
+## Dependency and ownership map
+| Task | Depends on | Writes | Member | Parallel eligible | Evidence |
+
+## Cost-aware operating assumptions
+| Decision | Governor evidence | Constraint | Fallback |
+```
+
+Large campaigns index these sections in the master plan; each `sub-plan/` slice
+owns its local detail. Parallel eligibility requires file- AND interface-disjoint
+proof.
+
 ## Interview-first & mode (prose detail)
 
 Batch ALL blocking ambiguities into ONE question round before writing. If a

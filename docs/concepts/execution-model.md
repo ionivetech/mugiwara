@@ -3,6 +3,36 @@
 Why the crew runs in your main conversation — and when subagents are actually
 used.
 
+## Three independent decisions
+
+Every mission makes three independent choices. They must not be conflated:
+
+| Dimension | Question | Values | Never implies |
+|---|---|---|---|
+| **Control mode** | How much does the human participate? | `guided` / `semi` / `auto` | a topology, cost tier, or risk tier. |
+| **Execution model (posture)** | How is work performed? | `inline-sequential`, `inline-batched`, `parallel-workers`, `context-relief`, `phase-isolated`, `team-scoped` | a control mode or cost level. |
+| **Cost Governor** | What is economically justified and safe to spend? | reserve / project / avoid / stop verdicts | a mode change or a crew-role change. |
+
+A Full-lane mission may be Guided and fully inline; a Lean mission may be Auto
+and sequential. The governor supplies measurable verdicts the workflow acts on —
+it recommends and records, it does not force.
+
+## Postures
+
+- **inline-sequential** — default: main-thread execution in plan order.
+- **inline-batched** — several read-only checks batched into one compact report.
+- **parallel-workers** — Nami-declared independent tasks run via worker
+  subagents; main thread remains owner.
+- **context-relief** — context pressure crosses threshold; one worker at a time,
+  preserving plan order.
+- **phase-isolated** — large campaign; `sub-plan/` + `flows/phase-NN/`.
+- **team-scoped** — `(mission, member)` isolation with shared-plan boundaries.
+
+Posture is chosen and recorded by Luffy at flow boundaries from mission
+evidence, lane, risk, dependency topology, context pressure, and governor
+verdicts. It adapts as evidence changes; control mode does not (except an
+explicit user flip).
+
 ## Auto-activation
 
 The workflow **auto-activates.** At session start the crew is announced; when

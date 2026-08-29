@@ -2,7 +2,7 @@
 // Phase 8 Reporting & CLI — cost ledger, avoided work, efficiency, trail (§39/§41–§43).
 // Pure view over existing persisted files: cost-events.jsonl (Phase 1),
 // context-registry.jsonl (Phase 2), decisions.md trail (§41). No new store.
-// ponytail: ledger is a view over existing files, no new store
+// note: ledger is a view over existing files, no new store
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CostEvent } from './cost.ts';
@@ -92,7 +92,7 @@ export function computeAvoidedMetrics(input: {
   const contexts_avoided = dup + rep;
   const stages_avoided = input.workMetrics?.stagesAvoided ?? 0;
   const slop_interventions = input.slopMetrics?.interventions ?? 0;
-  // ponytail: heuristic 150 tokens per avoided read, tune with §39 if needed
+  // note: heuristic 150 tokens per avoided read, tune with §39 if needed
   const tokens_avoided_est = contexts_avoided * 150;
   return { stages_avoided, contexts_avoided, slop_interventions, tokens_avoided_est };
 }
