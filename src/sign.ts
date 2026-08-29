@@ -133,7 +133,7 @@ export function configuredBackend(projectDir: string): string | undefined {
 
 function missionMeta(projectDir: string, mission: string): { commit: string; ts: string } {
   let commit = 'unknown';
-  try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: projectDir, encoding: 'utf8' }).trim(); } catch { /* best-effort */ }
+  try { commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { /* best-effort */ }
   return { commit, ts: new Date().toISOString() };
 }
 
