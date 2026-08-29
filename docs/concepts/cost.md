@@ -175,3 +175,18 @@ trail on disk + the evidence registry.
   conflated).
 - `contextStatus` mirrors the archive-time closure throw condition, surfaced
   as a pure, tested gate.
+
+## Investigation limits (`src/config.ts` + `src/investigation.ts`)
+
+Investigation is bounded by three flat policy keys (spec §13), all optional
+and commented out in `DEFAULT_CONFIG` (`readInvestigationConfig`, `src/config.ts`):
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `investigation_max_passes` | 2 | Cap on investigation passes |
+| `investigation_max_unrelated_files` | 5 | Max unrelated files opened |
+| `investigation_repeated_read_threshold` | 2 | Repeated reads before stopping |
+
+Non-numeric or zero values fall back to the defaults. The state machine in
+`src/investigation.ts` enforces these three limits plus an objective-met stop;
+wiring the verdicts into the agent flow is Phase 3+ (Work Governor).

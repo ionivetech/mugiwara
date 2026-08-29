@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DEFAULT_CONFIG, readConfig, ensureConfig } from '../src/config.ts';
+import { DEFAULT_CONFIG, readConfig, ensureConfig, readInvestigationConfig } from '../src/config.ts';
 
 function tmpProject(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugiwara-config-'));
@@ -50,6 +50,33 @@ describe('readConfig', () => {
     const cfg = readConfig(dir);
     expect(cfg.mode).toBe('auto');
     expect(cfg.commit).toBe('conventional');
+  });
+});
+
+describe('readInvestigationConfig', () => {
+  let dir: string;
+  beforeEach(() => { dir = tmpProject(); });
+  afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
+
+  it('returns defaults (2/5/2) when keys are absent', () => {
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
+    expect(readInvestigationConfig(dir)).toEqual({ max_passes: 2, max_unrelated_files: 5, repeated_read_threshold: 2 });
+  });
+
+  it('parses explicit values (4/9/3)', () => {
+    writeFileSync(
+      join(dir, '.mugiwara', 'config'),
+      'investigation_max_passes=4\ninvestigation_max_unrelated_files=9\ninvestigation_repeated_read_threshold=3\n',
+    );
+    expect(readInvestigationConfig(dir)).toEqual({ max_passes: 4, max_unrelated_files: 9, repeated_read_threshold: 3 });
+  });
+
+  it('falls back to defaults for non-numeric or zero values (2/5/2)', () => {
+    writeFileSync(
+      join(dir, '.mugiwara', 'config'),
+      'investigation_max_passes=abc\ninvestigation_max_unrelated_files=0\ninvestigation_repeated_read_threshold=-3\n',
+    );
+    expect(readInvestigationConfig(dir)).toEqual({ max_passes: 2, max_unrelated_files: 5, repeated_read_threshold: 2 });
   });
 });
 
