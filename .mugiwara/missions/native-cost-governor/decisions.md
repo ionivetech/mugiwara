@@ -48,3 +48,9 @@ live here; the plan doc stays clean.
   mission.ts/cost.ts — no false [PARALLEL]); runtime behavior preserved
   (savepoint.sh/lane-base.sh/DEFAULT_CONFIG untouched).
 - **Plan impact:** hand off to Flow 3 (Zoro, execution). No revision requested.
+
+## Flow 3 — Execution start (Zoro)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Mode:** auto — branch auto-created (feat/native-cost-governor), auto-commit per task (conventional). auto_commit=on.
+- **Plan:** T1–T5 sequential, no [PARALLEL]. Executing inline.
