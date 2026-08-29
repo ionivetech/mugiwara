@@ -8,7 +8,7 @@
 // Backend chosen via sign_backend in .mugiwara/config (auto|minisign|pure|off).
 // Detached signature lives beside the report (report.md.minisig | .mugisig).
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -67,9 +67,15 @@ export function ensurePureKey(homeDir: string): string {
     mkdirSync(dir, { recursive: true });
     const { key, pub } = generatePureKey();
     // atomic-ish: write key first, then pub; a partial pair re-keys on next run
-    if (!existsSync(keyPath)) writeFileSync(keyPath, key + '\n');
+    if (!existsSync(keyPath)) {
+      writeFileSync(keyPath, key + '\n', { mode: 0o600 });
+      // existing file (non-secret pub) never gets broadened — only secure the key
+    }
     if (!existsSync(pubPath)) writeFileSync(pubPath, pub + '\n');
   }
+  // defense-in-depth: seed material must never be world/group readable,
+  // even if created earlier with a loose umask or by an older version.
+  try { chmodSync(keyPath, 0o600); } catch { /* best-effort on platforms without chmod */ }
   return dir;
 }
 

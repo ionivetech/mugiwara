@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync, statSync, chmodSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { join } from 'node:path';
 import { pureSign, pureVerify, generatePureKey, ensurePureKey, resolveBackend, signReport, verifyReport, type BackendChoice } from '../src/sign.ts';
@@ -29,6 +29,17 @@ describe('pure ed25519 backend', () => {
     const again = ensurePureKey(home);
     expect(again).toBe(join(home, '.mugiwara'));
     expect(readdirSync(join(home, '.mugiwara')).length).toBe(2); // never duplicated
+  });
+
+  it('ensurePureKey secures the seed key to 0600 (never world-readable)', () => {
+    const dir = ensurePureKey(home);
+    const mode = statSync(join(dir, 'mugiwara.key')).mode & 0o777;
+    expect(mode).toBe(0o600);
+    // idempotent hardening: pre-existing loose file gets tightened
+    const keyPath = join(dir, 'mugiwara.key');
+    chmodSync(keyPath, 0o644);
+    ensurePureKey(home);
+    expect(statSync(keyPath).mode & 0o777).toBe(0o600);
   });
 
   it('signs and verifies round-trip with correct mission/commit/ts fields', () => {
