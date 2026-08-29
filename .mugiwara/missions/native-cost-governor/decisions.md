@@ -153,3 +153,19 @@ live here; the plan doc stays clean.
   - M2 `5ca71bb` — over-budget closure now records `context_status:'over'` event BEFORE the gate throws (ledger captures the condition, doesn't erase it).
 - **Re-verification (Luffy):** heal commits verified in git log; `bun run gate` re-run — **exit 0** (coverage PASS, mission.ts 94.41%). The only intermittent red (enforcement.test.ts "escape #2") is the documented pre-existing flake: reproduced on clean `main` (2/3 fail) in this session — proven NOT a Phase-2 regression, tracked as separate fix mission (blockers row 3), Phase-1 shipped with same caveat. Not burning Phase-2 heal cycles on it.
 - **Plan impact:** Phase 2 code clean, gates green. Proceed to Flow 9 closure + ship.
+
+## Flow 9 — Phase 2 closure + ship (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Ship gate:** GO — PR-ready internal change (no deploy/flag/rollout; N/A).
+  Ship checklist: build exit 0, 486 tests + coverage PASS, docs updated,
+  secrets scan clean (PR verdict + closure grep negative), rollback = revert
+  Phase-2 commits. Evidence: flows/06-closure.md, flows/07-pr-verdict.md.
+- **Pushed:** `feat/native-cost-governor` → origin @ dfc7982. Tree clean.
+- **savepoint:** state.json written (flow=1, next phase start). continue.json
+  next_action rewritten for Phase 3 (machine savepoint had reset to generic).
+- **Plan impact:** Phase 2 complete. Campaign continues at Phase 3 (Work
+  Governor). Next session resumes via `mugiwara continue`.
+- **Deferred (tracked):** enforcement.test.ts escape#2 flake (separate fix
+  mission); security F1/F2/F3 harden at Phase-3 wiring; quality nits
+  (context_metrics inline shape).
