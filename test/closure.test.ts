@@ -93,6 +93,12 @@ describe('closure integrity gate', () => {
     expect(text).toContain('[secret] x');
   });
 
+  it('secret scan covers cost-events.jsonl (Flow 7 fix — jsonl in TRAIL_EXTS)', () => {
+    writeFileSync(join(dir, 'cost-events.jsonl'), '{"kind":"closure","mission":"demo","token":"ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"}\n');
+    const withSecret = checkTrail(dir, dir);
+    expect(withSecret.some((i) => i.kind === 'secret' && i.detail.includes('GitHub token'))).toBe(true);
+  });
+
   it('resolves repo-root paths cited by the report', () => {
     writeFileSync(join(dir, 'report.md'), '[gate](src/auth/gate.md)');
     mkdirSync(join(dir, 'src', 'auth'), { recursive: true });
