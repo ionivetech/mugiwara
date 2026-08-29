@@ -412,7 +412,7 @@ if (integrityArg !== -1) {
         }
       }
     }
-  if (!constants.includes('LANE_BASE_lean=7000')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 7000)');
+  if (!constants.includes('LANE_BASE_lean=8421')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 8421)');
   if (!constants.includes('BUDGET_full=50000')) errors.push('doc-integrity: source lane-base.sh full budget drifted (expected 50000)');
 }
 }
