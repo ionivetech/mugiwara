@@ -34,6 +34,7 @@ This is the companion to the feature table in the
 - [26. Policy as code](#26-policy-as-code)
 - [27. Closure tools](#27-closure-tools)
 - [28. Permission boundaries & tool-surface governance](#28-permission-boundaries--tool-surface-governance)
+- [29. Adaptive execution & three-decision model](#29-adaptive-execution--three-decision-model)
 
 ## 1. The 9-flow-stage crew pipeline
 
@@ -544,6 +545,12 @@ the mission report.
 logged; 30k → `stop`, state written, and the mission pauses for a human
 decision.
 
+**Live slop governor.** Runs the slop detectors live at ledger build — a heal
+cycle at its limit, repeated reads, useless abstraction. `mugiwara cost` shows
+the count attributed to the crew member that caused it (healing→Brook,
+context→all). This makes wasted spend visible per mission, not hidden in a
+benchmark.
+
 → [Cost model](cost.md)
 
 ---
@@ -693,6 +700,31 @@ from [permissions](permissions.md).
 "check quickly" — the finding goes through Jinbe instead.
 
 → [Permission boundaries](permissions.md)
+
+---
+
+## 29. Adaptive execution & three-decision model
+
+**What.** Three independent decisions per mission: **control mode** (how much
+you approve), **execution posture** (how work runs), and **Cost Governor**
+(what is safe to spend). Luffy records an initial posture at Flow 0; Nami
+proposes the resolved posture at Flow 2; it re-evaluates only at flow-stage /
+task-batch boundaries, never mid-task. Postures: `inline-sequential` (default),
+`parallel-workers`, `context-relief`, `phase-isolated`, `team-scoped`.
+
+**How to use.** Automatic and deterministic (`src/posture.ts`) — posture is
+chosen from lane, risk, dependency topology, context pressure, and governor
+verdicts, and produces a reason + evidence refs (never an opaque score).
+Recorded in `decisions.md` and surfaced in the report's Adaptation section.
+A switch never changes control mode or crew roles. Old missions default to
+inline.
+
+**Scenario.** Nami declares two file-disjoint tasks → posture becomes
+`parallel-workers`; mid-mission context crosses the threshold → switches to
+`context-relief` (one worker at a time, order preserved); a governor stop →
+safe pause with state + continue emitted.
+
+→ [Adaptive execution](execution-model.md)
 
 ---
 

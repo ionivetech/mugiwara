@@ -9,6 +9,12 @@ run automatically is decided by the mode — except one config lever: `auto_comm
 manually; `auto` ignores it). The config shapes HOW artifacts are written when
 they are created.
 
+**Mode is not an execution posture and not a cost tier.** Mode is one of three
+independent decisions (control mode, execution posture, Cost Governor). A
+Guided mission can run fully inline; an Auto mission can be sequential; the
+posture adapts to evidence at flow boundaries while the mode only changes when
+you flip it. See [execution-model.md](execution-model.md).
+
 ## The three levels
 
 | Level | Plan | Execution | Ambiguities | Check-ins |

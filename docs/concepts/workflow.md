@@ -106,6 +106,27 @@ of truth; the host tool is a mirror.
 threshold) tells the agent when the skill does not apply — recorded in the
 decision log, never silent.
 
+## Execution posture (adaptive)
+
+Control mode, execution posture, and the Cost Governor are three **independent**
+decisions — one never quietly drives another:
+
+- **Control mode** (guided/semi/auto) decides how much you approve.
+- **Execution posture** decides *how* work runs: `inline-sequential` (default),
+  `parallel-workers`, `context-relief`, `phase-isolated`, `team-scoped`.
+- **Cost Governor** decides what is safe to spend (reserve / project / avoid / stop).
+
+Luffy records an initial posture at Flow 0 (ordinary work defaults to
+`inline-sequential`); Nami proposes the resolved posture at Flow 2. The posture
+re-evaluates **only at flow-stage or task-batch boundaries** — never mid-task —
+from lane, risk, dependency topology, context pressure, and governor verdicts.
+A switch never changes control mode or crew roles. On a governor stop or heal
+halt, the crew emits state + continue with the exact next action.
+
+The selection is deterministic (`src/posture.ts`) and produces a reason +
+evidence refs, never an opaque score. Old missions with no posture recorded
+default to inline. See [execution-model.md](execution-model.md).
+
 ## Large campaigns — sub-plan
 
 Missions >3 phases or >1500-line plans split via `sub-plan/` — master `plan.md` is the index, `sub-plan/01-phase01-<slug>.md` slices hold detail, `flows/phase-NN/` isolates execution per phase, `mugiwara archive --merge` folds all into `report.md`. Precedent: `native-cost-governor` (9 phases, 2688-line plan → single `report.md`).

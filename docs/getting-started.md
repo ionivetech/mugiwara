@@ -122,6 +122,12 @@ ready PR summary.
 The crew runs **inline** in your main conversation — every flow stage reports as a
 compact checkpoint. Subagents only for parallel task batches.
 
+Execution is **adaptive**: the crew picks an execution posture (inline / parallel /
+context-relief / phase / team) from evidence at each flow boundary, and a Cost
+Governor keeps spend measured and bounded (see
+[adaptive execution](concepts/execution-model.md)). Inline stays the default;
+parallel only when the plan proves independent tasks.
+
 Prefer to drive part of it yourself? A few slash commands exist:
 `/mugiwara` (mode switch), `/mugiwara-continue` (resume),
 `/mugiwara-review`, `/mugiwara-security`. The rest of the pipeline routes

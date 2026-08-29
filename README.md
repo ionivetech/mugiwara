@@ -160,6 +160,25 @@ pipeline config to write.**
 | **Self-healing**         | Brook reads all failures at once, fixes root causes, re-runs verification. ≤3 cycles.           |
 | **Resume from anywhere** | Rebuilds from `.mugiwara/` state. Continues, never restarts.                                    |
 | **12 platforms**         | Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity + CLI.             |
+| **Adaptive execution**   | Picks an execution posture (inline / parallel / context-relief / phase / team) from evidence at each flow boundary — cost-aware, never a mode flip. |
+| **Live slop governor**   | Detects wasted cost live (repeated reads, useless abstraction, healing spin) and attributes it to the crew member that caused it. `mugiwara cost` shows it. |
+
+**Adaptive execution — the three independent decisions:**
+
+Mugiwara keeps three choices separate, so one never quietly drives another:
+
+| Decision | Question | What it controls | Never implies |
+|---|---|---|---|
+| **Control mode** | How much do you participate? | guided / semi / auto approval + ambiguity | a topology or cost tier |
+| **Execution posture** | How is work performed? | inline / parallel / context-relief / phase / team | a control mode |
+| **Cost Governor** | What is safe to spend? | reserve / project / avoid / stop verdicts | a mode change |
+
+A Full-lane mission can be Guided and fully inline; a Lean mission can be Auto
+and sequential. The posture adapts to evidence at flow boundaries; your control
+mode only changes when you flip it. The governor recommends and records — it
+never silently skips a safety stage or replaces your consent.
+
+→ [Adaptive execution](docs/concepts/execution-model.md) · [Cost Governor](docs/concepts/cost.md) · [Modes](docs/concepts/modes.md)
 
 → All features, with how-to-use + scenarios: [Every feature](docs/concepts/features.md) · [Full pipeline](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Config](docs/concepts/config.md) · [Audit trail](docs/concepts/audit-trail.md) · [Cost](docs/concepts/cost.md) · [Provenance](docs/concepts/provenance.md) · [Policy](docs/concepts/policy-as-code.md) · [Closure tools](docs/concepts/closure-tools.md) · [Permissions](docs/concepts/permissions.md)
 
@@ -279,6 +298,7 @@ mid-mission. Only a genuine blocker or the heal halt pauses.
 | Security audit          | `/mugiwara-security` or "Jinbe, audit X" |
 | Resume a mission        | `/mugiwara continue <mission> [member]` or "where were we?" |
 | See mission position    | `mugiwara status` (flow stage, tasks, lane, blockers, budget) |
+| See cost + live slop     | `mugiwara cost` — ledger, avoided work, slop by crew member    |
 | Close out a mission     | `mugiwara archive <mission>` — folds the trail into report.md |
 | Tidy closed missions    | `mugiwara clean` (batch; `--all --force` includes in-flight) |
 | Switch mode             | `/mugiwara guided\|semi\|auto`           |
@@ -454,6 +474,7 @@ mugiwara status                               # computed mission state
 mugiwara continue [mission] [member]          # resume / list in-flight
 mugiwara archive <mission>                    # fold the trail into report.md (integrity-gated)
 mugiwara clean [--all] [--before <date>]      # batch-archive closed missions
+mugiwara cost [--mission <id>] [--json]       # cost ledger, avoided work, live slop, trail
 mugiwara blame <path>                         # provenance note on the last commit touching path
 mugiwara handoff <mission>                    # engineer-to-engineer handoff report
 mugiwara sign <mission> [--verify]            # optional minisign attestation of report.md
