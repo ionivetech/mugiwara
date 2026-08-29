@@ -64,6 +64,7 @@ Luffy classifies every request 8 ways:
 | Refuse | deploy / migration / key rotation / merge | decline at Flow 0, offer branch handoff |
 | Hotfix | production broken | Lane 1, gates deferred with owner |
 
+Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
 Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/missions/<mission>/decisions.md`. Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
 
 **Audit-lite (Lane 0/1).** Small trail only: `state.json`, `flows/01-execution.md`, closure `report.md`; plan/spec/blockers appear on these lanes only when a blocker occurs. Big scans may dispatch ONE read-only investigation subagent (never edits) returning a compressed digest; writers stay inline.
@@ -78,6 +79,7 @@ Blocked agent appends to `.mugiwara/missions/<mission>/blockers.md`:
 ```
 | flow stage | task | symptom | attempted | help-needed |
 ```
+Brook reads this at Flow 8. Never silently work around a blocker.
 
 ## Cleanup (Flow 9)
 
@@ -98,9 +100,7 @@ Stages classify required/conditional/optional (§7); skip only with a recorded r
 Agents/skills load only when they earn cost (§8/§9); mission complete only when §19's five conditions hold.
 Verdicts land as `work-governor` trail rows. savepoint/lane-base/config untouched.
 ## Scope & Code Governor
-
-Prefer the smallest correct scope — reuse existing code + local modification over new architecture (§14). An abstraction is justified only when used in ≥2 places or required by contract, never speculatively (§15); a dependency is added only with explicit justification (§16); implementations are minimum sufficient, never minimum LOC at the expense of verification/quality (§15/§38).
-Code waste (unnecessary helper/abstraction/wrapper/interface/config/dependency/generated code/refactor) is named; the change surface is measured; every scope verdict lands as a `scope-governor` trail row in `.mugiwara/missions/<mission>/decisions.md` → `## Cost governor decisions`. savepoint/lane-base/config untouched.
+Full definition: `references/scope-code-governor.md` — reuse-first, justification for abstractions/dependencies, minimum sufficient implementation.
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.
