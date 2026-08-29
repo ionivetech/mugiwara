@@ -1915,3 +1915,304 @@ per-task command-verifiable criterion:
   they do not fork the source modules; file-investigation limits stay in
   investigation.ts, scope/code waste signals stay in scope.ts, slop.ts adds
   the slop-specific intervention.
+
+---
+
+# native-cost-governor — Phase 7: Adaptive Budget & Circuit Breaker
+
+**Scope:** Phase 7 of the Native Cost Governor initiative (plan §51), mission
+split row 7 (`native-cost-governor-phase7`). Phase 7 delivers the **Adaptive
+Budget & Circuit Breaker** — the seven capabilities §51 Phase 7 enumerates
+(budget reservation, budget projection, adaptive budget, evidence-backed budget
+expansion, progressive thresholds, cost circuit breaker, anomaly detection).
+It **turns the spec §25–§29 framework into auditable budget verdicts**: every
+expensive stage reserves its max before running, the governor continuously
+projects the final cost, budget expands only with evidence, progressive
+thresholds tighten behavior, an anomaly trips the breaker, and slop-driven
+work-to-cost anomalies are flagged — without pretending a TS function can force
+the model to stop (verdicts-not-enforcement boundary).
+
+**Primary goal:** make *budget* adaptive and protected — never overspend
+without evidence, never starve a mandatory stage because an optional one ate
+the budget, and never blindly burn tokens when progress has stalled. Every
+verdict lands in the trail (§41) so the crew's budget choices are
+machine-checkable.
+
+## What Phase 7 consumes (shipped Phase 1–6 primitives) and what it enforces
+
+| Shipped primitive | Module | Phase-7 consumer |
+|-------------------|--------|------------------|
+| Cost envelope + thresholds | `src/cost.ts` `costEnvelope`/`budgetStatus`/`warnAt`/`stopAt`/`recordOptDecision` | reservation/projection/adaptive/breaker are computed on the cost envelope; `recordOptDecision` is the §41 trail |
+| Context metrics | `src/context.ts` `computeContextMetrics` | anomaly detection — context growth without evidence is a budget-anomaly signal |
+| Slop progress/anomaly | `src/slop.ts` `measureProgress`/`detectAnomaly` | anomaly detection re-consumes slop's progress-to-cost anomaly as the §24 budget-anomaly signal |
+| Lane budgets | `src/cost.ts` `LANE_BUDGET`/`budgetForLane` | adaptive budget — lane budget is the baseline that evidence may expand |
+
+Phase 7 **enforces**: an expensive stage reserves its expected max before
+executing (and releases the unused part after); the governor continuously
+projects `current + remaining required + expected conditional + possible
+healing` (§26); budget expands only for evidence-backed reasons (§27 valid:
+scope legitimately expanded, security-sensitive path, larger test surface,
+architecture dependency, legitimate healing; invalid: verbosity, unrelated
+exploration, re-reads, repeated output, unnecessary code); progressive
+thresholds (§28: 60%→optimize, 75%→aggressive, 90%→protect mandatory,
+100%→pause, 150%→hard warning, 300%→hard stop) govern behavior; the circuit
+breaker (§29) trips when `actual ≫ expected` without progress/scope/evidence;
+anomaly detection (§24) flags a work-to-cost drop.
+
+## Key decisions
+
+1. **The Adaptive Budget Governor is a pure TS module (`src/adaptive-budget.ts`),
+   like `src/work.ts`/`src/scope.ts`/`src/cognition.ts`/`src/slop.ts`.** Same
+   architecture: verdict functions take explicit inputs (unit-testable, fixtures
+   lock the thresholds), plus a separate record helper persists the verdict
+   through the sanitized `recordOptDecision` (§41). `savepoint.sh`/`lane-base.sh`
+   stay untouched; the shell runtime has no adaptive-budget role and Phase 7
+   does not migrate it.
+2. **Honest boundary — the module produces and records verdicts; the crew acts.**
+   The LLM crew (workflow skill) is the only thing that can actually reserve
+   budget, stop optional work, or pause at the breaker. Phase 7 makes the
+   *decision* a structured, recorded, auditable verdict the crew is instructed
+   to follow (T2 wiring) — it does not pretend a TS function can force the
+   model. Same honest boundary Phases 3–6 drew.
+3. **`DEFAULT_CONFIG` untouched — no new config keys (§52).** Adaptive budget
+   needs no policy boundary beyond the lane budgets and thresholds already
+   shipped. All budget thresholds (60/75/90/100/150/300) and reservation/projection
+   inputs are pure function inputs with internal defaults — nothing reads config.
+   No runtime config behavior change. The §6 `budget.max_tokens`/`slop.detection`
+   profile belongs to reporting phases (8), not here.
+4. **Re-consumption, not forking.** `detectBudgetAnomaly` re-consumes
+   `slop.ts:detectAnomaly`'s work-to-cost ratio as the budget-anomaly signal;
+   `checkProgressiveThreshold` re-consumes `cost.ts:budgetStatus` boundary math
+   (warnAt/stopAt) but adds the six §28 escalation levels. The source modules
+   stay the single definition; adaptive-budget wraps them with the §28/§29
+   escalation + breaker layer. No logic fork.
+5. **Defer reporting/CLI budget rows to Phase 8.** The ledger's budget
+   projection (§39: `budget.projected`/`reserved`/`remaining`/`avoided`),
+   §26 projection display, §42 `mugiwara cost` budget section, and §43 Cost
+   section budget rows are Phase 8 Reporting. Phase 7 records the *decisions*
+   and *produces pure verdicts* (§41 trail) but does not build the report
+   surface. Avoids gold-plating.
+6. **Security F2/F3 stay accepted Low (carried to Phase 8).** The Phase-7
+   record helper reuses the same S2-sanitized `recordOptDecision`, so no new
+   injection surface. F2 (do not fingerprint secret-bearing files) and F3
+   (`.mugiwara/` is local trusted state) remain documented design rules in
+   `docs/concepts/cost.md` (T2); harden at Phase 8 per decisions.md.
+
+## Architecture overview
+
+```
+  Shipped primitives (unchanged interfaces)
+  src/cost.ts (costEnvelope, budgetStatus, warnAt, stopAt, recordOptDecision)
+  src/context.ts (computeContextMetrics)  src/slop.ts (measureProgress, detectAnomaly)
+       │
+       ▼
+  src/adaptive-budget.ts ← NEW (T1): the Adaptive Budget verdict engine —
+       │       budget reservation (§25), projection (§26),
+       │       adaptive budget + evidence-backed expansion (§27),
+       │       progressive thresholds (§28: 60/75/90/100/150/300),
+       │       cost circuit breaker (§29), anomaly detection (§24)
+       │       + recordBudgetDecision (→ recordOptDecision §41)
+       │
+       ├──────────────────────────┐
+       ▼                          ▼
+  decisions.md (## Cost governor decisions)   content/skills/mugiwara-workflow
+       (every budget verdict)                 SKILL.md (T2 wiring: crew
+                                              reserves before expensive
+                                              stages, checks projection,
+                                              respects thresholds/breaker,
+                                              expands only with evidence)
+                                              + docs/concepts/cost.md
+```
+
+Pure verdict functions are unit-tested (T1); the agent-flow wiring (T2) is the
+workflow-skill + docs surface; T3 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `src/adaptive-budget.ts` | NEW — Adaptive Budget verdict engine (reservation, projection, adaptive, expansion, progressive thresholds, circuit breaker, anomaly) + `recordBudgetDecision` |
+| `test/adaptive-budget.test.ts` | NEW |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — reference the Adaptive Budget & Circuit Breaker: reservation, projection, adaptive/expansion, progressive thresholds, breaker, anomaly; record budget verdicts in the decision trail |
+| `docs/concepts/cost.md` | MODIFY — Adaptive Budget & Circuit Breaker section (seven capabilities, verdict contracts, honesty boundary, F2/F3 design rules) |
+| `src/cost.ts`, `src/context.ts`, `src/slop.ts` | UNCHANGED — consumed with pre-existing signatures; no edits |
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Build the adaptive-budget verdict engine | T1 | `bun test test/adaptive-budget.test.ts` green |
+| 2 | Wire budget verdicts into the workflow skill + docs | T2 | `grep` SKILL.md + cost.md, body ≤120, validate-content + verify-install + conformance green |
+| 3 | Full verification | T3 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 adaptive-budget.ts ──consumes: cost.ts, slop.ts (read-only)──► T2 SKILL.md + cost.md
+                                                                 │  (docs only)
+                                                                 ▼
+                                                              T3 full gate
+```
+
+No `[PARALLEL]` set in Phase 7: T1 is a single new module + test file with
+no cross-file edges; T2 consumes T1's surface (docs reference the new exports);
+T3 consumes all. Every edge shares the module surface or a not-yet-shipped
+interface — genuine sequentiality.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | adaptive-budget verdict engine | src/adaptive-budget.ts, test/adaptive-budget.test.ts | M | — | `bun test test/adaptive-budget.test.ts` green; ≥90% coverage |
+| T2 | wire adaptive budget verdicts into workflow skill + docs | content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md, content/skills/mugiwara-workflow/references/adaptive-budget-governor.md (if >120 lines) | S | T1 | SKILL.md rule + pointer, cost.md section, body ≤120, goldens updated if needed, validate-content + verify-install + conformance green |
+| T3 | full gate + evidence | flows/02-execution.md | S | T1, T2 | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: adaptive-budget verdict engine** (§25–§29, §24)
+
+- Files: create `src/adaptive-budget.ts`, `test/adaptive-budget.test.ts`
+- Interfaces: produces `src/adaptive-budget.ts` (consumed by T2 docs + Phase 8 reporting); consumes `src/cost.ts` `costEnvelope` (read-only, no import cycle) and `src/slop.ts` `detectAnomaly` (re-consumed as budget anomaly — pure delegation, no runtime import required beyond the pure math)
+- Size: M
+- Steps:
+  - [ ] Write `test/adaptive-budget.test.ts` first (TDD — see acceptance for the full case list)
+  - [ ] Implement `src/adaptive-budget.ts` (pure, no config, no FS except the record helper):
+    - `type BudgetReservation = { remaining: number; expected_max: number; available: number; reserved: number }` — `reserveBudget({ remaining, expected_max }): BudgetReservation` — `reserved = expected_max`, `available = max(0, remaining - reserved)` (§25). Marked `ponytail:`: reservation is a pure calc; the crew "releases unused reservation" by re-projecting.
+    - `type BudgetProjection = { current: number; remaining_required: number; expected_conditional: number; possible_healing: number; projected_min: number; projected_max: number }` — `projectBudget(input): BudgetProjection` — `projected_min = current + remaining_required + expected_conditional` (healing 0), `projected_max = projected_min + possible_healing` (§26: `current + remaining required + expected conditional + possible healing`).
+    - `type ExpansionVerdict = { allowed: boolean; reason: string }` — `evaluateExpansion({ reason, has_evidence, scope_expanded, security_path, test_surface_expanded, architecture_dependency, legitimate_healing }): ExpansionVerdict` — allow only when `has_evidence` AND one of the §27 valid reasons (`scope legitimately expanded`, `security-sensitive path`, `test surface larger`, `architecture dependency`, `legitimate healing`); otherwise deny with a reason naming the failing clause (invalid: `agent was verbose / explored unrelated / reread / repeated / unnecessary code`). Pure whitelist, not a config read.
+    - `type AdaptiveStatus = 'ok' | 'optimize' | 'aggressive' | 'protect' | 'pause' | 'warning' | 'stop'` — `checkProgressiveThreshold({ budget, used }): { status: AdaptiveStatus; pct: number }` — `pct = budget > 0 ? round(used/budget*100) : 0`; map §28: `<60 → ok`, `≥60 → optimize`, `≥75 → aggressive`, `≥90 → protect`, `≥100 → pause`, `≥150 → warning`, `≥300 → stop` (thresholds exactly per spec §28, inclusive at the boundary; tested at 59/60/74/75/89/90/99/100/149/150/299/300).
+    - `type CircuitBreakerVerdict = { tripped: boolean; reason: string }` — `checkCircuitBreaker({ expected, actual, progress_delta, scope_expanded, evidence_delta }): CircuitBreakerVerdict` — trip when `actual >= expected * 2` (documented heuristic: §29 "Expected 13k, Current 26k" → double; `ponytail:` double-threshold, tune with §24 signals if needed) AND `progress_delta === 0` AND `!scope_expanded && evidence_delta === 0` — i.e. consumption doubled without progress/scope/evidence. Otherwise `tripped: false`. Conservative: never trips on scope/evidence growth.
+    - `type BudgetAnomaly = { anomaly: boolean; reason: string }` — `detectBudgetAnomaly({ progress_before, progress_after, tokens_before, tokens_after }): BudgetAnomaly` — re-consumes `slop.ts` anomaly math: `tokens_delta = after - before`; if `tokens_delta >= 5000` and `progress_after - progress_before === 0` (no evidence/criteria/tests/files progress) → `anomaly: true` with reason `tokens grew without progress`; else false. Mirrors `slop.ts:measureProgress` 5k-zero-progress slop signal (§23) as the §24 work-to-cost anomaly (re-consumption, no fork).
+    - `recordBudgetDecision(missionDir: string, d: { decision: string; reason: string; evidence?: string }): void` — thin wrapper over `recordOptDecision` with `actor: 'budget-governor'` (sanitized via S2 path). Every non-ok verdict records here (§41).
+  - [ ] `docs/concepts/cost.md`: one paragraph — reservation/projection/adaptive/expansion/threshold/breaker/anomaly are pure over explicit inputs; `savepoint.sh` is not the budget governor (lane gate only); breaker is heuristic double-threshold, tune threshold is `ponytail:`-marked.
+  - [ ] Commit `feat(budget): adaptive budget verdict engine (reservation/projection/expansion/thresholds/breaker/anomaly)`
+- Acceptance:
+  - `bun test test/adaptive-budget.test.ts` passes. Cases (≥90% coverage, every verdict family):
+    - `reserveBudget({ remaining: 14000, expected_max: 4000 })` → `{ reserved: 4000, available: 10000 }`; zero-floors (`remaining 1000, max 4000 → available 0`)
+    - `projectBudget({ current: 11200, remaining_required: 4000, expected_conditional: 500, possible_healing: 5000 })` → `{ projected_min: 15700, projected_max: 20700 }` (§26 example shape); all-zero → 0/0
+    - `evaluateExpansion` — valid reasons with `has_evidence: true` → `allowed: true` (scope_expanded, security_path, test_surface_expanded, architecture_dependency, legitimate_healing each individually); `has_evidence: false` → `allowed: false`; invalid reason (`agent was verbose`) with `has_evidence: true` → still `allowed: false` (not a valid §27 reason); `reason: ''` → `allowed: false`
+    - `checkProgressiveThreshold` — 59→ok, 60→optimize, 75→aggressive, 90→protect, 100→pause, 150→warning, 300→stop; budget 0 → pct 0, status ok (no div-by-zero)
+    - `checkCircuitBreaker` — expected 13000, actual 26000, no progress/scope/evidence → `tripped: true`; same but with `evidence_delta: 1` → `tripped: false`; `actual < expected*2` → false; near-boundary `expected 13000 actual 25999` → false
+    - `detectBudgetAnomaly` — 5k tokens, 0 progress → `anomaly: true`; 4.9k tokens, 0 progress → `anomaly: false` (below 5k floor); 5k tokens, 1 progress → `anomaly: false`
+    - `recordBudgetDecision` — writes one `## Cost governor decisions` bullet with `budget-governor:` actor (reuses sanitized `recordOptDecision` — newline injection test)
+  - `bun run typecheck` passes; `bun run build` passes
+- Risk: none (pure + record helper only)
+- Ponytail marks: `ponytail: double-threshold (actual >= expected*2), tune if §29 needs finer signal` on `checkCircuitBreaker`.
+
+**Task 2: wire adaptive budget verdicts into the workflow skill + docs**
+
+- Files: modify `content/skills/mugiwara-workflow/SKILL.md`, `docs/concepts/cost.md`; create `content/skills/mugiwara-workflow/references/adaptive-budget-governor.md` only if body would exceed 120 lines (Phase-4/5/6 precedent: `af8a204`/`34f51c9`/`b8d0fbd`)
+- Interfaces: consumes `src/adaptive-budget.ts` exports from T1 (docs reference only — no runtime import)
+- Size: S
+- Steps:
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md` (respect the 120 body-line cap — `validate-content.ts:19`):
+    - Add rule 2e under the `## Cost Governor` section (sequential after Phase-6's 2d Stop-Slop): `Adaptive Budget & Circuit Breaker (Phase 7)` — reserve expected max before expensive stages (Review/Security/Healing), continuously project `current + remaining required + expected conditional + possible healing`, expand budget only with evidence (scope/security/test-surface/arch-dependency/healing), respect progressive thresholds (60/75/90/100/150/300), trip the circuit breaker on `actual ≥ 2× expected` without progress/scope/evidence, flag the 5k-zero-progress budget anomaly (§24). Record every non-ok budget verdict via `recordBudgetDecision` (§41). Always one-line pointer to the references file if the body is at the cap; otherwise inline the rule. Keep `description` (20–220 chars), `name` matching dir, `## Skip when` block, and frontmatter untouched.
+    - If the body would exceed 120 lines (base + HEAD sit at 120), move the body to `content/skills/mugiwara-workflow/references/adaptive-budget-governor.md` with a one-line pointer in SKILL.md (sanctioned pattern: `Full checklist: references/adaptive-budget-governor.md — N items;` never a bare filename) — zero content loss, needs `verify-install` green.
+  - [ ] In `docs/concepts/cost.md`, append a `## Adaptive Budget & Circuit Breaker (src/adaptive-budget.ts)` section — one paragraph per capability with verdict contract + inputs, the honest boundary (verdicts-not-enforcement), the Phase-8 deferral (projection display + `mugiwara cost` budget section + §43 rows are Phase 8), and the F2/F3 design rules carried forward.
+  - [ ] If a new reference file was added, run `bun scripts/conformance.ts --update-golden` and review the diff (must be only the file-count delta for the new reference file, no unrelated golden changes — Phase-4 precedent `ff14f57`).
+  - [ ] Run `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity`, `bun scripts/verify-install.ts`, `bun test test/adaptive-budget.test.ts` — all green
+  - [ ] Commit `docs(budget): wire adaptive budget & circuit breaker verdicts into the workflow skill and cost docs`
+- Acceptance:
+  - `grep -c adaptive-budget-governor content/skills/mugiwara-workflow/SKILL.md` ≥ 1 (pointer) OR `grep -c 'Adaptive Budget' content/skills/mugiwara-workflow/SKILL.md` ≥ 1 (inline); body line count `awk '/^---$/ {p++} p==2{body=1; next} body' content/skills/mugiwara-workflow/SKILL.md | wc -l` ≤ 120
+  - `grep -c 'Adaptive Budget' docs/concepts/cost.md` ≥ 1
+  - `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` exit 0
+  - `bun scripts/verify-install.ts` exit 0 (0 orphans, pointers resolve after install)
+  - `bun test test/adaptive-budget.test.ts` green; `bun run typecheck` green
+- Risk: low (docs-only, pattern proven in Phases 4/5/6). Rollback: revert the single commit.
+
+**Task 3: full gate + evidence**
+
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T2
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output (this runs build-hooks:check, typecheck, test:coverage, build, validate-content, lane-base, run-evals, retrieval-eval, verify-install — per AGENTS.md)
+  - [ ] If any gate fails: fix within scope, re-run. No gate may be waived except the known pre-existing `enforcement.test.ts` escape#2 flake (blockers.md row 3, heal_halt true) — re-run or prove on clean base is not a Phase-7 regression (precedent Phases 2–6).
+  - [ ] Write `flows/02-execution.md`: task table (T1–T3), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(budget): phase 7 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`; pre-existing flake not counted as Phase-7 regression when reproduced on base)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New `src/adaptive-budget.ts` misses the 90% coverage bar | medium | CI red | TDD-first; acceptance cases lock every verdict family; gate catches at T3 |
+| Skill-body edit trips validate-content (description drift, 120-line cap, 120-char line cap) | low | CI red | T2 acceptance locks all three; Phase-4/5/6 precedent: move to `references/` with pointer |
+| Budget verdicts over-conservative (block legitimate expansion/breaker trip on evidence growth) | medium | false deny/trip | every allow/deny/trip names the deciding clause (`has_evidence && valid reason` whitelist; breaker requires zero progress+scope+evidence); evidence growth never trips the breaker — test-locked |
+| Circuit breaker double-threshold too coarse | low | late trip or early trip | `ponytail: double-threshold, tune if §29 needs finer signal` — heuristic documented; §24 progress delta gates it so only zero-progress cases trip |
+| Anomaly re-consumption drift vs `src/slop.ts` | low | inconsistent verdicts | both use the same 5k-zero-progress floor; slop.ts owns the slop signal, adaptive-budget.ts re-consumes it as the budget-anomaly signal — identical thresholds, no fork |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers row 3); not a Phase-7 regression — proven by reproduction on clean main |
+| Ledger scope bleed (gold-plating into Reporting) | low | scope slop | hard boundary: Phase 7 records decisions + pure verdicts only; report/CLI (`mugiwara cost`, §26/§39/§42/§43) = Phase 8, benchmark = Phase 9 (honesty section) |
+
+Rollback plan: each task is one revertible commit; T3 evidence lists exact
+commits. Worst case: `git revert` the Phase-7 commits. `savepoint.sh`,
+`lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint +
+config behavior is preserved by construction.
+
+## Phase-7 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Adaptive Budget (user acceptance) maps to Phase-7 tasks; each user AC has ≥1
+per-task command-verifiable criterion:
+
+| User AC (spec DoD) | Capability (§51/§spec) | Deliverable |
+|---------------------|------------------------|-------------|
+| every mission has a cost envelope | foundation (Phase 1) + adaptive | T1 `costEnvelope` re-consumed + T1 `checkProgressiveThreshold` (test-locked pct + status at 60/75/90/100/150/300) |
+| planned/reserved/actual/projected tracked | reservation + projection | T1 `reserveBudget` (test-locked available calc) + T1 `projectBudget` (test-locked min/max) |
+| adaptive budget works | adaptive | T1 `evaluateExpansion` whitelist (test-locked allow on valid reasons + has_evidence) |
+| abnormal consumption triggers protection | breaker + thresholds | T1 `checkProgressiveThreshold` (test-locked 60→optimize … 300→stop) + T1 `checkCircuitBreaker` (test-locked double-threshold + evidence guard) |
+| budget expansion requires justification | expansion | T1 `evaluateExpansion` (test-locked: has_evidence + valid reason required; invalid reasons denied) |
+| work-to-cost anomaly flagged | anomaly | T1 `detectBudgetAnomaly` (test-locked 5k-zero-progress) |
+| optimization decisions auditable (§41) | all | T1 `recordBudgetDecision` → `recordOptDecision` (test-locked bullet shape + actor `budget-governor`) |
+
+## Definition of Done (Phase 7)
+
+- `src/adaptive-budget.ts` exists: `reserveBudget`, `projectBudget`,
+  `evaluateExpansion`, `checkProgressiveThreshold`, `checkCircuitBreaker`,
+  `detectBudgetAnomaly`, `recordBudgetDecision` — all pure, unit-tested, ≥90%
+  coverage.
+- The seven §51 Phase-7 capabilities are covered by verdict functions with
+  explicit reasons on every expansion/threshold/breaker/anomaly verdict.
+- `content/skills/mugiwara-workflow/SKILL.md` wires the Adaptive Budget &
+  Circuit Breaker: reservation, projection, adaptive/expansion, progressive
+  thresholds (60/75/90/100/150/300), breaker, anomaly + recorded budget
+  verdicts (rule 2e); description unchanged; body ≤120 lines (or references
+  pointer); validate-content green.
+- `docs/concepts/cost.md` documents the Adaptive Budget & Circuit Breaker
+  verdicts, the honest boundary, the Phase-8/Phase-9 deferral boundaries, and
+  the F2/F3 security design rules.
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` runtime
+  behavior — no new config keys.
+- `bun run gate` passes fully; every pre-existing test passes unchanged
+  (pre-existing escape#2 flake not counted when reproduced on base).
+- Phase 7 records decisions and pure verdicts only — no report/CLI surface
+  (Phase 8) and no benchmark suite (Phase 9) built here.
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `src/adaptive-budget.ts` produces and records verdicts;
+  the LLM crew (workflow skill, T2) is the only thing that acts on them. The
+  module does not pretend to force the model — it makes the budget decision
+  structured, auditable, and instructed.
+- **Report/CLI budget ledger deferred to Phase 8:** `budget.reserved`,
+  `projected`, `remaining`, `avoided`, `projected display` (§26),
+  `mugiwara cost` budget section (§42) and the Cost section budget rows (§43)
+  are Phase 8 Reporting — Phase 7 produces the pure verdicts and records the
+  decisions only.
+- **Benchmark deferred to Phase 9:** the §45 large-repo/long-mission/runaway
+  scenarios and the twelve §45 budget-workload expectations (§48 cost
+  benchmark) with detect→project→intervene are Phase 9 benchmark — Phase 7's
+  unit fixtures cover the verdicts.
+- **F2/F3 accepted Low (unchanged):** secret-bearing files should not be
+  fingerprinted/registered (F2) and `.mugiwara/` is local trusted state (F3) —
+  both documented as design rules in `docs/concepts/cost.md` (T2), hardened at
+  Phase 8 per decisions.md.
+- **No new config:** Phase 7 adds nothing to `DEFAULT_CONFIG` — budget verdicts
+  are pure over explicit inputs; the §6 `budget.max_tokens`/`slop.detection`
+  profile belongs to the reporting phases (7/8).
+- **Re-consumption note:** `detectBudgetAnomaly` re-consumes `slop.ts`
+  `detectAnomaly`/`measureProgress` 5k-zero-progress signal as the §24
+  work-to-cost anomaly for the budget layer — it does not fork slop.ts;
+  progress measurement stays in slop.ts, budget anomaly detection lives in
+  adaptive-budget.ts.
+

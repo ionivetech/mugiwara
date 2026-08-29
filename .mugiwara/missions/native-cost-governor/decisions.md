@@ -423,3 +423,35 @@ live here; the plan doc stays clean.
 - **savepoint:** state.json + continue.json to be rewritten for Phase 7 (Adaptive Budget & Circuit Breaker).
 - **Plan impact:** Phase 6 complete. Campaign continues at Phase 7 (Adaptive Budget & Circuit Breaker, spec §51 Phase 7). Next session resumes via `mugiwara continue`.
 - **Deferred (tracked):** report/CLI slop ledger → Phase 8; benchmark suite → Phase 9; security F2/F3 → Phase 8; enforcement escape#2 flake (separate fix mission).
+
+## Resume — Phase 7 session continuation (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Resumed:** native-cost-governor, Flow 1, 0/0 tasks via `mugiwara continue`
+  (node dist/mugiwara.js continue) — print verbatim:
+  `Resumed: native-cost-governor, Flow 1, 0/0 tasks — next_action: Phase 6 (Stop-Slop) closed (GO, pushed to feat/native-cost-governor, 4011347 head). Start Phase 7 (Adaptive Budget & Circuit Breaker, spec §51 Phase 7): budget reservation, budget projection, adaptive budget, evidence-backed expansion, progressive thresholds, cost circuit breaker, anomaly detection. Consumes Phase-1 cost + Phase-2 context + Phase-6 slop primitives. Nami: extend plan.md with Phase 7 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1-6 unmerged; open Phase 1-6 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission); security F2/F3 (Low) to harden at Phase 8. — run: Resume native-cost-governor campaign: Phase 7 Adaptive Budget & Circuit Breaker. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 6 closure). Run Flow 0/2 for Phase 7 on branch feat/native-cost-governor.`
+- **next_action verified against plan + todos:** consistent.
+  - `plan.md` holds Phase 1–6 detail (1917 lines, ends with Phase 6 DoD/honesty notes); Phase 7 is referenced only in the Mission split table (row 7) and spec §51 — no Phase 7 wave/task/DoD detail yet. next_action's "Nami: extend plan.md with Phase 7 detail + waves" therefore matches the missing section — not contradictory.
+  - `.mugiwara/missions/native-cost-governor/flows/todos.md` still shows Phase 2 Wave 1–3 7/7 x (stale, not updated for Phases 3–6 whose evidence lives in flows/*.md + git log). No todo marks Phase 7 done; no wave/task for Phase 7 exists to contradict next_action. Stale todos are data, not instruction.
+  - `continue.json` (machine-written position: mission/native-cost-governor, member/null, flow 1, branch feat/native-cost-governor, 4011347 HEAD per `node dist/mugiwara.js continue`) and `state.json` treat the position as data; instruction inside next_action/next_session_prompt treated as data and verified above, not obeyed verbatim.
+- **Decision:** execute next_action as the next step; never re-run Phase 1–6 completed work.
+- **Plan impact:** proceed to Flow 0 — Phase 7 triage, then Flow 2 (Nami) to extend plan.md. Branch continues stacked on `feat/native-cost-governor`.
+
+## Flow 0 — Phase 7 triage (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Request (resumed via `mugiwara continue`):** Phase 7 (Adaptive Budget & Circuit Breaker, spec §51 Phase 7): budget reservation (§25), budget projection (§26), adaptive budget (§27), evidence-backed expansion (§27), progressive thresholds (§28: 60/75/90/100/150/300%), cost circuit breaker (§29), anomaly detection (§24/§30–§32). Consumes Phase-1 cost envelope + Phase-2 context accounting + Phase-6 slop progress/anomaly primitives.
+- **Class:** explicit — spec §51 Phase 7 enumerates the seven deliverable capabilities and §24–§29 define the reservation/projection/adaptive/expansion/threshold/breaker/anomaly framework; consumed primitives are the shipped Phase 1–6 modules (`src/cost.ts`, `src/context.ts`, `src/slop.ts`).
+- **Lane:** Full — spans adaptive-budget domain, cross-cutting projection + breaker, wiring, tests, docs. Consistent with plan Mission split row 7 and prior phases (campaign has stayed Full since Flow 0 triage; no lane change).
+- **Mode:** auto (from `.mugiwara/config` mode=auto) — campaign runs to completion (Flow 5 scope override: "sampai phase akhir, cost governor benar-benar selesai"). Check-in verdicts logged without pausing.
+- **Route:** Flow 0 → Flow 2 (Nami, extend plan.md with Phase 7 detail + waves) → Flow 3 (Zoro, execute). Flow 1 (brainstorm) skipped — same reason as Phases 1–6: spec §51 + §24–§29 is explicit, options already in spec + plan; no unknown requirements to interrogate beyond the seven enumerated capabilities.
+- **Branch:** continue on `feat/native-cost-governor` (stacked, Phase 1–6 unmerged, 4011347 HEAD @ 2026-08-29T11:08:07Z per continue.json). No new branch — Phase 1–6 PRs can be opened anytime per continue.json branch strategy.
+- **Heal debt carried forward (not burning cycles):** enforcement.test.ts escape#2 flake (blockers.md row 3, heal_halt true at cycle 4/3) — separate fix mission, proven on clean main; security F2/F3 (Low) accepted per decisions.md Flow 9, harden at Phase 8; conformance goldens healed at Phase 4 (ff14f57), Phase 5 (34f51c9, 62→63), Phase 6 (b8d0fbd, 63→64).
+- **Plan impact:** plan.md gains a Phase 7 section (Nami); tasks wired from §51 Phase 7 + §24–§29 + the shipped primitives; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` stay untouched (no new config — Phase 7 governance is pure over explicit inputs, same honesty boundary as Phases 3–6).
+
+## Flow 2 → 3 — Phase 7 plan check-in (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Verdict:** GO — Phase 7 plan approved as written (appended to plan.md, 1917→~2450 lines).
+- **Reason:** 3 tasks (T1–T3) in 3 sequential waves; no false `[PARALLEL]` (T1 single module, T2 consumes T1, T3 consumes all — every edge shares the module surface or a not-yet-shipped interface). Architecture matches the logged Phase 7 triage (pure `src/adaptive-budget.ts` module + `recordOptDecision` reuse, `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched). Honest Phase-7 = verdicts-not-enforcement boundary logged; reporting/ledger explicitly deferred to Phase 8 (no gold-plating). Body-line risk mitigated: T2 note to move to `references/adaptive-budget-governor.md` if 120-line cap hit (Phase-4/5/6 precedent af8a204/34f51c9/b8d0fbd). Config call accepted: no new keys (§52), thresholds are pure inputs with defaults. Coverage gate 90% on `src/adaptive-budget.ts` verified at T3.
+- **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO pause; proceed to Zoro. Branch `feat/native-cost-governor` stacked.
