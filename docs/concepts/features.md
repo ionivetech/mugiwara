@@ -172,8 +172,8 @@ config owns writing standards."
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | conventional / gitmoji / plain |
 | `auto_commit` | on | on / off — off disables commit+push in guided/semi (auto unaffected) |
-| `coverage_new` | 90 | Coverage threshold, new files |
-| `coverage_modified` | 80 | Coverage threshold, modified files |
+| `coverage_new` | 85 | Coverage threshold, new files |
+| `coverage_modified` | 90 | Coverage threshold, modified files |
 | `review_depth` | full | full / standard / quick |
 | `quality_depth` | full | full / standard / quick |
 | `verify_merged` | off | on merges Flow 5+6 into one verify pass (never Lane 3) |

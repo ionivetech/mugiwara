@@ -231,8 +231,8 @@ Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/confi
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming |
 | `commit` | conventional | conventional / gitmoji / plain / template |
 | `auto_commit` | on | off disables commit+push in guided/semi |
-| `coverage_new` | 90 | Coverage threshold for new files (%) |
-| `coverage_modified` | 80 | Coverage threshold for modified files (%) |
+| `coverage_new` | 85 | Coverage threshold for new files (%) |
+| `coverage_modified` | 90 | Coverage threshold for modified files (%) |
 | `delegate_threshold` | 60 | % of budget at which remaining tasks dispatch to workers |
 | `heal_max_cycles` | 3 | Max heal-loop cycles before human escalation |
 | `verbosity` | normal | normal / full — how much the crew echoes |

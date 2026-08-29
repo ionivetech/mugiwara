@@ -15,8 +15,8 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG).toContain('mode=guided');
     expect(DEFAULT_CONFIG).toContain('branch=feature/{type}-{issue}-{slug}');
     expect(DEFAULT_CONFIG).toContain('auto_commit=on');
-    expect(DEFAULT_CONFIG).toContain('coverage_new=90');
-    expect(DEFAULT_CONFIG).toContain('coverage_modified=80');
+    expect(DEFAULT_CONFIG).toContain('coverage_new=85');
+    expect(DEFAULT_CONFIG).toContain('coverage_modified=90');
     expect(DEFAULT_CONFIG).toContain('heal_max_cycles=3');
     expect(DEFAULT_CONFIG).toContain('verbosity=normal');
   });

@@ -53,8 +53,8 @@ mode=guided
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
 auto_commit=on
-coverage_new=90
-coverage_modified=80
+coverage_new=85
+coverage_modified=90
 review_depth=full
 quality_depth=full
 verify_merged=off
@@ -70,8 +70,8 @@ verbosity=normal
 | branch | branch pattern | feature/{type}-{issue}-{slug} |
 | commit | conventional / gitmoji / plain / template | conventional |
 | auto_commit | on / off | on |
-| coverage_new | 0-100 | 90 |
-| coverage_modified | 0-100 | 80 |
+| coverage_new | 0-100 | 85 |
+| coverage_modified | 0-100 | 90 |
 | review_depth | full / standard / quick | full |
 | quality_depth | full / standard / quick | full |
 | verify_merged | on / off | off |

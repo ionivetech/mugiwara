@@ -187,8 +187,8 @@ six. **Archive** (`mugiwara archive <mission>`) folds waves + findings into
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | Commit style: conventional/gitmoji/plain, or a template like `{issue}: {title}` |
 | `auto_commit` | on | on/off — off: guided/semi never commit+push, you do |
-| `coverage_new` | 90 | Coverage % for new files |
-| `coverage_modified` | 80 | Coverage % for modified files |
+| `coverage_new` | 85 | Coverage % for new files |
+| `coverage_modified` | 90 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |
 | `quality_depth` | full | Sanji's quality depth: full/standard/quick |
 | `verify_merged` | off | on merges Flow 5+6 into one verify pass (never Lane 3) |
