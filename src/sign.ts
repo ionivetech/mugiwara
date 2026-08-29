@@ -49,9 +49,11 @@ export interface PureSig {
 /** Generate a 32-byte ed25519 seed + public key, both base64. */
 export function generatePureKey(): { key: string; pub: string } {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  const privJwk = privateKey.export({ format: 'jwk' });
+  const pubJwk = publicKey.export({ format: 'jwk' });
   return {
-    key: privateKey.export({ format: 'raw-private' }).toString('base64'),
-    pub: publicKey.export({ format: 'raw-public' }).toString('base64'),
+    key: Buffer.from(privJwk.d!, 'base64url').toString('base64'),
+    pub: Buffer.from(pubJwk.x!, 'base64url').toString('base64'),
   };
 }
 
@@ -94,7 +96,17 @@ export function pureSign(
 ): PureSignResult {
   const seed = Buffer.from(seedBase64.trim(), 'base64');
   if (seed.length !== 32) return { ok: false, message: 'invalid seed (want 32B base64)' };
-  const privateKey = createPrivateKey({ key: seed, format: 'raw-private', asymmetricKeyType: 'ed25519' });
+  const pubBuf = Buffer.from(opts.pub.trim(), 'base64');
+  if (pubBuf.length !== 32) return { ok: false, message: 'invalid pub (want 32B base64)' };
+  const privateKey = createPrivateKey({
+    key: {
+      kty: 'OKP',
+      crv: 'Ed25519',
+      d: seed.toString('base64url'),
+      x: pubBuf.toString('base64url'),
+    },
+    format: 'jwk',
+  });
   const sig = sign(null, Buffer.from(content, 'utf8'), privateKey).toString('base64');
   const out: PureSig = { algo: 'ed25519-pure', sig, pub: opts.pub, mission: opts.mission, commit: opts.commit, ts: opts.ts };
   if (opts.outputPath) writeFileSync(opts.outputPath, JSON.stringify(out, null, 2) + '\n');
@@ -106,7 +118,10 @@ export function pureVerify(content: string, sig: PureSig): boolean {
   try {
     const pub = Buffer.from(sig.pub, 'base64');
     if (pub.length !== 32) return false;
-    const publicKey = createPublicKey({ key: pub, format: 'raw-public', asymmetricKeyType: 'ed25519' });
+    const publicKey = createPublicKey({
+      key: { kty: 'OKP', crv: 'Ed25519', x: pub.toString('base64url') },
+      format: 'jwk',
+    });
     return verify(null, Buffer.from(content, 'utf8'), publicKey, Buffer.from(sig.sig, 'base64'));
   } catch {
     return false;
