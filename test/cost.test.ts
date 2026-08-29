@@ -3,8 +3,9 @@
 // Every expectation is a literal value asserted against scripts/lib/lane-base.sh
 // and scripts/savepoint.sh math (D5 single source of truth), never a truthy
 // typeof check.
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync, mkdtempSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   budgetForLane,
@@ -14,6 +15,8 @@ import {
   budgetStatus,
   delegateAt,
   costEnvelope,
+  appendCostEvent,
+  recordOptDecision,
 } from '../src/cost.ts';
 
 describe('budgetForLane', () => {
@@ -138,4 +141,76 @@ describe('parity with scripts/lib/lane-base.sh (D5)', () => {
       expect(laneBaseForLane(lane)).toBe(shellConstant('LANE_BASE', lane));
     });
   }
+});
+
+describe('appendCostEvent — append-only JSONL', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mugiwara-cost-event-'));
+  });
+
+  it('creates the file on first write and appends on the second', () => {
+    appendCostEvent(dir, { kind: 'closure', mission: 'demo', tokens_est: 100, budget: 12000, status: 'ok' });
+    appendCostEvent(dir, { kind: 'savepoint', mission: 'demo', tokens_est: 200, budget: 12000, status: 'ok' });
+    const lines = readFileSync(join(dir, 'cost-events.jsonl'), 'utf8').trim().split(/\r?\n/);
+    expect(lines).toHaveLength(2);
+    const [a, b] = lines.map((l) => JSON.parse(l) as { kind: string; mission: string; tokens_est: number; budget: number; status: string; ts: string });
+    expect(a).toMatchObject({ kind: 'closure', mission: 'demo', tokens_est: 100, budget: 12000, status: 'ok' });
+    expect(b).toMatchObject({ kind: 'savepoint', mission: 'demo', tokens_est: 200, budget: 12000, status: 'ok' });
+    expect(a.ts).toBeTruthy();
+  });
+
+  it('creates the mission dir when missing', () => {
+    const nested = join(dir, 'missions', 'demo');
+    appendCostEvent(nested, { kind: 'closure', mission: 'demo', tokens_est: 0, budget: 0, status: 'ok' });
+    expect(existsSync(join(nested, 'cost-events.jsonl'))).toBe(true);
+  });
+
+  it('does not rewrite or reorder earlier lines on append', () => {
+    appendCostEvent(dir, { kind: 'closure', mission: 'demo', tokens_est: 10, budget: 12000, status: 'ok' });
+    appendCostEvent(dir, { kind: 'closure', mission: 'demo', tokens_est: 20, budget: 12000, status: 'ok' });
+    const lines = readFileSync(join(dir, 'cost-events.jsonl'), 'utf8').trim().split(/\r?\n/);
+    expect(JSON.parse(lines[0]).tokens_est).toBe(10);
+    expect(JSON.parse(lines[1]).tokens_est).toBe(20);
+  });
+});
+
+describe('recordOptDecision — decisions.md section append', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mugiwara-opt-decision-'));
+  });
+
+  it('creates section header + bullet on a fresh file', () => {
+    recordOptDecision(dir, { actor: 'AI: test', decision: 'skip brainstorm', reason: 'spec explicit' });
+    const body = readFileSync(join(dir, 'decisions.md'), 'utf8');
+    const lines = body.split(/\r?\n/);
+    expect(lines.filter((l) => l.trim() === '## Cost governor decisions')).toHaveLength(1);
+    expect(lines.some((l) => l.includes('- ') && l.includes('skip brainstorm') && l.includes('reason: spec explicit'))).toBe(true);
+  });
+
+  it('appends a second bullet without duplicating the header', () => {
+    recordOptDecision(dir, { actor: 'AI: test', decision: 'skip brainstorm', reason: 'spec explicit' });
+    recordOptDecision(dir, { actor: 'AI: test', decision: 'reuse E014', reason: 'already inspected', evidence: 'E014' });
+    const body = readFileSync(join(dir, 'decisions.md'), 'utf8');
+    expect(body.split(/\r?\n/).filter((l) => l.trim() === '## Cost governor decisions')).toHaveLength(1);
+    expect(body).toContain('reuse E014');
+    expect(body).toContain('evidence: E014');
+  });
+
+  it('leaves existing sections untouched and appends at the end', () => {
+    writeFileSync(join(dir, 'decisions.md'), '# demo — decision log\n\n## Flow 0 — Triage\n\n- row\n');
+    recordOptDecision(dir, { actor: 'AI: test', decision: 'stop healing', reason: 'no progress' });
+    const body = readFileSync(join(dir, 'decisions.md'), 'utf8');
+    expect(body).toContain('# demo — decision log');
+    expect(body).toContain('## Flow 0 — Triage');
+    expect(body.split(/\r?\n/).filter((l) => l.trim() === '## Cost governor decisions')).toHaveLength(1);
+    expect(body.trimEnd().endsWith('reason: no progress')).toBe(true);
+  });
+
+  it('creates the mission dir when missing', () => {
+    const nested = join(dir, 'missions', 'demo');
+    recordOptDecision(nested, { actor: 'AI: test', decision: 'x', reason: 'y' });
+    expect(existsSync(join(nested, 'decisions.md'))).toBe(true);
+  });
 });

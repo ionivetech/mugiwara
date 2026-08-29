@@ -9,7 +9,7 @@ import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
 import { rankFiles, renderRouting } from './routing.ts';
 import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
-import { budgetForLane, budgetStatus, warnAt, stopAt } from './cost.ts';
+import { budgetForLane, budgetStatus, warnAt, stopAt, appendCostEvent } from './cost.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -194,6 +194,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;
     }
     costSection += '\n';
+
+    // Cost Governor: record the closure cost event — the mission's final
+    // cost snapshot, folded into report.md with the rest of the trail.
+    // (Phase 1 — native cost governor; pure append, never rewrites state.)
+    appendCostEvent(dir, {
+      kind: 'closure',
+      mission,
+      tokens_est: est,
+      budget: effBudget,
+      status: budgetStatus(effBudget, est),
+      context_chars: chars,
+    });
   }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).
@@ -219,6 +231,10 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       fold.push(join(artRel, f));
     }
   }
+  // Cost events ledger — appended by the closure event above (or a prior
+  // savepoint in a later phase); folds like any other trail artifact so
+  // nothing survives loose after archive.
+  if (existsSync(join(dir, 'cost-events.jsonl'))) fold.push('cost-events.jsonl');
 
   // The report survives: an existing report.md wins; otherwise the closure
   // wave seeds it; otherwise it starts empty.

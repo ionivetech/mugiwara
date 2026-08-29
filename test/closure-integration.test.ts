@@ -165,3 +165,28 @@ describe('pr-verdict survives archive (pr-verdict-standalone)', () => {
     expect(() => archiveMission(dir, 'demo')).not.toThrow();
   });
 });
+
+describe('cost-events.jsonl folds at archive (Phase 1 cost governor)', () => {
+  it('records a closure event and folds it into report.md, then removes the file', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 14200, tasks_done: 1, tasks_total: 1, evidence: [] },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    expect(rep).toContain('## Archived: cost-events.jsonl');
+    expect(rep).toContain('"kind":"closure"');
+    expect(rep).toContain('"mission":"demo"');
+    // folded + removed — nothing survives loose
+    expect(existsSync(join(root, 'cost-events.jsonl'))).toBe(false);
+  });
+
+  it('dry-run does not write a cost event', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 14200, tasks_done: 1, tasks_total: 1, evidence: [] },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo', { dryRun: true });
+    expect(existsSync(join(root, 'cost-events.jsonl'))).toBe(false);
+  });
+});
