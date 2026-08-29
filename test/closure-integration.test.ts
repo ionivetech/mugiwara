@@ -304,4 +304,20 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const events = readFileSync(join(root, 'cost-events.jsonl'), 'utf8');
     expect(events).toContain('"context_status":"over"');
   });
+
+  // H1: context-registry.jsonl folds into report.md and is removed, matching
+  // cost-events.jsonl's survival contract — nothing survives loose after archive.
+  it('context-registry.jsonl folds into report.md and is removed (survival parity)', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 1000, tasks_done: 1, tasks_total: 1, evidence: [] },
+      files: { 'context-registry.jsonl': JSON.stringify({ id: 'E001', kind: 'file', file: 'src/a.ts', reads: 1, chars: 5, ref: 'E001 src/a.ts' }) + '\n' },
+    });
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    archiveMission(dir, 'demo');
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    expect(rep).toContain('## Archived: context-registry.jsonl');
+    expect(rep).toContain('"id":"E001"');
+    // folded + removed — nothing survives loose
+    expect(existsSync(join(root, 'context-registry.jsonl'))).toBe(false);
+  });
 });

@@ -278,6 +278,11 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   // savepoint in a later phase); folds like any other trail artifact so
   // nothing survives loose after archive.
   if (existsSync(join(dir, 'cost-events.jsonl'))) fold.push('cost-events.jsonl');
+  // H1: the context registry is the same class of artifact as cost-events.jsonl
+  // (append-only JSONL ledger) — fold it into report.md and remove it so it does
+  // NOT survive loose after archive (survival parity; the fold loop below also
+  // removes every folded file).
+  if (existsSync(join(dir, 'context-registry.jsonl'))) fold.push('context-registry.jsonl');
 
   // The report survives: an existing report.md wins; otherwise the closure
   // wave seeds it; otherwise it starts empty.
