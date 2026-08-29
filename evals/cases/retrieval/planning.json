@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-planning",
+  "skill": "mugiwara-planning",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "turn an approved spec into an implementation plan",
+        "top_k": 3
+      },
+      {
+        "prompt": "implementation plan with waves and task index",
+        "top_k": 3
+      },
+      {
+        "prompt": "planning spec to implementation with tasks",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "execute the plan todo list first"
+      }
+    ]
+  }
+}

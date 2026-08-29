@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-security",
+  "skill": "mugiwara-security",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "security audit of a diff STRIDE OWASP",
+        "top_k": 3
+      },
+      {
+        "prompt": "security audit secrets injection authz",
+        "top_k": 3
+      },
+      {
+        "prompt": "STRIDE threat model security review",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "sonar style gate coverage thresholds"
+      }
+    ]
+  }
+}

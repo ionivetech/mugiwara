@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-frontend",
+  "skill": "mugiwara-frontend",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "frontend component with css styling and responsive layout",
+        "top_k": 3
+      },
+      {
+        "prompt": "accessible component markup with styling",
+        "top_k": 3
+      },
+      {
+        "prompt": "frontend responsive layout component",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "backend server code api endpoint"
+      }
+    ]
+  }
+}

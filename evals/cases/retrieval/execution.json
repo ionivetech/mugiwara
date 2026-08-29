@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-execution",
+  "skill": "mugiwara-execution",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "execute an approved plan with todo list",
+        "top_k": 3
+      },
+      {
+        "prompt": "execution of the plan one task one commit",
+        "top_k": 3
+      },
+      {
+        "prompt": "todo list execution sequential inline",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "plan a spec into implementation waves"
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "retrieval-backend",
+  "skill": "mugiwara-backend",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "backend API endpoint with a database query and error handling",
+        "top_k": 3
+      },
+      {
+        "prompt": "server code data integrity repo standards first",
+        "top_k": 3
+      },
+      {
+        "prompt": "backend API design with error handling and validation",
+        "top_k": 3
+      },
+      {
+        "prompt": "API endpoint backend service with data access",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "frontend component css styling responsive"
+      }
+    ]
+  }
+}

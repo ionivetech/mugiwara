@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-quality",
+  "skill": "mugiwara-quality",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "formatter linter duplication complexity maintainability check",
+        "top_k": 3
+      },
+      {
+        "prompt": "quality check lint format test suite",
+        "top_k": 3
+      },
+      {
+        "prompt": "duplication complexity lint after checkpoint",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "review the PR diff after gates"
+      }
+    ]
+  }
+}
