@@ -26,6 +26,12 @@ export async function run(argv: string[]): Promise<void> {
   const { command, flags, _ } = parseArgs(argv);
   if (flag(flags.help) || command === 'help') return help();
   if (flag(flags.version)) { console.log(`mugiwara ${VERSION}`); return; }
+  // `continue` and `status` are read-only position commands: dispatch before
+  // config bootstrap so a fresh project never gets a .mugiwara/config created
+  // and no setup chatter is printed before missions/members are listed.
+  if (command === 'continue' || command === 'status') {
+    return command === 'continue' ? continueCmd(flags, _) : statusCmd(flags);
+  }
   // A command on a fresh project must be immediately usable — bootstrap the
   // default .mugiwara/config when it is missing (not only at install time).
   // Skipped for install/update --dry-run: a dry run must not mutate the

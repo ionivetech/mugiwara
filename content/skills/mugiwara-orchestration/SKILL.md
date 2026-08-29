@@ -8,6 +8,15 @@ description: Gatekeeper + captain for any task: triage, classify, coordinate, ro
 
 - Mid-flow continuation with route already recorded in `.mugiwara/missions/<mission>/decisions.md`. Captain duties: triage, check-ins, decisions, closure — Luffy coordinates, never implements; returns decisions, no dispatch.
 
+## Control commands (pre-flow)
+
+`mugiwara continue` / `mugiwara status` are read-only control commands, not flow
+work: they dispatch before Flow 0 and crew dispatch, run the deterministic
+state/continue lookup, and never create config or start a flow stage. Treat a
+`continue`/`status` invocation as the resume gate — the CLI picks the resume
+point, exit 2 stops for the user to select, and only then does Flow 0 re-entry
+(or plan verification) begin.
+
 ## Delegation pillars (Flow 0)
 
 Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.

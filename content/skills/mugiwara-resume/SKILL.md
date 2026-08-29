@@ -50,7 +50,12 @@ All position data is computed at every flow-stage boundary by `mugiwara savepoin
 
 ## Resume protocol
 
-1. Run `mugiwara continue [mission] [member]` (add `--all` to cross git actors). The CLI scans `continue/`, applies the solo-vs-team rule, and selects — never scan or guess yourself. Print its output verbatim.
+1. Run `mugiwara continue [mission] [member]` FIRST — the read-only CLI is the
+   deterministic half of resume and must run before any model planning,
+   orchestration, or flow-artifact read. The CLI scans `continue/`, applies the
+   solo-vs-team rule, and selects — never scan or guess yourself. Print its
+   output verbatim. `continue`/`status` are read-only control commands: they
+   never create config and never start a flow stage.
 2. **Exit 2 = STOP.** It listed the in-flight missions/members, or reported none; the user picks. Never auto-resume one of several.
 3. Exit 0 = exactly one resume point printed: `Resumed: <mission> [<member>], Flow N, X/Y tasks — next_action: <exact> — run: <next_session_prompt>`.
 4. Verify next_action against the plan doc + todos `[x]` marks before acting — the one step that needs a model. A contradiction escalates to Luffy, never resolved silently, never executed blindly.

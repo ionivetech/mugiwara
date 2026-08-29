@@ -123,16 +123,15 @@ describe('run() — status', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('bootstrap: first command on a fresh project writes default .mugiwara/config', async () => {
+  test('read-only: status on a fresh project never creates .mugiwara/config', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-boot-'));
     try {
       const cfg = join(dir, '.mugiwara', 'config');
       expect(existsSync(cfg)).toBe(false);
       const { out } = await capture(['status'], dir);
-      expect(out).toContain('default .mugiwara/config written');
-      expect(existsSync(cfg)).toBe(true);
-      expect(readFileSync(cfg, 'utf8')).toContain('mode=guided');
-      expect(readFileSync(cfg, 'utf8')).toContain('auto_commit=on');
+      expect(out).toContain('No mission state on disk.');
+      expect(out).not.toContain('default .mugiwara/config written');
+      expect(existsSync(cfg)).toBe(false);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
