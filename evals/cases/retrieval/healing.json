@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-healing",
+  "skill": "mugiwara-healing",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "execution flow stage failed fix it",
+        "top_k": 3
+      },
+      {
+        "prompt": "healing failed flow stage root cause",
+        "top_k": 3
+      },
+      {
+        "prompt": "fix the failure from earlier flow stages",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "audit results evidence acceptance"
+      }
+    ]
+  }
+}

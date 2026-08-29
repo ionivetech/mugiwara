@@ -123,6 +123,41 @@ describe('run() — status', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
+  test('bootstrap: first command on a fresh project writes default .mugiwara/config', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-boot-'));
+    try {
+      const cfg = join(dir, '.mugiwara', 'config');
+      expect(existsSync(cfg)).toBe(false);
+      const { out } = await capture(['status'], dir);
+      expect(out).toContain('default .mugiwara/config written');
+      expect(existsSync(cfg)).toBe(true);
+      expect(readFileSync(cfg, 'utf8')).toContain('mode=guided');
+      expect(readFileSync(cfg, 'utf8')).toContain('auto_commit=on');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('bootstrap: existing config is never overwritten', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-boot2-'));
+    try {
+      const cfg = join(dir, '.mugiwara', 'config');
+      mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+      writeFileSync(cfg, 'mode=auto\n');
+      const { out } = await capture(['status'], dir);
+      expect(out).not.toContain('default .mugiwara/config written');
+      expect(readFileSync(cfg, 'utf8')).toBe('mode=auto\n');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('bootstrap: install --dry-run does not write config (no mutation)', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-dryrun-'));
+    try {
+      const cfg = join(dir, '.mugiwara', 'config');
+      expect(existsSync(cfg)).toBe(false);
+      await expect(capture(['install', '--dry-run'], dir)).rejects.toThrow(/Not a terminal/);
+      expect(existsSync(cfg)).toBe(false);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
   test('prints computed state for an in-flight mission', async () => {
     const dir = fixture([{ root: 'state', mission: 'seamless', file: 'state', body: state('seamless') }]);
     try {

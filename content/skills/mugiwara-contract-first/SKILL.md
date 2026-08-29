@@ -1,6 +1,7 @@
 ---
 name: mugiwara-contract-first
 description: Use for API, interface, or contract design — contract-first, error semantics, boundary validation, backward compatibility, versioning discipline.
+gate_artifact: flows/01-execution.md contract evidence — OpenAPI shape + error envelope written before implementation
 ---
 
 # API and Interface Design
@@ -23,9 +24,47 @@ Not for: pure internals no one else touches — those still get reviewed by the 
 
 Framework APIs from docs, not memory: `_shared/references/source-grounding.md`.
 
+## OpenAPI shape first
+
+Write the OpenAPI 3.0 document before any implementation line. The spec is the
+contract; the code must match it, never the reverse. The document covers: every
+path, request/response schema, every status code, and the error envelope. No
+endpoint merges without an OpenAPI entry.
+
+## Boundary validation with Zod
+
+- Parse untrusted input at the trust boundary with `.safeParse()`, never `.parse()` — returns a discriminated union, no throw. https://github.com/colinhacks/zod/blob/main/README.md
+- Read failures from `result.error.issues` — per-field `code`, `expected`, `received`, `path`, `message`. https://github.com/colinhacks/zod/blob/main/packages/docs-v3/home.md
+- Map failures to the envelope with `.flatten()` → `{ formErrors, fieldErrors }` keyed by field. https://github.com/colinhacks/zod/blob/main/packages/docs-v3/ERROR_HANDLING.md
+- Cross-field rules go in `.refine()` with a dynamic message from the failing input. https://github.com/colinhacks/zod/blob/main/packages/docs/content/api.mdx
+- Schemas are `z.object({...})` at the boundary; types derive via `z.infer`, so schema and type cannot drift.
+
+## Error envelope
+
+Every failure returns exactly `{ code, message, details }`:
+
+- `code` — stable machine-readable string (`validation_error`, `not_found`,
+  `rate_limited`). Never change a code once shipped.
+- `message` — human-readable sentence.
+- `details` — Zod `.flatten()` fieldErrors for validation failures; empty for
+  single-cause errors.
+
+The envelope is declared in the OpenAPI document's error schema, so clients
+can validate errors with the same contract as success.
+
+## Versioning
+
+New breaking change → new URL prefix (`/v2`), old prefix (`/v1`) stays live.
+Max **2 live versions**; never a third. Every response on the deprecated
+version carries `Sunset: <RFC-7231 date>`. When the date passes, remove the
+old version. Additive changes (new field, new status) never require a bump.
+The OpenAPI document describes both live versions and marks the sunset one.
+
 ## Process
 
-Full 5-step protocol: `references/process.md` — contract first, error semantics, boundary validation, backward compatibility, versioning discipline. 27 lines; every step required.
+Full 5-step protocol: `references/process.md` — contract first, error
+semantics, boundary validation, backward compatibility, versioning discipline.
+27 lines; every step required.
 
 Versioning + deprecation moves: `references/versioning-playbook.md`.
 
@@ -60,3 +99,9 @@ Any red flag = the interface is drifting. Stop, write the contract down, then co
 - Untrusted input validated at the boundary; boundary errors match the documented envelope.
 - One live version; the deprecation plan names the removal release and its migration.
 - A contract test asserts the documented shape and errors — the contract stays true because something checks it.
+
+## Gate artifact
+
+Write `flows/01-execution.md` with the evidence: OpenAPI doc path, the
+`{code,message,details}` envelope declaration, Zod schema list, and live
+versions with their `Sunset` dates. No gate_artifact entry, no merge.

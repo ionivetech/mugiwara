@@ -1,6 +1,7 @@
 ---
 name: mugiwara-frontend
 description: Use for frontend component, CSS styling, responsive layout, accessible — matching standards, extraction.
+gate_artifact: flows/01-execution.md — frontend evidence (tokens.css + component evidence)
 ---
 
 # Frontend (Anti-Slop)
@@ -9,41 +10,52 @@ description: Use for frontend component, CSS styling, responsive layout, accessi
 
 - Diff touches no UI code: backend, docs, config, or CLI-only change.
 - No visual change, markup, styling, or frontend behavior in the mission.
-
 Interfaces built under this skill must not look templated.
 
 ## Source-backed code
 
 Framework code from docs, not memory — `_shared/references/source-grounding.md`.
-
+- React Server Actions: `useActionState` for form pending/error state — https://react.dev/reference/react/useActionState
+- Tailwind class scanning: `content` purge paths — https://v3.tailwindcss.com/docs/content-configuration
 ## Existing repo standard first
 
 Match the repo's standard before writing anything new; reuse its components and patterns. Greenfield with no UI: skip to design-system extraction.
 - Component library (MUI/Tailwind/shadcn/etc) — a new button looks like the repo's buttons, not the internet's.
 - File conventions, naming, folder structure, CSS strategy; lint/format/test scripts.
 - Tokens already in the theme/config; existing page patterns — how pages compose sections and state.
-
 ## Redesigns: audit first
 
 Capture current layout, spacing/type scales, palette, and component inventory before changing existing UI. Fix real problems; do not restyle what works.
 
 ## Design-system extraction (before markup)
-Extract tokens from the stack's design system BEFORE markup — spacing scale, type scale, role-based palette, radii, shadows, motion language. Name them semantically (`surface-muted`, not `c3`); store where the stack keeps tokens. No tokens extracted, no markup written; token set and naming: `references/design-tokens.md`. Then turn tokens into a small primitive set (button, input, card, icon, layout helpers) before composing screens — reuse primitives everywhere; every bespoke component is debt on every screen.
 
+Tokens BEFORE markup — no tokens, no markup. Write `tokens.css` (CSS custom properties on `:root`) unless the stack keeps tokens elsewhere:
+- Spacing: 4/8 grid — 4, 8, 12, 16, 24, 32, 48, 64 (`space-xs`…`space-3xl`).
+- Type: 12/14/16/18/24/32/48 scale, 1.5 line-height, 45–75ch measure (`text-sm`…`text-display`).
+- Role palette: `surface-muted`, `text-primary`, `border-default`, `accent` — semantic, not color names.
+- Radii: 2/4/8/12/full; shadows sm–xl; motion: duration + easing (`duration-fast`, `ease-in-out`).
+Semantic names only (`surface-muted`, never `gray-100`). Full rules: `references/design-tokens.md`.
+
+## Primitives (reuse, 100%)
+
+Build `Button`, `Input`, `Card`, `Stack` from tokens; compose every screen from them. A bespoke component is debt on every screen — reuse primitives or justify the exception.
+- Storybook story per primitive as behavior reference, not a build harness — https://storybook.js.org/docs
+- Tailwind: `content: ['./src/**/*.{ts,tsx}']` purge in `tailwind.config.ts`; `prettier-plugin-tailwindcss` for stable class order.
+- Variants over props soup: 3+ boolean props = split the component; children/slots over config flags.
+## Server Actions (React)
+
+`useActionState(fn, initial)` returns `[state, formAction, isPending]`; pass `formAction` to `<form action>`. Progressive enhancement works even before hydration.
+- Disable submit while `isPending` (`useFormStatus` for nested buttons).
+- Render `state.error` into a `role="alert"`/`aria-live` region; every async region gets a `data-testid`.
+- Keyboard path asserted: tab order, focus, Enter/Escape; no focus trap without escape.
 ## Component architecture
 
-Compose, don't inherit. Small, single-purpose components; the tree mirrors the page, not a god-component.
-- Boundaries: one component = one responsibility; extract on reuse; leaves stay presentational (no data fetching).
+Compose, don't inherit. One responsibility per component; extract on reuse; leaves presentational (no data fetching).
 - Composition over configuration: children/slots beat dozens of props.
-- Props: primitives and plain callbacks over object-shaped flags; 3+ boolean props = split the component.
 - Naming by role (`ProductCard`, not `CardA`); variants over copy-paste.
-
 ## State management
 
-Minimal state, local first; lift only what is shared.
-- Server vs client state: never store a per-screen copy of API data; cache/refetch at a data layer; derive on render.
-- Single source of truth per state, no duplicate mirrors; lift only when siblings share — context/store for app-wide state, not one screen.
-- Loading, error, empty, success states designed, not an afterthought.
+Minimal state, local first; lift only what is shared. Server vs client: cache/refetch at a data layer, derive on render; no per-screen copies of API data. Loading/error/empty/success designed, not an afterthought.
 
 ## From Figma / image references
 
@@ -53,61 +65,48 @@ Extract tokens first, then reproduce structure faithfully: hierarchy, alignment,
 
 - Hierarchy and rhythm: one primary action per view, one focal point, consistent spacing.
 - Restraint: fewer, more considered elements; whitespace is a tool.
-- Typography: 1-2 typefaces, deliberate scale, weight for emphasis not decoration, 45-75ch lines.
-- Color: role-based palette, contrast AA minimum, never pure-black-on-pure-white for text-heavy surfaces.
-- Consistency: the same thing looks the same everywhere; no three ways to render a button.
+- Typography: 1-2 typefaces, deliberate scale, weight for emphasis, 45-75ch lines.
+- Color: role-based palette, contrast AA minimum, never pure-black-on-pure-white for text.
+- Consistency: the same thing looks the same everywhere.
 - Intentionality: every element earns its place; if you cannot say why, remove it.
-- State design: hover, focus, active, disabled, loading, error, empty — designed, not forgotten.
-- Craft: deliberate spacing grids; subtle motion respecting `prefers-reduced-motion`; verified at all breakpoints.
-
+- State design: hover, focus, active, disabled, loading, error, empty — designed.
+- Craft: spacing grids; motion respecting `prefers-reduced-motion`; verified at breakpoints.
 ## Responsive behavior
 
-Mobile-first: start at the smallest screen, add breakpoints as layout needs them. Default full-width stacked; columns only when there is room. Use the stack's breakpoints, not a parallel scale; fluid containers, type, and spacing. Verify at every breakpoint, including between them — 3 widths checked is not 12 checked.
+Mobile-first; default full-width stacked, columns only when there is room. Use the stack's breakpoints, not a parallel scale; fluid containers, type, and spacing. Verify at every breakpoint, including between them — 3 widths checked is not 12 checked.
 
+## Performance budgets
+
+- LCP <2.5s, CLS <0.1, INP <200ms. Images carry width/height or aspect-ratio; LCP asset preloaded; fonts `font-display`; input handlers off the main thread.
+- No layout thrash; animate only transform/opacity; lazy-load below the fold; no whole icon library for two icons; no re-render storms (stable keys, no work in render).
+- Lighthouse/lighthouse-ci in repo? Run it; scores meet budgets, deltas explained. Measure before optimizing.
 ## Banned AI-default patterns (the slop list)
-- Centered hero trio: headline + subtitle + two buttons, dead center, gradient text.
-- Row of 3-4 identical feature cards with icon-circle + title + two lines.
-- Purple/indigo gradient everything; glassmorphism everywhere; emoji as icons.
-- Placeholder content where real product copy exists.
-- Stock hero illustrations when the design specifies otherwise.
 
-Full catalog with the tell for each: `references/slop-catalog.md`. If the brief genuinely calls for one of these, execute it well — but the default is: don't.
-
+- Centered hero trio; row of 3-4 identical feature cards; purple/indigo gradient everything; glassmorphism; emoji as icons; placeholder copy; stock hero illustrations.
+- Full catalog with the tell for each: `references/slop-catalog.md`. Brief genuinely calls for one? Execute it well — but default is don't.
 ## WCAG 2.1 AA accessibility
 
-Non-negotiable baseline. Full checklist: `references/checklist.md`.
-
-- Keyboard: every interaction operable by keyboard alone; logical tab order; visible focus; no focus trap without escape.
-- Semantics: native elements over ARIA; landmarks; logical heading order; buttons for actions, links for navigation.
+Full checklist: `references/checklist.md`.
+- Keyboard: operable alone; logical tab order; visible focus; no trap without escape.
+- Semantics: native elements over ARIA; landmarks; logical heading order.
 - Contrast: 4.5:1 text, 3:1 large text/UI; never color-only meaning.
-- Forms: every input labeled (placeholder is not a label); errors/success announced; `aria-describedby` help.
-- Dynamic content: `aria-live` for changes; reduced-motion respected.
-
+- Forms: every input labeled (placeholder is not a label); `aria-describedby` help.
+- Dynamic content: `aria-live`; reduced-motion respected.
 ## Testability and verification
 
-Add stable `data-testid` to every interactive element per the repo's testing convention; async states (loading/error/empty) get testids too. Never test by CSS class or by text that changes. Prefer role/label queries (`getByRole`) in tests — an accessible name doubles as an accessibility assertion. Keyboard paths for non-trivial interactions (menu, modal, form) are asserted, not assumed. Then compare the result against the reference side by side; list remaining deltas before calling it done.
-
-## Performance
-
-- Core Web Vitals are the bar: LCP <2.5s, CLS <0.1, INP <200ms. Images carry width/height or aspect-ratio (CLS); the LCP asset is preloaded and fonts ship `font-display` (LCP); input handlers stay off the main thread (INP).
-- No layout thrash: batch DOM reads/writes; heavy work off the scroll path; animate only transform/opacity.
-- Assets: no giant images/font payloads; lazy-load below the fold; no whole icon library for two icons.
-- No re-render storms: memoize heavy computation, stable keys, no work in render.
-- Repo has Lighthouse or lighthouse-ci? Run it — performance and accessibility scores meet the repo's budgets, deltas explained. Measure before optimizing; do not guess the bottleneck.
+Stable `data-testid` on every interactive element and every async state (loading/error/empty). Never test by CSS class or by text that changes. Prefer `getByRole` — accessible name doubles as an a11y assertion. Keyboard paths asserted for menu/modal/form. Compare result against reference; list remaining deltas before done.
 
 ## Frontend security
 
 - Never render user content via `dangerouslySetInnerHTML`/`v-html` unless sanitized.
 - Escape user input in every template; no secrets in client code; validate URL params/storage/API input.
 - `rel="noopener"` on `target="_blank"`; validate URLs before navigating.
-
 ## Red flags
 
 - "Optimize when it's slow" — perf regressions ship measured later, rarely.
 - "It's client-side, so no security review" — client is public by definition.
 - "New screen, new components" — primitives are default; bespoke is exception.
 - "Global store for everything" — local state first; lift only what's shared.
-
 ## Common Rationalizations
 
 | Excuse | Reality |
@@ -120,3 +119,4 @@ Add stable `data-testid` to every interactive element per the repo's testing con
 | "Our repo is messy, I'll use my own style." | Match the repo standard first, then propose raising it. |
 
 If a rationalization wins, name it in the report as a known delta — not as silence.
+

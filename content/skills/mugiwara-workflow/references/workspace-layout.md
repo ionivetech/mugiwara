@@ -55,6 +55,9 @@ artifacts go outside `.mugiwara/`.
 
 Run `mugiwara archive <mission>` (dry-run first). It folds every flow file,
 review, security, blockers, and decisions into `report.md`, then removes them
-along with session state (`*.json`). The mission dir ends as two durable
-files: `plan.md` + `report.md`. Batch form for several closed missions:
-`mugiwara clean [--all] [--before <date>]`.
+along with session state (`*.json`). The PR material
+(`flows/07-pr-verdict.md`) survives as a standalone `pr-verdict.md` at the
+mission root — it is the handoff to the user and must not fold away. The
+mission dir ends as durable files: `plan.md` + `report.md` +
+`pr-verdict.md` (+ rollback/provenance). Batch form for several closed
+missions: `mugiwara clean [--all] [--before <date>]`.

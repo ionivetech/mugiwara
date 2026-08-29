@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
+import { DEFAULT_CONFIG } from './config.ts';
 import type { Scope } from './manifest.ts';
 
 export type ContentItem = {
@@ -172,22 +173,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
     let configExists = false;
     try { configExists = lstatSync(configPath).isFile() || lstatSync(configPath).isSymbolicLink(); } catch { configExists = false; }
     if (!configExists) {
-      const body = [
-        'mode=guided',
-        'branch=feature/{type}-{issue}-{slug}',
-        'commit=conventional',
-        'auto_commit=on',
-        'coverage_new=90',
-        'coverage_modified=80',
-        'review_depth=full',
-        'quality_depth=full',
-        'verify_merged=off',
-        'delegate_threshold=60',
-        'heal_max_cycles=3',
-        'verbosity=normal',
-        '# context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)',
-      ].join('\n') + '\n';
-      if (!dryRun) { mkdirSync(dirname(configPath), { recursive: true }); writeFileSync(configPath, body); }
+      if (!dryRun) { mkdirSync(dirname(configPath), { recursive: true }); writeFileSync(configPath, DEFAULT_CONFIG); }
       result.written.push(configPath);
       result.notes.push(`default config written: ${configPath} (edit it to customise)`);
     }

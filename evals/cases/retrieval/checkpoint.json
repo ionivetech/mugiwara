@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-checkpoint",
+  "skill": "mugiwara-checkpoint",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "audit results after execution flow stage",
+        "top_k": 3
+      },
+      {
+        "prompt": "checkpoint verify acceptance criteria evidence",
+        "top_k": 3
+      },
+      {
+        "prompt": "audit the execution results against plan",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "fix root cause failing test"
+      }
+    ]
+  }
+}

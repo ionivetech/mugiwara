@@ -120,19 +120,38 @@ describe('signReport / verifyReport with stubbed minisign', () => {
     process.env.PATH = `${bin}:${savedPath}`;
   }
 
-  it('no minisign installed → honest skip, never a fake signature', () => {
+  it('no minisign installed → auto falls back to pure, auto-generates keys, signs (never fake)', () => {
     const mdir = join(dir, 'm');
     mkdirSync(mdir, { recursive: true });
     writeFileSync(join(mdir, 'report.md'), 'body\n');
-    const r = signReport(dir, mdir);
-    expect(r.ok).toBe(false);
-    expect(r.message).toContain('minisign not installed');
+    // isolate HOME to an empty dir so the pure backend starts clean and
+    // auto-generates its own keys (roadmap: pure works out-of-box)
+    const home = mkdtempSync(join(tmpdir(), 'mugi-home-'));
+    const prevHome = process.env.HOME;
+    process.env.HOME = home;
+    try {
+      // no .mugiwara/config → sign_backend unset → auto → minisign absent → pure
+      const r = signReport(dir, mdir);
+      expect(r.ok).toBe(true);
+      expect(r.message).toContain('mugisig');
+      expect(existsSync(join(mdir, 'report.md.mugisig'))).toBe(true);
+      // and the signature verifies
+      const v = verifyReport(dir, mdir);
+      expect(v.ok).toBe(true);
+      expect(v.message).toContain('verifies');
+    } finally {
+      process.env.HOME = prevHome;
+      rmSync(home, { recursive: true, force: true });
+    }
   });
 
-  it('sign succeeds with stub and key; verify detects tampering via failing stub', () => {
+  it('sign succeeds with stub and key (sign_backend=minisign); verify detects tampering via failing stub', () => {
     const mdir = join(dir, 'm');
     mkdirSync(mdir, { recursive: true });
     writeFileSync(join(mdir, 'report.md'), 'body\n');
+    // force the minisign backend so the stub is exercised (auto would pick pure)
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'sign_backend=minisign\n');
     process.env.MUGIWARA_SIGN_KEY = '/keys/secret.key';
     stubMinisign(0);
     const signed = signReport(dir, mdir);

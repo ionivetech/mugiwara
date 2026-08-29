@@ -365,6 +365,22 @@ if [ "$HEAL_CYCLE" -ge "$HEAL_MAX_CYCLES" ] 2>/dev/null; then
   HEAL_HALT=true
 fi
 
+# depth flags — advisory → measured (roadmap v0.8 item 4). Read from config
+# like the other keys; computed into state.json so enforcement is a fact the
+# gates flow stage can read, not prose.
+DEPTH_REVIEW="full"; DEPTH_QUALITY="full"; DEPTH_VERIFY="off"
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  _cfg_r=$(grep -E '^review_depth=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_cfg_r" ] && DEPTH_REVIEW="$_cfg_r"
+  _cfg_q=$(grep -E '^quality_depth=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_cfg_q" ] && DEPTH_QUALITY="$_cfg_q"
+  _cfg_v=$(grep -E '^verify_merged=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_cfg_v" ] && DEPTH_VERIFY="$_cfg_v"
+fi
+case "$DEPTH_REVIEW" in full|standard|lean) ;; *) DEPTH_REVIEW="full" ;; esac
+case "$DEPTH_QUALITY" in full|standard|lean) ;; *) DEPTH_QUALITY="full" ;; esac
+case "$DEPTH_VERIFY" in on|off) ;; *) DEPTH_VERIFY="off" ;; esac
+
 # evidence paths — the mission's flow folder (quoted printf, no sed — mission
 # name is allowlisted above, but avoid sed metacharacter semantics entirely).
 # New missions use flows/; a legacy mission that already keeps waves/ stays on
@@ -498,6 +514,9 @@ const data = {
   heal_halt: process.argv[34] === 'true',
   delegate_threshold: parseInt(process.argv[35], 10) || 60,
   delegate_due: process.argv[36] === 'true',
+  review_depth: process.argv[38] || 'full',
+  quality_depth: process.argv[39] || 'full',
+  verify_merged: process.argv[40] || 'off',
   tokens_est: parseInt(process.argv[17], 10) || 0,
   tokens_source: process.argv[26] || 'computed',
   budget: parseInt(process.argv[18], 10) || 0,
@@ -517,7 +536,7 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
   "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
   "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE" \
-  "$MODEL"
+  "$MODEL" "$DEPTH_REVIEW" "$DEPTH_QUALITY" "$DEPTH_VERIFY"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

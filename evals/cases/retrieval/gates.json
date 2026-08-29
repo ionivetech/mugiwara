@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-gates",
+  "skill": "mugiwara-gates",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "sonar style gate coverage thresholds build",
+        "top_k": 3
+      },
+      {
+        "prompt": "coverage gate verdict after quality checks",
+        "top_k": 3
+      },
+      {
+        "prompt": "gate binary verdict pass fail",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "security audit STRIDE OWASP diff"
+      }
+    ]
+  }
+}

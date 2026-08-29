@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-review",
+  "skill": "mugiwara-review",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "review the PR diff code review after gates",
+        "top_k": 3
+      },
+      {
+        "prompt": "code review with findings severity",
+        "top_k": 3
+      },
+      {
+        "prompt": "review PR diff breaking change map",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "format lint duplication check"
+      }
+    ]
+  }
+}

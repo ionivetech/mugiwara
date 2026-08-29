@@ -1,9 +1,10 @@
 ---
 name: mugiwara-review
 description: Use after gates pass to review PR diff, code review — breaking-change map via caller mapping, five-axis review, severity-tagged findings. Max 3 cycles.
+gate_artifact: flows/review — .mugiwara/missions/<mission>/review.md: severity-tagged path:line findings
 ---
 
-# Review (Robin)
+# Review
 
 ## Skip when
 
@@ -11,6 +12,11 @@ description: Use after gates pass to review PR diff, code review — breaking-ch
 - User explicitly deferred review and recorded the decision.
 
 Review like the diff will be maintained by someone else at 3am — and like the implementer is wrong until proven otherwise.
+
+## Scope gate: small CLs
+
+- Flag any CL >400 LOC (non-generated) for split before deep review. One purpose per CL; two purposes = two CLs.
+- Review pace: 60-90s per 100 LOC. Above 400 LOC, pause and request a smaller CL unless the user approves a large review.
 
 ## Breaking-change analysis (do this FIRST) — build the damage map
 
@@ -24,9 +30,7 @@ Review like the diff will be maintained by someone else at 3am — and like the 
 
 ## Five-axis review
 
-Per-axis worksheet: `references/five-axis-worksheet.md`.
-
-One verdict + evidence per axis: correctness / readability / architecture / security / performance. No axis passes on assertion.
+Per-axis worksheet: `references/five-axis-worksheet.md`. One verdict + evidence per axis: correctness / readability / architecture / security / performance. No axis passes on assertion. FAIL on any axis → overall FAIL.
 
 Correctness always asks: does this change BREAK anything that currently works? Run the suite, exercise the feature tests for the touched areas, and verify no silent regression.
 
@@ -42,8 +46,7 @@ After five-axis review, classify all bugs found by severity and compute an overa
 | **D** | ≥1 critical, zero blocker |
 | **E** | ≥1 blocker |
 
-Each finding includes a remediation effort estimate: hours, days, or weeks.
-Rating E = won't merge. Rating D = review with caution + mitigation plan required.
+Each finding includes a remediation effort estimate: hours, days, or weeks. Rating E = won't merge. Rating D = review with caution + mitigation plan required.
 
 ## Regression emphasis
 
@@ -60,7 +63,7 @@ Rating E = won't merge. Rating D = review with caution + mitigation plan require
 
 ## Code attribute deep review
 
-Sanji produces metrics (quantitative), Robin interprets context (qualitative). Sanji's quality report is input to this review. Full worksheet: `references/code-attributes.md` — consistency, intentionality, adaptability per attribute.
+The quality analyzer produces metrics (quantitative); the reviewer interprets context (qualitative). The quality report is input to this review. Full worksheet: `references/code-attributes.md` — consistency, intentionality, adaptability per attribute.
 
 ## Severity
 
@@ -68,11 +71,11 @@ What each level means, with examples: `references/severity-rubric.md`.
 
 - blocker: public-break with no migration path, wrong behavior shipped, security hole, correctness failure reaching users. Fix before merge.
 - major: internal-break with callers unfixed, missed contract, real-cost readability/architecture/performance issue, behavior change outside declared scope. Fix this mission.
-- minor: polish, style drift, batched items. May go to Brook's batch.
+- minor: polish, style drift, batched items. May batch for a later pass.
 
 ## Dispute hierarchy
 
-Reviewer vs implementer disagreement → escalate to Luffy → human decides. Reviewer never "wins" on ego: reconsider every finding when the implementer pushes back with evidence.
+Reviewer vs implementer disagreement → escalate to the orchestrator → human decides. Reviewer never "wins" on ego: reconsider every finding when the implementer pushes back with evidence.
 
 ## Doubt-driven review
 
@@ -82,7 +85,7 @@ Never pass the implementer's CLAIM. For each claim:
 2. Strip the implementer's reasoning. Re-derive what the code actually does.
 3. Review adversarially: "find issues, do NOT validate." Approval is earned by surviving the search, not by matching a summary.
 4. Reconcile findings into categories: contract-misread / actionable / trade-off / noise. Report only the first three.
-5. Max 3 cycles. After 3, stop — or escalate to Luffy with the unresolved claim.
+5. Max 3 cycles. After 3, stop — or escalate to the orchestrator with the unresolved claim.
 
 ## Documentation
 
@@ -90,7 +93,7 @@ Public API changes must be reflected in README/docs/changelog where the repo has
 
 ## Findings format
 
-One line each: `path:line: [blocker|major|minor] problem → fix`. Write findings to `.mugiwara/missions/<mission>/review.md`. Deep security concerns → hand to Jinbe (`mugiwara-security`), do not duplicate. **Return to Luffy.** Luffy routes: blockers/majors → Brook, minors → Zoro or defer. Never dispatch Brook or Zoro yourself.
+One line each: `path:line: [blocker|major|minor] problem → fix`. Write findings to `.mugiwara/missions/<mission>/review.md`. Deep security concerns → hand to the security review (`mugiwara-security`), do not duplicate. **Ownership approval:** the change owner must acknowledge every blocker/major (approve, fix, or dispute with evidence) before merge. **Return to the orchestrator**, which routes: blockers/majors → fix, minors → defer or batch. Never dispatch follow-up yourself.
 
 ## Common rationalizations
 
@@ -102,13 +105,15 @@ One line each: `path:line: [blocker|major|minor] problem → fix`. Write finding
 ## Red flags
 
 - The diff reviewed without a damage map first.
+- A CL >400 LOC reviewed in place instead of split.
 - The implementer's claim accepted without adversarial re-derivation.
 - A changed public symbol (export, function, route, config key, CLI flag, DB schema, env var, event, message format) not checked for callers.
 - A damage map incomplete: changed symbols with no caller grep, or callers not all checked.
 - Behavior drift unflagged: altered behavior outside the declared scope passed as benign.
 - A public-break with no migration path reported as anything but a blocker.
 - A severity without criteria backing it, or findings without `path:line`.
-- Deep security concerns re-reviewed here instead of handed to Jinbe.
+- Deep security concerns re-reviewed here instead of handed to the security review.
+- A blocker/major merged without the owner's acknowledgement.
 - Ego over evidence: holding a finding after the implementer showed the code is correct.
 - The same claim cycled more than 3 times without stopping or escalating.
 - Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.

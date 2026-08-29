@@ -140,3 +140,28 @@ describe('archive closure artifacts', () => {
     }
   }, 30000);
 });
+
+describe('pr-verdict survives archive (pr-verdict-standalone)', () => {
+  it('flows/07-pr-verdict.md is copied to pr-verdict.md at root and not folded', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tasks_done: 1, tasks_total: 1, evidence: [] },
+      files: { 'flows/07-pr-verdict.md': '# PR verdict\n\n**GO** — ship it.\n' },
+    });
+    const r = archiveMission(dir, 'demo');
+    const root = join(dir, '.mugiwara', 'missions', 'demo');
+    expect(existsSync(join(root, 'pr-verdict.md'))).toBe(true);
+    expect(readFileSync(join(root, 'pr-verdict.md'), 'utf8')).toContain('PR verdict');
+    expect(existsSync(join(root, 'flows', '07-pr-verdict.md'))).toBe(false);
+    // not folded into report.md
+    const rep = readFileSync(join(root, 'report.md'), 'utf8');
+    expect(rep).not.toContain('Archived: 07-pr-verdict.md');
+    expect(r.kept.some(k => k.endsWith('pr-verdict.md'))).toBe(true);
+  });
+
+  it('archive without a pr-verdict file keeps working (no crash)', () => {
+    buildMission({
+      state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tasks_done: 1, tasks_total: 1, evidence: [] },
+    });
+    expect(() => archiveMission(dir, 'demo')).not.toThrow();
+  });
+});

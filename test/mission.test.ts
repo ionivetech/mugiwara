@@ -109,9 +109,12 @@ test('archiveMission folds flow files + findings into report.md, keeps plan.md +
   expect(existsSync(join(missionDir, 'state.json'))).toBe(false);
   expect(existsSync(join(missionDir, 'continue.json'))).toBe(false);
 
-  // the dir ends as two durable files
+  // the dir ends as durable files: plan.md + report.md + pr-verdict.md
   const left = readdirSync(missionDir);
-  expect(left.sort()).toEqual(['plan.md', 'report.md']);
+  expect(left.sort()).toEqual(['plan.md', 'pr-verdict.md', 'report.md']);
+
+  // PR verdict survives as its own file (not folded into report.md)
+  expect(readFileSync(join(missionDir, 'pr-verdict.md'), 'utf8')).toBe('pr verdict');
 
   // report.md holds closure summary + every folded section, wave files last
   const rep = readFileSync(join(missionDir, 'report.md'), 'utf8');
@@ -124,7 +127,8 @@ test('archiveMission folds flow files + findings into report.md, keeps plan.md +
   expect(rep).toContain('## Archived: spec.md');
   expect(rep).toContain('## Archived: 01-execution.md');
   expect(rep).toContain('exec evidence');
-  expect(rep).toContain('## Archived: 07-pr-verdict.md');
+  // 07-pr-verdict.md is NOT folded — it survives as pr-verdict.md at root
+  expect(rep).not.toContain('## Archived: 07-pr-verdict.md');
 
   // index line lands at .mugiwara/index.md
   expect(index).toBe('index.md');

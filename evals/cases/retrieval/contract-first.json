@@ -1,0 +1,25 @@
+{
+  "name": "retrieval-contract-first",
+  "skill": "mugiwara-contract-first",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "API interface contract design with versioning",
+        "top_k": 3
+      },
+      {
+        "prompt": "contract first API design boundary validation",
+        "top_k": 3
+      },
+      {
+        "prompt": "interface contract backward compatibility",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "execute an approved plan todo list"
+      }
+    ]
+  }
+}

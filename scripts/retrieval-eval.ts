@@ -93,14 +93,20 @@ interface Probe {
 // --- build index ---
 const index = buildIndex();
 
-// --- load cases ---
+// --- load cases (root + retrieval/ subdir for per-skill probes) ---
 const skills = readdirSync(skillsDir).filter(d => statSync(join(skillsDir, d)).isDirectory());
-const files = readdirSync(evalsDir).filter(f => f.endsWith('.json'));
+const rootCases = readdirSync(evalsDir).filter(f => f.endsWith('.json'));
+const retrievalDir = join(evalsDir, 'retrieval');
+const retrievalCases = existsSync(retrievalDir)
+  ? readdirSync(retrievalDir).filter(f => f.endsWith('.json')).map(f => join('retrieval', f))
+  : [];
+const files = [...rootCases, ...retrievalCases];
 const probes: Probe[] = [];
 const noSkillProbes: Probe[] = [];
 const covered = new Set<string>();
 
-for (const f of files) {
+for (const rel of files) {
+  const f = rel.includes('/') ? rel : rel;
   let c: CaseFile;
   try {
     c = JSON.parse(readFileSync(join(evalsDir, f), 'utf8'));

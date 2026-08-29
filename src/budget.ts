@@ -8,25 +8,16 @@
 // Token telemetry stays honest elsewhere: the estimator remains the default;
 // `tokens_source: reported` activates only where the harness exposes real
 // usage (see docs/concepts/cost.md). This module does not estimate tokens.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { readConfig } from './config.ts';
 
 export function readBudgetConfig(projectDir: string): number {
-  for (const base of [projectDir, homedir()]) {
-    const file = join(base, '.mugiwara', 'config');
-    if (!existsSync(file)) continue;
-    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
-      const t = line.trim();
-      if (!t || t.startsWith('#')) continue;
-      const eq = t.indexOf('=');
-      if (eq === -1) continue;
-      if (t.slice(0, eq).trim() !== 'context_budget_chars') continue;
-      const n = Number(t.slice(eq + 1).trim());
-      return Number.isFinite(n) && n > 0 ? n : 0;
-    }
-  }
-  return 0; // unset — measurement still recorded, never enforced
+  const cfg = readConfig(projectDir);
+  const raw = cfg.context_budget_chars;
+  if (raw === undefined || raw === '') return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 /** Sum of bytes across the trail: top-level *.md + flows/* (legacy waves/* counts too). */
