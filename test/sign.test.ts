@@ -35,6 +35,7 @@ describe('pure ed25519 backend', () => {
     const { key, pub } = generatePureKey();
     const content = '# report\n\nsigned content';
     const sig = pureSign(content, key, { mission: 'm1', commit: 'abc123', ts: '2026-08-29T00:00:00Z', pub });
+    if (!sig.ok) throw new Error('expected pureSign success');
     expect(sig.algo).toBe('ed25519-pure');
     expect(sig.mission).toBe('m1');
     expect(sig.commit).toBe('abc123');
@@ -47,6 +48,7 @@ describe('pure ed25519 backend', () => {
   it('rejects tampered content', () => {
     const { key, pub } = generatePureKey();
     const sig = pureSign('original content', key, { mission: 'm1', commit: 'abc', ts: 't', pub });
+    if (!sig.ok) throw new Error('expected pureSign success');
     expect(pureVerify('tampered content', sig)).toBe(false);
   });
 
@@ -57,11 +59,11 @@ describe('pure ed25519 backend', () => {
       writeFileSync(join(dir, 'report.md'), '# report');
       const { key, pub } = generatePureKey();
       const r = pureSign('report.md', key, { mission: 'm1', commit: 'c', ts: 't', pub, outputPath: join(dir, 'report.md.mugisig') });
+      if (!r.ok) throw new Error('expected pureSign success');
       expect(existsSync(join(dir, 'report.md.mugisig'))).toBe(true);
       const parsed = JSON.parse(readFileSync(join(dir, 'report.md.mugisig'), 'utf8'));
       expect(parsed.algo).toBe('ed25519-pure');
       expect(parsed.mission).toBe('m1');
-      expect('ok' in r).toBe(false); // success = PureSig, not {ok:false} error
       expect(r.mission).toBe('m1');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });

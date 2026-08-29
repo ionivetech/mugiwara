@@ -78,18 +78,21 @@ export function ensurePureKey(homeDir: string): string {
  * object or an error result. When outputPath is given, writes the .mugisig
  * JSON file beside the report.
  */
+export interface PureSignOk extends PureSig { ok: true; }
+export type PureSignResult = PureSignOk | { ok: false; message: string };
+
 export function pureSign(
   content: string,
   seedBase64: string,
   opts: { mission: string; commit: string; ts: string; pub: string; outputPath?: string },
-): PureSig | { ok: false; message: string } {
+): PureSignResult {
   const seed = Buffer.from(seedBase64.trim(), 'base64');
   if (seed.length !== 32) return { ok: false, message: 'invalid seed (want 32B base64)' };
   const privateKey = createPrivateKey({ key: seed, format: 'raw-private', asymmetricKeyType: 'ed25519' });
   const sig = sign(null, Buffer.from(content, 'utf8'), privateKey).toString('base64');
   const out: PureSig = { algo: 'ed25519-pure', sig, pub: opts.pub, mission: opts.mission, commit: opts.commit, ts: opts.ts };
   if (opts.outputPath) writeFileSync(opts.outputPath, JSON.stringify(out, null, 2) + '\n');
-  return out;
+  return { ...out, ok: true };
 }
 
 /** Verify a pure signature against content. */
@@ -164,7 +167,7 @@ export function signReport(projectDir: string, missionDir: string): { ok: boolea
   if (content === null) return { ok: false, message: `cannot read ${report}` };
   const { commit, ts } = missionMeta(projectDir, mission);
   const sig = pureSign(content, seed, { mission, commit, ts, pub, outputPath: `${report}.mugisig` });
-  if ('ok' in sig) return { ok: false, message: `signing failed: ${sig.message}` };
+  if (!sig.ok) return { ok: false, message: `signing failed: ${sig.message}` };
   return { ok: true, message: `signed ${report}.mugisig (pure ed25519, key: ${join(dir, 'mugiwara.key')})` };
 }
 
