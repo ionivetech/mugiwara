@@ -43,3 +43,18 @@ after Flow 7, appended to this file.
 Correctness: PASS. Quality: PASS. Integration: PASS. Docs: PASS.
 Ship-readiness: PASS (pre-existing debt ledgered and handed off, no open
 blocker caused by this mission's diff).
+
+## Sonar-style quality gate — FINAL verdict (after Flow 7 + Flow 8 heal)
+
+| Axis | Actual | Threshold | Status |
+|------|--------|-----------|--------|
+| Vulnerabilities | 0 (Jinbe PASS, no Crit/High, Rating A) | 0 | ✅ PASS |
+| Bugs | 0 (Robin: math verified correct) | 0 | ✅ PASS |
+| Code smells | 0 blocking (Robin non-blockers: dead-foundation-API + dormant markdown-injection — deferred to later phases, ledgered) | ≤ project threshold | ✅ PASS |
+| Coverage (new) | mission.ts 94.08% modified | ≥80 (config modified) | ✅ PASS |
+| Duplications (new) | 0% | <3% | ✅ PASS |
+| Security hotspots reviewed | 7/7 (100%) | ≥80% | ✅ PASS |
+
+Healed state (Flow 8): Robin's 2 findings (savepoint gate-math parity High + jsonl secret-scan Med) fixed in `2339f86` and proven by regression tests. `bun run gate` on healed state: exit 0, 446 tests, all 13 gates green.
+
+**GATES VERDICT: PASS** — coverage + build + sonar-quality + DoD all pass with evidence.
