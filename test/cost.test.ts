@@ -1,0 +1,141 @@
+// test/cost.test.ts
+// Phase 1 Cost Governor Foundation — src/cost.ts unit tests.
+// Every expectation is a literal value asserted against scripts/lib/lane-base.sh
+// and scripts/savepoint.sh math (D5 single source of truth), never a truthy
+// typeof check.
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  budgetForLane,
+  laneBaseForLane,
+  warnAt,
+  stopAt,
+  budgetStatus,
+  delegateAt,
+  costEnvelope,
+} from '../src/cost.ts';
+
+describe('budgetForLane', () => {
+  it('returns the lane-base.sh BUDGET constants per lane', () => {
+    expect(budgetForLane('lean')).toBe(12000);
+    expect(budgetForLane('standard')).toBe(25000);
+    expect(budgetForLane('full')).toBe(50000);
+    expect(budgetForLane('spike')).toBe(3000);
+  });
+  it('returns 0 for unknown lanes and direct', () => {
+    expect(budgetForLane('direct')).toBe(0);
+    expect(budgetForLane('mystery')).toBe(0);
+  });
+});
+
+describe('laneBaseForLane', () => {
+  it('returns the lane-base.sh LANE_BASE constants per lane', () => {
+    expect(laneBaseForLane('lean')).toBe(8421);
+    expect(laneBaseForLane('standard')).toBe(13325);
+    expect(laneBaseForLane('full')).toBe(22016);
+    expect(laneBaseForLane('spike')).toBe(5411);
+  });
+  it('returns 0 for unknown lanes', () => {
+    expect(laneBaseForLane('direct')).toBe(0);
+    expect(laneBaseForLane('mystery')).toBe(0);
+  });
+});
+
+describe('thresholds — savepoint.sh math (BUDGET*3/2, BUDGET*3)', () => {
+  it('warnAt is integer-division BUDGET*3/2 for every lane budget', () => {
+    expect(warnAt(12000)).toBe(18000);
+    expect(warnAt(25000)).toBe(37500);
+    expect(warnAt(50000)).toBe(75000);
+    expect(warnAt(3000)).toBe(4500);
+  });
+  it('stopAt is BUDGET*3 for every lane budget', () => {
+    expect(stopAt(12000)).toBe(36000);
+    expect(stopAt(25000)).toBe(75000);
+    expect(stopAt(50000)).toBe(150000);
+    expect(stopAt(3000)).toBe(9000);
+  });
+});
+
+describe('budgetStatus — savepoint.sh gate', () => {
+  it('is ok below warn', () => {
+    expect(budgetStatus(12000, 0)).toBe('ok');
+    expect(budgetStatus(12000, 17999)).toBe('ok');
+  });
+  it('is warn from warnAt to just under stopAt', () => {
+    expect(budgetStatus(12000, 18000)).toBe('warn');
+    expect(budgetStatus(12000, 35999)).toBe('warn');
+  });
+  it('is stop at and above stopAt', () => {
+    expect(budgetStatus(12000, 36000)).toBe('stop');
+    expect(budgetStatus(12000, 999999)).toBe('stop');
+  });
+  it('is ok when budget is 0 (unknown lane) regardless of tokens', () => {
+    expect(budgetStatus(0, 999999)).toBe('ok');
+  });
+});
+
+describe('delegateAt — savepoint.sh DELEGATE_AT math', () => {
+  it('is integer-division BUDGET*threshold/100', () => {
+    expect(delegateAt(12000, 60)).toBe(7200);
+    expect(delegateAt(25000, 60)).toBe(15000);
+    expect(delegateAt(50000, 80)).toBe(40000);
+    expect(delegateAt(3000, 60)).toBe(1800);
+  });
+});
+
+describe('costEnvelope', () => {
+  it('computes the normalized envelope from stored primitives', () => {
+    const env = costEnvelope({ lane: 'standard', budget: 25000, tokens_est: 14200 });
+    expect(env).toEqual({
+      planned: 25000,
+      used: 14200,
+      remaining: 10800,
+      pct: 57,
+      warn_at: 37500,
+      stop_at: 75000,
+      status: 'ok',
+    });
+  });
+  it('floors remaining at 0', () => {
+    expect(costEnvelope({ lane: 'lean', budget: 12000, tokens_est: 50000 }).remaining).toBe(0);
+  });
+  it('rounds pct to the nearest integer', () => {
+    expect(costEnvelope({ lane: 'lean', budget: 12000, tokens_est: 3000 }).pct).toBe(25);
+  });
+  it('degrades cleanly when budget is 0', () => {
+    const env = costEnvelope({ lane: 'direct', budget: 0, tokens_est: 5000 });
+    expect(env).toEqual({
+      planned: 0,
+      used: 5000,
+      remaining: 0,
+      pct: 0,
+      warn_at: 0,
+      stop_at: 0,
+      status: 'ok',
+    });
+  });
+});
+
+// Cross-source parity (D5): cost.ts constants MUST equal lane-base.sh — the
+// shell side is the runtime source of truth (savepoint.sh reads it) and the
+// TS side is the reader (mission.ts archive). A drift between the two would
+// silently split budget verdicts between savepoint and archive.
+const LANE_BASE_SRC = readFileSync(join(import.meta.dirname, '..', 'scripts', 'lib', 'lane-base.sh'), 'utf8');
+const LANES = ['lean', 'standard', 'full', 'spike'] as const;
+
+function shellConstant(pat: string, lane: string): number {
+  const m = LANE_BASE_SRC.match(new RegExp(`${pat}_${lane}=(\\d+)`));
+  return m ? parseInt(m[1], 10) : -1;
+}
+
+describe('parity with scripts/lib/lane-base.sh (D5)', () => {
+  for (const lane of LANES) {
+    it(`BUDGET_${lane} matches lane-base.sh`, () => {
+      expect(budgetForLane(lane)).toBe(shellConstant('BUDGET', lane));
+    });
+    it(`LANE_BASE_${lane} matches lane-base.sh`, () => {
+      expect(laneBaseForLane(lane)).toBe(shellConstant('LANE_BASE', lane));
+    });
+  }
+});
