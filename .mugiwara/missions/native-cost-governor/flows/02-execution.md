@@ -1,3 +1,118 @@
+# native-cost-governor — Phase 3 (Work Governor) — Execution (Flow 3, Zoro)
+
+Mode=auto · branch=feat/native-cost-governor · commit=conventional · auto_commit=on
+Campaign: 9-phase Cost Governor (user scope override). Phase 3 executes plan §"Phase 3: Work Governor".
+
+## Harness note — parallelization deviation (logged, not silent)
+
+The plan mandates `[PARALLEL]` Wave 1 (T1–T3, three file-disjoint files). This
+harness exposes **no subagent/task tool**, so literal concurrent worker dispatch
+is impossible. Executed **inline, sequentially, in plan order** (T1→T3). File
+disjointness is preserved **by construction**: T1 creates `src/work.ts` +
+`test/work.test.ts`, T2 modifies `src/evidence.ts` + `test/evidence.test.ts`,
+T3 modifies `src/cost.ts` — no two tasks touched the same file. The parallel
+contract (order + disjointness) holds; only the concurrency mechanism differs.
+Waves 2 (T4) and 3 (T5) are sequential by the plan.
+
+## Task table
+
+| # | Task | Status | Commit | Evidence |
+|---|------|--------|--------|----------|
+| T1 | Work Governor verdict engine (six capabilities) + record helper | ✅ PASS | `0d1bf3e` | `vitest run test/work.test.ts` 34 pass; `bun run typecheck` clean |
+| T2 | security F1: loadRegistry shape validation | ✅ PASS | `7736227` | `vitest run test/evidence.test.ts` 15 pass; typecheck clean |
+| T3 | cost.ts type dedup (ContextMetrics import) | ✅ PASS | `bc4346e` | `vitest run test/cost.test.ts` 36 pass; grep ContextMetrics 2 matches; no inline dup; typecheck clean |
+| T4 | wire verdicts into agent flow (workflow skill + cost.md) | ✅ PASS | `1bf7568` | `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` exit 0; grep Work Governor/work-governor 3 matches; description unchanged |
+| T5 | full gate + evidence | ✅ PASS | (this commit) | `bun run gate` exit 0 (clean run; flake documented below) |
+
+## Per-task detail
+
+### T1 — `feat(work): work governor verdict engine (stage/skip/agent/skill/delegation/completion)` (`0d1bf3e`)
+Files: `src/work.ts` (new), `test/work.test.ts` (new). TDD: test written first → RED (module missing) → implement → GREEN.
+- `classifyStage`: required (protects quality/security OR provides required evidence) / conditional (uncertainty_high OR non-explicit) / optional
+- `shouldSkipStage`: required never skips; conditional skips on evidence/investigation-stopped; optional skips on evidence/context-over; every skip has an explicit reason (§7)
+- `evaluateInvocation`: invoke only when unique responsibility + evidence cannot answer + stage cannot perform + value > cost; refuse names the first failing clause (§8)
+- `shouldLoadSkill`: load only when task/policy/dependency/verification requires (§9)
+- `evaluateDelegation`: consumes `delegateAt(budget, threshold_pct)` (budget ceiling) + `laneBaseForLane(lane)` (overhead floor — one delegate ≥ one agent's context load); delegate only when ≥2 independent tasks, value > overhead floor, usage ≤ budget_at. **Closes the Phase-2 Q1 remainder.**
+- `completionCheck`: complete iff all five §19 conditions; `missing[]` lists the gaps (§19)
+- `recordWorkDecision` → sanitized `recordOptDecision` with `work-governor` actor (§41)
+Acceptance: `vitest run test/work.test.ts` → **34 pass / 0 fail**. `bun run typecheck` → clean.
+
+### T2 — `fix(evidence): validate registry shape on load (security F1)` (`7736227`)
+Files: `src/evidence.ts`, `test/evidence.test.ts`. TDD: 4 new cases RED → GREEN.
+- `loadRegistry` now drops any entry failing shape (non-string fingerprint/kind/file/id/ref, or reads not a finite number ≥0) — never crashes the reader; `reads` coerced to `Math.floor(reads)`. A malformed or `string reads` line (string-concat risk) can no longer reach consumers. No signature change.
+Acceptance: `vitest run test/evidence.test.ts` → **15 pass / 0 fail** (11 pre-existing unchanged + 4 new F1 cases). typecheck clean.
+
+### T3 — `refactor(cost): type context_metrics via imported ContextMetrics (quality nit)` (`bc4346e`)
+Files: `src/cost.ts`. Type-only: `import type { ContextMetrics } from './context.ts'`; inline `context_metrics?: {…}` replaced by `context_metrics?: ContextMetrics` (single type definition). No runtime signature change.
+Acceptance: `vitest run test/cost.test.ts` → **36 pass / 0 fail** (unchanged). `grep -n 'ContextMetrics' src/cost.ts` → 2 matches (import + usage). `grep 'context_metrics?: {'` → empty. typecheck clean.
+
+### T4 — `docs(work): wire work governor verdicts into the workflow skill and cost docs` (`1bf7568`)
+Files: `content/skills/mugiwara-workflow/SKILL.md`, `docs/concepts/cost.md`.
+- SKILL.md `## Rules`: rule 2 now carries the Work Governor mandate (2a merged onto the rule-2 line — matches the file's existing rule 7+8 merge convention) + new `## Work Governor` subsection: classify stages required/conditional/optional (§7), skip only with a recorded reason, agents/skills load only when they earn cost (§8/§9), closure needs §19's five conditions, verdicts → `work-governor` trail rows.
+- `docs/concepts/cost.md`: new `## Work Governor (src/work.ts)` section — six capabilities + verdict contract table, delegation consumes `delegateAt`/`laneBaseForLane`, the honest boundary (module records — crew acts via the workflow skill), F2/F3 security design rules.
+Acceptance: validate-content exit 0 (description byte-unchanged, manifest/docs/drift clean). grep `Work Governor|work-governor` SKILL.md → 3 matches (≥2). grep `## Work Governor` cost.md → 1 match. typecheck clean.
+
+### T5 — `chore(work): phase 3 verification evidence`
+Files: `.mugiwara/missions/native-cost-governor/flows/02-execution.md` (this append).
+`bun run gate` full run. See Gate summary below.
+
+## Gate summary (`bun run gate`)
+
+Exit code: **0** on the clean run (`/tmp/opencode/gate-r4.log`). Full output
+captured. A prior run also exited 0 (first invocation); flaky runs fail only the
+pre-existing `enforcement.test.ts` "escape #2" — see flake note.
+
+| Stage | Result |
+|-------|--------|
+| build-hooks:check | ✓ 5 hook builds current |
+| typecheck | ✓ clean |
+| test:coverage | ✓ **524 tests / 31 files** (all pass on clean run) |
+| build | ✓ |
+| validate-content (manifest, docs, doc-integrity) | ✓ manifest in sync; index budget 4741/5500; 21 skills / 14 agents |
+| lane-base | ✓ |
+| check-doc-links | ✓ |
+| run-evals | ✓ 55 cases |
+| retrieval-eval | ✓ 201/201, rank-1 95.6%, top-3 100% |
+| verify-install | ✓ pointers resolve, prose valid, no orphans |
+| conformance | ✓ 12 platforms |
+| coverage-gate | ✓ PASS — `src/work.ts` 100% new (≥90), `src/evidence.ts` 100% new (≥90), `src/cost.ts` 100% new (≥90), `src/mission.ts` 94.41% modified (≥80) |
+
+No gate waived; no test skipped.
+
+## Pre-existing flake note (NOT a Phase-3 defect)
+
+`test/enforcement.test.ts` "guard: plan written + no planner dispatched → warns
+(escape #2 closed)" intermittently fails under the full suite. It is **the only**
+red on flaky runs (523 pass / 1 fail). Reproduction-on-clean-main was documented
+in Phase-2 closure; it is tracked as a separate fix mission. Evidence it is
+pre-existing and not mine: `git log --name-only` for my 4 commits shows zero
+touches to `enforcement.test.ts`; its last commit predates this phase. Not
+burning heal cycles — per plan risk table (row "Pre-existing enforcement flake").
+
+## Commit hygiene
+
+4 source commits (T1–T4), each touching only its declared files. `savepoint.sh`,
+`scripts/lib/lane-base.sh`, and `src/config.ts` `DEFAULT_CONFIG` **untouched**
+(git shows no change) — no new config keys, no runtime savepoint behavior change.
+No git push, no merge, per instructions.
+
+# Verdict:
+
+**PASS** — Phase 3 Work Governor shipped: verdict engine with all six
+capabilities + record helper (T1, `0d1bf3e`), security F1 shape validation on
+`loadRegistry` (T2, `7736227`), cost.ts `ContextMetrics` type dedup (T3,
+`bc4346e`), verdicts wired into the workflow skill + cost docs (T4, `1bf7568`).
+Delegation closes the Phase-2 Q1 remainder (`delegateAt` + `laneBaseForLane`).
+Full `bun run gate` exits 0 on the clean run; coverage-gate PASS with
+`src/work.ts` 100% (new ≥90). Only deviation: harness has no subagent tool, so
+mandated `[PARALLEL]` Wave 1 ran inline in plan order (disjointness preserved by
+construction), and the SKILL.md rule line was merged onto rule 2 to stay within
+the validator's 120-line body cap (same merge convention the file already uses
+for rules 7+8). The only intermittent red is the pre-existing enforcement
+"escape #2" flake (separate mission, proven on clean main in Phase 2). No blockers.
+
+---
+
 # native-cost-governor — Phase 2 (Context Governor) — Execution (Flow 3, Zoro)
 
 Mode=auto · branch=feat/native-cost-governor · commit=conventional · auto_commit=on
