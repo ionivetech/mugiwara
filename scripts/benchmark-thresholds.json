@@ -1,0 +1,47 @@
+{
+  "workloads": [
+    {
+      "id": "lean-trivial",
+      "projected": 8000,
+      "overhead": 1000,
+      "context_max": 20000,
+      "evidence_min": 1,
+      "expected_surface": { "files": 2, "loc": 50 }
+    },
+    {
+      "id": "standard-feature",
+      "projected": 15000,
+      "overhead": 1500,
+      "context_max": 40000,
+      "evidence_min": 3,
+      "expected_surface": { "files": 8, "loc": 300 }
+    },
+    {
+      "id": "large-repo",
+      "projected": 22000,
+      "overhead": 2200,
+      "context_max": 80000,
+      "evidence_min": 5,
+      "expected_surface": { "files": 50, "loc": 2000 }
+    },
+    {
+      "id": "long-mission",
+      "projected": 23000,
+      "overhead": 2300,
+      "context_max": 90000,
+      "evidence_min": 5,
+      "expected_surface": { "files": 30, "loc": 1500 }
+    }
+  ],
+  "slop_floors": { "max_slop_events": 0 },
+  "regression": {
+    "allow_cost_down_only_when": ["correctness", "evidence", "security", "quality", "scope"]
+  },
+  "baselines": {
+    "correctness": 100,
+    "evidence": 5,
+    "security": 100,
+    "quality": 100,
+    "scope": 100
+  }
+}

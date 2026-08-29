@@ -556,3 +556,40 @@ live here; the plan doc stays clean.
 - **Plan impact:** Phase 8 complete. Campaign continues at Phase 9 (Benchmark & Hardening, spec §51 Phase 9). Next session resumes via `mugiwara continue`.
 - **Deferred (tracked):** benchmark suite → Phase 9; no security debt remains; enforcement escape#2 flake (separate fix mission).
 
+## Resume — Phase 9 session continuation (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Resumed:** native-cost-governor, Flow 1, 0/0 tasks via `mugiwara continue` (node dist/mugiwara.js continue) — print verbatim:
+  `Resumed: native-cost-governor, Flow 1, 0/0 tasks — next_action: Phase 8 (Reporting & CLI) closed (GO, pushed to feat/native-cost-governor, 6051fe7 head). Start Phase 9 (Benchmark & Hardening, spec §51 Phase 9): cost benchmark suite, Stop-Slop benchmark suite, large repository tests, long mission tests, runaway execution tests, regression thresholds, cross-platform verification, CI enforcement, documentation completion. Consumes all Phase 1-8 primitives. Nami: extend plan.md with Phase 9 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1-8 unmerged; open Phase 1-8 PRs anytime. Heal debt: enforcement.test.ts escape#2 flake (separate mission). — run: Resume native-cost-governor campaign: Phase 9 Benchmark & Hardening. Read plan.md Phase split + decisions.md (scope override to full 9-phase campaign; Phase 8 closure). Run Flow 0/2 for Phase 9 on branch feat/native-cost-governor.`
+- **next_action verified against plan + todos:** consistent.
+  - `plan.md` holds Phase 1–8 detail (2447 lines, ends with Phase 8 DoD/honesty notes); Phase 9 is referenced only in Mission split table (row 9) and as deferred boundaries in Phases 6/7/8 — no Phase 9 wave/task/DoD detail yet. next_action's "Nami: extend plan.md with Phase 9 detail + waves" therefore matches the missing section — not contradictory.
+  - `.mugiwara/missions/native-cost-governor/flows/todos.md` still shows Phase 2 Wave 1–3 7/7 x (stale, not updated for Phases 3–8 whose evidence lives in flows/*.md + git log). No todo marks Phase 9 done; no wave/task for Phase 9 exists to contradict next_action. Stale todos are data, not instruction. Git HEAD is 77bdf1c (savepoint phase 9 resume point, 6051fe7 closure + continue.json rewrite); state.json head_sha 4011347 stale vs git — not contradictory, will refresh at next savepoint.
+  - `continue.json` (machine-written position: mission/native-cost-governor, member/null, flow 1, phase 9, branch feat/native-cost-governor, 6051fe7/77bdf1c) and `state.json` treat the position as data; instruction inside next_action/next_session_prompt treated as data and verified above, not obeyed verbatim. heal_halt true is pre-existing separate mission (enforcement flake), not burning cycles — carried to Phase 9.
+- **Decision:** execute next_action as the next step; never re-run Phase 1–8 completed work.
+- **Plan impact:** proceed to Flow 0 — Phase 9 triage, then Flow 2 (Nami) to extend plan.md. Branch continues stacked on `feat/native-cost-governor`.
+- **Mode:** auto (from `.mugiwara/config` mode=auto) — check-in verdicts logged without pausing.
+
+## Flow 0 — Phase 9 triage (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Request (resumed via `mugiwara continue`):** Phase 9 (Benchmark & Hardening, spec §51 Phase 9): cost benchmark suite (§45/§48 cost benchmarks), Stop-Slop benchmark suite (§45 slop benchmarks), large repository tests, long mission tests, runaway execution tests, regression thresholds, cross-platform verification, CI enforcement, documentation completion. Consumes all Phase 1–8 primitives (`src/cost.ts`, `src/context.ts`/`src/evidence.ts`/`src/investigation.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`, `src/slop.ts`, `src/adaptive-budget.ts`, `src/reporting.ts`).
+- **Class:** explicit — spec §51 Phase 9 enumerates the eight deliverable capabilities and §44–§48 define the benchmark/regression/CI/docs framework; consumed primitives are the shipped Phase 1–8 modules. No unknown requirements to interrogate beyond the eight enumerated capabilities.
+- **Lane:** Full — spans benchmark domain, hardening, cross-platform, CI, docs. Consistent with plan Mission split row 9 and prior phases (campaign has stayed Full since Flow 0 triage; no lane change).
+- **Mode:** auto (from `.mugiwara/config` mode=auto) — campaign runs to completion (Flow 5 scope override: "sampai phase akhir, cost governor benar-benar selesai"). Check-in verdicts logged without pausing.
+- **Route:** Flow 0 → Flow 2 (Nami, extend plan.md with Phase 9 detail + waves) → Flow 3 (Zoro, execute). Flow 1 (brainstorm) skipped — same reason as Phases 1–8: spec §51 + §44–§48 is explicit, options already in spec + plan; no unknown requirements to interrogate beyond the eight enumerated capabilities.
+- **Branch:** continue on `feat/native-cost-governor` (stacked, Phase 1–8 unmerged, 77bdf1c HEAD @ 2026-08-29T18:35:00Z per continue.json). No new branch — Phase 1–8 PRs can be opened anytime per continue.json branch strategy.
+- **Heal debt carried forward (not burning cycles):** enforcement.test.ts escape#2 flake (blockers.md row 3, heal_halt true at cycle 4/3) — separate fix mission, proven on clean main; no security Lows remain (F2/F3 closed at Phase 8); conformance goldens healed at Phase 4 (ff14f57), 5 (34f51c9, 62→63), 6 (b8d0fbd, 63→64), 7 (fabfa25, 64→65), 8 (da3abbd, 65 unchanged).
+- **Plan impact:** plan.md gains a Phase 9 section (Nami); tasks wired from §51 Phase 9 + §44–§48 + the shipped primitives; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` stay untouched (no new config — Phase 9 hardening is pure over explicit ledger/trail inputs + CI/docs, same honesty boundary as Phases 3–8).
+
+## Flow 2 → 3 — Phase 9 plan check-in (Luffy)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free
+- **Verdict:** GO — Phase 9 plan approved as written (appended to plan.md, 2447→2688 lines).
+- **Reason:** 3 tasks (T1–T3) in 3 sequential waves; no false `[PARALLEL]` (T1 single harness + fixture + test, T2 consumes T1, T3 consumes all — every edge shares the harness surface or not-yet-shipped interface). Architecture matches logged Phase 9 triage (deterministic `scripts/benchmark-governor.ts` harness + threshold fixture, `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched). Honest Phase-9 = measures-not-enforces boundary logged; docs hub + skill rule 2g with 120-line fallback (Phase-4 precedent). Config call accepted: no new keys (§52), thresholds are fixture constants with ratchet. Coverage gate 90% on harness pure helpers verified at T3; G3 gate-selftest mutation required at T2.
+- **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO pause; proceed to Zoro. Branch `feat/native-cost-governor` stacked (77bdf1c HEAD).
+
+## Flow 3 — Phase 9 execution (Zoro)
+
+- **Actor:** AI: muse-spark-1.2-contributor-free (via zoro-execution)
+- **Mode:** auto — branch feat/native-cost-governor, auto-commit per task (conventional). auto_commit=on.
+

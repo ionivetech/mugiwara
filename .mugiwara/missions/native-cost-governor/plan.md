@@ -2445,3 +2445,244 @@ Spec DoD Observability (user acceptance) maps to Phase-8 tasks; each user AC has
 - **No new config:** Phase 8 adds nothing to `DEFAULT_CONFIG` — reporting is pure over explicit ledger/trail inputs; the §6 `budget.*`/`slop.*` profile belongs to future policy phases, not here.
 - **Re-consumption note:** `buildCostLedger` re-consumes `cost.ts:costEnvelope` envelope math, `evidence.ts:loadRegistry` registry, and `cost.ts:recordOptDecision` trail — it does not fork them; `renderCostSection`/`toCostJSON` are the only new renderers.
 
+---
+
+# native-cost-governor — Phase 9: Benchmark & Hardening
+
+**Scope:** Phase 9 of the Native Cost Governor initiative (plan §51), mission split row 9 (`native-cost-governor-phase9`). Phase 9 is the **final hardening phase** — it delivers the nine capabilities §51 Phase 9 enumerates (cost benchmark suite §48, Stop-Slop benchmark suite §45, large repository tests, long mission tests, runaway execution tests, regression thresholds §49, cross-platform verification, CI enforcement, documentation completion §50). It **proves the Phases 1–8 governor actually saves work without regressing correctness**: the benchmark harness measures cost/slop/regression on representative workloads, the thresholds ratchet like `retrieval-eval`, CI enforces the harness, cross-platform proves parity, and docs close the §50 set — without adding runtime enforcement (measures, not enforces) or new config.
+
+**Primary goal:** make the governor *provably efficient and non-regressive* — every future change is gated on cost/slop benchmarks that fail when tokens exceed projected + overhead, correctness/evidence/security stay intact (§49), and the full docs set explains how to inspect, override, and debug the governor.
+
+## What Phase 9 consumes (shipped Phase 1–8 primitives) and what it surfaces
+
+| Shipped primitive | Module | Phase-9 consumer |
+|-------------------|--------|------------------|
+| Cost envelope + events + decision trail | `src/cost.ts` `costEnvelope`/`budgetStatus`/`cost-events.jsonl` + `decisions.md` §41 | cost benchmark suite reads envelope + events + trail to compute `used/projected/avoided`; thresholds gate on `projected + overhead` |
+| Context metrics + registry | `src/context.ts` `computeContextMetrics` + `src/evidence.ts` `context-registry.jsonl` + `src/investigation.ts` | cost/context benchmarks measure `estimated_tokens/duplicate_tokens/avoided_tokens`, investigation bounds; large-repo test stresses registry |
+| Work verdicts | `src/work.ts` `classifyStage`/`shouldSkipStage`/`evaluateInvocation`/`completionCheck` | Stop-Slop + cost benchmarks: stages skipped/avoided, completion detection, runaway test (no-progress continuation) |
+| Scope & Code verdicts | `src/scope.ts` `detectScopeDrift`/`checkExistingCodeReuse`/`evaluateAbstraction`/`measureChangeSurface` | scope/code slop benchmarks (§21.5/§21.8), large-repo change-surface, LOC/abstraction thresholds |
+| Cognition/Output verdicts | `src/cognition.ts` `isFocusedReasoning`/`compressOutput`/`detectDuplicateExplanation` | reasoning/output slop benchmarks (§21.3/§21.4), output compression measurement |
+| Slop signals + intervention | `src/slop.ts` `SLOP_TAXONOMY`/`measureProgress`/`detectAnomaly`/`decideIntervention` + six category detectors | Stop-Slop benchmark suite (§45, 12 scenarios), progress/anomaly regression thresholds |
+| Adaptive budget + breaker | `src/adaptive-budget.ts` `reserveBudget`/`projectBudget`/`checkProgressiveThreshold`/`checkCircuitBreaker` | budget projection/breaker benchmarks; runaway test (breaker trips at 2× without progress) |
+| Reporting & CLI | `src/reporting.ts` `buildCostLedger`/`renderCostSection`/`toCostJSON` + `src/cli.ts` `mugiwara cost` | benchmark fixtures can assert via `buildCostLedger`; `mugiwara cost --json` is the human inspection path docs describe |
+
+Phase 9 **surfaces**: a **cost benchmark suite** (§48 — representative workloads, each with `task/expected lane/required stages/expected evidence/acceptable cost+context range/expected changed surface/required gates`; measures `token/context/agent/stage/retry/healing/LOC/scope/slop/correctness/evidence`); a **Stop-Slop benchmark suite** (§45 — 12 dedicated scenarios, each expects `detect→classify→intervene→continue only when justified`); **large repository / long mission / runaway execution** stress tests (bench harness only, no runtime change); **regression thresholds** (ratchet: `tokens > projected + overhead` fails, like `retrieval-eval` floor; §49 regression rules — cost down + correctness/evidence/security/quality down = fail); **cross-platform verification** (12-platform `conformance.ts` parity + harness deterministic on all platforms); **CI enforcement** (harness wired into `bun run gate`, with `gate-selftest.ts` mutation proving it can go red — G3); and **documentation completion** (§50: `docs/cost-governor.md` et al. or consolidated `docs/concepts/cost.md` extension — whichever keeps SKILL.md ≤120 and `validate-content` green).
+
+## Key decisions
+
+1. **Benchmark harness is test/docs/CI, not runtime enforcement — honest boundary.** Like `lane-base.ts`/`retrieval-eval.ts`, the harness *measures* cost/slop/regression and fails CI when thresholds are violated; it does not add a runtime `savepoint.sh` gate or a new `DEFAULT_CONFIG` key. `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` stay untouched (no new config — §52 policy boundaries need no new key beyond lane budgets; thresholds are pure inputs/fixtures with defaults). The module proves whether the governor was efficient, it does not force the model at runtime — same honest boundary Phases 3–8 drew.
+2. **Single harness, two suites, one threshold fixture — minimal surface.** One script `scripts/benchmark-governor.ts` (pure, deterministic, no network) runs both suites plus the three stress tests; one fixture `scripts/benchmark-thresholds.json` (or in-script constants when the file would be overhead — pick the smallest that keeps thresholds auditable) holds the `projected + overhead` and slop/regression floors. Reuses the existing `retrieval-eval` ratchet pattern: thresholds ratchet up only on explicit update, never silently. No second harness, no new dependency.
+3. **Re-consumption, not forking.** Every benchmark workload re-consumes the shipped `src/*` verdict shapes and `src/reporting.ts:buildCostLedger` for ledger assertions — the source modules stay the single definition. The harness never re-implements `budgetForLane`/`checkCircuitBreaker`/`detectSlopSignal` math; it calls them and asserts the measured `ledger` against the fixture. No logic fork.
+4. **Thresholds: `tokens > projected + overhead` fails; §49 regression fails even when cost drops.** Cost benchmark fixtures define `projected` (from `projectBudget`) + `overhead` (per-workload tolerance, e.g. 10% or 500 tokens min) — measured `used` above that fails. Separately, any §49 regression (cost down but correctness/evidence/security/quality down, or scope under-implemented) fails as a hard regression, same as `retrieval-eval` floor. Both are pure comparisons, no new runtime.
+5. **CI: extend the existing `bun run gate`, not a new flaky gate.** Add `bun scripts/benchmark-governor.ts` to the `gate` script (same `package.json:gate` array as `lane-base`/`retrieval-eval`), and add a `gate-selftest.ts` mutation that tampers `benchmark-thresholds.json` (or the in-script constant) to prove the gate goes red — G3 `every gate must have a mutation proving it can fail` (AGENTS.md). No new gate that can fail without its mutation — incomplete change.
+6. **Cross-platform = deterministic harness + existing 12-platform conformance.** The harness is pure over explicit fixture inputs (no `Date.now`/`Math.random`/`fs` beyond reading fixtures), so it is deterministic on every platform. `scripts/conformance.ts` already asserts 12-platform file-count/install-surface parity; Phase 9 adds no new platform-specific code — the benchmark script is included in the conformance file-count golden when needed, updated via `bun scripts/conformance.ts --update-golden` (Phase-4 precedent `ff14f57`). No per-OS branching.
+7. **Docs completion without SKILL.md cap breach.** `docs/concepts/cost.md` already holds Phases 1–8 sections; Phase 9 appends the benchmark/hardening section there. If the workflow skill needs a benchmark rule, add it as rule 2g `Benchmark & Hardening (Phase 9)` — and if the body would exceed 120 lines, move the body to `content/skills/mugiwara-workflow/references/benchmark-governor.md` with a one-line pointer (sanctioned pattern `Full checklist: references/benchmark-governor.md — N items;` never a bare filename; precedent `af8a204`/`34f51c9`/`b8d0fbd`/`fabfa25`). `validate-content` + `verify-install` stay green; if a new reference file was added, goldens are regenerated (must be only the file-count delta, no unrelated changes).
+
+## Architecture overview
+
+```
+  Shipped primitives (unchanged interfaces)
+  src/cost.ts / src/context.ts / src/evidence.ts / src/investigation.ts
+  src/work.ts / src/scope.ts / src/cognition.ts / src/slop.ts
+  src/adaptive-budget.ts / src/reporting.ts (buildCostLedger, CostLedger)
+        │
+        ▼
+  scripts/benchmark-governor.ts ← NEW (T1): pure, deterministic harness —
+        │       runs cost benchmark suite (§48 workloads: task/lane/stages/evidence/cost+context range/surface/gates)
+        │       + Stop-Slop suite (§45: 12 scenarios detect→classify→intervene)
+        │       + large-repo / long-mission / runaway stress (bench only, no runtime)
+        │       compares measured ledger (via buildCostLedger) against
+        │       scripts/benchmark-thresholds.json (or in-script thresholds)
+        │       — tokens > projected+overhead → fail
+        │       — §49 regression (cost down but correctness/evidence/security/quality down) → fail
+        │
+        ├──────────────────────────┬──────────────────────────┐
+        ▼                          ▼                          ▼
+  docs/concepts/cost.md (T2)   package.json:gate (T2)     scripts/gate-selftest.ts (T2)
+  + SKILL.md rule 2g /          gate now runs               mutation proves harness can go red (G3)
+  references/benchmark-         benchmark-governor.ts        scripts/conformance.ts --update-golden
+  governor.md (if >120)         (extend existing gate)       when file-count changes
+        │                          │                          │
+        └──────────────┬───────────┴──────────┬───────────────┘
+                       ▼                      ▼
+                    T3 full gate + evidence (flows/02-execution.md)
+```
+
+Pure benchmark/threshold logic is unit-tested (T1 harness fixtures); wiring + docs + CI + cross-platform (T2) is the skill/docs/gate surface; T3 is the gate.
+
+## Project structure (touched)
+
+| File | Change |
+|------|--------|
+| `scripts/benchmark-governor.ts` | NEW — deterministic harness: cost suite (§48 workloads) + Stop-Slop suite (§45 12 scenarios) + large/long/runaway stress; reads `buildCostLedger` shape + thresholds fixture; exits 1 on `tokens > projected+overhead` or §49 regression |
+| `scripts/benchmark-thresholds.json` | NEW (or in-script constants if a separate file is overhead) — `projected + overhead` per workload + slop/regression floors; ratchet pattern like `retrieval-eval` |
+| `test/benchmark.test.ts` or `scripts/benchmark-governor.test.ts` | NEW — unit lock on harness pure helpers + threshold comparison helpers (≥90% on new pure code when applicable) |
+| `package.json` (`scripts.gate`) | MODIFY — append `bun scripts/benchmark-governor.ts` to the `gate` array (extend existing gate, no new standalone gate) |
+| `scripts/gate-selftest.ts` | MODIFY — add mutation that tampers `benchmark-thresholds.json` (or in-script threshold) and asserts `benchmark-governor` goes red (G3) |
+| `content/skills/mugiwara-workflow/SKILL.md` | MODIFY — rule 2g `Benchmark & Hardening (Phase 9)` + pointer to `references/benchmark-governor.md` when needed |
+| `content/skills/mugiwara-workflow/references/benchmark-governor.md` | CREATE only if SKILL.md body would exceed 120 lines (precedent `af8a204`) |
+| `docs/concepts/cost.md` | MODIFY — `## Benchmark & Hardening (scripts/benchmark-governor.ts)` section: cost/Stop-Slop/large/long/runaway/threshold/cross-platform/CI/docs contracts + honest boundary (measures, not enforces) |
+| `docs/cost-governor.md` / `docs/cost-model.md` / `docs/stop-slop.md` / `docs/cost-debugging.md` / `docs/cost-evaluation.md` | CREATE or CONSOLIDATE — §50 docs set (full set or consolidated into `docs/concepts/cost.md` + `docs/cost-governor.md` hub when separate files are overhead — keep to the smallest that satisfies `validate-content --check-docs` and `docs/concepts/*.md` mentions every skill) |
+| `test/golden/*.json` | MODIFY only if a new reference file bumps file-count (via `bun scripts/conformance.ts --update-golden`, Phase-4 precedent) |
+
+`scripts/lib/lane-base.sh`, `scripts/savepoint.sh`, and `DEFAULT_CONFIG` are **untouched** — no new config keys, no runtime savepoint behavior change.
+
+## Waves
+
+| Wave | Focus | Tasks | Gate |
+|------|-------|-------|------|
+| 1 | Benchmark harness + thresholds + stress fixtures | T1 | `bun scripts/benchmark-governor.ts` exit 0; `bun test test/benchmark.test.ts` green (or harness unit test file) |
+| 2 | Docs + CI enforcement + cross-platform + selftest | T2 | `grep` SKILL.md + cost.md, body ≤120, validate-content + verify-install + conformance green; `bun scripts/gate-selftest.ts` proves harness can go red |
+| 3 | Full verification | T3 | `bun run gate` exit 0 |
+
+## Implementation graph
+
+```
+T1 benchmark-governor.ts + thresholds ──consumes: cost.ts, context.ts, evidence.ts, work.ts, scope.ts, slop.ts, adaptive-budget.ts, reporting.ts (read-only)──► T2 docs + gate + selftest + conformance
+                                                                                                                     │  (SKILL.md + cost.md + package.json:gate + gate-selftest)
+                                                                                                                     ▼
+                                                                                                                  T3 full gate
+```
+
+No `[PARALLEL]` set in Phase 9: T1 is a single new harness + threshold fixture + test file with no cross-file edges beyond read-only re-consumption of shipped primitives; T2 consumes T1's surface (docs reference the new harness, `package.json:gate` calls it, `gate-selftest` mutates it); T3 consumes all. Every edge shares the harness surface or a not-yet-shipped interface — genuine sequentiality.
+
+## Task index
+
+| # | Task | Files | Size | Depends-on | Acceptance |
+|---|------|-------|------|------------|------------|
+| T1 | benchmark harness + thresholds + large/long/runaway fixtures | scripts/benchmark-governor.ts, scripts/benchmark-thresholds.json (or in-script), test/benchmark.test.ts (or scripts/benchmark-governor.test.ts) | M | — | `bun scripts/benchmark-governor.ts` exit 0; `bun test` harness unit file green; thresholds fixture exists |
+| T2 | docs + CI enforcement + cross-platform + selftest mutation | content/skills/mugiwara-workflow/SKILL.md, docs/concepts/cost.md, docs/cost-governor.md et al., package.json, scripts/gate-selftest.ts, test/golden/*.json (if file-count bump) | S | T1 | SKILL.md rule/pointer, cost.md section, docs set complete, body ≤120, package.json gate includes harness, gate-selftest mutation proves red, validate-content + verify-install + conformance green |
+| T3 | full gate + evidence | flows/02-execution.md | S | T1, T2 | `bun run gate` exit 0 |
+
+## Detail tasks
+
+**Task 1: benchmark harness — cost suite + Stop-Slop suite + large/long/runaway + thresholds** (§45, §48, §49)
+
+- Files: create `scripts/benchmark-governor.ts`, `scripts/benchmark-thresholds.json` (or in-script constants when a separate JSON is overhead — pick the smallest auditable form), `test/benchmark.test.ts` (or `scripts/benchmark-governor.test.ts` when co-located is smaller — one file, not two)
+- Interfaces: produces `scripts/benchmark-governor.ts` (consumed by T2 gate/docs + cross-platform); consumes `src/cost.ts` `costEnvelope`/`budgetForLane`, `src/context.ts`/`src/evidence.ts`, `src/slop.ts` `measureProgress`/`detectAnomaly`, `src/adaptive-budget.ts` `projectBudget`/`checkCircuitBreaker`, `src/reporting.ts` `buildCostLedger` shape (read-only, no import cycles beyond pure types — harness may import pure helpers only; ledger reads are via the typed shape, not direct FS in the pure core)
+- Size: M
+- Steps:
+  - [ ] Write the harness unit test file first (TDD — see acceptance for the full case list). Pure helpers only — no FS beyond temp fixture dirs.
+  - [ ] Implement `scripts/benchmark-governor.ts` — deterministic, no network, no `Date.now`/`Math.random`; single `main()` that exits 0 on pass, 1 on any threshold/regression fail, prints a concise summary (workloads pass/fail, tokens vs projected+overhead, slop events, regression verdict):
+    - **Workloads (cost suite §48):** define ≥3 representative workloads (lean trivial, standard feature, large-repo/long-mission/runaway — reuse the §47 integration cases as the workload seeds when they already exist). Each workload fixture declares `task`, `expected_lane` (from `src/cost.ts` `budgetForLane`), `required_stages`, `expected_evidence` (count), `acceptable_cost_range` (`projected` + `overhead`), `acceptable_context_range` (`chars` + overhead), `expected_changed_surface` (`{ files, loc }`), `required_gates` (validate-content/lane-base/etc.). The harness computes `measured` via `buildCostLedger` shape (or via pure `projectBudget`/`costEnvelope` math when no FS ledger exists in the test workload — both paths tested). Workload passes iff `measured.tokens <= projected + overhead` AND `measured.context_chars <= acceptable_context_range.max` AND `measured.changed_surface` within expected AND required evidence/gates present.
+    - **Stop-Slop suite (§45):** define 12 scenarios (one per §45 list: endless exploration, repeated reads, repeated commands, repeated failed test, repeated reasoning, unnecessary abstraction, unnecessary dependency, unrelated refactor, verbose output, no-progress healing, premature completion, excessive context). Each scenario feeds a minimal `SLOP_WORKLOAD` into `src/slop.ts` pure detectors (`detectSlopSignal`/`detectRetrySlop`/`detectHealingSlop`/`detectScopeSlop`/`detectContextSlop`/`detectInvestigationSlop`/`detectCodeSlop` + `decideIntervention`) and asserts `detect→classify→intervene→continue only when justified` (e.g. repeated-read 3× without evidence gain → `stop`; same with `has_concrete_reason` → `tolerate`). Pure, no FS.
+    - **Large/long/runaway stress:** `large repository` — workload with `files_touched` at the Phase 4 `measureChangeSurface` upper bound (e.g. 50 files) asserts `detectScopeDrift` + `benchmark-governor` still passes when scope is declared; `long mission` — workload with many stages (e.g. 9 flow stages) asserts `projectBudget` max still within lane budget + thresholds; `runaway` — workload with `actual = 2×expected` + no progress/evidence asserts `checkCircuitBreaker` tripped and harness fails the workload (measures, not enforces — the harness reports `breaker: tripped` and the workload is marked fail when runaway is not justified).
+    - **Thresholds fixture:** `scripts/benchmark-thresholds.json` (or in-script `THRESHOLDS` const) holds `{ workloads: [{ id, projected, overhead, context_max, evidence_min }], slop_floors: { max_slop_events }, regression: { allow_cost_down_only_when: ["correctness","evidence","security","quality","scope"] } }`. The harness reads this fixture (when JSON) or the const, compares `measured` against it, and fails when any threshold is exceeded. The fixture is the ratchet — thresholds only move on explicit update, same as `retrieval-eval` floor.
+    - **Regression rule (§49):** after the cost comparison, check §49: if `measured.tokens < baseline_cost` but any of `correctness/evidence/security/quality/scope` decreased vs baseline, the harness fails that workload with `regression: cost down but <dimension> down`. Baseline comes from the fixture's `baseline_*` fields (or from the workload's `expected_*` when baseline is the expected value). Pure comparison, no new runtime.
+    - Pure helpers extracted for unit testing: `isOverBudget(measured, projected, overhead)`, `checkRegression(measured, baseline)`, `evaluateStopSlopScenario(scenario)`, `evaluateStressWorkload(workload)` — all pure, deterministic, no FS.
+  - [ ] Wire the harness to be callable as `bun scripts/benchmark-governor.ts` (shebang + `if (import.meta.main)` guard, same pattern as `scripts/lane-base.ts`/`scripts/retrieval-eval.ts`). No new deps; reuse `src/cost.ts`/`src/slop.ts`/`src/adaptive-budget.ts` pure helpers already in the repo.
+  - [ ] Commit `feat(benchmark): cost + Stop-Slop benchmark harness, thresholds, large/long/runaway stress fixtures`
+- Acceptance:
+  - `bun scripts/benchmark-governor.ts` exit 0 (all workloads pass against the fixture thresholds; summary printed to stdout, no throw)
+  - `bun scripts/benchmark-governor.ts --help` or `bun scripts/benchmark-governor.ts` without args prints the workload summary (or at least does not throw on unknown flag — harness handles `--help` gracefully)
+  - `ls scripts/benchmark-governor.ts` exists; `ls scripts/benchmark-thresholds.json` exists OR `grep -c THRESHOLDS scripts/benchmark-governor.ts` ≥ 1 (in-script thresholds when JSON is overhead — one or the other, not neither)
+  - `bun test test/benchmark.test.ts` (or `bun test scripts/benchmark-governor.test.ts` when co-located) passes. Cases (every family, pure):
+    - `isOverBudget` — `measured=projected+overhead` → pass; `measured=projected+overhead+1` → fail
+    - `checkRegression` — `cost down + correctness down` → fail with `regression` verdict; `cost down + all dimensions ok` → pass
+    - `evaluateStopSlopScenario` — one §45 scenario (e.g. repeated reads 3×, no evidence gain) → `slop` + `stop`; same with `has_concrete_reason` → `tolerate`
+    - `evaluateStressWorkload` — `large repository` workload (many files) with declared scope → pass; `runaway` workload (2× expected, no progress) → `breaker: tripped` + fail
+    - Harness integration — temp fixture with `projected=10000, overhead=1000, measured=10500` → pass; `measured=11100` → fail (threshold)
+  - `bun run typecheck` passes; `bun run build` passes
+  - No new dep in `package.json:dependencies`; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` unchanged (`git diff --stat` shows no change to those three paths)
+- Risk: medium (new harness touches no shipped `src/*` runtime, but imports their pure helpers — any import cycle or type break is caught by typecheck; threshold math is pure and unit-locked). Rollback: revert the single commit.
+- Ponytail marks: `ponytail: thresholds are fixture constants, not config — ratchet like retrieval-eval` on the thresholds fixture; `ponytail: harness measures, does not enforce — no runtime gate` on `main()`.
+
+**Task 2: docs + CI enforcement + cross-platform + selftest mutation**
+
+- Files: modify `content/skills/mugiwara-workflow/SKILL.md`, `docs/concepts/cost.md`, `package.json` (`scripts.gate`), `scripts/gate-selftest.ts`; create `content/skills/mugiwara-workflow/references/benchmark-governor.md` only if SKILL.md body would exceed 120 lines (Phase-4/5/6/7/8 precedent: `af8a204`/`34f51c9`/`b8d0fbd`/`fabfa25`); create `docs/cost-governor.md` (and/or `docs/cost-model.md`/`docs/stop-slop.md`/`docs/cost-debugging.md`/`docs/cost-evaluation.md` when §50 requires separate files — consolidate into `docs/cost-governor.md` + `docs/concepts/cost.md` extension when separate files are overhead; the smallest that satisfies `validate-content --check-docs` and `docs/concepts/*.md` mentions every skill); update `test/golden/*.json` only via `bun scripts/conformance.ts --update-golden` when file-count changed
+- Interfaces: consumes `scripts/benchmark-governor.ts` + thresholds fixture from T1 (docs reference only + gate calls the script + selftest mutates the fixture)
+- Size: S
+- Steps:
+  - [ ] In `package.json`, extend the `gate` script to call the harness: add `bun scripts/benchmark-governor.ts` to the `gate` array (sequential, after `lane-base`/`retrieval-eval`, before `verify-install` — same pattern as `lane-base` gate). No new top-level `benchmark` script that bypasses the gate; the harness is part of `bun run gate`.
+  - [ ] In `scripts/gate-selftest.ts`, add a mutation that proves the harness can go red (G3): tamper `scripts/benchmark-thresholds.json` (or the in-script `THRESHOLDS` const when JSON is not used — write a temp low threshold) to set `projected=0, overhead=0` for one workload, run `bun scripts/benchmark-governor.ts` in a child process, assert exit 1. Same pattern as the existing `lane-base`/`retrieval-eval` mutations in that file. No new flaky gate without its mutation — incomplete change.
+  - [ ] In `content/skills/mugiwara-workflow/SKILL.md` (respect the 120 body-line cap — `validate-content.ts:19`):
+    - Add rule 2g under the `## Cost Governor` section (sequential after Phase-8's 2f Reporting & CLI): `Benchmark & Hardening (Phase 9)` — cost benchmark suite (§48) + Stop-Slop suite (§45) + large/long/runaway stress, thresholds (`tokens > projected+overhead` fails, §49 regression fails), cross-platform deterministic harness, CI via `bun run gate`, docs in `docs/concepts/cost.md` + `docs/cost-governor.md`. Every benchmark failure is a CI red; thresholds ratchet like `retrieval-eval`. Always one-line pointer to the references file if the body is at the cap; otherwise inline the rule. Keep `description` (20–220 chars), `name` matching dir, `## Skip when` block, and frontmatter untouched.
+    - If the body would exceed 120 lines (base + HEAD sit at ~120 after Phase 8), move the body to `content/skills/mugiwara-workflow/references/benchmark-governor.md` with a one-line pointer in SKILL.md (sanctioned pattern: `Full checklist: references/benchmark-governor.md — N items;` never a bare filename) — zero content loss, needs `verify-install` green.
+  - [ ] In `docs/concepts/cost.md`, append a `## Benchmark & Hardening (scripts/benchmark-governor.ts)` section — one paragraph per capability with harness/threshold/stress contracts + inputs, the honest boundary (measures, not enforces), the threshold ratchet note, the cross-platform determinism note, and the CI/selftest note. No duplication of `src/cost.ts`/`src/slop.ts` docs — reference them.
+  - [ ] Create or consolidate the §50 docs set: `docs/cost-governor.md` (hub: what Cost Governor does, how decisions are made, how Stop-Slop works, how budgets are calculated, how to override, how to inspect via `mugiwara cost`, how to debug a decision) + `docs/cost-evaluation.md` (benchmark workloads + thresholds + how to update the ratchet) when separate files are justified; otherwise consolidate the §50 content into the `docs/concepts/cost.md` `## Benchmark & Hardening` section plus a `docs/cost-governor.md` hub that links to `docs/concepts/cost.md` — the smallest that satisfies `validate-content --check-manifest --check-docs --check-doc-integrity` (check what that script actually enforces for `docs/` — if it only checks `docs/concepts/*.md` mentions every skill, a single hub file is enough; if it checks the §50 filenames literally, create the five §50 files as thin hubs pointing to `docs/concepts/cost.md`).
+  - [ ] If a new reference file was added, run `bun scripts/conformance.ts --update-golden` and review the diff (must be only the file-count delta for the new reference file(s), no unrelated golden changes — Phase-4 precedent `ff14f57`). If the harness bumps the installed `scripts/` surface but not `content/skills/`, no golden bump is needed — verify `bun scripts/conformance.ts` still passes.
+  - [ ] Run `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity`, `bun scripts/verify-install.ts`, `bun scripts/gate-selftest.ts`, `bun scripts/conformance.ts` — all green; run `bun scripts/benchmark-governor.ts` once more to confirm green
+  - [ ] Commit `docs(benchmark): wire benchmark & hardening into workflow skill, cost docs, CI gate + selftest + cross-platform`
+- Acceptance:
+  - `grep -c benchmark-governor content/skills/mugiwara-workflow/SKILL.md` ≥ 1 (pointer) OR `grep -c 'Benchmark & Hardening' content/skills/mugiwara-workflow/SKILL.md` ≥ 1 (inline); body line count `awk '/^---$/ {p++} p==2{body=1; next} body' content/skills/mugiwara-workflow/SKILL.md | wc -l` ≤ 120
+  - `grep -c 'Benchmark & Hardening' docs/concepts/cost.md` ≥ 1
+  - `ls docs/cost-governor.md` exists OR `grep -c 'cost-governor' docs/concepts/cost.md` ≥ 1 (hub exists when §50 requires it; check `validate-content --check-docs` for what it actually enforces)
+  - `grep -c benchmark-governor package.json` ≥ 1 (gate calls the harness)
+  - `grep -c benchmark scripts/gate-selftest.ts` ≥ 1 (mutation proves harness can go red)
+  - `bun scripts/conformance.ts` exit 0 (12 platforms); `bun scripts/verify-install.ts` exit 0 (0 orphans, pointers resolve)
+  - `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` exit 0
+  - `bun scripts/gate-selftest.ts` exit 0 (proves the benchmark gate can fail)
+- Risk: low (docs + gate wiring only, pattern proven in Phases 4/5/6/7/8). Rollback: revert the single commit.
+
+**Task 3: full gate + evidence**
+
+- Files: none new; evidence → `.mugiwara/missions/native-cost-governor/flows/02-execution.md`
+- Interfaces: consumes T1–T2
+- Size: S
+- Steps:
+  - [ ] Run `bun run gate` — capture full output (this runs build-hooks:check, typecheck, test:coverage, build, validate-content, lane-base, run-evals, retrieval-eval, benchmark-governor, verify-install — per AGENTS.md plus the new harness)
+  - [ ] If any gate fails: fix within scope, re-run. No gate may be waived except the known pre-existing `enforcement.test.ts` escape#2 flake (blockers.md row 3, heal_halt true) — re-run or prove on clean base is not a Phase-9 regression (precedent Phases 2–8).
+  - [ ] Write `flows/02-execution.md`: task table (T1–T3), per-task evidence (test commands + outputs), gate summary, `# Verdict:` line
+  - [ ] Commit `chore(benchmark): phase 9 verification evidence`
+- Acceptance: `bun run gate` exit 0 (full output captured in `.mugiwara/missions/native-cost-governor/flows/02-execution.md`; pre-existing flake not counted as Phase-9 regression when reproduced on base)
+- Risk: none
+
+## Risk & rollback
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| New harness `scripts/benchmark-governor.ts` misses the workload/threshold contract (workloads pass when they should fail) | medium | CI green when it should be red | TDD-first; T1 acceptance locks `projected+overhead` + regression + 12 Stop-Slop scenarios + large/long/runaway; gate catches at T3 |
+| Threshold fixture too tight (flaky) or too loose (never fails) | medium | flaky red or silent regression | thresholds are `projected + overhead` with explicit `overhead` per workload (≥10% or 500 tokens min); T1 unit tests lock the boundary (`+1` fails); selftest mutation proves tightness at T2 |
+| Skill-body edit trips validate-content (description drift, 120-line cap, 120-char line cap) | low | CI red | T2 acceptance locks all three; Phase-4/5/6/7/8 precedent: move to `references/` with pointer |
+| `package.json:gate` edit breaks existing gate (missing `&&` or wrong script name) | low | gate red | T2 grep + `bun run gate` at T3; gate-selftest at T2 proves the new entry can fail |
+| `gate-selftest` mutation missing or not proving red | high if omitted | G3 violation — gate that cannot fail is not a gate | T2 acceptance: `grep -c benchmark scripts/gate-selftest.ts` ≥ 1 + `bun scripts/gate-selftest.ts` exit 0 |
+| Conformance golden not updated after new reference file | low | conformance red | T2 note: run `--update-golden` when file-count changes; Phase-4 precedent `ff14f57` |
+| Cross-platform nondeterminism (random/date/fs ordering) | low | harness passes on one OS, fails on another | harness is pure over explicit fixture inputs, no `Date.now`/`Math.random`; `conformance.ts` 12-platform check at T2 |
+| Docs set incomplete (§50 expects 5 files but only hub created) | low | validate-content red | T2 step checks what `validate-content --check-docs` actually enforces for `docs/`; create the five §50 files as thin hubs when the literal filenames are checked |
+| Pre-existing enforcement flake (escape #2) | certain (intermittent) | red on a random run | tracked separate mission (blockers.md row 3); not a Phase-9 regression — proven by reproduction on clean main |
+| Benchmark scope bleed (gold-plating runtime enforcement into harness) | low | scope slop | hard boundary: Phase 9 measures, not enforces — no `savepoint.sh`/`DEFAULT_CONFIG` change, no runtime breaker (honesty section) |
+
+Rollback plan: each task is one revertible commit; T3 evidence lists exact commits. Worst case: `git revert` the Phase-9 commits. `savepoint.sh`, `lane-base.sh`, and `DEFAULT_CONFIG` are untouched, so runtime savepoint + config behavior is preserved by construction.
+
+## Phase-9 sub-scope → deliverable map + user-AC mapping
+
+Spec DoD Validation + §51 Phase-9 capabilities map to Phase-9 tasks; each user AC has ≥1 per-task command-verifiable criterion:
+
+| User AC (spec §56 Validation + §51 Phase 9) | Capability (§51/§spec) | Deliverable |
+|---------------------------------------------|------------------------|-------------|
+| cost benchmarks pass | cost benchmark §48 | T1 `scripts/benchmark-governor.ts` cost suite — 3+ workloads with `projected+overhead` thresholds (test-locked `+1` fails); `bun scripts/benchmark-governor.ts` exit 0 |
+| Stop-Slop benchmarks pass | Stop-Slop §45 | T1 Stop-Slop suite — 12 scenarios `detect→classify→intervene` (test-locked repeated-read `stop` vs `tolerate` with concrete reason) |
+| large repository tests pass | large-repo stress | T1 `evaluateStressWorkload` large-repo workload (many files, declared scope → pass) |
+| long mission tests pass | long-mission stress | T1 long-mission workload (many stages, `projectBudget` within lane budget) |
+| runaway execution tests pass | runaway stress + breaker §29 | T1 runaway workload (2× expected, no progress → `breaker: tripped` + fail) + re-consumes `checkCircuitBreaker` |
+| regression thresholds enforced | thresholds + §49 | T1 `checkRegression` (cost down + correctness/evidence/security/quality down → fail) + thresholds fixture ratchet; T2 `gate-selftest` mutation proves it can go red |
+| cross-platform verification | cross-platform | T2 `conformance.ts` 12-platform + deterministic harness (no random/date) |
+| CI enforcement | CI gate | T2 `package.json:gate` includes `benchmark-governor` + `gate-selftest` mutation; T3 `bun run gate` green |
+| documentation is complete | docs §50 | T2 `docs/concepts/cost.md` `## Benchmark & Hardening` + `docs/cost-governor.md` hub (or §50 five-file set when validator checks literal filenames); `validate-content --check-docs` green |
+
+## Definition of Done (Phase 9)
+
+- `scripts/benchmark-governor.ts` exists and is deterministic (no random/date/network): runs cost suite (§48 — 3+ workloads, each with `task/lane/stages/evidence/cost+context range/surface/gates`), Stop-Slop suite (§45 — 12 scenarios), large-repo/long-mission/runaway stress; compares `measured` (via `buildCostLedger` shape or pure math) against `scripts/benchmark-thresholds.json` (or in-script `THRESHOLDS`) — `tokens > projected+overhead` fails, §49 regression fails — exits 0 on pass, 1 on fail.
+- Thresholds fixture exists and is the ratchet (like `retrieval-eval` floor): workloads declare `projected + overhead`; slop/regression floors are explicit; thresholds only move on explicit fixture update.
+- `package.json:gate` calls `bun scripts/benchmark-governor.ts` (extend existing gate, no new standalone gate).
+- `scripts/gate-selftest.ts` has a mutation that tampers the benchmark thresholds and asserts the harness goes red — G3 satisfied.
+- `content/skills/mugiwara-workflow/SKILL.md` wires Benchmark & Hardening (rule 2g); description unchanged; body ≤120 lines (or references pointer); validate-content green.
+- `docs/concepts/cost.md` documents Benchmark & Hardening (cost/Stop-Slop/large/long/runaway/threshold/cross-platform/CI contracts, honest boundary — measures, not enforces).
+- `docs/cost-governor.md` hub exists (or the full §50 five-file set `docs/cost-governor.md`/`docs/cost-model.md`/`docs/stop-slop.md`/`docs/cost-debugging.md`/`docs/cost-evaluation.md` when the validator checks literal filenames) — `validate-content --check-manifest --check-docs --check-doc-integrity` green.
+- Cross-platform deterministic: `bun scripts/conformance.ts` 12-platform pass; `bun scripts/verify-install.ts` 0 orphans.
+- No changes to `savepoint.sh`, `lane-base.sh`, or `DEFAULT_CONFIG` — no new config keys, no runtime savepoint behavior change.
+- `bun run gate` passes fully; every pre-existing test passes unchanged (pre-existing escape#2 flake not counted when reproduced on base).
+- Phase 9 measures and gates — no runtime enforcement built here (honest boundary).
+
+## Honesty notes / deferred items
+
+- **Honest boundary:** `scripts/benchmark-governor.ts` measures cost/slop/regression and fails CI when thresholds are violated; it does not add a runtime `savepoint.sh` gate or pretend a benchmark script can force the model to be efficient. The LLM crew (workflow skill, rule 2g) is the only thing that acts on the signals — the harness proves whether the crew was efficient on the representative workloads.
+- **Thresholds are a ratchet, not a config:** `benchmark-thresholds.json` (or in-script `THRESHOLDS`) is the fixture that gates `tokens > projected+overhead` and §49 regression — same pattern as `retrieval-eval` floor. Thresholds only move on explicit fixture update (reviewed diff), never silently. No `DEFAULT_CONFIG` key, no runtime override.
+- **Large/long/runaway are bench-only stress tests:** they run inside the harness against synthetic workloads (large file count, many stages, 2× without progress) and assert the existing `measureChangeSurface`/`projectBudget`/`checkCircuitBreaker` verdicts — they do not add a new `src/stress.ts` runtime module or a new `mission.ts` path. The stress is the measurement workload, not a new governor.
+- **Cross-platform is determinism + conformance:** the harness is pure over explicit fixture inputs (no `Date.now`/`Math.random`/unordered FS reads), so it is deterministic on every platform; `conformance.ts` 12-platform parity is the cross-platform proof. No per-OS branching, no new platform-specific code.
+- **CI enforcement = gate extension + selftest mutation:** `package.json:gate` now includes `bun scripts/benchmark-governor.ts`; `scripts/gate-selftest.ts` has a mutation that proves the harness can go red — G3. A gate that cannot fail is not a gate; the mutation is the proof.
+- **Docs completion:** §50 lists `docs/cost-governor.md`/`docs/cost-model.md`/`docs/stop-slop.md`/`docs/cost-debugging.md`/`docs/cost-evaluation.md` — Phase 9 creates the hub (`docs/cost-governor.md`) that covers all five §50 topics and links to `docs/concepts/cost.md` for the deep contracts; when `validate-content --check-docs` checks the §50 filenames literally, the five files are created as thin hubs (one-line pointers) rather than a single hub. No SKILL.md cap breach — rule 2g moves to `references/benchmark-governor.md` when needed.
+- **No new config:** Phase 9 adds nothing to `DEFAULT_CONFIG` — benchmark thresholds are fixture constants, not policy keys; the §6 `budget.*`/`slop.*` profile belongs to future policy phases, not here.
+- **Re-consumption note:** the harness re-consumes `cost.ts:costEnvelope`/`budgetForLane`, `evidence.ts:loadRegistry` shape, `slop.ts:detect*`/`decideIntervention`, `adaptive-budget.ts:projectBudget`/`checkCircuitBreaker`, `reporting.ts:buildCostLedger` shape — it does not fork them; `benchmark-governor.ts` is the only new executable.
+- **Campaign closure:** Phase 9 is the final phase of the 9-phase campaign — after its `bun run gate` green, the Native Cost Governor is complete per spec §56 DoD (Cost/Work/Context/Cognition/Scope&Code/Stop-Slop/Safety&Quality/Observability/Validation all checked).
+
