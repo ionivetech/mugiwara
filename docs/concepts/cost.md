@@ -306,3 +306,24 @@ Twelve capabilities + record helper:
 **Phase boundaries (honesty):** Phase 6 records the decisions and produces pure verdicts only. The report/CLI slop ledger (`slop.events_detected`, `stopped`, `compressed` — §39) and Cost-section slop rows (§43) and `mugiwara cost` slop section (§42) are Phase 8 Reporting; the §45 benchmark suite is Phase 9. **Honest boundary:** `src/slop.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2d) is the only thing that acts on them. The module makes the slop decision structured, auditable, and instructed — it does not force the model.
 
 **Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
+
+## Adaptive Budget & Circuit Breaker (`src/adaptive-budget.ts`)
+
+Phase 7 delivers the **Adaptive Budget & Circuit Breaker** — reservation, projection, adaptive budget, evidence-backed expansion, progressive thresholds, circuit breaker, and anomaly detection. `src/adaptive-budget.ts` is a pure verdict engine over explicit inputs, each decision recorded via `recordBudgetDecision` → `recordOptDecision` (`## Cost governor decisions` trail, `budget-governor` actor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Seven capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Budget reservation (§25) | `reserveBudget` | `reserved` + `available = max(0, remaining - expected_max)` |
+| Budget projection (§26) | `projectBudget` | `projected_min = current + remaining + conditional`, `projected_max = min + healing` |
+| Adaptive budget (§27) | `evaluateExpansion` | `allowed` only when `has_evidence` + one valid flag (scope/security/test-surface/arch-dependency/healing) |
+| Evidence-backed expansion (§27) | `evaluateExpansion` | `deny` on invalid reason (verbosity/reread/repeat/code) even with evidence |
+| Progressive thresholds (§28) | `checkProgressiveThreshold` | `ok <60 → optimize ≥60 → aggressive ≥75 → protect ≥90 → pause ≥100 → warning ≥150 → stop ≥300` |
+| Cost circuit breaker (§29) | `checkCircuitBreaker` | `tripped` when `actual ≥ 2× expected` with no progress/scope/evidence (ponytail: double-threshold) |
+| Anomaly detection (§24) | `detectBudgetAnomaly` | `anomaly` when `tokens_delta ≥ 5000` with zero progress (re-consumes slop signal) |
+| Decision trail (§41) | `recordBudgetDecision` | persists any verdict as a `budget-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 7 records the decisions and produces pure verdicts only. The report/CLI budget ledger (`budget.reserved`, `projected`, `remaining`, `avoided` — §26/§39) and `mugiwara cost` budget section (§42) and Cost-section budget rows (§43) are Phase 8 Reporting; the §45 benchmark suite is Phase 9. **Honest boundary:** `src/adaptive-budget.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2e) is the only thing that acts on them. The module makes the budget decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
