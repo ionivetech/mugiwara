@@ -1,0 +1,19 @@
+{
+  "name": "posture-selection-phase-isolated",
+  "skill": "mugiwara-orchestration",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "triage this large campaign and pick the posture", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "fix this single typo on the products page" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A mission has 4 phases and a plan over 2000 lines. Triage the execution posture.",
+      "rubric": ["phase-isolated", "sub-plan", "phases", "reason"]
+    }
+  ]
+}

@@ -49,7 +49,7 @@ Classify every incoming request. 5-way table (Trivial/Explicit/Exploratory/Open-
 
 ## Lane routing + precedence (Flow 0, size before process)
 
-Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** Record the initial execution posture + rationale (default `inline-sequential`) per `references/posture-routing.md`. A pasted Explicit spec still sizes the lane from its file list before Flow 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k inline vs ~132k measured per dispatch); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
+Alongside the class, size the mission and pick a lane (0 Direct / 1 Lean / 2 Standard / 3 Full / 4 Spike). **Precedence: class decides whether there is work; lane decides how much process — class first, lane second, record both.** Record the initial execution posture + rationale (default `inline-sequential`) per `_shared/references/posture-routing.md`. A pasted Explicit spec still sizes the lane from its file list before Flow 2 (40-file spec → Lane 3). Escalation only: a lane may rise mid-mission, never drop. Full table: `references/triage-escalation.md`. Small tasks: read-only investigation → host `explore` agent or inline read — NOT a Luffy subagent (~5k inline vs ~132k measured per dispatch); explicit implement → Lane 1 Zoro inline. Review only when risky — full pipeline.
 
 ## Spec bridge (Flow 0 → Flow 2)
 

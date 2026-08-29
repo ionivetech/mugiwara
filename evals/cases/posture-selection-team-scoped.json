@@ -1,0 +1,19 @@
+{
+  "name": "posture-selection-team-scoped",
+  "skill": "mugiwara-orchestration",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "triage this team mission and set the execution posture", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "run the whole team's mission in one go" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A plan declares 3 members with non-overlapping file ownership. Auto mode.",
+      "rubric": ["team-scoped", "member scope", "never another member", "ownership map"]
+    }
+  ]
+}

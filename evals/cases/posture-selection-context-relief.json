@@ -1,0 +1,19 @@
+{
+  "name": "posture-selection-context-relief",
+  "skill": "mugiwara-orchestration",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "triage this mission and choose the execution posture", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "merge the release branch" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Mid-mission context crosses the threshold but remaining tasks are ordered and dependent.",
+      "rubric": ["context-relief", "order", "one worker at a time", "preserve order"]
+    }
+  ]
+}
