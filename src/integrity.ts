@@ -38,7 +38,7 @@ function findSecrets(body: string): Array<{ label: string; hit: string }> {
   return out;
 }
 
-const TRAIL_EXTS = new Set(['.md', '.json', '.sh']);
+const TRAIL_EXTS = new Set(['.md', '.json', '.sh', '.jsonl']);
 
 function trailFiles(dir: string): string[] {
   const out: string[] = [];

@@ -143,6 +143,62 @@ describe('parity with scripts/lib/lane-base.sh (D5)', () => {
   }
 });
 
+// Gate-math parity with scripts/savepoint.sh (Robin review, Flow 7 — High):
+// the constants test above only locks VALUES from lane-base.sh; it does not
+// lock the warn/stop/delegate FORMULAS. If savepoint.sh's gate math changes,
+// cost.ts must follow or archive and savepoint split their verdicts. Evaluate
+// the formulas read from savepoint.sh through bash (the exact arithmetic the
+// shell runtime uses) and assert cost.ts reproduces it per lane budget.
+import { execFileSync } from 'node:child_process';
+const SAVEPOINT_SRC = readFileSync(join(import.meta.dirname, '..', 'scripts', 'savepoint.sh'), 'utf8');
+
+function savepointFormula(name: string): string {
+  // parse `WARN_AT=$(( BUDGET * 3 / 2 ))` by line prefix — no regex escaping,
+  // immune to paren-counting. Content = everything between `$((` and `))`.
+  const line = SAVEPOINT_SRC.split(/\r?\n/).find((l) => l.trim().startsWith(`${name}=$((`));
+  if (!line) throw new Error(`savepoint.sh formula ${name} not found`);
+  const start = line.indexOf('$') + 3; // past `$((`
+  const end = line.indexOf('))'); // before both closing parens
+  return line.slice(start, end).trim();
+}
+
+function bashEval(expr: string): number {
+  return parseInt(execFileSync('bash', ['-c', `echo $(( ${expr} ))`], { encoding: 'utf8' }).trim(), 10);
+}
+
+describe('gate-math parity with scripts/savepoint.sh (D5, Flow 7 fix)', () => {
+  it('warnAt matches savepoint.sh WARN_AT formula evaluated per lane budget', () => {
+    const f = savepointFormula('WARN_AT');
+    expect(f).toContain('BUDGET'); // guard: we are testing the real formula, not a stub
+    for (const lane of LANES) {
+      const b = budgetForLane(lane);
+      expect(warnAt(b)).toBe(bashEval(f.replace('BUDGET', String(b))));
+    }
+  });
+  it('stopAt matches savepoint.sh STOP_AT formula evaluated per lane budget', () => {
+    const f = savepointFormula('STOP_AT');
+    for (const lane of LANES) {
+      const b = budgetForLane(lane);
+      expect(stopAt(b)).toBe(bashEval(f.replace('BUDGET', String(b))));
+    }
+  });
+  it('delegateAt matches savepoint.sh DELEGATE_AT formula evaluated per lane budget + threshold', () => {
+    const f = savepointFormula('DELEGATE_AT');
+    expect(f).toContain('DELEGATE_THRESHOLD');
+    for (const lane of LANES) {
+      const b = budgetForLane(lane);
+      expect(delegateAt(b, 60)).toBe(bashEval(f.replace('BUDGET', String(b)).replace('DELEGATE_THRESHOLD', '60')));
+    }
+  });
+  it('budgetStatus matches savepoint.sh branch order (stop wins over warn)', () => {
+    // savepoint: tokens >= STOP_AT → stop (checked first); then >= WARN_AT → warn; else ok
+    expect(budgetStatus(12000, 36000)).toBe('stop');
+    expect(budgetStatus(12000, 35999)).toBe('warn');
+    expect(budgetStatus(12000, 18000)).toBe('warn');
+    expect(budgetStatus(12000, 17999)).toBe('ok');
+  });
+});
+
 describe('appendCostEvent — append-only JSONL', () => {
   let dir: string;
   beforeEach(() => {
