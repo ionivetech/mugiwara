@@ -64,3 +64,24 @@ clobber each other's resume position.
 The session-start hook (auto mode) surfaces only the missions owned by your git
 actor — never another member's. If you hold several in-flight missions it lists
 them and asks, it never guesses.
+
+## Ownership & interface declarations (Phase D)
+
+Each member declares its owned files/interfaces in the shared plan's ownership
+map. A member or worker never receives another member's scope — in `auto` mode
+this is a hard boundary, never silently crossed (the resumed scope is exactly
+the selected `(mission, member)` file).
+
+## Standardized handoff
+
+Handoff between members or sequential sub-missions carries: done-criteria,
+branch/base status, dependency status, continuation pointer
+(`continue-<member>.json`), and unresolved blocker references. Never a bare
+"here's where I left off".
+
+## Base drift & collisions
+
+Base drift, merge, and interface collisions are **routing/escalation events**,
+never a silent retry or an automatic cross-scope edit. When main has moved past
+the mission base, escalate (rebase check) before continuing; an interface
+collision routes to Luffy, never silently overwrites another member's work.
