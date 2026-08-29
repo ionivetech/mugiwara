@@ -24,8 +24,18 @@ describe('DEFAULT_CONFIG', () => {
 
 describe('readConfig', () => {
   let dir: string;
-  beforeEach(() => { dir = tmpProject(); });
-  afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
+  const realHome = process.env.HOME;
+  beforeEach(() => {
+    dir = tmpProject();
+    // isolate from a real ~/.mugiwara/config on the developer's machine:
+    // readConfig merges the global config (src/config.ts), so point HOME at a
+    // fresh dir with none. Restored in afterEach.
+    process.env.HOME = join(tmpdir(), `mugiwara-home-${Date.now()}`);
+  });
+  afterEach(() => {
+    if (realHome === undefined) delete process.env.HOME; else process.env.HOME = realHome;
+    rmSync(dir, { recursive: true, force: true });
+  });
 
   it('parses key=value lines, trims values', () => {
     writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\nverbosity = full\n');
