@@ -54,3 +54,18 @@ live here; the plan doc stays clean.
 - **Actor:** AI: deepseek-v4-flash
 - **Mode:** auto — branch auto-created (feat/native-cost-governor), auto-commit per task (conventional). auto_commit=on.
 - **Plan:** T1–T5 sequential, no [PARALLEL]. Executing inline.
+
+## Flow 5 — Scope override (user)
+
+- **Actor:** user: ionive <ionivetech@gmail.com>
+- **Decision:** campaign runs to completion — execute ALL 9 Cost Governor
+  phases (plan §51) until the Cost Governor is genuinely done; do not stop
+  after Phase 1.
+- **Reason:** explicit user instruction ("sampai phase akhir, cost governor
+  benar-benar selesai").
+- **Plan impact:** supersedes the Phase-1-only triage scope. Sequencing model
+  unchanged (per plan Mission split): each phase = own branch + PR from main,
+  trunk-based, reviewable diffs (roadmap-v0.8 precedent). Phase N branches
+  after Phase N-1's PR is handed to the user for merge. Campaign spans
+  multiple sessions via continue.json; auto mode → no stopping for approval
+  between phases. Current phase (1) completes first, then Phase 2 onward.
