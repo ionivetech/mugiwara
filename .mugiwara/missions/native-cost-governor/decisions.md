@@ -69,3 +69,44 @@ live here; the plan doc stays clean.
   after Phase N-1's PR is handed to the user for merge. Campaign spans
   multiple sessions via continue.json; auto mode → no stopping for approval
   between phases. Current phase (1) completes first, then Phase 2 onward.
+
+## Flow 0 — Phase 2 triage (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Phase 2 (Context Governor) — plan §51:** explicit class, Lane 3, auto mode.
+- **Branch:** continues on feat/native-cost-governor (stacked — Phase 1 foundation reused).
+- **Flow 1 skipped:** §51 + §10–13 exhaustive.
+- **Architecture decision:** context accounting via TS module mirroring the Phase-1
+  pattern (shell savepoint.sh stays the runtime source; TS measures + machine-checks
+  parity). Chosen for consistency with Phase 1 + preserving savepoint.sh.
+- **Plan impact:** Nami plans Phase 2 on this basis.
+
+## Resume — session continuation (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Resumed:** native-cost-governor, Flow 3→ (Phase 2), via `mugiwara continue`.
+  Phase 1 5/5 tasks done, GO, branch feat/native-cost-governor pushed
+  (up to date with origin, 17 commits over main).
+- **next_action verified against plan + todos:** consistent. Phase 2 is the
+  scope-override campaign's next phase (Flow 0 — Phase 2 triage logged above).
+  No contradiction.
+- **Plan impact:** proceed to Flow 2 — Nami plans Phase 2 (Context Governor,
+  spec §10–13), extending plan.md. Branch continues stacked on
+  feat/native-cost-governor.
+
+## Flow 2 → 3 — Phase 2 plan check-in (Luffy)
+
+- **Actor:** AI: deepseek-v4-flash
+- **Verdict:** GO — Phase 2 plan approved as written (Nami, appended to plan.md).
+- **Reason:** 7 tasks (T1–T7) in 3 waves; honest `[PARALLEL]` sets (T1–T4
+  file+interface disjoint; T5–T6 disjoint, all Wave-1 interfaces shipped).
+  Architecture matches the logged Phase 2 triage (TS module, savepoint.sh
+  untouched). Review items absorbed: P1 (delegateAt clamp), S2 (recordOptDecision
+  \r\n strip), Q1 (costEnvelope live), C2 (token status on lane budget, chars on
+  context_budget_chars), Q2 (status once); laneBaseForLane/delegateAt consumption
+  explicitly deferred to Phase 3. Config call accepted: three commented
+  `investigation_*` keys in DEFAULT_CONFIG (mirrors `context_budget_chars`,
+  §52 policy boundaries, no behavior change, T3 updates pinned-string test
+  in-scope). Honest Phase-2 = measurement-not-enforcement boundary logged.
+- **Plan impact:** hand off to Flow 3 (Zoro, execution). Auto mode → no user GO
+  pause; proceed to Zoro.

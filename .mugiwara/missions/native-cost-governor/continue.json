@@ -1,0 +1,15 @@
+{
+  "mission": "native-cost-governor",
+  "member": null,
+  "actor": "AI: deepseek-v4-flash",
+  "branch": "feat/native-cost-governor",
+  "flow": 3,
+  "phase": 1,
+  "mode": "auto",
+  "tasks_done": 5,
+  "tasks_total": 5,
+  "lane": "full",
+  "next_action": "Phase 1 closed (GO, pushed). Start Phase 2 (Context Governor, plan §51 Phase 2): context accounting, budget enforcement, duplicate detection, evidence references/reuse, investigation limits, context efficiency metrics. Nami: extend plan.md with Phase 2 detail + waves. Branch strategy: continue on feat/native-cost-governor (stacked) since Phase 1 unmerged; open Phase 1 PR anytime.",
+  "next_session_prompt": "Resume native-cost-governor campaign: Phase 2 Context Governor. Read plan.md §Phase split + decisions.md (scope override to full 9-phase campaign). Run Flow 0/2 for Phase 2 on branch feat/native-cost-governor.",
+  "updated_at": "2026-08-29T00:00:00.000Z"
+}
