@@ -476,8 +476,6 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 **Troubleshooting:** [Common problems](docs/troubleshooting.md)
 
-**Roadmap:** [ROADMAP.md](ROADMAP.md)
-
 ## What is measured, and what is not
 
 | Claim | Status |
