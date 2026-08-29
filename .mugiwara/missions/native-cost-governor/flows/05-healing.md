@@ -100,3 +100,114 @@ TDD: each fix's test was written first, run red, then the fix landed green.
 merge (per Luffy). Escalation: the `enforcement.test.ts` timing flake is the
 only thing between the branch and a green gate; it is already a separate
 tracked fix mission (blockers.md row 3), not a Phase-2 defect.
+
+---
+
+## ESCALATION — T2 "restore governance lines" (Phase-4 checkpoint) — false premise
+
+**Status: ESCALATED to Luffy. No code committed. Tree left green at 1bfc887.**
+
+### What the checkpoint asked
+Restore two governance lines Zoro cut in `eb8229d` —
+`Precedence: class decides whether there is work; lane decides how much process — class first, lane second.`
+and `Brook reads this at Flow 8. Never silently work around a blocker.` — keep the
+Phase-4 additions (rule `2b` + `## Scope & Code Governor`), keep the validator green,
+and delete no content to compensate. It asserted the deletion was unnecessary because
+"the repo validator caps at 120 CHARACTERS PER LINE, not 120 lines."
+
+### Why the checkpoint is factually wrong
+1. **The validator caps at 120 LINES, not 120 chars/line.** `scripts/validate-content.ts:19`:
+   `if (kind === 'skill' && body.replace(/\r?\n$/, '').split(/\r?\n/).length > 120)`
+   → "body exceeds 120 lines". A repo-wide search (`rg "120.*char|Body lines"`) found
+   **zero** 120-char-per-line rules anywhere in `scripts/` or `docs/`. The documented
+   limit (AGENTS.md skill-standard table: `Body lines | ≤120`) is a **line** cap.
+2. **The file is already AT the cap with the governance lines absent.** Base
+   `3490284` = 120 body lines; HEAD `1bfc887` = 120 body lines.
+3. **Zoro's rationale was correct.** `git show eb8229d` is net-zero lines: Phase-4
+   added `## Scope & Code Governor` (+heading/blank/2 content = +4 lines) and inline
+   `2b` (same line); Zoro cut exactly 4 lines (`Precedence:`+blank, `Brook` line, and
+   one blank before the pipeline table) to hold 120. The deletions were necessary, not
+   a misread.
+4. **The requested outcome is unsatisfiable.** Restore (+4 lines) + keep Phase-4 +
+   validator exit 0 (= ≤120 lines) + delete no content cannot coexist. Restoring the
+   two lines yields 124 body lines → `validate-content` fails (verified: restore pushed
+   it to 123, gate red).
+
+### Root cause
+Phase-4 represents the Scope & Code Governor rule **twice**: inline `2b` appended to
+rule 2, AND a full standalone `## Scope & Code Governor` section. That double
+representation overflowed the 120-line body budget, and the two governance lines were
+the collateral. Zoro cut the right budget lines but the wrong *content* — the actual
+bloat is the duplicated governor representation.
+
+### Options for Luffy (decision is Luffy's — content-budget/scope call, not a heal fix)
+- **A — Move a section to `references/`** (sanctioned skill pattern): relocate the
+  `## Scope & Code Governor` body to `references/scope-code-governor.md`, leave a
+  one-line pointer. Frees ~4 lines with zero content loss. Requires `verify-install`
+  pointer resolution. Cleanest; a real (small) refactor.
+- **B — De-duplicate the governor rule**: keep inline `2b` OR the standalone section,
+  drop the redundant copy. Loses some §15/§16 elaboration unless folded into `2b`.
+- **C — Accept the current state**: governance lines stay out; file is at the cap and
+  green. Reopens the governance-content gap the checkpoint cares about.
+- **D — Raise the cap / weaken the validator**: rejected outright — forbidden.
+
+### Evidence
+- Validator on clean HEAD: `validate-content --check-manifest --check-docs --check-doc-integrity` → **exit 0** (21 skills, 14 agents).
+- `bun test test/scope.test.ts` → **41 pass, 0 fail** (T1 unaffected).
+- Restored-lines attempt reverted; working tree at 1bfc887 (only pre-existing
+  plan.md/decisions.md mods remain — untouched per task).
+- No commit made; no SHA to report (task requested a SHA — superseded by escalation).
+
+### What I did NOT do (and why)
+Did not restore + commit a gate-red file. Did not delete content to compensate
+(forbidden). Did not silently agree with the checkpoint's false validator premise
+(role rule: a finding that doesn't hold up gets technical reasoning, not agreement).
+
+---
+
+## RESOLUTION — T2 governance lines, heal cycle 1 (Option A, Luffy's decision)
+
+**Status: HEALED. Commit `af8a204`. Option A (move section to `references/`) applied.**
+
+Per Luffy's decision (Option A), the T2 blocker is cleared using the repo's
+sanctioned references pattern:
+
+1. **New file** `content/skills/mugiwara-workflow/references/scope-code-governor.md`
+   — title + full `## Scope & Code Governor` body (both paragraphs), wrapped to
+   ≤120 chars/line. English only.
+2. **`content/skills/mugiwara-workflow/SKILL.md`**:
+   - Inline `## Scope & Code Governor` section (heading + blank + 2 content lines,
+     4 lines) replaced with heading + one-line pointer
+     `Full definition: \`references/scope-code-governor.md\` — reuse-first, justification
+     for abstractions/dependencies, minimum sufficient implementation.` (2 lines).
+   - Restored `Precedence: class decides whether there is work; lane decides how much
+     process — class first, lane second.` at line 67 (Flow 0, after the Hotfix row).
+   - Restored `Brook reads this at Flow 8. Never silently work around a blocker.` at
+     line 82 (Blocker protocol).
+   - Rule `2b` on line 91 intact. Every new line ≤120 chars.
+   - **Final body line count: 120** (exactly at the validator cap, gate green).
+
+### Verification (all green)
+- `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` → **exit 0** (content valid: 21 skills, 14 agents; manifest/docs in sync).
+- `bun scripts/verify-install.ts` → **exit 0** — 246 pointers checked across 9
+  targets, 0 broken; `references/scope-code-governor.md` pointer resolves after
+  install; 0/41 reference files unreachable.
+- `bun test test/scope.test.ts` → **41 pass, 0 fail** (T1 unaffected).
+- `bun run typecheck` → **exit 0**.
+- grep confirms both restored governance lines + rule 2b + `## Scope & Code Governor` present.
+
+### Restored-line positions (final SKILL.md)
+- line **67** — `Precedence: class decides whether there is work; lane decides how much process — class first, lane second.`
+- line **82** — `Brook reads this at Flow 8. Never silently work around a blocker.`
+- line **91** — rule 2b intact.
+- line **102/103** — `## Scope & Code Governor` heading + references pointer.
+
+### Commit
+`fix(workflow): move scope governor to references, restore SKILL.md governance lines`
+— SHA **af8a204**, new commit on top of 1bfc887 (not amended). Only
+`SKILL.md` + `references/scope-code-governor.md` staged; orchestrator artifacts
+(plan.md, decisions.md, blockers.md, flows/05-healing.md) untouched by the commit.
+
+### Untouched
+No `src/*.ts`, `savepoint.sh`, `lane-base.sh`, `DEFAULT_CONFIG`, `plan.md`,
+`decisions.md`, or `state.json` changed.
