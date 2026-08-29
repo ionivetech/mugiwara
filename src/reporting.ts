@@ -202,3 +202,24 @@ export function toCostJSON(ledger: CostLedger): string {
     2,
   );
 }
+
+// ── adaptation summary (Phase E) ──
+// Posture decisions are recorded in decisions.md (via Phase C). Summarize them
+// from the existing trail — no second store.
+export function summarizeAdaptation(missionDir: string): { count: number; rows: { ts: string; decision: string; reason: string }[] } {
+  const trail = parseDecisionTrail(missionDir);
+  const postureRe = /posture|switch|adapt|pause|parallel-workers|context-relief|phase-isolated|team-scoped/i;
+  const rows = trail
+    .filter((t) => postureRe.test(`${t.decision} ${t.reason}`))
+    .map((t) => ({ ts: t.ts, decision: t.decision, reason: t.reason }));
+  return { count: rows.length, rows };
+}
+
+export function renderAdaptationSection(missionDir: string): string {
+  const { count, rows } = summarizeAdaptation(missionDir);
+  if (count === 0) return '';
+  const lines = ['', '## Adaptation', '', '| Time | Decision | Reason |', '|---|---|---|'];
+  for (const r of rows) lines.push(`| ${r.ts} | ${r.decision} | ${r.reason} |`);
+  if (rows.length === 0) lines.push('| — | (posture rows recorded in decisions.md) | |');
+  return lines.join('\n');
+}

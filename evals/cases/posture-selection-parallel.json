@@ -1,0 +1,19 @@
+{
+  "name": "posture-selection-parallel",
+  "skill": "mugiwara-orchestration",
+  "type": "positive",
+  "trigger": {
+    "positive": [
+      { "prompt": "triage this mission and pick the execution posture", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "merge the release branch" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "Standard lane, two file-disjoint independent tasks declared in Nami's dependency map, no shared interfaces, low risk. Triage the mission.",
+      "rubric": ["parallel-workers", "inline-sequential", "dependency map", "reason"]
+    }
+  ]
+}
