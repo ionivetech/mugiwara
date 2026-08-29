@@ -578,6 +578,26 @@ console.log('\nT7 — evidence-thin gate');
   }
 }
 
+// --- Benchmark governor — tamper thresholds, prove harness goes red ---
+console.log('\nBenchmark governor — thresholds tamper');
+{
+  const threshFile = join(root, 'scripts', 'benchmark-thresholds.json');
+  if (!existsSync(threshFile)) {
+    console.log('  ⚠  benchmark-thresholds.json not found, skipping');
+  } else {
+    const original = readFileSync(threshFile, 'utf8');
+    try {
+      const data = JSON.parse(original);
+      data.workloads = data.workloads.map((w: Record<string, unknown>) => ({ ...w, projected: 0, overhead: 0 }));
+      writeFileSync(threshFile, JSON.stringify(data, null, 2));
+      assert('tampered thresholds → benchmark-governor fails', false, () => run('bench', 'bun scripts/benchmark-governor.ts'));
+    } finally {
+      writeFileSync(threshFile, original);
+      assert('restored → benchmark-governor passes', true, () => run('bench', 'bun scripts/benchmark-governor.ts'));
+    }
+  }
+}
+
 // --- DOCLINKS: a relative .md link that does not resolve must fail the gate ---
 console.log('\nDOCLINKS — doc link resolution');
 {

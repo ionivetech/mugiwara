@@ -348,3 +348,22 @@ Seven capabilities + ledger view:
 
 **Security design rules:** F2 — `loadRegistry` selective-drop shape validation (malformed lines dropped, never whole registry discarded) + never fingerprint secret-bearing files (`.env`, keys); F3 — every `missionDir` FS helper (`loadRegistry`, `persistRegistry`, `appendCostEvent`, `recordOptDecision`, `loadCostEvents`, `parseDecisionTrail`, `buildCostLedger`) asserts `missionDir` allowlist (`.mugiwara/missions/<id>` or `mugiwara-` tmp harness) — `Invalid missionDir` otherwise. Phase 8 closes the two Lows carried since Phase 2.
 
+## Benchmark & Hardening (scripts/benchmark-governor.ts)
+
+Phase 9 delivers **Benchmark & Hardening** — cost suite (§48), Stop-Slop suite (§45), large repository / long mission / runaway stress, regression thresholds (§49), cross-platform verification, CI enforcement, documentation completion (§50). `scripts/benchmark-governor.ts` is a deterministic harness (no `Date.now`/`Math.random`/network) that measures the Phases 1–8 governor; `scripts/benchmark-thresholds.json` is the ratchet fixture (like `retrieval-eval` floor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+| Capability | Harness | Verdict |
+|------------|---------|---------|
+| Cost suite (§48) | 4 workloads (lean-trivial/standard-feature/large-repo/long-mission) each with `task/lane/stages/evidence/cost+context range/surface/gates` | pass iff `measured.tokens ≤ projected+overhead` AND `context ≤ max` AND `evidence ≥ min` AND `surface` within expected |
+| Stop-Slop suite (§45) | 12 scenarios `detect→classify→intervene` (endless exploration, repeated reads, repeated commands, repeated failed test, repeated reasoning, unnecessary abstraction, unnecessary dependency, unrelated refactor, verbose output, no-progress healing, premature completion, excessive context) | each scenario pure over `src/slop.ts` detectors + `decideIntervention`; slop without `has_concrete_reason` → `stop`/`escalate`, with reason → `tolerate` |
+| Large repo stress | 50 files within declared scope → `detectScopeSlop` negative | pass |
+| Long mission stress | 9 flow stages `projectBudget` max ≤ full budget 50k | pass |
+| Runaway stress (§29) | actual 2× expected with no progress/scope/evidence → `checkCircuitBreaker` tripped | harness reports `breaker: tripped` (measures, not enforces) |
+| Thresholds (ratchet) | `scripts/benchmark-thresholds.json` holds `projected+overhead/context_max/evidence_min` per workload + `slop_floors` + `regression` baselines | thresholds only move on explicit diff, never silently; `ponytail: thresholds are fixture constants, not config — ratchet like retrieval-eval` |
+| Regression (§49) | `checkRegression` — cost down but correctness/evidence/security/quality/scope down → fail | hard regression, same as retrieval-eval floor |
+| Cross-platform | harness deterministic (pure inputs); `scripts/conformance.ts` 12-platform parity | no per-OS branching |
+| CI enforcement | `package.json:gate` runs `bun scripts/benchmark-governor.ts`; `scripts/gate-selftest.ts` tampers thresholds to prove red (G3) | gate that cannot fail is not a gate; `ponytail: harness measures, does not enforce — no runtime gate` |
+| Docs | `docs/cost-governor.md` hub + this section | honest boundary: measures, not enforces — LLM crew (workflow skill rule 2g) acts on signals |
+
+**Honest boundary:** `scripts/benchmark-governor.ts` measures cost/slop/regression and fails CI when thresholds are violated; it does not add a runtime `savepoint.sh` gate or pretend a benchmark script can force the model to be efficient. The LLM crew (workflow skill, rule 2g) is the only thing that acts on the signals — the harness proves whether the crew was efficient on the representative workloads. Thresholds are the ratchet fixture `scripts/benchmark-thresholds.json` (like `retrieval-eval` floor); 12-platform `conformance.ts` is the cross-platform proof.
+
