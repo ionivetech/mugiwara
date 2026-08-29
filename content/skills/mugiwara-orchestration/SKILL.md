@@ -101,7 +101,7 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 
 ## Closure (Flow 9)
 
-Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Write the closure summary to `.mugiwara/missions/<mission>/report.md` (seeded from `flows/06-closure.md`); report and summary prose follow `_shared/references/prose-style.md`. Run `mugiwara savepoint <mission>` for final state, then `mugiwara archive <mission>` — waves, review, security, blockers, decisions fold into report.md; plan.md stays. The mission dir ends as two files: plan.md + report.md. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
+Gate — every task's acceptance criteria verified, every gate passed, findings resolved or deferred with an owner, blocker ledger reviewed. Write the closure summary to `.mugiwara/missions/<mission>/report.md` (seeded from `flows/06-closure.md`); report and summary prose follow `_shared/references/prose-style.md`. Run `mugiwara savepoint <mission>` for final state, then `mugiwara archive <mission>` — waves, review, security, blockers, decisions fold into report.md; plan.md stays; the PR material (`flows/07-pr-verdict.md`) survives as `pr-verdict.md` at the mission root. The mission dir ends as plan.md + report.md + pr-verdict.md. Full detail: `references/closure.md`. With `auto_commit=off` (guided/semi): skip the save-point commit and push — hand the uncommitted tree + verdict to the user; auto always pushes.
 
 ## Spirit vs letter
 

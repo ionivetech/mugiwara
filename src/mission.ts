@@ -201,12 +201,20 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   }
   // Flow artifacts: flows/ is the current layout; a legacy mission that still
   // keeps waves/ folds from there so an upgrade never strands a trail.
+  // 07-pr-verdict.md SURVIVES archive as a standalone `pr-verdict.md` at the
+  // mission root — it is the PR material handed to the user, so it must not
+  // fold away into report.md.
+  const PR_VERDICT = 'pr-verdict.md';
+  const PR_VERDICT_SRC = join('flows', '07-pr-verdict.md');
   const flowsDir = join(dir, 'flows');
   const legacyWavesDir = join(dir, 'waves');
   const artDir = existsSync(flowsDir) ? flowsDir : existsSync(legacyWavesDir) ? legacyWavesDir : flowsDir;
   const artRel = artDir === legacyWavesDir ? 'waves' : 'flows';
   if (existsSync(artDir)) {
-    for (const f of readdirSync(artDir).sort()) fold.push(join(artRel, f));
+    for (const f of readdirSync(artDir).sort()) {
+      if (artRel === 'flows' && f === '07-pr-verdict.md') continue; // survives as pr-verdict.md
+      fold.push(join(artRel, f));
+    }
   }
 
   // The report survives: an existing report.md wins; otherwise the closure
@@ -218,6 +226,14 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   if (!dryRun) {
     mkdirSync(dir, { recursive: true });
+    // PR verdict survives archive as a standalone file at the mission root —
+    // it is the PR material handed to the user and must not fold away.
+    const prVerdictSrc = join(dir, PR_VERDICT_SRC);
+    if (existsSync(prVerdictSrc)) {
+      const prVerdictPath = join(dir, PR_VERDICT);
+      writeFileSync(prVerdictPath, readFileSync(prVerdictSrc, 'utf8'));
+      kept.push(join('missions', mission, PR_VERDICT));
+    }
     if (fold.length) {
       const sections = fold.map((f) => {
         const body = readFileSync(join(dir, f), 'utf8').trim();
@@ -241,6 +257,11 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     for (const f of fold) {
       rmSync(join(dir, f), { force: true, recursive: true });
       removed.push(join('missions', mission, f));
+    }
+    // the pr-verdict source was copied to the root — remove the flows/ copy
+    if (existsSync(prVerdictSrc)) {
+      rmSync(join(dir, PR_VERDICT_SRC), { force: true });
+      removed.push(join('missions', mission, PR_VERDICT_SRC));
     }
     // session state dies with the mission
     for (const f of files.filter((f) => f.endsWith('.json'))) rmSync(join(dir, f), { force: true });
