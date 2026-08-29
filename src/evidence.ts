@@ -110,7 +110,27 @@ export function persistRegistry(missionDir: string, registry: RegistryEntry[]): 
 export function loadRegistry(missionDir: string): RegistryEntry[] {
   const file = join(missionDir, REGISTRY_FILE);
   try {
-    return readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l) as RegistryEntry);
+    return readFileSync(file, 'utf8')
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((l) => JSON.parse(l) as RegistryEntry)
+      // F1 — validate entry shape on load: drop malformed lines, never crash
+      // the reader, and coerce `reads` to a bounded integer. A malformed or
+      // `string reads` line (string-concat risk) can no longer reach consumers.
+      .filter((e): e is RegistryEntry => {
+        const ok =
+          typeof e.fingerprint === 'string' &&
+          typeof e.kind === 'string' &&
+          typeof e.file === 'string' &&
+          typeof e.id === 'string' &&
+          typeof e.ref === 'string' &&
+          typeof e.reads === 'number' &&
+          Number.isFinite(e.reads) &&
+          e.reads >= 0;
+        if (!ok) return false;
+        e.reads = Math.floor(e.reads);
+        return true;
+      });
   } catch {
     return [];
   }

@@ -4,7 +4,7 @@
 // detection (spec §12). Reuse-or-create: a repeat read returns the existing
 // reference instead of a new one. Persisted as append-only context-registry.jsonl.
 import { describe, it, expect } from 'vitest';
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -130,5 +130,73 @@ describe('persistRegistry / loadRegistry — JSONL round-trip', () => {
   it('returns empty list when no registry file exists', () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
     expect(loadRegistry(dir)).toEqual([]);
+  });
+});
+
+describe('loadRegistry — F1 shape validation (security hardening)', () => {
+  it('drops a line whose reads is a string (string-concat risk); rest load intact', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
+    writeFileSync(
+      join(dir, 'context-registry.jsonl'),
+      [
+        JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'a.ts', id: 'E001', reads: 1, ref: 'E001 a.ts' }),
+        JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'b.ts', id: 'E002', reads: '3', ref: 'E002 b.ts' }),
+        JSON.stringify({ fingerprint: 'f3', kind: 'file', file: 'c.ts', id: 'E003', reads: 1, ref: 'E003 c.ts' }),
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    const loaded = loadRegistry(dir);
+    expect(loaded).toHaveLength(2);
+    expect(loaded.map((e) => e.id)).toEqual(['E001', 'E003']);
+  });
+
+  it('drops a line missing ref; valid lines before and after load', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
+    writeFileSync(
+      join(dir, 'context-registry.jsonl'),
+      [
+        JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'a.ts', id: 'E001', reads: 1, ref: 'E001 a.ts' }),
+        JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'b.ts', id: 'E002', reads: 1 }),
+        JSON.stringify({ fingerprint: 'f3', kind: 'file', file: 'c.ts', id: 'E003', reads: 1, ref: 'E003 c.ts' }),
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    const loaded = loadRegistry(dir);
+    expect(loaded).toHaveLength(2);
+    expect(loaded.map((e) => e.id)).toEqual(['E001', 'E003']);
+  });
+
+  it('floors a fractional reads and drops a negative reads', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
+    writeFileSync(
+      join(dir, 'context-registry.jsonl'),
+      [
+        JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'a.ts', id: 'E001', reads: 2.7, ref: 'E001 a.ts' }),
+        JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'b.ts', id: 'E002', reads: -1, ref: 'E002 b.ts' }),
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    const loaded = loadRegistry(dir);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].reads).toBe(2);
+  });
+
+  it('drops a line with non-finite reads', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-evidence-'));
+    writeFileSync(
+      join(dir, 'context-registry.jsonl'),
+      [
+        JSON.stringify({ fingerprint: 'f1', kind: 'file', file: 'a.ts', id: 'E001', reads: 1, ref: 'E001 a.ts' }),
+        JSON.stringify({ fingerprint: 'f2', kind: 'file', file: 'b.ts', id: 'E002', reads: NaN, ref: 'E002 b.ts' }),
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+    const loaded = loadRegistry(dir);
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].id).toBe('E001');
   });
 });
