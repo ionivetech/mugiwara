@@ -17,6 +17,8 @@ import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
 import { costEnvelope } from './cost.ts';
+import { computeLiveSlop } from './slop.ts';
+import { loadRegistry } from './evidence.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
@@ -396,7 +398,18 @@ function costCmd(flags: Args['flags'], positionals: string[]): void {
   const envelope = states.length
     ? costEnvelope({ lane: (states[0] as unknown as { lane?: string }).lane, budget: (states[0] as unknown as { budget?: number }).budget, tokens_est: (states[0] as unknown as { tokens_est?: number }).tokens_est })
     : costEnvelope({ lane: 'full', tokens_est: 0 });
-  const ledger = buildCostLedger({ missionDir, envelope });
+  // live slop (§3.3): run existing detectors over state already available
+  // (heal cycle, context registry repeated reads) so slop_interventions is real.
+  const state0 = states[0] as unknown as { heal_cycle?: number };
+  let repeatedReads = 0;
+  try {
+    const reg = loadRegistry(missionDir);
+    repeatedReads = reg.reduce((s, e) => s + Math.max(e.reads - 1, 0), 0);
+  } catch {
+    repeatedReads = 0;
+  }
+  const liveSlop = computeLiveSlop({ heal_cycle: state0?.heal_cycle ?? 0, repeated_reads: repeatedReads });
+  const ledger = buildCostLedger({ missionDir, envelope, slopSummary: { interventions: liveSlop.interventions } });
   if (flag(flags.json)) {
     console.log(toCostJSON(ledger));
     return;
@@ -404,6 +417,10 @@ function costCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`Cost envelope: ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned})`);
   console.log(`Avoided: ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ~${ledger.avoided.tokens_avoided_est} tokens`);
   console.log(`Efficiency: reuse ${ledger.efficiency.reuse_rate}, dup ${ledger.efficiency.duplicate_avoidance_chars} chars, budget ${ledger.efficiency.budget_efficiency_pct}%`);
+  if (ledger.avoided.slop_interventions > 0) {
+    const roles = Object.entries(liveSlop.perRole).map(([r, n]) => `${r}:${n}`).join(', ');
+    console.log(`Slop: ${ledger.avoided.slop_interventions} intervention(s) — ${roles}`);
+  }
   console.log(`Trail: ${ledger.trail.length} decisions`);
   if (flag(flags.ledger) && ledger.trail.length) {
     for (const t of ledger.trail.slice(0, 20)) console.log(`- ${t.ts} — ${t.actor}: ${t.decision} — reason: ${t.reason}${t.evidence ? ` — evidence: ${t.evidence}` : ''}`);

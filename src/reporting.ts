@@ -179,7 +179,7 @@ export function renderCostSection(ledger: CostLedger): string {
     '|-----------|-------|',
     `| Budget | ${env.status} ${env.pct}% (${env.used}/${env.planned}) |`,
     `| Context | ${env.planned} chars, reuse ${ledger.efficiency.reuse_rate} |`,
-    `| Avoided | ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ${ledger.avoided.tokens_avoided_est} tokens est |`,
+    `| Avoided | ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ${ledger.avoided.slop_interventions} slop, ~${ledger.avoided.tokens_avoided_est} tokens est |`,
     `| Efficiency | reuse ${ledger.efficiency.reuse_rate}, dup ${ledger.efficiency.duplicate_avoidance_chars} chars, budget ${ledger.efficiency.budget_efficiency_pct}% |`,
     `| Trail | ${ledger.trail.length} decisions |`,
   ];
