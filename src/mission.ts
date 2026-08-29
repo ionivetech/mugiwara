@@ -4,6 +4,7 @@ import { existsSync, rmSync, readFileSync, readdirSync, mkdirSync, writeFileSync
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { checkTrail, formatIssues } from './integrity.ts';
+import { checkMissionArtifacts } from './check-artifacts.ts';
 import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
 import { rankFiles, renderRouting } from './routing.ts';
@@ -121,6 +122,12 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const issues = checkTrail(dir, projectDir);
     if (issues.length) {
       throw new Error(`closure integrity gate failed — fix these before archiving:\n${formatIssues(issues)}`);
+    }
+    // Artifact gate (roadmap v0.8 item 4): Lane 2+ missions must carry
+    // plan.md + flows/* evidence — a mission without its trail does not fold.
+    const artifacts = checkMissionArtifacts(dir);
+    if (!artifacts.ok) {
+      throw new Error(`archive artifact gate failed — missing: ${artifacts.missing.join(', ')} (lane ${artifacts.lane}). Write the evidence trail before archiving.`);
     }
   }
 
