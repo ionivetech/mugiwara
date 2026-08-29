@@ -14,7 +14,7 @@ import { resetMission, archiveMission } from './mission.ts';
 import { runScript, RUNNABLE } from './run.ts';
 import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor } from './continue.ts';
 import { blamePath } from './provenance.ts';
-import { signReport, verifyReport } from './sign.ts';
+import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
@@ -442,11 +442,27 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`\nwritten: ${out}`);
 }
 
-/** `mugiwara sign <mission>` / `--verify` — optional minisign attestation. */
+/** `mugiwara sign <mission>` / `--verify` / `--gen-key` — optional attestation. */
 function signCmd(flags: Args['flags'], _: string[]): void {
   const projectDir = resolve(str(flags.project) ?? process.cwd());
+  if (flag(flags.genKey)) {
+    const backend = str(flags.backend) ?? 'auto';
+    const home = homedir();
+    if (backend === 'minisign') {
+      if (!hasMinisign()) { console.error('✗ minisign not installed — cannot generate keys with this backend'); process.exit(1); }
+      try {
+        execFileSync('minisign', ['-G'], { stdio: 'inherit' });
+        console.log('✓ minisign key pair generated in ~/.mugiwara/');
+        return;
+      } catch { console.error('✗ key generation failed'); process.exit(1); }
+    }
+    // pure (default)
+    const dir = ensurePureKey(home);
+    console.log(`✓ pure ed25519 key pair ready: ${join(dir, 'mugiwara.key')} / ${join(dir, 'mugiwara.pub')}`);
+    return;
+  }
   const mission = _[1];
-  if (!mission) { console.error('usage: mugiwara sign <mission> [--verify] [--project <dir>]'); process.exit(1); }
+  if (!mission) { console.error('usage: mugiwara sign <mission> [--verify] [--gen-key [--backend pure|minisign]] [--project <dir>]'); process.exit(1); }
   const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
   if (!existsSync(missionDir)) { console.error(`no mission dir: ${missionDir}`); process.exit(1); }
   const r = flag(flags.verify) ? verifyReport(projectDir, missionDir) : signReport(projectDir, missionDir);
@@ -475,7 +491,9 @@ Usage:
                          (fetch notes first: git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara')
   mugiwara handoff <m>   write .mugiwara/missions/<m>/handoff.md — a report the next
                          engineer can act on (computed state + staleness check)
-  mugiwara sign <m>      optional attestation: minisign-sign report.md (--verify to check)
+  mugiwara sign <m>      attestation: sign report.md (auto/minisign/pure/off; --verify to check)
+  mugiwara sign --gen-key [--backend pure|minisign]
+                         create signing keys (pure ed25519 default)
   mugiwara run <script> [args...]
                          run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [flow] [mode]

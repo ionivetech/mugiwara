@@ -8,7 +8,7 @@
 // Backend chosen via sign_backend in .mugiwara/config (auto|minisign|pure|off).
 // Detached signature lives beside the report (report.md.minisig | .mugisig).
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
 import { homedir } from 'node:os';
 import { join } from 'node:path';

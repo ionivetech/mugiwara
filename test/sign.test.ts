@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { join } from 'node:path';
-import { pureSign, pureVerify, generatePureKey, ensurePureKey, resolveBackend, type BackendChoice } from '../src/sign.ts';
+import { pureSign, pureVerify, generatePureKey, ensurePureKey, resolveBackend, signReport, verifyReport, type BackendChoice } from '../src/sign.ts';
 
 function tmpHome(): string {
   return mkdtempSync(join(tmpdir(), 'mugi-home-'));
@@ -85,5 +85,72 @@ describe('resolveBackend', () => {
   });
   it('unknown → pure fallback (never silent off)', () => {
     expect(resolveBackend('weird', { hasMinisign: false, hasKey: false })).toBe('pure');
+  });
+});
+
+describe('signReport end-to-end (pure backend)', () => {
+  let home: string;
+  let project: string;
+  beforeEach(() => {
+    home = tmpHome();
+    project = mkdtempSync(join(tmpdir(), 'mugi-proj-'));
+    // isolate homedir so pure keys land in the temp home, never the real one
+    const prev = process.env.HOME;
+    process.env.HOME = home;
+    process.env.MUGIWARA_HOME_OVERRIDE = home;
+  });
+  afterEach(() => {
+    delete process.env.HOME;
+    delete process.env.MUGIWARA_HOME_OVERRIDE;
+    rmSync(home, { recursive: true, force: true });
+    rmSync(project, { recursive: true, force: true });
+  });
+
+  it('signs with auto backend (no minisign → pure), verifies round-trip, detects tamper', () => {
+    // auto-generate keys first (as --gen-key would)
+    const dir = ensurePureKey(home);
+    const key = readFileSync(join(dir, 'mugiwara.key'), 'utf8');
+    const pub = readFileSync(join(dir, 'mugiwara.pub'), 'utf8');
+
+    const mdir = join(project, '.mugiwara', 'missions', 'demo');
+    mkdirSync(mdir, { recursive: true });
+    writeFileSync(join(mdir, 'report.md'), '# demo report\n');
+
+    const r = signReport(project, mdir);
+    expect(r.ok).toBe(true);
+    expect(r.message).toContain('mugisig');
+
+    const ok = verifyReport(project, mdir);
+    expect(ok.ok).toBe(true);
+    expect(ok.message).toContain('verifies');
+
+    // tamper → INVALID
+    writeFileSync(join(mdir, 'report.md'), '# tampered\n');
+    const bad = verifyReport(project, mdir);
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toContain('INVALID');
+    void key; void pub;
+  });
+
+  it('sign_backend=off refuses to sign', () => {
+    mkdirSync(join(project, '.mugiwara'), { recursive: true });
+    writeFileSync(join(project, '.mugiwara', 'config'), 'sign_backend=off\n');
+    const mdir = join(project, '.mugiwara', 'missions', 'demo');
+    mkdirSync(mdir, { recursive: true });
+    writeFileSync(join(mdir, 'report.md'), '# demo\n');
+    const r = signReport(project, mdir);
+    expect(r.ok).toBe(false);
+    expect(r.message).toContain('signing disabled');
+  });
+
+  it('sign_backend=minisign without minisign → loud failure', () => {
+    mkdirSync(join(project, '.mugiwara'), { recursive: true });
+    writeFileSync(join(project, '.mugiwara', 'config'), 'sign_backend=minisign\n');
+    const mdir = join(project, '.mugiwara', 'missions', 'demo');
+    mkdirSync(mdir, { recursive: true });
+    writeFileSync(join(mdir, 'report.md'), '# demo\n');
+    const r = signReport(project, mdir);
+    expect(r.ok).toBe(false);
+    expect(r.message).toContain('sign_backend=minisign but minisign not installed');
   });
 });
