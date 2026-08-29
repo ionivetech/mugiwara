@@ -150,7 +150,28 @@ single source of truth for the shell runtime (`savepoint.sh` reads it and
 cannot import TypeScript); `src/cost.ts` is the TS-side mirror —
 `budgetForLane`, `laneBaseForLane`, `warnAt`/`stopAt` (1.5×/3× thresholds),
 `budgetStatus`, `delegateAt`, and the normalized `costEnvelope` read model.
-`src/mission.ts` (archive cost section) consumes it instead of hardcoding
-lane budgets. Drift between the two sides is a CI failure, not a display
-nit: `test/cost.test.ts` asserts every constant against `lane-base.sh`
-(parity — same D5 pattern as `scripts/lane-base.ts`).
+  `src/mission.ts` (archive cost section) consumes it instead of hardcoding
+  lane budgets. Drift between the two sides is a CI failure, not a display
+  nit: `test/cost.test.ts` asserts every constant against `lane-base.sh`
+  (parity — same D5 pattern as `scripts/lane-base.ts`).
+
+## Context accounting + budget (`src/context.ts`)
+
+Phase 2 adds context measurement and bounds it. `savepoint.sh` measures
+**tokens** and gates the lane token budget; it does **not** measure context —
+so there is no shell-side context measurement to mirror, and `src/context.ts`
+is the single definition. Context accounting runs on demand in TS, fed by the
+trail on disk + the evidence registry.
+
+- **Chars measure** — `measureContextChars` reuses `src/budget.ts` (single
+  implementation, test-locked): the total byte footprint of the trail's
+  markdown artifacts, i.e. the context a future reader must load.
+- **Est-token ratio** — `estContextTokens(chars) = round(chars / 4)`, a coarse
+  documented estimate (`ponytail:` comment — refine when provider token
+  telemetry exists).
+- **Budget gate** — `contextStatus` gates on `context_budget_chars` (chars),
+  never on tokens: chars > budget → 'over', else 'ok'. Budget 0 → 'ok'. This
+  keeps the context budget separate from the lane token budget (C2 — never
+  conflated).
+- `contextStatus` mirrors the archive-time closure throw condition, surfaced
+  as a pure, tested gate.
