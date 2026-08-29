@@ -66,7 +66,10 @@ export function budgetStatus(budget: number, tokens: number): 'ok' | 'warn' | 's
 
 /** Delegation threshold — same as `$(( BUDGET * DELEGATE_THRESHOLD / 100 ))`. */
 export function delegateAt(budget: number, thresholdPct: number): number {
-  return Math.floor((budget * thresholdPct) / 100);
+  // clamp threshold to [1,100] before the integer division — matches
+  // savepoint.sh's clamp (DELEGATE_THRESHOLD clamped 1..100, scripts/savepoint.sh)
+  const t = Math.min(100, Math.max(1, thresholdPct));
+  return Math.floor((budget * t) / 100);
 }
 
 // ── Normalized cost envelope (computed, never stored — state.json convention) ──
@@ -153,8 +156,11 @@ export function recordOptDecision(missionDir: string, d: Omit<OptDecision, 'ts'>
     hasSection = readFileSync(file, 'utf8').split(/\r?\n/).some((l) => l.trim() === OPT_SECTION);
   } catch { /* first write */ }
   const ts = new Date().toISOString();
-  const ev = d.evidence ? ` — evidence: ${d.evidence}` : '';
-  const bullet = `- ${ts} — ${d.actor}: ${d.decision} — reason: ${d.reason}${ev}`;
+  // flat fields by contract — strip newlines so no markdown/line injection
+  // into decisions.md → report.md (S2). CR/LF become spaces.
+  const flat = (s: string): string => s.replace(/[\r\n]+/g, ' ');
+  const ev = d.evidence ? ` — evidence: ${flat(d.evidence)}` : '';
+  const bullet = `- ${ts} — ${flat(d.actor)}: ${flat(d.decision)} — reason: ${flat(d.reason)}${ev}`;
   const body = hasSection ? `\n${bullet}\n` : `\n${OPT_SECTION}\n\n${bullet}\n`;
   appendFileSync(file, body, 'utf8');
 }

@@ -85,6 +85,17 @@ describe('delegateAt — savepoint.sh DELEGATE_AT math', () => {
     expect(delegateAt(50000, 80)).toBe(40000);
     expect(delegateAt(3000, 60)).toBe(1800);
   });
+
+  it('clamps thresholdPct to [1,100] before division (P1 — matches savepoint.sh clamp)', () => {
+    // 0 → clamped to 1: BUDGET*1/100
+    expect(delegateAt(12000, 0)).toBe(delegateAt(12000, 1));
+    expect(delegateAt(12000, 0)).toBe(120);
+    // >100 → clamped to 100: BUDGET*100/100
+    expect(delegateAt(12000, 150)).toBe(delegateAt(12000, 100));
+    expect(delegateAt(12000, 150)).toBe(12000);
+    // mid-range unchanged
+    expect(delegateAt(12000, 60)).toBe(7200);
+  });
 });
 
 describe('costEnvelope', () => {
@@ -268,5 +279,25 @@ describe('recordOptDecision — decisions.md section append', () => {
     const nested = join(dir, 'missions', 'demo');
     recordOptDecision(nested, { actor: 'AI: test', decision: 'x', reason: 'y' });
     expect(existsSync(join(nested, 'decisions.md'))).toBe(true);
+  });
+
+  it('strips newlines from flat fields — no markdown/line injection (S2)', () => {
+    recordOptDecision(dir, {
+      actor: 'AI: test\n- injected actor',
+      decision: 'stop\n## fake section',
+      reason: 'x\ry',
+      evidence: 'E001\n* injected',
+    });
+    const body = readFileSync(join(dir, 'decisions.md'), 'utf8');
+    // exactly one bullet line — no injected blank/header lines
+    const bullets = body.split(/\r?\n/).filter((l) => l.startsWith('- '));
+    expect(bullets).toHaveLength(1);
+    expect(bullets[0]).not.toContain('\n');
+    expect(bullets[0]).not.toContain('\r');
+    // no injected header line — `## fake section` is flattened inline, never a standalone heading
+    expect(body.split(/\r?\n/).some((l) => l.trim().startsWith('## fake section'))).toBe(false);
+    expect(body.split(/\r?\n/).some((l) => l.startsWith('- injected'))).toBe(false);
+    expect(body.split(/\r?\n/).some((l) => l.startsWith('* injected'))).toBe(false);
+    expect(bullets[0]).toContain('reason: x y');
   });
 });
