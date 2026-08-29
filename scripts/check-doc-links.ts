@@ -16,8 +16,14 @@ function walk(d: string, out: string[] = []): string[] {
   return out;
 }
 const files: string[] = [];
-for (const r of ["docs", "examples"]) files.push(...walk(join(root, r)));
-for (const r of ["README.md", "ROADMAP.md"]) files.push(resolve(root, r));
+for (const r of ["docs", "examples"]) {
+  const p = join(root, r);
+  if (existsSync(p)) files.push(...walk(p));
+}
+for (const r of ["README.md", "ROADMAP.md"]) {
+  const p = resolve(root, r);
+  if (existsSync(p)) files.push(p);
+}
 
 let bad = 0;
 for (const f of files) {

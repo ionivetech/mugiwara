@@ -179,8 +179,9 @@ function planTouched(): boolean {
       if (!existsSync(plan)) continue;
       // lstat, not stat: a symlinked plan pointing outside .mugiwara/
       // must not count as a plan write.
+      // 1s tolerance: file mtime can be ~7ms before first_seen due to FS granularity / clock skew
       const at = lstatSync(plan).mtimeMs;
-      if (at >= sessionStart) return true;
+      if (at + 1000 >= sessionStart) return true;
     }
   } catch { /* unreadable — treat as untouched */ }
   return false;

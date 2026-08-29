@@ -28,9 +28,7 @@ Batch blocking ambiguities into ONE question round; never assume silently. Mode 
 
 ## Full context scan
 
-Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. If the mission needs it, scan everything — a plan written without the real code is fiction. Ground every file path and step in what exists; confirm tooling, do not assume. Trust-sort sources (high/medium/low): `references/plan-template.md`. Rule: every file path in the plan must be verified to exist in the scan — an unverified path fails the plan.
-
-**User AC mapping (per `mugiwara-testcases`).** In the context scan, read the declared test source (none = no user tests) and map each user AC to ≥1 per-task criterion: executable user test → the project test command scoped to that file; declarative AC → "translate to a project test file + run" or a literal command check. Cross-cutting user ACs (an e2e flow spanning tasks) become plan-level criteria re-run at the checkpoint against the whole diff; never invent an integration test as a criterion — user tests are the only integration-class criteria.
+Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. Ground every file path in what exists; confirm tooling, do not assume. Trust-sort sources: `references/plan-template.md`. Rule: every file path must be verified — unverified path fails.
 
 ## Zero-question standard
 
@@ -106,6 +104,8 @@ Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key deci
 
 Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. The planner writes the split before any task detail.
 
+## Large campaign — sub-plan
+Full checklist: `references/large-campaign-subplan.md` — 6 items; trigger `>3 phases` or `>1500 lines`, `sub-plan/NN-phaseNN-<slug>.md`, master index pattern.
 ## Handoff
 
 STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to the orchestrator.** Present a 2-3 line summary (waves, task count, key risks) and hand off for the GO decision. The orchestrator decides: approve → executor, revise → back to you, or escalate.

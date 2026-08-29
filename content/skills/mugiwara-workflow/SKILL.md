@@ -64,10 +64,7 @@ Luffy classifies every request 8 ways:
 | Refuse | deploy / migration / key rotation / merge | decline at Flow 0, offer branch handoff |
 | Hotfix | production broken | Lane 1, gates deferred with owner |
 
-Precedence: class decides whether there is work; lane decides how much process — class first, lane second.
-Lane: 0=Direct (<20 LOC), 1=Lean (1-2 files), 2=Standard (3-8 files), 3=Full (9+ or sensitive), 4=Spike. Record route in `.mugiwara/missions/<mission>/decisions.md`. Read-only investigation (no file change) → Answer/Explore — no crew, no Luffy subagent.
-
-**Audit-lite (Lane 0/1).** Small trail only: `state.json`, `flows/01-execution.md`, closure `report.md`; plan/spec/blockers appear on these lanes only when a blocker occurs. Big scans may dispatch ONE read-only investigation subagent (never edits) returning a compressed digest; writers stay inline.
+Precedence: class decides work; lane decides process — class first, lane second. Lane: 0=Direct (<20 LOC), 1=Lean (1-2), 2=Standard (3-8), 3=Full (9+), 4=Spike. Record route in `decisions.md`.
 
 ## Session handoff
 
@@ -93,14 +90,10 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 5. Plan doc is source of truth from Flow 2.
 6. Resume via `resume-coordinator` before any flow stage — never restart.
 7. Push branch + hand verdict to user; crew never merges or deploys. 8. Host todo mirrors the plan doc every task + flow stage — same response as evidence.
-## Work Governor
-Stages classify required/conditional/optional (§7); skip only with a recorded reason; agents/skills load only when they earn cost (§8/§9); mission complete only when §19's five conditions hold; verdicts as `work-governor` trail rows. savepoint/lane-base/config untouched.
-## Scope & Code Governor — Full definition: `references/scope-code-governor.md` — reuse-first, justification for abstractions/dependencies, minimum sufficient implementation.
-## Cognitive & Output Governor — Full definition: `references/cognitive-output-governor.md` — Question→Evidence→Decision→Action, bounded alternatives, compressed deduplicated mission-focused output.
-## Stop-Slop Governor — Full definition: `references/stop-slop-governor.md` — taxonomy/signals, progress vs cost, anomaly, intervention; six detectors: retry/healing/scope/context/investigation/code; slop-governor trail rows. savepoint/lane-base/config untouched.
-## Adaptive Budget & Circuit Breaker — Full definition: `references/adaptive-budget-governor.md` — reservation/projection/adaptive/expansion/thresholds/breaker/anomaly; budget-governor trail rows. savepoint/lane-base/config untouched.
-## Reporting & CLI — cost ledger aggregates envelope+events+registry+trail; `mugiwara cost` surfaces ledger (--json); report Cost section renders ledger+avoided+efficiency+trail (§43). No new config.
-## Benchmark & Hardening — Full definition: `references/benchmark-governor.md` — cost/Stop-Slop/large/long/runaway/threshold/regression/cross-platform/CI. savepoint/lane-base/config untouched.
+## Governors
+Work (§7), Scope/Code (§14-16), Cognitive, Stop-Slop (§45), Budget (§43), Reporting/CLI, Benchmark (§48-49) — full checklists: `references/scope-code-governor.md`, `references/cognitive-output-governor.md`, `references/stop-slop-governor.md`, `references/adaptive-budget-governor.md`, `references/benchmark-governor.md`; trail rows; savepoint/lane-base/config untouched.
+## Large campaign — sub-plan & archive merge
+Full checklist: `references/large-campaign-subplan.md` — 12 items; `sub-plan/` when `>3 phases` or `>1500 lines`, `flows/phase-NN/` isolation, `mugiwara archive --merge` folds into `report.md`.
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.
