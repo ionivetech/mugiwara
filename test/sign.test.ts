@@ -153,4 +153,28 @@ describe('signReport end-to-end (pure backend)', () => {
     expect(r.ok).toBe(false);
     expect(r.message).toContain('sign_backend=minisign but minisign not installed');
   });
+
+  it('verify: .mugisig verifies even when minisign binary is absent (tries both)', () => {
+    // pure-sign a report
+    const mdir = join(project, '.mugiwara', 'missions', 'demo');
+    mkdirSync(mdir, { recursive: true });
+    writeFileSync(join(mdir, 'report.md'), '# demo\n');
+    const signed = signReport(project, mdir);
+    expect(signed.ok).toBe(true);
+
+    // minisign not installed on this machine (hasMinisign false) — the
+    // .mugisig path must still verify without the binary
+    const v = verifyReport(project, mdir);
+    expect(v.ok).toBe(true);
+    expect(v.message).toContain('mugisig');
+  });
+
+  it('verify: missing both signatures says not signed', () => {
+    const mdir = join(project, '.mugiwara', 'missions', 'demo');
+    mkdirSync(mdir, { recursive: true });
+    writeFileSync(join(mdir, 'report.md'), '# demo\n');
+    const v = verifyReport(project, mdir);
+    expect(v.ok).toBe(false);
+    expect(v.message).toContain('not signed');
+  });
 });
