@@ -190,3 +190,36 @@ and commented out in `DEFAULT_CONFIG` (`readInvestigationConfig`, `src/config.ts
 Non-numeric or zero values fall back to the defaults. The state machine in
 `src/investigation.ts` enforces these three limits plus an objective-met stop;
 wiring the verdicts into the agent flow is Phase 3+ (Work Governor).
+
+## Work Governor (`src/work.ts`)
+
+Phase 3 turns the Phase-2 signals into auditable skip/avoid/delegate/complete
+decisions. `src/work.ts` is the verdict engine — pure functions over explicit
+inputs, each decision recorded via `recordWorkDecision` → `recordOptDecision`
+(`## Cost governor decisions` trail, `work-governor` actor).
+
+Six capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Stage classification (§7) | `classifyStage` | required/conditional/optional |
+| Evidence-backed skipping (§7/§13) | `shouldSkipStage` | skip + explicit reason, never for required |
+| Agent invocation control (§8) | `evaluateInvocation` | invoke only when unique + evidence cannot answer + stage cannot + value > cost |
+| Skill loading control (§9) | `shouldLoadSkill` | load only when task/policy/dependency/verification requires |
+| Delegation optimization (§30) | `evaluateDelegation` | delegate when ≥2 independent tasks, value > overhead floor, inside `delegateAt` budget |
+| Completion detection (§19) | `completionCheck` | complete iff all five §19 conditions |
+| Decision trail (§41) | `recordWorkDecision` | persists any verdict as a `work-governor` trail row |
+
+**Delegation consumes the Phase-2 Q1 remainder:** `evaluateDelegation` calls
+`delegateAt(budget, threshold_pct)` for the budget ceiling and
+`laneBaseForLane(lane)` for the overhead floor — one delegate costs at least one
+agent's context load.
+
+**Honest boundary:** `src/work.ts` produces and records verdicts; the LLM crew
+(workflow skill) is the only thing that acts on them. The module makes the
+decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not `registerRead` secret-bearing files
+(`.env`, keys, tokens); fingerprints of secrets would persist in the trail. F3 —
+`.mugiwara/` is local trusted state; if writers ever open `missionDir` to
+untrusted input, validate it before passing to the record helpers.

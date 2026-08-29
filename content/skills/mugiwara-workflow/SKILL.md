@@ -90,13 +90,17 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 ## Rules
 
 1. Evidence over claims — run checks, show output.
-2. No flow stage skipped without a reason recorded in the decision log.
+2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage.
 3. Heal loop: max 3 cycles, then escalate.
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
 6. Resume via `resume-coordinator` before any flow stage — never restart.
 7. Push branch + hand verdict to user; crew never merges or deploys. 8. Host todo mirrors the plan doc every task + flow stage — same response as evidence.
+## Work Governor
 
+Stages classify required/conditional/optional (§7); skip only with a recorded reason.
+Agents/skills load only when they earn cost (§8/§9); mission complete only when §19's five conditions hold.
+Verdicts land as `work-governor` trail rows. savepoint/lane-base/config untouched.
 ## Iron Law
 
 EVIDENCE OVER CLAIMS. "Done" = command re-run, output captured, evidence fresh. Every evidence pointer is a CLICKABLE markdown link — `[path](relative/path)` — so reports link straight to the artifact.
