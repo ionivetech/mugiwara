@@ -4,10 +4,11 @@
   "type": "positive",
   "trigger": {
     "positive": [
-      { "prompt": "triage this mission and choose the execution posture", "top_k": 3 }
+      { "prompt": "gatekeeper: triage this mission and choose the execution posture", "top_k": 3 },
+      { "prompt": "captain: classify, route, and set the posture", "top_k": 3 }
     ],
     "negative": [
-      { "prompt": "merge the release branch" }
+      { "prompt": "explain how context budget is measured in tokens" }
     ]
   },
   "behavioral": [

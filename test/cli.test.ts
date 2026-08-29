@@ -404,3 +404,86 @@ describe('run() — reset with --force removes mission dirs', () => {  test('res
   });
 });
 
+describe('run() — cost live slop', () => {
+  test('heal cycle at the limit surfaces live slop attributed to Brook', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'sloppy', file: 'state', body: { mission: 'sloppy', lane: 'full', heal_cycle: 4, tokens_est: 5000, budget: 20000, evidence: [], updated_at: '2026-08-29T00:00:00Z' } },
+    ]);
+    try {
+      const { out } = await capture(['cost', '--mission', 'sloppy'], dir);
+      expect(out).toContain('Cost envelope');
+      expect(out).toContain('Slop: 1 intervention(s)');
+      expect(out).toContain('Brook:1');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('clean mission shows no slop line', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'clean', file: 'state', body: { mission: 'clean', lane: 'standard', heal_cycle: 0, tokens_est: 1000, budget: 20000, evidence: [], updated_at: '2026-08-29T00:00:00Z' } },
+    ]);
+    try {
+      const { out } = await capture(['cost', '--mission', 'clean'], dir);
+      expect(out).toContain('Cost envelope');
+      expect(out).not.toContain('Slop:');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--json emits a parseable ledger with slop interventions', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'sloppy', file: 'state', body: { mission: 'sloppy', lane: 'full', heal_cycle: 4, tokens_est: 5000, budget: 20000, evidence: [], updated_at: '2026-08-29T00:00:00Z' } },
+    ]);
+    // a config present means no bootstrap chatter pollutes the JSON output
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
+    try {
+      const { out } = await capture(['cost', '--mission', 'sloppy', '--json'], dir);
+      const parsed = JSON.parse(out);
+      expect(parsed.avoided.slop_interventions).toBe(1);
+      expect(parsed.envelope.status).toBeTruthy();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('cost with an unknown mission prints an error and exits 1', async () => {
+    const dir = fixture([]);
+    try {
+      const { err } = await capture(['cost', '--mission', 'nope'], dir);
+      expect(err).toContain('No cost ledger found');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('cost without a mission and multiple in-flight states requires --mission', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'm1', file: 'state', body: state('m1') },
+      { root: 'state', mission: 'm2', file: 'state', body: state('m2') },
+    ]);
+    try {
+      const { err } = await capture(['cost'], dir);
+      expect(err).toContain('multiple missions in flight');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — blame', () => {
+  test('blame prints a provenance note for a path', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-blame-'));
+    try {
+      const { out } = await capture(['blame', 'src/cli.ts'], dir);
+      expect(out.length).toBeGreaterThan(0);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — handoff', () => {
+  test('writes a handoff.md from computed state', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'hm', file: 'state', body: state('hm') },
+    ]);
+    try {
+      const { out } = await capture(['handoff', 'hm'], dir);
+      expect(out).toContain('# Handoff: hm');
+      expect(existsSync(join(dir, '.mugiwara', 'missions', 'hm', 'handoff.md'))).toBe(true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+
+

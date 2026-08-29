@@ -4,10 +4,11 @@
   "type": "negative",
   "trigger": {
     "positive": [
-      { "prompt": "execute the approved plan", "top_k": 3 }
+      { "prompt": "executing an approved plan: todo list, commit per logical task, evidence per task", "top_k": 3 },
+      { "prompt": "parallel worker batches executing approved plan tasks with evidence", "top_k": 3 }
     ],
     "negative": [
-      { "prompt": "why is the plan written this way?" }
+      { "prompt": "explain the high-level architecture of this feature" }
     ]
   },
   "behavioral": [

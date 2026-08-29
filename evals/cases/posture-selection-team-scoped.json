@@ -4,10 +4,11 @@
   "type": "positive",
   "trigger": {
     "positive": [
-      { "prompt": "triage this team mission and set the execution posture", "top_k": 3 }
+      { "prompt": "gatekeeper: triage this team mission and set the execution posture", "top_k": 3 },
+      { "prompt": "captain: classify, route, and pick the posture", "top_k": 3 }
     ],
     "negative": [
-      { "prompt": "run the whole team's mission in one go" }
+      { "prompt": "explain the (mission, member) state file layout" }
     ]
   },
   "behavioral": [
