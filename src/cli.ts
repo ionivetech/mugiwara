@@ -16,6 +16,8 @@ import { readContinue, readState, resolveContinue, formatTable, formatResume, gi
 import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
+import { costEnvelope } from './cost.ts';
+import { buildCostLedger, toCostJSON } from './reporting.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -45,6 +47,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'clean': return cleanCmd(flags);
     case 'continue': return continueCmd(flags, _);
     case 'status': return statusCmd(flags);
+    case 'cost': return costCmd(flags, _);
     case 'run': return runCmd(flags, _);
     case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
     case 'blame': return blameCmd(flags, _);
@@ -362,6 +365,46 @@ function statusCmd(flags: Args['flags']): void {
   }
 }
 
+/** `mugiwara cost [--mission <id>] [--json] [--ledger]` — show cost ledger, avoided work, efficiency, trail. */
+function costCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const mission = str(flags.mission) ?? positionals[1] ?? (() => {
+    const states = readState(projectDir);
+    if (states.length === 1) return states[0].mission;
+    if (states.length > 1) {
+      console.error('multiple missions in flight — specify --mission <id>');
+      process.exit(1);
+    }
+    return null;
+  })();
+  if (!mission) {
+    console.error('usage: mugiwara cost [--mission <id>] [--json] [--ledger] [--project <dir>]');
+    process.exit(1);
+  }
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(missionDir)) {
+    console.error(`No cost ledger found for mission "${mission}"`);
+    process.exit(1);
+  }
+  const states = readState(projectDir).filter((s) => s.mission === mission);
+  const envelope = states.length
+    ? costEnvelope({ lane: (states[0] as unknown as { lane?: string }).lane, budget: (states[0] as unknown as { budget?: number }).budget, tokens_est: (states[0] as unknown as { tokens_est?: number }).tokens_est })
+    : costEnvelope({ lane: 'full', tokens_est: 0 });
+  const ledger = buildCostLedger({ missionDir, envelope });
+  if (flag(flags.json)) {
+    console.log(toCostJSON(ledger));
+    return;
+  }
+  console.log(`Cost envelope: ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned})`);
+  console.log(`Avoided: ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ~${ledger.avoided.tokens_avoided_est} tokens`);
+  console.log(`Efficiency: reuse ${ledger.efficiency.reuse_rate}, dup ${ledger.efficiency.duplicate_avoidance_chars} chars, budget ${ledger.efficiency.budget_efficiency_pct}%`);
+  console.log(`Trail: ${ledger.trail.length} decisions`);
+  if (flag(flags.ledger) && ledger.trail.length) {
+    for (const t of ledger.trail.slice(0, 20)) console.log(`- ${t.ts} — ${t.actor}: ${t.decision} — reason: ${t.reason}${t.evidence ? ` — evidence: ${t.evidence}` : ''}`);
+    if (ledger.trail.length > 20) console.log(`… ${ledger.trail.length - 20} more`);
+  }
+}
+
 /** `mugiwara run <script.sh> [args]` — run a bundled harness script here. */
 function runCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolve(str(flags.project) ?? process.cwd());
@@ -487,6 +530,8 @@ Usage:
   mugiwara continue <m> [member]
                          print the exact resume point for that mission/member
   mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
+  mugiwara cost [--mission <id>] [--json] [--ledger]
+                         show cost ledger, avoided work, efficiency, trail (human + JSON)
   mugiwara blame <path>  provenance note on the last commit touching <path>
                          (fetch notes first: git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara')
   mugiwara handoff <m>   write .mugiwara/missions/<m>/handoff.md — a report the next

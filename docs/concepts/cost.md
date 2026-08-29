@@ -141,3 +141,229 @@ when that first-class path is used. At closure, the mission report surfaces:
 This turns lane sizing from "process efficiency" into a number an engineering
 manager can act on. No other skills pack produces this because no other pack
 sizes work.
+
+## Cost Governor module (`src/cost.ts`)
+
+Phase 1 of the Native Cost Governor initiative centralizes the budget math
+that used to live in two places. `scripts/lib/lane-base.sh` remains the
+single source of truth for the shell runtime (`savepoint.sh` reads it and
+cannot import TypeScript); `src/cost.ts` is the TS-side mirror —
+`budgetForLane`, `laneBaseForLane`, `warnAt`/`stopAt` (1.5×/3× thresholds),
+`budgetStatus`, `delegateAt`, and the normalized `costEnvelope` read model.
+  `src/mission.ts` (archive cost section) consumes it instead of hardcoding
+  lane budgets. Drift between the two sides is a CI failure, not a display
+  nit: `test/cost.test.ts` asserts every constant against `lane-base.sh`
+  (parity — same D5 pattern as `scripts/lane-base.ts`).
+
+## Context accounting + budget (`src/context.ts`)
+
+Phase 2 adds context measurement and bounds it. `savepoint.sh` measures
+**tokens** and gates the lane token budget; it does **not** measure context —
+so there is no shell-side context measurement to mirror, and `src/context.ts`
+is the single definition. Context accounting runs on demand in TS, fed by the
+trail on disk + the evidence registry.
+
+- **Chars measure** — `measureContextChars` reuses `src/budget.ts` (single
+  implementation, test-locked): the total byte footprint of the trail's
+  markdown artifacts, i.e. the context a future reader must load.
+- **Est-token ratio** — `estContextTokens(chars) = round(chars / 4)`, a coarse
+  documented estimate (`ponytail:` comment — refine when provider token
+  telemetry exists).
+- **Budget gate** — `contextStatus` gates on `context_budget_chars` (chars),
+  never on tokens: chars > budget → 'over', else 'ok'. Budget 0 → 'ok'. This
+  keeps the context budget separate from the lane token budget (C2 — never
+  conflated).
+- `contextStatus` mirrors the archive-time closure throw condition, surfaced
+  as a pure, tested gate.
+
+## Investigation limits (`src/config.ts` + `src/investigation.ts`)
+
+Investigation is bounded by three flat policy keys (spec §13), all optional
+and commented out in `DEFAULT_CONFIG` (`readInvestigationConfig`, `src/config.ts`):
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `investigation_max_passes` | 2 | Cap on investigation passes |
+| `investigation_max_unrelated_files` | 5 | Max unrelated files opened |
+| `investigation_repeated_read_threshold` | 2 | Repeated reads before stopping |
+
+Non-numeric or zero values fall back to the defaults. The state machine in
+`src/investigation.ts` enforces these three limits plus an objective-met stop;
+wiring the verdicts into the agent flow is Phase 3+ (Work Governor).
+
+## Work Governor (`src/work.ts`)
+
+Phase 3 turns the Phase-2 signals into auditable skip/avoid/delegate/complete
+decisions. `src/work.ts` is the verdict engine — pure functions over explicit
+inputs, each decision recorded via `recordWorkDecision` → `recordOptDecision`
+(`## Cost governor decisions` trail, `work-governor` actor).
+
+Six capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Stage classification (§7) | `classifyStage` | required/conditional/optional |
+| Evidence-backed skipping (§7/§13) | `shouldSkipStage` | skip + explicit reason, never for required |
+| Agent invocation control (§8) | `evaluateInvocation` | invoke only when unique + evidence cannot answer + stage cannot + value > cost |
+| Skill loading control (§9) | `shouldLoadSkill` | load only when task/policy/dependency/verification requires |
+| Delegation optimization (§30) | `evaluateDelegation` | delegate when ≥2 independent tasks, value > overhead floor, inside `delegateAt` budget |
+| Completion detection (§19) | `completionCheck` | complete iff all five §19 conditions |
+| Decision trail (§41) | `recordWorkDecision` | persists any verdict as a `work-governor` trail row |
+
+**Delegation consumes the Phase-2 Q1 remainder:** `evaluateDelegation` calls
+`delegateAt(budget, threshold_pct)` for the budget ceiling and
+`laneBaseForLane(lane)` for the overhead floor — one delegate costs at least one
+agent's context load.
+
+**Honest boundary:** `src/work.ts` produces and records verdicts; the LLM crew
+(workflow skill) is the only thing that acts on them. The module makes the
+decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not `registerRead` secret-bearing files
+(`.env`, keys, tokens); fingerprints of secrets would persist in the trail. F3 —
+`.mugiwara/` is local trusted state; if writers ever open `missionDir` to
+untrusted input, validate it before passing to the record helpers.
+
+## Scope & Code Governor (`src/scope.ts`)
+
+Phase 4 delivers the **Scope & Code Governor** — scope drift detection,
+existing-code reuse checks, abstraction justification, dependency justification,
+minimum sufficient implementation policy, code waste detection, and change-surface
+measurement. `src/scope.ts` is a pure verdict engine over explicit inputs, each
+decision recorded via `recordScopeDecision` → `recordOptDecision`
+(`## Cost governor decisions` trail, `scope-governor` actor). No new config keys;
+`savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Eight capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Scope drift detection (§14/§51-1) | `detectScopeDrift` | `drift` + `scope_score` = fraction of touched files outside declared scope; reason names them |
+| Existing-code reuse (§14/§51-2) | `checkExistingCodeReuse` | `reuse:true` only when existing code is present AND local modification is viable |
+| Abstraction justification (§15/§51-3) | `evaluateAbstraction` | justified only when used in ≥2 places with duplication benefit, or required by contract — never speculative |
+| Dependency justification (§16/§51-4) | `evaluateDependency` | justified only when no equivalent, not solvable with existing, long-term value, maintenance ≤ removal cost |
+| Minimum sufficient policy (§15/§38/§51-5) | `minimumSufficientCheck` | `under` (missing verification/coverage) / `over` (incidental complexity) / `sufficient` |
+| Code waste detection (§15/§51-6) | `detectCodeWaste` | `waste_types` lists helper/abstraction/wrapper/interface/config/dependency/generated code/refactor |
+| Change-surface measurement (§5.4/§51-7) | `measureChangeSurface` | `loc_changed`; justified iff within declared scope and no new abstraction/dependency |
+| Decision trail (§41) | `recordScopeDecision` | persists any verdict as a `scope-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 4 records the decisions and produces the
+pure `measureChangeSurface` metrics only. The report/CLI code ledger
+(`files_changed`, `LOC`, new abstractions/deps, `mugiwara cost` — §5.4/§39/§42)
+is Phase 8 Reporting; the §21.11 code-slop taxonomy and §45 detect→classify→
+intervene machinery (unnecessary abstraction/dependency) is Phase 6 Stop-Slop.
+**Honest boundary:** `src/scope.ts` produces and records verdicts; the LLM crew
+(workflow skill, rule 2b) is the only thing that acts on them. The module makes
+the scope/code decision structured, auditable, and instructed — it does not
+force the model.
+
+**Security design rules:** F2 — do not `registerRead` secret-bearing files
+(`.env`, keys, tokens); fingerprints of secrets would persist in the trail. F3 —
+`.mugiwara/` is local trusted state; if writers ever open `missionDir` to
+untrusted input, validate it before passing to the record helpers.
+
+## Cognitive & Output Governor (`src/cognition.ts`)
+
+Phase 5 delivers the **Cognitive & Output Governor** — focused reasoning policy, investigation termination, alternative limitation, output compression, duplicate explanation detection, and mission-focused output structure. `src/cognition.ts` is a pure verdict engine over explicit inputs, each decision recorded via `recordCognitiveDecision` → `recordOptDecision` (`## Cost governor decisions` trail, `cognitive-governor` actor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Seven capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Focused reasoning policy (§17) | `isFocusedReasoning` | `focused` + `slop_types` (speculative_architecture/repeated_reconsideration/hypothetical_requirements/unrelated_implementations); reason names the slop |
+| Investigation termination (§13/§17) | `shouldTerminateInvestigation` | `terminate` on triad complete or limits hit without concrete reason; `has_concrete_reason` overrides |
+| Alternative limitation (§17) | `limitAlternatives` | `limited` + `dropped` when beyond `max_alternatives` (default 3) or without evidence backing; `bounded to N` |
+| Output compression (§18) | `compressOutput` | `compressed` + `saved_chars` keeps only lines within 2 of an essential heading; `well_structured` ≥2 headings |
+| Duplicate explanation detection (§17/§18) | `detectDuplicateExplanation` | `duplicate` + `duplicate_groups` via `fingerprint` grouping; exact duplicates only |
+| Mission-focused structure (§18) | `structureOutput` | `well_structured` + `missing` (Decision/Evidence required); reason names missing or mission-focused |
+| Decision trail (§41) | `recordCognitiveDecision` | persists any verdict as a `cognitive-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 5 records the decisions and produces pure verdicts only. The report/CLI cognition ledger (`reasoning focused vs slop`, `output compressed chars`, `duplicate explanations avoided` — §39/§43) is Phase 8 Reporting; the §21.3/§21.4 reasoning/output slop taxonomy and §45 detect→classify→intervene machinery is Phase 6 Stop-Slop. **Honest boundary:** `src/cognition.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2c) is the only thing that acts on them. The module makes the cognitive/output decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
+
+## Stop-Slop Governor (`src/slop.ts`)
+
+Phase 6 delivers the **Stop-Slop Governor** — slop taxonomy, detection signals, progress measurement, work-to-cost anomaly, intervention rules, and six category detectors (retry, healing, scope, context, investigation, code). `src/slop.ts` is a pure verdict engine over explicit inputs, each decision recorded via `recordSlopDecision` → `recordOptDecision` (`## Cost governor decisions` trail, `slop-governor` actor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Twelve capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Slop taxonomy (§21) | `SLOP_TAXONOMY` + `classifySlop` | eight §21 kinds; keyword match → `SlopKind` or `null` |
+| Detection signals (§22) | `detectSlopSignal` | `slop` when `count ≥ threshold` with no evidence gain |
+| Progress measurement (§23) | `measureProgress` | `progress` + `cost_delta` + `progress_per_cost`; `slop_signal` when cost grows without progress |
+| Work-to-cost anomaly (§24) | `detectAnomaly` | `anomaly` when `progress_per_cost < baseline * drop_threshold` (default 0.5) |
+| Intervention rules (§20) | `decideIntervention` | `tolerate`/`stop`/`compress`/`escalate` by `severity` + `progress_stalled` |
+| Retry slop (§21.6/§31) | `detectRetrySlop` | `slop` when same action + same evidence + same failure → STOP |
+| Healing slop (§21.7/§32) | `detectHealingSlop` | `slop` when no fixes with previous zero-fix or `cycle ≥ max` |
+| Scope slop (§21.8) | `detectScopeSlop` | `slop` when out-of-scope file or unrelated refactor without `acceptance_expanded` |
+| Context slop (§21.2/§12) | `detectContextSlop` | `slop` when repeated reads ≥ threshold or duplicate chars or irrelevant files |
+| Investigation slop (§21.1/§13) | `detectInvestigationSlop` | `slop` when any limit breached without `has_concrete_reason` |
+| Code slop (§21.5/§15) | `detectCodeSlop` | `slop` when abstraction/dependency/boilerplate/LOC>100 without acceptance or justification |
+| Decision trail (§41) | `recordSlopDecision` | persists any verdict as a `slop-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 6 records the decisions and produces pure verdicts only. The report/CLI slop ledger (`slop.events_detected`, `stopped`, `compressed` — §39) and Cost-section slop rows (§43) and `mugiwara cost` slop section (§42) are Phase 8 Reporting; the §45 benchmark suite is Phase 9. **Honest boundary:** `src/slop.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2d) is the only thing that acts on them. The module makes the slop decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
+
+## Adaptive Budget & Circuit Breaker (`src/adaptive-budget.ts`)
+
+Phase 7 delivers the **Adaptive Budget & Circuit Breaker** — reservation, projection, adaptive budget, evidence-backed expansion, progressive thresholds, circuit breaker, and anomaly detection. `src/adaptive-budget.ts` is a pure verdict engine over explicit inputs, each decision recorded via `recordBudgetDecision` → `recordOptDecision` (`## Cost governor decisions` trail, `budget-governor` actor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Seven capabilities + record helper:
+
+| Capability | Function | Verdict |
+|------------|----------|---------|
+| Budget reservation (§25) | `reserveBudget` | `reserved` + `available = max(0, remaining - expected_max)` |
+| Budget projection (§26) | `projectBudget` | `projected_min = current + remaining + conditional`, `projected_max = min + healing` |
+| Adaptive budget (§27) | `evaluateExpansion` | `allowed` only when `has_evidence` + one valid flag (scope/security/test-surface/arch-dependency/healing) |
+| Evidence-backed expansion (§27) | `evaluateExpansion` | `deny` on invalid reason (verbosity/reread/repeat/code) even with evidence |
+| Progressive thresholds (§28) | `checkProgressiveThreshold` | `ok <60 → optimize ≥60 → aggressive ≥75 → protect ≥90 → pause ≥100 → warning ≥150 → stop ≥300` |
+| Cost circuit breaker (§29) | `checkCircuitBreaker` | `tripped` when `actual ≥ 2× expected` with no progress/scope/evidence (ponytail: double-threshold) |
+| Anomaly detection (§24) | `detectBudgetAnomaly` | `anomaly` when `tokens_delta ≥ 5000` with zero progress (re-consumes slop signal) |
+| Decision trail (§41) | `recordBudgetDecision` | persists any verdict as a `budget-governor` trail row |
+
+**Phase boundaries (honesty):** Phase 7 records the decisions and produces pure verdicts only. The report/CLI budget ledger (`budget.reserved`, `projected`, `remaining`, `avoided` — §26/§39) and `mugiwara cost` budget section (§42) and Cost-section budget rows (§43) are Phase 8 Reporting; the §45 benchmark suite is Phase 9. **Honest boundary:** `src/adaptive-budget.ts` produces and records verdicts; the LLM crew (workflow skill, rule 2e) is the only thing that acts on them. The module makes the budget decision structured, auditable, and instructed — it does not force the model.
+
+**Security design rules:** F2 — do not fingerprint/register secret-bearing files (`.env`, keys); fingerprints of secrets would persist in the trail. F3 — `.mugiwara/` is local trusted state; if writers ever open `missionDir` to untrusted input, validate it before passing to the record helpers.
+
+## Reporting & CLI (`src/reporting.ts`)
+
+Phase 8 delivers **Reporting & CLI** — cost ledger, `mugiwara cost`, JSON output, Cost section in mission reports, avoided work accounting, cost efficiency metrics, and optimization decision trail. `src/reporting.ts` is a pure view over the three persisted files (`cost-events.jsonl`, `context-registry.jsonl`, `decisions.md` §41) — no new store. `buildCostLedger` aggregates envelope + events + registry + trail; `renderCostSection` renders the §43 Cost section; `toCostJSON` emits JSON (§42); `parseDecisionTrail`/`loadCostEvents`/`computeAvoidedMetrics`/`computeEfficiencyMetrics` are the pure helpers. No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+Seven capabilities + ledger view:
+
+| Capability | Function | Output |
+|------------|----------|--------|
+| Cost ledger (§39) | `buildCostLedger` | `{ envelope, ledger: { events, registrySize, decisions }, avoided, efficiency, trail }` — view, recomputed at archive/CLI time |
+| `mugiwara cost` CLI (§42) | `src/cli.ts:costCmd` | `mugiwara cost [--mission <id>] [--json] [--ledger]` — human (`Cost envelope / Avoided / Efficiency / Trail`) or `toCostJSON` JSON |
+| JSON output (§42) | `toCostJSON` | `JSON.stringify(ledger, null, 2)` with stable key order |
+| Cost section in reports (§43) | `renderCostSection` + `src/mission.ts` archive | `archives/mission/report.md` `## Cost` now includes `Budget / Context / Avoided / Efficiency / Trail` rows (ledger view) |
+| Avoided work accounting (§39/§43) | `computeAvoidedMetrics` | `contexts_avoided = dup+repeated`, `stages_avoided`, `slop_interventions`, `tokens_avoided_est = contexts*150` (ponytail heuristic) |
+| Cost efficiency metrics (§39) | `computeEfficiencyMetrics` | `reuse_rate`, `duplicate_avoidance_chars`, `budget_efficiency_pct` |
+| Optimization decision trail (§41) | `parseDecisionTrail` + `recordOptDecision` | bullets under `## Cost governor decisions` parsed, rendered (truncated to 5 + `… n more`), folded at archive |
+
+**Phase boundaries (honesty):** Phase 8 computes and renders the ledger only; the §45 benchmark suite (cost/Stop-Slop/large-repo/long-mission/runaway + §48 thresholds) is Phase 9. **Honest boundary:** `src/reporting.ts` computes and renders; the LLM crew (workflow skill, rule 2f) is the only thing that acts on the underlying signals — the module proves whether the crew was efficient, it does not force efficiency.
+
+**Security design rules:** F2 — `loadRegistry` selective-drop shape validation (malformed lines dropped, never whole registry discarded) + never fingerprint secret-bearing files (`.env`, keys); F3 — every `missionDir` FS helper (`loadRegistry`, `persistRegistry`, `appendCostEvent`, `recordOptDecision`, `loadCostEvents`, `parseDecisionTrail`, `buildCostLedger`) asserts `missionDir` allowlist (`.mugiwara/missions/<id>` or `mugiwara-` tmp harness) — `Invalid missionDir` otherwise. Phase 8 closes the two Lows carried since Phase 2.
+
+## Benchmark & Hardening (scripts/benchmark-governor.ts)
+
+Phase 9 delivers **Benchmark & Hardening** — cost suite (§48), Stop-Slop suite (§45), large repository / long mission / runaway stress, regression thresholds (§49), cross-platform verification, CI enforcement, documentation completion (§50). `scripts/benchmark-governor.ts` is a deterministic harness (no `Date.now`/`Math.random`/network) that measures the Phases 1–8 governor; `scripts/benchmark-thresholds.json` is the ratchet fixture (like `retrieval-eval` floor). No new config keys; `savepoint.sh`/`lane-base.sh`/`DEFAULT_CONFIG` untouched.
+
+| Capability | Harness | Verdict |
+|------------|---------|---------|
+| Cost suite (§48) | 4 workloads (lean-trivial/standard-feature/large-repo/long-mission) each with `task/lane/stages/evidence/cost+context range/surface/gates` | pass iff `measured.tokens ≤ projected+overhead` AND `context ≤ max` AND `evidence ≥ min` AND `surface` within expected |
+| Stop-Slop suite (§45) | 12 scenarios `detect→classify→intervene` (endless exploration, repeated reads, repeated commands, repeated failed test, repeated reasoning, unnecessary abstraction, unnecessary dependency, unrelated refactor, verbose output, no-progress healing, premature completion, excessive context) | each scenario pure over `src/slop.ts` detectors + `decideIntervention`; slop without `has_concrete_reason` → `stop`/`escalate`, with reason → `tolerate` |
+| Large repo stress | 50 files within declared scope → `detectScopeSlop` negative | pass |
+| Long mission stress | 9 flow stages `projectBudget` max ≤ full budget 50k | pass |
+| Runaway stress (§29) | actual 2× expected with no progress/scope/evidence → `checkCircuitBreaker` tripped | harness reports `breaker: tripped` (measures, not enforces) |
+| Thresholds (ratchet) | `scripts/benchmark-thresholds.json` holds `projected+overhead/context_max/evidence_min` per workload + `slop_floors` + `regression` baselines | thresholds only move on explicit diff, never silently; `ponytail: thresholds are fixture constants, not config — ratchet like retrieval-eval` |
+| Regression (§49) | `checkRegression` — cost down but correctness/evidence/security/quality/scope down → fail | hard regression, same as retrieval-eval floor |
+| Cross-platform | harness deterministic (pure inputs); `scripts/conformance.ts` 12-platform parity | no per-OS branching |
+| CI enforcement | `package.json:gate` runs `bun scripts/benchmark-governor.ts`; `scripts/gate-selftest.ts` tampers thresholds to prove red (G3) | gate that cannot fail is not a gate; `ponytail: harness measures, does not enforce — no runtime gate` |
+| Docs | `docs/cost-governor.md` hub + this section | honest boundary: measures, not enforces — LLM crew (workflow skill rule 2g) acts on signals |
+
+**Honest boundary:** `scripts/benchmark-governor.ts` measures cost/slop/regression and fails CI when thresholds are violated; it does not add a runtime `savepoint.sh` gate or pretend a benchmark script can force the model to be efficient. The LLM crew (workflow skill, rule 2g) is the only thing that acts on the signals — the harness proves whether the crew was efficient on the representative workloads. Thresholds are the ratchet fixture `scripts/benchmark-thresholds.json` (like `retrieval-eval` floor); 12-platform `conformance.ts` is the cross-platform proof.
+

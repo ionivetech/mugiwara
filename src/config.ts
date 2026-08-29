@@ -22,6 +22,9 @@ export const DEFAULT_CONFIG = [
   'heal_max_cycles=3',
   'verbosity=normal',
   '# context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)',
+  '# investigation_max_passes=2  # optional: cap investigation passes (spec §13)',
+  '# investigation_max_unrelated_files=5',
+  '# investigation_repeated_read_threshold=2',
 ].join('\n') + '\n';
 
 /** Config file path candidates: project first, then user home. */
@@ -66,4 +69,37 @@ export function ensureConfig(projectDir: string): boolean {
   mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
   writeFileSync(file, DEFAULT_CONFIG);
   return true;
+}
+
+// ── Investigation limits (§13) ──────────────────────────────────────────────
+// Three flat policy keys, all optional (commented in DEFAULT_CONFIG per §52).
+// Defaults: max_passes 2, max_unrelated_files 5, repeated_read_threshold 2.
+
+export type InvestigationConfig = {
+  max_passes: number;
+  max_unrelated_files: number;
+  repeated_read_threshold: number;
+};
+
+const INVESTIGATION_DEFAULTS: InvestigationConfig = {
+  max_passes: 2,
+  max_unrelated_files: 5,
+  repeated_read_threshold: 2,
+};
+
+/** Parse a flat config value as a positive integer; invalid/absent → default. */
+function positiveInt(raw: string | undefined, fallback: number): number {
+  if (raw === undefined || raw === '') return fallback;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+}
+
+/** Read the three investigation limit keys via readConfig; non-numeric/zero → default. */
+export function readInvestigationConfig(projectDir: string): InvestigationConfig {
+  const cfg = readConfig(projectDir);
+  return {
+    max_passes: positiveInt(cfg.investigation_max_passes, INVESTIGATION_DEFAULTS.max_passes),
+    max_unrelated_files: positiveInt(cfg.investigation_max_unrelated_files, INVESTIGATION_DEFAULTS.max_unrelated_files),
+    repeated_read_threshold: positiveInt(cfg.investigation_repeated_read_threshold, INVESTIGATION_DEFAULTS.repeated_read_threshold),
+  };
 }

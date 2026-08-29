@@ -9,6 +9,10 @@ import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
 import { rankFiles, renderRouting } from './routing.ts';
 import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
+import { budgetForLane, costEnvelope, appendCostEvent } from './cost.ts';
+import { loadRegistry } from './evidence.ts';
+import { computeContextMetrics, contextStatus } from './context.ts';
+import { buildCostLedger } from './reporting.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -149,18 +153,51 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     const chars = measureContextChars(dir);
     const budget = readBudgetConfig(projectDir);
     const footprintLine = formatFootprint(chars, budget);
-    if (budget && chars > budget) {
-      throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
-    }
     const est = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
     const src = typeof state.tokens_source === 'string' ? state.tokens_source : 'computed';
     const lane = typeof state.lane === 'string' ? state.lane : 'unknown';
-    // lane budgets for readable delta (from lane-base.sh, mirrored here for display only)
-    const laneBudget = lane === 'lean' ? 12000 : lane === 'standard' ? 25000 : lane === 'full' ? 50000 : lane === 'spike' ? 3000 : 0;
-    const effBudget = budget || laneBudget;
-    const pct = effBudget ? Math.round((est / effBudget) * 100) : 0;
+    // C2: `status` gates on the LANE token budget (what savepoint.sh enforces),
+    // never on the context char budget. `contextStatus` below is its own gate.
+    const laneBudget = budgetForLane(lane);
+    // Q1/Q2: the normalized envelope computes planned/used/remaining/pct/status
+    // on the lane token budget — ONE computation (Q2), reused at render and for
+    // the closure event. `effBudget` stays only for the readable delta display.
+    const env = costEnvelope({ lane, budget: laneBudget, tokens_est: est });
+    const effBudget = budget || laneBudget; // display-only delta basis — never for status (C2)
     const delta = effBudget ? (est <= effBudget ? `${(effBudget - est).toLocaleString()} under` : `${(est - effBudget).toLocaleString()} over`) : 'no budget configured';
     const srcLabel = src === 'reported' ? 'provider-reported' : 'estimator';
+    const statusLabel = env.status.toUpperCase(); // derived from the single computation, not recomputed
+    // context status on context_budget_chars — separate gate, never token `est` (C2)
+    const ctxStatus = contextStatus(budget, chars);
+    // context-efficiency metrics from the evidence registry (reads), else all-zero
+    // with a note — a zero row must not be misread as "efficient" (risk row).
+    const registry = loadRegistry(dir);
+    const reads_total = registry.reduce((s, e) => s + e.reads, 0);
+    const repeated_reads = registry.reduce((s, e) => s + Math.max(e.reads - 1, 0), 0);
+    // M1: honest char accounting — each registered entry carries the content
+    // length it holds (chars). total_chars = chars actually loaded (each entry
+    // × its reads); unique_chars = distinct payload bytes. computeContextMetrics
+    // derives duplicate_chars = total − unique (bytes re-read) and
+    // read_avoidance_chars = same (bytes not reloaded by reuse). When a
+    // registry exists but carries no char payloads (legacy/absent field), the
+    // char fields render as n/a — never fabricated 0 — so reuse_rate > 0 never
+    // sits beside a false "read_avoidance_chars: 0".
+    const unique_chars = registry.reduce((s, e) => s + (e.chars ?? 0), 0);
+    const total_chars = registry.reduce((s, e) => s + (e.chars ?? 0) * e.reads, 0);
+    const charTracked = registry.length > 0 && total_chars > 0;
+    const metrics = registry.length
+      ? computeContextMetrics({
+          files_loaded: registry.length,
+          reads_total,
+          reads_reused: repeated_reads,
+          unique_chars,
+          total_chars,
+          repeated_reads,
+        })
+      : { files_loaded: 0, repeated_reads: 0, duplicate_chars: 0, reuse_rate: 0, read_avoidance_chars: 0 };
+    const ctxNote = registry.length
+      ? (charTracked ? '' : ' (char data not tracked)')
+      : ' (no registry — reads not tracked)';
     // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;
@@ -183,14 +220,50 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       '| Metric | Value |',
       '|--------|-------|',
       `| **Tokens used** | ${est.toLocaleString()} (${srcLabel}) |`,
-      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? Math.round(effBudget * 1.5).toLocaleString() : '—'} · stop ${effBudget ? (effBudget * 3).toLocaleString() : '—'}) |`,
-      `| **Budget status** | ${effBudget ? `${pct}% of budget · ${delta} · ${est >= effBudget * 3 ? 'STOP' : est >= effBudget * 1.5 ? 'WARN' : 'OK'}` : 'no lane budget'} |`,
+      `| **Lane** | ${lane} (budget ${effBudget ? effBudget.toLocaleString() : '—'} · warn ${effBudget ? env.warn_at.toLocaleString() : '—'} · stop ${effBudget ? env.stop_at.toLocaleString() : '—'}) |`,
+      `| **Budget status** | ${effBudget ? `${env.pct}% of budget · ${delta} · ${statusLabel}` : 'no lane budget'} |`,
       `| **Context footprint** | ${chars.toLocaleString()} chars${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
+      `| **Context budget status** | ${ctxStatus.toUpperCase()}${budget ? ` (budget ${budget.toLocaleString()})` : ' (no context budget configured)'} |`,
+      `| **Context efficiency** | files_loaded: ${metrics.files_loaded} · repeated_reads: ${metrics.repeated_reads} · duplicate_chars: ${charTracked ? metrics.duplicate_chars : 'n/a'} · reuse_rate: ${metrics.reuse_rate} · read_avoidance_chars: ${charTracked ? metrics.read_avoidance_chars : 'n/a'}${ctxNote} |`,
     ].join('\n');
     if (hasReported) {
       costSection += `\n| **Provider total** | ${reportedTotal.toLocaleString()} (provider-reported — sum of reported stages) |`;
     }
+    // Phase 8 Reporting — ledger/avoided/efficiency/trail rows (§39/§43)
+    try {
+      const ledger = buildCostLedger({ missionDir: dir, envelope: env });
+      costSection += `\n| Budget | ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned}) |`;
+      costSection += `\n| Context | ${chars.toLocaleString()} chars, reuse ${ledger.efficiency.reuse_rate} |`;
+      costSection += `\n| Avoided | ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ${ledger.avoided.tokens_avoided_est} tokens est |`;
+      costSection += `\n| Efficiency | reuse ${ledger.efficiency.reuse_rate}, dup ${ledger.efficiency.duplicate_avoidance_chars} chars, budget ${ledger.efficiency.budget_efficiency_pct}% |`;
+      costSection += `\n| Trail | ${ledger.trail.length} decisions |`;
+      if (ledger.trail.length) {
+        const show = ledger.trail.slice(0, 5);
+        for (const t of show) costSection += `\n- ${t.ts} — ${t.actor}: ${t.decision} — reason: ${t.reason}${t.evidence ? ` — evidence: ${t.evidence}` : ''}`;
+        if (ledger.trail.length > 5) costSection += `\n… ${ledger.trail.length - 5} more`;
+      }
+    } catch { /* ledger best-effort — trail parse failure never blocks archive */ }
     costSection += '\n';
+
+    // Cost Governor: record the closure cost event — the mission's final
+    // cost snapshot, folded into report.md with the rest of the trail.
+    // (Phase 1 — native cost governor; pure append, never rewrites state.)
+    appendCostEvent(dir, {
+      kind: 'closure',
+      mission,
+      tokens_est: est,
+      budget: laneBudget,
+      status: env.status, // Q2: the single lane-token-budget computation
+      context_chars: chars,
+      context_status: ctxStatus,
+      context_metrics: metrics,
+    });
+    // M2: the closure event (with context_status possibly 'over') is recorded
+    // BEFORE the hard gate throws — an over-budget closure still leaves a
+    // ledger row so the over-budget condition is observable, never erased.
+    if (budget && chars > budget) {
+      throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
+    }
   }
 
   // Fold order: narrative artifacts first, wave evidence last (chronological).
@@ -216,6 +289,15 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       fold.push(join(artRel, f));
     }
   }
+  // Cost events ledger — appended by the closure event above (or a prior
+  // savepoint in a later phase); folds like any other trail artifact so
+  // nothing survives loose after archive.
+  if (existsSync(join(dir, 'cost-events.jsonl'))) fold.push('cost-events.jsonl');
+  // H1: the context registry is the same class of artifact as cost-events.jsonl
+  // (append-only JSONL ledger) — fold it into report.md and remove it so it does
+  // NOT survive loose after archive (survival parity; the fold loop below also
+  // removes every folded file).
+  if (existsSync(join(dir, 'context-registry.jsonl'))) fold.push('context-registry.jsonl');
 
   // The report survives: an existing report.md wins; otherwise the closure
   // wave seeds it; otherwise it starts empty.
