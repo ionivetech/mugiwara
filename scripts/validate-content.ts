@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // scripts/validate-content.ts
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
-import { join, basename } from 'node:path';
+import { join, basename, dirname } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
 
 const root = join(import.meta.dirname, '..', 'content');
@@ -28,6 +28,25 @@ function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Rec
     if (bullets.length > 4) errors.push(`skill ${file}: "## Skip when" block exceeds 4 bullets`);
   }
   if (kind === 'skill' && !body.includes('## Red flags')) errors.push(`skill ${file}: missing required "## Red flags" block`);
+  if (kind === 'skill') {
+    // gate_artifact (roadmap item 2): a declared artifact must name a
+    // verifiable path (flows/ mission evidence, plan.md, or a references/
+    // file that must actually exist beside the skill).
+    const ga = (data as Record<string, unknown>).gate_artifact;
+    if (ga !== undefined) {
+      const v = String(ga).trim();
+      if (!v) errors.push(`skill ${file}: gate_artifact declared but empty`);
+      else if (!/(flows\/|plan\.md|references\/)/.test(v)) {
+        errors.push(`skill ${file}: gate_artifact "${v}" must name a flows/, plan.md, or references/ path`);
+      } else {
+        const refMatch = v.match(/(references\/[\w./-]+\.md)/);
+        if (refMatch) {
+          const refPath = join(dirname(file), refMatch[1]);
+          if (!existsSync(refPath)) errors.push(`skill ${file}: gate_artifact references "${refMatch[1]}" but file does not exist`);
+        }
+      }
+    }
+  }
   if (kind === 'skill') {
     const lines = body.split(/\r?\n/);
     const headingRe = /^## /;
