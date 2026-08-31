@@ -63,7 +63,9 @@ describe('provenance against a real repo', () => {
     const repo = gitRepo();
     writeFileSync(join(repo, 'plain.ts'), 'x\n');
     execSync2('git add -A && git commit -qm plain', { cwd: repo });
-    expect(blamePath(repo, 'plain.ts')).toContain('(no mugiwara provenance note');
+    const out = blamePath(repo, 'plain.ts');
+    expect(out).toContain('no per-commit note');
+    expect(out).toContain('provenance.md');
     rmSync(repo, { recursive: true, force: true });
   });
 

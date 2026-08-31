@@ -7,6 +7,8 @@ import { checkTrail, formatIssues } from './integrity.ts';
 import { checkMissionArtifacts } from './check-artifacts.ts';
 import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
+import { loadPolicy } from './policy.ts';
+import { verifyReport } from './sign.ts';
 import { rankFiles, renderRouting } from './routing.ts';
 import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
 import { budgetForLane, costEnvelope, appendCostEvent } from './cost.ts';
@@ -173,16 +175,40 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   // Closure integrity gate: the trail validates itself before it
   // folds. Dangling links, secrets, or missing evidence fail the archive.
+  // Card-number shapes are warn-only — they do not block archive.
   if (!dryRun) {
     const issues = checkTrail(dir, projectDir);
-    if (issues.length) {
-      throw new Error(`closure integrity gate failed — fix these before archiving:\n${formatIssues(issues)}`);
+    const blocking = issues.filter((i) => i.kind !== 'secret-warn' && i.severity !== 'warn');
+    if (blocking.length) {
+      throw new Error(`closure integrity gate failed — fix these before archiving:\n${formatIssues(blocking)}`);
+    }
+    if (issues.length && blocking.length === 0) {
+      // warn-only — log but do not fail
+      // console.warn is best-effort; archive proceeds
+      try {
+        const warnText = formatIssues(issues);
+        if (warnText) console.warn(`closure integrity warnings (non-blocking):\n${warnText}`);
+      } catch { /* ignore */ }
     }
     // Artifact gate (roadmap v0.8 item 4): Lane 2+ missions must carry
     // plan.md + flows/* evidence — a mission without its trail does not fold.
     const artifacts = checkMissionArtifacts(dir);
     if (!artifacts.ok) {
       throw new Error(`archive artifact gate failed — missing: ${artifacts.missing.join(', ')} (lane ${artifacts.lane}). Write the evidence trail before archiving.`);
+    }
+    // Attestation gate (D4): when attestation.required true, report must be signed and trusted.
+    try {
+      const policy = loadPolicy(projectDir);
+      if (policy?.attestation?.required) {
+        const v = verifyReport(projectDir, dir);
+        if (!v.ok) {
+          throw new Error(`closure integrity gate failed — attestation required but report not signed/trusted: ${v.message}`);
+        }
+      }
+    } catch (e) {
+      if ((e as Error).message.startsWith('closure integrity gate failed — attestation required')) throw e;
+      if ((e as Error).message.startsWith('unknown policy key')) throw e;
+      // other policy load errors are best-effort — do not block archive
     }
   }
 
@@ -423,6 +449,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
         const pt = countPlanTasks(dir);
         const tasks_done = pt.total > 0 ? pt.done : st.done;
         const tasks_total = pt.total > 0 ? pt.total : st.total;
+        const baseShaForNote = typeof state.base_sha === 'string' ? state.base_sha : undefined;
         writeProvenance(projectDir, dir, {
           mission,
           actor: typeof state.actor === 'string' ? state.actor : '',
@@ -433,7 +460,8 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
           tasks_total,
           evidence: Array.isArray(state.evidence) ? (state.evidence as string[]) : [],
           models: stageModels,
-        });
+          base_sha: baseShaForNote,
+        } as never, baseShaForNote);
         kept.push(join('missions', mission, 'provenance.md'));
       } catch { /* provenance is additive; archive proceeds */ }
     }

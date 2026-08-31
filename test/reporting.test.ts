@@ -186,7 +186,7 @@ describe('archive integration — reporting enriches report.md', () => {
 
 describe('summarizeAdaptation / renderAdaptationSection (Phase E)', () => {
   it('returns zero rows when no posture decisions recorded', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-adapt-empty-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-adapt-empty-'));
     const { count, rows } = summarizeAdaptation(dir);
     expect(count).toBe(0);
     expect(rows).toHaveLength(0);
@@ -194,7 +194,7 @@ describe('summarizeAdaptation / renderAdaptationSection (Phase E)', () => {
   });
 
   it('summarizes posture switch rows from the decisions trail', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-adapt-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-adapt-'));
     writeFileSync(
       join(dir, 'decisions.md'),
       '## Cost governor decisions\n' +

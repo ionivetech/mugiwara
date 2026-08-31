@@ -75,16 +75,34 @@ export function renderProvenanceMd(note: string, sha: string | null): string {
   return lines.join('\n') + '\n';
 }
 
-export function attachGitNote(projectDir: string, branch: string, note: string): { sha: string } | null {
+export function attachGitNote(projectDir: string, branch: string, note: string, baseSha?: string): { sha: string; count: number } | null {
   try {
-    let sha: string;
+    const range = baseSha ? `${baseSha}..${branch}` : branch;
+    let shas: string[] = [];
     try {
-      sha = git(projectDir, ['rev-parse', '--verify', branch]);
+      const raw = git(projectDir, ['rev-list', range]);
+      shas = raw.split('\n').filter(Boolean);
     } catch {
-      sha = git(projectDir, ['rev-parse', 'HEAD']);
+      // rev-list failed (unknown baseSha/branch) — fall back to single head
+      shas = [];
     }
-    git(projectDir, ['notes', '--ref=mugiwara', 'add', '-f', '-m', note, sha]);
-    return { sha };
+    // ponytail: cap at 200 commits, fallback to head-only beyond
+    if (shas.length > 200) {
+      console.warn(`attachGitNote: range ${shas.length} >200, falling back to head-only`);
+      shas = [];
+    }
+    let targets = shas;
+    if (!targets.length) {
+      try {
+        targets = [git(projectDir, ['rev-parse', '--verify', branch])];
+      } catch {
+        targets = [git(projectDir, ['rev-parse', 'HEAD'])];
+      }
+    }
+    for (const sha of targets) {
+      git(projectDir, ['notes', '--ref=mugiwara', 'add', '-f', '-m', note, sha]);
+    }
+    return { sha: targets[0], count: targets.length };
   } catch {
     // not a repo, detached oddities, or notes disabled — degrade honestly
     return null;
@@ -104,13 +122,15 @@ export function blamePath(projectDir: string, path: string): string {
     const note = git(projectDir, ['notes', '--ref=mugiwara', 'show', sha]);
     return `${path} @ ${sha.slice(0, 7)}\n${note}`;
   } catch {
-    return `${path} @ ${sha.slice(0, 7)}\n(no mugiwara provenance note on this commit)`;
+    return `${path} @ ${sha.slice(0, 7)}\nno per-commit note — see .mugiwara/missions/<m>/provenance.md`;
   }
 }
 
 /** Closure hook: write provenance.md + attach the git note. */
-export function writeProvenance(projectDir: string, missionDir: string, state: NoteSource): void {
+export function writeProvenance(projectDir: string, missionDir: string, state: NoteSource & { base_sha?: string }, baseSha?: string): void {
   const note = buildNote(state);
-  const attached = attachGitNote(projectDir, state.branch, note);
+  const resolvedBase = baseSha ?? (typeof (state as Record<string, unknown>).base_sha === 'string' ? (state as Record<string, unknown>).base_sha as string : undefined);
+  const cleanBase = resolvedBase && resolvedBase !== 'unknown' ? resolvedBase : undefined;
+  const attached = attachGitNote(projectDir, state.branch, note, cleanBase);
   writeFileSync(join(missionDir, 'provenance.md'), renderProvenanceMd(note, attached ? attached.sha : null));
 }

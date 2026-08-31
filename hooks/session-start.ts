@@ -131,6 +131,13 @@ if (active.length === 1 && mode === 'auto') {
 
 // Silent unless there is in-flight work: a session that never used mugiwara
 // gets zero injected context.
+// Codex vs Claude: Codex SessionStart expects {hookSpecificOutput:{hookEventName,additionalContext}}
+// Claude expects {additionalContext} — Codex rejects top-level additionalContext (additionalProperties:false).
+const isCodexSession = !!(process.env.CODEX_HOME || process.env.CODEX_THREAD_ID || process.env.CODEX_HOME_DIR);
 if (resumeContext) {
-  console.log(JSON.stringify({ additionalContext: resumeContext }));
+  if (isCodexSession) {
+    console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'SessionStart', additionalContext: resumeContext } }));
+  } else {
+    console.log(JSON.stringify({ additionalContext: resumeContext }));
+  }
 }
