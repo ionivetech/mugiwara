@@ -523,7 +523,8 @@ const data = {
   budget_status: process.argv[19],
   skill_version: process.argv[20],
   evidence: process.argv[21] ? process.argv[21].split(',').filter(Boolean) : [],
-  updated_at: process.argv[22]
+  updated_at: process.argv[22],
+  schema_version: 2
 };
 require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\n');
 " \

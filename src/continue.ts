@@ -14,6 +14,32 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
+export const CURRENT_SCHEMA_VERSION = 2;
+
+/**
+ * v0.6 legacy layout: `.mugiwara/state/<mission>/<member>.json`
+ * (and `.mugiwara/continue/<mission>/...`) is invisible to v0.8
+ * `missions/` readers. Detect it so status/continue can warn.
+ */
+export function hasLegacyLayout(projectDir: string): boolean {
+  for (const legacy of [join(projectDir, '.mugiwara', 'state'), join(projectDir, '.mugiwara', 'continue')]) {
+    if (!existsSync(legacy)) continue;
+    try {
+      const walk = (dir: string): boolean => {
+        for (const e of readdirSync(dir, { withFileTypes: true })) {
+          if (e.isFile() && e.name.endsWith('.json')) return true;
+          if (e.isDirectory() && walk(join(dir, e.name))) return true;
+        }
+        return false;
+      };
+      if (walk(legacy)) return true;
+    } catch { /* ignore */ }
+  }
+  // also legacy flat files at .mugiwara/state.json style already handled by missions scan,
+  // but treat top-level .mugiwara/state/*.json absence as no legacy
+  return false;
+}
+
 /** Mission/member allowlist — identical to savepoint.sh and mission.ts. */
 const SAFE = /^[A-Za-z0-9._-]+$/;
 const isSafeKey = (s: string): boolean => SAFE.test(s) && !/^\.+$/.test(s);
@@ -51,6 +77,7 @@ export type StateEntry = ContinueEntry & {
   budget_status: string;
   files_touched: number;
   evidence: string[];
+  schema_version: number | string | null;
 };
 
 const num = (v: unknown): number => {
@@ -148,6 +175,7 @@ export function readContinue(projectDir: string): ContinueEntry[] {
 export function readState(projectDir: string): StateEntry[] {
   return scan(projectDir, 'state', (r, member) => {
     const tasks = (r.tasks ?? {}) as Record<string, unknown>;
+    const sv = r.schema_version;
     return {
       mission: text(r.mission),
       member,
@@ -178,6 +206,7 @@ export function readState(projectDir: string): StateEntry[] {
       budget_status: text(r.budget_status) || 'ok',
       files_touched: num(r.files_touched),
       evidence: Array.isArray(r.evidence) ? r.evidence.map(text).filter(Boolean) : [],
+      schema_version: typeof sv === 'number' || typeof sv === 'string' ? sv : null,
     };
   });
 }

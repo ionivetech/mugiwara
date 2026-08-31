@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // src/cli.ts
-import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -12,7 +12,7 @@ import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProj
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission, archiveMission } from './mission.ts';
 import { runScript, RUNNABLE } from './run.ts';
-import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor } from './continue.ts';
+import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION } from './continue.ts';
 import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
@@ -20,6 +20,7 @@ import { costEnvelope } from './cost.ts';
 import { computeLiveSlop } from './slop.ts';
 import { loadRegistry } from './evidence.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
+import { enforceHarnessPolicy } from './policy.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -28,6 +29,16 @@ export async function run(argv: string[]): Promise<void> {
   const { command, flags, _ } = parseArgs(argv);
   if (flag(flags.help) || command === 'help') return help();
   if (flag(flags.version)) { console.log(`mugiwara ${VERSION}`); return; }
+  // harness.require_enforcement — enterprise gate: refuse rules-based harnesses
+  // (only opencode is runtime-enforced). Covers run/savepoint/archive/status
+  // + other workflow commands; install/update/uninstall/list are setup and bypass.
+  {
+    const bypass = new Set(['install', 'update', 'uninstall', 'list']);
+    if (!bypass.has(command)) {
+      const projectDirForHarness = resolve(str(flags.project) ?? process.cwd());
+      enforceHarnessPolicy(projectDirForHarness);
+    }
+  }
   // `continue` and `status` are read-only position commands: dispatch before
   // config bootstrap so a fresh project never gets a .mugiwara/config created
   // and no setup chatter is printed before missions/members are listed.
@@ -61,6 +72,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'blame': return blameCmd(flags, _);
     case 'handoff': return handoffCmd(flags, _);
     case 'sign': return signCmd(flags, _);
+    case 'migrate': return migrateCmd(flags);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -282,9 +294,27 @@ async function uninstall(flags: Args['flags']): Promise<void> {
   console.log(`OK removed ${removed.length} files`);
 }
 
+function legacyWarning(projectDir: string): void {
+  if (hasLegacyLayout(projectDir)) {
+    console.error('⚠ legacy layout detected (v0.6 .mugiwara/state/ — run `mugiwara migrate` to move to missions/)');
+  }
+}
+
+function schemaWarnings(projectDir: string): void {
+  const states = readState(projectDir);
+  for (const s of states) {
+    const v = s.schema_version;
+    if (v !== CURRENT_SCHEMA_VERSION) {
+      const wrote = v === null || v === undefined || v === '' ? 'unknown' : String(v);
+      console.error(`⚠ state written by v${wrote} (mission ${s.mission}${s.member ? `/${s.member}` : ''}) — current expects v${CURRENT_SCHEMA_VERSION} — run \`mugiwara migrate\``);
+    }
+  }
+}
+
 function list(flags: Args['flags']): void {
   const home = homedir();
   const projectDir = resolve(str(flags.project) ?? process.cwd());
+  legacyWarning(projectDir);
   let found = false;
   for (const [label, file] of [
     ['project', manifestPath({ scope: 'project', projectDir, home })],
@@ -316,6 +346,8 @@ function list(flags: Args['flags']): void {
  */
 function continueCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolve(str(flags.project) ?? process.cwd());
+  legacyWarning(projectDir);
+  schemaWarnings(projectDir);
   const [mission, member] = positionals.slice(1);
   let entries = readContinue(projectDir);
 
@@ -358,6 +390,8 @@ function continueCmd(flags: Args['flags'], positionals: string[]): void {
 /** `mugiwara status` — one screen of computed mission state, no model needed. */
 function statusCmd(flags: Args['flags']): void {
   const projectDir = resolve(str(flags.project) ?? process.cwd());
+  legacyWarning(projectDir);
+  schemaWarnings(projectDir);
   const states = readState(projectDir);
   if (!states.length) { console.log('No mission state on disk.'); return; }
   const actor = flag(flags.all) ? null : gitActor(projectDir);
@@ -508,6 +542,88 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`\nwritten: ${out}`);
 }
 
+export function migrateCmd(flags: Args['flags']): void {
+  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const dryRun = flag(flags.dryRun);
+  const legacyState = join(projectDir, '.mugiwara', 'state');
+  const legacyContinue = join(projectDir, '.mugiwara', 'continue');
+  const missionsRoot = join(projectDir, '.mugiwara', 'missions');
+  const moves: Array<{ src: string; dest: string }> = [];
+
+  const collect = (srcRoot: string, isContinue: boolean) => {
+    if (!existsSync(srcRoot)) return;
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (e.isFile() && e.name.endsWith('.json')) {
+          const rel = full.slice(srcRoot.length + 1);
+          let destRel: string;
+          if (isContinue) {
+            const parts = rel.split('/');
+            const file = parts.pop()!;
+            const mission = parts.join('/');
+            const stem = file.slice(0, -'.json'.length);
+            let destFile: string;
+            if (stem === 'state') destFile = 'continue.json';
+            else destFile = `continue-${stem}.json`;
+            destRel = mission ? join(mission, destFile) : destFile;
+          } else {
+            destRel = rel;
+          }
+          moves.push({ src: full, dest: join(missionsRoot, destRel) });
+        }
+      }
+    };
+    walk(srcRoot);
+  };
+  collect(legacyState, false);
+  collect(legacyContinue, true);
+
+  // legacy flat: .mugiwara/state.json style? treat any top-level .mugiwara/state*.json as not legacy missions but still warn
+  // Already covered by state/ dir; nothing more to collect.
+
+  if (!moves.length) {
+    if (!existsSync(legacyState) && !existsSync(legacyContinue)) {
+      console.log('no legacy layout found (.mugiwara/state/ does not exist)');
+    } else {
+      console.log('no legacy state files to migrate');
+    }
+    return;
+  }
+
+  for (const m of moves) {
+    console.log(`${dryRun ? 'would migrate' : 'migrated'} ${m.src} → ${m.dest}`);
+    if (!dryRun) {
+      mkdirSync(dirname(m.dest), { recursive: true });
+      try {
+        const raw = JSON.parse(readFileSync(m.src, 'utf8')) as Record<string, unknown>;
+        raw.schema_version = CURRENT_SCHEMA_VERSION;
+        writeFileSync(m.dest, JSON.stringify(raw, null, 2) + '\n');
+        rmSync(m.src, { force: true });
+      } catch {
+        try { renameSync(m.src, m.dest); } catch { /* ignore */ }
+      }
+    }
+  }
+  if (!dryRun) {
+    const prune = (root: string) => {
+      if (!existsSync(root)) return;
+      const walkPrune = (dir: string) => {
+        for (const e of readdirSync(dir, { withFileTypes: true })) {
+          if (e.isDirectory()) walkPrune(join(dir, e.name));
+        }
+        try { if (readdirSync(dir).length === 0) rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+      };
+      walkPrune(root);
+      try { if (existsSync(root) && readdirSync(root).length === 0) rmSync(root, { recursive: true, force: true }); } catch { /* ignore */ }
+    };
+    prune(legacyState);
+    prune(legacyContinue);
+  }
+  console.log(`${dryRun ? 'would migrate' : 'migrated'} ${moves.length} file(s)${dryRun ? ' (dry run)' : ''}`);
+}
+
 /** `mugiwara sign <mission>` / `--verify` / `--gen-key` — optional attestation. */
 function signCmd(flags: Args['flags'], _: string[]): void {
   const projectDir = resolve(str(flags.project) ?? process.cwd());
@@ -562,10 +678,12 @@ Usage:
   mugiwara sign <m>      attestation: sign report.md (auto/minisign/pure/off; --verify to check)
   mugiwara sign --gen-key [--backend pure|minisign]
                          create signing keys (pure ed25519 default)
+  mugiwara migrate [--dry-run] [--project <dir>]
+                          move legacy .mugiwara/state/ layout to .mugiwara/missions/
   mugiwara run <script> [args...]
-                         run a bundled harness script here (${RUNNABLE.join(', ')})
+                          run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [flow] [mode]
-                         shorthand for: mugiwara run savepoint.sh ...
+                          shorthand for: mugiwara run savepoint.sh ...
   mugiwara --help        this help
   mugiwara --version     print version
 

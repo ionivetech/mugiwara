@@ -91,9 +91,11 @@ console.log('\nCost gate — measured vs stated index chars');
   const costFile = join(root, 'docs', 'concepts', 'cost.md');
   const original = readFileSync(costFile, 'utf8');
   try {
-    const drifted = original.replace(/\*\*Current:\*\* \d[\d,]* chars/, '**Current:** 1 chars');
-    if (drifted === original) {
-      console.log('  ⚠  "**Current:** N chars" pattern not found in cost.md — skipping');
+    const costPattern = /\*\*Current:\*\* \d[\d,]* chars/;
+    const drifted = original.replace(costPattern, '**Current:** 1 chars');
+    if (!costPattern.test(original) || drifted === original) {
+      console.error('✗ COST: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
       writeFileSync(costFile, drifted);
       assert('drifted stated index chars → exit 1', false, () => run('COST', 'bun scripts/validate-content.ts'));
@@ -134,12 +136,14 @@ if (!existsSync(savepointFile)) {
   const original = readFileSync(savepointFile, 'utf8');
   try {
     // reintroduce the D1 defect: read lane_prev with require() of a relative path
+    const d1Pattern = /PREV_JSON=\$\(node -e "try\{const fs=require\('fs'\);const s=JSON\.parse\(fs\.readFileSync\(process\.argv\[1\],'utf8'\)\);process\.stdout\.write\(JSON\.stringify\(\{mission:s\.mission\|\|'',lane:s\.lane\|\|'',peak:s\.lane_peak\|\|''\}\)\)\}catch\(e\)\{process\.stdout\.write\('\{\}'\)\}" "\$STATE_FILE" 2>\/dev\/null \|\| true\)/;
     const broken = original.replace(
-      /PREV_JSON=\$\(node -e "try\{const fs=require\('fs'\);const s=JSON\.parse\(fs\.readFileSync\(process\.argv\[1\],'utf8'\)\);process\.stdout\.write\(JSON\.stringify\(\{mission:s\.mission\|\|'',lane:s\.lane\|\|'',peak:s\.lane_peak\|\|''\}\)\)\}catch\(e\)\{process\.stdout\.write\('\{\}'\)\}" "\$STATE_FILE" 2>\/dev\/null \|\| true\)/,
+      d1Pattern,
       "PREV_JSON=$(node -e \"try{const s=require(process.argv[1]);process.stdout.write(JSON.stringify({mission:s.mission||'',lane:s.lane||'',peak:s.lane_peak||''}))}catch(e){process.stdout.write('{}')}\" \"$STATE_FILE\" 2>/dev/null || true)"
     );
-    if (broken === original) {
-      console.log('  ⚠  D1 mutation pattern not found — skipping');
+    if (!d1Pattern.test(original) || broken === original) {
+      console.error('✗ D1: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
       writeFileSync(savepointFile, broken);
       assert('broken LANE_PREV resolve → lane-integrity fails', false, () => run('D1', 'bun run test -- lane-integrity -t "lane_prev"'));
@@ -158,12 +162,14 @@ if (!existsSync(savepointFile)) {
   const original = readFileSync(savepointFile, 'utf8');
   try {
     // neuter the clamp: make lane_rank always return 0 so a drop never holds
+    const d2Pattern = /lane_rank\(\) \{\n  case "\$1" in\n    direct\) echo 0 ;;[\s\S]*?\n  esac\n\}/;
     const broken = original.replace(
-      /lane_rank\(\) \{\n  case "\$1" in\n    direct\) echo 0 ;;[\s\S]*?\n  esac\n\}/,
+      d2Pattern,
       'lane_rank() {\n  echo 0\n}'
     );
-    if (broken === original) {
-      console.log('  ⚠  D2 mutation pattern not found — skipping');
+    if (!d2Pattern.test(original) || broken === original) {
+      console.error('✗ D2: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
       writeFileSync(savepointFile, broken);
       assert('broken clamp → lane-integrity fails', false, () => run('D2', 'bun run test -- lane-integrity -t "clamp"'));
@@ -183,12 +189,14 @@ if (!existsSync(patternsFile)) {
   const original = readFileSync(patternsFile, 'utf8');
   try {
     // reintroduce the D3 defect: singular-only list (no payments/, migrations/)
+    const d3Pattern = /SENSITIVE_PATS=.*/;
     const broken = original.replace(
-      /SENSITIVE_PATS=.*/,
+      d3Pattern,
       'SENSITIVE_PATS="auth/|payment/|billing/|crypto/|secrets/|\\.env$|config/.*key|migration/|\\.sql$|schema\\.|\\.prisma$|\\.terraform|\\.tf$"'
     );
-    if (broken === original) {
-      console.log('  ⚠  D3 mutation pattern not found — skipping');
+    if (!d3Pattern.test(original) || broken === original) {
+      console.error('✗ D3: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
       writeFileSync(patternsFile, broken);
       assert('singular sensitive patterns → lane-integrity fails', false, () => run('D3', 'bun run test -- lane-integrity -t "payments"'));
@@ -218,10 +226,12 @@ if (!existsSync(patternsFile)) {
     const live = original.match(/SENSITIVE_PATS="([^"]+)"/)?.[1] ?? '';
     const broken = live.split('|').filter(t => !D3B_FAMILY_TOKENS.has(t)).join('|');
     const brokenLine = `SENSITIVE_PATS="${broken}"`;
-    if (broken === live || !live) {
-      console.log('  ⚠  D3b: no D3 family tokens found in live SENSITIVE_PATS — skipping');
+    const d3bPattern = /SENSITIVE_PATS="[^"]*"/;
+    if (!d3bPattern.test(original) || broken === live || !live) {
+      console.error('✗ D3b: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
-      writeFileSync(patternsFile, original.replace(/SENSITIVE_PATS="[^"]*"/, brokenLine));
+      writeFileSync(patternsFile, original.replace(d3bPattern, brokenLine));
       assert('missing new categories → lane-integrity fails', false, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
     }
   } finally {
@@ -238,12 +248,14 @@ if (!existsSync(savepointFile)) {
   const original = readFileSync(savepointFile, 'utf8');
   try {
     // revert to delta-based (0 on deletions/refactors)
+    const d4Pattern = /LOC_TOKENS=\$\(\( LOC_CHURN \* 12 \)\)/;
     const broken = original.replace(
-      /LOC_TOKENS=\$\(\( LOC_CHURN \* 12 \)\)/,
+      d4Pattern,
       'LOC_TOKENS=$(( LOC_DELTA > 0 ? LOC_DELTA * 12 : 0 ))'
     );
-    if (broken === original) {
-      console.log('  ⚠  D4 mutation pattern not found — skipping');
+    if (!d4Pattern.test(original) || broken === original) {
+      console.error('✗ D4: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
       writeFileSync(savepointFile, broken);
       assert('zero churn tokens → lane-integrity fails', false, () => run('D4', 'bun run test -- lane-integrity -t "churn"'));
@@ -263,12 +275,14 @@ if (!existsSync(savepointFile)) {
   try {
     // silently drop the continue writer block (make it a no-op). Anchor on the
     // D10 header comment so the regex hits the writer, not the STATE_FILE if.
+    const d10Pattern = /# --- continue.*\(D10\): machine-written resume point ---[\s\S]*?\nfi\n\n/;
     const broken = original.replace(
-      /# --- continue\/<mission>\/<member>\.json \(D10\): machine-written resume point ---[\s\S]*?\nfi\n\n/,
+      d10Pattern,
       '# --- continue writer disabled (D10) ---\n\n'
     );
-    if (broken === original) {
-      console.log('  ⚠  D10 mutation pattern not found — skipping');
+    if (!d10Pattern.test(original) || broken === original) {
+      console.error('✗ D10: mutation target not found — the gate it guards may be dead.');
+      failed++;
     } else {
       writeFileSync(savepointFile, broken);
       assert('broken continue writer → savepoint fails', false, () => run('D10', 'bun run test -- savepoint -t "D10"'));

@@ -18,6 +18,7 @@ import { targets, TARGET_IDS } from '../src/targets/index.ts';
 
 const repoRoot = join(import.meta.dirname, '..');
 const fail: string[] = [];
+const isJson = process.argv.includes('--json');
 
 function findMd(root: string, out: string[] = []): string[] {
   if (!existsSync(root)) return out;
@@ -169,6 +170,25 @@ if (orphans.length > ORPHAN_BASELINE) {
 }
 
 // ---------------------------------------------------------------------------
+if (isJson) {
+  const payload = {
+    pointers_total: pointers,
+    pointers_targets: TARGET_IDS.length,
+    pointers_broken: brokenPointers,
+    prose_paths: prosePaths,
+    prose_files: proseFiles.length,
+    orphans,
+    orphans_count: orphans.length,
+    ref_files: refFiles.length,
+    targets: TARGET_IDS.length,
+    pointers: pointers,
+    broken_pointers: brokenPointers,
+  };
+  console.log(JSON.stringify(payload, null, 2));
+  if (fail.length) process.exit(1);
+  process.exit(0);
+}
+
 console.log(`  ${pointers} pointers checked across ${TARGET_IDS.length} targets`);
 console.log(`  ${prosePaths} prose paths checked in ${proseFiles.length} files`);
 console.log(`  ${orphans.length}/${refFiles.length} reference files unreachable (baseline ${ORPHAN_BASELINE})`);

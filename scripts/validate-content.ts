@@ -417,6 +417,66 @@ if (integrityArg !== -1) {
 }
 }
 
+// --- README metrics gate (D3): README table must match .metrics/latest.json ---
+if (process.argv.includes('--check-readme-metrics')) {
+  const metricsPath = join(import.meta.dirname, '..', '.metrics', 'latest.json');
+  if (!existsSync(metricsPath)) {
+    errors.push(`README metrics: ${metricsPath} not found — run bun scripts/write-metrics.ts`);
+  } else {
+    let metrics: any;
+    try { metrics = JSON.parse(readFileSync(metricsPath, 'utf8')); }
+    catch (e) { errors.push(`README metrics: invalid JSON in ${metricsPath}: ${e}`); }
+    if (metrics) {
+      const readmePath = join(import.meta.dirname, '..', 'README.md');
+      if (!existsSync(readmePath)) {
+        errors.push('README metrics: README.md not found');
+      } else {
+        const readme = readFileSync(readmePath, 'utf8');
+        // rank-1: **95.9%**, 216 probes
+        const rankMatch = readme.match(/Retrieval routing rank-1[^\n]*?(\d+\.\d+)%[^\n]*?(\d+)\s+probes/i);
+        if (!rankMatch) {
+          errors.push('README metrics: could not parse Retrieval routing rank-1 row (expected "**X.Y%**, N probes")');
+        } else {
+          const readmeRank = parseFloat(rankMatch[1]);
+          const readmeProbes = parseInt(rankMatch[2], 10);
+          const wantRank = Number(metrics.retrieval_rank1);
+          const wantProbes = Number(metrics.retrieval_probes);
+          if (Math.abs(readmeRank - wantRank) > 0.05) {
+            errors.push(`README metrics: rank-1 ${readmeRank}% != metrics ${wantRank}% (probes ${readmeProbes} vs ${wantProbes}) — run bun scripts/write-metrics.ts and update README`);
+          }
+          if (readmeProbes !== wantProbes) {
+            errors.push(`README metrics: probes ${readmeProbes} != metrics ${wantProbes} (rank ${readmeRank}% vs ${wantRank}%) — run bun scripts/write-metrics.ts and update README`);
+          }
+        }
+        // pointers: **286/286**, 9 targets (or tiers)
+        const ptrMatch = readme.match(/Reference pointers resolve[^\n]*?\*\*(\d+)\/(\d+)\*\*[^\n]*?(\d+)\s+(tiers|targets)/i);
+        if (!ptrMatch) {
+          errors.push('README metrics: could not parse Reference pointers row (expected "**N/N**, M targets")');
+        } else {
+          const a = parseInt(ptrMatch[1], 10);
+          const b = parseInt(ptrMatch[2], 10);
+          const count = parseInt(ptrMatch[3], 10);
+          const wantTotal = Number(metrics.pointers_total);
+          const wantTargets = Number(metrics.pointers_targets);
+          if (a !== wantTotal || b !== wantTotal) {
+            errors.push(`README metrics: pointers ${a}/${b} != metrics ${wantTotal}/${wantTotal} — run bun scripts/write-metrics.ts and update README`);
+          }
+          if (count !== wantTargets) {
+            errors.push(`README metrics: targets/tiers ${count} != metrics ${wantTargets} — run bun scripts/write-metrics.ts and update README (expected ${wantTargets} targets)`);
+          }
+        }
+        // sanity: table still claims "Nothing in this table is an estimate"
+        if (!readme.includes('Nothing in this table is an estimate')) {
+          errors.push('README metrics: missing "Nothing in this table is an estimate" line');
+        }
+        if (errors.filter(e => e.startsWith('README metrics:')).length === 0) {
+          console.log(`✓ README metrics match .metrics/latest.json (rank-1 ${metrics.retrieval_rank1}% ${metrics.retrieval_probes} probes, ${metrics.pointers_total}/${metrics.pointers_total} pointers, ${metrics.pointers_targets} targets)`);
+        }
+      }
+    }
+  }
+}
+
 // Conditional-assertion guard: an expect() reachable only inside a truthiness
 // check silently passes when the value is absent. This class produced 9 defects.
 // Allowed: checks keyed on a declared invariant (tier, fixture keys).

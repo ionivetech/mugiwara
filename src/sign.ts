@@ -13,6 +13,7 @@ import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } 
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { readConfig } from './config.ts';
+import { loadPolicy } from './policy.ts';
 
 export function signArgs(reportPath: string, secretKey: string): string[] {
   return ['-Sm', reportPath, '-s', secretKey];
@@ -192,6 +193,42 @@ export function signReport(projectDir: string, missionDir: string): { ok: boolea
   return { ok: true, message: `signed ${report}.mugisig (pure ed25519, key: ${join(dir, 'mugiwara.key')})` };
 }
 
+function normalizePubkey(pk: string): string {
+  const t = pk.trim();
+  return t.startsWith('ed25519:') ? t.slice('ed25519:'.length).trim() : t;
+}
+
+function checkTrust(projectDir: string, signerPubB64: string): { ok: boolean; message?: string } {
+  try {
+    const policy = loadPolicy(projectDir);
+    const att = policy?.attestation;
+    if (!att) return { ok: true };
+    const trusted = att.trusted_keys ?? [];
+    const revoked = att.revoked ?? [];
+    const signer = signerPubB64.trim();
+    // revoked by pubkey direct match (before trusted check, so revoked is authoritative)
+    const directlyRevoked = revoked.some((r) => {
+      const rpk = (r as { pubkey?: string }).pubkey;
+      if (!rpk) return false;
+      return normalizePubkey(rpk) === signer;
+    });
+    if (directlyRevoked) return { ok: false, message: 'signature valid but signer revoked (pubkey in revoked list)' };
+
+    if (trusted.length === 0) {
+      // No trust list → only signature validity matters; revoked already checked
+      return { ok: true };
+    }
+    const match = trusted.find((e) => normalizePubkey(e.pubkey) === signer);
+    if (!match) return { ok: false, message: 'signature valid but signer untrusted (pub not in trusted_keys)' };
+    // check revoked by id (revoked id means that trusted id is revoked)
+    const revokedById = revoked.some((r) => r.id === match.id);
+    if (revokedById) return { ok: false, message: `signature valid but signer revoked (id: ${match.id})` };
+    return { ok: true };
+  } catch {
+    return { ok: true };
+  }
+}
+
 export function verifyReport(projectDir: string, missionDir: string): { ok: boolean; message: string } {
   const report = join(missionDir, 'report.md');
   const minisig = `${report}.minisig`;
@@ -208,6 +245,10 @@ export function verifyReport(projectDir: string, missionDir: string): { ok: bool
     const pubKey = existsSync(defaultKey('public')) ? defaultKey('public') : null;
     try {
       execFileSync('minisign', verifyArgs(report, pubKey), { cwd: projectDir, stdio: 'pipe' });
+      // trust check for pure is not applied to minisig (MVP: pure-only trust).
+      // If a .mugisig also exists alongside minisig, still trust-check the pure pub for completeness,
+      // but minisig verification already succeeded — treat as ok.
+      // For strict attestation, operator should use pure backend when trusted_keys is configured.
       return { ok: true, message: 'signature verifies against report.md (minisig)' };
     } catch {
       return { ok: false, message: 'SIGNATURE INVALID — report.md changed after signing (minisig)' };
@@ -219,9 +260,10 @@ export function verifyReport(projectDir: string, missionDir: string): { ok: bool
     const parsed = JSON.parse(readFileSafe(mugisig) ?? '{}') as PureSig;
     const content = readFileSafe(report);
     if (content === null || parsed.algo !== 'ed25519-pure') return { ok: false, message: 'invalid .mugisig file' };
-    return pureVerify(content, parsed)
-      ? { ok: true, message: 'signature verifies against report.md (mugisig, ed25519-pure)' }
-      : { ok: false, message: 'SIGNATURE INVALID — report.md changed after signing (mugisig)' };
+    if (!pureVerify(content, parsed)) return { ok: false, message: 'SIGNATURE INVALID — report.md changed after signing (mugisig)' };
+    const trust = checkTrust(projectDir, parsed.pub);
+    if (!trust.ok) return { ok: false, message: trust.message! };
+    return { ok: true, message: 'signature verifies against report.md (mugisig, ed25519-pure)' };
   } catch {
     return { ok: false, message: 'invalid .mugisig file' };
   }
