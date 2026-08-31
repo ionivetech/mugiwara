@@ -151,7 +151,7 @@ describe('detectBudgetAnomaly', () => {
 
 describe('recordBudgetDecision', () => {
   it('writes bullet with budget-governor actor and sanitizes', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'adaptive-'));
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-adaptive-'));
     try {
       recordBudgetDecision(dir, { decision: 'pause\ninjection', reason: 'over budget', evidence: 'E001' });
       const content = readFileSync(join(dir, 'decisions.md'), 'utf8');

@@ -57,24 +57,53 @@ function applyModeChange(mode: string) {
   renameSync(tmp, file);
 }
 
+// Codex vs Claude: Codex UserPromptSubmit expects {} or {hookSpecificOutput:{hookEventName,additionalContext}}
+// Claude expects {prompt:""} — Codex rejects "prompt" (additionalProperties:false).
+// Detect Codex via env or input shape (turn_id/cwd/model are Codex-only).
+function isCodexInput(parsed: Record<string, unknown>): boolean {
+  if (process.env.CODEX_HOME || process.env.CODEX_THREAD_ID) return true;
+  if (typeof parsed.turn_id === 'string') return true;
+  if (typeof parsed.cwd === 'string' && typeof parsed.model === 'string') return true;
+  return false;
+}
+
 // main
 async function main() {
   let input = '';
   for await (const chunk of process.stdin) input += chunk;
-  if (!input.trim()) { process.stdout.write(JSON.stringify({ prompt: '' })); return; }
+  if (!input.trim()) {
+    // empty stdin — Codex expects {}, Claude expects {prompt:""}
+    // Emit Codex-safe empty ( {} ) — Claude also accepts {} as no-op (prompt passthrough)
+    // but to keep Claude behavior, sniff env: if Codex-like env, emit {}, else prompt
+    const codexEmpty = !!(process.env.CODEX_HOME || process.env.CODEX_THREAD_ID);
+    process.stdout.write(JSON.stringify(codexEmpty ? {} : { prompt: '' }));
+    return;
+  }
 
-  let parsed: { prompt?: string };
-  try { parsed = JSON.parse(input); } catch { parsed = { prompt: input }; }
-  const prompt = parsed.prompt ?? '';
+  let parsed: Record<string, unknown>;
+  try { parsed = JSON.parse(input) as Record<string, unknown>; } catch { parsed = { prompt: input }; }
+  const prompt = typeof parsed.prompt === 'string' ? parsed.prompt : '';
 
   const change = parseModeChange(prompt);
   if (change) applyModeChange(change);
 
-  // pass-through — always return the prompt unchanged
-  process.stdout.write(JSON.stringify({ prompt }));
+  const codex = isCodexInput(parsed);
+  if (codex) {
+    // Codex schema: additionalProperties:false — "prompt" is invalid. Use hookSpecificOutput or {}.
+    if (change) {
+      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: `Mugiwara mode changed to ${change}` } }));
+    } else {
+      process.stdout.write(JSON.stringify({}));
+    }
+  } else {
+    // Claude: pass-through prompt
+    process.stdout.write(JSON.stringify({ prompt }));
+  }
 }
 
 main().catch(() => {
   // silent — hook must never block the conversation
-  process.stdout.write(JSON.stringify({ prompt: '' }));
+  // Codex-safe fallback: {} (valid for both, but Claude prefers prompt — however {} is also accepted as no-op)
+  const codexFallback = !!(process.env.CODEX_HOME || process.env.CODEX_THREAD_ID);
+  process.stdout.write(JSON.stringify(codexFallback ? {} : { prompt: '' }));
 });

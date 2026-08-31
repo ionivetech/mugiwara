@@ -54,12 +54,22 @@ function applyModeChange(mode) {
   writeFileSync(tmp, body);
   renameSync(tmp, file);
 }
+function isCodexInput(parsed) {
+  if (process.env.CODEX_HOME || process.env.CODEX_THREAD_ID)
+    return true;
+  if (typeof parsed.turn_id === "string")
+    return true;
+  if (typeof parsed.cwd === "string" && typeof parsed.model === "string")
+    return true;
+  return false;
+}
 async function main() {
   let input = "";
   for await (const chunk of process.stdin)
     input += chunk;
   if (!input.trim()) {
-    process.stdout.write(JSON.stringify({ prompt: "" }));
+    const codexEmpty = !!(process.env.CODEX_HOME || process.env.CODEX_THREAD_ID);
+    process.stdout.write(JSON.stringify(codexEmpty ? {} : { prompt: "" }));
     return;
   }
   let parsed;
@@ -68,12 +78,22 @@ async function main() {
   } catch {
     parsed = { prompt: input };
   }
-  const prompt = parsed.prompt ?? "";
+  const prompt = typeof parsed.prompt === "string" ? parsed.prompt : "";
   const change = parseModeChange(prompt);
   if (change)
     applyModeChange(change);
-  process.stdout.write(JSON.stringify({ prompt }));
+  const codex = isCodexInput(parsed);
+  if (codex) {
+    if (change) {
+      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: `Mugiwara mode changed to ${change}` } }));
+    } else {
+      process.stdout.write(JSON.stringify({}));
+    }
+  } else {
+    process.stdout.write(JSON.stringify({ prompt }));
+  }
 }
 main().catch(() => {
-  process.stdout.write(JSON.stringify({ prompt: "" }));
+  const codexFallback = !!(process.env.CODEX_HOME || process.env.CODEX_THREAD_ID);
+  process.stdout.write(JSON.stringify(codexFallback ? {} : { prompt: "" }));
 });

@@ -90,6 +90,30 @@ targets must be Luffy) plus the tier-3 stub lines in `src/targets/generic.ts`.
 The validator is the floor everywhere; CI blocks drift. This does not make
 mugiwara a runtime — see `enforcement.md`.
 
+## Harness enforcement policy (enterprise)
+
+Write-scope is runtime-enforced only on **opencode**; the other 11 harnesses are
+rules-based. Enterprise orgs can require the enforced path:
+
+```yaml
+# mugiwara.policy.yml
+harness:
+  require_enforcement: true  # refuse to run where write-scope is rules-based only
+```
+
+When `harness.require_enforcement: true`, the CLI (`src/cli.ts` → `src/policy.ts`
+`enforceHarnessPolicy` / `isEnforcedHarness` / `detectHarness`) refuses to run
+on any non-opencode harness and exits 1:
+
+> `harness enforcement required but current harness is rules-based only — use opencode or set harness.require_enforcement:false`
+
+Detection mirrors `scripts/savepoint.sh`: `OPENCODE` / `OPENCODE_TOKENS_FILE` env
+or `.opencode/config.json` (project or cwd) ⇒ `opencode` (enforced);
+`CLAUDECODE` / `CLAUDE_CODE_ENTRYPOINT` / `ANTHROPIC_MODEL` containing `claude`
+⇒ `claude`; otherwise `unknown` / `cursor` — all non-opencode are treated as
+rules-based. Set `harness.require_enforcement: false` or run under opencode to
+pass. See `docs/concepts/policy-as-code.md`.
+
 ## Turn-end enforcement capability
 
 Hooks are the only mechanism that produces a mission artifact without a model
