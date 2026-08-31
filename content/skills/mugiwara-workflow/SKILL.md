@@ -84,14 +84,14 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 
 ## Rules
 1. Evidence over claims — run checks, show output.
-2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage. 2b. Scope & Code Governor: before adding code, check §14 reuse; justify new abstractions (§15) and dependencies (§16); prefer minimum sufficient implementation; record scope verdicts as scope-governor trail rows. 2c. Cognitive & Output Governor: keep reasoning Question→Evidence→Decision→Action; bound alternatives; compress output to Decision/Action/Result/Evidence/Blocker; dedup explanations; record cognitive verdicts as cognitive-governor trail rows. 2d. Stop-Slop Governor: detect slop via taxonomy/signals; measure progress vs cost; flag anomaly; intervene (tolerate/stop/compress/escalate); detect retry/healing/scope/context/investigation/code slop; record slop-governor trail rows. 2e. Adaptive Budget & Circuit Breaker: reserve/projection/expansion/thresholds/breaker/anomaly; record budget-governor trail rows. 2f. Reporting & CLI: ledger aggregates envelope+events+registry+trail; mugiwara cost surfaces ledger (--json); report Cost section renders ledger+avoided+efficiency+trail (§43). 2g. Benchmark & Hardening: cost (§48) + Stop-Slop (§45) suites, large/long/runaway stress, thresholds tokens>projected+overhead fails, §49 regression fails, deterministic harness, CI via bun run gate, thresholds ratchet like retrieval-eval — Full checklist: references/benchmark-governor.md — 12 scenarios; unchecked boxes are not done.
+2. No flow stage skipped without a reason recorded in the decision log. Cost governor — ladder (need→reuse→stdlib→native→installed dep→one line→code), terse output Decision/Action/Result/Evidence, slop taxonomy + budget reserve/projection — Full checklist: `_shared/references/cost-governor.md`; trail rows; unchecked boxes are not done.
 3. Heal loop: max 3 cycles, then escalate.
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
 6. Resume via `resume-coordinator` before any flow stage — never restart.
 7. Push branch + hand verdict to user; crew never merges or deploys. 8. Host todo mirrors the plan doc every task + flow stage — same response as evidence.
-## Governors
-Work (§7), Scope/Code (§14-16), Cognitive, Stop-Slop (§45), Budget (§43), Reporting/CLI, Benchmark (§48-49) — full checklists: `references/scope-code-governor.md`, `references/cognitive-output-governor.md`, `references/stop-slop-governor.md`, `references/adaptive-budget-governor.md`, `references/benchmark-governor.md`; trail rows; savepoint/lane-base/config untouched.
+## Cost governor
+Full checklist: `_shared/references/cost-governor.md` — ladder, terse output, dedup, slop taxonomy, budget reserve/projection, benchmark; trail rows; savepoint/lane-base/config untouched.
 ## Large campaign — sub-plan & archive merge
 Full checklist: `references/large-campaign-subplan.md` — 12 items; `sub-plan/` when `>3 phases` or `>1500 lines`, `flows/phase-NN/` isolation, `mugiwara archive` folds into `report.md`.
 ## Iron Law

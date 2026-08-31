@@ -91,7 +91,7 @@ Blocked → one row `| flow stage | task | symptom | attempted | help-needed |` 
 
 Boy Scout rule — every touched file leaves cleaner than found: one refactor per touch, done while green, its own commit, never bundled into another task.
 
-TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`.
+TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`. Before adding code: ladder reuse helper?→stdlib?→native?→installed dep?→one line?→code — Full checklist: `_shared/references/cost-governor.md`.
 
 ## Large campaign — phase-isolated flows
 Full checklist: `references/execution-phase-flows.md` — 4 items; `flows/phase-NN/02-execution.md` per phase, `flows/todos.md` with `## Phase NN` sections, no flat overwrite.
