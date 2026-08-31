@@ -51,8 +51,13 @@ describe('readConfig', () => {
     expect(Object.keys(cfg).length).toBe(1);
   });
 
-  it('returns empty object when no config exists', () => {
-    expect(readConfig(dir)).toEqual({});
+  it('auto-creates default config when none exists (tier-3 bootstrap)', () => {
+    expect(existsSync(join(dir, '.mugiwara', 'config'))).toBe(false);
+    const cfg = readConfig(dir);
+    expect(cfg.mode).toBe('guided');
+    expect(cfg.branch).toBe('feature/{type}-{issue}-{slug}');
+    expect(existsSync(join(dir, '.mugiwara', 'config'))).toBe(true);
+    expect(readFileSync(join(dir, '.mugiwara', 'config'), 'utf8')).toBe(DEFAULT_CONFIG);
   });
 
   it('handles Windows line endings', () => {

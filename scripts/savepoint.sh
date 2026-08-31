@@ -331,6 +331,13 @@ if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
   TASKS_TOTAL=$(grep -cE '^\s*-\s*\[[ xX]\]' "$PLAN_FILE" 2>/dev/null || true)
   TASKS_DONE=$(grep -c '\[x\]' "$PLAN_FILE" 2>/dev/null || true)
 fi
+# Fallback for large campaigns (>3 phases, >1500 lines) where master plan.md is an index
+# and tasks live in sub-plan/*.md — only when plan.md has zero checkbox tasks to
+# keep simple missions unchanged.
+if [ "${TASKS_TOTAL:-0}" -eq 0 ] 2>/dev/null && [ -d "$MISSION_DIR/sub-plan" ]; then
+  TASKS_TOTAL=$(grep -rcE '^\s*-\s*\[[ xX]\]' "$MISSION_DIR/sub-plan" 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || true)
+  TASKS_DONE=$(grep -rc '\[x\]' "$MISSION_DIR/sub-plan" 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || true)
+fi
 
 # blocker count
 BLOCKERS_FILE="$MISSION_DIR/blockers.md"

@@ -39,22 +39,19 @@ export async function run(argv: string[]): Promise<void> {
       enforceHarnessPolicy(projectDirForHarness);
     }
   }
-  // `continue` and `status` are read-only position commands: dispatch before
-  // config bootstrap so a fresh project never gets a .mugiwara/config created
-  // and no setup chatter is printed before missions/members are listed.
-  if (command === 'continue' || command === 'status') {
-    return command === 'continue' ? continueCmd(flags, _) : statusCmd(flags);
-  }
-  // A command on a fresh project must be immediately usable — bootstrap the
-  // default .mugiwara/config when it is missing (not only at install time).
-  // Skipped for install/update --dry-run: a dry run must not mutate the
-  // project (the installer writes the config itself on a real install).
+  // Bootstrap default .mugiwara/config on any command when missing — including
+  // `continue`/`status` — so tier-3 agents that only mkdir .mugiwara still get
+  // a config. Also covered by readConfig() auto-create for non-CLI entry.
+  // Skipped for install/update --dry-run: a dry run must not mutate the project.
   const isDryRunInstall = (command === 'install' || command === 'update') && flag(flags.dryRun);
   if (!isDryRunInstall) {
     const projectDir = resolve(str(flags.project) ?? process.cwd());
     if (ensureConfig(projectDir)) {
       console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
     }
+  }
+  if (command === 'continue' || command === 'status') {
+    return command === 'continue' ? continueCmd(flags, _) : statusCmd(flags);
   }
   switch (command) {
     case 'install': return install(flags);

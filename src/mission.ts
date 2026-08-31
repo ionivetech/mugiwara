@@ -33,6 +33,52 @@ function primaryState(dir: string, files: string[]): Record<string, unknown> | n
   }
 }
 
+/** Extract tasks from state.json — handles nested tasks:{done,total} (current savepoint) and legacy flat fields. */
+function tasksFromState(state: Record<string, unknown> | null): { done: number; total: number } {
+  if (!state) return { done: 0, total: 0 };
+  const t = (state as Record<string, unknown>).tasks as { done?: unknown; total?: unknown } | undefined;
+  if (t && typeof t.done === 'number' && typeof t.total === 'number') return { done: t.done, total: t.total };
+  const done = Number((state as Record<string, unknown>).tasks_done);
+  const total = Number((state as Record<string, unknown>).tasks_total);
+  return { done: Number.isFinite(done) ? done : 0, total: Number.isFinite(total) ? total : 0 };
+}
+
+/** Fresh task counts from plan.md, with sub-plan fallback for large campaigns (>3 phases). */
+function countPlanTasks(missionDir: string): { done: number; total: number } {
+  let total = 0;
+  let done = 0;
+  const planFile = join(missionDir, 'plan.md');
+  if (existsSync(planFile)) {
+    try {
+      const text = readFileSync(planFile, 'utf8');
+      for (const line of text.split(/\r?\n/)) {
+        if (/^\s*-\s*\[[ xX]\]/.test(line)) {
+          total++;
+          if (/^\s*-\s*\[[xX]\]/.test(line)) done++;
+        }
+      }
+    } catch { /* best-effort */ }
+  }
+  if (total === 0) {
+    const subPlanDir = join(missionDir, 'sub-plan');
+    if (existsSync(subPlanDir)) {
+      try {
+        for (const f of readdirSync(subPlanDir)) {
+          if (!f.endsWith('.md')) continue;
+          const text = readFileSync(join(subPlanDir, f), 'utf8');
+          for (const line of text.split(/\r?\n/)) {
+            if (/^\s*-\s*\[[ xX]\]/.test(line)) {
+              total++;
+              if (/^\s*-\s*\[[xX]\]/.test(line)) done++;
+            }
+          }
+        }
+      } catch { /* best-effort */ }
+    }
+  }
+  return { done, total };
+}
+
 /** Files the mission changed, base..branch. Empty on any git failure — routing is best-effort. */
 function changedFiles(projectDir: string, state: Record<string, unknown> | null): string[] {
   const base = typeof state?.base_sha === 'string' ? state.base_sha : '';
@@ -102,6 +148,11 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
   } else {
     if (existsSync(join(root, 'lessons.md'))) kept.push('lessons.md');
     else if (existsSync(join(root, join('logs', 'lessons.md')))) kept.push(join('logs', 'lessons.md'));
+  }
+  // index.md is the archive history — after a full reset (missions gone) its entries are dangling (point to deleted report.md). A reset is a fresh start, so clear it; next archive recreates "# Mission index" header.
+  if (removed.includes('missions') && existsSync(join(root, 'index.md'))) {
+    rmSync(join(root, 'index.md'));
+    removed.push('index.md');
   }
   for (const f of ['config', 'manifest.json', 'backup']) {
     if (existsSync(join(root, f))) kept.push(f);
@@ -394,6 +445,10 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       });
       if (rb) kept.push(join('missions', mission, rb.file));
       try {
+        const st = tasksFromState(state);
+        const pt = countPlanTasks(dir);
+        const tasks_done = pt.total > 0 ? pt.done : st.done;
+        const tasks_total = pt.total > 0 ? pt.total : st.total;
         const baseShaForNote = typeof state.base_sha === 'string' ? state.base_sha : undefined;
         writeProvenance(projectDir, dir, {
           mission,
@@ -401,8 +456,8 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
           lane: typeof state.lane === 'string' ? state.lane : '',
           mode: typeof state.mode === 'string' ? state.mode : '',
           branch: state.branch,
-          tasks_done: Number(state.tasks_done) || 0,
-          tasks_total: Number(state.tasks_total) || 0,
+          tasks_done,
+          tasks_total,
           evidence: Array.isArray(state.evidence) ? (state.evidence as string[]) : [],
           models: stageModels,
           base_sha: baseShaForNote,
