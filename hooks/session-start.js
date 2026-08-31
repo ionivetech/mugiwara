@@ -104,6 +104,11 @@ if (active.length === 1 && mode === "auto") {
 ${lines}
 ` + `Run /mugiwara continue <mission> [member] to resume one explicitly.`;
 }
+var isCodexSession = !!(process.env.CODEX_HOME || process.env.CODEX_THREAD_ID || process.env.CODEX_HOME_DIR);
 if (resumeContext) {
-  console.log(JSON.stringify({ additionalContext: resumeContext }));
+  if (isCodexSession) {
+    console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: resumeContext } }));
+  } else {
+    console.log(JSON.stringify({ additionalContext: resumeContext }));
+  }
 }
