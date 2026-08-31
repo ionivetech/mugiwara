@@ -40,6 +40,12 @@ function configPaths(projectDir: string): string[] {
  * blank lines are skipped; values are trimmed.
  */
 export function readConfig(projectDir: string): Record<string, string> {
+  try {
+    const file = join(projectDir, '.mugiwara', 'config');
+    let exists = false;
+    try { exists = lstatSync(file).isFile() || lstatSync(file).isSymbolicLink(); } catch { exists = false; }
+    if (!exists) ensureConfig(projectDir);
+  } catch { /* best-effort: auto-create must not break reads */ }
   const out: Record<string, string> = {};
   for (const file of configPaths(projectDir)) {
     if (!existsSync(file)) continue;

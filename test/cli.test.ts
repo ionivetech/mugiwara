@@ -125,15 +125,16 @@ describe('run() — status', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('read-only: status on a fresh project never creates .mugiwara/config', async () => {
+  test('status on a fresh project auto-creates .mugiwara/config (tier-3 bootstrap)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-boot-'));
     try {
       const cfg = join(dir, '.mugiwara', 'config');
       expect(existsSync(cfg)).toBe(false);
       const { out } = await capture(['status'], dir);
       expect(out).toContain('No mission state on disk.');
-      expect(out).not.toContain('default .mugiwara/config written');
-      expect(existsSync(cfg)).toBe(false);
+      expect(out).toContain('default .mugiwara/config written');
+      expect(existsSync(cfg)).toBe(true);
+      expect(readFileSync(cfg, 'utf8')).toContain('mode=guided');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
