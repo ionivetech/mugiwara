@@ -147,6 +147,11 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
     if (existsSync(join(root, 'lessons.md'))) kept.push('lessons.md');
     else if (existsSync(join(root, join('logs', 'lessons.md')))) kept.push(join('logs', 'lessons.md'));
   }
+  // index.md is the archive history — after a full reset (missions gone) its entries are dangling (point to deleted report.md). A reset is a fresh start, so clear it; next archive recreates "# Mission index" header.
+  if (removed.includes('missions') && existsSync(join(root, 'index.md'))) {
+    rmSync(join(root, 'index.md'));
+    removed.push('index.md');
+  }
   for (const f of ['config', 'manifest.json', 'backup']) {
     if (existsSync(join(root, f))) kept.push(f);
   }
