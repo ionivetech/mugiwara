@@ -6,6 +6,8 @@ gate_artifact: plan.md Waves/Task index — planning evidence
 
 # Planning
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - Lane 0 direct work: no plan needed for a typo or single-file fix.

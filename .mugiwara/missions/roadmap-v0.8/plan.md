@@ -203,7 +203,7 @@ validate-content.ts + docs. Lane 3.
 reference yang bisa diverifikasi. Chopper di Flow 4 memverifikasi artifact
 benar-benar ada di flows/. Ini mengubah "prose sound" → "measured".
 
-**[PARALLEL] proof:** T1-T5 = 5 file dirs independen, tidak ada file
+**[PARALLEL] proof:** T1-T5 = 5 file dirs independent, tidak ada file
 bersama (tiap skill punya dir sendiri). validate-content.ts (T6) hanya
 dibaca, bukan diedit, selama T1-T5. Parallel aman.
 

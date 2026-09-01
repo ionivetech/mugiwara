@@ -6,6 +6,8 @@ gate_artifact: flows/review — .mugiwara/missions/<mission>/review.md: severity
 
 # Review
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - Zero diff to review: docs-only change or lane 0 one-line fix.

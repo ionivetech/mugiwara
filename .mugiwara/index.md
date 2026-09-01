@@ -4,3 +4,4 @@
 - native-cost-governor — 2026-08-29
 - workflow-subplan — 2026-08-29
 - seamless-governors — 2026-09-01
+- seamless-followup — 2026-09-01

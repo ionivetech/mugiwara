@@ -3,6 +3,7 @@ name: mugiwara-orchestration
 description: Gatekeeper + captain for any task: triage, classify, coordinate, route, refuse deploy, key rotation, hotfix, "skip the pipeline" pressure, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
 ---
 # Orchestration (Luffy)
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
 
 ## Skip when
 
@@ -82,7 +83,7 @@ Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never ou
 ## Flow transitions (visibility)
 
 Banner in the owning agent's color opens every flow stage — the equals line
-`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0`. A skip is recorded, never silent.
+`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0`. A skip is recorded, never silent. **Host todos (Luffy):** At Flow 0 Luffy seeds host native todos (`todowrite` on opencode) mirroring `plan.md` every task + flow stage as `pending`; Zoro flips `pending→in_progress→completed` each wave; keep `flows/todos.md` as archive — UI sync via `todowrite`, same response as evidence. Full checklist: `_shared/references/cost-governor.md`.
 
 ## Output discipline
 

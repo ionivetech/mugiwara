@@ -7,6 +7,7 @@ import { existsSync, readFileSync, writeFileSync, copyFileSync, renameSync, unli
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { gatesForLane } from '../src/policy.ts';
+import { budgetForLane } from '../src/cost.ts';
 
 const root = join(import.meta.dirname, '..');
 let passed = 0;
@@ -647,6 +648,8 @@ console.log('\nT3 — lane-aware gates');
       const s = gatesForLane('full');
       return s.length === 12 && s.includes('run-evals') && s.includes('retrieval-eval') && s.includes('conformance');
     });
+    assert('budget direct → 0, full → 50000', true, () => budgetForLane('direct') === 0 && budgetForLane('full') === 50000);
+    assert('budget spike → 3000 (direct fixture 3k)', true, () => budgetForLane('spike') === 3000);
     // mutation: break direct step count → should fail (file content shows not 3)
     const broken = originalPolicy.replace(
       "direct: ['build-hooks:check', 'typecheck', 'build']",

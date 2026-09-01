@@ -53,8 +53,7 @@ their banners appear only when a wave or worker names them.
 
 ## Rules
 
-1. Banner before EVERY flow stage; handoff after it. No flow stage starts without its
-   banner (orchestration red flag).
+1. Banner before EVERY flow stage; handoff after it. Main thread emits `===== FLOW N — CREW =====` FIRST line and `→ Flow N+1 — Crew` LAST line even when subagent does work — covers Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy. No flow stage starts without its banner (orchestration red flag).
 2. The color comes from this table only — never invent a hex mid-mission.
 3. One form everywhere: equals line `===== <emoji> FLOW N — <CREW> (ROLE) =====` — five `=` per side, the crew emoji from the table leading the line, ANSI-wrapped in terminals, plain in markdown-rendering UIs. When unsure, the plain form is safe everywhere.
 4. Only the crew table's colors and the two SGR forms above (truecolor,

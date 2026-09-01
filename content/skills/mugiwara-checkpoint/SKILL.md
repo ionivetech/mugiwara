@@ -6,6 +6,8 @@ gate_artifact: flows/02-audit.md — per-task acceptance evidence
 
 # Checkpoint
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - No execution flow stage completed this mission — nothing to audit yet.

@@ -6,6 +6,8 @@ gate_artifact: flows/01-execution.md quality evidence — duplicated_lines_densi
 
 # Quality (Sanji)
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - No code changed: docs-only or config-only diff with no lint/test surface.

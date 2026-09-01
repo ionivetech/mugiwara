@@ -161,7 +161,7 @@ Mission: work through the full ROADMAP.md (fresh v0.8 roadmap: 5 items).
   main dan ikut serta sebagai history branch baru. Branch lama
   `feat/roadmap-config-bootstrap` + `feat/roadmap-dual-attestation` di-delete
   (local + remote). M1 WIP (sign.ts + test, uncommitted) ikut pindah via
-  rename — tidak ada kerja hilang.
+  rename — no work lost.
 - **Plan impact:** plan.md mission split di-amend; branch per sub-mission
   dibatalkan. PR tunggal untuk seluruh campaign (catatan: PR jadi besar —
   trade-off diterima user eksplisit).
