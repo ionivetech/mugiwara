@@ -16,7 +16,7 @@
 
 ## Goal
 
-Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. One `cost-governor` tunggal (terse+lazy, no caveman/ponytail mention) + lane-aware + slop all-lines + crew strengthened.
+Solo and enterprise both useful, all features valuable, low cost, seamless. One `cost-governor` tunggal (terse+lazy, no caveman/ponytail mention) + lane-aware + slop all-lines + crew strengthened.
 
 ## Lane & Mode
 
@@ -25,11 +25,11 @@ Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. O
 
 ## Task index
 
-### Wave 0 — P0 Solo/Team gate (krusial, before plan)
+### Wave 0 — P0 Solo/Team gate (crucial, before plan)
 
 | # | Task | Files | Acceptance |
 |---|------|-------|------------|
-| T0 | **P0 Solo/Team gate** — `mode guided/semi` → Luffy **wajib tanya** `solo atau tim?` sebelum Nami, `auto` → default solo dari `git config`. Affects `state.json` vs `<member>.json`, plan `parallel` vs `inline`, `Nami` member isolation | `content/skills/mugiwara-orchestration/SKILL.md`, `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-planning/SKILL.md`, `src/continue.ts`, `src/mission.ts` | `guided/semi` tanpa jawaban → blocker, tidak lanjut ke Nami; `auto` → solo default tercatat di `decisions.md`; `tim` → `state: <member>.json` + `continue-<member>.json` per member |
+| T0 | **P0 Solo/Team gate** — `mode guided/semi` → Luffy **must ask** solo or team? before Nami, `auto` → default solo from `git config`. Affects `state.json` vs `<member>.json`, plan `parallel` vs `inline`, `Nami` member isolation | `content/skills/mugiwara-orchestration/SKILL.md`, `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-planning/SKILL.md`, `src/continue.ts`, `src/mission.ts` | `guided/semi` without answer → blocker, does not proceed to Nami; `auto` → solo default recorded in `decisions.md`; `team` → `state: <member>.json` + `continue-<member>.json` per member |
 
 ### Wave 1 — Governor unification (terse+lazy, no branding)
 
@@ -75,7 +75,7 @@ Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. O
 
 ## Tasks
 
-- [x] T0 P0 Solo/Team gate — guided/semi wajib tanya, auto default solo (P0)
+- [x] T0 P0 Solo/Team gate — guided/semi must ask, auto default solo (P0)
 - [x] T1 Merge 5 governors → 1 references/cost-governor.md (terse+lazy, no branding)
 - [x] T2 Wire cost-governor reduce — Zoro pre-check reuse/stdlib/native/one-line
 - [x] T3 Lane-aware gates — direct 3 steps, full 12 steps

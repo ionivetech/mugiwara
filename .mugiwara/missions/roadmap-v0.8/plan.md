@@ -203,7 +203,7 @@ validate-content.ts + docs. Lane 3.
 reference yang bisa diverifikasi. Chopper di Flow 4 memverifikasi artifact
 benar-benar ada di flows/. Ini mengubah "prose sound" → "measured".
 
-**[PARALLEL] proof:** T1-T5 = 5 file dirs independen, tidak ada file
+**[PARALLEL] proof:** T1-T5 = 5 file dirs independent, no shared file
 bersama (tiap skill punya dir sendiri). validate-content.ts (T6) hanya
 dibaca, bukan diedit, selama T1-T5. Parallel aman.
 
@@ -242,9 +242,9 @@ scripts/retrieval-eval.ts (load retrieval/*.json), floor re-baseline. Lane 2.
 
 ### Detail
 
-Retrieval cases = prompt ke skill description (TF-IDF). Positive: prompt
-konkret dari capability skill (mis. "Prisma transaction dengan rollback" →
-mugiwara-backend). Negative: prompt dari skill LAIN (harus TIDAK match).
-Context7 ground truth = prompt dirancang dari knowledge yang sudah di-cite
-di skill body (M2/M3). T2: loader scan evals/cases/retrieval/*.json sebagai
-bagian dari covered set (skill key wajib).
+Retrieval cases = prompt to skill description (TF-IDF). Positive: prompt
+concrete from skill capability (e.g., "Prisma transaction with rollback" →
+mugiwara-backend). Negative: prompt from OTHER skill (must NOT match).
+Context7 ground truth = prompts designed from knowledge already cited
+in skill body (M2/M3). T2: loader scans evals/cases/retrieval/*.json as
+part of covered set (skill key required).

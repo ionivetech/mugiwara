@@ -3,7 +3,7 @@
 **Mission:** seamless-governors · **Branch:** feat/seamless-governors · **Mode:** auto · **Lane:** Full (9/9 tasks) · **Actor:** ionivetech <ionivetech@gmail.com>
 
 ## Summary
-Solo & enterprise sama-sama useful, cost kecil, seamless. Cost Governor terse+lazy (no caveman/ponytail), lane-aware, slop all-lines, crew strengthened, P0 solo/team gate.
+Solo and enterprise both useful, low cost, seamless. Cost Governor terse+lazy (no caveman/ponytail), lane-aware, slop all-lines, crew strengthened, P0 solo/team gate.
 
 ## Per-flow outcomes
 
@@ -47,11 +47,11 @@ Flow 4 → 9 · 9/9 tasks · 0 blockers · 1 heal · 57280/50000 tokens (ok, del
 **Actor:** AI: muse-spark-1.2-contributor-free
 **Reason:** 8 tasks across 4 waves, file-disjoint within wave, need Nami plan before Zoro. Previous missions (audit-hardening) proved lane-aware + slop not wired — this mission fixes that class, not just instance.
 
-## Flow 0 — P0 Solo/Team gate (krusial)
+## Flow 0 — P0 Solo/Team gate (crucial)
 
-**Gap found:** Luffy tidak tanya `solo atau tim?` di `mode guided/semi` — langsung anggap solo dari `git config`. Ini krusial P0 karena affect `state.json` vs `<member>.json`, `Nami` parallel plan, `Zoro` dispatch, `continue` isolation.
+**Gap found:** Luffy does not ask solo or team? di `mode guided/semi` — directly assumes solo from `git config`. This is crucial P0 because it affects `state.json` vs `<member>.json`, `Nami` parallel plan, `Zoro` dispatch, `continue` isolation.
 
-**Fix:** Tambah T0 P0 ke plan — `guided/semi` → wajib tanya + blocker kalau belum jawab, `auto` → default solo tercatat. Masuk Wave 0 sebelum governor unification.
+**Fix:** Added T0 P0 ke plan — `guided/semi` → must ask + blocker kalau belum jawab, `auto` → default solo tercatat. Placed in Wave 0 before governor unification.
 
 ## Flow 0 — crew strengthening assessment
 
@@ -230,7 +230,7 @@ Heuristic hotspot list = paths that touch FS writes, policy parsing, signing, or
 
 # Spec — seamless-governors
 
-**Goal:** Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. Cost Governor reduce (terse+lazy inspired by caveman/ponytail but no branding), Stop Slop all-lines, Lane-aware, Crew strengthened.
+**Goal:** Solo and enterprise both useful, all features valuable, low cost, seamless. Cost Governor reduce (terse+lazy inspired by caveman/ponytail but no branding), Stop Slop all-lines, Lane-aware, Crew strengthened.
 
 **Acceptance (from user 2026-08-31):**
 - Caveman/ponytail as *inspiration* for cost reduce — reimplement as Mugiwara-native, no branding, no copy
@@ -1025,12 +1025,12 @@ Every plan acceptance gets a row. Evidence = command output or clickable file li
 
 | Acceptance | Command run | Evidence | Status |
 |------------|-------------|----------|--------|
-| `guided/semi` tanpa jawaban → blocker, tidak lanjut ke Nami | grep + file inspect: `src/continue.ts` member isolation + `content/skills/mugiwara-orchestration/SKILL.md` mode read + `decisions.md` §Flow 0 gap/fix | [src/continue.ts](../../../src/continue.ts):9-12 solo `state.json` vs `<member>.json` isolation, [src/mission.ts](../../../src/mission.ts):19-33 `isStateFile` + `primaryState`, [content/skills/mugiwara-orchestration/SKILL.md](../../../content/skills/mugiwara-orchestration/SKILL.md):42 mode read `guided\|semi\|auto`, [references/multi-actor.md](../../../references/multi-actor.md) file-per-member isolation, `decisions.md:12-16` gap found + fix T0 added | **PASS** |
-| `auto` → solo default tercatat di `decisions.md` | file inspect `decisions.md` Flow 0 RESOLVED | [.mugiwara/missions/seamless-governors/decisions.md](decisions.md):32-36 `Answer: solo (user 2026-08-31) Effect: state.json solo, Nami inline-sequential, Zoro single actor` | **PASS** |
-| `tim` → `state: <member>.json` + `continue-<member>.json` per member | file inspect `src/continue.ts` scan + `src/mission.ts` + `references/multi-actor.md` | [src/continue.ts](../../../src/continue.ts):120-142 `scan` handles `state` vs `<member>` and `continue` vs `continue-<member>`, [references/multi-actor.md](../../../references/multi-actor.md):42-54 savepoint per-member examples | **PASS** |
+| `guided/semi` without answer → blocker, does not proceed to Nami | grep + file inspect: `src/continue.ts` member isolation + `content/skills/mugiwara-orchestration/SKILL.md` mode read + `decisions.md` §Flow 0 gap/fix | [src/continue.ts](../../../src/continue.ts):9-12 solo `state.json` vs `<member>.json` isolation, [src/mission.ts](../../../src/mission.ts):19-33 `isStateFile` + `primaryState`, [content/skills/mugiwara-orchestration/SKILL.md](../../../content/skills/mugiwara-orchestration/SKILL.md):42 mode read `guided\|semi\|auto`, [references/multi-actor.md](../../../references/multi-actor.md) file-per-member isolation, `decisions.md:12-16` gap found + fix T0 added | **PASS** |
+| `auto` → solo default recorded in `decisions.md` | file inspect `decisions.md` Flow 0 RESOLVED | [.mugiwara/missions/seamless-governors/decisions.md](decisions.md):32-36 `Answer: solo (user 2026-08-31) Effect: state.json solo, Nami inline-sequential, Zoro single actor` | **PASS** |
+| `team` → `state: <member>.json` + `continue-<member>.json` per member | file inspect `src/continue.ts` scan + `src/mission.ts` + `references/multi-actor.md` | [src/continue.ts](../../../src/continue.ts):120-142 `scan` handles `state` vs `<member>` and `continue` vs `continue-<member>`, [references/multi-actor.md](../../../references/multi-actor.md):42-54 savepoint per-member examples | **PASS** |
 | Files declared: orchestration, workflow, planning, `src/continue.ts`, `src/mission.ts` exist | `ls` + `git log --stat` shows T0 docs in plan creation commit `11a885d` (plan.md/spec.md/decisions.md created with T0 row) | [.mugiwara/missions/seamless-governors/plan.md](plan.md):30 T0 row, `plan.md` 9 checkboxes `- [x] T0` present, state `member:null` solo | **PASS** |
 
-> **Note:** Literal phrase `wajib tanya solo atau tim` not a code string — behavior verified via isolation mechanism + decisions log + mode read. No `guided/semi` mission in this run to trigger blocker, but infrastructure for blocker (interview-first in [content/skills/mugiwara-planning/SKILL.md](../../../content/skills/mugiwara-planning/SKILL.md):25) + mode gates exists. No missing-impl — trail shows T0 resolved before Wave 1.
+> **Note:** Literal phrase `must ask solo or team` not a code string — behavior verified via isolation mechanism + decisions log + mode read. No `guided/semi` mission in this run to trigger blocker, but infrastructure for blocker (interview-first in [content/skills/mugiwara-planning/SKILL.md](../../../content/skills/mugiwara-planning/SKILL.md):25) + mode gates exists. No missing-impl — trail shows T0 resolved before Wave 1.
 
 ### T1 — Merge 5 governors → 1 `references/cost-governor.md`
 
@@ -1630,7 +1630,7 @@ Never weaken thresholds. No `eslint-disable`, no `prettier-ignore`, no threshold
 **Mission:** seamless-governors · **Branch:** feat/seamless-governors · **Mode:** auto · **Lane:** Full (9/9 tasks) · **Actor:** ionivetech <ionivetech@gmail.com>
 
 ## Summary
-Solo & enterprise sama-sama useful, cost kecil, seamless. Cost Governor terse+lazy (no caveman/ponytail), lane-aware, slop all-lines, crew strengthened, P0 solo/team gate.
+Solo and enterprise both useful, low cost, seamless. Cost Governor terse+lazy (no caveman/ponytail), lane-aware, slop all-lines, crew strengthened, P0 solo/team gate.
 
 ## Per-flow outcomes
 
@@ -2640,9 +2640,9 @@ Every plan acceptance gets a row. Evidence = command output or clickable file li
 
 | Acceptance | Command run | Evidence | Status |
 |------------|-------------|----------|--------|
-| `guided/semi` tanpa jawaban → blocker, tidak lanjut ke Nami | grep + file inspect: `src/continue.ts` member isolation + `content/skills/mugiwara-orchestration/SKILL.md` mode read + `decisions.md` §Flow 0 gap/fix | [src/continue.ts](../../../src/continue.ts):9-12 solo `state.json` vs `<member>.json` isolation, [src/mission.ts](../../../src/mission.ts):19-33 `isStateFile` + `primaryState`, [content/skills/mugiwara-orchestration/SKILL.md](../../../content/skills/mugiwara-orchestration/SKILL.md):42 mode `guided\|semi\|auto`, [references/multi-actor.md](../../../references/multi-actor.md) file-per-member, `decisions.md:12-16` gap + fix T0 | **PASS** |
-| `auto` → solo default tercatat di `decisions.md` | file inspect | [.mugiwara/missions/seamless-governors/decisions.md](decisions.md):32-36 `Answer: solo (user 2026-08-31) Effect: state.json solo, Nami inline-sequential, Zoro single actor` | **PASS** |
-| `tim` → `state: <member>.json` + `continue-<member>.json` per member | file inspect | [src/continue.ts](../../../src/continue.ts):120-142 `scan` handles `state` vs `<member>` and `continue` vs `continue-<member>` | **PASS** |
+| `guided/semi` without answer → blocker, does not proceed to Nami | grep + file inspect: `src/continue.ts` member isolation + `content/skills/mugiwara-orchestration/SKILL.md` mode read + `decisions.md` §Flow 0 gap/fix | [src/continue.ts](../../../src/continue.ts):9-12 solo `state.json` vs `<member>.json` isolation, [src/mission.ts](../../../src/mission.ts):19-33 `isStateFile` + `primaryState`, [content/skills/mugiwara-orchestration/SKILL.md](../../../content/skills/mugiwara-orchestration/SKILL.md):42 mode `guided\|semi\|auto`, [references/multi-actor.md](../../../references/multi-actor.md) file-per-member, `decisions.md:12-16` gap + fix T0 | **PASS** |
+| `auto` → solo default recorded in `decisions.md` | file inspect | [.mugiwara/missions/seamless-governors/decisions.md](decisions.md):32-36 `Answer: solo (user 2026-08-31) Effect: state.json solo, Nami inline-sequential, Zoro single actor` | **PASS** |
+| `team` → `state: <member>.json` + `continue-<member>.json` per member | file inspect | [src/continue.ts](../../../src/continue.ts):120-142 `scan` handles `state` vs `<member>` and `continue` vs `continue-<member>` | **PASS** |
 | Files declared exist | `ls` + C17 | `plan.md:30` T0 row, `plan.md` 9 checkboxes `- [x] T0` present, `state.json member:null` solo, commit `11a885d` created plan/spec with T0 | **PASS** |
 
 ### T1 — Merge 5 governors → 1 `references/cost-governor.md`
@@ -2843,7 +2843,7 @@ F1 coverage and F3 sonar gaps were FIXED in cycle 1 and are **not** appended as 
 
 # Todos — seamless-governors
 
-- [x] T0 P0 Solo/Team gate — guided/semi wajib tanya, auto default solo (P0)
+- [x] T0 P0 Solo/Team gate — guided/semi must ask, auto default solo (P0)
 - [x] T1 Merge 5 governors → 1 references/cost-governor.md (terse+lazy, no branding)
 - [x] T2 Wire cost-governor reduce — Zoro pre-check reuse/stdlib/native/one-line
 - [x] T3 Lane-aware gates — direct 3 steps, full 12 steps
