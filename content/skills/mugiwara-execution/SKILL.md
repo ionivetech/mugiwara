@@ -30,6 +30,7 @@ Before touching code:
 2. Check each box off only when the task completes, WITH its evidence link (`[path](relative/path)`, clickable).
 3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
 4. Mirror EVERY transition into the host's native todo tool (`todowrite` on opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only) in the SAME response the task's evidence lands — one transition per call, never batched at flow-stage end. Per-host table: `docs/reference/harness-matrix.md`. Every task response opens with `[task N/M] <status>` — progress is visible on every harness, todo tool or not.
+5. **Ownership:** Luffy seeds `pending` at Flow 0; Zoro flips `pending→in_progress→completed` each wave — `flows/todos.md` stays as archive, host UI sync via `todowrite` in same response. Full checklist: `_shared/references/cost-governor.md`.
 
 ## Flow-stage execution
 
