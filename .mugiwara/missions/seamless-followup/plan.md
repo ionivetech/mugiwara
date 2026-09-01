@@ -45,7 +45,7 @@
 - [x] T1 Todos sync — todowrite mirror plan.md
 - [x] T2 Banner all crews — main thread before dispatch
 - [x] T3 Verify lane-aware 3 vs 12 + 3k vs 50k
-- [ ] T4 Usopp + investigator read-only
+- [x] T4 Usopp + investigator read-only
 
 ## Definition of Done
 
