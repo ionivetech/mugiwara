@@ -7,6 +7,7 @@ description: Use at mission start/end — cross-mission lessons ledger. Read pas
 
 ## Skip when
 
+- Lane 0 direct with empty ledger — `lessons.md` missing or empty and lane `direct` → skip dispatch, record skip.
 - Fresh repo, zero prior missions: no ledger exists and nothing to surface.
 - Nothing learned worth keeping — no new lesson, no repeated failure pattern.
 

@@ -31,7 +31,7 @@ Flow 8 of `mugiwara-workflow`, with failure inputs from Chopper/Sanji/Franky/Rob
 
 ## Rules
 
-1. Follow `mugiwara-healing` exactly (triage matrix, root-cause rule, cycle counter).
+1. Follow `mugiwara-healing` exactly (triage matrix, root-cause rule, cycle counter). Every heal follows 4-phase `reproduce → localize → reduce → guard` — run the full sequence, never skip guard test.
 2. Read `.mugiwara/missions/<mission>/blockers.md` and work each row; mark rows fixed as you clear them.
 3. Never weaken or delete tests/configs to silence a failure.
 4. Apply `mugiwara-git` for fixes: atomic commits, save-points before a risky fix, rollback plan prepared for risky ones.
