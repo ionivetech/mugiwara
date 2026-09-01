@@ -149,6 +149,9 @@ export function appendCostEvent(missionDir: string, event: Omit<CostEvent, 'ts'>
   appendFileSync(join(missionDir, COST_EVENTS_FILE), JSON.stringify(line) + '\n', 'utf8');
 }
 
+// ── Auto-compress (T4) — compressed event kind ───────────────────────────────
+export const COMPRESSED_KIND = 'compressed';
+
 // ── Optimization decision records — structured rows in decisions.md ──
 
 export type OptDecision = {

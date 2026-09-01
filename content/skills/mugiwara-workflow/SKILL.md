@@ -41,9 +41,9 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 
 **Inline by default.** Main thread embodies each crew role using that crew's skill. Every flow stage runs in the main conversation. **One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
 
-**Banners.** Every flow stage opens with a banner in the owning agent's color and closes with a handoff line — the equals line `===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Keep literal `FLOW N —` (the check-in protocol reads it; heal cycles are counted from the decision log's `## Flow 8` sections, not from banners). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line of the flow stage's final response. A flow stage without both is skipped — record why.
+**Banners.** Every flow stage opens with a banner in the owning agent's color and closes with a handoff line — the equals line `===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Keep literal `FLOW N —` (the check-in protocol reads it; heal cycles are counted from the decision log's `## Flow 8` sections, not from banners). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line of the flow stage's final response. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0` — slop §§21-24. A flow stage without both is skipped — record why.
 
-**Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members.
+**Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `state.json` `heal_cycle`/`heal_halt` + `context-registry.jsonl` `repeated_reads` — `repeated_reads>threshold` skip/compress, `heal_cycle≥3` halt/escalate — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
 
 **Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/flows/01-execution.md`.
 
@@ -68,7 +68,7 @@ Precedence: class decides work; lane decides process — class first, lane secon
 
 ## Session handoff
 
-At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` before the final text response: mission, member, flow stage, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the flow stage. Next session starts with `/mugiwara continue <mission> [member]` — no re-explanation. `auto` mode continues across sessions via the continue file: one command per session, no re-explanation. State proves what is done; continue says what is next — verify next_action against state, escalate contradictions.
+At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` before the final text response: mission, member, flow stage, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the flow stage. Each handoff runs `mugiwara savepoint <mission> --flow N` — flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync, no `0/0`. Next session starts with `/mugiwara continue <mission> [member]` — no re-explanation. `auto` mode continues across sessions via the continue file: one command per session, no re-explanation. State proves what is done; continue says what is next — verify next_action against state, escalate contradictions.
 
 ## Blocker protocol
 
@@ -84,14 +84,14 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 
 ## Rules
 1. Evidence over claims — run checks, show output.
-2. No flow stage skipped without a reason recorded in the decision log. 2a. Work Governor: classify stages required/conditional/optional (§7); record skip/avoid verdicts as work-governor trail rows; never skip a required stage. 2b. Scope & Code Governor: before adding code, check §14 reuse; justify new abstractions (§15) and dependencies (§16); prefer minimum sufficient implementation; record scope verdicts as scope-governor trail rows. 2c. Cognitive & Output Governor: keep reasoning Question→Evidence→Decision→Action; bound alternatives; compress output to Decision/Action/Result/Evidence/Blocker; dedup explanations; record cognitive verdicts as cognitive-governor trail rows. 2d. Stop-Slop Governor: detect slop via taxonomy/signals; measure progress vs cost; flag anomaly; intervene (tolerate/stop/compress/escalate); detect retry/healing/scope/context/investigation/code slop; record slop-governor trail rows. 2e. Adaptive Budget & Circuit Breaker: reserve/projection/expansion/thresholds/breaker/anomaly; record budget-governor trail rows. 2f. Reporting & CLI: ledger aggregates envelope+events+registry+trail; mugiwara cost surfaces ledger (--json); report Cost section renders ledger+avoided+efficiency+trail (§43). 2g. Benchmark & Hardening: cost (§48) + Stop-Slop (§45) suites, large/long/runaway stress, thresholds tokens>projected+overhead fails, §49 regression fails, deterministic harness, CI via bun run gate, thresholds ratchet like retrieval-eval — Full checklist: references/benchmark-governor.md — 12 scenarios; unchecked boxes are not done.
+2. No flow stage skipped without a reason recorded in the decision log. Cost governor — ladder (need→reuse→stdlib→native→installed dep→one line→code), terse output Decision/Action/Result/Evidence, slop taxonomy + budget reserve/projection — Full checklist: `_shared/references/cost-governor.md`; trail rows; unchecked boxes are not done.
 3. Heal loop: max 3 cycles, then escalate.
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
 6. Resume via `resume-coordinator` before any flow stage — never restart.
 7. Push branch + hand verdict to user; crew never merges or deploys. 8. Host todo mirrors the plan doc every task + flow stage — same response as evidence.
-## Governors
-Work (§7), Scope/Code (§14-16), Cognitive, Stop-Slop (§45), Budget (§43), Reporting/CLI, Benchmark (§48-49) — full checklists: `references/scope-code-governor.md`, `references/cognitive-output-governor.md`, `references/stop-slop-governor.md`, `references/adaptive-budget-governor.md`, `references/benchmark-governor.md`; trail rows; savepoint/lane-base/config untouched.
+## Cost governor
+Full checklist: `_shared/references/cost-governor.md` — ladder, terse output, dedup, slop taxonomy, budget reserve/projection, benchmark; trail rows; savepoint/lane-base/config untouched.
 ## Large campaign — sub-plan & archive merge
 Full checklist: `references/large-campaign-subplan.md` — 12 items; `sub-plan/` when `>3 phases` or `>1500 lines`, `flows/phase-NN/` isolation, `mugiwara archive` folds into `report.md`.
 ## Iron Law

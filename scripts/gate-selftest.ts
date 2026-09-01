@@ -6,6 +6,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, copyFileSync, renameSync, unlinkSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
+import { gatesForLane } from '../src/policy.ts';
 
 const root = join(import.meta.dirname, '..');
 let passed = 0;
@@ -624,6 +625,51 @@ console.log('\nDOCLINKS — doc link resolution');
   } finally {
     if (existsSync(probe)) unlinkSync(probe);
   }
+}
+
+// --- T3: lane-aware gates — direct 3 steps, full 12 steps ---
+console.log('\nT3 — lane-aware gates');
+{
+  const policyFile = join(root, 'src', 'policy.ts');
+  const originalPolicy = readFileSync(policyFile, 'utf8');
+  try {
+    assert('direct lane → 3 steps', true, () => gatesForLane('direct').length === 3);
+    assert('direct lane includes typecheck+build', true, () => {
+      const s = gatesForLane('direct');
+      return s.includes('typecheck') && s.includes('build');
+    });
+    assert('lean lane → 6 steps with validate-content', true, () => {
+      const s = gatesForLane('lean');
+      return s.length === 6 && s.includes('validate-content');
+    });
+    assert('standard lane → 9 steps', true, () => gatesForLane('standard').length === 9);
+    assert('full lane → 12 steps with evals/retrieval/conformance', true, () => {
+      const s = gatesForLane('full');
+      return s.length === 12 && s.includes('run-evals') && s.includes('retrieval-eval') && s.includes('conformance');
+    });
+    // mutation: break direct step count → should fail (file content shows not 3)
+    const broken = originalPolicy.replace(
+      "direct: ['build-hooks:check', 'typecheck', 'build']",
+      "direct: ['typecheck']"
+    );
+    if (broken !== originalPolicy) {
+      writeFileSync(policyFile, broken);
+      assert('broken direct gate → not 3 steps', false, () => readFileSync(policyFile, 'utf8').includes("direct: ['build-hooks:check', 'typecheck', 'build']"));
+    } else {
+      console.error('✗ T3: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    }
+  } finally {
+    writeFileSync(policyFile, originalPolicy);
+    assert('restored → direct 3 steps', true, () => {
+      const txt = readFileSync(policyFile, 'utf8');
+      return txt.includes("direct: ['build-hooks:check', 'typecheck', 'build']");
+    });
+  }
+  assert('full still includes conformance (conformance 71→74)', true, () => {
+    const txt = readFileSync(policyFile, 'utf8');
+    return txt.includes("'conformance'") && txt.includes("full:");
+  });
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

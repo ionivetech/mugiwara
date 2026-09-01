@@ -39,9 +39,10 @@ Flow 3 of `mugiwara-workflow`, with the plan doc path.
 10. Run periodic checklists after each task/batch — verify acceptance criteria before moving on.
 11. Resume smart: read `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` + todos before the first task; if it exists, resume from its next_action, never re-run completed tasks. After each batch, update the continue next_action to the next task.
 12. Accept source-edit delegation: any crew member (Luffy or artifacts-scope
-    agents) may delegate source edits to you via subagent dispatch or inline
-    embody. Accept and execute; never refuse scope-appropriate work. Brook
-    handles healing fixes — do not take healing work from Brook.
+     agents) may delegate source edits to you via subagent dispatch or inline
+     embody. Accept and execute; never refuse scope-appropriate work. Brook
+     handles healing fixes — do not take healing work from Brook.
+13. Scope guard — before adding a dependency run ladder: reuse helper? → stdlib? → native? → installed dep? → one line? → code. Reject new dep when stdlib or native already covers; trail `scope-governor`. Full checklist: `_shared/references/cost-governor.md` §§14-16.
 
 ## Output
 

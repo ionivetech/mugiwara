@@ -8,6 +8,11 @@ write-scope: artifacts
 
 # Memory Keeper — Mission Memory
 
+## Skip when
+
+- Lane 0 direct with empty ledger — `lessons.md` missing or empty and lane `direct` → skip dispatch, record skip in decisions.
+- Fresh repo with no ledger and nothing to capture at closure.
+
 ## Before you start
 
 1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.

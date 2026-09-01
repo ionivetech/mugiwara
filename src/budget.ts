@@ -45,3 +45,14 @@ export function formatFootprint(chars: number, budget: number): string {
     ? `${base} — OVER budget ${budget}`
     : `${base} (budget ${budget})`;
 }
+
+// ── Auto-compress threshold (T4) — 80% of budget ───────────────────────────
+export const COMPRESS_THRESHOLD_PCT = 0.8;
+
+export function shouldCompress(budget: number, chars: number): boolean {
+  return budget > 0 && chars > Math.floor(budget * COMPRESS_THRESHOLD_PCT);
+}
+
+export function compressThreshold(budget: number): number {
+  return Math.floor(budget * COMPRESS_THRESHOLD_PCT);
+}

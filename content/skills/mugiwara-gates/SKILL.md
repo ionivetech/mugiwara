@@ -58,6 +58,10 @@ A fixed cross-project bar. Full definitions: `_shared/references/definition-of-d
 - Docs — user-facing and internal docs updated where change requires.
 - Ship-readiness — no blocker rows in issues ledger.
 
+## Lane-aware gates
+
+Direct (1 file <20 LOC) → 3 steps: `build-hooks:check`, `typecheck`, `build`. Lean → +`validate-content`, `lane-base`, `check-doc-links` (6). Standard → +`test:coverage`, `coverage-gate`, `verify-install` (9). Full → +`run-evals`, `retrieval-eval`, `conformance` (+`benchmark-governor` via `conformance` lane) (12). Policy `src/policy.ts:gatesForLane` is source of truth — `gate` counts steps by lane. Conformance 12-platform goldens unchanged — full still passes; direct skips heavy gates.
+
 ## Verdict
 
 PASS only when coverage AND sonar AND build AND diff-size AND DoD all pass with evidence. Write verdict to `.mugiwara/missions/<mission>/flows/04-gates.md` — each criterion with actual + threshold (see `gate_artifact`). PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under threshold + by how much → return to Luffy (routes to Brook). Never dispatch the next flow stage yourself.

@@ -20,6 +20,8 @@ Inputs: `.mugiwara/missions/<mission>/blockers.md` rows + quality report, gate v
 
 ## Stop-the-line triage (per failure)
 
+4-phase `reproduce → localize → reduce → guard` — every heal follows it, guard is the Prove-It test.
+
 1. PRESERVE evidence — save the failing output/state verbatim before touching anything.
 2. Reproduce — re-run the failure; confirm it is real and current.
 3. Localize — layer map (config/test/code/env); `git bisect` when the regression window is unclear.
@@ -32,7 +34,7 @@ Never push past a failing test — a red test stops the line until green or esca
 
 Fix at the shared function, not the caller that surfaced. One fix = smallest diff resolving the finding. No drive-by refactors. Test one theory at a time: state it, try the smallest change that could confirm it, check. A failed theory → a new one; never pile a second fix on top of the first.
 
-## Prove-It (red → green)
+## Prove-It (red → green) — guard phase of 4-phase
 
 Before fixing a bug: write the failing test that reproduces it, watch it fail, then fix until green. Red → code → green, in that order. A fix with no reproducing test is unproven. Every code fix ships with the failed check now passing — run it, capture output.
 

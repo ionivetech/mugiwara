@@ -49,7 +49,7 @@ Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<memb
    `.mugiwara/missions/<mission>/state.json | <member>.json`: savepoint computes
    `tokens_est ≥ delegate_threshold% × budget` (default 60), never an absolute
    `tokens_est > 80,000`. Remaining SEQUENTIAL tasks dispatch to workers — one
-   at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it.
+   at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `heal_cycle`/`heal_halt` + `repeated_reads` (context-registry) — `heal_cycle≥max` halt/escalate, `repeated_reads≥thr` skip re-read/compress — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
 
 ## Batch resume
 
@@ -91,7 +91,7 @@ Blocked → one row `| flow stage | task | symptom | attempted | help-needed |` 
 
 Boy Scout rule — every touched file leaves cleaner than found: one refactor per touch, done while green, its own commit, never bundled into another task.
 
-TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`.
+TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`. Before adding code: ladder reuse helper?→stdlib?→native?→installed dep?→one line?→code — Full checklist: `_shared/references/cost-governor.md`.
 
 ## Large campaign — phase-isolated flows
 Full checklist: `references/execution-phase-flows.md` — 4 items; `flows/phase-NN/02-execution.md` per phase, `flows/todos.md` with `## Phase NN` sections, no flat overwrite.
