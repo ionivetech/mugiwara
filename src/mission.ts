@@ -10,8 +10,8 @@ import { writeProvenance } from './provenance.ts';
 import { loadPolicy } from './policy.ts';
 import { verifyReport } from './sign.ts';
 import { rankFiles, renderRouting } from './routing.ts';
-import { formatFootprint, measureContextChars, readBudgetConfig } from './budget.ts';
-import { budgetForLane, costEnvelope, appendCostEvent } from './cost.ts';
+import { formatFootprint, measureContextChars, readBudgetConfig, shouldCompress, compressThreshold } from './budget.ts';
+import { budgetForLane, costEnvelope, appendCostEvent, COMPRESSED_KIND } from './cost.ts';
 import { loadRegistry } from './evidence.ts';
 import { computeContextMetrics, contextStatus } from './context.ts';
 import { buildCostLedger, renderAdaptationSection } from './reporting.ts';
@@ -326,6 +326,38 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       costSection += renderAdaptationSection(dir);
     } catch { /* best-effort */ }
 
+    // T4: auto-compress when context >80% budget — compress flows → stub, not throw
+    // (record compressed event; closure still recorded; hard gate only at 100%)
+    if (shouldCompress(budget, chars)) {
+      try {
+        const flowsDir = join(dir, 'flows');
+        const wavesDir = join(dir, 'waves');
+        const targetDir = existsSync(flowsDir) ? flowsDir : existsSync(wavesDir) ? wavesDir : null;
+        if (targetDir && existsSync(targetDir)) {
+          const flowFiles = readdirSync(targetDir).filter(f => f.endsWith('.md'));
+          if (flowFiles.length) {
+            const pct = Math.round((chars / budget) * 100);
+            const stub = `# Compressed trail\n\nTrail ${chars} chars exceeds ${pct}% of budget ${budget} (threshold ${compressThreshold(budget)}) — flows archived as stub to preserve budget. Original flows: ${flowFiles.join(', ')}\n`;
+            for (const f of flowFiles) {
+              try { rmSync(join(targetDir, f), { force: true }); } catch {}
+            }
+            writeFileSync(join(targetDir, '00-compressed.md'), stub);
+          }
+        }
+        appendCostEvent(dir, {
+          kind: COMPRESSED_KIND,
+          mission,
+          tokens_est: est,
+          budget: laneBudget,
+          status: 'compressed',
+          context_chars: chars,
+          context_status: ctxStatus,
+          context_metrics: metrics,
+        });
+        costSection += `\n| **Compressed** | yes — ${chars} chars >80% of ${budget} — flows stubbed as 00-compressed.md |`;
+      } catch { /* compress best-effort — never blocks archive */ }
+    }
+
     // Cost Governor: record the closure cost event — the mission's final
     // cost snapshot, folded into report.md with the rest of the trail.
     // (Phase 1 — native cost governor; pure append, never rewrites state.)
@@ -342,6 +374,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     // M2: the closure event (with context_status possibly 'over') is recorded
     // BEFORE the hard gate throws — an over-budget closure still leaves a
     // ledger row so the over-budget condition is observable, never erased.
+    // T4: over 80% already compressed above; hard fail only at 100% preserves gate-selftest.
     if (budget && chars > budget) {
       throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
     }

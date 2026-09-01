@@ -488,3 +488,22 @@ export function enforceHarnessPolicy(projectDir: string): void {
 
 /** Alias for CLI import convenience. */
 export const checkHarnessEnforcement = enforceHarnessPolicy;
+
+// ── Lane-aware gates (T3) ───────────────────────────────────────────────────
+// Direct → minimal (typecheck+build only), lean → +validate-content, standard+
+// → +evals/retrieval/conformance/benchmark. Single source for gate-selftest
+// and the franky-gates skill doc. Full = 12 steps, direct = 3 steps.
+export const GATE_STEPS_BY_LANE: Record<string, string[]> = {
+  direct: ['build-hooks:check', 'typecheck', 'build'],
+  lean: ['build-hooks:check', 'typecheck', 'build', 'validate-content', 'lane-base', 'check-doc-links'],
+  standard: ['build-hooks:check', 'typecheck', 'build', 'validate-content', 'lane-base', 'check-doc-links', 'test:coverage', 'coverage-gate', 'verify-install'],
+  full: ['build-hooks:check', 'typecheck', 'build', 'validate-content', 'lane-base', 'check-doc-links', 'test:coverage', 'coverage-gate', 'verify-install', 'run-evals', 'retrieval-eval', 'conformance'],
+};
+
+export function gatesForLane(lane: string): string[] {
+  return GATE_STEPS_BY_LANE[lane] ?? GATE_STEPS_BY_LANE.full;
+}
+
+export function isLaneAwareGateStep(step: string, lane: string): boolean {
+  return gatesForLane(lane).includes(step);
+}
