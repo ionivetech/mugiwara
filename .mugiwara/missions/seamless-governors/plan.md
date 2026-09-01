@@ -82,5 +82,5 @@ Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. O
 - [x] T4 Cost auto-compress — compress flows when context >80% budget
 - [x] T5 Wire slop to all crews — repeated_reads/heal_cycle checks
 - [x] T6 Enforce savepoint each handoff + checkbox
-- [ ] T7 Strengthen Zoro + Brook 4-phase + Memory Keeper skip
-- [ ] T8 Verify seamless — solo direct 3 gates, no review/heal
+- [x] T7 Strengthen Zoro + Brook 4-phase + Memory Keeper skip
+- [x] T8 Verify seamless — solo direct 3 gates, no review/heal

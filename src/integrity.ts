@@ -186,6 +186,8 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
   const passCited = collectPassCitedPaths(missionDir);
   for (const e of passCited) {
     if (!e.trim() || isAbsolute(e)) continue;
+    // state/continue are machine-generated JSON, not evidence with command output — skip thin check
+    if (/(?:^|\/)(state|continue)(-[^\/]*)?\.json$/.test(e)) continue;
     const candMission = join(missionDir, e);
     const candRoot = join(projectRoot, e);
     const resolved = existsSync(candMission) ? candMission : existsSync(candRoot) ? candRoot : null;
