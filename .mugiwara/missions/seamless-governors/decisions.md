@@ -50,3 +50,19 @@
 - `bun run typecheck` — exit 0
 - `grep -R -i "caveman|ponytail" content/ references/` — clean
 **Actor:** AI: muse-spark-1.2-contributor-free
+
+## Flow 3 — Execution Wave 2 T3-T4 (Zoro)
+
+**Mode:** auto · **Branch:** feat/seamless-governors · **Commit style:** conventional · **auto_commit:** on (auto mode always)
+**Posture:** inline-sequential (Wave 2 files disjoint but executed inline per execution rule — minimal diff, body ≤120)
+**Tasks:** T3 lane-aware gates + T4 cost auto-compress
+**Decisions:**
+- T3: `src/policy.ts` GATE_STEPS_BY_LANE single source — direct 3, lean 6, standard 9, full 12 (conformance retained). Doc 4-line Lane-aware gates section (80/120) pointing to policy as source. Gate-selftest T3 mutation proves direct 3 steps.
+- T4: `src/budget.ts` 80% threshold + `src/cost.ts` COMPRESSED_KIND + `src/mission.ts` archive compress flows→stub (00-compressed.md) before hard 100% gate, records compressed+closure events, never throws at 80-99%.
+**Evidence:**
+- `bun run build` — Bundled 34 modules exit 0
+- `bun run typecheck` — exit 0
+- `bun scripts/validate-content.ts` — content valid 21/14, index 4741/5500 exit 0
+- `gatesForLane` direct 3 / full 12 with conformance true
+- `shouldCompress 90% → compress stub not throw`, `100% → compress then throw` (M2)
+**Actor:** AI: muse-spark-1.2-contributor-free
