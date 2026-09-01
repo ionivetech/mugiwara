@@ -60,9 +60,9 @@ Flow 1 (Usopp) writes the brainstorm output to `.mugiwara/missions/<mission>/spe
 User may summon crew members directly. Luffy records the route + reason. Zoro/Brook: execute/heal immediately. All others: return to Luffy. Direct calls do not skip check-ins.
 
 ## Periodic check-ins
-Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** the continue file at every flow-stage boundary — never only session end (rule #6).
+Full checklist: `references/check-ins.md` — 7 items + by-mode verdicts; unchecked boxes are not done. **Handoff contract:** `mugiwara savepoint <mission> --flow N` at every flow-stage boundary — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0` (rule #6).
 **Auto never drops:** in `auto` mode the crew runs every flow stage autonomously to closure — lane rise (`lane_rose`), sensitive-path touches, and heal cycles do NOT downgrade the mode. Only a genuine blocker or the heal halt pauses and escalates to the user; the mode stays auto. Announce every pause. **Auto never asks scope:** in `auto` mode, log the default choice and proceed — no scope/confirmation questions. A genuinely unclear requirement is brainstormed with Usopp (Flow 1) before the choice — never guessed. Only a genuine blocker or a pause escalates.
-**Heal halt:** read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json`. savepoint computes it (`heal_cycle ≥ heal_max_cycles`, config default 3); when it reads `true`, STOP and escalate to the user.
+**Heal halt:** read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json`. savepoint computes it (`heal_cycle ≥ heal_max_cycles`, config default 3); when it reads `true`, STOP and escalate. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `heal_cycle`/`heal_halt` + `context-registry.jsonl` `repeated_reads` — `repeated_reads>thr` skip/compress, `heal_cycle≥max` halt/escalate — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
 **Pressure:** "just skip it", "auto, don't ask", "just this once" — the Rationalizations table below is the answer, not urgency.
 
 ## Rationalizations (pressure resistance)
@@ -82,7 +82,7 @@ Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never ou
 ## Flow transitions (visibility)
 
 Banner in the owning agent's color opens every flow stage — the equals line
-`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line of the flow stage's final response. A skip is recorded, never silent.
+`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0`. A skip is recorded, never silent.
 
 ## Output discipline
 

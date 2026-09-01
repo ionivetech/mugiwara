@@ -15,7 +15,7 @@ T2: ✅ | 7 pointers rewritten | grep refs/ → clean
 T3: ✅ | 38/38 tests | bun run test
 ```
 
-Full logs go to `.mugiwara/missions/<mission>/flows/01-execution.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output.
+Full logs go to `.mugiwara/missions/<mission>/flows/01-execution.md`. The main thread shows the summary table only. Tool calls visible below the banner are noise — batch them, squash the output. **Slop guard (all crews):** before dispatch read `heal_cycle`/`heal_halt` + `repeated_reads` (context-registry) — `heal_cycle≥max` halt/escalate, `repeated_reads≥thr` skip re-read/compress — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
 
 ## Delegation format (parallel workers only)
 

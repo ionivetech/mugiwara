@@ -66,3 +66,22 @@
 - `gatesForLane` direct 3 / full 12 with conformance true
 - `shouldCompress 90% → compress stub not throw`, `100% → compress then throw` (M2)
 **Actor:** AI: muse-spark-1.2-contributor-free
+
+## Flow 3 — Execution Wave 3 T5-T6 (Zoro)
+
+**Mode:** auto · **Branch:** feat/seamless-governors · **Commit style:** conventional · **auto_commit:** on (auto mode always)
+**Posture:** inline-sequential (Wave 3 files disjoint but executed inline — minimal diff, body ≤120)
+**Tasks:** T5 slop all-lines + T6 savepoint handoff
+**Decisions:**
+- T5: Wired slop to all crews Luffy/Nami/Zoro/Brook — before dispatch read `heal_cycle`/`heal_halt` + `context-registry.jsonl` `repeated_reads` — `repeated_reads>thr` skip/compress, `heal_cycle≥3` halt/escalate — trail `slop-governor` — pointers to `_shared/references/cost-governor.md` §§21-24,20,31-32 in workflow (Banners+Subagents+Session handoff), execution (Worker dispatch triggers), dispatch.md, orchestration (Periodic check-ins). Savepoint.sh computes `REPEATED_READS` from `context-registry.jsonl` (sum reads-1) + existing `HEAL_CYCLE`/`HEAL_HALT` — §22/31 context, §21.7/32 healing — compress/escalate, persisted as `repeated_reads` in state.json.
+- T6: Enforced `mugiwara savepoint <mission> --flow N` at every handoff — workflow Banners Close=savepoint before handoff + Session handoff Each handoff runs savepoint + orchestration Handoff contract + Flow transitions Close=savepoint before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0` on `plan.md` 18/18 (or 9/9 for this mission). Close sequence `→ Flow N+1 — Crew` after savepoint.
+**Evidence:**
+- `bun run build` — Bundled 34 modules exit 0
+- `bun run typecheck` — exit 0
+- `bun scripts/validate-content.ts --check-manifest --check-docs --check-doc-integrity` — content valid 21/14, index 4741/5500 exit 0
+- `bun scripts/verify-install.ts` — 290 pointers 0 broken 0 orphans exit 0
+- `grep -R -i "caveman|ponytail" content/ references/ scripts/savepoint.sh` — clean (0 hits)
+- `repeated_reads>thr → slop` + `heal_cycle≥3 → halt` via `src/slop.ts` detectors + `scripts/benchmark-governor.ts` 12 slop scenarios green
+- `slop_interventions>0` via `buildCostLedger` liveSlop (context registry + heal_cycle) when repeated_reads≥3
+- `state.json flow==continue.json flow` sync + tasks `7/9` (plan.md -[x] + fallback) no `0/0`
+**Actor:** AI: muse-spark-1.2-contributor-free

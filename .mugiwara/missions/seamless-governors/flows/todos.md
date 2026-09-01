@@ -5,7 +5,7 @@
 - [x] T2 Wire cost-governor reduce — Zoro pre-check reuse/stdlib/native/one-line
 - [x] T3 Lane-aware gates — direct 3 steps, full 12 steps
 - [x] T4 Cost auto-compress — compress flows when context >80% budget
-- [ ] T5 Wire slop to all crews — repeated_reads/heal_cycle checks
-- [ ] T6 Enforce savepoint each handoff + checkbox
+- [x] T5 Wire slop to all crews — repeated_reads/heal_cycle checks
+- [x] T6 Enforce savepoint each handoff + checkbox
 - [ ] T7 Strengthen Zoro + Brook 4-phase + Memory Keeper skip
 - [ ] T8 Verify seamless — solo direct 3 gates, no review/heal

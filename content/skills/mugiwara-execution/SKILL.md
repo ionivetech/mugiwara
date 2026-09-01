@@ -49,7 +49,7 @@ Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<memb
    `.mugiwara/missions/<mission>/state.json | <member>.json`: savepoint computes
    `tokens_est ≥ delegate_threshold% × budget` (default 60), never an absolute
    `tokens_est > 80,000`. Remaining SEQUENTIAL tasks dispatch to workers — one
-   at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it.
+   at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `heal_cycle`/`heal_halt` + `repeated_reads` (context-registry) — `heal_cycle≥max` halt/escalate, `repeated_reads≥thr` skip re-read/compress — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
 
 ## Batch resume
 

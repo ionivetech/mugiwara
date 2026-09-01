@@ -372,6 +372,16 @@ if [ "$HEAL_CYCLE" -ge "$HEAL_MAX_CYCLES" ] 2>/dev/null; then
   HEAL_HALT=true
 fi
 
+# slop — context (repeated reads) per cost-governor §§21-24,31-32 — T5 wire all crews Luffy/Nami/Zoro/Brook
+REPEATED_READS=0
+REPEATED_THRESHOLD=3
+REGISTRY_FILE="$MISSION_DIR/context-registry.jsonl"
+if [ -f "$REGISTRY_FILE" ]; then
+  REPEATED_READS=$(node -e "try{const fs=require('fs');const t=fs.readFileSync(process.argv[1],'utf8');let s=0;for(const l of t.split(/\r?\n/)){if(!l.trim())continue;try{const e=JSON.parse(l);if(typeof e.reads==='number'&&e.reads>=2)s+=Math.floor(e.reads)-1}catch{}}console.log(s)}catch(e){console.log(0)}" "$REGISTRY_FILE" 2>/dev/null || echo 0)
+  REPEATED_READS=$(( ${REPEATED_READS:-0} + 0 ))
+fi
+# repeated_reads > threshold → context slop — crew must skip re-read/compress before dispatch (§22,31); heal_cycle≥max → halt/escalate (§21.7/32) — cost-governor §§20,21-24
+
 # depth flags — advisory → measured (roadmap v0.8 item 4). Read from config
 # like the other keys; computed into state.json so enforcement is a fact the
 # gates flow stage can read, not prose.
@@ -531,7 +541,8 @@ const data = {
   skill_version: process.argv[20],
   evidence: process.argv[21] ? process.argv[21].split(',').filter(Boolean) : [],
   updated_at: process.argv[22],
-  schema_version: 2
+  schema_version: 2,
+  repeated_reads: parseInt(process.argv[41], 10) || 0
 };
 require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\n');
 " \
@@ -544,7 +555,8 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
   "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
   "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE" \
-  "$MODEL" "$DEPTH_REVIEW" "$DEPTH_QUALITY" "$DEPTH_VERIFY"
+  "$MODEL" "$DEPTH_REVIEW" "$DEPTH_QUALITY" "$DEPTH_VERIFY" \
+  "$REPEATED_READS"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
