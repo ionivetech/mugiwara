@@ -5,6 +5,8 @@ description: Use at mission start/end — cross-mission lessons ledger. Read pas
 
 # Lessons (Mission Memory)
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - Lane 0 direct with empty ledger — `lessons.md` missing or empty and lane `direct` → skip dispatch, record skip.

@@ -1,18 +1,18 @@
 # Plan — seamless-followup
 
 **Mission:** `seamless-followup` · **Branch:** `feat/seamless-followup` · **Mode:** `auto` · **Lane:** `Full` (4 fixes, 8+ files)
-**Source:** Follow-up dari seamless-governors — todos sync, banner all crews, lane-aware verify, Usopp investigator
+**Source:** Follow-up from seamless-governors — todos sync, banner all crews, lane-aware verify, Usopp investigator
 
 ## Context scan
 
-- **Todos:** `plan.md tasks` → `flows/todos.md` file, tidak pernah `todowrite` host UI → tidak sync dengan Opencode sidebar, hilang setelah `archive`
-- **Banner:** Zoro subagent tanpa banner main thread → transcript tidak rapih, Flow 1-9 tidak ada `===== FLOW N — CREW =====`, heal count dari `decisions.md` bukan banner
-- **Cost:** Lane-aware sudah code (`GATE_STEPS_BY_LANE` direct 3/full 12, `shouldCompress` 80%) tapi belum diverifikasi `direct 3k` vs `full 50k` di fixture
-- **Usopp:** `mugiwara-brainstorm` only (3 rounds), tidak ada investigator read-only (`Grep/Glob` file:line) untuk Round 2 research — masih pakai `explore` subagent 132k
+- **Todos:** `plan.md tasks` → `flows/todos.md` file, never `todowrite` host UI → not synced with Opencode sidebar, lost after `archive`
+- **Banner:** Zoro subagent without banner main thread → transcript not tidy, Flow 1-9 missing `===== FLOW N — CREW =====`, heal count from `decisions.md` not banner
+- **Cost:** Lane-aware already coded (`GATE_STEPS_BY_LANE` direct 3/full 12, `shouldCompress` 80%) but not yet verified `direct 3k` vs `full 50k` in fixture
+- **Usopp:** `mugiwara-brainstorm` only (3 rounds), no investigator read-only (`Grep/Glob` file:line) for Round 2 research — still using `explore` subagent 132k
 
 ## Goal
 
-4 perbaikan seamless: todos sync Opencode + banner all crews via main thread + lane-aware verify + Usopp investigator, tanpa caveman/ponytail branding
+4 seamless fixes: todos sync Opencode + banner all crews via main thread + lane-aware verify + Usopp investigator, without caveman/ponytail branding
 
 ## Lane & Mode
 
@@ -25,8 +25,8 @@
 
 | # | Task | Files | Acceptance |
 |---|------|-------|------------|
-| T1 | Todos sync — `todowrite` mirror `plan.md` every task + flow stage (pending→in_progress→completed) | `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-orchestration/SKILL.md`, `content/skills/mugiwara-execution/SKILL.md` | `todowrite` 9 todos di Flow 0, update tiap wave, `flows/todos.md` tetap + host UI sync |
-| T2 | Banner all crews — main thread emit `===== FLOW N — CREW =====` before dispatch subagent (if any), handoff after | `content/skills/mugiwara-workflow/SKILL.md`, `references/wave-banners.md` | Transcript ada banner untuk Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy |
+| T1 | Todos sync — `todowrite` mirror `plan.md` every task + flow stage (pending→in_progress→completed) | `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-orchestration/SKILL.md`, `content/skills/mugiwara-execution/SKILL.md` | `todowrite` 9 todos in Flow 0, update each wave, `flows/todos.md` remains + host UI sync |
+| T2 | Banner all crews — main thread emit `===== FLOW N — CREW =====` before dispatch subagent (if any), handoff after | `content/skills/mugiwara-workflow/SKILL.md`, `references/wave-banners.md` | Transcript has banner for Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy |
 
 ### Wave 2 — Lane-aware + Cost verify
 

@@ -6,13 +6,13 @@ feat(governors): seamless lane-aware cost+slop + crew strengthen (P0 solo/team) 
 
 ## Summary
 
-Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless — tanpa `caveman`/`ponytail` branding.
+Solo and enterprise both useful, all features valuable, low cost, seamless — without `caveman`/`ponytail` branding.
 
 **9 tasks (T0 P0 + T1-T8) across 4 waves, Lane Full, solo, auto:**
-- **T0 P0 Solo/Team gate** (krusial): `guided/semi` wajib tanya `solo atau tim?` sebelum Nami, `auto` default solo — affect `state.json` vs `<member>.json`, `Nami` parallel, `Zoro` dispatch
+- **T0 P0 Solo/Team gate** (crucial): `guided/semi` must ask `solo or team?` before Nami, `auto` default solo — affect `state.json` vs `<member>.json`, `Nami` parallel, `Zoro` dispatch
 - **Governor unification (T1-T2):** 5 governor (`cognitive, scope, slop, budget, benchmark`) → 1 `references/cost-governor.md` 104 lines terse+lazy ladder (need?→reuse?→stdlib?→native?→installed dep?→one line?→code), `mugiwara-execution` wire reduce
 - **Lane-aware + Cost (T3-T4):** `GATE_STEPS_BY_LANE` direct 3 / lean 6 / standard 9 / full 12 + budget `direct 0 / lean 12k / standard 25k / full 50k`, `shouldCompress` 80% context → stub `00-compressed.md` not throw
-- **Slop all-lines + Savepoint (T5-T6):** `repeated_reads>3`/`heal_cycle≥3` check di Luffy/Nami/Zoro/Brook + `savepoint` tiap handoff sync `flow`/`tasks` (no `0/0`, sub-plan fallback)
+- **Slop all-lines + Savepoint (T5-T6):** `repeated_reads>3`/`heal_cycle≥3` check in Luffy/Nami/Zoro/Brook + `savepoint` each handoff sync `flow`/`tasks` (no `0/0`, sub-plan fallback)
 - **Crew strengthen + Verify (T7-T8):** Zoro scope guard, Brook 4-phase `reproduce→localize→reduce→guard`, Memory Keeper skip Lane 0 + empty ledger, `direct-seamless` 8 tests
 - **Tier3 fix (carry from fix/tier3-config-autocreate):** `readConfig()` auto-create + `continue/status` bootstrap + `countPlanTasks` + `reset` clear `index.md`
 
@@ -82,7 +82,7 @@ Branch `feat/seamless-governors` from `3b6f253` → `c8387f3` (9 commits), `orig
 - [x] Savepoint each handoff + `- [ ]` checkbox (no `0/0`, sub-plan fallback)
 - [x] Zoro scope guard + Brook 4-phase + Memory Keeper skip Lane 0
 - [x] Solo `direct` 1 file <20 LOC → 3 gates, budget 0, no review/heal
-- [x] P0 Solo/Team gate — `guided/semi` wajib tanya, `auto` default solo
+- [x] P0 Solo/Team gate — `guided/semi` must ask, `auto` default solo
 - [x] Tier3 `readConfig` auto-create + `continue/status` bootstrap
 - [x] `reset` clears `index.md` when missions gone
 - [x] `integrity` skip `state/continue.json` thin check

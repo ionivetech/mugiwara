@@ -5,6 +5,8 @@ description: Use at mission end — pre-launch checklist, feature flags, staged 
 
 # Ship Gate (Luffy, Franky)
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - Not releasing: no deploy, rollout, feature-flag flip, or user-facing change.

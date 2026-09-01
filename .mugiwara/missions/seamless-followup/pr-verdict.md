@@ -6,15 +6,15 @@ feat(followup): todos sync + banner all crews + lane-aware + Usopp investigator
 
 ## Summary
 
-4 perbaikan seamless follow-up dari `seamless-governors` — checklist tetap, sync conditional, banner rapih, cost reduce, Usopp bisa investigate:
+4 seamless fixes follow-up from `seamless-governors` — checklist remains, sync conditional, tidy banner, cost reduce, Usopp can investigate:
 
-1. **Todos sync (T1):** `plan.md - [x]` + `flows/todos.md` tetap sebagai archive, **host UI sync conditional** — `todowrite` kalau `opencode`, `TaskCreate/TaskUpdate` kalau `Claude` (TodoWrite deprecated), `none` kalau tier 2/3 (Codex, Cursor, dll.) — `harness-matrix.md:137` table. Luffy seed `pending` Flow 0, Zoro flip `in_progress→completed` tiap wave.
+1. **Todos sync (T1):** `plan.md - [x]` + `flows/todos.md` still as archive, **host UI sync conditional** — `todowrite` if `opencode`, `TaskCreate/TaskUpdate` if `Claude` (TodoWrite deprecated), `none` if tier 2/3 (Codex, Cursor, etc.) — `harness-matrix.md:137` table. Luffy seeds `pending` Flow 0, Zoro flips `in_progress→completed` each wave.
 
-2. **Banner all crews (T2):** Main thread emit `===== FLOW N — CREW =====` **first line** sebelum dispatch subagent (jika pakai subagent), handoff `→ Flow N+1` **last line** setelah balik — untuk **semua** Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy. Transcript rapih walau kerja di subagent.
+2. **Banner all crews (T2):** Main thread emit `===== FLOW N — CREW =====` **first line** before dispatch subagent (if using subagent), handoff `→ Flow N+1` **last line** after return — for **all** Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy. Transcript tidy even when subagent does work.
 
 3. **Lane-aware verify (T3):** `direct` (1 file <20 LOC) → 3 gates / budget 0, `full` (9 tasks) → 12 gates / 50k — fixture `fix.ts` 1 LOC → `lane.sh direct`, `savepoint` `1/1, budget 0` — 8 tests.
 
-4. **Usopp + investigator (T4):** `usopp-brainstorm` skills +`mugiwara-root-cause` (read-only `Grep/Glob file:line, no fix`) — Round 2 research pakai codebase facts, simple locate tidak perlu `explore` subagent 132k.
+4. **Usopp + investigator (T4):** `usopp-brainstorm` skills +`mugiwara-root-cause` (read-only `Grep/Glob file:line, no fix`) — Round 2 research uses codebase facts, simple locate does not need `explore` subagent 132k.
 
 Branch `feat/seamless-followup` from `feat/seamless-governors` `4b83e7d` → `424b964` (4 commits), solo, auto.
 
@@ -62,7 +62,7 @@ Branch `feat/seamless-followup` from `feat/seamless-governors` `4b83e7d` → `42
 
 ## Checklist
 
-- [x] Todos sync — `plan.md - [x]` + `flows/todos.md` tetap, `todowrite` opencode / `TaskUpdate` Claude / none tier 2/3
+- [x] Todos sync — `plan.md - [x]` + `flows/todos.md` remains, `todowrite` opencode / `TaskUpdate` Claude / none tier 2/3
 - [x] Banner all crews — main thread `===== FLOW N — CREW =====` before dispatch, handoff after (Flow 0-9)
 - [x] Lane-aware gates direct 3 vs full 12 verified
 - [x] Budget direct 0 vs full 50000 verified
@@ -74,13 +74,13 @@ Branch `feat/seamless-followup` from `feat/seamless-governors` `4b83e7d` → `42
 
 ## Notes
 
-- `todowrite` disabled for subagents by default (opencode permission `todowrite`) — main thread (Luffy/Zoro) seeds/flips, subagent `cavecrew` tidak dipanggil untuk todos.
-- `TaskCreate` di Claude untuk apa? → bikin 1 todo baru di sidebar Task Claude (pengganti TodoWrite deprecated) — Luffy seed `pending`, Zoro `TaskUpdate` → `completed`.
-- Tier 2/3 (Codex, Cursor, Windsurf, dll.) tidak punya native todo tool — `harness-matrix.md:137` `none` — jadi cuma file `todos.md` + `plan.md`.
+- `todowrite` disabled for subagents by default (opencode permission `todowrite`) — main thread (Luffy/Zoro) seeds/flips, subagent `cavecrew` not called for todos.
+- `TaskCreate` in Claude for what? → creates 1 new todo in Claude Task sidebar (replacement for deprecated TodoWrite) — Luffy seeds `pending`, Zoro `TaskUpdate` → `completed`.
+- Tier 2/3 (Codex, Cursor, Windsurf, etc.) have no native todo tool — `harness-matrix.md:137` `none` — so only `todos.md` + `plan.md` files.
 
 ## Verdict
 
-**GO** — 4/4 tasks PASS, checklist tetap + sync conditional, banner rapih all crews, lane-aware verified, Usopp investigator read-only. Single PR `feat/seamless-followup` ready.
+**GO** — 4/4 tasks PASS, checklist remains + sync conditional, tidy banner all crews, lane-aware verified, Usopp investigator read-only. Single PR `feat/seamless-followup` ready.
 
 ## Branch
 

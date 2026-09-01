@@ -7,16 +7,16 @@
 
 - **Luffy triage** strong (8 classes) but `savepoint` not enforced each handoff → `0/0` stale (fixed in `fix/tier3-config-autocreate` with `readConfig` auto-create + `countPlanTasks` fallback, but not enforced in workflow)
 - **Cost Governor** = `src/cost.ts` + `lane-base.sh` + `budgetForLane` + `cost-events.jsonl` — *record* only (ledger), not *reduce* (no auto-compress, no budget adapt)
-- **Governors fragmented:** `cognitive-output-governor.md`, `scope-code-governor.md`, `stop-slop-governor.md`, `adaptive-budget-governor.md`, `benchmark-governor.md` — 5 files, solo bingung
+- **Governors fragmented:** `cognitive-output-governor.md`, `scope-code-governor.md`, `stop-slop-governor.md`, `adaptive-budget-governor.md`, `benchmark-governor.md` — 5 files, confusing for solo
 - **Stop Slop** detect in `savepoint`/`reporting` only — not wired to Luffy/Nami/Zoro/Brook real path (`repeated_reads`, `heal_cycle` not checked before dispatch)
-- **Gates** (`validate-content`, `conformance` 12 platforms, `benchmark`) run for all lanes — solo `direct` bayar 60s, enterprise `full` juga 60s (no lane-aware skip)
-- **Crew:** Zoro parallel OK, but `scope-governor` not enforced (tambah dep sembarang), Brook 4-phase root-cause not in all heals, Memory Keeper dispatch even when `lessons.md` empty + Lane 0
+- **Gates** (`validate-content`, `conformance` 12 platforms, `benchmark`) run for all lanes — solo `direct` pays 60s, enterprise `full` also 60s (no lane-aware skip)
+- **Crew:** Zoro parallel OK, but `scope-governor` not enforced (arbitrary dep additions), Brook 4-phase root-cause not in all heals, Memory Keeper dispatch even when `lessons.md` empty + Lane 0
 - **Caveman/Ponytail** requested as *inspiration* for cost reduce — must be reimplemented as Mugiwara-native `terse + lazy` without branding, not installed
 - **Reset** now clears `index.md` (fixed), but `lessons.md` still deleted without `--keep-logs` — solo loses memory
 
 ## Goal
 
-Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. One `cost-governor` tunggal (terse+lazy, no caveman/ponytail mention) + lane-aware + slop all-lines + crew strengthened.
+Solo and enterprise both useful, all features valuable, low cost, seamless. One single `cost-governor` (terse+lazy, no caveman/ponytail mention) + lane-aware + slop all-lines + crew strengthened.
 
 ## Lane & Mode
 
@@ -25,11 +25,11 @@ Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. O
 
 ## Task index
 
-### Wave 0 — P0 Solo/Team gate (krusial, before plan)
+### Wave 0 — P0 Solo/Team gate (crucial, before plan)
 
 | # | Task | Files | Acceptance |
 |---|------|-------|------------|
-| T0 | **P0 Solo/Team gate** — `mode guided/semi` → Luffy **wajib tanya** `solo atau tim?` sebelum Nami, `auto` → default solo dari `git config`. Affects `state.json` vs `<member>.json`, plan `parallel` vs `inline`, `Nami` member isolation | `content/skills/mugiwara-orchestration/SKILL.md`, `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-planning/SKILL.md`, `src/continue.ts`, `src/mission.ts` | `guided/semi` tanpa jawaban → blocker, tidak lanjut ke Nami; `auto` → solo default tercatat di `decisions.md`; `tim` → `state: <member>.json` + `continue-<member>.json` per member |
+| T0 | **P0 Solo/Team gate** — `mode guided/semi` → Luffy **must ask** `solo or team?` before Nami, `auto` → default solo from `git config`. Affects `state.json` vs `<member>.json`, plan `parallel` vs `inline`, `Nami` member isolation | `content/skills/mugiwara-orchestration/SKILL.md`, `content/skills/mugiwara-workflow/SKILL.md`, `content/skills/mugiwara-planning/SKILL.md`, `src/continue.ts`, `src/mission.ts` | `guided/semi` without answer → blocker, does not proceed to Nami; `auto` → solo default recorded in `decisions.md`; `team` → `state: <member>.json` + `continue-<member>.json` per member |
 
 ### Wave 1 — Governor unification (terse+lazy, no branding)
 
@@ -75,7 +75,7 @@ Solo & enterprise sama-sama useful, semua fitur berguna, cost kecil, seamless. O
 
 ## Tasks
 
-- [x] T0 P0 Solo/Team gate — guided/semi wajib tanya, auto default solo (P0)
+- [x] T0 P0 Solo/Team gate — guided/semi must ask, auto default solo (P0)
 - [x] T1 Merge 5 governors → 1 references/cost-governor.md (terse+lazy, no branding)
 - [x] T2 Wire cost-governor reduce — Zoro pre-check reuse/stdlib/native/one-line
 - [x] T3 Lane-aware gates — direct 3 steps, full 12 steps

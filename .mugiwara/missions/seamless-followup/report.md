@@ -3,7 +3,7 @@
 **Mission:** seamless-followup · **Branch:** feat/seamless-followup · **Mode:** auto · **Lane:** Full (4/4) · **Actor:** ionivetech <ionivetech@gmail.com>
 
 ## Summary
-4 perbaikan seamless: todos sync Opencode (todowrite) + Banner all crews via main thread + lane-aware verify + Usopp investigator. Checklist tetap, sync conditional, cost reduce.
+4 seamless fixes: todos sync Opencode (todowrite) + Banner all crews via main thread + lane-aware verify + Usopp investigator. Checklist remains, sync conditional, cost reduce.
 
 ## Per-flow outcomes
 - Triage (Flow 0) PASS — Explicit, Full, solo, P0 already done
@@ -165,7 +165,7 @@ No OWASP Top-10 injection, no secret leak, no privilege escalation, no trust-bou
 
 # Spec — seamless-followup
 
-**Goal:** 4 perbaikan seamless follow-up dari seamless-governors
+**Goal:** 4 seamless fixes follow-up from seamless-governors
 
 1. Todos sync Opencode — todowrite mirror plan.md
 2. Banner all crews — main thread before dispatch subagent
@@ -949,7 +949,7 @@ All consent answers recorded. No state-mutating test run without consent.
 **Mission:** seamless-followup · **Branch:** feat/seamless-followup · **Mode:** auto · **Lane:** Full (4/4) · **Actor:** ionivetech <ionivetech@gmail.com>
 
 ## Summary
-4 perbaikan seamless: todos sync Opencode (todowrite) + Banner all crews via main thread + lane-aware verify + Usopp investigator. Checklist tetap, sync conditional, cost reduce.
+4 seamless fixes: todos sync Opencode (todowrite) + Banner all crews via main thread + lane-aware verify + Usopp investigator. Checklist remains, sync conditional, cost reduce.
 
 ## Per-flow outcomes
 - Triage (Flow 0) PASS — Explicit, Full, solo, P0 already done

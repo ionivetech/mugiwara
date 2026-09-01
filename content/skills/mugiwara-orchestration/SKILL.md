@@ -3,6 +3,7 @@ name: mugiwara-orchestration
 description: Gatekeeper + captain for any task: triage, classify, coordinate, route, refuse deploy, key rotation, hotfix, "skip the pipeline" pressure, direct calls, mode flips, lane escalation, heal cycles, check-in, close.
 ---
 # Orchestration (Luffy)
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
 
 ## Skip when
 
