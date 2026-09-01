@@ -5,6 +5,8 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 
 # Mugiwara Workflow
 
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
 
 - Lane 0 direct work: typo, rename, or single-file fix under 20 LOC; or the user explicitly declined the harness (`mugiwara off` — Luffy acknowledges, records it in the decision log, and the crew stands down).
@@ -41,7 +43,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 
 **Inline by default.** Main thread embodies each crew role using that crew's skill. Every flow stage runs in the main conversation. **One role at a time.** The main thread embodies ONE crew role per response — completes that role's report, then moves to the next. Never role-bleeds two personas into one response; never starts the next role before the current one returns its output.
 
-**Banners.** Every flow stage opens with a banner in the owning agent's color and closes with a handoff line — the equals line `===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Keep literal `FLOW N —` (the check-in protocol reads it; heal cycles are counted from the decision log's `## Flow 8` sections, not from banners). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line of the flow stage's final response. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0` — slop §§21-24. A flow stage without both is skipped — record why.
+**Banners.** Every flow stage opens with a banner in the owning agent's color and closes with a handoff line — the equals line `===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` (ANSI-wrapped in terminals, plain in markdown UIs). Keep literal `FLOW N —` (the check-in protocol reads it; heal cycles are counted from the decision log's `## Flow 8` sections, not from banners). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line of the flow stage's final response. **All crews:** Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy — main thread emits banner + handoff even when subagent does work. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0` — slop §§21-24. A flow stage without both is skipped — record why.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `state.json` `heal_cycle`/`heal_halt` + `context-registry.jsonl` `repeated_reads` — `repeated_reads>threshold` skip/compress, `heal_cycle≥3` halt/escalate — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
 
@@ -89,7 +91,8 @@ Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec +
 4. Flow 7: Robin and Jinbe parallel over same diff.
 5. Plan doc is source of truth from Flow 2.
 6. Resume via `resume-coordinator` before any flow stage — never restart.
-7. Push branch + hand verdict to user; crew never merges or deploys. 8. Host todo mirrors the plan doc every task + flow stage — same response as evidence.
+7. Push branch + hand verdict to user; crew never merges or deploys.
+8. Host todos mirror `plan.md` every task + flow stage via native tool (`todowrite` on opencode) — Luffy seeds `pending` at Flow 0, Zoro flips `pending→in_progress→completed` each wave; `flows/todos.md` stays as archive, UI sync in same response as evidence.
 ## Cost governor
 Full checklist: `_shared/references/cost-governor.md` — ladder, terse output, dedup, slop taxonomy, budget reserve/projection, benchmark; trail rows; savepoint/lane-base/config untouched.
 ## Large campaign — sub-plan & archive merge
