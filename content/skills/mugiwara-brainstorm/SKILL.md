@@ -5,7 +5,7 @@ description: Use for vague ideas or architecture exploration before planning —
 
 # Brainstorm (Usopp)
 
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
 
 ## Skip when
 
