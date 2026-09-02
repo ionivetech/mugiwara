@@ -82,12 +82,16 @@ describe('closure integrity gate', () => {
     writeFileSync(join(dir, 'notes.md'), 'token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456" <!-- mugiwara:allow-secret -->');
     expect(checkTrail(dir, dir).some((i) => i.kind === 'secret')).toBe(false);
 
-    // clean trail passes silently
+    // clean trail passes silently (needs evidence to avoid zero-evidence warn)
     writeFileSync(join(dir, 'report.md'), 'see [plan](plan.md)');
-    writeFileSync(join(dir, 'waves.md'), '');
-    writeFileSync(join(dir, 'state.json'), JSON.stringify({ evidence: [] }));
+    writeFileSync(join(dir, 'waves.md'), '`run` ok');
+    writeFileSync(join(dir, 'state.json'), JSON.stringify({ evidence: ['waves.md'] }));
     rmSync(join(dir, 'notes.md'));
-    expect(checkTrail(dir, dir)).toEqual([]);
+    expect(checkTrail(dir, dir).filter((i) => i.severity !== 'warn')).toEqual([]);
+    // zero-evidence trail warns (B7) but does not block unless policy says so
+    writeFileSync(join(dir, 'state.json'), JSON.stringify({ evidence: [] }));
+    const zeroIssues = checkTrail(dir, dir);
+    expect(zeroIssues.some((i) => i.kind === 'evidence' && i.severity === 'warn' && i.detail.includes('no evidence'))).toBe(true);
 
     const text = formatIssues([{ kind: 'secret', detail: 'x' }]);
     expect(text).toContain('[secret] x');

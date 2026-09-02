@@ -24,7 +24,7 @@ describe('budgetForLane', () => {
     expect(budgetForLane('lean')).toBe(12000);
     expect(budgetForLane('standard')).toBe(25000);
     expect(budgetForLane('full')).toBe(50000);
-    expect(budgetForLane('spike')).toBe(3000);
+    expect(budgetForLane('spike')).toBe(9000);
   });
   it('returns 0 for unknown lanes and direct', () => {
     expect(budgetForLane('direct')).toBe(0);
@@ -50,13 +50,13 @@ describe('thresholds — savepoint.sh math (BUDGET*3/2, BUDGET*3)', () => {
     expect(warnAt(12000)).toBe(18000);
     expect(warnAt(25000)).toBe(37500);
     expect(warnAt(50000)).toBe(75000);
-    expect(warnAt(3000)).toBe(4500);
+    expect(warnAt(9000)).toBe(13500);
   });
   it('stopAt is BUDGET*3 for every lane budget', () => {
     expect(stopAt(12000)).toBe(36000);
     expect(stopAt(25000)).toBe(75000);
     expect(stopAt(50000)).toBe(150000);
-    expect(stopAt(3000)).toBe(9000);
+    expect(stopAt(9000)).toBe(27000);
   });
 });
 
@@ -83,7 +83,7 @@ describe('delegateAt — savepoint.sh DELEGATE_AT math', () => {
     expect(delegateAt(12000, 60)).toBe(7200);
     expect(delegateAt(25000, 60)).toBe(15000);
     expect(delegateAt(50000, 80)).toBe(40000);
-    expect(delegateAt(3000, 60)).toBe(1800);
+    expect(delegateAt(9000, 60)).toBe(5400);
   });
 
   it('clamps thresholdPct to [1,100] before division (P1 — matches savepoint.sh clamp)', () => {

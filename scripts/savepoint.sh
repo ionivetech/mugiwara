@@ -8,6 +8,18 @@ set -u
 
 die() { echo "savepoint: $*" >&2; exit 1; }
 
+# count_boxes <file> <char-class> — count markdown checkboxes.
+# Anchored so prose mentioning "- [x]" is not counted; skips fenced code blocks
+# so documentation examples are not counted; matches [x] and [X] alike. (B3)
+count_boxes() {
+  [ -f "$1" ] || { echo 0; return; }
+  awk -v pat="$2" '
+    /^[[:space:]]*```/ { inblock = !inblock; next }
+    !inblock && $0 ~ ("^[[:space:]]*-[[:space:]]*\\[" pat "\\]") { n++ }
+    END { print n+0 }
+  ' "$1"
+}
+
 MUGIWARA_DIR="${MUGIWARA_DIR:-.mugiwara}"
 
 # optional provider-reported tokens file (T4): --tokens-file <path> JSON {input_tokens, output_tokens}
@@ -154,6 +166,11 @@ esac
 # (BSD/macOS-safe: no \+ BRE).
 BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
 
+# Resolve the repo root: handles subdirectories and git worktrees, where .git
+# is a file rather than a directory. (B4)
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || die "not a git repository"
+cd "$REPO_ROOT" || die "cannot enter repo root"
+
 # state + continue live in the mission dir. Solo (member empty) → state.json
 # + continue.json; team writes <member>.json + continue-<member>.json so
 # parallel members never clobber each other.
@@ -167,7 +184,6 @@ else
 fi
 
 [ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [member] [wave] [mode] [lane]"
-[ -d .git ] || die "not a git repository"
 
 # --- computed fields ---
 BASE_SHA=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null || git merge-base HEAD "$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's|refs/remotes/origin/||')" 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "unknown")
@@ -328,16 +344,23 @@ if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
   # total counts ALL task lines (checked + unchecked); done counts checked only.
   # A fully-completed plan must read total=N done=N, never total=0 (the old
   # unchecked-only grep degenerated a done plan to tasks.total=0).
-  TASKS_TOTAL=$(grep -cE '^\s*-\s*\[[ xX]\]' "$PLAN_FILE" 2>/dev/null || true)
-  TASKS_DONE=$(grep -c '\[x\]' "$PLAN_FILE" 2>/dev/null || true)
+  TASKS_TOTAL=$(count_boxes "$PLAN_FILE" '[ xX]')
+  TASKS_DONE=$(count_boxes "$PLAN_FILE" '[xX]')
 fi
 # Fallback for large campaigns (>3 phases, >1500 lines) where master plan.md is an index
 # and tasks live in sub-plan/*.md — only when plan.md has zero checkbox tasks to
 # keep simple missions unchanged.
 if [ "${TASKS_TOTAL:-0}" -eq 0 ] 2>/dev/null && [ -d "$MISSION_DIR/sub-plan" ]; then
-  TASKS_TOTAL=$(grep -rcE '^\s*-\s*\[[ xX]\]' "$MISSION_DIR/sub-plan" 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || true)
-  TASKS_DONE=$(grep -rc '\[x\]' "$MISSION_DIR/sub-plan" 2>/dev/null | awk -F: '{s+=$2} END {print s+0}' || true)
+  TASKS_TOTAL=0; TASKS_DONE=0
+  for _sp in "$MISSION_DIR"/sub-plan/*.md; do
+    [ -f "$_sp" ] || continue
+    TASKS_TOTAL=$(( TASKS_TOTAL + $(count_boxes "$_sp" '[ xX]') ))
+    TASKS_DONE=$(( TASKS_DONE + $(count_boxes "$_sp" '[xX]') ))
+  done
 fi
+# done ≤ total is an invariant of the audit trail — never let a report show
+# progress above 100%, whatever the plan file contains. (B3)
+[ "${TASKS_DONE:-0}" -gt "${TASKS_TOTAL:-0}" ] 2>/dev/null && TASKS_DONE="$TASKS_TOTAL"
 
 # blocker count
 BLOCKERS_FILE="$MISSION_DIR/blockers.md"

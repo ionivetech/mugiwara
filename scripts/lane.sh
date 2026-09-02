@@ -11,7 +11,11 @@ BASE="${1:-main}"
 JSON_OUT=0
 [ "${2:-}" = "--json" ] && JSON_OUT=1
 
-[ -d .git ] || { echo "lane: not a git repository" >&2; exit 1; }
+# Resolve the repo root: handles subdirectories and git worktrees, where .git
+# is a file rather than a directory. (B4)
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+  echo "lane: not a git repository" >&2; exit 1; }
+cd "$REPO_ROOT" || { echo "lane: cannot enter repo root" >&2; exit 1; }
 
 # resolve base
 if ! git rev-parse "$BASE" >/dev/null 2>&1; then

@@ -19,7 +19,11 @@ export type MugiwaraPolicy = {
     coverage?: { new?: number; modified?: number };
     require_human_approval?: string[];
   };
-  evidence?: { required?: string[] };
+  evidence?: {
+    required?: string[];
+    /** Lanes where an empty evidence set blocks archive instead of warning. (B7) */
+    require_nonempty_for_lanes?: string[];
+  };
   integrity?: { extra_secret_patterns?: Array<{ pattern: string; label: string; severity?: 'block' | 'warn' }> };
   attestation?: {
     required?: boolean;
@@ -361,7 +365,18 @@ function normalize(raw: Record<string, unknown>): MugiwaraPolicy {
       out.gates.require_human_approval = strings(gates.require_human_approval);
   }
   const evidence = raw.evidence as Record<string, unknown> | undefined;
-  if (evidence && Array.isArray(evidence.required)) out.evidence = { required: strings(evidence.required) };
+  if (evidence) {
+    const ev: NonNullable<MugiwaraPolicy['evidence']> = {};
+    if (Array.isArray(evidence.required)) ev.required = strings(evidence.required);
+    else if (typeof evidence.required === 'string' && (evidence.required as string).trim().startsWith('[')) {
+      try { const p = JSON.parse(evidence.required as string); if (Array.isArray(p)) ev.required = strings(p); } catch { /* ignore */ }
+    }
+    if (Array.isArray(evidence.require_nonempty_for_lanes)) ev.require_nonempty_for_lanes = strings(evidence.require_nonempty_for_lanes);
+    else if (typeof evidence.require_nonempty_for_lanes === 'string' && (evidence.require_nonempty_for_lanes as string).trim().startsWith('[')) {
+      try { const p = JSON.parse(evidence.require_nonempty_for_lanes as string); if (Array.isArray(p)) ev.require_nonempty_for_lanes = strings(p); } catch { /* ignore */ }
+    }
+    if (ev.required || ev.require_nonempty_for_lanes) out.evidence = ev;
+  }
   const integrity = raw.integrity as Record<string, unknown> | undefined;
   if (integrity && Array.isArray(integrity.extra_secret_patterns)) {
     const arr = integrity.extra_secret_patterns as unknown[];

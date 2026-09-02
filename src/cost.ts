@@ -33,7 +33,7 @@ export const LANE_BUDGET: Record<string, number> = {
   lean: 12000,
   standard: 25000,
   full: 50000,
-  spike: 3000,
+  spike: 9000,
 };
 
 /** Token estimate for skills/agents loaded in this lane (0 for unknown/direct). */

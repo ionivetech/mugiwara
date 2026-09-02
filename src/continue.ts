@@ -111,6 +111,11 @@ export function gitActor(cwd: string): string {
   return name || process.env.USER || process.env.USERNAME || '';
 }
 
+const unreadable: string[] = [];
+
+/** State files that exist but could not be parsed. Cleared by each scan. (B6) */
+export function unreadableStateFiles(): string[] { return [...unreadable]; }
+
 /**
  * Read every mission dir under `.mugiwara/missions/<mission>/`, picking the
  * files this reader owns: state readers take `state.json` / `<member>.json`,
@@ -118,6 +123,7 @@ export function gitActor(cwd: string): string {
  * files are skipped.
  */
 function scan<T>(projectDir: string, kind: 'state' | 'continue', map: (raw: Record<string, unknown>, member: string | null) => T): T[] {
+  unreadable.length = 0;
   const base = join(projectDir, '.mugiwara', 'missions');
   if (!existsSync(base)) return [];
   const out: T[] = [];
@@ -148,7 +154,7 @@ function scan<T>(projectDir: string, kind: 'state' | 'continue', map: (raw: Reco
         if (text(raw.mission) !== mission) continue;
         out.push(map(raw, member));
       } catch {
-        // corrupt savepoint — skip, never crash the listing
+        unreadable.push(join(mission, f));
       }
     }
   }
