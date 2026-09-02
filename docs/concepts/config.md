@@ -66,6 +66,11 @@ both define a coverage threshold, the higher value wins — policy can raise,
 never lower. See [policy-as-code](policy-as-code.md). An invalid policy file
 (unknown root key) fails lane/archive loudly instead of being ignored.
 
+```yaml
+evidence:
+  require_nonempty_for_lanes: ["full"]   # a lane-3 mission must record evidence
+```
+
 ## Machine-read vs advisory-only
 
 Code reads five keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`

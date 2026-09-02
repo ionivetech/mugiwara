@@ -2,12 +2,20 @@
 
 What actually differs per harness tier. Every skill and agent file ships to every harness, but behavior differs in three tiers.
 
-| Tier | Harnesses | Skills | Agents | `references/` | Scope | Conformance |
-|------|-----------|--------|--------|:---:|-------|------|
-| **1** | Claude Code, opencode | Native, auto-trigger per skill | Real, dispatchable | Yes | global + project | **verified** — claude, opencode in CI (`scripts/conformance.ts`) |
-| **2** | Gemini, Codex, Copilot | Full body in rules dir + bootstrap pointer | Markdown only | Yes | project only | **verified** — gemini, codex, copilot in CI |
-| **3** | Windsurf, Cline, Kilo, Antigravity | Stub; body in `.mugiwara/refs/` | Stub | Yes | project only | **verified** — windsurf, cline, kilo, antigravity in CI |
-| **marketplace** | Cursor, Kimi, Pi | plugin.json manifest + `content/` pointers (no rules-dir install) | via manifest | n/a | n/a | **verified** — cursor, kimi, pi manifests in CI |
+| Tier | Harnesses | Skills | Agents | `references/` | Scope | CLI availability | Conformance |
+|------|-----------|--------|--------|:---:|-------|----------------|------|
+| **1** | Claude Code, opencode | Native, auto-trigger per skill | Real, dispatchable | Yes | global + project | bundled | **verified** — claude, opencode in CI (`scripts/conformance.ts`) |
+| **2** | Gemini, Codex, Copilot | Full body in rules dir + bootstrap pointer | Markdown only | Yes | project only | npx only | **verified** — gemini, codex, copilot in CI |
+| **3** | Windsurf, Cline, Kilo, Antigravity | Stub; body in `.mugiwara/refs/` | Stub | Yes | project only | shell fallback | **verified** — windsurf, cline, kilo, antigravity in CI |
+| **marketplace** | Cursor, Kimi, Pi | plugin.json manifest + `content/` pointers (no rules-dir install) | via manifest | n/a | n/a | npx only | **verified** — cursor, kimi, pi manifests in CI |
+
+### If the CLI is unavailable
+
+`mugiwara savepoint`, `archive`, `continue`, and `sign` all require the CLI.
+Without it the crew still runs the pipeline and still produces an inline report,
+but **no machine-readable state is written** — so resume, budget tracking,
+lane-escalation memory, and the closure integrity gate are inactive. The crew
+announces this at Flow 0 rather than failing silently.
 
 Conformance runs `scripts/conformance.ts` in CI: every installable target
 installs into a scripted fixture repo, runs

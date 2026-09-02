@@ -1,5 +1,5 @@
 // src/installer.ts
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync, lstatSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync, lstatSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -57,6 +57,7 @@ export interface Target {
 }
 
 export const CONTENT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'content');
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')) as { version: string };
 export const VERSION = pkg.version;
 
@@ -99,9 +100,13 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   const backupRoot = join(scope === 'global' ? home : projectDir, '.mugiwara');
   const result: InstallResult = { written: [], skipped: [], backedUp: [], notes: [] };
 
-  const writeOne = (absPath: string, text: string) => {
+  const writeOne = (absPath: string, text: string, mode?: number) => {
     if (existsSync(absPath)) {
-      if (readFileSync(absPath, 'utf8') === text) { result.skipped.push(absPath); return; }
+      if (readFileSync(absPath, 'utf8') === text) {
+        // ensure mode even when content unchanged
+        if (!dryRun && mode !== undefined) { try { chmodSync(absPath, mode); } catch { /* ignore */ } }
+        result.skipped.push(absPath); return;
+      }
       if (!force) {
         result.skipped.push(absPath);
         result.notes.push(`conflict (not overwritten; run update to replace with backup): ${absPath}`);
@@ -114,7 +119,11 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
       if (!dryRun) { mkdirSync(backupDir, { recursive: true }); copyFileSync(absPath, backupFile); }
       result.backedUp.push(absPath);
     }
-    if (!dryRun) { mkdirSync(dirname(absPath), { recursive: true }); writeFileSync(absPath, text); }
+    if (!dryRun) {
+      mkdirSync(dirname(absPath), { recursive: true });
+      writeFileSync(absPath, text);
+      if (mode !== undefined) { try { chmodSync(absPath, mode); } catch { /* ignore */ } }
+    }
     result.written.push(absPath);
   };
 
@@ -154,6 +163,20 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   if (sharedRefs.length) {
     const sharedRoot = join(dirs.skillsDir, '_shared', 'references');
     for (const r of sharedRefs) writeOne(join(sharedRoot, r.relPath), r.text);
+  }
+
+  // Shell fallbacks: pure sh, no Node. The critical path (lane sizing + state)
+  // must survive on a harness where the CLI cannot run. See plan.md B1.
+  {
+    const SHELL_FALLBACKS = ['lane.sh', 'savepoint.sh', 'lib/patterns.sh', 'lib/lane-base.sh'];
+    const mugiwaraDir = join(scope === 'global' ? home : projectDir, '.mugiwara');
+    for (const rel of SHELL_FALLBACKS) {
+      const src = join(REPO_ROOT, 'scripts', rel);
+      if (!existsSync(src)) continue;
+      const text = readFileSync(src, 'utf8');
+      const dest = join(mugiwaraDir, 'bin', rel);
+      writeOne(dest, text, 0o755);
+    }
   }
 
   if (target.postInstall) {

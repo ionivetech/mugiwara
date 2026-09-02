@@ -154,6 +154,7 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
     expect(['estimator', 'reported']).toContain(state.tokens_source);
     expect(typeof state.skill_version).toBe('string');
     expect(typeof state.updated_at).toBe('string');
+    expect(state.tasks.done, 'done must never exceed total').toBeLessThanOrEqual(state.tasks.total);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -439,6 +440,57 @@ test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 1500
     runSavepoint(dir, 'test-mission "" 3 guided', { MUGIWARA_TOKENS: '36000' });
     state = JSON.parse(readFileSync(statePath(dir, 'test-mission'), 'utf8'));
     expect(state.budget_status).toBe('stop');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('B3: task counting — anchored, code-block aware, case-insensitive, no prose leakage (6 cases)', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-tasks-'));
+  try {
+    setupGit(dir);
+    const mission = 'task-count';
+    const cases: Array<{ plan: string; expect: { done: number; total: number }; label: string }> = [
+      {
+        label: '1: 2 checked, 3 unchecked => 2/5',
+        plan: '- [x] a\n- [ ] b\n- [x] c\n- [ ] d\n- [ ] e\n',
+        expect: { done: 2, total: 5 },
+      },
+      {
+        label: '2: uppercase [X] counts as done',
+        plan: '- [X] a\n- [x] b\n- [ ] c\n',
+        expect: { done: 2, total: 3 },
+      },
+      {
+        label: '3: indented sub-tasks counted',
+        plan: '- [x] parent\n  - [x] child1\n  - [ ] child2\n    - [X] grandchild\n',
+        expect: { done: 3, total: 4 },
+      },
+      {
+        label: '4: fence contents excluded',
+        plan: '- [x] real\n```\n- [x] doc example\n- [ ] doc example 2\n```\n- [ ] real2\n',
+        expect: { done: 1, total: 2 },
+      },
+      {
+        label: '5: prose mentioning - [x] not counted',
+        plan: 'Use - [x] to mark done.\n- [ ] the only real task\n',
+        expect: { done: 0, total: 1 },
+      },
+      {
+        label: '6: 3 prose + 1 unchecked => 0/1 and done<=total',
+        plan: 'note - [x] one\nnote - [x] two\nnote - [x] three\n- [ ] single\n',
+        expect: { done: 0, total: 1 },
+      },
+    ];
+    for (const c of cases) {
+      const planPath = join(dir, '.mugiwara', 'missions', mission, 'plan.md');
+      mkdirSync(join(dir, '.mugiwara', 'missions', mission), { recursive: true });
+      writeFileSync(planPath, c.plan);
+      runSavepoint(dir, `${mission} "" 3 guided`);
+      const state = JSON.parse(readFileSync(statePath(dir, mission), 'utf8'));
+      expect(state.tasks, c.label).toEqual(c.expect);
+      expect(state.tasks.done, `${c.label} done<=total`).toBeLessThanOrEqual(state.tasks.total);
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

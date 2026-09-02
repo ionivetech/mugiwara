@@ -31,7 +31,7 @@ remaining headroom in reserve — it is the budget's lock, not free space.
 | 1 Lean | execute → quality | 8,000 | 12,000 | warn 18k / stop 36k |
 | 2 Standard | plan → execute → audit → review | 13,000 | 25,000 | warn 37.5k / stop 75k |
 | 3 Full | all 9 flow stages | 22,000 | 50,000 | warn 75k / stop 150k |
-| 4 Spike | brainstorm → re-triage | 1,000 | 3,000 | warn 4.5k / stop 9k |
+| 4 Spike | brainstorm → re-triage | 1,000 | 9,000 | warn 13.5k / stop 27k |
 
 LANE_BASE is **not a hand-written estimate** — `scripts/lane-base.ts`
 computes the honest instruction load from the skill + agent bodies each lane
@@ -51,7 +51,7 @@ Two numbers are computed, gate-validated constants — not guesses:
 | Lane | Instruction base¹ (tokens) | Budget | Warn (1.5×) | Stop (3×) |
 |------|---------------------------|--------|-------------|-----------|
 | direct | 0 (no pipeline) | — | — | — |
-| spike | 1,000 | 3k | 4.5k | 9k |
+| spike | 1,000 | 9k | 13.5k | 27k |
 | lean | 8,000 | 12k | 18k | 36k |
 | standard | 13,000 | 25k | 37.5k | 75k |
 | full | 22,000 | 50k | 75k | 150k |

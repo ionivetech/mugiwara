@@ -12,7 +12,7 @@ import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProj
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
 import { resetMission, archiveMission } from './mission.ts';
 import { runScript, RUNNABLE } from './run.ts';
-import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION } from './continue.ts';
+import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles } from './continue.ts';
 import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
@@ -25,6 +25,17 @@ import { enforceHarnessPolicy } from './policy.ts';
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
 
+// Anchor to the repo root so running from a package subdirectory does not
+// create a shadow .mugiwara/ there. (B4)
+function resolveProjectDir(explicit?: string): string {
+  if (explicit) return resolve(explicit);
+  try {
+    const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+    if (root) return root;
+  } catch { /* not a git repo — fall through */ }
+  return process.cwd();
+}
+
 export async function run(argv: string[]): Promise<void> {
   const { command, flags, _ } = parseArgs(argv);
   if (flag(flags.help) || command === 'help') return help();
@@ -35,7 +46,7 @@ export async function run(argv: string[]): Promise<void> {
   {
     const bypass = new Set(['install', 'update', 'uninstall', 'list']);
     if (!bypass.has(command)) {
-      const projectDirForHarness = resolve(str(flags.project) ?? process.cwd());
+      const projectDirForHarness = resolveProjectDir(str(flags.project));
       enforceHarnessPolicy(projectDirForHarness);
     }
   }
@@ -45,7 +56,7 @@ export async function run(argv: string[]): Promise<void> {
   // Skipped for install/update --dry-run: a dry run must not mutate the project.
   const isDryRunInstall = (command === 'install' || command === 'update') && flag(flags.dryRun);
   if (!isDryRunInstall) {
-    const projectDir = resolve(str(flags.project) ?? process.cwd());
+    const projectDir = resolveProjectDir(str(flags.project));
     if (ensureConfig(projectDir)) {
       console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
     }
@@ -75,7 +86,7 @@ export async function run(argv: string[]): Promise<void> {
 }
 
 function resetCmd(flags: Args['flags']): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const force = flag(flags.force);
   const result = resetMission(projectDir, flag(flags.keepLogs), force);
   if (result.blocked) {
@@ -88,7 +99,7 @@ function resetCmd(flags: Args['flags']): void {
 }
 
 function archive(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
   if (!mission) { console.error('usage: mugiwara archive <mission> [--project <dir>] [--dry-run]'); process.exit(1); }
   const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun) });
@@ -107,7 +118,7 @@ function archive(flags: Args['flags'], positionals: string[]): void {
  * touched before that date.
  */
 function cleanCmd(flags: Args['flags']): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const dryRun = flag(flags.dryRun);
   const root = join(projectDir, '.mugiwara', 'missions');
   if (!existsSync(root)) { console.log('nothing to clean (.mugiwara/missions/ does not exist).'); return; }
@@ -173,7 +184,7 @@ async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; pro
       if (!interactive) { scope = 'project'; }
       else scope = (await choose(rl!, 'Install scope?', ['global (user-wide)', 'project (this repo)'])) === 0 ? 'global' : 'project';
     }
-    const projectDir = resolve(str(flags.project) ?? process.cwd());
+    const projectDir = resolveProjectDir(str(flags.project));
     if (scope === 'project' && !existsSync(projectDir)) throw new Error(`Project dir not found: ${projectDir}`);
 
     let targetIds = str(flags.target)?.split(',').map(s => s.trim()) ?? null;
@@ -231,13 +242,15 @@ async function install(flags: Args['flags']): Promise<void> {
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
+  console.log('CLI: run `npm i -g @ionivetech/mugiwara` so the crew can call `mugiwara savepoint/archive/continue`.');
+  console.log('     Without it the crew degrades to inline-only — no state, no resume, no closure gate.');
   // A fresh install writes a default .mugiwara/config — point at it directly.
   console.log('\nNext: edit .mugiwara/config to customise (mode, branch, coverage, depths).');
 }
 
 async function uninstall(flags: Args['flags']): Promise<void> {
   const scope: Scope = flag(flags.global) ? 'global' : 'project';
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const home = homedir();
   const file = manifestPath({ scope, projectDir, home });
   const manifest = readManifest(file);
@@ -310,7 +323,7 @@ function schemaWarnings(projectDir: string): void {
 
 function list(flags: Args['flags']): void {
   const home = homedir();
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
   let found = false;
   for (const [label, file] of [
@@ -342,11 +355,27 @@ function list(flags: Args['flags']): void {
  * the caller must stop and let the user pick.
  */
 function continueCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
   schemaWarnings(projectDir);
   const [mission, member] = positionals.slice(1);
   let entries = readContinue(projectDir);
+
+  // If the requested member's state file is unreadable, refuse rather than
+  // resuming from continue-<member>.json alone. A resume point without its
+  // state is a guess. (B6)
+  if (mission) {
+    // readState populates unreadableStateFiles for state files; entries already captured
+    readState(projectDir);
+    const badState = unreadableStateFiles();
+    const target = member ? `${mission}/${member}.json` : `${mission}/state.json`;
+    if (badState.includes(target)) {
+      console.error(`✗ mission "${mission}"${member ? ` member "${member}"` : ''} has unreadable state: ${target}`);
+      process.exit(1);
+    }
+    // re-read continue entries after the state scan cleared unreadable (preserve original entries)
+    // entries already holds the correct continue data, no need to re-read
+  }
 
   // default to this actor's work; --all crosses actors on a shared checkout
   if (!flag(flags.all)) {
@@ -386,11 +415,19 @@ function continueCmd(flags: Args['flags'], positionals: string[]): void {
 
 /** `mugiwara status` — one screen of computed mission state, no model needed. */
 function statusCmd(flags: Args['flags']): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
   schemaWarnings(projectDir);
   const states = readState(projectDir);
-  if (!states.length) { console.log('No mission state on disk.'); return; }
+  const bad = unreadableStateFiles();
+  if (bad.length) {
+    console.error(`⚠ ${bad.length} unreadable state file(s): ${bad.join(', ')}`);
+    console.error('  These are not "no mission" — they are corrupt. Inspect or delete them.');
+  }
+  if (!states.length) {
+    console.log(bad.length ? 'No readable mission state on disk.' : 'No mission state on disk.');
+    return;
+  }
   const actor = flag(flags.all) ? null : gitActor(projectDir);
   const rows = actor ? (states.filter((s) => s.actor === actor).length ? states.filter((s) => s.actor === actor) : states) : states;
   for (const s of rows) {
@@ -406,7 +443,7 @@ function statusCmd(flags: Args['flags']): void {
 
 /** `mugiwara cost [--mission <id>] [--json] [--ledger]` — show cost ledger, avoided work, efficiency, trail. */
 function costCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const mission = str(flags.mission) ?? positionals[1] ?? (() => {
     const states = readState(projectDir);
     if (states.length === 1) return states[0].mission;
@@ -461,7 +498,7 @@ function costCmd(flags: Args['flags'], positionals: string[]): void {
 
 /** `mugiwara run <script.sh> [args]` — run a bundled harness script here. */
 function runCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const name = positionals[1];
   if (!name) {
     console.error(`usage: mugiwara run <script> [args...]\n  scripts: ${RUNNABLE.join(', ')}`);
@@ -473,7 +510,7 @@ function runCmd(flags: Args['flags'], positionals: string[]): void {
 
 /** `mugiwara blame <path>` — provenance note on the last commit touching path. */
 function blameCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const path = positionals[1];
   if (!path) { console.error('usage: mugiwara blame <file-path>'); process.exit(1); }
   console.log(blamePath(projectDir, path));
@@ -506,10 +543,15 @@ export function stalenessLine(projectDir: string, baseSha: string): string | nul
 
 /** `mugiwara handoff <mission>` — a report the next engineer can act on. */
 function handoffCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
   if (!mission) { console.error('usage: mugiwara handoff <mission> [--project <dir>]'); process.exit(1); }
   const states = readState(projectDir).filter((s) => s.mission === mission);
+  const bad = unreadableStateFiles().filter((p) => p.startsWith(`${mission}/`));
+  if (bad.length) {
+    console.error(`✗ mission "${mission}" has unreadable state: ${bad.join(', ')}`);
+    process.exit(1);
+  }
   if (!states.length) { console.error(`no in-flight mission "${mission}"`); process.exit(1); }
   const lines = [
     `# Handoff: ${mission}`,
@@ -540,7 +582,7 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
 }
 
 export function migrateCmd(flags: Args['flags']): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   const dryRun = flag(flags.dryRun);
   const legacyState = join(projectDir, '.mugiwara', 'state');
   const legacyContinue = join(projectDir, '.mugiwara', 'continue');
@@ -623,7 +665,7 @@ export function migrateCmd(flags: Args['flags']): void {
 
 /** `mugiwara sign <mission>` / `--verify` / `--gen-key` — optional attestation. */
 function signCmd(flags: Args['flags'], _: string[]): void {
-  const projectDir = resolve(str(flags.project) ?? process.cwd());
+  const projectDir = resolveProjectDir(str(flags.project));
   if (flag(flags.genKey)) {
     const backend = str(flags.backend) ?? 'auto';
     const home = homedir();

@@ -107,6 +107,22 @@ for (const lane of lanes) {
   }
 }
 
+// A lane whose base exceeds its budget is born in `warn` — the budget is then
+// noise rather than a signal. (B5)
+for (const lane of ['lean', 'standard', 'full', 'spike']) {
+  const base = constants[lane]?.base ?? 0;
+  const budget = constants[lane]?.budget ?? 0;
+  if (base >= budget) {
+    console.log(`  ✗ LANE_BASE_${lane} (${base}) >= BUDGET_${lane} (${budget}) — every mission starts over budget`);
+    failures++;
+  }
+  const pct = budget ? Math.round((base / budget) * 100) : 100;
+  if (pct > 80) {
+    console.log(`  ✗ LANE_BASE_${lane} is ${pct}% of BUDGET_${lane} — leaves no headroom (target ≤70%)`);
+    failures++;
+  }
+}
+
 if (failures > 0) {
   console.log(`\nlane-base: ${failures} constant(s) drifted from content load`);
   process.exit(1);

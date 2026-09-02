@@ -162,21 +162,52 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
 
   // 3: evidence entries recorded as repo paths must exist
   const evidencePaths: string[] = [];
-  const evidenceFile = join(missionDir, 'state.json');
-  if (existsSync(evidenceFile)) {
+  // Solo layout writes state.json; team layout writes <member>.json per member.
+  // Reading only state.json left the evidence gate dead on the team path (B2).
+  const stateFiles = existsSync(missionDir)
+    ? readdirSync(missionDir)
+        .filter((n) => n.endsWith('.json') && n !== 'continue.json' && !n.startsWith('continue-'))
+        .sort()
+    : [];
+  for (const name of stateFiles) {
+    const evidenceFile = join(missionDir, name);
     try {
       const s = JSON.parse(readFileSync(evidenceFile, 'utf8')) as { evidence?: unknown };
-      if (Array.isArray(s.evidence)) {
-        for (const e of s.evidence) {
-          if (typeof e !== 'string' || !e.trim()) continue;
-          evidencePaths.push(e);
-          const cand = join(projectRoot, e);
-          if (!isAbsolute(e) && !existsSync(cand) && !existsSync(join(missionDir, e))) {
-            issues.push({ kind: 'evidence', detail: `state.json evidence "${e}" does not exist` });
-          }
+      if (!Array.isArray(s.evidence)) continue;
+      for (const e of s.evidence) {
+        if (typeof e !== 'string' || !e.trim()) continue;
+        evidencePaths.push(e);
+        const cand = join(projectRoot, e);
+        if (!isAbsolute(e) && !existsSync(cand) && !existsSync(join(missionDir, e))) {
+          issues.push({ kind: 'evidence', detail: `${name} evidence "${e}" does not exist` });
         }
       }
     } catch { /* corrupt state — the state reader owns that error */ }
+  }
+
+  // Iron Law: no evidence = not complete. Absent evidence is a different failure
+  // from thin evidence, and previously went unreported entirely. (B7)
+  if (evidencePaths.length === 0) {
+    let severity: 'warn' | 'block' = 'warn';
+    try {
+      const policy = loadPolicy(projectRoot);
+      const lanes = (policy as unknown as { evidence?: { require_nonempty_for_lanes?: string[] } })?.evidence?.require_nonempty_for_lanes;
+      if (Array.isArray(lanes) && lanes.length) {
+        const stateLanes = new Set<string>();
+        for (const name of stateFiles) {
+          try {
+            const s = JSON.parse(readFileSync(join(missionDir, name), 'utf8')) as { lane?: unknown };
+            if (typeof s.lane === 'string') stateLanes.add(s.lane);
+          } catch { /* ignore */ }
+        }
+        if ([...stateLanes].some((l) => lanes.includes(l))) severity = 'block';
+      }
+    } catch { /* policy read failure -> keep warn */ }
+    issues.push({
+      kind: 'evidence',
+      severity,
+      detail: 'mission declares no evidence — closing with zero recorded checks',
+    });
   }
 
   // 4: evidence-content spot check (T7): a PASS verdict that cites an evidence

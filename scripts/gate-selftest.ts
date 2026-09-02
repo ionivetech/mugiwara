@@ -649,7 +649,7 @@ console.log('\nT3 — lane-aware gates');
       return s.length === 12 && s.includes('run-evals') && s.includes('retrieval-eval') && s.includes('conformance');
     });
     assert('budget direct → 0, full → 50000', true, () => budgetForLane('direct') === 0 && budgetForLane('full') === 50000);
-    assert('budget spike → 3000 (direct fixture 3k)', true, () => budgetForLane('spike') === 3000);
+    assert('budget spike → 9000 (direct fixture 9k)', true, () => budgetForLane('spike') === 9000);
     // mutation: break direct step count → should fail (file content shows not 3)
     const broken = originalPolicy.replace(
       "direct: ['build-hooks:check', 'typecheck', 'build']",
@@ -673,6 +673,161 @@ console.log('\nT3 — lane-aware gates');
     const txt = readFileSync(policyFile, 'utf8');
     return txt.includes("'conformance'") && txt.includes("full:");
   });
+}
+
+// --- B1: CLI availability — remove section → content validation fails ---
+console.log('\nB1 — CLI availability');
+{
+  const wf = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+  const original = readFileSync(wf, 'utf8');
+  try {
+    const b1Pattern = /## CLI availability[\s\S]*?## Artifact trust/;
+    const b1Broken = original.replace(b1Pattern, '## Artifact trust');
+    if (!b1Pattern.test(original) || b1Broken === original) {
+      console.error('✗ B1: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(wf, b1Broken);
+      assert('missing CLI availability → grep fails', false, () => run('B1-grep', 'grep -q "CLI availability" content/skills/mugiwara-workflow/SKILL.md'));
+    }
+  } finally {
+    writeFileSync(wf, original);
+    assert('restored → content validation passes', true, () => run('B1-restore', 'grep -q "CLI availability" content/skills/mugiwara-workflow/SKILL.md'));
+  }
+}
+
+// --- B2: team evidence gate — revert to single state.json → integrity gate fails on team ---
+console.log('\nB2 — team evidence gate');
+{
+  const integ = join(root, 'src', 'integrity.ts');
+  const original = readFileSync(integ, 'utf8');
+  try {
+    const fixedPattern = /const stateFiles = existsSync\(missionDir\)/;
+    const broken = original.replace(fixedPattern, "const evidenceFile = join(missionDir, 'state.json'); // B2 revert");
+    const fullPattern = /  \/\/ Solo layout writes state\.json; team layout writes <member>\.json per member\./;
+    let b2Broken = original;
+    if (fullPattern.test(original)) {
+      // remove the team-aware block header to make grep for stateFiles fail for the specific definition
+      b2Broken = original.replace(fixedPattern, "const evidenceFile = join(missionDir, 'state.json'); // B2 revert");
+      // also need to remove remaining stateFiles references to make grep fail - replace all stateFiles with evidenceFile
+      b2Broken = b2Broken.replace(/stateFiles/g, 'evidenceFile');
+    }
+    if (!fixedPattern.test(original) || broken === original) {
+      console.error('✗ B2: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(integ, b2Broken);
+      assert('single state.json → team evidence gate dead', false, () => run('B2', 'grep -q "const stateFiles = existsSync" src/integrity.ts'));
+    }
+  } finally {
+    writeFileSync(integ, original);
+    assert('restored → team gate present', true, () => run('B2-restore', 'grep -q "const stateFiles = existsSync" src/integrity.ts'));
+  }
+}
+
+// --- B3: task counter — restore unanchored grep → savepoint task test fails ---
+console.log('\nB3 — task counter');
+{
+  const sp = join(root, 'scripts', 'savepoint.sh');
+  const original = readFileSync(sp, 'utf8');
+  try {
+    const broken = original.replace('TASKS_TOTAL=$(count_boxes "$PLAN_FILE" \'[ xX]\')', 'TASKS_TOTAL=$(grep -cE \'^\\s*-\\s*\\[[ xX]\\]\' "$PLAN_FILE" 2>/dev/null || true)')
+      .replace('TASKS_DONE=$(count_boxes "$PLAN_FILE" \'[xX]\')', 'TASKS_DONE=$(grep -c \'\\[x\\]\' "$PLAN_FILE" 2>/dev/null || true)');
+    if (broken === original) {
+      console.error('✗ B3: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(sp, broken);
+      assert('unanchored grep → savepoint task test fails', false, () => run('B3', 'bun run test -- savepoint -t "B3: task counting"'));
+    }
+  } finally {
+    writeFileSync(sp, original);
+    assert('restored → savepoint task test passes', true, () => run('B3-restore', 'bun run test -- savepoint -t "B3: task counting"'));
+  }
+}
+
+// --- B4: repo root — restore [ -d .git ] → lane subdirectory test fails ---
+console.log('\nB4 — repo root');
+{
+  const lane = join(root, 'scripts', 'lane.sh');
+  const original = readFileSync(lane, 'utf8');
+  try {
+    const broken = original.replace(
+      /# Resolve the repo root: handles subdirectories and git worktrees[\s\S]*?cd "\$REPO_ROOT" \|\| \{ echo "lane: cannot enter repo root" >&2; exit 1; \}/,
+      '[ -d .git ] || { echo "lane: not a git repository" >&2; exit 1; }'
+    );
+    if (broken === original) {
+      console.error('✗ B4: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(lane, broken);
+      assert('[ -d .git ] → lane subdirectory gate dead', false, () => run('B4', 'grep -q "git rev-parse --show-toplevel" scripts/lane.sh'));
+    }
+  } finally {
+    writeFileSync(lane, original);
+    assert('restored → lane uses git rev-parse', true, () => run('B4-restore', 'grep -q "git rev-parse --show-toplevel" scripts/lane.sh'));
+  }
+}
+
+// --- B5: spike budget — set below base → lane-base fails ---
+console.log('\nB5 — spike budget');
+{
+  const baseFile = join(root, 'scripts', 'lib', 'lane-base.sh');
+  const original = readFileSync(baseFile, 'utf8');
+  try {
+    const broken = original.replace('BUDGET_spike=9000', 'BUDGET_spike=3000');
+    if (broken === original) {
+      console.error('✗ B5: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(baseFile, broken);
+      assert('BUDGET_spike 3000 < LANE_BASE 5411 → lane-base fails', false, () => run('B5', 'bun scripts/lane-base.ts'));
+    }
+  } finally {
+    writeFileSync(baseFile, original);
+    assert('restored → lane-base passes', true, () => run('B5-restore', 'bun scripts/lane-base.ts'));
+  }
+}
+
+// --- B6: corrupt state — swallow parse errors again → status test fails ---
+console.log('\nB6 — corrupt state');
+{
+  const cont = join(root, 'src', 'continue.ts');
+  const original = readFileSync(cont, 'utf8');
+  try {
+    const broken = original.replace('unreadable.push(join(mission, f));', '// corrupt savepoint — skip, never crash the listing');
+    if (broken === original) {
+      console.error('✗ B6: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(cont, broken);
+      assert('swallow parse errors → unreadable gate dead', false, () => run('B6', 'grep -q "unreadableStateFiles" src/continue.ts && grep -q "unreadable.push" src/continue.ts'));
+    }
+  } finally {
+    writeFileSync(cont, original);
+    assert('restored → corrupt state surfaced', true, () => run('B6-restore', 'grep -q "unreadable.push" src/continue.ts'));
+  }
+}
+
+// --- B7: zero evidence — remove check → integrity team test fails ---
+console.log('\nB7 — zero evidence');
+{
+  const integ = join(root, 'src', 'integrity.ts');
+  const original = readFileSync(integ, 'utf8');
+  try {
+    const b7Pattern = /mission declares no evidence/;
+    const broken = original.replace(b7Pattern, 'ZERO_EVIDENCE_REMOVED');
+    if (!b7Pattern.test(original) || broken === original) {
+      console.error('✗ B7: mutation target not found — the gate it guards may be dead.');
+      failed++;
+    } else {
+      writeFileSync(integ, broken);
+      assert('no zero-evidence check → integrity gate dead', false, () => run('B7', 'grep -q "mission declares no evidence" src/integrity.ts'));
+    }
+  } finally {
+    writeFileSync(integ, original);
+    assert('restored → zero-evidence warned', true, () => run('B7-restore', 'grep -q "mission declares no evidence" src/integrity.ts'));
+  }
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

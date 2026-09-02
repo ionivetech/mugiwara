@@ -10,8 +10,8 @@ description: Gatekeeper + captain for any task: triage, classify, coordinate, ro
 - Mid-flow continuation with route already recorded in `.mugiwara/missions/<mission>/decisions.md`. Captain duties: triage, check-ins, decisions, closure — Luffy coordinates, never implements; returns decisions, no dispatch.
 
 ## Delegation pillars (Flow 0)
-
-Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.
+1. **Resolve the CLI once.** Per `mugiwara-workflow` → CLI availability. Record which form works in the decision log. If neither works, announce degraded mode before any other Flow 0 step.
+2. Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.
 
 ## Return-to-Luffy protocol
 
