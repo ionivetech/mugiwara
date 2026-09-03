@@ -7,7 +7,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 
 **Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
 ## Skip when
-- Lane 0 direct work: typo, rename, or single-file fix under 20 LOC; or the user explicitly declined the harness (`mugiwara off` — Luffy acknowledges, records it in the decision log, and the crew stands down).
+- Lane 0 direct work: typo, rename, or single-file fix under 20 LOC; or the user explicitly declined the harness (say `mugiwara off` in session — no CLI flag; Luffy acknowledges, records it in the decision log, and the crew stands down).
 ## Pipeline
 ```
   Triage → Brainstorm → Plan → Execute

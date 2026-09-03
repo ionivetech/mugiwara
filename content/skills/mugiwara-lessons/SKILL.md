@@ -39,6 +39,8 @@ Read before starting meaningful work in a repo the crew has worked in before.
 - Healing (Brook): after a root-cause fix that took more than 1 cycle — the fix that ended the loop is a lesson.
 - Any agent: an insight that would have saved time if known earlier.
 
+Writer: `mugiwara lesson "<text>"` appends a dated row to `.mugiwara/lessons.md` (`| YYYY-MM-DD | <mission> | <area> | <text> |`). Use it — never rely on memory.
+
 ## Lesson quality bar
 
 Actionable + specific, not platitudes.

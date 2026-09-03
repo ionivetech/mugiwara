@@ -16,23 +16,43 @@ commits). See [modes.md](modes.md) for the mode matrix.
 ## Example file
 
 ```
-# .mugiwara/config
-mode=guided
+# Mugiwara config. Project overrides ~/.mugiwara/config.
+# Every key here is read by code. Delete a line to take its default.
+
+# -- Autonomy ---------------------------------------------
+mode=guided                  # guided | semi | auto — how much the crew does without asking
+verbosity=normal             # normal | full — how much the crew echoes
+
+# -- Team -------------------------------------------------
+# team_member=              # your member id; set it and state isolates per person
+# team_members=1            # how many people on this mission; >1 enables team-scoped posture
+
+# -- Git --------------------------------------------------
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
-auto_commit=on
+auto_commit=on               # on | off — off hands you an uncommitted tree in guided/semi
+
+# -- Gates ------------------------------------------------
 coverage_new=85
 coverage_modified=90
-review_depth=full
+review_depth=full            # full | standard | quick
 quality_depth=full
 verify_merged=off
-delegate_threshold=60
-heal_max_cycles=3
-verbosity=normal
-# context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)
-# investigation_max_passes=2            # optional: Investigation Governor exploration-pass cap
-# investigation_max_unrelated_files=5   # optional: unrelated files cap before slop flag
-# investigation_repeated_read_threshold=2  # optional: repeated-read cap before slop flag
+
+# -- Limits -----------------------------------------------
+delegate_threshold=60        # % of budget before delegation is advised
+heal_max_cycles=3            # heal loop halts here and escalates
+
+# -- Monorepo ---------------------------------------------
+# lane_scope_glob=packages/api/**   # count only matching files when sizing the lane
+
+# -- Optional ---------------------------------------------
+# context_budget_chars=150000       # fail archive if the trail exceeds this
+# investigation_max_passes=2
+# investigation_max_unrelated_files=5
+# investigation_repeated_read_threshold=2
+# sign=auto                         # auto | minisign | pure | off
+# enforce=block                     # off | warn | block — pipeline-guard policy
 ```
 
 ## Keys
@@ -51,6 +71,9 @@ verbosity=normal
 | `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers. **Read by `scripts/savepoint.sh`** — it computes `delegate_due` (`tokens_est ≥ threshold% of budget`) into `state.json`; the execution skill reads that flag, never the raw value. |
 | `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation. **Read by `scripts/savepoint.sh`** — recorded in `state.json` and used to compute `heal_halt` (`heal_cycle ≥ max`), which the crew reads. |
 | `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. **Read by `scripts/savepoint.sh`** — recorded in `state.json`. |
+| `team_member` | string | unset | Your member id; set it and state isolates per person. **Read by `scripts/savepoint.sh`** — sources `MEMBER` when positional empty. |
+| `team_members` | number | 1 | How many people on this mission; >1 enables `team-scoped` posture. **Read by `scripts/savepoint.sh`** — recorded as `team_members` in `state.json`. |
+| `lane_scope_glob` | glob pattern | unset | Count only matching files when sizing the lane (monorepo scoping). **Read by `scripts/lane.sh` and `scripts/savepoint.sh`**. |
 | `context_budget_chars` | number (bytes) | unset | Ceiling on the mission trail's total size (top-level `*.md` + `flows/*`), measured at archive. Over the ceiling fails the archive like a failed test; unset = measured and printed in the report only. **Read by the closure pipeline** (`src/budget.ts`). |
 | `investigation_max_passes` | number (≥1) | 2 | Max exploration passes the Investigation Governor allows before it flags unbounded exploration as slop (§13). **Read by `readInvestigationConfig`** (`src/investigation.ts`). |
 | `investigation_max_unrelated_files` | number (≥1) | 5 | Max unrelated files opened during investigation before the governor flags it (§13). **Read by `readInvestigationConfig`**. |
@@ -73,17 +96,10 @@ evidence:
 
 ## Machine-read vs advisory-only
 
-Code reads five keys: `verbosity`, `delegate_threshold`, and `heal_max_cycles`
-(read by `scripts/savepoint.sh`, which records or computes them into
-`state.json`), `coverage_new`/`coverage_modified` (read by the coverage
-gate), `context_budget_chars` (read by the closure pipeline), the three
-`investigation_*` keys (read by `readInvestigationConfig` into the
-Investigation Governor), `sign` (read by `src/sign.ts`), and
-`enforce` (read by `hooks/pipeline-guard.ts`). Everything else is **advisory-only** — read by the crew from this prose,
+Code reads: `mode` (read by `scripts/savepoint.sh` — positional > env > project > global > guided, validated), `team_member`/`team_members` (read by `scripts/savepoint.sh` for isolation and `team-scoped` posture), `verbosity`, `delegate_threshold`, `heal_max_cycles`, `lane_scope_glob` (read by `scripts/savepoint.sh` and `scripts/lane.sh`), `coverage_new`/`coverage_modified` (read by the coverage gate), `context_budget_chars` (read by the closure pipeline), the three `investigation_*` keys (read by `readInvestigationConfig` into the Investigation Governor), `sign` (read by `src/sign.ts`), and `enforce` (read by `hooks/pipeline-guard.ts`). Everything else is **advisory-only** — read by the crew from this prose,
 never by a validator or hook. Changing an advisory key changes crew behavior
 but no gate fails and no computation changes:
 
-- `mode` — autonomy level; read by the crew from this file.
 - `branch`, `commit`, `auto_commit` — git discipline (execution skill): the
   branch naming pattern, the commit style, and whether to commit/push at all.
   The harness never creates branches or writes commits — those are model

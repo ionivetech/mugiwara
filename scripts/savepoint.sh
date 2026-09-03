@@ -63,9 +63,27 @@ if [ -n "$GIT_NAME" ] && [ -n "$GIT_EMAIL" ]; then GIT_ID="$GIT_NAME <$GIT_EMAIL
 
 # --- parse mission args: <mission> [member] [wave] [mode] ---
 MISSION="${1:-${STATE_MISSION:-}}"
+# member: positional > env > config team_member > empty (solo). Never derive
+# silently from git identity — solo vs team is a recorded Flow 0 decision, not
+# an inference. (W3)
 MEMBER="${2:-${STATE_MEMBER:-}}"
+if [ -z "$MEMBER" ] && [ -f "$MUGIWARA_DIR/config" ]; then
+  MEMBER=$(grep -E '^team_member=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+fi
 WAVE="${3:-${STATE_WAVE:-1}}"
-MODE="${4:-${STATE_MODE:-guided}}"
+# mode: positional > env > project config > global config > guided. The hook
+# passes it positionally; direct script and CLI calls must fall back to config
+# or 11 of 12 harnesses record the wrong mode. (W1)
+MODE="${4:-${STATE_MODE:-}}"
+if [ -z "$MODE" ]; then
+  for _cfg in "$MUGIWARA_DIR/config" "$HOME/.mugiwara/config"; do
+    [ -f "$_cfg" ] || continue
+    _m=$(grep -E '^mode=' "$_cfg" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+    [ -n "$_m" ] && { MODE="$_m"; break; }
+  done
+fi
+MODE="${MODE:-guided}"
+case "$MODE" in guided|semi|auto) ;; *) MODE="guided" ;; esac
 # Triage lane (M7): the lane Luffy assigned at Flow 0. Without it savepoint
 # recomputed the lane from file counts alone and silently discarded the
 # triage decision — a Lane 3 mission recorded itself as "direct". Explicit
@@ -181,6 +199,17 @@ if [ -n "$MEMBER" ]; then
 else
   STATE_FILE="$MISSION_DIR/state.json"
   CONTINUE_FILE="$MISSION_DIR/continue.json"
+fi
+
+# A mission is solo or team, never both. Two layouts side by side orphan one of
+# them: hidden from `status`, still read by the integrity gate. (W4)
+if [ -n "$MEMBER" ] && [ -f "$MISSION_DIR/state.json" ] && [ "${MUGIWARA_ALLOW_LAYOUT_SWITCH:-0}" != "1" ]; then
+  die "mission '$MISSION' is solo (state.json exists) — refusing to add member '$MEMBER'. Run: mugiwara migrate --to-team $MEMBER"
+fi
+if [ -z "$MEMBER" ] && ls "$MISSION_DIR"/*.json >/dev/null 2>&1; then
+  if ls "$MISSION_DIR"/*.json | grep -qv -e 'state.json' -e 'continue'; then
+    die "mission '$MISSION' is team — pass a member: savepoint.sh $MISSION <member> ..."
+  fi
 fi
 
 [ -z "$MISSION" ] && die "usage: savepoint.sh <mission> [member] [wave] [mode] [lane]"
@@ -395,6 +424,16 @@ if [ "$HEAL_CYCLE" -ge "$HEAL_MAX_CYCLES" ] 2>/dev/null; then
   HEAL_HALT=true
 fi
 
+# W10: register plan.md read so repeated_reads is not structurally zero (evidence.registerRead)
+if [ -f "$MISSION_DIR/plan.md" ] && [ ! -s "$MISSION_DIR/context-registry.jsonl" ]; then
+  mkdir -p "$MISSION_DIR"
+  _plan_fp=$(node -e "const crypto=require('crypto');const fs=require('fs');try{const d=fs.readFileSync(process.argv[1],'utf8');process.stdout.write(crypto.createHash('sha256').update(d).digest('hex'))}catch(e){process.stdout.write('')}" "$MISSION_DIR/plan.md" 2>/dev/null || true)
+  if [ -n "$_plan_fp" ]; then
+    _plan_chars=$(wc -c < "$MISSION_DIR/plan.md" 2>/dev/null | tr -d ' ' || echo 0)
+    printf '{"fingerprint":"%s","kind":"file","file":"plan.md","id":"E001","reads":1,"chars":%s,"ref":"E001 plan.md"}\n' "$_plan_fp" "$_plan_chars" >> "$MISSION_DIR/context-registry.jsonl" 2>/dev/null || true
+  fi
+fi
+
 # slop — context (repeated reads) per cost-governor §§21-24,31-32 — T5 wire all crews Luffy/Nami/Zoro/Brook
 REPEATED_READS=0
 REPEATED_THRESHOLD=3
@@ -522,6 +561,75 @@ if [ "$BUDGET" -gt 0 ] 2>/dev/null; then
   fi
 fi
 
+# team_members for posture (W5) — config key team_members, default 1
+TEAM_MEMBERS=1
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  _tm=$(grep -E '^team_members=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_tm" ] && TEAM_MEMBERS="$_tm"
+fi
+case "$TEAM_MEMBERS" in ''|*[!0-9]*) TEAM_MEMBERS=1 ;; esac
+# plan metrics for posture decision (phase-isolated / parallel)
+PLAN_LINES=0
+PHASES=1
+INDEPENDENT_TASKS=0
+if [ -f "$MISSION_DIR/plan.md" ]; then
+  PLAN_LINES=$(wc -l < "$MISSION_DIR/plan.md" 2>/dev/null | tr -d ' ' || echo 0)
+  PH=$(grep -c "^## Wave" "$MISSION_DIR/plan.md" 2>/dev/null || true)
+  [ "$PH" -gt 0 ] 2>/dev/null && PHASES="$PH"
+  INDEPENDENT_TASKS=$(grep -c "\[PARALLEL\]" "$MISSION_DIR/plan.md" 2>/dev/null || true)
+fi
+# governor for posture
+GOVERNOR="normal"
+case "$STATUS" in
+  stop) GOVERNOR="stop" ;;
+  warn) GOVERNOR="avoid" ;;
+  *) GOVERNOR="normal" ;;
+esac
+CONTEXT_PRESSURE=false
+if [ "$BUDGET" -gt 0 ] 2>/dev/null && [ "$TOKENS_EST" -gt $(( BUDGET * 6 / 10 )) ] 2>/dev/null; then
+  CONTEXT_PRESSURE=true
+fi
+POSTURE="inline-sequential"
+POSTURE_REASON="no parallel/phase/team/relief trigger — default inline in plan order"
+POSTURE_PAUSE=false
+if [ "$GOVERNOR" = "stop" ]; then
+  POSTURE="inline-sequential"
+  POSTURE_REASON="governor stop — pause safely, keep inline; state + continue emitted"
+  POSTURE_PAUSE=true
+elif [ "$TEAM_MEMBERS" -gt 1 ] 2>/dev/null; then
+  POSTURE="team-scoped"
+  POSTURE_REASON="$TEAM_MEMBERS team members with non-overlapping scope"
+elif [ "$PHASES" -gt 3 ] 2>/dev/null || [ "$PLAN_LINES" -gt 1500 ] 2>/dev/null; then
+  POSTURE="phase-isolated"
+  POSTURE_REASON="large campaign — $PHASES phases / $PLAN_LINES lines"
+elif [ "$CONTEXT_PRESSURE" = true ]; then
+  POSTURE="context-relief"
+  POSTURE_REASON="context pressure with ordered dependent tasks — one worker at a time, order preserved"
+elif [ "$INDEPENDENT_TASKS" -ge 2 ] 2>/dev/null; then
+  POSTURE="parallel-workers"
+  POSTURE_REASON="$INDEPENDENT_TASKS independent tasks, no shared files/interfaces"
+fi
+# investigation config (W8) — three keys, defaults 2/5/2
+INV_MAX_PASSES=2
+INV_MAX_UNRELATED=5
+INV_REPEATED_THRESH=2
+if [ -f "$MUGIWARA_DIR/config" ]; then
+  _v=$(grep -E '^investigation_max_passes=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_v" ] && INV_MAX_PASSES="$_v"
+  _v=$(grep -E '^investigation_max_unrelated_files=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_v" ] && INV_MAX_UNRELATED="$_v"
+  _v=$(grep -E '^investigation_repeated_read_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  [ -n "$_v" ] && INV_REPEATED_THRESH="$_v"
+fi
+case "$INV_MAX_PASSES" in ''|*[!0-9]*) INV_MAX_PASSES=2 ;; esac
+case "$INV_MAX_UNRELATED" in ''|*[!0-9]*) INV_MAX_UNRELATED=5 ;; esac
+case "$INV_REPEATED_THRESH" in ''|*[!0-9]*) INV_REPEATED_THRESH=2 ;; esac
+# investigation_status: simple threshold check on repeated_reads (W8/W10)
+INVESTIGATION_STATUS="continue"
+if [ "$REPEATED_READS" -ge "$INV_REPEATED_THRESH" ] 2>/dev/null; then
+  INVESTIGATION_STATUS="stop"
+fi
+
 mkdir -p "$MISSION_DIR"
 
 node -e "
@@ -565,7 +673,12 @@ const data = {
   evidence: process.argv[21] ? process.argv[21].split(',').filter(Boolean) : [],
   updated_at: process.argv[22],
   schema_version: 2,
-  repeated_reads: parseInt(process.argv[41], 10) || 0
+  repeated_reads: parseInt(process.argv[41], 10) || 0,
+  team_members: parseInt(process.argv[42], 10) || 1,
+  posture: process.argv[43] || 'inline-sequential',
+  posture_reason: process.argv[44] || '',
+  posture_pause: process.argv[45] === 'true',
+  investigation_status: process.argv[46] || 'continue'
 };
 require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\n');
 " \
@@ -579,7 +692,7 @@ require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\
   "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
   "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE" \
   "$MODEL" "$DEPTH_REVIEW" "$DEPTH_QUALITY" "$DEPTH_VERIFY" \
-  "$REPEATED_READS"
+  "$REPEATED_READS" "$TEAM_MEMBERS" "$POSTURE" "$POSTURE_REASON" "$POSTURE_PAUSE" "$INVESTIGATION_STATUS"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"

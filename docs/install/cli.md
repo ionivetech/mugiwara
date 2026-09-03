@@ -125,6 +125,9 @@ mugiwara continue [mission] [member]              # resolve the resume point (ex
 mugiwara cost [--mission <id>] [--json]           # cost ledger, avoided work, live slop, trail
 mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh
 mugiwara savepoint <mission> [member] [flow stage] [mode]  # shorthand for run savepoint.sh
+mugiwara migrate --to-team <member> [--mission <id>] [--dry-run]  # solo -> team (moves state.json)
+mugiwara migrate --to-solo <member> [--mission <id>] [--dry-run]  # team -> solo (refuses if >1 member)
+mugiwara lesson "<text>"                          # append a dated row to .mugiwara/lessons.md
 ```
 
 `status` reads `.mugiwara/missions/*/` state files and prints flow stage, tasks, lane, mode, blockers,

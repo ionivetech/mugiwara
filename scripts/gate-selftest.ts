@@ -830,5 +830,143 @@ console.log('\nB7 — zero evidence');
   }
 }
 
+// --- W1: mode from config — revert to positional-only → gate fails ---
+console.log('\nW1 — mode from config');
+{
+  const sp = join(root, 'scripts', 'savepoint.sh');
+  const original = readFileSync(sp, 'utf8');
+  try {
+    const broken = original.replace(
+      /# mode: positional > env > project config > global config > guided[\s\S]*?MODE="\$\{MODE:-guided\}"/,
+      'MODE="${4:-${STATE_MODE:-guided}}"'
+    );
+    if (broken === original) {
+      console.error('✗ W1: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(sp, broken);
+      assert('reverted MODE → savepoint mode test fails', false, () => run('W1', 'grep -q "MUGIWARA_DIR/config.*mode=" scripts/savepoint.sh'));
+    }
+  } finally {
+    writeFileSync(sp, original);
+    assert('restored → mode fallback present', true, () => run('W1-restore', 'grep -q "MUGIWARA_DIR/config.*mode=" scripts/savepoint.sh'));
+  }
+}
+
+// --- W2: Solo-or-team section — remove → content validation fails ---
+console.log('\nW2 — Solo-or-team section');
+{
+  const f = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace(/## Solo or team \(Flow 0\)[\s\S]*?## Request classifier/, '## Request classifier');
+    if (broken === original) {
+      console.error('✗ W2: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('removed Solo-or-team → content validation fails', false, () => run('W2', 'grep -q "Solo or team" content/skills/mugiwara-orchestration/SKILL.md'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → Solo-or-team present', true, () => run('W2-restore', 'grep -q "Solo or team" content/skills/mugiwara-orchestration/SKILL.md'));
+  }
+}
+
+// --- W4: allow layout switch without migrate → lane-integrity fails ---
+console.log('\nW4 — layout switch guard');
+{
+  const sp = join(root, 'scripts', 'savepoint.sh');
+  const original = readFileSync(sp, 'utf8');
+  try {
+    const broken = original.replace(/if \[ -n "\$MEMBER" \] && \[ -f "\$MISSION_DIR\/state\.json" \] && \[ "\$\{MUGIWARA_ALLOW_LAYOUT_SWITCH:.*/, '# guard removed');
+    if (broken === original) {
+      console.error('✗ W4: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(sp, broken);
+      assert('guard removed → check fails', false, () => run('W4', 'grep -q "is solo (state.json exists)" scripts/savepoint.sh'));
+    }
+  } finally {
+    writeFileSync(sp, original);
+    assert('restored → guard present', true, () => run('W4-restore', 'grep -q "is solo (state.json exists)" scripts/savepoint.sh'));
+  }
+}
+
+// --- W7: remove posture import → --check-wiring fails ---
+console.log('\nW7 — wiring gate');
+{
+  const mf = join(root, 'src', 'mission.ts');
+  const original = readFileSync(mf, 'utf8');
+  try {
+    const broken = original.replace(/import \{ selectPosture \} from '\.\/posture\.ts';/, '// removed');
+    if (broken === original) {
+      console.error('✗ W7: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(mf, broken);
+      assert('removed posture import → --check-wiring fails', false, () => run('W7', 'bun scripts/validate-content.ts --check-wiring'));
+    }
+  } finally {
+    writeFileSync(mf, original);
+    assert('restored → wiring passes', true, () => run('W7-restore', 'bun scripts/validate-content.ts --check-wiring'));
+  }
+}
+
+// --- W11: delete lane_scope_glob from config.md → --check-config fails ---
+console.log('\nW11 — config drift');
+{
+  const cf = join(root, 'docs', 'concepts', 'config.md');
+  const original = readFileSync(cf, 'utf8');
+  try {
+    const broken = original.replace(/lane_scope_glob/g, 'LANE_REMOVED');
+    if (broken === original) {
+      console.error('✗ W11: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(cf, broken);
+      assert('removed lane_scope_glob → --check-config fails', false, () => run('W11', 'bun scripts/validate-content.ts --check-config'));
+    }
+  } finally {
+    writeFileSync(cf, original);
+    assert('restored → --check-config passes', true, () => run('W11-restore', 'bun scripts/validate-content.ts --check-config'));
+  }
+}
+
+// --- W15: paste raw JSONL into report.md → reporting test fails ---
+console.log('\nW15 — report raw JSONL');
+{
+  const mf = join(root, 'src', 'mission.ts');
+  const original = readFileSync(mf, 'utf8');
+  try {
+    const broken = original.replace(/\/\/ W15: no raw JSONL in report.*/, '  if (hasCostEvents) fold.push("cost-events.jsonl"); // W15 revert');
+    if (broken === original) {
+      console.error('✗ W15: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(mf, broken);
+      assert('reverted raw JSONL → check fails', false, () => run('W15', 'grep -q "hasCostEvents" src/mission.ts | grep -q "fold.push"'));
+    }
+  } finally {
+    writeFileSync(mf, original);
+    assert('restored → no raw JSONL', true, () => run('W15-restore', 'grep -q "no raw JSONL" src/mission.ts'));
+  }
+}
+
+// --- W12: point doc at state/<mission>/ → --check-doc-integrity fails ---
+console.log('\nW12 — doc integrity stale path');
+{
+  const ref = join(root, 'references', 'multi-actor.md');
+  const original = readFileSync(ref, 'utf8');
+  try {
+    const broken = original + '\n`state/<mission>/state.json`\n';
+    writeFileSync(ref, broken);
+    assert('stale path → --check-doc-integrity fails', false, () => run('W12', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  } finally {
+    writeFileSync(ref, original);
+    assert('restored → doc-integrity passes', true, () => run('W12-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

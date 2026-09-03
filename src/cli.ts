@@ -80,7 +80,8 @@ export async function run(argv: string[]): Promise<void> {
     case 'blame': return blameCmd(flags, _);
     case 'handoff': return handoffCmd(flags, _);
     case 'sign': return signCmd(flags, _);
-    case 'migrate': return migrateCmd(flags);
+    case 'migrate': return migrateCmd(flags, _);
+    case 'lesson': return lessonCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -581,9 +582,143 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`\nwritten: ${out}`);
 }
 
-export function migrateCmd(flags: Args['flags']): void {
+function lessonCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const text = positionals.slice(1).join(' ').trim();
+  if (!text) { console.error('usage: mugiwara lesson "<text>" [--project <dir>]'); process.exit(1); }
+  const file = join(projectDir, '.mugiwara', 'lessons.md');
+  const date = new Date().toISOString().slice(0, 10);
+  const sanitized = text.replace(/\|/g, '/').replace(/\r?\n/g, ' ').trim();
+  const line = `| ${date} | manual | general | ${sanitized} |`;
+  const header = '| Date | Mission | Area | Lesson |\n|---|---|---|---|';
+  let existing = '';
+  try { existing = readFileSync(file, 'utf8'); } catch {}
+  if (!existing) {
+    mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
+    writeFileSync(file, header + '\n' + line + '\n');
+  } else {
+    // ensure file ends with newline
+    const needsNewline = !existing.endsWith('\n');
+    writeFileSync(file, existing + (needsNewline ? '\n' : '') + line + '\n');
+  }
+  console.log(`lesson appended: ${line}`);
+}
+
+export function migrateCmd(flags: Args['flags'], positionals: string[] = []): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const dryRun = flag(flags.dryRun);
+  // --to-team / --to-solo: solo<->team layout switch (W4). Moves, not copies.
+  const toTeam = str(flags.toTeam);
+  const toSolo = str(flags.toSolo);
+  if (toTeam || toSolo) {
+    const member = (toTeam ?? toSolo) as string;
+    if (!/^[A-Za-z0-9._-]+$/.test(member) || /^\.+$/.test(member) || member === 'state' || member === 'continue') {
+      console.error(`invalid member name "${member}" (allowlist: [a-zA-Z0-9._-], not a dot-path, not state/continue)`);
+      process.exit(1);
+    }
+    if (toTeam && toSolo) {
+      console.error('use either --to-team or --to-solo, not both');
+      process.exit(1);
+    }
+    const missionsRootInner = join(projectDir, '.mugiwara', 'missions');
+    let mission = str(flags.mission) ?? (positionals[1] ? String(positionals[1]) : null);
+    const inferMission = (): string | null => {
+      if (!existsSync(missionsRootInner)) return null;
+      const all = readdirSync(missionsRootInner, { withFileTypes: true }).filter(e => e.isDirectory()).map(e => e.name);
+      if (mission && all.includes(mission)) return mission;
+      if (mission) return mission;
+      // try to find candidate missions for the requested operation
+      if (toTeam) {
+        const candidates = all.filter(m => existsSync(join(missionsRootInner, m, 'state.json')));
+        if (candidates.length === 1) return candidates[0];
+        if (candidates.length === 0) {
+          console.error('no solo mission with state.json found for --to-team');
+          process.exit(1);
+        }
+        console.error(`multiple solo missions: ${candidates.join(', ')} — specify --mission <id>`);
+        process.exit(1);
+      } else {
+        const candidates = all.filter(m => existsSync(join(missionsRootInner, m, `${member}.json`)));
+        if (candidates.length === 1) return candidates[0];
+        if (candidates.length === 0) {
+          console.error(`no mission with ${member}.json found for --to-solo`);
+          process.exit(1);
+        }
+        console.error(`multiple missions with ${member}.json: ${candidates.join(', ')} — specify --mission <id>`);
+        process.exit(1);
+      }
+      return null;
+    };
+    const targetMission = inferMission();
+    if (!targetMission) {
+      console.error('could not infer mission — specify --mission <id>');
+      process.exit(1);
+    }
+    const dir = join(missionsRootInner, targetMission);
+    if (toTeam) {
+      const srcState = join(dir, 'state.json');
+      const srcContinue = join(dir, 'continue.json');
+      const destState = join(dir, `${member}.json`);
+      const destContinue = join(dir, `continue-${member}.json`);
+      if (!existsSync(srcState)) {
+        console.error(`mission "${targetMission}" has no state.json — already team or not found`);
+        process.exit(1);
+      }
+      if (existsSync(destState)) {
+        console.error(`destination ${destState} already exists`);
+        process.exit(1);
+      }
+      const toMove: Array<{ src: string; dest: string }> = [{ src: srcState, dest: destState }];
+      if (existsSync(srcContinue)) toMove.push({ src: srcContinue, dest: destContinue });
+      for (const m of toMove) {
+        console.log(`${dryRun ? 'would migrate' : 'migrated'} ${m.src} → ${m.dest}`);
+        if (!dryRun) {
+          mkdirSync(dirname(m.dest), { recursive: true });
+          try { renameSync(m.src, m.dest); } catch { /* fallback copy */ 
+            try { writeFileSync(m.dest, readFileSync(m.src)); rmSync(m.src, { force: true }); } catch {}
+          }
+        }
+      }
+      console.log(`${dryRun ? 'would migrate' : 'migrated'} ${toMove.length} file(s)${dryRun ? ' (dry run)' : ''}`);
+      return;
+    } else {
+      // --to-solo
+      const srcState = join(dir, `${member}.json`);
+      const srcContinue = join(dir, `continue-${member}.json`);
+      const destState = join(dir, 'state.json');
+      const destContinue = join(dir, 'continue.json');
+      if (!existsSync(srcState)) {
+        console.error(`mission "${targetMission}" has no ${member}.json`);
+        process.exit(1);
+      }
+      const files = readdirSync(dir).filter(f => {
+        const stem = f.replace(/\.json$/, '');
+        return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
+      });
+      const members = files.filter(f => f !== 'state.json');
+      if (members.length > 1) {
+        console.error(`mission "${targetMission}" has ${members.length} members (${members.join(', ')}) — refusing --to-solo (would orphan)`);
+        process.exit(1);
+      }
+      if (existsSync(destState)) {
+        console.error(`destination ${destState} already exists`);
+        process.exit(1);
+      }
+      const toMove: Array<{ src: string; dest: string }> = [{ src: srcState, dest: destState }];
+      if (existsSync(srcContinue)) toMove.push({ src: srcContinue, dest: destContinue });
+      for (const m of toMove) {
+        console.log(`${dryRun ? 'would migrate' : 'migrated'} ${m.src} → ${m.dest}`);
+        if (!dryRun) {
+          mkdirSync(dirname(m.dest), { recursive: true });
+          try { renameSync(m.src, m.dest); } catch {
+            try { writeFileSync(m.dest, readFileSync(m.src)); rmSync(m.src, { force: true }); } catch {}
+          }
+        }
+      }
+      console.log(`${dryRun ? 'would migrate' : 'migrated'} ${toMove.length} file(s)${dryRun ? ' (dry run)' : ''}`);
+      return;
+    }
+  }
   const legacyState = join(projectDir, '.mugiwara', 'state');
   const legacyContinue = join(projectDir, '.mugiwara', 'continue');
   const missionsRoot = join(projectDir, '.mugiwara', 'missions');
@@ -718,7 +853,12 @@ Usage:
   mugiwara sign --gen-key [--backend pure|minisign]
                          create signing keys (pure ed25519 default)
   mugiwara migrate [--dry-run] [--project <dir>]
-                          move legacy .mugiwara/state/ layout to .mugiwara/missions/
+                           move legacy .mugiwara/state/ layout to .mugiwara/missions/
+  mugiwara migrate --to-team <member> [--mission <id>] [--dry-run]
+                           move state.json -> <member>.json (solo -> team)
+  mugiwara migrate --to-solo <member> [--mission <id>] [--dry-run]
+                           move <member>.json -> state.json (team -> solo; refuses if >1 member)
+  mugiwara lesson "<text>" append a dated row to .mugiwara/lessons.md
   mugiwara run <script> [args...]
                           run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [flow] [mode]

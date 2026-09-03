@@ -414,7 +414,175 @@ if (integrityArg !== -1) {
     }
   if (!constants.includes('LANE_BASE_lean=8421')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 8421)');
   if (!constants.includes('BUDGET_full=50000')) errors.push('doc-integrity: source lane-base.sh full budget drifted (expected 50000)');
+  // W12 stale path check: obsolete layout must not appear
+  const staleChecks: [string, string[]][] = [
+    ['state/<mission>', ['docs/concepts/comparison.md', 'docs/concepts/features.md', 'references/multi-actor.md', 'README.md']],
+    ['continue/<mission>', ['docs/concepts/comparison.md', 'docs/concepts/features.md', 'references/multi-actor.md', 'README.md']],
+    ['plans/<mission>', ['docs/concepts/comparison.md', 'docs/concepts/features.md', 'references/multi-actor.md', 'README.md']],
+    ['logs/lessons', ['docs/concepts/comparison.md', 'docs/concepts/features.md', 'references/multi-actor.md', 'README.md']],
+  ];
+  for (const [pat, docs] of staleChecks) {
+    for (const doc of docs) {
+      const p = join(import.meta.dirname, '..', doc);
+      if (existsSync(p) && readFileSync(p, 'utf8').includes(pat)) {
+        errors.push(`doc-integrity: ${doc} contains obsolete path "${pat}" — use missions/<mission>/ layout`);
+      }
+    }
+  }
+  // W17 metrics must come from .metrics/latest.json — check for hardcoded stale numbers not in metrics
+  const metricsPath2 = join(import.meta.dirname, '..', '.metrics/latest.json');
+  if (existsSync(metricsPath2)) {
+    const m2 = JSON.parse(readFileSync(metricsPath2, 'utf8'));
+    const readme2 = readFileSync(join(import.meta.dirname, '..', 'README.md'), 'utf8');
+    // ensure README rank-1 and pointers match metrics (also checked in --check-readme-metrics, but this is integrity)
+    const rankMatch2 = readme2.match(/Retrieval routing rank-1[^\n]*?(\d+\.\d+)%/);
+    if (rankMatch2 && parseFloat(rankMatch2[1]) !== Number(m2.retrieval_rank1)) {
+      errors.push(`doc-integrity: README rank-1 ${rankMatch2[1]}% != metrics ${m2.retrieval_rank1}%`);
+    }
+  }
+  // stale CLI commands: any `mugiwara <word>` where word is not a valid CLI case, appearing as code, is stale
+  const validCmds = new Set(['install','update','uninstall','list','reset','archive','clean','continue','status','cost','run','savepoint','blame','handoff','sign','migrate','lesson','help','version','mode','off']);
+  const docsToScan = ['docs/concepts/workflow.md','docs/concepts/config.md','README.md','references/multi-actor.md'];
+  for (const doc of docsToScan) {
+    const p = join(import.meta.dirname, '..', doc);
+    if (!existsSync(p)) continue;
+    const txt = readFileSync(p, 'utf8');
+    for (const m of txt.matchAll(/`mugiwara ([a-z-]+)/g)) {
+      const cmd = m[1];
+      if (!validCmds.has(cmd) && cmd !== '--help' && cmd !== '--version') {
+        errors.push(`doc-integrity: ${doc} contains stale command "mugiwara ${cmd}" not in src/cli.ts`);
+      }
+    }
+  }
 }
+}
+
+// --- config drift gate (W11): every key code reads must appear in DEFAULT_CONFIG and docs, and vice versa ---
+if (process.argv.includes('--check-config')) {
+  const cfgSrc = readFileSync(join(import.meta.dirname, '..', 'src/config.ts'), 'utf8');
+  const m = cfgSrc.match(/DEFAULT_CONFIG\s*=\s*\[([\s\S]*?)\]\.join/);
+  let defaultKeys: string[] = [];
+  if (m) {
+    const block = m[1];
+    for (const line of block.split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t) continue;
+      // extract string content between quotes
+      const q = t.match(/['"`]([^'"`]*?)['"`]/);
+      if (!q) continue;
+      let s = q[1].trim();
+      if (!s) continue;
+      if (s.startsWith('#')) s = s.slice(1).trim();
+      if (!s) continue;
+      const eq = s.indexOf('=');
+      if (eq === -1) continue;
+      const key = s.slice(0, eq).trim();
+      if (key) defaultKeys.push(key);
+    }
+  }
+  // docs keys from config.md table (only the ## Keys section, not template examples)
+  const docPath = join(import.meta.dirname, '..', 'docs/concepts/config.md');
+  let docKeys: string[] = [];
+  if (existsSync(docPath)) {
+    const docText = readFileSync(docPath, 'utf8');
+    const keysSectionMatch = docText.match(/## Keys([\s\S]*?)(?:\n## |\n#|$)/);
+    const keysSection = keysSectionMatch ? keysSectionMatch[1] : docText;
+    for (const line of keysSection.split(/\r?\n/)) {
+      const cm = line.match(/\|\s*`([^`]+)`\s*\|/);
+      if (cm) {
+        const k = cm[1].trim();
+        if (k && !docKeys.includes(k)) docKeys.push(k);
+      }
+    }
+  } else {
+    errors.push('config-drift: docs/concepts/config.md not found');
+  }
+  // code keys: scan src/*.ts, scripts/*.sh, hooks/*.ts for key patterns
+  const codeRoots = [
+    join(import.meta.dirname, '..', 'src'),
+    join(import.meta.dirname, '..', 'scripts'),
+    join(import.meta.dirname, '..', 'hooks'),
+  ];
+  const codeTextAll = codeRoots.map(r => {
+    if (!existsSync(r)) return '';
+    const files = readdirSync(r, { withFileTypes: true }).filter(e => e.isFile() && (e.name.endsWith('.ts') || e.name.endsWith('.sh'))).map(e => readFileSync(join(r, e.name), 'utf8')).join('\n');
+    // also need subdirectories
+    let sub = '';
+    try {
+      for (const e of readdirSync(r, { withFileTypes: true })) {
+        if (e.isDirectory()) {
+          const subdir = join(r, e.name);
+          for (const f of readdirSync(subdir, { withFileTypes: true }).filter(x => x.isFile() && (x.name.endsWith('.ts') || x.name.endsWith('.sh')))) {
+            sub += readFileSync(join(subdir, f.name), 'utf8') + '\n';
+          }
+        }
+      }
+    } catch {}
+    return files + sub;
+  }).join('\n');
+  // check each default key appears in code
+  for (const k of defaultKeys) {
+    if (!codeTextAll.includes(k)) {
+      errors.push(`config-drift: DEFAULT_CONFIG key "${k}" not found in code (src/*.ts, scripts/*.sh, hooks/*.ts)`);
+    }
+    if (!docKeys.includes(k)) {
+      errors.push(`config-drift: DEFAULT_CONFIG key "${k}" missing from docs/concepts/config.md`);
+    }
+  }
+  for (const k of docKeys) {
+    if (!defaultKeys.includes(k)) {
+      errors.push(`config-drift: docs/concepts/config.md key "${k}" not in DEFAULT_CONFIG`);
+    }
+    if (!codeTextAll.includes(k)) {
+      errors.push(`config-drift: docs key "${k}" not found in code`);
+    }
+  }
+  if (!errors.some(e => e.startsWith('config-drift'))) {
+    console.log(`✓ config in sync: ${defaultKeys.length} keys (${defaultKeys.join(', ')})`);
+  }
+}
+
+// --- wiring gate (W7): every src module must be imported somewhere ---
+if (process.argv.includes('--check-wiring')) {
+  const srcDir = join(import.meta.dirname, '..', 'src');
+  const ENTRY = new Set(['cli.ts', 'index.ts', 'installer.ts']);
+  const srcFiles = readdirSync(srcDir).filter(n => n.endsWith('.ts'));
+  const searchDirs = [srcDir, join(import.meta.dirname, '..', 'hooks'), join(import.meta.dirname, '..', 'scripts')];
+  const allFiles: string[] = [];
+  for (const d of searchDirs) {
+    if (!existsSync(d)) continue;
+    const walk = (dir: string) => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, e.name);
+        if (e.isDirectory()) walk(full);
+        else if (e.isFile() && (e.name.endsWith('.ts') || e.name.endsWith('.js') || e.name.endsWith('.sh') || e.name.endsWith('.mjs'))) {
+          allFiles.push(full);
+        }
+      }
+    };
+    walk(d);
+  }
+  for (const f of srcFiles) {
+    if (ENTRY.has(f)) continue;
+    const stem = f.slice(0, -3);
+    let found = false;
+    for (const full of allFiles) {
+      if (full.endsWith(`/src/${f}`) || full === join(srcDir, f)) continue;
+      try {
+        const txt = readFileSync(full, 'utf8');
+        if (txt.includes(`'./${stem}`) || txt.includes(`"./${stem}`) || txt.includes(`'./${stem}.ts'`) || txt.includes(`"./${stem}.ts"`)) {
+          found = true;
+          break;
+        }
+      } catch {}
+    }
+    if (!found) {
+      errors.push(`src/${f}: imported by nothing — wire it, or delete it with its tests and its features.md claim`);
+    }
+  }
+  if (!errors.some(e => e.includes('imported by nothing'))) {
+    console.log(`✓ wiring: all src modules imported`);
+  }
 }
 
 // --- README metrics gate (D3): README table must match .metrics/latest.json ---
