@@ -155,7 +155,7 @@ describe('F3 allowlist', () => {
 });
 
 describe('archive integration — reporting enriches report.md', () => {
-  it('temp mission with event+registry+decisions → report contains Avoided/Efficiency/Trail and folds jsonls', () => {
+  it('temp mission with event+registry+decisions → report contains single Cost paragraph and Verdict first, no raw JSONL', () => {
     const base = mkdtempSync(join(tmpdir(), 'mugiwara-reporting-'));
     const projectDir = base;
     const mission = 'test-archive-reporting';
@@ -174,11 +174,16 @@ describe('archive integration — reporting enriches report.md', () => {
     const result = archiveMission(projectDir, mission, { dryRun: false });
     const report = readFileSync(join(dir, 'report.md'), 'utf8');
     expect(report).toContain('## Cost');
-    expect(report).toContain('Avoided');
-    expect(report).toContain('Efficiency');
-    expect(report).toContain('Trail');
-    expect(report).toContain('## Archived: cost-events.jsonl');
-    expect(report).toContain('## Archived: context-registry.jsonl');
+    expect(report).toContain('Used **1,000** of 50,000 tokens (2%)');
+    expect(report).toContain('## Verdict');
+    expect(report).toContain('## What changed');
+    expect(report).toContain('## Gates');
+    expect(report).toContain('## Decisions');
+    expect(report).toContain('## Not verified');
+    expect(report).not.toContain('## Archived: cost-events.jsonl');
+    expect(report).not.toContain('## Archived: context-registry.jsonl');
+    expect(report).not.toContain('{"ts"');
+    expect(report).not.toContain('n/a (no registry');
     expect(existsSync(join(dir, 'cost-events.jsonl'))).toBe(false);
     expect(existsSync(join(dir, 'context-registry.jsonl'))).toBe(false);
   });

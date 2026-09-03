@@ -76,7 +76,10 @@ export function readConfig(projectDir: string): Record<string, string> {
       const key = t.slice(0, eq).trim();
       if (!key) continue;
       if (key in out) continue; // project value already set — keep it
-      out[key] = t.slice(eq + 1).trim();
+      let rawVal = t.slice(eq + 1).trim();
+      const hash = rawVal.indexOf('#');
+      if (hash !== -1) rawVal = rawVal.slice(0, hash).trim();
+      out[key] = rawVal;
     }
   }
   return out;

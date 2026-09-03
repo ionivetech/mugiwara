@@ -68,7 +68,7 @@ MISSION="${1:-${STATE_MISSION:-}}"
 # an inference. (W3)
 MEMBER="${2:-${STATE_MEMBER:-}}"
 if [ -z "$MEMBER" ] && [ -f "$MUGIWARA_DIR/config" ]; then
-  MEMBER=$(grep -E '^team_member=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  MEMBER=$(grep -E '^team_member=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
 fi
 WAVE="${3:-${STATE_WAVE:-1}}"
 # mode: positional > env > project config > global config > guided. The hook
@@ -78,7 +78,7 @@ MODE="${4:-${STATE_MODE:-}}"
 if [ -z "$MODE" ]; then
   for _cfg in "$MUGIWARA_DIR/config" "$HOME/.mugiwara/config"; do
     [ -f "$_cfg" ] || continue
-    _m=$(grep -E '^mode=' "$_cfg" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+    _m=$(grep -E '^mode=' "$_cfg" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
     [ -n "$_m" ] && { MODE="$_m"; break; }
   done
 fi
@@ -109,7 +109,7 @@ esac
 # verbosity from config (project .mugiwara/config), default normal; env override
 VERBOSITY="${STATE_VERBOSITY:-normal}"
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  CFG_VERBOSITY=$(grep -E '^verbosity=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  CFG_VERBOSITY=$(grep -E '^verbosity=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$CFG_VERBOSITY" ] && VERBOSITY="$CFG_VERBOSITY"
 fi
 case "$VERBOSITY" in
@@ -120,7 +120,7 @@ esac
 # heal_max_cycles from config (project .mugiwara/config), default 3; env override
 HEAL_MAX_CYCLES="${STATE_HEAL_MAX_CYCLES:-3}"
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  CFG_HEAL_MAX=$(grep -E '^heal_max_cycles=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  CFG_HEAL_MAX=$(grep -E '^heal_max_cycles=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$CFG_HEAL_MAX" ] && HEAL_MAX_CYCLES="$CFG_HEAL_MAX"
 fi
 case "$HEAL_MAX_CYCLES" in
@@ -131,7 +131,7 @@ esac
 # delegate_threshold from config (project .mugiwara/config), default 60; env override
 DELEGATE_THRESHOLD="${STATE_DELEGATE_THRESHOLD:-60}"
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  CFG_DELEGATE=$(grep -E '^delegate_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  CFG_DELEGATE=$(grep -E '^delegate_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$CFG_DELEGATE" ] && DELEGATE_THRESHOLD="$CFG_DELEGATE"
 fi
 case "$DELEGATE_THRESHOLD" in
@@ -221,7 +221,7 @@ HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 # lane_scope_glob (T5): monorepo scoping — count only files matching the glob
 LANE_SCOPE_GLOB=""
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  _cfg_scope=$(grep -E '^lane_scope_glob=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
+  _cfg_scope=$(grep -E '^lane_scope_glob=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | tr -d '"' | tr -d "'")
   [ -n "$_cfg_scope" ] && LANE_SCOPE_GLOB="$_cfg_scope"
 fi
 # union of committed + staged + unstaged + untracked (F) — see patterns.sh
@@ -449,11 +449,11 @@ fi
 # gates flow stage can read, not prose.
 DEPTH_REVIEW="full"; DEPTH_QUALITY="full"; DEPTH_VERIFY="off"
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  _cfg_r=$(grep -E '^review_depth=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _cfg_r=$(grep -E '^review_depth=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_cfg_r" ] && DEPTH_REVIEW="$_cfg_r"
-  _cfg_q=$(grep -E '^quality_depth=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _cfg_q=$(grep -E '^quality_depth=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_cfg_q" ] && DEPTH_QUALITY="$_cfg_q"
-  _cfg_v=$(grep -E '^verify_merged=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _cfg_v=$(grep -E '^verify_merged=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_cfg_v" ] && DEPTH_VERIFY="$_cfg_v"
 fi
 case "$DEPTH_REVIEW" in full|standard|lean) ;; *) DEPTH_REVIEW="full" ;; esac
@@ -564,7 +564,7 @@ fi
 # team_members for posture (W5) — config key team_members, default 1
 TEAM_MEMBERS=1
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  _tm=$(grep -E '^team_members=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _tm=$(grep -E '^team_members=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_tm" ] && TEAM_MEMBERS="$_tm"
 fi
 case "$TEAM_MEMBERS" in ''|*[!0-9]*) TEAM_MEMBERS=1 ;; esac
@@ -614,11 +614,11 @@ INV_MAX_PASSES=2
 INV_MAX_UNRELATED=5
 INV_REPEATED_THRESH=2
 if [ -f "$MUGIWARA_DIR/config" ]; then
-  _v=$(grep -E '^investigation_max_passes=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _v=$(grep -E '^investigation_max_passes=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_v" ] && INV_MAX_PASSES="$_v"
-  _v=$(grep -E '^investigation_max_unrelated_files=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _v=$(grep -E '^investigation_max_unrelated_files=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_v" ] && INV_MAX_UNRELATED="$_v"
-  _v=$(grep -E '^investigation_repeated_read_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '[:space:]')
+  _v=$(grep -E '^investigation_repeated_read_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_v" ] && INV_REPEATED_THRESH="$_v"
 fi
 case "$INV_MAX_PASSES" in ''|*[!0-9]*) INV_MAX_PASSES=2 ;; esac
