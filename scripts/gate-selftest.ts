@@ -845,11 +845,11 @@ console.log('\nW1 — mode from config');
       failed++;
     } else {
       writeFileSync(sp, broken);
-      assert('reverted MODE → savepoint mode test fails', false, () => run('W1', 'grep -q "MUGIWARA_DIR/config.*mode=" scripts/savepoint.sh'));
+      assert('reverted MODE → savepoint mode test fails', false, () => run('W1', 'grep -q "for _cfg in.*MUGIWARA_DIR/config" scripts/savepoint.sh'));
     }
   } finally {
     writeFileSync(sp, original);
-    assert('restored → mode fallback present', true, () => run('W1-restore', 'grep -q "MUGIWARA_DIR/config.*mode=" scripts/savepoint.sh'));
+    assert('restored → mode fallback present', true, () => run('W1-restore', 'grep -q "for _cfg in.*MUGIWARA_DIR/config" scripts/savepoint.sh'));
   }
 }
 
@@ -879,7 +879,7 @@ console.log('\nW4 — layout switch guard');
   const sp = join(root, 'scripts', 'savepoint.sh');
   const original = readFileSync(sp, 'utf8');
   try {
-    const broken = original.replace(/if \[ -n "\$MEMBER" \] && \[ -f "\$MISSION_DIR\/state\.json" \] && \[ "\$\{MUGIWARA_ALLOW_LAYOUT_SWITCH:.*/, '# guard removed');
+    const broken = original.replace(/is solo \(state\.json exists\)/, 'REMOVED');
     if (broken === original) {
       console.error('✗ W4: mutation target not found');
       failed++;
