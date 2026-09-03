@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach, afterAll } from 'vitest';
 
-vi.setConfig({ testTimeout: 30000 });
+// timeout via test option
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -73,7 +73,7 @@ describe('archive closure artifacts', () => {
     const rep = readFileSync(join(dir, '.mugiwara', 'missions', 'demo', 'report.md'), 'utf8');
     expect(rep).toContain('## Review routing');
     expect(rep).toMatch(/1\. `src\/auth\/gate\.ts`[^\n]*sensitive path/);
-    expect(rep).toContain('Context footprint');
+    expect(rep).toContain('## Cost');
     // provenance note attaches to branch head (git present)
     expect(readFileSync(join(dir, '.mugiwara', 'missions', 'demo', 'provenance.md'), 'utf8'))
       .not.toContain('Commit: not recorded');
@@ -174,10 +174,10 @@ describe('cost-events.jsonl folds at archive (Phase 1 cost governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    expect(rep).toContain('## Archived: cost-events.jsonl');
-    expect(rep).toContain('"kind":"closure"');
-    expect(rep).toContain('"mission":"demo"');
-    // folded + removed — nothing survives loose
+    expect(rep).toContain('## Cost');
+    expect(rep).not.toContain('## Archived: cost-events.jsonl');
+    expect(rep).not.toContain('"kind":"closure"');
+    // removed without pasting — nothing survives loose
     expect(existsSync(join(root, 'cost-events.jsonl'))).toBe(false);
   });
 
@@ -204,14 +204,9 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    // lane standard budget 25000, warn 37500 → 40000 is warn on the lane token budget
-    expect(rep).toMatch(/Budget status[\s\S]*warn/i);
-    // context chars are well under 150000 → context status ok
-    expect(rep).toMatch(/Context footprint/);
-    // closure event status = warn (lane budget), context_status = ok
-    const evLine = readFileSync(join(root, 'report.md'), 'utf8').split(/\r?\n/).find((l) => l.includes('"kind":"closure"'));
-    expect(evLine).toBeTruthy();
-    expect(JSON.parse(evLine ?? '{}')).toMatchObject({ status: 'warn', context_status: 'ok' });
+    expect(rep).toContain('## Cost');
+    expect(rep).toContain('Used **');
+    expect(rep).not.toContain('"kind":"closure"');
   });
 
   // Q2: status computed once — the closure event `status` and the report
@@ -223,10 +218,9 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    const ev = JSON.parse(rep.split(/\r?\n/).find((l) => l.includes('"kind":"closure"')) ?? '{}') as { status: string };
-    // full lane budget 50000, stop 150000 → 160000 is stop on the lane token budget
-    expect(ev.status).toBe('stop');
-    expect(rep).toMatch(/Budget status[\s\S]*stop/i);
+    expect(rep).toContain('## Cost');
+    expect(rep).toContain('Used **');
+    expect(rep).not.toContain('"kind":"closure"');
   });
 
   // Q1 + metrics: Cost section renders from the envelope and a Context
@@ -238,10 +232,9 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    expect(rep).toContain('Context efficiency');
-    expect(rep).toContain('no registry — reads not tracked');
-    expect(rep).toMatch(/reuse_rate[\s\S]*0/);
-    expect(rep).toMatch(/files_loaded[\s\S]*0/);
+    expect(rep).toContain('## Cost');
+    expect(rep).not.toContain('no registry — reads not tracked');
+    expect(rep).not.toContain('Context efficiency');
   });
 
   // Q1 + metrics: with a registry present, the row reports the measured values.
@@ -259,13 +252,9 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    expect(rep).toContain('Context efficiency');
-    // unique = 150, total = 250 → duplicate = read_avoidance = 100; reuse 1/3
-    expect(rep).toContain('duplicate_chars: 100');
-    expect(rep).toContain('read_avoidance_chars: 100');
-    expect(rep).toContain('reuse_rate: 0.3333333333333333');
-    // M1: reuse_rate > 0 must not coexist with a hardcoded read_avoidance_chars: 0
-    expect(rep).not.toContain('read_avoidance_chars: 0');
+    expect(rep).toContain('## Cost');
+    expect(rep).not.toContain('duplicate_chars');
+    expect(rep).not.toContain('read_avoidance_chars');
     expect(rep).not.toContain('char data not tracked');
   });
 
@@ -283,9 +272,9 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    expect(rep).toContain('duplicate_chars: n/a');
-    expect(rep).toContain('read_avoidance_chars: n/a');
-    expect(rep).toContain('char data not tracked');
+    expect(rep).not.toContain('duplicate_chars');
+    expect(rep).not.toContain('read_avoidance_chars');
+    expect(rep).not.toContain('char data not tracked');
   });
 
   // M2: an over-budget closure records a cost event with context_status 'over'
@@ -315,9 +304,10 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     const root = join(dir, '.mugiwara', 'missions', 'demo');
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    expect(rep).toContain('## Archived: context-registry.jsonl');
-    expect(rep).toContain('"id":"E001"');
-    // folded + removed — nothing survives loose
+    expect(rep).toContain('## Cost');
+    expect(rep).not.toContain('## Archived: context-registry.jsonl');
+    expect(rep).not.toContain('"id":"E001"');
+    // removed without pasting — nothing survives loose
     expect(existsSync(join(root, 'context-registry.jsonl'))).toBe(false);
   });
 });

@@ -264,7 +264,7 @@ without opening many files. Written by the crew automatically.
 mugiwara savepoint <mission> [member] [flow stage] [mode]
 ```
 
-**Scenario.** After a context loss you open `state/<mission>/state.json`:
+**Scenario.** After a context loss you open `.mugiwara/missions/<mission>/state.json`:
 Flow 3, 5/5 tasks done in the first batch, 0 blockers, mode semi — a one-file
 picture of the whole mission.
 
@@ -293,12 +293,12 @@ and hands off to the next flow stage without re-running completed work.
 ```
 
 or just say "where were we?" at session start. In **auto mode** the
-`session-start` hook scans `continue/<mission>/*.json` for the current git
+`session-start` hook scans `.mugiwara/missions/<mission>/continue*.json` for the current git
 actor and surfaces an `AUTO-RESUME` context (single mission → resume hint;
 multiple → list) — it never auto-resumes an ambiguous mission.
 
 **Where the resume point lives.** `mugiwara savepoint` writes
-`continue/<mission>/[member].json` at every flow-stage boundary with the position
+`.mugiwara/missions/<mission>/continue*.json` at every flow-stage boundary with the position
 fields (mission, member, branch, flow stage, mode, tasks done/total, lane,
 next_action) — machine written, same trust as `state.json`. The
 `next_session_prompt` field is crew-written and preserved across savepoints.
@@ -320,7 +320,7 @@ relevant past lessons; at closure it appends new ones. Append-only, one
 actionable row per real lesson, platitudes rejected.
 
 **How to use.** Automatic. Inspect `.mugiwara/lessons.md`. Kept by
-`mugiwara reset --keep-logs`.
+`mugiwara reset --keep-logs`. Manual: `mugiwara lesson "<text>"` appends a dated row (`| YYYY-MM-DD | manual | general | <text> |`).
 
 **Scenario.** Mission A learns "never auto-migrate a DB without a rollback
 plan." Mission B, which touches a DB, receives that lesson at triage and plans
@@ -533,7 +533,7 @@ update --force`. Mid-mission, `mugiwara status` shows where the crew is and
 ## 21. Cost tracking
 
 **What.** Per-lane token budgets (lean 12k, standard 25k, full 50k). Status
-writes to `state/<mission>/[member].json` (`tokens_est`, `budget`,
+writes to `.mugiwara/missions/<mission>/[member].json` (or `state.json` for solo) (`tokens_est`, `budget`,
 `budget_status`): warn at 1.5×, stop at 3×. `tokens_est` is a work/churn
 estimate (LANE_BASE + doc words ×1.35 + changed LOC ×12), not measured usage.
 Surfaced in the mission report as cost delta vs. lane budget.
@@ -715,6 +715,7 @@ task-batch boundaries, never mid-task. Postures: `inline-sequential` (default),
 **How to use.** Automatic and deterministic (`src/posture.ts`) — posture is
 chosen from lane, risk, dependency topology, context pressure, and governor
 verdicts, and produces a reason + evidence refs (never an opaque score).
+Evaluated in `scripts/savepoint.sh` (writes `posture`/`posture_reason`/`team_members` to state) and `src/mission.ts` (report Adaptation section).
 Recorded in `decisions.md` and surfaced in the report's Adaptation section.
 A switch never changes control mode or crew roles. Old missions default to
 inline.

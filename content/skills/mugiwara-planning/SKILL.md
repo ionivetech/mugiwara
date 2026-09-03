@@ -9,14 +9,12 @@ gate_artifact: plan.md Waves/Task index — planning evidence
 **Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
 
 ## Skip when
-
 - Lane 0 direct work: no plan needed for a typo or single-file fix.
 - A plan already exists and is approved — execute, don't re-plan.
 
 Classify the mission by size first — after the route decision — then write the plan at the matching level. Quality bar: a zero-context senior engineer executes every task without asking one question. Rule: never plan above or below the measured size (file count + days from the spec) — a 40-file spec is never Quick.
 
 ## Classify mission size
-
 | Level | When | Required sections |
 |-------|------|-------------------|
 | **Quick** | 1 task, ≤2 files, well-understood (typo, bugfix) | Goals, Wave table, Detail task, Acceptance |
@@ -25,27 +23,29 @@ Classify the mission by size first — after the route decision — then write t
 | **Very large** | est. >2 days work, multi-PR scope | Lane 3 + MUST split (`## Mission split`) |
 
 ## Interview-first & mode
-
 Batch blocking ambiguities into ONE question round; never assume silently. Mode gates per config. Full detail: `references/plan-template.md`.
 
 ## Full context scan
-
 Scan the whole codebase the mission touches before writing: structure, entry points, existing patterns, tests, tooling. Ground every file path in what exists; confirm tooling, do not assume. Trust-sort sources: `references/plan-template.md`. Rule: every file path must be verified — unverified path fails.
 
 ## Zero-question standard
-
 A senior principal's plan leaves nothing to the executor's judgment. Every task specifies: exact file paths (never "the component"), the exact commands to run (TDD steps with the test command), an acceptance criterion that is a literal command or file check ("works correctly" is banned), and the dependency edge. If you cannot write it that specifically, scan again before the task goes in. Rule: a stranger must read each task once and run the acceptance verbatim.
 
 ## CODEOWNERS per area
-
 Map every task to a codebase area before parallelizing. Each area (e.g. `src/auth/`, `api/`, `docs/`) lists the task(s) that own it; two tasks in the SAME area are never `[PARALLEL]`, disjoint areas are the only parallel proof. Route review per area from the same table. Rule: every task in the task index appears in exactly one area row of its wave — an unowned file is a planning defect.
 
 | Area | Owner task(s) |
 |------|---------------|
 | <path prefix> | T1, T2 |
 
-## Plan tables (wave + task index)
+## Sub-missions (team only)
+When Flow 0 recorded `team_members > 1`, extend area table into sub-mission table before task detail. Full rule: `references/sub-missions.md`. Solo missions skip this entirely. Every area row maps to exactly one sub-mission; every sub-mission ends mergeable; `Depends On` is the plan's edge. Run `mugiwara initiative conflict-check <plan>` before GO — file touched by two sub-missions is a planning defect, not a merge problem.
 
+| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |
+|----|------|----------|--------|--------|-----------|---------------|
+| S1 | cart api | farid | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |
+
+## Plan tables (wave + task index)
 Before the detail blocks, add two markdown tables so the executor can read the shape at a glance and parallelize safely:
 
 | Wave | Focus | Tasks | Gate |
@@ -57,7 +57,6 @@ Before the detail blocks, add two markdown tables so the executor can read the s
 | T1 | <title> | <paths> | S | — | <one-line check> |
 
 ## Unified task template
-
 ```
 **Task N: <title>** `[PARALLEL]` | `[SEQUENTIAL, depends-on: Task M (file: <path>)]`
 - Files: create/modify <exact paths>
@@ -72,21 +71,17 @@ Before the detail blocks, add two markdown tables so the executor can read the s
 **Task size = commit granularity.** The executor commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task folds into its neighboring logical task, never standalone. A plan full of XS tasks is a history-littering plan; merge them up before writing. Rule: one task = one commit, no exceptions.
 
 ## Waves
-
 Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALLEL]` ONLY when tasks share no file AND no interface dependency AND no shared CODEOWNERS area (state the proof); otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption. Per-wave gate: acceptance checks run with evidence; a wave starts only when its dependencies are proven done.
 
 **Rollback per wave.** Every wave names its rollback point — a tag at the last proven-good commit — in the wave table. Rule: wave N starts only when wave N-1's rollback point is recorded; a failed wave gate means revert (`git revert <wave-N-tag>`), fix, re-run the gate. A wave with no named rollback point is a planning defect.
 
 ## Implementation graph
-
 Every edge names its file: `consumes <file> from Task M → produces <file> for Task N`; flag cross-file risk edges (two tasks reading the same file — never parallel). Tasks carrying `Break:` split mid-execution when files exceed 8 or concerns diverge — re-index the tail.
 
 ## Acceptance vs Definition of Done
-
 - **Acceptance** = "did we build the right thing?" — per task, command-verifiable. **Definition of Done** = "finished to standard?" — correctness, quality, integration, docs, ship-readiness; checked at the final wave.
 
 ## Anti-patterns
-
 Each with its failure mode and the fix: `references/anti-patterns.md`.
 
 - "TBD", "add appropriate error handling", or "similar to Task N" in a step.
@@ -99,17 +94,14 @@ Each with its failure mode and the fix: `references/anti-patterns.md`.
 Any anti-pattern fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole. "Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → fiction; "trust me, they're parallel" → race.
 
 ## Full-level skeleton
-
 Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## CODEOWNERS`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
 
 ## Mission split (very large) — Lane 3
-
 Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. The planner writes the split before any task detail.
 
 ## Large campaign — sub-plan
 Full checklist: `references/large-campaign-subplan.md` — 6 items; trigger `>3 phases` or `>1500 lines`, `sub-plan/NN-phaseNN-<slug>.md`, master index pattern.
 ## Handoff
-
 STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to the orchestrator.** Present a 2-3 line summary (waves, task count, key risks) and hand off for the GO decision. The orchestrator decides: approve → executor, revise → back to you, or escalate.
 
 Never hand to the executor without a GO. In `guided` mode, the orchestrator asks the user before delegating. In `semi`/`auto`, the orchestrator may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, the orchestrator routes.

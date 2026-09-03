@@ -9,13 +9,16 @@ its own file inside the mission folder, so parallel work never collides:
 
 ```
 .mugiwara/
-├── state/<mission>/state.json        # solo mission state
-├── state/<mission>/<member>.json     # team member state
-├── continue/<mission>/state.json     # solo resume point (D10)
-├── continue/<mission>/<member>.json  # team member resume point
-├── plans/<mission>.md                # shared plan (source of truth)
-├── reports/YYYY-MM-DD-<mission>.md
-├── results/<mission>-*.md
+├── missions/<mission>/state.json              # solo mission state
+├── missions/<mission>/<member>.json           # team member state
+├── missions/<mission>/continue.json           # solo resume point (D10)
+├── missions/<mission>/continue-<member>.json  # team member resume point
+├── missions/<mission>/plan.md                 # shared plan (source of truth)
+├── missions/<mission>/flows/                  # flow evidence
+├── missions/<mission>/report.md               # closure report
+├── lessons.md                                 # shared ledger (append-only)
+├── config
+└── index.md
 ```
 
 Branch is an implementation detail, not an identity: a member can hold several
@@ -31,11 +34,11 @@ $ mugiwara reset
 ✗ Active mission for 'john'. Use --force to override.
 ```
 
-`--force` still preserves `logs/lessons.md` and `config`.
+`--force` still preserves `.mugiwara/lessons.md` and `config`.
 
 ## Shared state
 
-The lessons ledger (`logs/lessons.md`) stays shared — that is the point of it.
+The lessons ledger (`.mugiwara/lessons.md`) stays shared — that is the point of it.
 All actors read and write to the same file. Append-only, never overwrite.
 
 ## Member namespacing
@@ -44,13 +47,13 @@ All actors read and write to the same file. Append-only, never overwrite.
 member argument) write `state.json`; team missions write `<member>.json`:
 
 ```bash
-mugiwara savepoint dark-mode                 # solo → state/dark-mode/state.json
-mugiwara savepoint payment-gateway john    # team → state/payment-gateway/john.json
-mugiwara savepoint payment-gateway patty     #        state/payment-gateway/patty.json
+mugiwara savepoint dark-mode                 # solo → missions/dark-mode/state.json
+mugiwara savepoint payment-gateway john    # team → missions/payment-gateway/john.json
+mugiwara savepoint payment-gateway patty     #        missions/payment-gateway/patty.json
 ```
 
-The resume point follows the same scoping: `continue/<mission>/<member>.json`
-(team) or `continue/<mission>/state.json` (solo), so parallel members never
+The resume point follows the same scoping: `missions/<mission>/continue-<member>.json`
+(team) or `missions/<mission>/continue.json` (solo), so parallel members never
 clobber each other's resume position.
 
 ## Resuming your own work

@@ -11,7 +11,7 @@ by whom — and the cost of the process scales to the size of the work.
 - **Lane sizing** — process scales from zero flow stages (typo) to nine (auth
   migration), computed from the diff by `mugiwara run lane.sh`, not guessed.
 - **Evidence trail** — every flow-stage boundary writes computed state to
-  `state/<mission>/[member].json`. No flow stage passes on a spoken claim;
+  `.mugiwara/missions/<mission>/[member].json` (or `state.json` for solo). No flow stage passes on a spoken claim;
   check output is captured into `.mugiwara/missions/<mission>/flows/`.
 - **Resume from disk** — lose context mid-mission and the crew rebuilds from
   `.mugiwara/` instead of restarting.

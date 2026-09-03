@@ -9,24 +9,43 @@ import { join } from 'node:path';
 
 /** The default config body, identical to what the installer has always written. */
 export const DEFAULT_CONFIG = [
-  'mode=guided',
+  '# Mugiwara config. Project overrides ~/.mugiwara/config.',
+  '# Every key here is read by code. Delete a line to take its default.',
+  '',
+  '# -- Autonomy ---------------------------------------------',
+  'mode=guided                  # guided | semi | auto — how much the crew does without asking',
+  'verbosity=normal             # normal | full — how much the crew echoes',
+  '',
+  '# -- Team -------------------------------------------------',
+  '# team_member=              # your member id; set it and state isolates per person',
+  '# team_members=1            # how many people on this mission; >1 enables team-scoped posture',
+  '',
+  '# -- Git --------------------------------------------------',
   'branch=feature/{type}-{issue}-{slug}',
   'commit=conventional',
-  'auto_commit=on',
+  'auto_commit=on               # on | off — off hands you an uncommitted tree in guided/semi',
+  '',
+  '# -- Gates ------------------------------------------------',
   'coverage_new=85',
   'coverage_modified=90',
-  'review_depth=full',
+  'review_depth=full            # full | standard | quick',
   'quality_depth=full',
   'verify_merged=off',
-  'delegate_threshold=60',
-  'heal_max_cycles=3',
-  'verbosity=normal',
-  '# context_budget_chars=150000  # optional: fail archive if trail exceeds this (measured in report Cost section)',
-  '# investigation_max_passes=2  # optional: cap investigation passes (spec §13)',
+  '',
+  '# -- Limits -----------------------------------------------',
+  'delegate_threshold=60        # % of budget before delegation is advised',
+  'heal_max_cycles=3            # heal loop halts here and escalates',
+  '',
+  '# -- Monorepo ---------------------------------------------',
+  '# lane_scope_glob=packages/api/**   # count only matching files when sizing the lane',
+  '',
+  '# -- Optional ---------------------------------------------',
+  '# context_budget_chars=150000       # fail archive if the trail exceeds this',
+  '# investigation_max_passes=2',
   '# investigation_max_unrelated_files=5',
   '# investigation_repeated_read_threshold=2',
-  '# sign=auto            # optional: auto | minisign | pure | off — report attestation',
-  '# enforce=block                # optional: off | warn | block — pipeline-guard policy',
+  '# sign=auto                         # auto | minisign | pure | off',
+  '# enforce=block                     # off | warn | block — pipeline-guard policy',
 ].join('\n') + '\n';
 
 /** Config file path candidates: project first, then user home. */
@@ -57,7 +76,10 @@ export function readConfig(projectDir: string): Record<string, string> {
       const key = t.slice(0, eq).trim();
       if (!key) continue;
       if (key in out) continue; // project value already set — keep it
-      out[key] = t.slice(eq + 1).trim();
+      let rawVal = t.slice(eq + 1).trim();
+      const hash = rawVal.indexOf('#');
+      if (hash !== -1) rawVal = rawVal.slice(0, hash).trim();
+      out[key] = rawVal;
     }
   }
   return out;
