@@ -1,0 +1,15 @@
+{
+  "mission": "enforcement-gaps",
+  "member": null,
+  "actor": "ionivetech <ionivetech@gmail.com>",
+  "branch": "enforcement-gaps",
+  "flow": 9,
+  "mode": "auto",
+  "tasks_done": 10,
+  "tasks_total": 10,
+  "lane": "full",
+  "lane_prev": null,
+  "updated_at": "2026-09-04T10:23:17Z",
+  "next_action": "verify this wave against the plan, then continue per plan (next wave or closure)",
+  "next_session_prompt": ""
+}

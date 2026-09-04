@@ -249,16 +249,16 @@ bun scripts/validate-content.ts --check-config --check-wiring --check-doc-integr
 bunx vitest run test/hooks.test.ts
 ```
 
-- [ ] E1 entry protocol with the routing rule (T1)
-- [ ] E2 gate on all 14 agents, no exemption (T2)
-- [ ] E3 artifact-only work blocks (T4)
-- [ ] E4 PreToolUse denies 10 classes, allows feature pushes and reads (T5)
-- [ ] E5 capability verified, matrix honest per tier (T9)
-- [ ] E6 banner absence warns, never blocks (T8)
-- [ ] E7 15 hook tests green incl. both over-correction guards (T7)
-- [ ] E8 no `logs/` reference (T3)
-- [ ] enforcement.md lists every invariant and mechanism (T11)
-- [ ] one mutation per fix, each reds one gate (T10)
+- [x] E1 entry protocol with the routing rule (T1)
+- [x] E2 gate on all 14 agents, no exemption (T2)
+- [x] E3 artifact-only work blocks (T4)
+- [x] E4 PreToolUse denies 10 classes, allows feature pushes and reads (T5)
+- [x] E5 capability verified, matrix honest per tier (T9)
+- [x] E6 banner absence warns, never blocks (T8)
+- [x] E7 15 hook tests green incl. both over-correction guards (T7)
+- [x] E8 no `logs/` reference (T3)
+- [x] enforcement.md lists every invariant and mechanism (T11)
+- [x] one mutation per fix, each reds one gate (T10)
 
 ## Anti-patterns
 
