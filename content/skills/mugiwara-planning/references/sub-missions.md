@@ -4,8 +4,8 @@ When Flow 0 recorded `team_members > 1`, extend the area table into a sub-missio
 
 | ID | Name | Assignee | Branch | Status | Depends On | Touched Files |
 |----|------|----------|--------|--------|-----------|---------------|
-| S1 | cart api | farid | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |
-| S2 | payment ui | rina | feat/pay | [ ] | - | src/pay.tsx |
+| S1 | cart api | John Doe | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |
+| S2 | payment ui | Jane Smith | feat/pay | [ ] | - | src/pay.tsx |
 
 Rules: every area row maps to exactly one sub-mission; every sub-mission ends mergeable on its own; `Depends On` is the plan's dependency edge, not a guess.
 
