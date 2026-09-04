@@ -12,3 +12,7 @@
 - **Branch:** `fix/seamless-pipeline` (from plan spec), cut from `main` (clean tree).
 - **Actors:** request `user: ionivetech <<ionivetech@gmail.com>>`; triage verdict `AI: muse-spark-1.3-contributor-free`.
 - **Plan impact:** none — mission starts per spec; execution order from plan §Execution order (items 1–8).
+
+## Flow 3 — Task 1.2 (2026-09-04)
+- **Done:** `--check-doc-integrity` now reads `case '<cmd>'` from `src/cli.ts` and scans all markdown under content/docs/references + README/AGENTS; skips in-session `mode`/`off` and `--flags`. Mutation-proven: removing `case 'archive'` fails the gate naming it. `AI: muse-spark-1.3-contributor-free`.
+- **Known flag (not a failure):** gate currently reports `docs instruct "mugiwara lessons" but src/cli.ts has no case 'lessons'` — this is N7, resolved by Task 1.3. Numerical order kept; full green expected after 1.3.

@@ -559,7 +559,52 @@ if (process.argv.includes('--check-config')) {
       errors.push(`config-drift: docs key "${k}" not found in code`);
     }
   }
-  if (!errors.some(e => e.startsWith('config-drift'))) {
+  // N6: key parity is not value parity. A documented enum value the code rejects
+  // falls back silently — the user gets the default and no error. Compare both
+  // directions. (auto_commit is advisory-only by design — no code allowlist
+  // exists, so there is nothing to compare.)
+  const configMd = existsSync(docPath) ? readFileSync(docPath, 'utf8') : '';
+  const savepointSh = readFileSync(join(import.meta.dirname, '..', 'scripts', 'savepoint.sh'), 'utf8');
+  const parseDocumentedValues = (key: string): string[] => {
+    const m = configMd.match(new RegExp(`^\\|\\s*\`${key}\`\\s*\\|\\s*([^|]+)\\|`, 'm'));
+    if (!m) return [];
+    return m[1].split('/').map((v) => v.trim()).filter(Boolean);
+  };
+  const parseShellAllowlist = (varName: string): string[] => {
+    const m = savepointSh.match(new RegExp(`case "\\$${varName}" in\\s*([^)]+)\\)`));
+    if (!m) return [];
+    return m[1].split(/[|\s]+/).map((v) => v.trim()).filter(Boolean);
+  };
+  const parseTsUnion = (file: string, typeName: string, extra: string[] = [], exclude: RegExp | null = null): string[] => {
+    const p = join(import.meta.dirname, '..', file);
+    if (!existsSync(p)) return [];
+    const src = readFileSync(p, 'utf8');
+    const m = src.match(new RegExp(`type ${typeName} = ([^;]+);`));
+    if (!m) return [];
+    const vals = [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+    return [...new Set([...vals, ...extra])].filter((v) => !(exclude && exclude.test(v)));
+  };
+  const ENUM_CHECKS: Array<{ key: string; accepted: string[] }> = [
+    { key: 'mode', accepted: parseShellAllowlist('MODE') },
+    { key: 'verbosity', accepted: parseShellAllowlist('VERBOSITY') },
+    { key: 'review_depth', accepted: parseShellAllowlist('DEPTH_REVIEW') },
+    { key: 'quality_depth', accepted: parseShellAllowlist('DEPTH_QUALITY') },
+    { key: 'verify_merged', accepted: parseShellAllowlist('DEPTH_VERIFY') },
+    // sign allowlist lives in TypeScript: read the exported union, not grep.
+    // 'minisign-fail' is internal (never a valid config value); 'auto' is an
+    // explicit resolveBackend case, so it counts as accepted.
+    { key: 'sign', accepted: parseTsUnion('src/sign.ts', 'BackendChoice', ['auto'], /-fail$/) },
+    { key: 'enforce', accepted: parseTsUnion('hooks/pipeline-guard.ts', 'Enforce') },
+  ];
+  for (const { key, accepted } of ENUM_CHECKS) {
+    const documented = parseDocumentedValues(key);
+    if (!documented.length || !accepted.length) continue;
+    const missing = documented.filter((v) => !accepted.includes(v));
+    const undocumented = accepted.filter((v) => !documented.includes(v));
+    if (missing.length) errors.push(`config ${key}: documented but rejected by code: ${missing.join(', ')}`);
+    if (undocumented.length) errors.push(`config ${key}: accepted by code but undocumented: ${undocumented.join(', ')}`);
+  }
+  if (!errors.some(e => e.startsWith('config-drift') || e.startsWith('config '))) {
     console.log(`✓ config in sync: ${defaultKeys.length} keys (${defaultKeys.join(', ')})`);
   }
 }
