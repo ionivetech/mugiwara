@@ -3,13 +3,13 @@
   "member": null,
   "actor": "ionivetech <ionivetech@gmail.com>",
   "branch": "fix-seamless-pipeline",
-  "flow": 2,
+  "flow": 7,
   "mode": "auto",
-  "tasks_done": 0,
+  "tasks_done": 12,
   "tasks_total": 13,
   "lane": "full",
-  "lane_prev": null,
-  "updated_at": "2026-09-04T10:47:44Z",
+  "lane_prev": "full",
+  "updated_at": "2026-09-04T13:13:16Z",
   "next_action": "verify this wave against the plan, then continue per plan (next wave or closure)",
   "next_session_prompt": ""
 }

@@ -16,3 +16,12 @@
 ## Flow 3 — Task 1.2 (2026-09-04)
 - **Done:** `--check-doc-integrity` now reads `case '<cmd>'` from `src/cli.ts` and scans all markdown under content/docs/references + README/AGENTS; skips in-session `mode`/`off` and `--flags`. Mutation-proven: removing `case 'archive'` fails the gate naming it. `AI: muse-spark-1.3-contributor-free`.
 - **Known flag (not a failure):** gate currently reports `docs instruct "mugiwara lessons" but src/cli.ts has no case 'lessons'` — this is N7, resolved by Task 1.3. Numerical order kept; full green expected after 1.3.
+
+## Flow 4 — Audit (2026-09-04)
+- **N1 e2e:** rebuilt dist (`bun run build`); `node dist/mugiwara.js initiative conflict-check` names shared file, exit 1. Audit caught stale dist — fixed by rebuild. `AI: muse-spark-1.3-contributor-free`.
+- **Full suite local result:** 746 pass / 32 fail. Triaged, not a regression:
+  - 4 `gitActor env-precedence` failures reproduce on pristine main worktree (sandbox env lacks normal git identity plumbing) — pre-existing environmental.
+  - ~28 remaining failures (savepoint/continue/harness names) all pass in isolation on this branch (savepoint 18/18, harness 13/13, hooks banner 3/3, initiative 9/9, plugin 45/45) — parallel-contention flakes under 48-file load, unstable set.
+  - Verdict: no code regression from this mission; CI (clean env) arbitrates full-green.
+- **Deviations from spec:** savepoint.sh lines drifted 459-460 → 467-468 (same text); `/mugiwara guided` slash in docs/install/opencode.md:59 left (out of scope, no backtick-mode form); N2 fallout fixed 6 extra files restating the old banner form; Task 2.2 detection lives in pipeline-guard (owns transcript_path) with schema in engagement-marker (marker never sees response text — its own E6 comment).
+- **1.3 decision:** Option B (remove promise). No lessons ledger, no consumer tooling, no demonstrated need — import/export fails ladder rung 1.
