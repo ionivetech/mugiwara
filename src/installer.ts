@@ -244,6 +244,7 @@ const GITIGNORE_BLOCK = `# >>> mugiwara >>> — audit trail is the product: comm
 .mugiwara/index.md
 .mugiwara/config
 .mugiwara/refs/
+.mugiwara/active-member
 # <<< mugiwara <<<
 `;
 

@@ -63,12 +63,12 @@ if [ -n "$GIT_NAME" ] && [ -n "$GIT_EMAIL" ]; then GIT_ID="$GIT_NAME <$GIT_EMAIL
 
 # --- parse mission args: <mission> [member] [wave] [mode] ---
 MISSION="${1:-${STATE_MISSION:-}}"
-# member: positional > env > config team_member > empty (solo). Never derive
-# silently from git identity — solo vs team is a recorded Flow 0 decision, not
-# an inference. (W3)
+# member: positional > env > active-member cache. The cache is written by
+# `mugiwara continue` after the user picks from the roster — never typed by
+# hand, so it cannot disagree with the plan. Empty means solo.
 MEMBER="${2:-${STATE_MEMBER:-}}"
-if [ -z "$MEMBER" ] && [ -f "$MUGIWARA_DIR/config" ]; then
-  MEMBER=$(grep -E '^team_member=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
+if [ -z "$MEMBER" ] && [ -f "$MUGIWARA_DIR/active-member" ]; then
+  MEMBER=$(head -1 "$MUGIWARA_DIR/active-member" 2>/dev/null | tr -d '[:space:]')
 fi
 WAVE="${3:-${STATE_WAVE:-1}}"
 # mode: positional > env > project config > global config > guided. The hook
@@ -573,11 +573,24 @@ if [ "$BUDGET" -gt 0 ] 2>/dev/null; then
   fi
 fi
 
-# team_members for posture (W5) — config key team_members, default 1
+# team_members for posture — roster-derived (replaces deleted config key)
+# Count distinct Assignees in plan.md sub-mission table; 1 if no table (solo)
 TEAM_MEMBERS=1
-if [ -f "$MUGIWARA_DIR/config" ]; then
-  _tm=$(grep -E '^team_members=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
-  [ -n "$_tm" ] && TEAM_MEMBERS="$_tm"
+if [ -f "$MISSION_DIR/plan.md" ]; then
+  _tm_count=$(awk '
+    BEGIN { inTable=0; }
+    tolower($0) ~ /^\| *id / && tolower($0) ~ /\| *name / { inTable=1; next }
+    inTable {
+      if ($0 !~ /^\|/) exit
+      if ($0 ~ /^\|[[:space:]:-]+\|/) next
+      n=split($0, cols, "|")
+      who=cols[4]
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", who)
+      if (who != "" && who != "-") seen[who]=1
+    }
+    END { c=0; for (k in seen) c++; print c+0 }
+  ' "$MISSION_DIR/plan.md" 2>/dev/null | tr -d '[:space:]')
+  case "$_tm_count" in ''|*[!0-9]*) ;; *) [ "$_tm_count" -gt 0 ] 2>/dev/null && TEAM_MEMBERS="$_tm_count" ;; esac
 fi
 case "$TEAM_MEMBERS" in ''|*[!0-9]*) TEAM_MEMBERS=1 ;; esac
 # plan metrics for posture decision (phase-isolated / parallel)
@@ -686,7 +699,7 @@ const data = {
   updated_at: process.argv[22],
   schema_version: 2,
   repeated_reads: parseInt(process.argv[41], 10) || 0,
-  team_members: parseInt(process.argv[42], 10) || 1,
+  team_members: parseInt(process.argv[42], 10) || 1, // roster-derived
   posture: process.argv[43] || 'inline-sequential',
   posture_reason: process.argv[44] || '',
   posture_pause: process.argv[45] === 'true',
