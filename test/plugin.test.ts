@@ -1,7 +1,7 @@
 // test/plugin.test.ts
 import { test, expect } from 'vitest';
 import { execSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, symlinkSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import plugin from '../.opencode/plugins/mugiwara.mjs';
@@ -542,6 +542,98 @@ test('D10: session-start rejects non-numeric wave/tasks in continue (N1)', { tim
     // invalid entry skipped → no other mission → silent, never injects the payload
     expect(out.trim()).toBe('');
   } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('E5: FORBIDDEN table mirrors src/guards.ts byte-identically', () => {
+  // The opencode copy is deliberate (the .mjs cannot import TS), so drift
+  // must fail CI here instead of silently forking enforcement per harness.
+  const block = (src: string): string => {
+    const text = readFileSync(join(import.meta.dirname, '..', src), 'utf8');
+    const m = /GUARDS-TABLE-START\r?\n([\s\S]*?)\r?\n\/\/ GUARDS-TABLE-END/.exec(text);
+    expect(m, `${src}: GUARDS-TABLE markers missing`).not.toBeNull();
+    return m![1].replace(/\r\n/g, '\n').trim();
+  };
+  expect(block('.opencode/plugins/mugiwara.mjs')).toBe(block('src/guards.ts'));
+});
+
+test('E5: tool.execute.before denies irreversible bash, allows the rest', async () => {
+  const hooks = await plugin();
+  const before = hooks['tool.execute.before'] as (input: unknown, output: unknown) => Promise<void>;
+  expect(typeof before).toBe('function');
+  await expect(before({ tool: 'bash' }, { args: { command: 'gh pr create --fill' } }))
+    .rejects.toThrow(/refusing to opening or merging a PR/);
+  await expect(before({ tool: 'bash' }, { args: { command: 'git push origin main' } }))
+    .rejects.toThrow(/protected branch/);
+  await before({ tool: 'bash' }, { args: { command: 'git push -u origin feature/MKR-412' } });
+  await before({ tool: 'bash' }, { args: { command: 'terraform plan' } });
+  await before({ tool: 'read' }, { args: { filePath: 'x.ts' } });
+});
+
+test('E5: tool call mentioning the crew marks the session engaged', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-engage-'));
+  const prev = process.cwd();
+  process.chdir(dir);
+  try {
+    const hooks = await plugin();
+    const before = hooks['tool.execute.before'] as (input: unknown, output: unknown) => Promise<void>;
+    await before({ tool: 'task', subagent_type: 'mugiwara:zoro-execution' }, {});
+    expect(existsSync(join(dir, '.mugiwara', '.engaged'))).toBe(true);
+  } finally {
+    process.chdir(prev);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('E5: session.idle surfaces work-without-triage, silent when clean', async () => {
+  const hooks = await plugin();
+  const onEvent = hooks['event'] as (arg: unknown) => Promise<void>;
+  expect(typeof onEvent).toBe('function');
+  // unrelated events never fire
+  await onEvent({ event: { type: 'session.created' } });
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-idle-'));
+  const prev = process.cwd();
+  process.chdir(dir);
+  try {
+    execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
+    mkdirSync(join(dir, '.mugiwara', 'spec'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'spec', 'idea.md'), '# brainstorm\n');
+    writeFileSync(join(dir, '.mugiwara', '.engaged'), JSON.stringify({ first_seen: new Date().toISOString() }));
+    await expect(onEvent({ event: { type: 'session.idle' } }))
+      .rejects.toThrow(/this session did work/);
+    // triage on disk silences it
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'state.json'), JSON.stringify({ mission: 'm', lane: 'full' }));
+    await onEvent({ event: { type: 'session.idle' } });
+  } finally {
+    process.chdir(prev);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('E5-R1: symlinked dirs inside .mugiwara are not walked as work', async () => {
+  const hooks = await plugin();
+  const onEvent = hooks['event'] as (arg: unknown) => Promise<void>;
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-symlink-'));
+  const prev = process.cwd();
+  process.chdir(dir);
+  try {
+    execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
+    const outside = mkdtempSync(join(tmpdir(), 'mugi-outside-'));
+    try {
+      writeFileSync(join(outside, 'fresh.md'), '# fresh\n');
+      mkdirSync(join(dir, '.mugiwara', 'spec'), { recursive: true });
+      symlinkSync(outside, join(dir, '.mugiwara', 'spec', 'link'));
+      writeFileSync(join(dir, '.mugiwara', '.engaged'), JSON.stringify({ first_seen: new Date().toISOString() }));
+      // symlink target is fresh, but outside the root — not this session's work
+      await onEvent({ event: { type: 'session.idle' } });
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
+  } finally {
+    process.chdir(prev);
     rmSync(dir, { recursive: true, force: true });
   }
 });

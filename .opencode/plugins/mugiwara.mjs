@@ -17,7 +17,8 @@
 // or from the git repo:
 //   { "plugin": ["mugiwara@git+https://github.com/ionivetech/mugiwara.git"] }
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, statSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readMode, parseModeChange, applyModeChange, ensureDefaultConfig } from '../mugiwara-helpers.mjs';
@@ -135,6 +136,144 @@ function readAgents(stepsEnabled = true) {
   return agents;
 }
 
+// Enforcement mirrors (E5, Stage B). The FORBIDDEN table is a copy of
+// src/guards.ts between the GUARDS-TABLE markers — plugin.test.ts asserts the
+// two blocks are byte-identical, so edit the source, never just this copy.
+// The tool hook surface is binary (throw = deny): enforce=warn degrades to
+// allow here, documented in docs/reference/harness-matrix.md.
+
+const FORBIDDEN = [
+// GUARDS-TABLE-START
+  [/\bgh\s+pr\s+(create|merge|ready)\b/, 'opening or merging a PR'],
+  [/\bgh\s+release\s+create\b/, 'creating a release'],
+  [/\bgit\s+merge\b/, 'merging a branch'],
+  [/\bgit\s+push\b[^|;&]*\b(main|master|production|release)\b/, 'pushing to a protected branch'],
+  [/\bgit\s+push\b[^|;&]*--force/, 'force-pushing'],
+  [/\bnpm\s+publish\b|\byarn\s+publish\b|\bpnpm\s+publish\b/, 'publishing a package'],
+  [/\bkubectl\s+(apply|delete|rollout)\b/, 'changing a cluster'],
+  [/\bterraform\s+(apply|destroy)\b/, 'changing infrastructure'],
+  [/\bdocker\s+push\b/, 'pushing an image'],
+  [/\baws\s+\w+\s+(create|delete|update|put)\b/, 'changing cloud resources'],
+// GUARDS-TABLE-END
+];
+
+function checkCommand(command) {
+  for (const [re, action] of FORBIDDEN) {
+    if (re.test(command)) return action;
+  }
+  return null;
+}
+
+function refusalMessage(action) {
+  return (
+    `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` +
+    `deploys — the human does, from the branch and the verdict the crew hands over. ` +
+    `Run it yourself, or set enforce=off in .mugiwara/config.`
+  );
+}
+
+function readEnforce(cwd) {
+  for (const base of [cwd, process.env.HOME || '']) {
+    if (!base) continue;
+    const file = join(base, '.mugiwara', 'config');
+    if (!existsSync(file)) continue;
+    for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const [k, v] = line.split('=').map((s) => s.trim());
+      if (k !== 'enforce') continue;
+      if (v === 'off' || v === 'warn' || v === 'block') return v;
+      return 'block';
+    }
+  }
+  return 'block';
+}
+
+function markEngaged(cwd) {
+  try {
+    const dir = join(cwd, '.mugiwara');
+    mkdirSync(dir, { recursive: true });
+    const file = join(dir, '.engaged');
+    let firstSeen = new Date().toISOString();
+    try {
+      const prev = JSON.parse(readFileSync(file, 'utf8'));
+      if (prev && typeof prev.first_seen === 'string') firstSeen = prev.first_seen;
+    } catch { /* fresh marker */ }
+    writeFileSync(file, JSON.stringify({ first_seen: firstSeen, touched_at: new Date().toISOString() }, null, 2) + '\n');
+  } catch { /* fail open — no marker, no policing */ }
+}
+
+// Git working tree changed outside .mugiwara/, or null when git is unreadable
+// (no opinion — the caller treats null as "cannot tell", never as clean).
+function gitSourceChanged(cwd) {
+  try {
+    const out = execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    return out.split(/\r?\n/).map((l) => l.slice(3).trim()).filter(Boolean).some((p) => !p.startsWith('.mugiwara/'));
+  } catch { return null; }
+}
+
+function markerStart(cwd) {
+  try {
+    const marker = JSON.parse(readFileSync(join(cwd, '.mugiwara', '.engaged'), 'utf8'));
+    return Date.parse(marker.first_seen ?? '') || Date.parse(marker.touched_at ?? '') || 0;
+  } catch { return 0; }
+}
+
+function artifactWorkSince(cwd, start) {
+  try {
+    const stack = ['missions', 'spec', 'plans'].map((s) => join(cwd, '.mugiwara', s)).filter((p) => existsSync(p));
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const e of readdirSync(cur, { withFileTypes: true })) {
+        const full = join(cur, e.name);
+        try {
+          // Symlinks never resolve: a dirent symlink reports isDirectory()
+          // false, so the symlink check must come first, not nested inside.
+          if (e.isSymbolicLink()) continue;
+          if (e.isDirectory()) { stack.push(full); continue; }
+          if (statSync(full).mtimeMs + 1000 >= start) return true;
+        } catch { /* skip */ }
+      }
+    }
+  } catch { /* no artifact opinion */ }
+  return false;
+}
+
+function triageOnDisk(cwd) {
+  const base = join(cwd, '.mugiwara', 'missions');
+  if (!existsSync(base)) return false;
+  for (const e of readdirSync(base, { withFileTypes: true })) {
+    if (!e.isDirectory()) continue;
+    for (const f of readdirSync(join(base, e.name))) {
+      const stem = f.replace(/\.json$/, '');
+      if (!f.endsWith('.json') || stem === 'continue' || stem.startsWith('continue-')) continue;
+      try {
+        const s = JSON.parse(readFileSync(join(base, e.name, f), 'utf8'));
+        if (s && typeof s.mission === 'string' && s.mission) return true;
+      } catch { /* corrupt savepoint is not triage */ }
+    }
+  }
+  return false;
+}
+
+// Check-1 port: engaged + (source or artifact work) + no triage on disk.
+// Crisp on-disk facts only, mirroring hooks/pipeline-guard.ts. Fail open:
+// any error returns null (no opinion), never a false accusation.
+function sessionWorkNoTriage(cwd) {
+  try {
+    if (readEnforce(cwd) === 'off') return null;
+    if (!existsSync(join(cwd, '.mugiwara', '.engaged'))) return null;
+    const source = gitSourceChanged(cwd);
+    if (source === null) return null;
+    const start = markerStart(cwd);
+    const artifacts = start ? artifactWorkSince(cwd, start) : false;
+    if (!source && !artifacts) return null;
+    if (triageOnDisk(cwd)) return null;
+    return (
+      'Mugiwara: this session did work (source and/or .mugiwara artifacts) but no ' +
+      'Flow 0 triage is on disk. Run Flow 0 (classify, size the lane, write the decision log).'
+    );
+  } catch { return null; }
+}
+
 export default async () => ({
   dispose: () => {},
 
@@ -168,6 +307,39 @@ export default async () => ({
         const change = parseModeChange(part.text);
         if (change) applyModeChange(change);
       }
+    }
+  },
+
+  'tool.execute.before': async (input, output) => {
+    // E4 port: refuse irreversible bash commands before they run (throw =
+    // deny). Engagement for the session-end check is recorded here too: any
+    // tool call mentioning the crew marks the session engaged.
+    try {
+      const cwd = process.cwd();
+      let shape = '';
+      try { shape = JSON.stringify(input); } catch { /* unshaped — skip marking */ }
+      if (shape.toLowerCase().includes('mugiwara')) markEngaged(cwd);
+      if (input && input.tool === 'bash') {
+        const command = output && output.args && typeof output.args.command === 'string' ? output.args.command : '';
+        const action = checkCommand(command);
+        if (action && readEnforce(cwd) === 'block') throw new Error(refusalMessage(action));
+      }
+    } catch (e) {
+      if (e && /Mugiwara: refusing/.test(e.message)) throw e;
+      // fail open — never wedge a tool call
+    }
+  },
+
+  event: async ({ event }) => {
+    // Check-1 port at session end: work with no triage surfaces loudly here.
+    // Advisory, not preventive — the work already happened; prevention on this
+    // harness is the tool hook above. Fail open.
+    try {
+      if (!event || event.type !== 'session.idle') return;
+      const reason = sessionWorkNoTriage(process.cwd());
+      if (reason) throw new Error(reason);
+    } catch (e) {
+      if (e && /Mugiwara: this session did work/.test(e.message)) throw e;
     }
   },
 });

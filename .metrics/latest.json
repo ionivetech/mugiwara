@@ -7,9 +7,9 @@
   "retrieval_negatives": 82,
   "retrieval_index_size": 21,
   "retrieval_index_terms": 293,
-  "pointers_total": 320,
+  "pointers_total": 322,
   "pointers_targets": 9,
   "pointers_broken": 0,
   "index_size": 21,
-  "updated": "2026-09-03"
+  "updated": "2026-09-04"
 }

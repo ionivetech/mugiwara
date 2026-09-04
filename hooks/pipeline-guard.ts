@@ -84,6 +84,53 @@ function sourceChanged(): boolean {
 }
 
 /**
+ * Session anchor for the session-scoped scans: first_seen, else touched_at,
+ * else 0 (unknown). Shared by artifactWorkNow and bannerThisSession — one
+ * definition, not two copies. Fail open.
+ */
+function sessionStartFrom(markerFile: string): number {
+  try {
+    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string; touched_at?: string };
+    return Date.parse(m.first_seen ?? '') || Date.parse(m.touched_at ?? '') || 0;
+  } catch { return 0; }
+}
+
+/**
+ * Artifact work in this session: files written under .mugiwara/missions,
+ * .mugiwara/spec, or .mugiwara/plans since the session's first-seen marker.
+ * Work is not only source edits — a brainstorm that produced a spec, a plan,
+ * or a recommendation is work, and it escaped the source-only predicate. (E3)
+ * Session-scoped like planTouched: an absent/unreadable marker means untouched,
+ * never "everything counts". Fail open throughout.
+ */
+function artifactWorkNow(): boolean {
+  const markerFile = join(cwd, '.mugiwara', '.engaged');
+  if (!existsSync(markerFile)) return false;
+  const sessionStart = sessionStartFrom(markerFile);
+  if (!sessionStart) return false;
+  try {
+    const stack = ['missions', 'spec', 'plans']
+      .map((s) => join(cwd, '.mugiwara', s))
+      .filter((p) => existsSync(p));
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      for (const e of readdirSync(cur, { withFileTypes: true })) {
+        const full = join(cur, e.name);
+        try {
+          // Symlink check first: a symlink dirent reports isDirectory()
+          // false, so nesting this inside the directory branch never fires.
+          if (e.isSymbolicLink()) continue;
+          if (e.isDirectory()) { stack.push(full); continue; }
+          // 1s tolerance, same as planTouched (FS granularity / clock skew)
+          if (statSync(full).mtimeMs + 1000 >= sessionStart) return true;
+        } catch { /* unreadable entry — skip */ }
+      }
+    }
+  } catch { return false; }
+  return false;
+}
+
+/**
  * The newest readable savepoint for any mission, or null when there is none.
  * Its existence IS the triage fact (check 1); its `lane` field is the input to
  * the write-boundary check (check 2).
@@ -187,6 +234,45 @@ function planTouched(): boolean {
   return false;
 }
 
+/**
+ * A flow banner (`## Flow <n> —`) recorded in this session's mission files.
+ * The banner is the only signal the user can see that the pipeline ran, and
+ * Luffy's rule 10 already requires every flow stage to be logged in the
+ * decision log — so the decision log and flow files are where banners live.
+ * (E6: implemented here, not in the marker — no hook payload carries response
+ * text, so the marker can never see a banner. Warning only, never a block:
+ * banner detection depends on text matching, and a false block on a
+ * formatting variance is what gets the whole fence disabled.)
+ */
+function bannerThisSession(): boolean {
+  const markerFile = join(cwd, '.mugiwara', '.engaged');
+  if (!existsSync(markerFile)) return true; // no session anchor — no opinion
+  const sessionStart = sessionStartFrom(markerFile);
+  if (!sessionStart) return true;
+  const re = /^## Flow \d+\s—/m;
+  try {
+    const missionsDir = join(cwd, '.mugiwara', 'missions');
+    for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const files = [`${join(missionsDir, e.name)}/decisions.md`];
+      const flowsDir = join(missionsDir, e.name, 'flows');
+      if (existsSync(flowsDir)) {
+        for (const f of readdirSync(flowsDir)) {
+          if (f.endsWith('.md')) files.push(join(flowsDir, f));
+        }
+      }
+      for (const f of files) {
+        try {
+          if (!existsSync(f)) continue;
+          if (statSync(f).mtimeMs + 1000 < sessionStart) continue;
+          if (re.test(readFileSync(f, 'utf8'))) return true;
+        } catch { /* unreadable entry — skip */ }
+      }
+    }
+  } catch { return true; }
+  return false;
+}
+
 async function main(): Promise<void> {
   let input = '';
   for await (const chunk of process.stdin) input += chunk;
@@ -242,6 +328,17 @@ async function main(): Promise<void> {
         'deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.\n',
       );
     }
+    // --- check 4: the banner signal (E6, warning only) -----------------------
+    // Work recorded with state on disk but no flow banner this session. The
+    // banner is the only visible signal the pipeline ran — its absence is how
+    // the original defect went unnoticed. Warning, never a block.
+    if ((sourceChangedNow || planTouched()) && !bannerThisSession()) {
+      process.stderr.write(
+        '⚠ Mugiwara: work recorded with no flow banner in this session. The banner is ' +
+        'the only signal the user has that the pipeline ran. Announce ' +
+        '`## Flow N — <crew>` at each stage.\n',
+      );
+    }
     return;
   }
 
@@ -250,9 +347,12 @@ async function main(): Promise<void> {
   // the original invariant and it BLOCKS (the triage fact is a crisp on-disk
   // check, no absence-inference). Only fires when source actually changed.
   if (!state) {
-    if (!sourceChangedNow) return;
+    // Any work at all — source edits OR artifacts written — with no triage on
+    // disk is the escape this guard exists to close. (E3)
+    if (!sourceChangedNow && !artifactWorkNow()) return;
     const reason =
-      'Mugiwara: source changed in this session but no Flow 0 triage is on disk. ' +
+      'Mugiwara: this session did work (source and/or .mugiwara artifacts) but no ' +
+      'Flow 0 triage is on disk. ' +
       'Run Flow 0 (classify, size the lane, write the decision log) and record it with ' +
       '`mugiwara savepoint <mission> "" 0 <mode>` — or, if this is Lane 0 trivial work, ' +
       'record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.';

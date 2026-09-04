@@ -130,8 +130,18 @@ choosing to, and they are not portable.
 | Target | Turn-end enforcement | Basis |
 |--------|----------------------|-------|
 | `claude` | **enforced** | `Stop` + `SubagentStop` run `hooks/auto-savepoint.ts` |
-| `opencode` | advisory only | no verified turn-end event to bind to |
+| `opencode` | warning at session end | `event` `session.idle` surfaces work-without-triage (advisory — the work already happened; prevention is the tool hook above) |
 | the other 7 targets | advisory only | no hook mechanism at all |
+
+| Target | Irreversible-command guard | Basis |
+|--------|----------------------------|-------|
+| `claude` | **enforced** | `PreToolUse` on Bash runs `hooks/pretool-guard.js` |
+| `opencode` | **enforced** | `tool.execute.before` on bash throws (same table as `src/guards.ts`, parity-tested) |
+| the other 7 targets | prose only | no hook mechanism at all |
+
+`tool.execute.before` is binary (throw = deny): `enforce=warn` degrades to
+allow on opencode. The default is `block`, so the degradation only matters to
+sessions that explicitly opted into `warn`.
 
 Full ENFORCED / ASPIRATIONAL split: [enforcement.md](enforcement.md).
 

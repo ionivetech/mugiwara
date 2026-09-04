@@ -50,6 +50,44 @@ function sourceChanged() {
     return false;
   }
 }
+function sessionStartFrom(markerFile) {
+  try {
+    const m = JSON.parse(readFileSync(markerFile, "utf8"));
+    return Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
+  } catch {
+    return 0;
+  }
+}
+function artifactWorkNow() {
+  const markerFile = join(cwd, ".mugiwara", ".engaged");
+  if (!existsSync(markerFile))
+    return false;
+  const sessionStart = sessionStartFrom(markerFile);
+  if (!sessionStart)
+    return false;
+  try {
+    const stack = ["missions", "spec", "plans"].map((s) => join(cwd, ".mugiwara", s)).filter((p) => existsSync(p));
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const e of readdirSync(cur, { withFileTypes: true })) {
+        const full = join(cur, e.name);
+        try {
+          if (e.isSymbolicLink())
+            continue;
+          if (e.isDirectory()) {
+            stack.push(full);
+            continue;
+          }
+          if (statSync(full).mtimeMs + 1000 >= sessionStart)
+            return true;
+        } catch {}
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
 function newestMissionState() {
   const base = join(cwd, ".mugiwara", "missions");
   if (!existsSync(base))
@@ -141,6 +179,43 @@ function planTouched() {
   } catch {}
   return false;
 }
+function bannerThisSession() {
+  const markerFile = join(cwd, ".mugiwara", ".engaged");
+  if (!existsSync(markerFile))
+    return true;
+  const sessionStart = sessionStartFrom(markerFile);
+  if (!sessionStart)
+    return true;
+  const re = /^## Flow \d+\s\u2014/m;
+  try {
+    const missionsDir = join(cwd, ".mugiwara", "missions");
+    for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!e.isDirectory())
+        continue;
+      const files = [`${join(missionsDir, e.name)}/decisions.md`];
+      const flowsDir = join(missionsDir, e.name, "flows");
+      if (existsSync(flowsDir)) {
+        for (const f of readdirSync(flowsDir)) {
+          if (f.endsWith(".md"))
+            files.push(join(flowsDir, f));
+        }
+      }
+      for (const f of files) {
+        try {
+          if (!existsSync(f))
+            continue;
+          if (statSync(f).mtimeMs + 1000 < sessionStart)
+            continue;
+          if (re.test(readFileSync(f, "utf8")))
+            return true;
+        } catch {}
+      }
+    }
+  } catch {
+    return true;
+  }
+  return false;
+}
 async function main() {
   let input = "";
   for await (const chunk of process.stdin)
@@ -169,12 +244,15 @@ async function main() {
       process.stderr.write("\u26A0 Mugiwara: a plan doc (missions/<mission>/plan.md) was written this session, " + "but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. " + "Only Nami writes the plan \u2014 dispatch nami-planner, or record the plan as a " + `deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.
 `);
     }
+    if ((sourceChangedNow || planTouched()) && !bannerThisSession()) {
+      process.stderr.write("\u26A0 Mugiwara: work recorded with no flow banner in this session. The banner is " + "the only signal the user has that the pipeline ran. Announce " + "`## Flow N \u2014 <crew>` at each stage.\n");
+    }
     return;
   }
   if (!state) {
-    if (!sourceChangedNow)
+    if (!sourceChangedNow && !artifactWorkNow())
       return;
-    const reason = "Mugiwara: source changed in this session but no Flow 0 triage is on disk. " + "Run Flow 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
+    const reason = "Mugiwara: this session did work (source and/or .mugiwara artifacts) but no " + "Flow 0 triage is on disk. " + "Run Flow 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
     if (enforce === "warn") {
       process.stderr.write(`\u26A0 ${reason}
 `);

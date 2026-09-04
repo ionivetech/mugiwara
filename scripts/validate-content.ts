@@ -187,10 +187,18 @@ for (const doc of ['README.md', 'docs/index.md', 'docs/concepts/agents.md']) {
 // --- hub-rule gate (F3): every non-Luffy agent carries both hub sections ---
 for (const f of agentFiles) {
   const name = f.replace(/\.md$/, '');
-  if (name === 'luffy-orchestrator') continue;
   const text = readFileSync(join(agentDir, f), 'utf8');
+  // Entry protocol: EVERY agent, Luffy included. Exempting him is what let a
+  // captain with no pre-flight checklist ship. (E2)
   if (!text.includes('## Before you start')) errors.push(`agent ${f}: missing "## Before you start" entry protocol`);
-  if (!text.includes('## Return to Luffy')) errors.push(`agent ${f}: missing "## Return to Luffy" hub rule`);
+  // Return-to-Luffy: every agent EXCEPT Luffy — he cannot return to himself.
+  if (name !== 'luffy-orchestrator' && !text.includes('## Return to Luffy')) {
+    errors.push(`agent ${f}: missing "## Return to Luffy" hub rule`);
+  }
+  // Luffy carries the routing counterpart instead.
+  if (name === 'luffy-orchestrator' && !text.includes('Brainstorm is Usopp')) {
+    errors.push('agent luffy-orchestrator: missing the "never do another crew member\'s work" routing rule');
+  }
 }
 
 // --- hub-skill gate (F3): every agent lists mugiwara-orchestration (the hub rule's home) ---
@@ -570,7 +578,9 @@ if (process.argv.includes('--check-wiring')) {
       if (full.endsWith(`/src/${f}`) || full === join(srcDir, f)) continue;
       try {
         const txt = readFileSync(full, 'utf8');
-        if (txt.includes(`'./${stem}`) || txt.includes(`"./${stem}`) || txt.includes(`'./${stem}.ts'`) || txt.includes(`"./${stem}.ts"`)) {
+        // hooks import shared code as '../src/<stem>' (bundled by build-hooks)
+        // — that is a first-class wire, not a dangling module.
+        if (txt.includes(`'./${stem}`) || txt.includes(`"./${stem}`) || txt.includes(`'./${stem}.ts'`) || txt.includes(`"./${stem}.ts"`) || txt.includes(`'../src/${stem}.ts'`) || txt.includes(`"../src/${stem}.ts"`)) {
           found = true;
           break;
         }
@@ -643,6 +653,78 @@ if (process.argv.includes('--check-readme-metrics')) {
       }
     }
   }
+}
+
+// --- invariant-mechanism gate (E-gaps 5.2): every never/always/MUST has a mechanism ---
+// A rule with no machine behind it and no prose-only entry is a gap, not a
+// rule. Concepts live in docs/concepts/enforcement.md; each concept below
+// must have its anchor there, and every never/always/MUST line in content/
+// must match at least one concept. Adding a rule = table row + concept here
+// + mutation in gate-selftest.ts.
+if (process.argv.includes('--check-invariants')) {
+  const enfPath = join(import.meta.dirname, '..', 'docs', 'concepts', 'enforcement.md');
+  const enf = existsSync(enfPath) ? readFileSync(enfPath, 'utf8') : '';
+  if (!enf) errors.push('invariant gate: docs/concepts/enforcement.md is missing');
+  const CONCEPTS: Array<{ id: string; re: RegExp; anchor: string }> = [
+    { id: 'INV-triage', re: /triage|savepoint|flow 0/i, anchor: 'hooks/pipeline-guard.js' },
+    { id: 'INV-write-scope', re: /write-scope|delegat.*zoro|another crew member|crew member's (work|job)|dispatch another crew|one role at a time|embodies one|never.*mutat|mode: all|subagent|never forward|never dispatch|never.*route|never execute source/i, anchor: 'INV-write-scope' },
+    { id: 'INV-luffy-hub', re: /return to luffy|luffy routes?|routes? .*luffy|orchestrator|route reasons|check-in|decision log|next_action|flow stage|omitted|in-flight|exits 2/i, anchor: 'INV-hub' },
+    { id: 'INV-plan-nami', re: /only nami|nami's|without a GO|executor without/i, anchor: 'INV-plan-nami' },
+    { id: 'INV-banner', re: /banner/i, anchor: 'INV-banner' },
+    { id: 'INV-no-deploy', re: /deploys?|merging?|creates a PR|gh pr|push.*branch|terminal step|reaches a user|ship.*user/i, anchor: 'hooks/pretool-guard.js' },
+    { id: 'INV-heal-cap', re: /heal|4-phase|reproduce.*localize/i, anchor: 'INV-heal-cap' },
+    { id: 'INV-lane', re: /\blane\b|mission split|sub-mission|parallel.*safe|never.*parallel|\[PARALLEL\]|shortcut|full pipeline/i, anchor: 'INV-lane' },
+    { id: 'INV-evidence', re: /evidence|re-run|re run|claim|never validate|doubt|fresh (context|agent)|adversarial|no pass/i, anchor: 'INV-evidence' },
+    { id: 'INV-mode', re: /auto.?commit|auto mode|guided|semi|mode.*flip|steps cap|verbosity|auto never|never.*auto|never ask/i, anchor: 'INV-mode' },
+    { id: 'INV-quality', re: /weaken|threshold|coverage|lint|fake pass|silent.*pass|duplicat|complexity|dead code|strict|sonar|maintainability|assert green|failing suite|default-on|trigger|may raise|fixed numbers|invent tooling/i, anchor: 'INV-quality' },
+    { id: 'INV-tests', re: /\btdd\b|failing first|immutable|oracle|user.?test|flaky|intermittent|never.*test\b|gherkin|feature file|banned|translate-or-command|long unreachable|can never prove|never saw|small steps|never create inte|integration tests/i, anchor: 'INV-tests' },
+    { id: 'INV-resume', re: /restart|resume|continue\.json|continue from|never restarts?|never scan|state proves/i, anchor: 'INV-resume' },
+    { id: 'INV-english', re: /always english|one language only|conversational language/i, anchor: 'INV-english' },
+    { id: 'INV-plan-discipline', re: /zero-question|unverified path|\btbd\b|plan above or below|40-file|task index|stranger must|plan.*hole|regression|correctness.*break|never.*plan|never appended|2000\+ lines/i, anchor: 'INV-plan-discipline' },
+    { id: 'INV-security-contract', re: /secret|sanitiz|authz|\.safeParse|trust|inject|data, never|finding, not|dangerouslySetInnerHTML|owasp|stride|exploit|permission|pii|never trust|minor by default|severity|gets the matrix|expiry|revoke/i, anchor: 'INV-security-contract' },
+    { id: 'INV-git-hygiene', re: /commit|git add|revert|broken tree|staging|micro-commit|never.*tree|force-add|gitignore/i, anchor: 'INV-git-hygiene' },
+    { id: 'INV-conduct', re: /ego|yes-man|interrogat|trade-off|assume silently|batched question|sparring|recommendation|reconsider|pushes back|silently defer|verdict only/i, anchor: 'INV-conduct' },
+    { id: 'INV-mirror', re: /todo.*mirror|same response|transcript.*sufficient|task N\/M|echoing raw|compact.*table|report table|evidence link|never changes|always visible|audit surface|audit trail|never narrows|one-liner|mid-argument|overwrite|detailed summary|lags|never seeded|list never|must always see|never depends/i, anchor: 'INV-mirror' },
+    { id: 'INV-trust', re: /redefine.*rule|artifact trust|untrusted|HIGH trust|LOW-trust|instruction.*data|verbatim instructions|lesson/i, anchor: 'INV-trust' },
+    { id: 'INV-role', re: /never implements|never fixes|outside your role|luffy's, always|who never|never does what|11th member|finding yourself|coordinator|auditor/i, anchor: 'INV-role' },
+    { id: 'INV-role-conduct', re: /never refuse|never file|not verdicts|input, not|plain |generic assistant|embodies roles|fix the SKILL, never/i, anchor: 'INV-role-conduct' },
+    { id: 'INV-execution-misc', re: /inline.*main thread|worker|sequential|main thread IS the crew|frame persists|never drop the roles|inspection.*only|no network|no shell|read-only|pre-flow|never dispatch|wave|dispatch.*flow|never create config|never print|control-command|mid-task|posture/i, anchor: 'INV-execution-model' },
+    { id: 'INV-debug', re: /repro|root cause|symptom|minimal change|one theory|no debugging/i, anchor: 'INV-debug' },
+    { id: 'INV-a11y', re: /alt=|outline|aria|reduced-motion|contrast|gray-100|role\/label|focus|color-only/i, anchor: 'INV-a11y' },
+    { id: 'INV-code-facts', re: /operator|operand|almost always a bug|≠/i, anchor: 'INV-code-facts' },
+    { id: 'INV-contract', re: /contract|additive|versions|bump|deprecated/i, anchor: 'INV-contract' },
+    { id: 'INV-backend', re: /migration|ad-hoc|atomic|pagination|unbounded|N\+1|eager-load|invalidation|buffer whole|timeouts|cancellation|hang/i, anchor: 'INV-backend' },
+  ];
+  for (const c of CONCEPTS) {
+    if (enf && !enf.includes(c.anchor)) errors.push(`invariant gate: concept ${c.id} has no mechanism row in enforcement.md (anchor "${c.anchor}")`);
+  }
+  // The matrix documents the per-tier side of the hook concepts — a removed
+  // guard row must fail this gate, not slip through as prose.
+  for (const row of ['Irreversible-command guard', 'Turn-end enforcement']) {
+    const matrix = readFileSync(join(import.meta.dirname, '..', 'docs', 'reference', 'harness-matrix.md'), 'utf8');
+    if (!matrix.includes(row)) errors.push(`invariant gate: harness-matrix.md lost its "${row}" row`);
+  }
+  const lineRe = /\bnever\b|\balways\b|MUST/;
+  const scanRoots = [join(root, 'skills'), join(root, 'agents')];
+  const unreg: string[] = [];
+  const seen = new Set<string>();
+  const walkInv = (dir: string) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, e.name);
+      if (e.isDirectory()) { walkInv(full); continue; }
+      if (!e.name.endsWith('.md')) continue;
+      for (const line of readFileSync(full, 'utf8').split(/\r?\n/)) {
+        if (!lineRe.test(line)) continue;
+        const key = line.trim();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        if (!CONCEPTS.some((c) => c.re.test(line))) unreg.push(`${full.replace(root + '/', '')}: ${key.slice(0, 100)}`);
+      }
+    }
+  };
+  for (const d of scanRoots) walkInv(d);
+  for (const u of unreg) errors.push(`invariant without mechanism: ${u} — add a concept row in enforcement.md + a bucket above`);
+  if (!unreg.length && enf) console.log(`✓ invariants: every never/always/MUST maps to a mechanism row`);
 }
 
 // Conditional-assertion guard: an expect() reachable only inside a truthiness
