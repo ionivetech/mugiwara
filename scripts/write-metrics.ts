@@ -3,7 +3,7 @@
 // Deterministic, no network. Runs retrieval-eval --json and verify-install --json.
 
 import { execSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = join(import.meta.dirname, '..');
@@ -71,3 +71,27 @@ const outPath = join(outDir, 'latest.json');
 writeFileSync(outPath, JSON.stringify(metrics, null, 2) + '\n');
 console.log(`✓ wrote ${outPath}`);
 console.log(JSON.stringify(metrics, null, 2));
+
+// Sync the README metrics table in the same run, so neither AI nor human
+// opens a PR with stale numbers (the classic first-push CI red). The
+// --check-readme-metrics gate stays as the backstop: if these patterns stop
+// matching, it fails loudly instead of silently drifting.
+{
+  const readmePath = join(root, 'README.md');
+  const before = readFileSync(readmePath, 'utf8');
+  let after = before;
+  after = after.replace(
+    /\*\*[\d.]+%\*\*, \d+ probes/,
+    `**${rank1Str}**, ${probes} probes`,
+  );
+  after = after.replace(
+    /\*\*\d+\/\d+\*\*(, \d+ targets)/,
+    `**${pointersTotal}/${pointersTotal}**$1`,
+  );
+  if (after !== before) {
+    writeFileSync(readmePath, after);
+    console.log('✓ README metrics table synced');
+  } else {
+    console.log('✓ README metrics table already current');
+  }
+}
