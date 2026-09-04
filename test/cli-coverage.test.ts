@@ -3,10 +3,10 @@
 // handoff errors, sign keygen, unknown target). Uses run() + exit mock.
 import { describe, test, expect, vi, afterEach } from 'vitest';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
-import * as os from 'node:os';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run } from '../src/cli.ts';
+import { hasMinisign } from '../src/sign.ts';
 
 class ExitSignal extends Error { code: number; constructor(c: number) { super(`exit ${c}`); this.code = c; } }
 afterEach(() => vi.restoreAllMocks());
@@ -244,16 +244,18 @@ describe('command usage + state errors', () => {
 });
 
 describe('sign keygen', () => {
-  test('--gen-key pure backend writes keys under homedir', async () => {
+  // No homedir redirection on either runner (bun ignores $HOME, node freezes
+  // the ESM namespace) — exercise the minisign-absent error branch, which
+  // exits before touching the home directory. Pure-backend file writes are
+  // covered by sign.test.ts against a temp home.
+  test('--gen-key --backend minisign without the binary exits 1', async () => {
+    if (hasMinisign()) return;
     const dir = tmp();
-    const homeSpy = vi.spyOn(os, 'homedir').mockReturnValue(dir);
     try {
-      const r = await cap(['sign', '--gen-key', '--project', dir]);
-      expect(r.code).toBe(0);
-      expect(r.out).toContain('key pair ready');
-      expect(existsSync(join(dir, '.mugiwara', 'mugiwara.key'))).toBe(true);
+      const r = await cap(['sign', '--gen-key', '--backend', 'minisign', '--project', dir]);
+      expect(r.code).toBe(1);
+      expect(r.err).toContain('minisign not installed');
     } finally {
-      homeSpy.mockRestore();
       rmSync(dir, { recursive: true, force: true });
     }
   });
