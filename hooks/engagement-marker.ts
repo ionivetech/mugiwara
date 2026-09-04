@@ -68,9 +68,11 @@ async function main(): Promise<void> {
     let firstSeen = new Date().toISOString();
     let dispatchedAt = '';
     let plannedAt = '';
+    let bannerFlow: number | null = null;
+    let bannerFlowAt = '';
     if (existsSync(file)) {
       try {
-        const prev = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; first_seen?: string; executor_dispatched_at?: string; planner_dispatched_at?: string };
+        const prev = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; first_seen?: string; executor_dispatched_at?: string; planner_dispatched_at?: string; last_banner_flow?: number; last_banner_flow_at?: string };
         const sameSession = !sessionId || !prev.session_id || prev.session_id === sessionId;
         if (sameSession && typeof prev.first_seen === 'string') firstSeen = prev.first_seen;
         // A dispatch belongs to the session that made it. Carrying it into the
@@ -78,6 +80,10 @@ async function main(): Promise<void> {
         // because Zoro ran yesterday.
         if (sameSession && typeof prev.executor_dispatched_at === 'string') dispatchedAt = prev.executor_dispatched_at;
         if (sameSession && typeof prev.planner_dispatched_at === 'string') plannedAt = prev.planner_dispatched_at;
+        // A banner belongs to its session too — yesterday's banner must not
+        // silence today's missing one.
+        if (sameSession && typeof prev.last_banner_flow === 'number') bannerFlow = prev.last_banner_flow;
+        if (sameSession && typeof prev.last_banner_flow_at === 'string') bannerFlowAt = prev.last_banner_flow_at;
       } catch { /* corrupt marker — rewrite it */ }
     }
     if (dispatched) dispatchedAt = new Date().toISOString();
@@ -88,6 +94,8 @@ async function main(): Promise<void> {
       touched_at: new Date().toISOString(),
       executor_dispatched_at: dispatchedAt,
       planner_dispatched_at: plannedAt,
+      last_banner_flow: bannerFlow,
+      last_banner_flow_at: bannerFlowAt,
     }, null, 2) + '\n');
   } catch {
     // cannot write (read-only fs, permissions) — stay silent, guard stays off

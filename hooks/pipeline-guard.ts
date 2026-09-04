@@ -19,7 +19,7 @@
 //
 // Fails OPEN on any internal error. A fence that can wedge a session gets
 // disabled by its users, and then it fences nothing.
-import { existsSync, readFileSync, readdirSync, statSync, lstatSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, lstatSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -235,21 +235,75 @@ function planTouched(): boolean {
 }
 
 /**
- * A flow banner (`## Flow <n> —`) recorded in this session's mission files.
- * The banner is the only signal the user can see that the pipeline ran, and
- * Luffy's rule 10 already requires every flow stage to be logged in the
- * decision log — so the decision log and flow files are where banners live.
- * (E6: implemented here, not in the marker — no hook payload carries response
- * text, so the marker can never see a banner. Warning only, never a block:
- * banner detection depends on text matching, and a false block on a
- * formatting variance is what gets the whole fence disabled.)
+ * Flow-banner detection. The heading form is `## <emoji> Flow N — Crew (Role)`,
+ * so the match tolerates anything between `## ` and `Flow`. Warning only,
+ * never a block: banner detection matches response text, and a false block on
+ * a formatting variance is the outcome that gets the whole fence disabled.
  */
+// Transcripts are JSONL: the banner sits mid-line inside an escaped string,
+// so the transcript scan is not line-anchored. Warning-only, so a discussion
+// *about* a banner counting as one is benign.
+const TRANSCRIPT_BANNER_RE = /## .*Flow (\d+)\s*—/g;
+
+/** Highest flow stage announced in text, or 0 when no banner is present. */
+function extractBannerFlow(text: string): number {
+  let best = 0;
+  for (const m of text.matchAll(TRANSCRIPT_BANNER_RE)) {
+    const n = Number(m[1]);
+    if (Number.isFinite(n) && n > best) best = n;
+  }
+  return best;
+}
+
+/**
+ * Record last_banner_flow in the engagement marker (schema owned by
+ * engagement-marker.ts — this only writes its two fields, same-session
+ * scoped like the dispatch facts). The marker itself never sees response
+ * text (its payload is tool input), so the Stop hook — whose payload may
+ * carry transcript_path — owns detection. Never throws.
+ */
+function recordBannerFlow(flow: number, sessionId: string): void {
+  const file = join(cwd, '.mugiwara', '.engaged');
+  try {
+    const prev = existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown> : {};
+    const sameSession = !sessionId || typeof prev.session_id !== 'string' || prev.session_id === sessionId;
+    if (!sameSession) return;
+    writeFileSync(file, JSON.stringify({
+      ...prev,
+      touched_at: new Date().toISOString(),
+      last_banner_flow: flow,
+      last_banner_flow_at: new Date().toISOString(),
+    }, null, 2) + '\n');
+  } catch { /* fail open */ }
+}
+
+/** A banner recorded for this session (fresh scan already stored, or stored earlier). */
+function bannerRecorded(sessionId: string): boolean {
+  const file = join(cwd, '.mugiwara', '.engaged');
+  if (!existsSync(file)) return false;
+  try {
+    const m = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; last_banner_flow?: unknown; last_banner_flow_at?: string };
+    if (typeof m.last_banner_flow !== 'number' || !m.last_banner_flow_at) return false;
+    if (sessionId && m.session_id && m.session_id !== sessionId) return false;
+    return Date.now() - (Date.parse(m.last_banner_flow_at) || 0) < MARKER_TTL_MS;
+  } catch { return false; }
+}
+
+/** Highest banner in the Stop-hook transcript, or 0 when absent/unreadable. */
+function bannerFromTranscript(payload: Record<string, unknown>): number {
+  const p = payload.transcript_path;
+  if (typeof p !== 'string' || !p) return 0;
+  try {
+    if (!existsSync(p)) return 0;
+    return extractBannerFlow(readFileSync(p, 'utf8'));
+  } catch { return 0; }
+}
 function bannerThisSession(): boolean {
   const markerFile = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(markerFile)) return true; // no session anchor — no opinion
   const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart) return true;
-  const re = /^## Flow \d+\s—/m;
+  const re = /^## .*Flow (\d+)\s*—/m;
   try {
     const missionsDir = join(cwd, '.mugiwara', 'missions');
     for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
@@ -328,15 +382,19 @@ async function main(): Promise<void> {
         'deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.\n',
       );
     }
-    // --- check 4: the banner signal (E6, warning only) -----------------------
+    // --- check 4: the banner signal (warning only) -----------------------
     // Work recorded with state on disk but no flow banner this session. The
     // banner is the only visible signal the pipeline ran — its absence is how
-    // the original defect went unnoticed. Warning, never a block.
-    if ((sourceChangedNow || planTouched()) && !bannerThisSession()) {
+    // an off-pipeline session goes unnoticed. Warning, never a block.
+    // Signal order: fresh transcript scan (recorded to the marker) →
+    // marker's same-session record → mission-file fallback.
+    const transcriptFlow = bannerFromTranscript(payload);
+    if (transcriptFlow > 0) recordBannerFlow(transcriptFlow, sessionId);
+    if ((sourceChangedNow || planTouched()) && !bannerRecorded(sessionId) && !bannerThisSession()) {
       process.stderr.write(
-        '⚠ Mugiwara: work recorded with no flow banner in this session. The banner is ' +
-        'the only signal the user has that the pipeline ran. Announce ' +
-        '`## Flow N — <crew>` at each stage.\n',
+        '⚠ Mugiwara: work recorded with no flow banner this session. The banner is the ' +
+        'only signal the user has that the pipeline ran. Open each stage with ' +
+        '`## <emoji> Flow N — Crew (Role)`.\n',
       );
     }
     return;

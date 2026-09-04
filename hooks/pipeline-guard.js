@@ -2,7 +2,7 @@
 // @bun
 
 // hooks/pipeline-guard.ts
-import { existsSync, readFileSync, readdirSync, statSync, lstatSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync, lstatSync, writeFileSync } from "fs";
 import { execFileSync } from "child_process";
 import { homedir } from "os";
 import { join } from "path";
@@ -179,6 +179,59 @@ function planTouched() {
   } catch {}
   return false;
 }
+var TRANSCRIPT_BANNER_RE = /## .*Flow (\d+)\s*\u2014/g;
+function extractBannerFlow(text) {
+  let best = 0;
+  for (const m of text.matchAll(TRANSCRIPT_BANNER_RE)) {
+    const n = Number(m[1]);
+    if (Number.isFinite(n) && n > best)
+      best = n;
+  }
+  return best;
+}
+function recordBannerFlow(flow, sessionId) {
+  const file = join(cwd, ".mugiwara", ".engaged");
+  try {
+    const prev = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+    const sameSession = !sessionId || typeof prev.session_id !== "string" || prev.session_id === sessionId;
+    if (!sameSession)
+      return;
+    writeFileSync(file, JSON.stringify({
+      ...prev,
+      touched_at: new Date().toISOString(),
+      last_banner_flow: flow,
+      last_banner_flow_at: new Date().toISOString()
+    }, null, 2) + `
+`);
+  } catch {}
+}
+function bannerRecorded(sessionId) {
+  const file = join(cwd, ".mugiwara", ".engaged");
+  if (!existsSync(file))
+    return false;
+  try {
+    const m = JSON.parse(readFileSync(file, "utf8"));
+    if (typeof m.last_banner_flow !== "number" || !m.last_banner_flow_at)
+      return false;
+    if (sessionId && m.session_id && m.session_id !== sessionId)
+      return false;
+    return Date.now() - (Date.parse(m.last_banner_flow_at) || 0) < MARKER_TTL_MS;
+  } catch {
+    return false;
+  }
+}
+function bannerFromTranscript(payload) {
+  const p = payload.transcript_path;
+  if (typeof p !== "string" || !p)
+    return 0;
+  try {
+    if (!existsSync(p))
+      return 0;
+    return extractBannerFlow(readFileSync(p, "utf8"));
+  } catch {
+    return 0;
+  }
+}
 function bannerThisSession() {
   const markerFile = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(markerFile))
@@ -186,7 +239,7 @@ function bannerThisSession() {
   const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart)
     return true;
-  const re = /^## Flow \d+\s\u2014/m;
+  const re = /^## .*Flow (\d+)\s*\u2014/m;
   try {
     const missionsDir = join(cwd, ".mugiwara", "missions");
     for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
@@ -244,8 +297,11 @@ async function main() {
       process.stderr.write("\u26A0 Mugiwara: a plan doc (missions/<mission>/plan.md) was written this session, " + "but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. " + "Only Nami writes the plan \u2014 dispatch nami-planner, or record the plan as a " + `deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.
 `);
     }
-    if ((sourceChangedNow || planTouched()) && !bannerThisSession()) {
-      process.stderr.write("\u26A0 Mugiwara: work recorded with no flow banner in this session. The banner is " + "the only signal the user has that the pipeline ran. Announce " + "`## Flow N \u2014 <crew>` at each stage.\n");
+    const transcriptFlow = bannerFromTranscript(payload);
+    if (transcriptFlow > 0)
+      recordBannerFlow(transcriptFlow, sessionId);
+    if ((sourceChangedNow || planTouched()) && !bannerRecorded(sessionId) && !bannerThisSession()) {
+      process.stderr.write("\u26A0 Mugiwara: work recorded with no flow banner this session. The banner is the " + "only signal the user has that the pipeline ran. Open each stage with " + "`## <emoji> Flow N \u2014 Crew (Role)`.\n");
     }
     return;
   }

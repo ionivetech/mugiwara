@@ -214,3 +214,54 @@ test('marker: a zoro dispatch records the executor fact, not the planner one', {
     expect(marker.planner_dispatched_at).toBeFalsy();
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---------- N2: the banner signal — work with state but no banner warns ----------
+
+const bannerState = (dir: string): void => {
+  const d = join(dir, '.mugiwara', 'missions', 'm');
+  mkdirSync(d, { recursive: true });
+  writeFileSync(join(d, 'state.json'), JSON.stringify({ mission: 'm', lane: 'full' }));
+  writeFileSync(join(dir, 'app.js'), 'code\n');
+};
+
+test('guard banner: work + state, no banner anywhere → warns naming the banner', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    bannerState(dir);
+    const r = hook(GUARD, dir, { session_id: 's1' });
+    expect(r.status).toBe(0);
+    expect(r.err).toContain('no flow banner');
+    expect(r.err).toContain('## <emoji> Flow N');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard banner: transcript banner suppresses warning and records last_banner_flow', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    bannerState(dir);
+    const transcript = join(dir, 'transcript.jsonl');
+    writeFileSync(transcript, '{"role":"assistant","content":"## ⚔️ Flow 3 — Zoro (Execution)\\nwork\\n"}\n');
+    const r = hook(GUARD, dir, { session_id: 's1', transcript_path: transcript });
+    expect(r.err).not.toContain('no flow banner');
+    const marker = JSON.parse(readFileSync(join(dir, '.mugiwara', '.engaged'), 'utf8'));
+    expect(marker.last_banner_flow).toBe(3);
+    // a later marker write in the same session preserves the record
+    engage(dir);
+    const again = JSON.parse(readFileSync(join(dir, '.mugiwara', '.engaged'), 'utf8'));
+    expect(again.last_banner_flow).toBe(3);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard banner: banner in mission files suppresses warning without transcript', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    bannerState(dir);
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    writeFileSync(join(d, 'decisions.md'), '## Flow 2 — Nami (Planning)\n');
+    const r = hook(GUARD, dir, { session_id: 's1' });
+    expect(r.err).not.toContain('no flow banner');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
