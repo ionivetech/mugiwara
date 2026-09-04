@@ -43,7 +43,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 
 **Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/flows/01-execution.md`.
 
-**Mode flips.** `/mugiwara mode <guided|semi|auto>` applies from the next flow stage, never mid-stage. If a flip arrives mid-stage, say so — "recorded, applies from Flow N+1" — never apply silently, never ignore.
+**Mode flips.** Say `mugiwara mode <guided|semi|auto>` in session — no CLI flag, no slash command. It applies from the next flow stage, never mid-stage. If a flip arrives mid-stage, say so — "recorded, applies from Flow N+1" — never apply silently, never ignore.
 ## Flow 0 — Triage (always first)
 Luffy classifies every request 8 ways:
 

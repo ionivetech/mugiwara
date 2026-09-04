@@ -144,13 +144,8 @@ autonomously to ship, never the other members'. If a requirement is unclear,
 the owning agent brainstorms with Usopp, Luffy makes the call, and the crew
 proceeds. Only a genuine blocker or the heal halt pauses.
 
-**How to use.**
-
-```
-/mugiwara guided | semi | auto
-```
-
-or in-session phrase `mugiwara mode auto`, or edit `.mugiwara/config`.
+**How to use.** Say `mugiwara mode <guided|semi|auto>` in session — no CLI flag,
+no slash command — or edit `.mugiwara/config`.
 
 **Scenario.** Day session in `guided` so you steer every decision; a Friday
 night batch in `auto` so the crew ships the plan and you review the branch on
