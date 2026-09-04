@@ -968,5 +968,151 @@ console.log('\nW12 — doc integrity stale path');
   }
 }
 
+// --- E1: delete ## Before you start from luffy-orchestrator.md → validate-content fails ---
+console.log('\nE1 — luffy entry protocol');
+{
+  const lf = join(root, 'content', 'agents', 'luffy-orchestrator.md');
+  const original = readFileSync(lf, 'utf8');
+  try {
+    const broken = original.replace('## Before you start', '## Before you begin');
+    if (broken === original) {
+      console.error('✗ E1: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(lf, broken);
+      assert('luffy section renamed → validate-content fails', false, () => run('E1', 'bun scripts/validate-content.ts'));
+    }
+  } finally {
+    writeFileSync(lf, original);
+    assert('restored → content passes', true, () => run('E1-restore', 'bun scripts/validate-content.ts'));
+  }
+}
+
+// --- E2: restore the luffy exemption → the gate goes blind, selftest catches it ---
+console.log('\nE2 — luffy exemption');
+{
+  const vf = join(root, 'scripts', 'validate-content.ts');
+  const lf = join(root, 'content', 'agents', 'luffy-orchestrator.md');
+  const vOrig = readFileSync(vf, 'utf8');
+  const lOrig = readFileSync(lf, 'utf8');
+  try {
+    const vBroken = vOrig.replace(
+      "  const name = f.replace(/\\.md$/, '');\n  const text = readFileSync(join(agentDir, f), 'utf8');",
+      "  const name = f.replace(/\\.md$/, '');\n  if (name === 'luffy-orchestrator') continue;\n  const text = readFileSync(join(agentDir, f), 'utf8');",
+    );
+    const lBroken = lOrig.replace('## Before you start', '## Before you begin');
+    if (vBroken === vOrig || lBroken === lOrig) {
+      console.error('✗ E2: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(vf, vBroken);
+      writeFileSync(lf, lBroken);
+      // Blindness proof: with the exemption back, a captain with no checklist
+      // passes the gate. Demonstrating that blindness IS the passing test —
+      // it proves the gate can go blind, which is what this mutation guards.
+      if (run('E2', 'bun scripts/validate-content.ts')) {
+        passed++;
+        console.log('  ✓ E2: exemption blinds the gate — regression caught');
+      } else {
+        console.error('✗ E2: gate still red — exemption no longer blinds');
+        failed++;
+      }
+    }
+  } finally {
+    writeFileSync(vf, vOrig);
+    writeFileSync(lf, lOrig);
+    assert('restored → content passes', true, () => run('E2-restore', 'bun scripts/validate-content.ts'));
+  }
+}
+
+// --- E3: restore the source-only predicate → artifact case fails ---
+console.log('\nE3 — source-only predicate');
+{
+  const gf = join(root, 'hooks', 'pipeline-guard.ts');
+  const original = readFileSync(gf, 'utf8');
+  try {
+    const broken = original.replace('if (!sourceChangedNow && !artifactWorkNow()) return;', 'if (!sourceChangedNow) return;');
+    if (broken === original) {
+      console.error('✗ E3: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(gf, broken);
+      execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+      assert('source-only predicate → artifact case fails', false, () => run('E3', 'bunx vitest run test/hooks.test.ts -t "artifacts written"'));
+    }
+  } finally {
+    writeFileSync(gf, original);
+    execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+    assert('restored → artifact case passes', true, () => run('E3-restore', 'bunx vitest run test/hooks.test.ts -t "artifacts written"'));
+  }
+}
+
+// --- E4: remove gh pr create from the FORBIDDEN table → deny case fails ---
+console.log('\nE4 — forbidden table');
+{
+  const gf = join(root, 'src', 'guards.ts');
+  const original = readFileSync(gf, 'utf8');
+  try {
+    const broken = original.replace("  [/\\bgh\\s+pr\\s+(create|merge|ready)\\b/, 'opening or merging a PR'],\n", '');
+    if (broken === original) {
+      console.error('✗ E4: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(gf, broken);
+      execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+      assert('missing pr-create row → deny case fails', false, () => run('E4', 'bunx vitest run test/hooks.test.ts -t "gh pr create"'));
+    }
+  } finally {
+    writeFileSync(gf, original);
+    execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+    assert('restored → deny case passes', true, () => run('E4-restore', 'bunx vitest run test/hooks.test.ts -t "gh pr create"'));
+  }
+}
+
+// --- E5-overcorrection: block every git push → feature-push case fails ---
+console.log('\nE5 — over-broad push matcher');
+{
+  const gf = join(root, 'src', 'guards.ts');
+  const original = readFileSync(gf, 'utf8');
+  try {
+    const broken = original.replace(
+      "  [/\\bgit\\s+push\\b[^|;&]*\\b(main|master|production|release)\\b/, 'pushing to a protected branch'],",
+      "  [/\\bgit\\s+push\\b[^|;&]*\\b(main|master|production|release)\\b/, 'pushing to a protected branch'],\n  [/\\bgit\\s+push\\b/, 'pushing anything'],",
+    );
+    if (broken === original) {
+      console.error('✗ E5: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(gf, broken);
+      execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+      assert('push-all matcher → feature-push case fails', false, () => run('E5', 'bunx vitest run test/hooks.test.ts -t "feature-branch push"'));
+    }
+  } finally {
+    writeFileSync(gf, original);
+    execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+    assert('restored → feature-push passes', true, () => run('E5-restore', 'bunx vitest run test/hooks.test.ts -t "feature-branch push"'));
+  }
+}
+
+// --- E6: remove the harness-matrix guard row → --check-invariants fails ---
+console.log('\nE6 — matrix guard row');
+{
+  const mf = join(root, 'docs', 'reference', 'harness-matrix.md');
+  const original = readFileSync(mf, 'utf8');
+  try {
+    const broken = original.replace(/Irreversible-command guard/g, 'Irreversible-command sentry');
+    if (broken === original) {
+      console.error('✗ E6: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(mf, broken);
+      assert('guard row renamed → --check-invariants fails', false, () => run('E6', 'bun scripts/validate-content.ts --check-invariants'));
+    }
+  } finally {
+    writeFileSync(mf, original);
+    assert('restored → invariants pass', true, () => run('E6-restore', 'bun scripts/validate-content.ts --check-invariants'));
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

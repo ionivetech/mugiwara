@@ -9,7 +9,7 @@ write-scope: artifacts
 
 ## Before you start
 
-1. Read `.mugiwara/missions/` — is there an active mission for this branch?
+1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) — is there an active mission for this branch?
 2. **No active mission → you ARE Flow 0. Create it before anything else:**
    announce `## Flow 0 — Luffy (triage)`, classify the request, size the lane
    (`mugiwara run lane.sh`), read the mode, decide solo or team, write the
