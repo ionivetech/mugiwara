@@ -1294,8 +1294,8 @@ console.log('\nN9 — platform-count mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      '9 via install (Claude, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity) + 3 via marketplace manifest (Cursor, Kimi, Pi)',
-      'Claude, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, and 5 more',
+      ' — 9 via install, 3 via marketplace manifest.',
+      '.',
     );
     if (broken === original) {
       console.error('✗ N9: mutation target not found');
@@ -1307,6 +1307,128 @@ console.log('\nN9 — platform-count mutation');
   } finally {
     writeFileSync(f, original);
     assert('restored → doc-integrity passes', true, () => run('N9-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- T1 mutation: team_member back in DEFAULT_CONFIG → --check-config red ---
+console.log('\nT1 — removed-key resurrection mutation');
+{
+  const f = join(root, 'src', 'config.ts');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace(
+      "  '# -- Git --------------------------------------------------',",
+      "  '# team_member=jane-doe            # resurrected key (must fail)',\n  '# -- Git --------------------------------------------------',",
+    );
+    if (broken === original) {
+      console.error('✗ T1: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('resurrected config key → check-config fails', false, () => run('T1', 'bun scripts/validate-content.ts --check-config'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → check-config passes', true, () => run('T1-restore', 'bun scripts/validate-content.ts --check-config'));
+  }
+}
+
+// --- T2 mutation: roster section removed from mugiwara-orchestration → doc-integrity red ---
+console.log('\nT2 — roster-section mutation');
+{
+  const f = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace('## Solo or team (Flow 0)\n', '');
+    if (broken === original) {
+      console.error('✗ T2: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('roster section removed → doc-integrity fails', false, () => run('T2', 'bun scripts/validate-content.ts --check-doc-integrity'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('T2-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- T3 mutation: closure blocker check neutered → team-roster tests 7-9 red ---
+console.log('\nT3 — closure-gate mutation');
+{
+  const f = join(root, 'src', 'mission.ts');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace('for (const who of roster) {', 'for (const who of []) {');
+    if (broken === original) {
+      console.error('✗ T3: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('closure gate neutered → roster tests fail', false, () => run('T3', 'bun test test/team-roster.test.ts -t "closure"'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → roster tests pass', true, () => run('T3-restore', 'bun test test/team-roster.test.ts -t "closure"'));
+  }
+}
+
+// --- T4 mutation: member list reads continue files only → roster test 12 red ---
+console.log('\nT4 — member-union mutation');
+{
+  const f = join(root, 'src', 'cli.ts');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace(
+      'if (!entries.some((e) => e.mission === s.mission && e.member === s.member)) {',
+      'if (false) {',
+    );
+    if (broken === original) {
+      console.error('✗ T4: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('union disabled → test 12 fails', false, () => run('T4', 'bun test test/team-roster.test.ts -t "continue file deleted"'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → test 12 passes', true, () => run('T4-restore', 'bun test test/team-roster.test.ts -t "continue file deleted"'));
+  }
+}
+
+// --- T5 mutation: orphan resume allowed → roster test 13 red ---
+console.log('\nT5 — orphan-resume mutation');
+{
+  const f = join(root, 'src', 'cli.ts');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original
+      .split('if (!memberState && r.entry.member !== null) {').join('if (false) {')
+      .split('if (!memberState) {').join('if (false) {');
+    if (broken === original) {
+      console.error('✗ T5: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('orphan resume allowed → test 13 fails', false, () => run('T5', 'bun test test/team-roster.test.ts -t "resume refused"'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → test 13 passes', true, () => run('T5-restore', 'bun test test/team-roster.test.ts -t "resume refused"'));
+  }
+}
+
+// --- T6 mutation: fake command in a runbook → doc-integrity red ---
+console.log('\nT6 — fake-runbook-command mutation');
+{
+  const f = join(root, 'docs', 'runbooks', 'troubleshooting.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    writeFileSync(f, `${original}\nRun \`mugiwara frobnicate\` to recalibrate.\n`);
+    assert('fake runbook verb → doc-integrity fails', false, () => run('T6', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('T6-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
   }
 }
 

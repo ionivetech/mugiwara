@@ -505,6 +505,31 @@ if (integrityArg !== -1) {
   if (!orchSkill.includes('## Flow summary line')) {
     errors.push('doc-integrity: mugiwara-orchestration SKILL.md lost its "## Flow summary line" contract');
   }
+  // Roster contract: Flow 0 must decide solo-vs-team before the first
+  // savepoint fixes the state layout. Without this section the roster has no
+  // source and member names drift back to free-form typing.
+  if (!orchSkill.includes('## Solo or team (Flow 0)')) {
+    errors.push('doc-integrity: mugiwara-orchestration SKILL.md lost its "## Solo or team (Flow 0)" roster contract');
+  }
+  // Runbook-command gate: every `mugiwara <verb>` taught in docs/runbooks/
+  // must exist in src/cli.ts. A runbook is followed literally — a dangling
+  // verb strands the reader mid-procedure.
+  {
+    const runbooksDir = join(import.meta.dirname, '..', 'docs', 'runbooks');
+    if (existsSync(runbooksDir)) {
+      for (const f of readdirSync(runbooksDir).filter((n) => n.endsWith('.md'))) {
+        const text = readFileSync(join(runbooksDir, f), 'utf8');
+        for (const m of text.matchAll(/`mugiwara ([a-z-]+)/g)) {
+          const verb = m[1];
+          if (verb.startsWith('--')) continue;
+          if (IN_SESSION.has(verb)) continue;
+          if (!cliSrc.includes(`case '${verb}'`)) {
+            errors.push(`doc-integrity: runbook docs/runbooks/${f} teaches "mugiwara ${verb}" but src/cli.ts has no case '${verb}'`);
+          }
+        }
+      }
+    }
+  }
   // N9: the platform count must stay qualified — 9 installable + 3 marketplace.
   const readme = readFileSync(join(import.meta.dirname, '..', 'README.md'), 'utf8');
   if (readme.includes('12 platforms') && !readme.includes('via marketplace manifest')) {
@@ -637,6 +662,21 @@ if (process.argv.includes('--check-config')) {
     const undocumented = accepted.filter((v) => !documented.includes(v));
     if (missing.length) errors.push(`config ${key}: documented but rejected by code: ${missing.join(', ')}`);
     if (undocumented.length) errors.push(`config ${key}: accepted by code but undocumented: ${undocumented.join(', ')}`);
+  }
+  // Removed-key gate: keys deleted on purpose must not come back through the
+  // docs. A doc that teaches a key the code no longer reads is worse than a
+  // missing doc.
+  const REMOVED_KEYS = ['team_member', 'team_members'];
+  const walkMd = (dir: string): string[] =>
+    listFiles(dir).filter((f) => f.endsWith('.md')).map((f) => join(dir, f));
+  for (const key of REMOVED_KEYS) {
+    for (const file of walkMd(join(import.meta.dirname, '..', 'docs'))
+        .concat(walkMd(join(import.meta.dirname, '..', 'content')))
+        .concat([join(import.meta.dirname, '..', 'README.md')])) {
+      if (readFileSync(file, 'utf8').includes(key)) {
+        errors.push(`config-drift: ${file} references removed config key "${key}"`);
+      }
+    }
   }
   if (!errors.some(e => e.startsWith('config-drift') || e.startsWith('config '))) {
     console.log(`✓ config in sync: ${defaultKeys.length} keys (${defaultKeys.join(', ')})`);
