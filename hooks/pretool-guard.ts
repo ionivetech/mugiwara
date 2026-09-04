@@ -10,24 +10,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { checkCommand, refusalMessage } from '../src/guards.ts';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
-
-const FORBIDDEN: Array<[RegExp, string]> = [
-  [/\bgh\s+pr\s+(create|merge|ready)\b/, 'opening or merging a PR'],
-  [/\bgh\s+release\s+create\b/, 'creating a release'],
-  [/\bgit\s+merge\b/, 'merging a branch'],
-  // Protected branches and force pushes only. A plain
-  // `git push -u origin <feature-branch>` — the crew's own terminal step —
-  // must stay allowed, so `main|master|...` is matched as a whole word.
-  [/\bgit\s+push\b[^|;&]*\b(main|master|production|release)\b/, 'pushing to a protected branch'],
-  [/\bgit\s+push\b[^|;&]*--force/, 'force-pushing'],
-  [/\bnpm\s+publish\b|\byarn\s+publish\b|\bpnpm\s+publish\b/, 'publishing a package'],
-  [/\bkubectl\s+(apply|delete|rollout)\b/, 'changing a cluster'],
-  [/\bterraform\s+(apply|destroy)\b/, 'changing infrastructure'],
-  [/\bdocker\s+push\b/, 'pushing an image'],
-  [/\baws\s+\w+\s+(create|delete|update|put)\b/, 'changing cloud resources'],
-];
 
 type Enforce = 'off' | 'warn' | 'block';
 
@@ -59,12 +44,9 @@ async function main(): Promise<void> {
     const toolInput = (payload.tool_input ?? {}) as Record<string, unknown>;
     const command = typeof toolInput.command === 'string' ? toolInput.command : '';
     if (!command) return;
-    for (const [re, action] of FORBIDDEN) {
-      if (!re.test(command)) continue;
-      const reason =
-        `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` +
-        `deploys — the human does, from the branch and the verdict the crew hands over. ` +
-        `Run it yourself, or set enforce=off in .mugiwara/config.`;
+    const action = checkCommand(command);
+    if (action) {
+      const reason = refusalMessage(action);
       if (enforce === 'warn') {
         process.stderr.write(`⚠ ${reason}\n`);
         return;

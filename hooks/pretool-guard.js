@@ -5,7 +5,8 @@
 import { existsSync, readFileSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
-var cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+
+// src/guards.ts
 var FORBIDDEN = [
   [/\bgh\s+pr\s+(create|merge|ready)\b/, "opening or merging a PR"],
   [/\bgh\s+release\s+create\b/, "creating a release"],
@@ -18,6 +19,19 @@ var FORBIDDEN = [
   [/\bdocker\s+push\b/, "pushing an image"],
   [/\baws\s+\w+\s+(create|delete|update|put)\b/, "changing cloud resources"]
 ];
+function checkCommand(command) {
+  for (const [re, action] of FORBIDDEN) {
+    if (re.test(command))
+      return action;
+  }
+  return null;
+}
+function refusalMessage(action) {
+  return `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` + `deploys — the human does, from the branch and the verdict the crew hands over. ` + `Run it yourself, or set enforce=off in .mugiwara/config.`;
+}
+
+// hooks/pretool-guard.ts
+var cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 function readEnforce() {
   for (const base of [cwd, homedir()]) {
     if (!base)
@@ -54,10 +68,9 @@ async function main() {
     const command = typeof toolInput.command === "string" ? toolInput.command : "";
     if (!command)
       return;
-    for (const [re, action] of FORBIDDEN) {
-      if (!re.test(command))
-        continue;
-      const reason = `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` + `deploys \u2014 the human does, from the branch and the verdict the crew hands over. ` + `Run it yourself, or set enforce=off in .mugiwara/config.`;
+    const action = checkCommand(command);
+    if (action) {
+      const reason = refusalMessage(action);
       if (enforce === "warn") {
         process.stderr.write(`\u26A0 ${reason}
 `);
