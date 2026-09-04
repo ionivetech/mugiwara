@@ -201,6 +201,56 @@ function markEngaged(cwd) {
   } catch { /* fail open — no marker, no policing */ }
 }
 
+// Git working tree changed outside .mugiwara/, or null when git is unreadable
+// (no opinion — the caller treats null as "cannot tell", never as clean).
+function gitSourceChanged(cwd) {
+  try {
+    const out = execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    return out.split(/\r?\n/).map((l) => l.slice(3).trim()).filter(Boolean).some((p) => !p.startsWith('.mugiwara/'));
+  } catch { return null; }
+}
+
+function markerStart(cwd) {
+  try {
+    const marker = JSON.parse(readFileSync(join(cwd, '.mugiwara', '.engaged'), 'utf8'));
+    return Date.parse(marker.first_seen ?? '') || Date.parse(marker.touched_at ?? '') || 0;
+  } catch { return 0; }
+}
+
+function artifactWorkSince(cwd, start) {
+  try {
+    const stack = ['missions', 'spec', 'plans'].map((s) => join(cwd, '.mugiwara', s)).filter((p) => existsSync(p));
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const e of readdirSync(cur, { withFileTypes: true })) {
+        const full = join(cur, e.name);
+        try {
+          if (e.isDirectory()) { stack.push(full); continue; }
+          if (statSync(full).mtimeMs + 1000 >= start) return true;
+        } catch { /* skip */ }
+      }
+    }
+  } catch { /* no artifact opinion */ }
+  return false;
+}
+
+function triageOnDisk(cwd) {
+  const base = join(cwd, '.mugiwara', 'missions');
+  if (!existsSync(base)) return false;
+  for (const e of readdirSync(base, { withFileTypes: true })) {
+    if (!e.isDirectory()) continue;
+    for (const f of readdirSync(join(base, e.name))) {
+      const stem = f.replace(/\.json$/, '');
+      if (!f.endsWith('.json') || stem === 'continue' || stem.startsWith('continue-')) continue;
+      try {
+        const s = JSON.parse(readFileSync(join(base, e.name, f), 'utf8'));
+        if (s && typeof s.mission === 'string' && s.mission) return true;
+      } catch { /* corrupt savepoint is not triage */ }
+    }
+  }
+  return false;
+}
+
 // Check-1 port: engaged + (source or artifact work) + no triage on disk.
 // Crisp on-disk facts only, mirroring hooks/pipeline-guard.ts. Fail open:
 // any error returns null (no opinion), never a false accusation.
@@ -208,44 +258,12 @@ function sessionWorkNoTriage(cwd) {
   try {
     if (readEnforce(cwd) === 'off') return null;
     if (!existsSync(join(cwd, '.mugiwara', '.engaged'))) return null;
-    let source = false;
-    try {
-      const out = execFileSync('git', ['status', '--porcelain'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-      source = out.split(/\r?\n/).map((l) => l.slice(3).trim()).filter(Boolean).some((p) => !p.startsWith('.mugiwara/'));
-    } catch { return null; }
-    let artifacts = false;
-    try {
-      const marker = JSON.parse(readFileSync(join(cwd, '.mugiwara', '.engaged'), 'utf8'));
-      const start = Date.parse(marker.first_seen ?? '') || Date.parse(marker.touched_at ?? '') || 0;
-      if (start) {
-        const stack = ['missions', 'spec', 'plans'].map((s) => join(cwd, '.mugiwara', s)).filter((p) => existsSync(p));
-        while (stack.length && !artifacts) {
-          const cur = stack.pop();
-          for (const e of readdirSync(cur, { withFileTypes: true })) {
-            const full = join(cur, e.name);
-            try {
-              if (e.isDirectory()) { stack.push(full); continue; }
-              if (statSync(full).mtimeMs + 1000 >= start) { artifacts = true; break; }
-            } catch { /* skip */ }
-          }
-        }
-      }
-    } catch { /* no artifact opinion */ }
+    const source = gitSourceChanged(cwd);
+    if (source === null) return null;
+    const start = markerStart(cwd);
+    const artifacts = start ? artifactWorkSince(cwd, start) : false;
     if (!source && !artifacts) return null;
-    const base = join(cwd, '.mugiwara', 'missions');
-    if (existsSync(base)) {
-      for (const e of readdirSync(base, { withFileTypes: true })) {
-        if (!e.isDirectory()) continue;
-        for (const f of readdirSync(join(base, e.name))) {
-          const stem = f.replace(/\.json$/, '');
-          if (!f.endsWith('.json') || stem === 'continue' || stem.startsWith('continue-')) continue;
-          try {
-            const s = JSON.parse(readFileSync(join(base, e.name, f), 'utf8'));
-            if (s && typeof s.mission === 'string' && s.mission) return null;
-          } catch { /* corrupt savepoint is not triage */ }
-        }
-      }
-    }
+    if (triageOnDisk(cwd)) return null;
     return (
       'Mugiwara: this session did work (source and/or .mugiwara artifacts) but no ' +
       'Flow 0 triage is on disk. Run Flow 0 (classify, size the lane, write the decision log).'

@@ -84,6 +84,18 @@ function sourceChanged(): boolean {
 }
 
 /**
+ * Session anchor for the session-scoped scans: first_seen, else touched_at,
+ * else 0 (unknown). Shared by artifactWorkNow and bannerThisSession — one
+ * definition, not two copies. Fail open.
+ */
+function sessionStartFrom(markerFile: string): number {
+  try {
+    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string; touched_at?: string };
+    return Date.parse(m.first_seen ?? '') || Date.parse(m.touched_at ?? '') || 0;
+  } catch { return 0; }
+}
+
+/**
  * Artifact work in this session: files written under .mugiwara/missions,
  * .mugiwara/spec, or .mugiwara/plans since the session's first-seen marker.
  * Work is not only source edits — a brainstorm that produced a spec, a plan,
@@ -94,11 +106,7 @@ function sourceChanged(): boolean {
 function artifactWorkNow(): boolean {
   const markerFile = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(markerFile)) return false;
-  let sessionStart = 0;
-  try {
-    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string; touched_at?: string };
-    sessionStart = Date.parse(m.first_seen ?? '') || Date.parse(m.touched_at ?? '') || 0;
-  } catch { return false; }
+  const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart) return false;
   try {
     const stack = ['missions', 'spec', 'plans']
@@ -236,11 +244,7 @@ function planTouched(): boolean {
 function bannerThisSession(): boolean {
   const markerFile = join(cwd, '.mugiwara', '.engaged');
   if (!existsSync(markerFile)) return true; // no session anchor — no opinion
-  let sessionStart = 0;
-  try {
-    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string; touched_at?: string };
-    sessionStart = Date.parse(m.first_seen ?? '') || Date.parse(m.touched_at ?? '') || 0;
-  } catch { return true; }
+  const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart) return true;
   const re = /^## Flow \d+\s—/m;
   try {

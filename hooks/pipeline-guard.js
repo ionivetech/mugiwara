@@ -50,17 +50,19 @@ function sourceChanged() {
     return false;
   }
 }
+function sessionStartFrom(markerFile) {
+  try {
+    const m = JSON.parse(readFileSync(markerFile, "utf8"));
+    return Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
+  } catch {
+    return 0;
+  }
+}
 function artifactWorkNow() {
   const markerFile = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(markerFile))
     return false;
-  let sessionStart = 0;
-  try {
-    const m = JSON.parse(readFileSync(markerFile, "utf8"));
-    sessionStart = Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
-  } catch {
-    return false;
-  }
+  const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart)
     return false;
   try {
@@ -180,13 +182,7 @@ function bannerThisSession() {
   const markerFile = join(cwd, ".mugiwara", ".engaged");
   if (!existsSync(markerFile))
     return true;
-  let sessionStart = 0;
-  try {
-    const m = JSON.parse(readFileSync(markerFile, "utf8"));
-    sessionStart = Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
-  } catch {
-    return true;
-  }
+  const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart)
     return true;
   const re = /^## Flow \d+\s\u2014/m;
