@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,6 +9,29 @@ import {
   runInitiative,
   SUB_MISSIONS_HEADER,
 } from '../src/initiative.ts';
+import { run as runCli } from '../src/cli.ts';
+
+afterEach(() => vi.restoreAllMocks());
+
+async function cli(args: string[]): Promise<{ code: number | null; out: string; err: string }> {
+  let code: number | null = 0;
+  let out = '', err = '';
+  const exitSpy = vi.spyOn(process, 'exit').mockImplementation(((c: number) => { throw { code: c }; }) as never);
+  const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((s: string) => true) as never);
+  try {
+    await runCli(args);
+  } catch (e) {
+    code = typeof e === 'object' && e !== null && 'code' in (e as object) ? (e as { code: number }).code : 99;
+  } finally {
+    // read calls BEFORE restore — restore resets them
+    out = logSpy.mock.calls.map((c) => c.join(' ')).join('\n') + writeSpy.mock.calls.map((c) => String(c[0])).join('');
+    err = errSpy.mock.calls.map((c) => c.join(' ')).join('\n');
+    exitSpy.mockRestore(); logSpy.mockRestore(); errSpy.mockRestore(); writeSpy.mockRestore();
+  }
+  return { code, out, err };
+}
 
 const plan = (header: string, rows: string[]): string =>
   `# Plan\n\n## Sub-missions\n\n${header}\n|----|------|----------|--------|--------|-----------|---------------|\n${rows.join('\n')}\n`;
@@ -120,5 +143,43 @@ describe('initiative sub-mission parsing (N1)', () => {
 
   it('splitTouchedFiles handles commas and whitespace', () => {
     expect(splitTouchedFiles('a.ts, b.ts  c.ts,')).toEqual(['a.ts', 'b.ts', 'c.ts']);
+  });
+
+  it('CLI conflict-check names the shared file and exits 1', async () => {
+    const f = planFile(
+      plan(SUB_MISSIONS_HEADER, [
+        '| S1 | cart api | farid | feat/cart | [ ] | - | src/api/shared.ts |',
+        '| S2 | payment ui | rina | feat/pay | [ ] | - | src/api/shared.ts |',
+      ]),
+    );
+    try {
+      const r = await cli(['initiative', 'conflict-check', f]);
+      expect(r.code).toBe(1);
+      expect(r.out).toContain('src/api/shared.ts');
+    } finally {
+      rmSync(f, { force: true });
+    }
+  });
+
+  it('CLI status exits 0 with the dashboard', async () => {
+    const f = planFile(plan(SUB_MISSIONS_HEADER, ROWS));
+    try {
+      const r = await cli(['initiative', 'status', f]);
+      expect(r.code).toBe(0);
+      expect(r.out).toContain('S1');
+    } finally {
+      rmSync(f, { force: true });
+    }
+  });
+
+  it('CLI --target cursor names the marketplace path and exits 1', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-init-mkt-'));
+    try {
+      const r = await cli(['install', '--project', dir, '--target', 'cursor', '--yes']);
+      expect(r.code).toBe(1);
+      expect(r.err).toContain('marketplace manifest');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
