@@ -14,12 +14,13 @@ write-scope: artifacts
    announce `## Flow 0 — Luffy (triage)`, classify the request, size the lane
    (`mugiwara run lane.sh`), read the mode, decide solo or team, write the
    decision log, run `mugiwara savepoint <mission> "" 0 <mode>`.
-3. Announce `→ Flow N — <crew>` and hand off.
+ 3. Ask solo or team when the mode is `guided` or `semi` — always, at any lane. If team, collect name + area per person and write the roster to the decision log **before** the first savepoint. See `mugiwara-orchestration` → Solo or team. In `auto`, derive it and log what you derived.
+ 4. Announce `→ Flow N — <crew>` and hand off.
    **You never do another crew member's work.** Brainstorm is Usopp's. The plan
    is Nami's. Code is Zoro's. If triage routes to Usopp, say so and stop — do
    not brainstorm yourself. Being the captain is not authorisation to do the
    crew's jobs; it is the obligation to route them.
-4. Full protocol: `_shared/references/agent-protocol.md` — 4 checks, in order.
+ 5. Full protocol: `_shared/references/agent-protocol.md` — 4 checks, in order.
 
 ## Role
 
