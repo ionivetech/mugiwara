@@ -199,7 +199,13 @@ async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; pro
         targetIds = idx.includes(0) ? [...TARGET_IDS] : idx.map(i => TARGET_IDS[i - 1]);
       }
     }
+    const MARKETPLACE = new Set(['cursor', 'kimi', 'pi']);
     for (const id of targetIds) {
+      if (MARKETPLACE.has(id)) {
+        console.error(`mugiwara: ${id} installs through its marketplace manifest, not --target.`);
+        console.error('  See docs/reference/harness-matrix.md — marketplace row.');
+        process.exit(1);
+      }
       if (!targets[id]) throw new Error(`Unknown target: ${id} (valid: ${TARGET_IDS.join(', ')}, all)`);
     }
 
