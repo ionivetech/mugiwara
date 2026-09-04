@@ -448,18 +448,32 @@ if (integrityArg !== -1) {
       errors.push(`doc-integrity: README rank-1 ${rankMatch2[1]}% != metrics ${m2.retrieval_rank1}%`);
     }
   }
-  // stale CLI commands: any `mugiwara <word>` where word is not a valid CLI case, appearing as code, is stale
-  const validCmds = new Set(['install','update','uninstall','list','reset','archive','clean','continue','status','cost','run','savepoint','blame','handoff','sign','migrate','lesson','help','version','mode','off']);
-  const docsToScan = ['docs/concepts/workflow.md','docs/concepts/config.md','README.md','references/multi-actor.md'];
-  for (const doc of docsToScan) {
-    const p = join(import.meta.dirname, '..', doc);
+  // N4: a skill that instructs `mugiwara <cmd>` when the CLI has no such case is an
+  // instruction the agent cannot follow. This is how `initiative` shipped as a
+  // dangling reference. Cases are read from the CLI source, not hardcoded.
+  const cliSrc = readFileSync(join(import.meta.dirname, '..', 'src', 'cli.ts'), 'utf8');
+  // In-session phrases, not CLI verbs — see mugiwara-workflow.
+  const IN_SESSION = new Set(['mode', 'off']);
+  const referenced = new Set<string>();
+  const walkMarkdown = (dir: string): string[] =>
+    listFiles(dir).filter((f) => f.endsWith('.md')).map((f) => join(dir, f));
+  for (const dir of ['content', 'docs', 'references']) {
+    for (const file of walkMarkdown(join(import.meta.dirname, '..', dir))) {
+      const text = readFileSync(file, 'utf8');
+      for (const m of text.matchAll(/`mugiwara ([a-z-]+)/g)) referenced.add(m[1]);
+    }
+  }
+  // Also scan repo-root markdown (README, AGENTS) — same defect class.
+  for (const file of ['README.md', 'AGENTS.md']) {
+    const p = join(import.meta.dirname, '..', file);
     if (!existsSync(p)) continue;
-    const txt = readFileSync(p, 'utf8');
-    for (const m of txt.matchAll(/`mugiwara ([a-z-]+)/g)) {
-      const cmd = m[1];
-      if (!validCmds.has(cmd) && cmd !== '--help' && cmd !== '--version') {
-        errors.push(`doc-integrity: ${doc} contains stale command "mugiwara ${cmd}" not in src/cli.ts`);
-      }
+    for (const m of readFileSync(p, 'utf8').matchAll(/`mugiwara ([a-z-]+)/g)) referenced.add(m[1]);
+  }
+  for (const cmd of referenced) {
+    if (IN_SESSION.has(cmd)) continue;
+    if (cmd.startsWith('--')) continue;
+    if (!cliSrc.includes(`case '${cmd}'`)) {
+      errors.push(`doc-integrity: docs instruct "mugiwara ${cmd}" but src/cli.ts has no case '${cmd}'`);
     }
   }
 }
