@@ -6,3 +6,4 @@
 - seamless-governors — 2026-09-01
 - seamless-followup — 2026-09-01
 - enforcement-gaps — 2026-09-04
+- seamless-pipeline — 2026-09-04
