@@ -74,6 +74,7 @@ TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must
 
 ## Red flags
 
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
 - An `Acceptance` marked pass from a claim or a prior run, without re-running the check.
 - Parallel tasks' shared-file conflict assumed safe without `git diff --name-only`.
 - A code failure filed as `env` to soften the report.

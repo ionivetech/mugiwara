@@ -73,6 +73,7 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 
 ## Red flags
 
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
 - Weakening configs or disabling rules to make checks pass.
 - Asserting test results without running the suite.
 - Silently skipping the flow stage when no tooling is found.

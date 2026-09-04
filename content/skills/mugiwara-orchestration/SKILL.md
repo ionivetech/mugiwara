@@ -89,6 +89,10 @@ At `normal`: investigation steps (reads, greps, probes), file contents, and narr
 **The rule: the transcript must remain sufficient to review the mission without opening a file.** If collapsing a line breaks that, do not collapse it.
 Rendered examples: `references/output-contract.md` — match the shape.
 
+## Flow summary line
+
+Every flow stage closes with exactly one summary line before the handoff (`✓ Flow 5 — Sanji · lint 0 · 84/84 tests → results/05-quality.md`). Shape: `<verdict> Flow N — Crew · <2-4 facts> → <evidence path>`. At `verbosity=normal` it replaces the stage's prose; at `full` it is emitted last. Never collapsed: decisions, questions, blockers, lane rises, escalations, file edits.
+
 ## Work splitting
 When a flow stage has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
 

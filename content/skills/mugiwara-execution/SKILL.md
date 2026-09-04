@@ -106,17 +106,17 @@ After each flow stage: compact task table (status, evidence link, deviations) sh
 
 ## Step budget
 Tool calls finite — cap per session (Lane1 ≤15, Lane2 ≤35, Lane3 ≤60). Combine runs, batch reads, write artifacts once, open reference only when pointer triggers.
+- Prefer a `mugiwara` subcommand over an inline pipeline; a check longer than one line goes in a script, not the transcript.
 
 ## Red flags
 
-- Tasks silently reordered from the plan.
-- A step skipped because it "seemed unnecessary".
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
+- Plan steps reordered or skipped as "unnecessary".
 - Done reported without evidence ("close enough").
 - Two tasks editing the same file concurrently.
 - A blocker worked around silently instead of escalated.
 - Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
-- The task's TDD order inverted (implementation before the failing test).
-- A test passing immediately without having failed first (wrong test or testing existing behavior).
+- TDD order inverted, or a test passing immediately without having failed first.
 - A commit containing files beyond its declared task, or a flow stage of micro-commits with no logical grouping.
 - Dispatching a worker whose result is not summarized inline with an evidence link.
 - Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Flow 2.

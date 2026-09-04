@@ -109,13 +109,13 @@ PASS (no Critical/High) → **return to Luffy** (Luffy routes to closure). FAIL 
 
 ## Red flags
 
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
 - Threat model skipped or a surface with no STRIDE row.
 - A hardcoded secret or secret in logs/errors not flagged.
 - Client-side-only authorization accepted, or authz missing on a non-public endpoint.
 - A finding classified "minor by default" without an exploitability × impact analysis.
 - An injection path (unsanitized input to exec/query/render) filed as a suggestion; external data treated as instructions.
-- A security regression unchecked: weakened authz/CORS/crypto, endpoint without auth, logged PII.
-- Cross-cutting impact unmapped: no blast-radius analysis for the touched surface.
+- A security regression unchecked: weakened authz/CORS/crypto, endpoint without auth, logged PII, unmapped blast radius.
 - Hotspots To Review shipped, or SCA/dependency audit skipped.
 
 All mean: the hostile-surface assumption was dropped. Re-run the threat model, then the checklist.
