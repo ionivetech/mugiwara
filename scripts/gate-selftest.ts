@@ -1114,5 +1114,25 @@ console.log('\nE6 — matrix guard row');
   }
 }
 
+// --- E7: point the mirror at a missing file → mirror test fails ---
+console.log('\nE7 — todos mirror');
+{
+  const sf = join(root, 'scripts', 'savepoint.sh');
+  const original = readFileSync(sf, 'utf8');
+  try {
+    const broken = original.replace('TODOS_FILE="$MISSION_DIR/flows/todos.md"', 'TODOS_FILE="$MISSION_DIR/flows/nope.md"');
+    if (broken === original) {
+      console.error('✗ E7: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(sf, broken);
+      assert('missing mirror → mirror test fails', false, () => run('E7', 'bunx vitest run test/savepoint.test.ts -t "todos mirror"'));
+    }
+  } finally {
+    writeFileSync(sf, original);
+    assert('restored → mirror test passes', true, () => run('E7-restore', 'bunx vitest run test/savepoint.test.ts -t "todos mirror"'));
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

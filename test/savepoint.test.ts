@@ -496,4 +496,33 @@ test('B3: task counting — anchored, code-block aware, case-insensitive, no pro
   }
 });
 
+test('todos mirror wins over plan.md when it has boxes (provenance 0/N fix)', { timeout: 30000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-mirror-'));
+  try {
+    setupGit(dir);
+    const mission = 'mirror-count';
+    const mdir = join(dir, '.mugiwara', 'missions', mission);
+    mkdirSync(join(mdir, 'flows'), { recursive: true });
+    // plan carries a different-granularity acceptance list, all unchecked
+    writeFileSync(join(mdir, 'plan.md'), '- [ ] E1 thing\n- [ ] E2 thing\n');
+    // mirror carries the task boxes, partially done
+    writeFileSync(join(mdir, 'flows', 'todos.md'), '- [x] T1\n- [x] T2\n- [ ] T3\n');
+    runSavepoint(dir, `${mission} "" 3 guided`);
+    let state = JSON.parse(readFileSync(statePath(dir, mission), 'utf8'));
+    expect(state.tasks).toEqual({ done: 2, total: 3 });
+    // all checked => done=N, never 0/N on a finished mission
+    writeFileSync(join(mdir, 'flows', 'todos.md'), '- [x] T1\n- [x] T2\n- [x] T3\n');
+    runSavepoint(dir, `${mission} "" 3 guided`);
+    state = JSON.parse(readFileSync(statePath(dir, mission), 'utf8'));
+    expect(state.tasks).toEqual({ done: 3, total: 3 });
+    // mirror without boxes => falls back to plan counts
+    writeFileSync(join(mdir, 'flows', 'todos.md'), '# Todos\nnone yet\n');
+    runSavepoint(dir, `${mission} "" 3 guided`);
+    state = JSON.parse(readFileSync(statePath(dir, mission), 'utf8'));
+    expect(state.tasks).toEqual({ done: 0, total: 2 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 import { dirname } from 'node:path';

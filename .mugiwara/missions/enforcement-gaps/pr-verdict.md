@@ -26,6 +26,8 @@ tests, opencode port with parity-tested shared predicates, and a
 - `23d01d6` 5.2: `enforcement.md` + `--check-invariants` (26 concepts)
 - `1e363f4` 5.1: 6 selftest mutations (+2 fixes: `a0102eb` LOC,
   `4117321` guards unit tests, `a065cdf` symlink R1)
+- post-closure: savepoint counts `flows/todos.md` mirror first (provenance
+  read 0/N on finished missions) + mirror test + E7 mutation
 
 ## Per-flow-stage evidence
 

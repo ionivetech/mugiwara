@@ -365,11 +365,19 @@ if [ -n "$LANE_PREV" ] && [ "$LANE_PREV" != "$LANE" ]; then
   esac
 fi
 
-# task counts from plan doc — bare name, one file per mission.
+# task counts — the execution mirror wins over the plan doc.
+# Zoro tracks one box per task in flows/todos.md as work lands, while plan.md
+# may carry no boxes at all (Steps: inline) or a different-granularity
+# acceptance list. Counting plan-only left finished missions reading 0/N.
+# Mirror wins when it has boxes; plan.md otherwise; sub-plan/ as before.
 PLAN_FILE="$MISSION_DIR/plan.md"
+TODOS_FILE="$MISSION_DIR/flows/todos.md"
 TASKS_DONE=0
 TASKS_TOTAL=0
-if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
+if [ -f "$TODOS_FILE" ] && [ "$(count_boxes "$TODOS_FILE" '[ xX]')" -gt 0 ] 2>/dev/null; then
+  TASKS_TOTAL=$(count_boxes "$TODOS_FILE" '[ xX]')
+  TASKS_DONE=$(count_boxes "$TODOS_FILE" '[xX]')
+elif [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
   # total counts ALL task lines (checked + unchecked); done counts checked only.
   # A fully-completed plan must read total=N done=N, never total=0 (the old
   # unchecked-only grep degenerated a done plan to tasks.total=0).
