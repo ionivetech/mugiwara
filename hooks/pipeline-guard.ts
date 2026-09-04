@@ -223,6 +223,49 @@ function planTouched(): boolean {
   return false;
 }
 
+/**
+ * A flow banner (`## Flow <n> —`) recorded in this session's mission files.
+ * The banner is the only signal the user can see that the pipeline ran, and
+ * Luffy's rule 10 already requires every flow stage to be logged in the
+ * decision log — so the decision log and flow files are where banners live.
+ * (E6: implemented here, not in the marker — no hook payload carries response
+ * text, so the marker can never see a banner. Warning only, never a block:
+ * banner detection depends on text matching, and a false block on a
+ * formatting variance is what gets the whole fence disabled.)
+ */
+function bannerThisSession(): boolean {
+  const markerFile = join(cwd, '.mugiwara', '.engaged');
+  if (!existsSync(markerFile)) return true; // no session anchor — no opinion
+  let sessionStart = 0;
+  try {
+    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string; touched_at?: string };
+    sessionStart = Date.parse(m.first_seen ?? '') || Date.parse(m.touched_at ?? '') || 0;
+  } catch { return true; }
+  if (!sessionStart) return true;
+  const re = /^## Flow \d+\s—/m;
+  try {
+    const missionsDir = join(cwd, '.mugiwara', 'missions');
+    for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!e.isDirectory()) continue;
+      const files = [`${join(missionsDir, e.name)}/decisions.md`];
+      const flowsDir = join(missionsDir, e.name, 'flows');
+      if (existsSync(flowsDir)) {
+        for (const f of readdirSync(flowsDir)) {
+          if (f.endsWith('.md')) files.push(join(flowsDir, f));
+        }
+      }
+      for (const f of files) {
+        try {
+          if (!existsSync(f)) continue;
+          if (statSync(f).mtimeMs + 1000 < sessionStart) continue;
+          if (re.test(readFileSync(f, 'utf8'))) return true;
+        } catch { /* unreadable entry — skip */ }
+      }
+    }
+  } catch { return true; }
+  return false;
+}
+
 async function main(): Promise<void> {
   let input = '';
   for await (const chunk of process.stdin) input += chunk;
@@ -276,6 +319,17 @@ async function main(): Promise<void> {
         'but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. ' +
         'Only Nami writes the plan — dispatch nami-planner, or record the plan as a ' +
         'deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.\n',
+      );
+    }
+    // --- check 4: the banner signal (E6, warning only) -----------------------
+    // Work recorded with state on disk but no flow banner this session. The
+    // banner is the only visible signal the pipeline ran — its absence is how
+    // the original defect went unnoticed. Warning, never a block.
+    if ((sourceChangedNow || planTouched()) && !bannerThisSession()) {
+      process.stderr.write(
+        '⚠ Mugiwara: work recorded with no flow banner in this session. The banner is ' +
+        'the only signal the user has that the pipeline ran. Announce ' +
+        '`## Flow N — <crew>` at each stage.\n',
       );
     }
     return;

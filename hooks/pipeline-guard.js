@@ -176,6 +176,49 @@ function planTouched() {
   } catch {}
   return false;
 }
+function bannerThisSession() {
+  const markerFile = join(cwd, ".mugiwara", ".engaged");
+  if (!existsSync(markerFile))
+    return true;
+  let sessionStart = 0;
+  try {
+    const m = JSON.parse(readFileSync(markerFile, "utf8"));
+    sessionStart = Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
+  } catch {
+    return true;
+  }
+  if (!sessionStart)
+    return true;
+  const re = /^## Flow \d+\s\u2014/m;
+  try {
+    const missionsDir = join(cwd, ".mugiwara", "missions");
+    for (const e of readdirSync(missionsDir, { withFileTypes: true })) {
+      if (!e.isDirectory())
+        continue;
+      const files = [`${join(missionsDir, e.name)}/decisions.md`];
+      const flowsDir = join(missionsDir, e.name, "flows");
+      if (existsSync(flowsDir)) {
+        for (const f of readdirSync(flowsDir)) {
+          if (f.endsWith(".md"))
+            files.push(join(flowsDir, f));
+        }
+      }
+      for (const f of files) {
+        try {
+          if (!existsSync(f))
+            continue;
+          if (statSync(f).mtimeMs + 1000 < sessionStart)
+            continue;
+          if (re.test(readFileSync(f, "utf8")))
+            return true;
+        } catch {}
+      }
+    }
+  } catch {
+    return true;
+  }
+  return false;
+}
 async function main() {
   let input = "";
   for await (const chunk of process.stdin)
@@ -203,6 +246,9 @@ async function main() {
     if (planTouched() && !plannerDispatched(sessionId)) {
       process.stderr.write("\u26A0 Mugiwara: a plan doc (missions/<mission>/plan.md) was written this session, " + "but no planner (nami-planner / mugiwara-planning) was dispatched or embodied. " + "Only Nami writes the plan \u2014 dispatch nami-planner, or record the plan as a " + `deliberate exception in the decision log. Set enforce=off in .mugiwara/config to disable.
 `);
+    }
+    if ((sourceChangedNow || planTouched()) && !bannerThisSession()) {
+      process.stderr.write("\u26A0 Mugiwara: work recorded with no flow banner in this session. The banner is " + "the only signal the user has that the pipeline ran. Announce " + "`## Flow N \u2014 <crew>` at each stage.\n");
     }
     return;
   }
