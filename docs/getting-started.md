@@ -186,7 +186,7 @@ six. **Archive** (`mugiwara archive <mission>`) folds waves + findings into
 | `mode` | guided | Autonomy: guided/semi/auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | Commit style: conventional/gitmoji/plain, or a template like `{issue}: {title}` |
-| `auto_commit` | on | on/off — off: guided/semi never commit+push, you do |
+| `auto_commit` | off | on/off — off: guided/semi never commit+push, you do |
 | `coverage_new` | 85 | Coverage % for new files |
 | `coverage_modified` | 90 | Coverage % for modified files |
 | `review_depth` | full | Robin's review depth: full/standard/quick |

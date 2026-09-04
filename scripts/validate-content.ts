@@ -448,19 +448,67 @@ if (integrityArg !== -1) {
       errors.push(`doc-integrity: README rank-1 ${rankMatch2[1]}% != metrics ${m2.retrieval_rank1}%`);
     }
   }
-  // stale CLI commands: any `mugiwara <word>` where word is not a valid CLI case, appearing as code, is stale
-  const validCmds = new Set(['install','update','uninstall','list','reset','archive','clean','continue','status','cost','run','savepoint','blame','handoff','sign','migrate','lesson','help','version','mode','off']);
-  const docsToScan = ['docs/concepts/workflow.md','docs/concepts/config.md','README.md','references/multi-actor.md'];
-  for (const doc of docsToScan) {
-    const p = join(import.meta.dirname, '..', doc);
-    if (!existsSync(p)) continue;
-    const txt = readFileSync(p, 'utf8');
-    for (const m of txt.matchAll(/`mugiwara ([a-z-]+)/g)) {
-      const cmd = m[1];
-      if (!validCmds.has(cmd) && cmd !== '--help' && cmd !== '--version') {
-        errors.push(`doc-integrity: ${doc} contains stale command "mugiwara ${cmd}" not in src/cli.ts`);
-      }
+  // N4: a skill that instructs `mugiwara <cmd>` when the CLI has no such case is an
+  // instruction the agent cannot follow. This is how `initiative` shipped as a
+  // dangling reference. Cases are read from the CLI source, not hardcoded.
+  const cliSrc = readFileSync(join(import.meta.dirname, '..', 'src', 'cli.ts'), 'utf8');
+  // In-session phrases, not CLI verbs — see mugiwara-workflow.
+  const IN_SESSION = new Set(['mode', 'off']);
+  const referenced = new Set<string>();
+  const walkMarkdown = (dir: string): string[] =>
+    listFiles(dir).filter((f) => f.endsWith('.md')).map((f) => join(dir, f));
+  for (const dir of ['content', 'docs', 'references']) {
+    for (const file of walkMarkdown(join(import.meta.dirname, '..', dir))) {
+      const text = readFileSync(file, 'utf8');
+      for (const m of text.matchAll(/`mugiwara ([a-z-]+)/g)) referenced.add(m[1]);
     }
+  }
+  // Also scan repo-root markdown (README, AGENTS) — same defect class.
+  for (const file of ['README.md', 'AGENTS.md']) {
+    const p = join(import.meta.dirname, '..', file);
+    if (!existsSync(p)) continue;
+    for (const m of readFileSync(p, 'utf8').matchAll(/`mugiwara ([a-z-]+)/g)) referenced.add(m[1]);
+  }
+  for (const cmd of referenced) {
+    if (IN_SESSION.has(cmd)) continue;
+    if (cmd.startsWith('--')) continue;
+    if (!cliSrc.includes(`case '${cmd}'`)) {
+      errors.push(`doc-integrity: docs instruct "mugiwara ${cmd}" but src/cli.ts has no case '${cmd}'`);
+    }
+  }
+  // N2 banner-format: no raw ANSI escapes in model-facing instructions. The
+  // colour table in wave-banners.md is data for the plugin, not an
+  // instruction — it holds hex, never escapes, so no exemption is needed.
+  // N8 in-session phrases must never read as slash commands.
+  const proseFiles: string[] = [];
+  for (const dir of ['content', 'docs', 'references']) {
+    proseFiles.push(...walkMarkdown(join(import.meta.dirname, '..', dir)));
+  }
+  for (const file of ['README.md', 'AGENTS.md']) {
+    const p = join(import.meta.dirname, '..', file);
+    if (existsSync(p)) proseFiles.push(p);
+  }
+  for (const file of proseFiles) {
+    const text = readFileSync(file, 'utf8');
+    if (/\\x1b\[|38;2;|38;5;/.test(text)) {
+      errors.push(`doc-integrity: ${file} instructs raw ANSI escapes the model cannot emit — banners are plain headings`);
+    }
+    // `/mugiwara continue` is a real CLI verb and out of scope — only the mode
+    // switch is an in-session phrase, so only its slash forms are flagged.
+    if (/`\/(mugiwara mode|mugiwara (guided|semi|auto))/.test(text)) {
+      errors.push(`doc-integrity: ${file} writes the in-session mode phrase as a slash command — say "mugiwara mode <level>" in session, no slash, no CLI flag`);
+    }
+  }
+  // N5: the flow-summary contract must exist — it is what keeps normal
+  // verbosity to one line per stage.
+  const orchSkill = readFileSync(join(import.meta.dirname, '..', 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md'), 'utf8');
+  if (!orchSkill.includes('## Flow summary line')) {
+    errors.push('doc-integrity: mugiwara-orchestration SKILL.md lost its "## Flow summary line" contract');
+  }
+  // N9: the platform count must stay qualified — 9 installable + 3 marketplace.
+  const readme = readFileSync(join(import.meta.dirname, '..', 'README.md'), 'utf8');
+  if (readme.includes('12 platforms') && !readme.includes('via marketplace manifest')) {
+    errors.push('doc-integrity: README "12 platforms" is unqualified — split 9 via install + 3 via marketplace manifest');
   }
 }
 }
@@ -545,7 +593,52 @@ if (process.argv.includes('--check-config')) {
       errors.push(`config-drift: docs key "${k}" not found in code`);
     }
   }
-  if (!errors.some(e => e.startsWith('config-drift'))) {
+  // N6: key parity is not value parity. A documented enum value the code rejects
+  // falls back silently — the user gets the default and no error. Compare both
+  // directions. (auto_commit is advisory-only by design — no code allowlist
+  // exists, so there is nothing to compare.)
+  const configMd = existsSync(docPath) ? readFileSync(docPath, 'utf8') : '';
+  const savepointSh = readFileSync(join(import.meta.dirname, '..', 'scripts', 'savepoint.sh'), 'utf8');
+  const parseDocumentedValues = (key: string): string[] => {
+    const m = configMd.match(new RegExp(`^\\|\\s*\`${key}\`\\s*\\|\\s*([^|]+)\\|`, 'm'));
+    if (!m) return [];
+    return m[1].split('/').map((v) => v.trim()).filter(Boolean);
+  };
+  const parseShellAllowlist = (varName: string): string[] => {
+    const m = savepointSh.match(new RegExp(`case "\\$${varName}" in\\s*([^)]+)\\)`));
+    if (!m) return [];
+    return m[1].split(/[|\s]+/).map((v) => v.trim()).filter(Boolean);
+  };
+  const parseTsUnion = (file: string, typeName: string, extra: string[] = [], exclude: RegExp | null = null): string[] => {
+    const p = join(import.meta.dirname, '..', file);
+    if (!existsSync(p)) return [];
+    const src = readFileSync(p, 'utf8');
+    const m = src.match(new RegExp(`type ${typeName} = ([^;]+);`));
+    if (!m) return [];
+    const vals = [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+    return [...new Set([...vals, ...extra])].filter((v) => !(exclude && exclude.test(v)));
+  };
+  const ENUM_CHECKS: Array<{ key: string; accepted: string[] }> = [
+    { key: 'mode', accepted: parseShellAllowlist('MODE') },
+    { key: 'verbosity', accepted: parseShellAllowlist('VERBOSITY') },
+    { key: 'review_depth', accepted: parseShellAllowlist('DEPTH_REVIEW') },
+    { key: 'quality_depth', accepted: parseShellAllowlist('DEPTH_QUALITY') },
+    { key: 'verify_merged', accepted: parseShellAllowlist('DEPTH_VERIFY') },
+    // sign allowlist lives in TypeScript: read the exported union, not grep.
+    // 'minisign-fail' is internal (never a valid config value); 'auto' is an
+    // explicit resolveBackend case, so it counts as accepted.
+    { key: 'sign', accepted: parseTsUnion('src/sign.ts', 'BackendChoice', ['auto'], /-fail$/) },
+    { key: 'enforce', accepted: parseTsUnion('hooks/pipeline-guard.ts', 'Enforce') },
+  ];
+  for (const { key, accepted } of ENUM_CHECKS) {
+    const documented = parseDocumentedValues(key);
+    if (!documented.length || !accepted.length) continue;
+    const missing = documented.filter((v) => !accepted.includes(v));
+    const undocumented = accepted.filter((v) => !documented.includes(v));
+    if (missing.length) errors.push(`config ${key}: documented but rejected by code: ${missing.join(', ')}`);
+    if (undocumented.length) errors.push(`config ${key}: accepted by code but undocumented: ${undocumented.join(', ')}`);
+  }
+  if (!errors.some(e => e.startsWith('config-drift') || e.startsWith('config '))) {
     console.log(`✓ config in sync: ${defaultKeys.length} keys (${defaultKeys.join(', ')})`);
   }
 }

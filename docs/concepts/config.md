@@ -30,7 +30,7 @@ verbosity=normal             # normal | full — how much the crew echoes
 # -- Git --------------------------------------------------
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
-auto_commit=on               # on | off — off hands you an uncommitted tree in guided/semi
+auto_commit=off              # on | off — off hands you an uncommitted tree in guided/semi
 
 # -- Gates ------------------------------------------------
 coverage_new=85
@@ -62,7 +62,7 @@ heal_max_cycles=3            # heal loop halts here and escalates
 | `mode` | guided / semi / auto | guided | How much the crew does without asking |
 | `branch` | branch naming pattern | `feature/{type}-{issue}-{slug}` | Placeholders filled from mission metadata (see [Branch and commit templates](#branch-and-commit-templates)). **Advisory-only** — the crew reads it to name branches; the harness never creates branches. |
 | `commit` | conventional / gitmoji / plain / template | conventional | Commit message style, or a template with placeholders (see below). **Advisory-only** — the crew reads it to format commit messages; the harness never writes commits. |
-| `auto_commit` | on / off | on | Auto-commit per task + final push. Off disables both in `guided` and `semi` — changes stay in the working tree for the user to commit and push manually. Has no effect in `auto` mode, which always commits. **Advisory-only** — commit/push are model decisions; no validator or hook reads this. |
+| `auto_commit` | on / off | off | Off by default: changes stay in the working tree for the user to commit and push manually. Set `on` to auto-commit per task + final push in `guided` and `semi`. Has no effect in `auto` mode, which always commits. **Advisory-only** — commit/push are model decisions; no validator or hook reads this. |
 | `coverage_new` | number (0-100) | 85 | Coverage threshold for new files |
 | `coverage_modified` | number (0-100) | 90 | Coverage threshold for modified files |
 | `review_depth` | full / standard / quick | full | Code review depth for Robin (Flow 7): full (breaking-change map + 5-axis + sonar), standard (5-axis only), quick (severity only). **Advisory-only** — read by the crew, not by code. |

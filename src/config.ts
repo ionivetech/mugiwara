@@ -23,7 +23,7 @@ export const DEFAULT_CONFIG = [
   '# -- Git --------------------------------------------------',
   'branch=feature/{type}-{issue}-{slug}',
   'commit=conventional',
-  'auto_commit=on               # on | off — off hands you an uncommitted tree in guided/semi',
+  'auto_commit=off              # on | off — off hands you an uncommitted tree in guided/semi',
   '',
   '# -- Gates ------------------------------------------------',
   'coverage_new=85',

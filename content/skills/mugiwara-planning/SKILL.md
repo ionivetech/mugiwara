@@ -43,7 +43,7 @@ When Flow 0 recorded `team_members > 1`, extend area table into sub-mission tabl
 
 | ID | Name | Assignee | Branch | Status | Depends On | Touched Files |
 |----|------|----------|--------|--------|-----------|---------------|
-| S1 | cart api | farid | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |
+| S1 | cart api | John Doe | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |
 
 ## Plan tables (wave + task index)
 Before the detail blocks, add two markdown tables so the executor can read the shape at a glance and parallelize safely:

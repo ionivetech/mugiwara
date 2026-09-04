@@ -191,7 +191,7 @@ sequential. Inline stays the default.
 | **Evidence gates** | Every flow stage re-runs checks with evidence; archive fails on missing |
 | **Team split** | One plan, per-(mission, member) state + resume, zero collisions |
 | **Resume** | Rebuilds from `.mugiwara/` state — continues, never restarts |
-| **12 platforms** | Claude, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, and 5 more |
+| **12 platforms** | 9 via install (Claude, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity) + 3 via marketplace manifest (Cursor, Kimi, Pi) |
 
 → All 29 features: [Every feature](docs/concepts/features.md)
 
@@ -228,7 +228,7 @@ ship, never the other members'.
 
 ## Configuration
 
-Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
+Switch mode any time: say `mugiwara mode <guided|semi|auto>` in session — no CLI flag, no slash command. Or edit `.mugiwara/config`:
 
 | Key | Default | What |
 |---|---|---|
@@ -258,7 +258,7 @@ Project config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 | See mission position | `mugiwara status` |
 | See cost + live slop | `mugiwara cost` |
 | Close out a mission | `mugiwara archive <mission>` |
-| Switch mode | `/mugiwara guided\|semi\|auto` |
+| Switch mode | `mugiwara mode <guided\|semi\|auto>` (in session) |
 | All docs | [docs/](docs/) |
 
 ---

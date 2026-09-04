@@ -16,7 +16,7 @@ describe('attestation policy parsing', () => {
 attestation:
   required: true
   trusted_keys:
-    - { id: "farid", pubkey: "ed25519:AAAA", added: "2026-08-31" }
+    - { id: "jdoe", pubkey: "ed25519:AAAA", added: "2026-08-31" }
     - { id: "ci", pubkey: "ed25519:BBBB", added: "2026-08-31" }
   revoked:
     - { id: "old-ci", revoked: "2026-08-15", reason: "key rotation" }
@@ -24,7 +24,7 @@ attestation:
     const att = extractAttestation(yml);
     expect(att?.required).toBe(true);
     expect(att?.trusted_keys?.length).toBe(2);
-    expect(att?.trusted_keys?.[0].id).toBe('farid');
+    expect(att?.trusted_keys?.[0].id).toBe('jdoe');
     expect(att?.trusted_keys?.[0].pubkey).toBe('ed25519:AAAA');
     expect(att?.revoked?.[0].id).toBe('old-ci');
   });
@@ -34,7 +34,7 @@ attestation:
 attestation:
   required: false
   trusted_keys:
-    - id: farid
+    - id: jdoe
       pubkey: ed25519:AAAA
       added: 2026-08-31
     - id: ci
@@ -57,14 +57,14 @@ attestation:
       const yml = `attestation:
   required: true
   trusted_keys:
-    - { id: "farid", pubkey: "ed25519:AAAA", added: "2026-08-31" }
+    - { id: "jdoe", pubkey: "ed25519:AAAA", added: "2026-08-31" }
   revoked:
     - { id: "old-ci", revoked: "2026-08-15", reason: "rotation" }
 `;
       writeFileSync(join(dir, 'mugiwara.policy.yml'), yml);
       const p = loadPolicy(dir);
       expect(p?.attestation?.required).toBe(true);
-      expect(p?.attestation?.trusted_keys?.[0].id).toBe('farid');
+      expect(p?.attestation?.trusted_keys?.[0].id).toBe('jdoe');
       expect(p?.attestation?.revoked?.[0].id).toBe('old-ci');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
@@ -100,7 +100,7 @@ describe('sign --verify trust checks', () => {
     const yml = `attestation:
   required: true
   trusted_keys:
-    - { id: "farid", pubkey: "ed25519:${pub}", added: "2026-08-31" }
+    - { id: "jdoe", pubkey: "ed25519:${pub}", added: "2026-08-31" }
 `;
     writeFileSync(join(proj, 'mugiwara.policy.yml'), yml);
     const v = verifyReport(proj, mdir);
@@ -131,9 +131,9 @@ describe('sign --verify trust checks', () => {
 
     const yml = `attestation:
   trusted_keys:
-    - { id: "farid", pubkey: "ed25519:${pub}", added: "2026-08-31" }
+    - { id: "jdoe", pubkey: "ed25519:${pub}", added: "2026-08-31" }
   revoked:
-    - { id: "farid", revoked: "2026-08-15", reason: "key rotation" }
+    - { id: "jdoe", revoked: "2026-08-15", reason: "key rotation" }
 `;
     writeFileSync(join(proj, 'mugiwara.policy.yml'), yml);
     const v = verifyReport(proj, mdir);
@@ -147,9 +147,9 @@ describe('sign --verify trust checks', () => {
     pureSign(content, key, { mission: 'demo', commit: 'abc', ts: new Date().toISOString(), pub, outputPath: join(mdir, 'report.md.mugisig') });
     const yml = `attestation:
   trusted_keys:
-    - { id: "farid", pubkey: "ed25519:${pub}" }
+    - { id: "jdoe", pubkey: "ed25519:${pub}" }
   revoked:
-    - { id: "farid", pubkey: "ed25519:${pub}", revoked: "2026-08-15" }
+    - { id: "jdoe", pubkey: "ed25519:${pub}", revoked: "2026-08-15" }
 `;
     writeFileSync(join(proj, 'mugiwara.policy.yml'), yml);
     const v = verifyReport(proj, mdir);
@@ -218,7 +218,7 @@ describe('attestation.required archive gate', () => {
       const { pub, key } = generatePureKey();
       const content = readFileSync(join(mdir, 'report.md'), 'utf8');
       pureSign(content, key, { mission: 'demo', commit: 'abc', ts: new Date().toISOString(), pub, outputPath: join(mdir, 'report.md.mugisig') });
-      writeFileSync(join(proj, 'mugiwara.policy.yml'), `attestation:\n  required: true\n  trusted_keys:\n    - { id: "farid", pubkey: "ed25519:${pub}" }\n`);
+      writeFileSync(join(proj, 'mugiwara.policy.yml'), `attestation:\n  required: true\n  trusted_keys:\n    - { id: "jdoe", pubkey: "ed25519:${pub}" }\n`);
       const r = archiveMission(proj, 'demo');
       expect(r.report).toBeTruthy();
       expect(existsSync(join(mdir, 'report.md'))).toBe(true);

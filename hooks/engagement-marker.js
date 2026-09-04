@@ -30,6 +30,8 @@ async function main() {
     let firstSeen = new Date().toISOString();
     let dispatchedAt = "";
     let plannedAt = "";
+    let bannerFlow = null;
+    let bannerFlowAt = "";
     if (existsSync(file)) {
       try {
         const prev = JSON.parse(readFileSync(file, "utf8"));
@@ -40,6 +42,10 @@ async function main() {
           dispatchedAt = prev.executor_dispatched_at;
         if (sameSession && typeof prev.planner_dispatched_at === "string")
           plannedAt = prev.planner_dispatched_at;
+        if (sameSession && typeof prev.last_banner_flow === "number")
+          bannerFlow = prev.last_banner_flow;
+        if (sameSession && typeof prev.last_banner_flow_at === "string")
+          bannerFlowAt = prev.last_banner_flow_at;
       } catch {}
     }
     if (dispatched)
@@ -51,7 +57,9 @@ async function main() {
       first_seen: firstSeen,
       touched_at: new Date().toISOString(),
       executor_dispatched_at: dispatchedAt,
-      planner_dispatched_at: plannedAt
+      planner_dispatched_at: plannedAt,
+      last_banner_flow: bannerFlow,
+      last_banner_flow_at: bannerFlowAt
     }, null, 2) + `
 `);
   } catch {}

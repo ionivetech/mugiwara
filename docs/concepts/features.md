@@ -109,8 +109,8 @@ the chat carries terse verdicts and evidence pointers. Subagents exist to
 parallelize, never to hide work.
 
 **How to use.** Nothing to configure. Watch wave banners
-(`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` —
-ANSI-wrapped in terminals, plain in markdown UIs) and checkpoint
+(`## ⚔️ Flow 3 — Zoro (Execution)` —
+never ANSI escapes; the harness plugin applies colour) and checkpoint
 reports in the chat.
 
 **Detail.** Subagents are used only for genuinely parallel work:
@@ -144,13 +144,8 @@ autonomously to ship, never the other members'. If a requirement is unclear,
 the owning agent brainstorms with Usopp, Luffy makes the call, and the crew
 proceeds. Only a genuine blocker or the heal halt pauses.
 
-**How to use.**
-
-```
-/mugiwara guided | semi | auto
-```
-
-or in-session phrase `mugiwara mode auto`, or edit `.mugiwara/config`.
+**How to use.** Say `mugiwara mode <guided|semi|auto>` in session — no CLI flag,
+no slash command — or edit `.mugiwara/config`.
 
 **Scenario.** Day session in `guided` so you steer every decision; a Friday
 night batch in `auto` so the crew ships the plan and you review the branch on
@@ -171,7 +166,7 @@ config owns writing standards."
 | `mode` | guided | guided / semi / auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | conventional / gitmoji / plain |
-| `auto_commit` | on | on / off — off disables commit+push in guided/semi (auto unaffected) |
+| `auto_commit` | off | on / off — off disables commit+push in guided/semi (auto unaffected) |
 | `coverage_new` | 85 | Coverage threshold, new files |
 | `coverage_modified` | 90 | Coverage threshold, modified files |
 | `review_depth` | full | full / standard / quick |

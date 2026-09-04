@@ -48,9 +48,8 @@ ships one entry at a time, anonymized:
 
 Rules: no code snippets over 3 lines, no file paths from the source repo, no
 names of people or companies. A lesson that cannot be told under those rules
-is not shipped. Consumers import into their own ledger with
-`mugiwara lessons import <file>` semantics described in
-[concepts/lessons](concepts/lessons.md).
+is not shipped. Consumers append the rows to their own `.mugiwara/lessons.md` by hand. There is
+no import command.
 
 ## Marketplace listing checklist
 

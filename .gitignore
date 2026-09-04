@@ -6,5 +6,6 @@ dist/
 .opencode/package-lock.json
 coverage/
 .tsbuildinfo
+.mugiwara/
 
 .DS_Store

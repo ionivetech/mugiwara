@@ -5,29 +5,28 @@ plugin and the opencode-target generator derive agent UI colors from the table
 below — change a color HERE, never in code. This file is machine-parsed:
 keep the table format exact (one row per agent, pipes, no extra columns).
 
-## Banner format (one form)
+## The banner
 
-Every flow stage opens with the banner line in the owning agent's color, and closes
-with a handoff line:
+Every flow stage opens with this line and closes with a handoff:
 
-```
-===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====
-→ Flow 4 — Chopper (Checkpoint)
-```
+    ## ⚔️ Flow 3 — Zoro (Execution)
+    → Flow 4 — Chopper
 
-- Terminal: wrap the whole line in ANSI truecolor `\x1b[38;2;R;G;Bm` ... `\x1b[0m`.
-- Markdown UI: emit the plain equals line, no ANSI (UIs strip or garble escapes).
-- The crew emoji leads the line, before the `FLOW N` text.
-- RGB values come from the `hex` column below; R/G/B are the hex channels in
-  decimal (truecolor `38;2;R;G;B`). If the terminal lacks truecolor, use the
-  `ansi-256` index: `\x1b[38;5;Nm`.
-- Flow 9's handoff: `→ closure`.
-- The literal `FLOW N —` text must stay exact: the check-in protocol reads it.
-  Heal cycles are counted from the DECISION LOG's `## Flow 8` sections
-  (`mugiwara savepoint` greps `^## flow 8`), not from banners — a banner that
-  drops the literal does not reset the heal loop.
-- Never convey the flow stage by color alone — the crew name always accompanies
-  the color.
+Rules, all unconditional:
+
+- A markdown heading (`## `), the crew emoji, then `Flow N — Crew (Role)`.
+- **Never emit ANSI escapes.** The model cannot tell a terminal from a markdown
+  UI, so it must not try. Colour is applied by the harness plugin, which knows
+  the surface — see "Colour" below.
+- Keep `Flow N —` literal: the check-in protocol reads it.
+- Handoff is the LAST line of the stage's final response. Flow 9 closes with
+  `→ closure`.
+
+## Colour (harness, not model)
+
+The crew colour table below is consumed by the opencode plugin
+(`readBannerColors()`) and by any harness that can style output. The model never
+renders colour and never needs the hex values.
 
 ## Crew colors
 
@@ -53,12 +52,8 @@ their banners appear only when a wave or worker names them.
 
 ## Rules
 
-1. Banner before EVERY flow stage; handoff after it. Main thread emits `===== FLOW N — CREW =====` FIRST line and `→ Flow N+1 — Crew` LAST line even when subagent does work — covers Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy. No flow stage starts without its banner (orchestration red flag).
-2. The color comes from this table only — never invent a hex mid-mission.
-3. One form everywhere: equals line `===== <emoji> FLOW N — <CREW> (ROLE) =====` — five `=` per side, the crew emoji from the table leading the line, ANSI-wrapped in terminals, plain in markdown-rendering UIs. When unsure, the plain form is safe everywhere.
-4. Only the crew table's colors and the two SGR forms above (truecolor,
-   256-index) may appear in a banner — never other escape families (OSC,
-   title, cursor, other SGR codes). The banner is a fixed template, not a
-   formatting playground.
+1. Banner before EVERY flow stage; handoff after it. Main thread emits `## <emoji> Flow N — Crew (Role)` FIRST line and `→ Flow N+1 — Crew` LAST line even when subagent does work — covers Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy. No flow stage starts without its banner (orchestration red flag).
+2. The color comes from this table only — never invent a hex mid-mission. The model never emits color itself; the harness styles the heading.
+3. One form everywhere: heading `## <emoji> Flow N — Crew (Role)` — renders as a visual break in every markdown UI and stays readable as plain text in a terminal.
 5. Adding a crew member? Add the row here first; the plugin and target
    generator pick it up automatically.

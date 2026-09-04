@@ -37,11 +37,10 @@ By mode (per mode config): `guided` checks in with the user as today; `semi`/`au
 
 ## Flow transitions (visibility)
 
-Every flow stage opens with a colored banner in the owning agent's color and closes
-with the handoff line `→ Flow N+1 — <crew>` (Flow 9: `→ closure`). Terminal:
-equals line `===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` wrapped in ANSI truecolor
-`\x1b[38;2;R;G;Bm...\x1b[0m` (256 fallback `38;5;N`); markdown UIs: the plain
-equals line, no ANSI. The literal `FLOW N —`
+Every flow stage opens with a heading banner and closes
+with the handoff line `→ Flow N+1 — <crew>` (Flow 9: `→ closure`). The banner form is `## <emoji> Flow N — Crew (Role)` — one unconditional form, never ANSI
+escapes (the model cannot tell a terminal from a markdown UI; the harness
+plugin applies colour). The literal `Flow N —`
 text must stay exact (the check-in protocol reads it; heal cycles are counted
 from the decision log's `## Flow 8` sections, not from banners). Colors
 and the full spec: `_shared/references/wave-banners.md`. No wave starts without its banner. A wave intentionally

@@ -106,4 +106,6 @@ One line each: `path:line: [blocker|major|minor] problem → fix`. Write finding
 
 ## Red flags
 
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
+
 Full list: `references/red-flags-review.md` — 14 checks; any hit means review missed its job.

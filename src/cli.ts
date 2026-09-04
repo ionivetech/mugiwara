@@ -19,6 +19,7 @@ import { ensureConfig } from './config.ts';
 import { costEnvelope } from './cost.ts';
 import { computeLiveSlop } from './slop.ts';
 import { loadRegistry } from './evidence.ts';
+import { runInitiative } from './initiative.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
 import { enforceHarnessPolicy } from './policy.ts';
 
@@ -82,6 +83,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'sign': return signCmd(flags, _);
     case 'migrate': return migrateCmd(flags, _);
     case 'lesson': return lessonCmd(flags, _);
+    case 'initiative': return initiativeCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -197,7 +199,13 @@ async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; pro
         targetIds = idx.includes(0) ? [...TARGET_IDS] : idx.map(i => TARGET_IDS[i - 1]);
       }
     }
+    const MARKETPLACE = new Set(['cursor', 'kimi', 'pi']);
     for (const id of targetIds) {
+      if (MARKETPLACE.has(id)) {
+        console.error(`mugiwara: ${id} installs through its marketplace manifest, not --target.`);
+        console.error('  See docs/reference/harness-matrix.md — marketplace row.');
+        process.exit(1);
+      }
       if (!targets[id]) throw new Error(`Unknown target: ${id} (valid: ${TARGET_IDS.join(', ')}, all)`);
     }
 
@@ -602,6 +610,13 @@ function lessonCmd(flags: Args['flags'], positionals: string[]): void {
     writeFileSync(file, existing + (needsNewline ? '\n' : '') + line + '\n');
   }
   console.log(`lesson appended: ${line}`);
+}
+
+/** `mugiwara initiative <status|conflict-check> <plan>` — sub-mission checks. */
+function initiativeCmd(_flags: Args['flags'], positionals: string[]): void {
+  const r = runInitiative(positionals[1], positionals[2]);
+  process.stdout.write(r.output);
+  if (r.code !== 0) process.exit(r.code);
 }
 
 export function migrateCmd(flags: Args['flags'], positionals: string[] = []): void {

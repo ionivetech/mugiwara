@@ -99,8 +99,7 @@ linear.
 ## Checkpoint reports
 
 You see progress as **checkpoint reports**, not a firehose: a flow stage banner
-(`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====` in the
-agent's color — plain in markdown UIs, ANSI-wrapped in terminals), one compact report per crew member at each
+(`## ⚔️ Flow 3 — Zoro (Execution)`, never ANSI escapes), one compact report per crew member at each
 stage boundary (what ran / result / evidence pointer), a progress summary per
 flow stage, and a pause when something fails or gets risky. Subagents are used only
 where they genuinely help: independent `[PARALLEL]` task batches, Brook's

@@ -1134,5 +1134,181 @@ console.log('\nE7 — todos mirror');
   }
 }
 
+// --- N1 mutation: remove `case 'initiative'` → --check-doc-integrity red ---
+console.log('\nN1 — initiative case mutation');
+{
+  const f = join(root, 'src', 'cli.ts');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace("    case 'initiative': return initiativeCmd(flags, _);\n", '');
+    if (broken === original) {
+      console.error('✗ N1: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('missing initiative case → doc-integrity fails', false, () => run('N1', 'bun scripts/validate-content.ts --check-doc-integrity'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('N1-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- N2 mutation: ANSI escape back into wave-banners.md → banner-format red ---
+console.log('\nN2 — banner-format mutation');
+{
+  const f = join(root, 'references', 'wave-banners.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = `${original}\nTerminal: wrap in ANSI \`\\x1b[38;2;R;G;Bm\` ... \`\\x1b[0m\`.\n`;
+    writeFileSync(f, broken);
+    assert('ANSI escape in prose → doc-integrity fails', false, () => run('N2', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('N2-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- N3 mutation: depth allowlist back to lean → --check-config red ---
+console.log('\nN3 — depth allowlist mutation');
+{
+  const f = join(root, 'scripts', 'savepoint.sh');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.split('in full|standard|quick').join('in full|standard|lean');
+    if (broken === original) {
+      console.error('✗ N3: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('lean-only allowlist → check-config fails', false, () => run('N3', 'bun scripts/validate-content.ts --check-config'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → check-config passes', true, () => run('N3-restore', 'bun scripts/validate-content.ts --check-config'));
+  }
+}
+
+// --- N4 mutation: documented enum value the code rejects → --check-config red ---
+console.log('\nN4 — documented-enum mutation');
+{
+  const f = join(root, 'docs', 'concepts', 'config.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace('`review_depth` | full / standard / quick |', '`review_depth` | full / standard / turbo |');
+    if (broken === original) {
+      console.error('✗ N4: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('turbo documented → check-config fails', false, () => run('N4', 'bun scripts/validate-content.ts --check-config'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → check-config passes', true, () => run('N4-restore', 'bun scripts/validate-content.ts --check-config'));
+  }
+}
+
+// --- N5 mutation: flow-summary contract removed → content validation red ---
+console.log('\nN5 — flow-summary mutation');
+{
+  const f = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace('## Flow summary line\n', '');
+    if (broken === original) {
+      console.error('✗ N5: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('summary contract removed → validation fails', false, () => run('N5', 'bun scripts/validate-content.ts --check-doc-integrity'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → validation passes', true, () => run('N5-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- N6 mutation: banner recording removed from marker → hooks banner test red ---
+console.log('\nN6 — banner-recording mutation');
+{
+  const f = join(root, 'hooks', 'engagement-marker.ts');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original
+      .replace("        if (sameSession && typeof prev.last_banner_flow === 'number') bannerFlow = prev.last_banner_flow;\n", '')
+      .replace("        if (sameSession && typeof prev.last_banner_flow_at === 'string') bannerFlowAt = prev.last_banner_flow_at;\n", '');
+    if (broken === original) {
+      console.error('✗ N6: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      run('N6-build', 'bun run build-hooks');
+      assert('recording removed → banner test fails', false, () => run('N6', 'bun test test/hooks.test.ts -t banner'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    run('N6-rebuild', 'bun run build-hooks');
+    assert('restored → banner test passes', true, () => run('N6-restore', 'bun test test/hooks.test.ts -t banner'));
+  }
+}
+
+// --- N7 mutation: `mugiwara lessons import` with no CLI case → doc-integrity red ---
+console.log('\nN7 — lessons-import mutation');
+{
+  const f = join(root, 'docs', 'adoption.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    writeFileSync(f, `${original}\nImport with \`mugiwara lessons import <file>\`.\n`);
+    assert('dangling lessons verb → doc-integrity fails', false, () => run('N7', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('N7-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- N8 mutation: `/mugiwara mode` slash form → in-session phrase check red ---
+console.log('\nN8 — slash-mode mutation');
+{
+  const f = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace('Say `mugiwara mode <guided|semi|auto>` in session', '`/mugiwara mode <guided|semi|auto>` applies');
+    if (broken === original) {
+      console.error('✗ N8: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('slash mode phrase → doc-integrity fails', false, () => run('N8', 'bun scripts/validate-content.ts --check-doc-integrity'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('N8-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
+// --- N9 mutation: unqualified "12 platforms" → README platform-count check red ---
+console.log('\nN9 — platform-count mutation');
+{
+  const f = join(root, 'README.md');
+  const original = readFileSync(f, 'utf8');
+  try {
+    const broken = original.replace(
+      '9 via install (Claude, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity) + 3 via marketplace manifest (Cursor, Kimi, Pi)',
+      'Claude, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, and 5 more',
+    );
+    if (broken === original) {
+      console.error('✗ N9: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(f, broken);
+      assert('unqualified count → doc-integrity fails', false, () => run('N9', 'bun scripts/validate-content.ts --check-doc-integrity'));
+    }
+  } finally {
+    writeFileSync(f, original);
+    assert('restored → doc-integrity passes', true, () => run('N9-restore', 'bun scripts/validate-content.ts --check-doc-integrity'));
+  }
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed > 0 ? 1 : 0);

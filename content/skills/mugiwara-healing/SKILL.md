@@ -72,6 +72,7 @@ Write `.mugiwara/missions/<mission>/flows/05-healing.md`: fixed list (finding â†
 
 ## Red flags
 
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
 - Patching the symptom path instead of the root cause (fix at the shared function, not the one caller that surfaced).
 - A fix shipped without a reproducing test (Prove-It skipped).
 - A test or config deleted or weakened to silence a failure.

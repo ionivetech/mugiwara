@@ -70,6 +70,7 @@ PASS only when coverage AND sonar AND build AND diff-size AND DoD all pass with 
 
 ## Red flags
 
+- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
 - Missing coverage tooling → silent pass.
 - PASS verdict with no evidence.
 - Coverage measured against wrong base.

@@ -29,7 +29,7 @@ Whatever the level, these are always visible — they are the audit surface:
 ## `normal` — default
 
 ```
-==================== ⚔️ FLOW 3 — ZORO (EXECUTION) ====================
+## `Flow 3 — Zoro (Execution)`
 ✎ src/auth/invitation.ts   +42/-8   token validation + redirect guard
 ✎ src/routes/index.ts      +6/-0    route registration
 ✓ tests 84/84 · lint 0     → results/m/03-quality.md
@@ -44,7 +44,7 @@ appear. Reasoning reduced to conclusions.
 ## `full` — everything
 
 ```
-==================== ⚔️ FLOW 3 — ZORO (EXECUTION) ====================
+## `Flow 3 — Zoro (Execution)`
 $ mugiwara run lane.sh m
 lane: full (44 files, 5 sensitive)
 $ readFileSync src/auth/invitation.ts
