@@ -187,10 +187,18 @@ for (const doc of ['README.md', 'docs/index.md', 'docs/concepts/agents.md']) {
 // --- hub-rule gate (F3): every non-Luffy agent carries both hub sections ---
 for (const f of agentFiles) {
   const name = f.replace(/\.md$/, '');
-  if (name === 'luffy-orchestrator') continue;
   const text = readFileSync(join(agentDir, f), 'utf8');
+  // Entry protocol: EVERY agent, Luffy included. Exempting him is what let a
+  // captain with no pre-flight checklist ship. (E2)
   if (!text.includes('## Before you start')) errors.push(`agent ${f}: missing "## Before you start" entry protocol`);
-  if (!text.includes('## Return to Luffy')) errors.push(`agent ${f}: missing "## Return to Luffy" hub rule`);
+  // Return-to-Luffy: every agent EXCEPT Luffy — he cannot return to himself.
+  if (name !== 'luffy-orchestrator' && !text.includes('## Return to Luffy')) {
+    errors.push(`agent ${f}: missing "## Return to Luffy" hub rule`);
+  }
+  // Luffy carries the routing counterpart instead.
+  if (name === 'luffy-orchestrator' && !text.includes('Brainstorm is Usopp')) {
+    errors.push('agent luffy-orchestrator: missing the "never do another crew member\'s work" routing rule');
+  }
 }
 
 // --- hub-skill gate (F3): every agent lists mugiwara-orchestration (the hub rule's home) ---
