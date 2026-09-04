@@ -62,6 +62,7 @@ function wireSettings(root: string, hooksDir: string): { written: string[]; note
   const events: Record<string, { file: string; timeout: number; matcher?: string }> = {
     SessionStart: { file: 'session-start.js', timeout: 10 },
     UserPromptSubmit: { file: 'mugiwara-mode-tracker.js', timeout: 5 },
+    PreToolUse: { file: 'pretool-guard.js', timeout: 10, matcher: 'Bash' },
     Stop: { file: 'auto-savepoint.js', timeout: 20 },
     SubagentStop: { file: 'pipeline-guard.js', timeout: 15 },
     // matcher scopes the marker to crew invocations — without it the hook would
