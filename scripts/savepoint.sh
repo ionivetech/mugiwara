@@ -464,8 +464,12 @@ if [ -f "$MUGIWARA_DIR/config" ]; then
   _cfg_v=$(grep -E '^verify_merged=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
   [ -n "$_cfg_v" ] && DEPTH_VERIFY="$_cfg_v"
 fi
-case "$DEPTH_REVIEW" in full|standard|lean) ;; *) DEPTH_REVIEW="full" ;; esac
-case "$DEPTH_QUALITY" in full|standard|lean) ;; *) DEPTH_QUALITY="full" ;; esac
+# `quick` is the documented third level; `lean` was an undocumented synonym.
+# Accept both, normalise to the documented name. (N3)
+[ "$DEPTH_REVIEW" = "lean" ] && DEPTH_REVIEW="quick"
+[ "$DEPTH_QUALITY" = "lean" ] && DEPTH_QUALITY="quick"
+case "$DEPTH_REVIEW" in full|standard|quick) ;; *) DEPTH_REVIEW="full" ;; esac
+case "$DEPTH_QUALITY" in full|standard|quick) ;; *) DEPTH_QUALITY="full" ;; esac
 case "$DEPTH_VERIFY" in on|off) ;; *) DEPTH_VERIFY="off" ;; esac
 
 # evidence paths — the mission's flow folder (quoted printf, no sed — mission
