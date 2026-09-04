@@ -38,8 +38,7 @@ By mode (per mode config): `guided` checks in with the user as today; `semi`/`au
 ## Flow transitions (visibility)
 
 Every flow stage opens with a heading banner and closes
-with the handoff line `→ Flow N+1 — <crew>` (Flow 9: `→ closure`). The banner
-form is `## <emoji> Flow N — Crew (Role)` — one unconditional form, never ANSI
+with the handoff line `→ Flow N+1 — <crew>` (Flow 9: `→ closure`). The banner form is `## <emoji> Flow N — Crew (Role)` — one unconditional form, never ANSI
 escapes (the model cannot tell a terminal from a markdown UI; the harness
 plugin applies colour). The literal `Flow N —`
 text must stay exact (the check-in protocol reads it; heal cycles are counted
