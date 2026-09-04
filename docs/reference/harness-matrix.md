@@ -133,6 +133,12 @@ choosing to, and they are not portable.
 | `opencode` | advisory only | no verified turn-end event to bind to |
 | the other 7 targets | advisory only | no hook mechanism at all |
 
+| Target | Irreversible-command guard | Basis |
+|--------|----------------------------|-------|
+| `claude` | **enforced** | `PreToolUse` on Bash runs `hooks/pretool-guard.js` |
+| `opencode` | under verification (T9) | opencode hook capability not yet confirmed |
+| the other 7 targets | prose only | no hook mechanism at all |
+
 Full ENFORCED / ASPIRATIONAL split: [enforcement.md](enforcement.md).
 
 ## Worker dispatch capability

@@ -21,6 +21,11 @@ against, what it does not, and where to report a flaw.
   highest-value injection target. A lesson may describe a pattern; it may
   never redefine a rule, a lane, a gate, or a role. Violations are rejected
   and reported.
+- **Crew-executed irreversible actions.** `gh pr create|merge`, `git merge`,
+  pushes to protected branches, package publishes, and infra applies are
+  refused by the PreToolUse guard (`hooks/pretool-guard.ts`) before they run
+  on tier 1; prose elsewhere. The human performs the terminal step from the
+  handed-over branch and verdict. Reads and feature-branch pushes stay allowed.
 
 ## What it does not defend against
 

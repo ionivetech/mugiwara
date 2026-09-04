@@ -43,6 +43,18 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 2. Rollback must be as fast as the deploy (flag off, or revert + redeploy).
 3. Prove the rollback path exists — a rollback that exists only on paper is not a rollback.
 
+## Never
+
+The crew never creates a PR, merges, or deploys — in any mode. Refused
+commands: `gh pr create|merge|ready`, `gh release create`, `git merge`,
+pushes to `main|master|production|release`, `--force` pushes,
+`npm|yarn|pnpm publish`, `kubectl apply|delete|rollout`,
+`terraform apply|destroy`, `docker push`, mutating `aws` calls. Enforced by
+the PreToolUse guard (`hooks/pretool-guard.ts`) on tier 1, prose elsewhere.
+Reads (`gh pr view`, `terraform plan`, `kubectl get`) and feature-branch
+pushes stay allowed. The human runs the terminal step from the handed-over
+branch and verdict.
+
 ## Binary verdict
 
 1. Verdict is GO or NO-GO. No "GO with caveats", no "almost".
