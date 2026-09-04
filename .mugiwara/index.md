@@ -5,3 +5,4 @@
 - workflow-subplan — 2026-08-29
 - seamless-governors — 2026-09-01
 - seamless-followup — 2026-09-01
+- enforcement-gaps — 2026-09-04
