@@ -16,7 +16,7 @@ evidence:
 attestation:
   required: true
   trusted_keys:
-    - { id: "farid", pubkey: "ed25519:AAAA…", added: "2026-08-31" }
+    - { id: "jdoe", pubkey: "ed25519:AAAA…", added: "2026-08-31" }
     - { id: "ci",    pubkey: "ed25519:BBBB…", added: "2026-08-31" }
   revoked:
     - { id: "old-ci", revoked: "2026-08-15", reason: "key rotation" }
@@ -60,9 +60,9 @@ base64). Trusted list entries use inline or multiline form:
 
 ```yaml
 trusted_keys:
-  - { id: "farid", pubkey: "ed25519:AAAA", added: "2026-08-31" }
+  - { id: "jdoe", pubkey: "ed25519:AAAA", added: "2026-08-31" }
   # or multiline:
-  - id: farid
+  - id: jdoe
     pubkey: ed25519:AAAA
     added: 2026-08-31
 ```

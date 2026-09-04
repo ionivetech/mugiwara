@@ -166,7 +166,7 @@ config owns writing standards."
 | `mode` | guided | guided / semi / auto |
 | `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
 | `commit` | conventional | conventional / gitmoji / plain |
-| `auto_commit` | on | on / off — off disables commit+push in guided/semi (auto unaffected) |
+| `auto_commit` | off | on / off — off disables commit+push in guided/semi (auto unaffected) |
 | `coverage_new` | 85 | Coverage threshold, new files |
 | `coverage_modified` | 90 | Coverage threshold, modified files |
 | `review_depth` | full | full / standard / quick |
