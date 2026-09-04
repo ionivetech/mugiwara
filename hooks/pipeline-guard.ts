@@ -117,7 +117,10 @@ function artifactWorkNow(): boolean {
       for (const e of readdirSync(cur, { withFileTypes: true })) {
         const full = join(cur, e.name);
         try {
-          if (e.isDirectory()) { if (!e.isSymbolicLink()) stack.push(full); continue; }
+          // Symlink check first: a symlink dirent reports isDirectory()
+          // false, so nesting this inside the directory branch never fires.
+          if (e.isSymbolicLink()) continue;
+          if (e.isDirectory()) { stack.push(full); continue; }
           // 1s tolerance, same as planTouched (FS granularity / clock skew)
           if (statSync(full).mtimeMs + 1000 >= sessionStart) return true;
         } catch { /* unreadable entry — skip */ }

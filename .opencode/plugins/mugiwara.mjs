@@ -225,6 +225,9 @@ function artifactWorkSince(cwd, start) {
       for (const e of readdirSync(cur, { withFileTypes: true })) {
         const full = join(cur, e.name);
         try {
+          // Symlinks never resolve: a dirent symlink reports isDirectory()
+          // false, so the symlink check must come first, not nested inside.
+          if (e.isSymbolicLink()) continue;
           if (e.isDirectory()) { stack.push(full); continue; }
           if (statSync(full).mtimeMs + 1000 >= start) return true;
         } catch { /* skip */ }

@@ -612,3 +612,28 @@ test('E5: session.idle surfaces work-without-triage, silent when clean', async (
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('E5-R1: symlinked dirs inside .mugiwara are not walked as work', async () => {
+  const hooks = await plugin();
+  const onEvent = hooks['event'] as (arg: unknown) => Promise<void>;
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-symlink-'));
+  const prev = process.cwd();
+  process.chdir(dir);
+  try {
+    execSync('git init -q && git config user.email test@test.com && git config user.name Test && git commit --allow-empty -qm base', { cwd: dir });
+    const outside = mkdtempSync(join(tmpdir(), 'mugi-outside-'));
+    try {
+      writeFileSync(join(outside, 'fresh.md'), '# fresh\n');
+      mkdirSync(join(dir, '.mugiwara', 'spec'), { recursive: true });
+      symlinkSync(outside, join(dir, '.mugiwara', 'spec', 'link'));
+      writeFileSync(join(dir, '.mugiwara', '.engaged'), JSON.stringify({ first_seen: new Date().toISOString() }));
+      // symlink target is fresh, but outside the root — not this session's work
+      await onEvent({ event: { type: 'session.idle' } });
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
+  } finally {
+    process.chdir(prev);
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

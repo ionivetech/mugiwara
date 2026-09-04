@@ -72,9 +72,10 @@ function artifactWorkNow() {
       for (const e of readdirSync(cur, { withFileTypes: true })) {
         const full = join(cur, e.name);
         try {
+          if (e.isSymbolicLink())
+            continue;
           if (e.isDirectory()) {
-            if (!e.isSymbolicLink())
-              stack.push(full);
+            stack.push(full);
             continue;
           }
           if (statSync(full).mtimeMs + 1000 >= sessionStart)
