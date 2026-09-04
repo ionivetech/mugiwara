@@ -217,6 +217,28 @@ export function readState(projectDir: string): StateEntry[] {
   });
 }
 
+/**
+ * Every member known to this mission — from state files and continue files
+ * together. State alone is not enough (a member may have a resume point queued
+ * before their first savepoint) and continue alone is not enough (a deleted
+ * continue file must not erase a member whose state is intact).
+ */
+export function knownMembers(projectDir: string, mission: string): string[] {
+  const dir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(dir)) return [];
+  const members = new Set<string>();
+  for (const f of readdirSync(dir)) {
+    if (!f.endsWith('.json')) continue;
+    const stem = f.slice(0, -'.json'.length);
+    if (stem === 'state' || stem === 'continue') continue;
+    let member: string | null = null;
+    if (stem.startsWith('continue-')) member = stem.slice('continue-'.length);
+    else member = stem;
+    if (member && isSafeKey(member)) members.add(member);
+  }
+  return [...members].sort() as string[];
+}
+
 export type Resolution =
   | { kind: 'none' }
   | { kind: 'missions'; entries: ContinueEntry[] }
