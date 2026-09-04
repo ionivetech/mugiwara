@@ -1,5 +1,5 @@
 # Mission: invitation-accepted-flow
-2026-09-03 · farid · branch `feature/MKR-412` · lane **full** · mode guided
+2026-09-03 · John Doe · branch `feature/MKR-412` · lane **full** · mode guided
 
 ## Verdict
 **GO** — all gates passed. 1 finding deferred with an owner.

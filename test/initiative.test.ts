@@ -37,9 +37,9 @@ const plan = (header: string, rows: string[]): string =>
   `# Plan\n\n## Sub-missions\n\n${header}\n|----|------|----------|--------|--------|-----------|---------------|\n${rows.join('\n')}\n`;
 
 const ROWS = [
-  '| S1 | cart api | farid | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |',
-  '| S2 | payment ui | rina | feat/pay | [ ] | - | src/pay.tsx |',
-  '| S3 | docs | rina | feat/docs | [x] | - | docs/guide.md |',
+  '| S1 | cart api | John Doe | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |',
+  '| S2 | payment ui | Jane Smith | feat/pay | [ ] | - | src/pay.tsx |',
+  '| S3 | docs | Jane Smith | feat/docs | [x] | - | docs/guide.md |',
 ];
 
 function planFile(body: string): string {
@@ -75,8 +75,8 @@ describe('initiative sub-mission parsing (N1)', () => {
   it('4. two sub-missions sharing a file conflict, naming both IDs', () => {
     const f = planFile(
       plan(SUB_MISSIONS_HEADER, [
-        '| S1 | cart api | farid | feat/cart | [ ] | - | src/api/shared.ts |',
-        '| S2 | payment ui | rina | feat/pay | [ ] | - | src/api/shared.ts src/pay.tsx |',
+        '| S1 | cart api | John Doe | feat/cart | [ ] | - | src/api/shared.ts |',
+        '| S2 | payment ui | Jane Smith | feat/pay | [ ] | - | src/api/shared.ts src/pay.tsx |',
       ]),
     );
     try {
@@ -127,8 +127,8 @@ describe('initiative sub-mission parsing (N1)', () => {
   it('status renders the dashboard with blocked-by edges', () => {
     const f = planFile(
       plan(SUB_MISSIONS_HEADER, [
-        '| S1 | cart api | farid | feat/cart | [ ] | - | src/cart.ts |',
-        '| S2 | payment ui | rina | feat/pay | [ ] | S1 | src/pay.tsx |',
+        '| S1 | cart api | John Doe | feat/cart | [ ] | - | src/cart.ts |',
+        '| S2 | payment ui | Jane Smith | feat/pay | [ ] | S1 | src/pay.tsx |',
       ]),
     );
     try {
@@ -148,8 +148,8 @@ describe('initiative sub-mission parsing (N1)', () => {
   it('CLI conflict-check names the shared file and exits 1', async () => {
     const f = planFile(
       plan(SUB_MISSIONS_HEADER, [
-        '| S1 | cart api | farid | feat/cart | [ ] | - | src/api/shared.ts |',
-        '| S2 | payment ui | rina | feat/pay | [ ] | - | src/api/shared.ts |',
+        '| S1 | cart api | John Doe | feat/cart | [ ] | - | src/api/shared.ts |',
+        '| S2 | payment ui | Jane Smith | feat/pay | [ ] | - | src/api/shared.ts |',
       ]),
     );
     try {
