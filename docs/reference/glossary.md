@@ -21,7 +21,7 @@ page names the preferred one.
 | **Gate** | Binary pass/fail with evidence (coverage, build, DoD, sonar-style conditions). No negotiation. |
 | **Blocker ledger** | `blockers.md` rows for anything that failed and needs help. Ship-readiness requires it empty or owned. |
 | **Heal cycle** | One Brook pass over accumulated failures. Bounded at 3; a 4th halts and escalates. |
-| **Banner** | The `⚔️ FLOW N — CREW` line marking a flow stage's start; its absence means the stage was skipped (recorded). |
+| **Banner** | The `## <emoji> Flow N — Crew (Role)` heading marking a flow stage's start; its absence means the stage was skipped (recorded). |
 | **Check-in** | Luffy's report at a flow-stage boundary: what happened, evidence links, next route. |
 | **Trail** | Everything a mission leaves under `.mugiwara/`: plans, waves, review/security findings, decisions, blockers. Folds into `report.md` at archive. |
 | **Archive** | `mugiwara archive <mission>` — folds the trail into report.md after the integrity gate passes; leaves durable files behind. |

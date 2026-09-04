@@ -228,7 +228,7 @@ ship, never the other members'.
 
 ## Configuration
 
-Switch mode any time: `/mugiwara guided | semi | auto`. Or edit `.mugiwara/config`:
+Switch mode any time: say `mugiwara mode <guided|semi|auto>` in session — no CLI flag, no slash command. Or edit `.mugiwara/config`:
 
 | Key | Default | What |
 |---|---|---|
@@ -258,7 +258,7 @@ Project config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 | See mission position | `mugiwara status` |
 | See cost + live slop | `mugiwara cost` |
 | Close out a mission | `mugiwara archive <mission>` |
-| Switch mode | `/mugiwara guided\|semi\|auto` |
+| Switch mode | `mugiwara mode <guided\|semi\|auto>` (in session) |
 | All docs | [docs/](docs/) |
 
 ---

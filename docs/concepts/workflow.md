@@ -79,11 +79,10 @@ you**, who opens the PR. The crew never creates a PR, merges, or deploys.
 
 ## Banners and progress
 
-Each flow stage opens with a colored banner in the owning agent's color and closes
-with a handoff line. One banner form everywhere — the agent-colored equals
-line (`===== ⚔️ FLOW 3 — ZORO (EXECUTION) =====`),
-ANSI-wrapped in terminals, plain in markdown UIs (Claude Code UI, VSCode,
-Codex). Colors and emoji come from one table
+Each flow stage opens with a heading banner and closes
+with a handoff line. One banner form everywhere — `## ⚔️ Flow 3 — Zoro (Execution)`,
+never ANSI escapes (the model cannot tell a terminal from a markdown UI;
+the harness plugin applies colour). Colors and emoji come from one table
 (`references/wave-banners.md`), which the
 opencode plugin and installer read too, so the banner color always matches
 the agent's UI chip.

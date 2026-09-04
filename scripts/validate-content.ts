@@ -476,6 +476,40 @@ if (integrityArg !== -1) {
       errors.push(`doc-integrity: docs instruct "mugiwara ${cmd}" but src/cli.ts has no case '${cmd}'`);
     }
   }
+  // N2 banner-format: no raw ANSI escapes in model-facing instructions. The
+  // colour table in wave-banners.md is data for the plugin, not an
+  // instruction — it holds hex, never escapes, so no exemption is needed.
+  // N8 in-session phrases must never read as slash commands.
+  const proseFiles: string[] = [];
+  for (const dir of ['content', 'docs', 'references']) {
+    proseFiles.push(...walkMarkdown(join(import.meta.dirname, '..', dir)));
+  }
+  for (const file of ['README.md', 'AGENTS.md']) {
+    const p = join(import.meta.dirname, '..', file);
+    if (existsSync(p)) proseFiles.push(p);
+  }
+  for (const file of proseFiles) {
+    const text = readFileSync(file, 'utf8');
+    if (/\\x1b\[|38;2;|38;5;/.test(text)) {
+      errors.push(`doc-integrity: ${file} instructs raw ANSI escapes the model cannot emit — banners are plain headings`);
+    }
+    // `/mugiwara continue` is a real CLI verb and out of scope — only the mode
+    // switch is an in-session phrase, so only its slash forms are flagged.
+    if (/`\/(mugiwara mode|mugiwara (guided|semi|auto))/.test(text)) {
+      errors.push(`doc-integrity: ${file} writes the in-session mode phrase as a slash command — say "mugiwara mode <level>" in session, no slash, no CLI flag`);
+    }
+  }
+  // N5: the flow-summary contract must exist — it is what keeps normal
+  // verbosity to one line per stage.
+  const orchSkill = readFileSync(join(import.meta.dirname, '..', 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md'), 'utf8');
+  if (!orchSkill.includes('## Flow summary line')) {
+    errors.push('doc-integrity: mugiwara-orchestration SKILL.md lost its "## Flow summary line" contract');
+  }
+  // N9: the platform count must stay qualified — 9 installable + 3 marketplace.
+  const readme = readFileSync(join(import.meta.dirname, '..', 'README.md'), 'utf8');
+  if (readme.includes('12 platforms') && !readme.includes('via marketplace manifest')) {
+    errors.push('doc-integrity: README "12 platforms" is unqualified — split 9 via install + 3 via marketplace manifest');
+  }
 }
 }
 
