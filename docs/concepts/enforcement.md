@@ -1,5 +1,9 @@
 # Enforcement — every rule has a mechanism
 
+Models ignore prose rules under pressure — a "never" with no mechanism behind
+it fails silently. This page exists so every invariant either names what
+enforces it or admits it is prose-only.
+
 > Every invariant stated as **never** or **always** in a skill or agent file
 > must name its mechanism here, or be explicitly listed as prose-only with the
 > reason. An invariant with no mechanism and no entry is a gap, not a rule.

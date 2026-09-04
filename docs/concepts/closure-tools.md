@@ -1,8 +1,30 @@
 # Closure tools
 
-What happens when a mission ends. Five deterministic mechanisms run at or
+Closing a mission early used to delete teammates' resume points — one member's
+archive wiped state the others still needed to resume. These gates exist so
+closure folds a finished trail instead of destroying live work.
+
+What happens when a mission ends. Six deterministic mechanisms run at or
 around `mugiwara archive` — no model judgement, so they cannot be talked
 past.
+
+## Team gate
+
+Archive deletes session state, so closing while a teammate is still in flight
+destroys their resume point. Every assignee in the sub-mission table in
+`plan.md` must reach Flow 9 before the mission folds: `mugiwara archive` and
+`mugiwara clean --all` share the check via `closureBlockers` — assigned but
+never started, in flight below Flow 9, and state with no sub-mission row all
+block. `--force` archives anyway, and in-flight resume points are lost:
+
+```
+mugiwara: closure blocked — mission "payment-gateway" is not finished:
+  jane-doe     Flow 5, still in flight
+  john-smith   assigned, never started
+
+  Every assignee must reach Flow 9. Run `mugiwara status` to check.
+  Use --force to archive anyway — in-flight resume points will be lost.
+```
 
 ## Closure integrity gate
 

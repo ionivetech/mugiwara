@@ -257,6 +257,7 @@ without opening many files. Written by the crew automatically.
 
 ```bash
 mugiwara savepoint <mission> [member] [flow stage] [mode]
+mugiwara savepoint --flow <N>   # mission/member/mode inferred (member from the active-member cache)
 ```
 
 **Scenario.** After a context loss you open `.mugiwara/missions/<mission>/state.json`:
@@ -286,6 +287,11 @@ and hands off to the next flow stage without re-running completed work.
 /mugiwara continue <mission>       # solo → resume; team → list members
 /mugiwara continue <mission> <member>  # resume that member's work
 ```
+
+On a team mission with no member given, `continue` shows the roster picker —
+a numbered table with a STATE column — and caches the pick to
+`.mugiwara/active-member`; picking a not-started row starts it at Flow 0.
+New arrivals join with `mugiwara join <mission> <member> --area "<area>"`.
 
 or just say "where were we?" at session start. In **auto mode** the
 `session-start` hook scans `.mugiwara/missions/<mission>/continue*.json` for the current git
@@ -512,6 +518,8 @@ mugiwara continue <mission> [member]   # exact resume point
 mugiwara status                        # computed state: flow stage, tasks, lane, blockers, budget
 mugiwara run <script.sh> [args]        # run a bundled harness script (savepoint.sh · lane.sh)
 mugiwara savepoint <mission> [member] [flow stage] [mode]
+mugiwara savepoint --flow <N>          # mission/member/mode inferred
+mugiwara join <mission> <member> --area "<area>" [--files "a.ts,b.ts"]
 mugiwara archive <mission>             # fold a closed mission's evidence into its report
 mugiwara --version                     # version
 ```
@@ -664,11 +672,12 @@ pipeline — encoded once, enforced on every mission, no prose to remember.
 
 ## 27. Closure tools
 
-**What.** Five deterministic mechanisms at archive: the integrity gate
-(dangling links, secrets, missing evidence fail the archive), an executable
-rollback map, review routing (ranked reading order in the report), a context
-footprint line with optional ceiling, and optional minisign attestation.
-Plus staleness warnings on resume and `mugiwara handoff`.
+**What.** Six deterministic mechanisms at archive: the team gate (every roster
+assignee must reach Flow 9 — shared with `clean --all` via `closureBlockers`),
+the integrity gate (dangling links, secrets, missing evidence fail the
+archive), an executable rollback map, review routing (ranked reading order in
+the report), a context footprint line with optional ceiling, and optional
+minisign attestation. Plus staleness warnings on resume and `mugiwara handoff`.
 
 **How to use.** Automatic at archive/continue; `mugiwara sign <mission>
 [--verify]`, `mugiwara handoff <mission>` opt-in.
@@ -710,7 +719,7 @@ task-batch boundaries, never mid-task. Postures: `inline-sequential` (default),
 **How to use.** Automatic and deterministic (`src/posture.ts`) — posture is
 chosen from lane, risk, dependency topology, context pressure, and governor
 verdicts, and produces a reason + evidence refs (never an opaque score).
-Evaluated in `scripts/savepoint.sh` (writes `posture`/`posture_reason`/`team_members` to state) and `src/mission.ts` (report Adaptation section).
+Evaluated in `scripts/savepoint.sh` (writes `posture`/`posture_reason`/roster-derived team size to state) and `src/mission.ts` (report Adaptation section).
 Recorded in `decisions.md` and surfaced in the report's Adaptation section.
 A switch never changes control mode or crew roles. Old missions default to
 inline.

@@ -1,7 +1,9 @@
 # Audit Trail
 
-Every artifact the Mugiwara crew produces — what writes it, when, and how to
-read it as a reviewer.
+A mission that ends with "trust me" leaves nothing to review — claims without
+artifacts cannot be checked. The trail exists so every verdict points at files
+a reviewer can open. Every artifact the Mugiwara crew produces — what writes
+it, when, and how to read it as a reviewer.
 
 One directory per mission: `.mugiwara/missions/<mission>/`. Bare file names,
 no date prefixes — the date lives in `state.json` (`updated_at`) and in git

@@ -4,12 +4,12 @@
 [![npm downloads](https://img.shields.io/npm/dm/@ionivetech%2fmugiwara)](https://www.npmjs.com/package/@ionivetech/mugiwara)
 [![License: MIT](https://img.shields.io/github/license/ionivetech/mugiwara)](https://github.com/ionivetech/mugiwara/blob/main/LICENSE)
 
-**Your agent writes the code. Mugiwara proves it.**
+**Your AI agent already writes the code. Mugiwara makes it reviewable.**
 
-A governed engineering crew for your AI agent — evidence at every step, a
-process that sizes itself to the work, and cost you can actually see. No
-runtime, no API keys, no servers. Just markdown your agent already knows how
-to read.
+A crew of 12 specialists with defined roles, evidence at every step, and a
+process that sizes itself to the work — a typo costs nothing, an auth migration
+gets all nine stages and a security review. No runtime, no API keys, no
+servers. Just markdown your agent already knows how to read.
 
 Works on Claude Code, opencode, Copilot, Gemini, and 8 more platforms.
 
@@ -55,6 +55,21 @@ Used **8,781** of 12,000 tokens (73%). Lane `lean`. 1 heal cycle.
 ```
 
 *Generated from fixture `test/fixtures/report-sample.md` — 2026-09-03.*
+
+### Without Mugiwara
+
+> **Agent:** Done — I refactored the auth flow and all tests pass.
+>
+> **You:** ...which tests? Did anything touch the token check? What did you
+> decide about the redirect? Is there anything you skipped?
+>
+> **Agent:** *(the context is gone)*
+
+### With Mugiwara
+
+One file, attached to the PR. Which files changed, which gates passed and where
+their evidence lives, who decided what and why, and — the part nobody else
+writes down — **what was not verified**.
 
 ## The process fits the work
 
@@ -187,13 +202,13 @@ sequential. Inline stays the default.
 
 | Feature | One line |
 |---|---|
-| **Lane sizing** | Work auto-sized from `git diff` — typo instant, auth full pipeline |
-| **Evidence gates** | Every flow stage re-runs checks with evidence; archive fails on missing |
-| **Team split** | One plan, per-(mission, member) state + resume, zero collisions |
-| **Resume** | Rebuilds from `.mugiwara/` state — continues, never restarts |
-| **12 platforms** | 9 via install (Claude, opencode, Copilot, Gemini, Codex, Windsurf, Cline, Kilo, Antigravity) + 3 via marketplace manifest (Cursor, Kimi, Pi) |
+| Lane sizing | Process scales to the work. Computed from `git diff`, never guessed. |
+| Evidence gates | A stage passes only if the check actually ran. No output, no pass. |
+| Team split | One shared plan, per-person state, file conflicts caught before merge. |
+| Resume | Session died? Continues from the exact stage. Never restarts. |
+| 12 platforms | Same crew on Claude Code, Gemini, Codex, Copilot, Cursor and more — 9 via install, 3 via marketplace manifest. |
 
-→ All 29 features: [Every feature](docs/concepts/features.md)
+→ all features: [Every feature](docs/concepts/features.md)
 
 ---
 
@@ -218,11 +233,10 @@ ship, never the other members'.
 
 ## When not to use Mugiwara
 
-- **Prototyping or spikes** — use Lane 4, or skip mugiwara entirely.
-- **Unattended multi-hour runs** — the crew runs inline so you can interrupt it.
-- **Solo scripts with no review path** — the audit trail has no audience.
-- **Harnesses without agent dispatch** (Gemini, Codex, tier 3) — you get the
-  workflow and the trail, not enforced role boundaries.
+- **Throwaway prototype you will delete tonight** — use Lane 4 spike, or skip mugiwara entirely; the trail outlives the code otherwise.
+- **Unattended multi-hour runs with nobody watching chat** — the crew runs inline so you can interrupt it; asleep at the wheel, use a batch runner instead.
+- **Solo script with no reviewer, no PR, no future reader** — the audit trail has no audience, so it is pure overhead.
+- **Harnesses without agent dispatch** (Gemini, Codex, tier 3) — you get the workflow and the trail, not enforced role boundaries; do not expect the harness to stop a role from touching code it should not.
 
 ---
 
@@ -262,6 +276,18 @@ Project config (`.mugiwara/config`) overrides global (`~/.mugiwara/config`).
 | All docs | [docs/](docs/) |
 
 ---
+
+## Try it in 60 seconds
+
+    npx @ionivetech/mugiwara@latest install --target claude --yes
+
+Then just describe what you want:
+
+    "fix the typo in the header comment"        -> fixed immediately, no ceremony
+    "add pagination to the users endpoint"      -> plan, execute, audit, quality, review
+    "move auth to short-lived tokens"           -> all nine stages plus a security review
+
+You did not choose any of that. The lane was computed from the diff.
 
 ## Install
 
@@ -352,7 +378,7 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 | Claim | Status |
 |---|---|
 | Retrieval routing rank-1 | **95.9%**, 216 probes, offline, in CI |
-| Reference pointers resolve | **322/322**, 9 targets, in CI |
+| Reference pointers resolve | **318/318**, 9 targets, in CI |
 | Index size published vs measured | **doc-gated** — validator fails on drift, in CI |
 | Lane constants match content load | **verified**, in CI |
 | Write-scope enforcement | **opencode only** — rules-based elsewhere |

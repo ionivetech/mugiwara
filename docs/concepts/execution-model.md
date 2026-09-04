@@ -1,7 +1,10 @@
 # Execution Model
 
-Why the crew runs in your main conversation — and when subagents are actually
-used.
+Work inside subagents is invisible — claims come back without evidence and
+failures hide where no one looks. The crew runs inline by default so every
+flow stage plays out where you can see it, with subagents only for genuinely
+parallel work. Why the crew runs in your main conversation — and when
+subagents are actually used.
 
 ## Three independent decisions
 
