@@ -84,6 +84,42 @@ function sourceChanged(): boolean {
 }
 
 /**
+ * Artifact work in this session: files written under .mugiwara/missions,
+ * .mugiwara/spec, or .mugiwara/plans since the session's first-seen marker.
+ * Work is not only source edits — a brainstorm that produced a spec, a plan,
+ * or a recommendation is work, and it escaped the source-only predicate. (E3)
+ * Session-scoped like planTouched: an absent/unreadable marker means untouched,
+ * never "everything counts". Fail open throughout.
+ */
+function artifactWorkNow(): boolean {
+  const markerFile = join(cwd, '.mugiwara', '.engaged');
+  if (!existsSync(markerFile)) return false;
+  let sessionStart = 0;
+  try {
+    const m = JSON.parse(readFileSync(markerFile, 'utf8')) as { first_seen?: string; touched_at?: string };
+    sessionStart = Date.parse(m.first_seen ?? '') || Date.parse(m.touched_at ?? '') || 0;
+  } catch { return false; }
+  if (!sessionStart) return false;
+  try {
+    const stack = ['missions', 'spec', 'plans']
+      .map((s) => join(cwd, '.mugiwara', s))
+      .filter((p) => existsSync(p));
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      for (const e of readdirSync(cur, { withFileTypes: true })) {
+        const full = join(cur, e.name);
+        try {
+          if (e.isDirectory()) { if (!e.isSymbolicLink()) stack.push(full); continue; }
+          // 1s tolerance, same as planTouched (FS granularity / clock skew)
+          if (statSync(full).mtimeMs + 1000 >= sessionStart) return true;
+        } catch { /* unreadable entry — skip */ }
+      }
+    }
+  } catch { return false; }
+  return false;
+}
+
+/**
  * The newest readable savepoint for any mission, or null when there is none.
  * Its existence IS the triage fact (check 1); its `lane` field is the input to
  * the write-boundary check (check 2).
@@ -250,9 +286,12 @@ async function main(): Promise<void> {
   // the original invariant and it BLOCKS (the triage fact is a crisp on-disk
   // check, no absence-inference). Only fires when source actually changed.
   if (!state) {
-    if (!sourceChangedNow) return;
+    // Any work at all — source edits OR artifacts written — with no triage on
+    // disk is the escape this guard exists to close. (E3)
+    if (!sourceChangedNow && !artifactWorkNow()) return;
     const reason =
-      'Mugiwara: source changed in this session but no Flow 0 triage is on disk. ' +
+      'Mugiwara: this session did work (source and/or .mugiwara artifacts) but no ' +
+      'Flow 0 triage is on disk. ' +
       'Run Flow 0 (classify, size the lane, write the decision log) and record it with ' +
       '`mugiwara savepoint <mission> "" 0 <mode>` — or, if this is Lane 0 trivial work, ' +
       'record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.';

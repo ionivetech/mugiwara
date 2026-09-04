@@ -50,6 +50,41 @@ function sourceChanged() {
     return false;
   }
 }
+function artifactWorkNow() {
+  const markerFile = join(cwd, ".mugiwara", ".engaged");
+  if (!existsSync(markerFile))
+    return false;
+  let sessionStart = 0;
+  try {
+    const m = JSON.parse(readFileSync(markerFile, "utf8"));
+    sessionStart = Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
+  } catch {
+    return false;
+  }
+  if (!sessionStart)
+    return false;
+  try {
+    const stack = ["missions", "spec", "plans"].map((s) => join(cwd, ".mugiwara", s)).filter((p) => existsSync(p));
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const e of readdirSync(cur, { withFileTypes: true })) {
+        const full = join(cur, e.name);
+        try {
+          if (e.isDirectory()) {
+            if (!e.isSymbolicLink())
+              stack.push(full);
+            continue;
+          }
+          if (statSync(full).mtimeMs + 1000 >= sessionStart)
+            return true;
+        } catch {}
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
 function newestMissionState() {
   const base = join(cwd, ".mugiwara", "missions");
   if (!existsSync(base))
@@ -172,9 +207,9 @@ async function main() {
     return;
   }
   if (!state) {
-    if (!sourceChangedNow)
+    if (!sourceChangedNow && !artifactWorkNow())
       return;
-    const reason = "Mugiwara: source changed in this session but no Flow 0 triage is on disk. " + "Run Flow 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
+    const reason = "Mugiwara: this session did work (source and/or .mugiwara artifacts) but no " + "Flow 0 triage is on disk. " + "Run Flow 0 (classify, size the lane, write the decision log) and record it with " + '`mugiwara savepoint <mission> "" 0 <mode>` \u2014 or, if this is Lane 0 trivial work, ' + "record a Lane 0 savepoint to say so. Set enforce=off in .mugiwara/config to disable this check.";
     if (enforce === "warn") {
       process.stderr.write(`\u26A0 ${reason}
 `);
