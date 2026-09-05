@@ -1,7 +1,10 @@
 # Modes
 
-The crew's autonomy level. Read once per flow stage at dispatch; a flip applies from
-the next flow stage, never mid-flow-stage.
+An agent that asks about every step wastes your day; one that never asks ships
+surprises. Modes exist so you set the interruption level once instead of
+negotiating it at every flow stage. The crew's autonomy level. Read once per
+flow stage at dispatch; a flip applies from the next flow stage, never
+mid-flow-stage.
 
 **Mode owns autonomy, config owns writing standards.** Whether branch and commit
 run automatically is decided by the mode — except one config lever: `auto_commit

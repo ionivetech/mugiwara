@@ -6,7 +6,7 @@ export type Args = {
   flags: Record<string, FlagValue>;
 };
 
-const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target', '--before': 'before', '--backend': 'backend', '--mission': 'mission', '--to-team': 'toTeam', '--to-solo': 'toSolo' };
+const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target', '--before': 'before', '--backend': 'backend', '--mission': 'mission', '--to-team': 'toTeam', '--to-solo': 'toSolo', '--flow': 'flow', '--area': 'area', '--files': 'files' };
 const BOOL_FLAGS: Record<string, string> = {
   '--global': 'global', '--yes': 'yes', '-y': 'yes', '--force': 'force',
   '--dry-run': 'dryRun', '--keep-logs': 'keepLogs', '--check': 'check', '--all': 'all', '--verify': 'verify',

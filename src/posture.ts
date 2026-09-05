@@ -22,7 +22,7 @@ export type PostureInput = {
   independent_tasks: number;
   order_dependent: boolean;
   context_pressure: boolean;
-  team_members: number;
+  team_members: number; // roster-derived
   phases: number;
   plan_lines: number;
   governor: GovernorVerdict;
@@ -45,11 +45,11 @@ export function selectPosture(input: PostureInput): PostureResult {
       evidence_refs: ['governor circuit-breaker', 'state.json'],
     };
   }
-  if (input.team_members > 1) {
+  if (input.team_members > 1) { // roster-derived
     return {
       posture: 'team-scoped',
       pause: false,
-      reason: `${input.team_members} team members with non-overlapping scope`,
+      reason: `${input.team_members} team members with non-overlapping scope`, // roster
       evidence_refs: ['plan ownership map'],
     };
   }

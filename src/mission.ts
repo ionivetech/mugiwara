@@ -102,6 +102,86 @@ function changedFiles(projectDir: string, state: Record<string, unknown> | null)
   }
 }
 
+/**
+ * Count distinct assignees in the mission's sub-mission table. This replaces
+ * the deleted `team_members` config key — the roster is the only place that
+ * knows how many people are on a mission, and it cannot disagree with the plan
+ * because it IS the plan.
+ * Returns 1 when there is no table (solo mission).
+ */
+export function rosterSize(missionDir: string): number {
+  const plan = join(missionDir, 'plan.md');
+  if (!existsSync(plan)) return 1;
+  const text = readFileSync(plan, 'utf8');
+  const assignees = new Set<string>();
+  let inTable = false;
+  for (const line of text.split('\n')) {
+    const lower = line.trim().toLowerCase();
+    if (lower.startsWith('| id ') && lower.includes('| name ')) { inTable = true; continue; }
+    if (inTable) {
+      if (!line.trim().startsWith('|')) break;
+      if (/^\|[\s:-]+\|/.test(line)) continue;          // separator row
+      const cols = line.split('|').map((c) => c.trim());
+      const who = cols[3];                               // Assignee column
+      if (who && who !== '-') assignees.add(who);
+    }
+  }
+  return assignees.size || 1;
+}
+
+export function rosterAssignees(missionDir: string): string[] {
+  const plan = join(missionDir, 'plan.md');
+  if (!existsSync(plan)) return [];
+  const text = readFileSync(plan, 'utf8');
+  const assignees = new Set<string>();
+  let inTable = false;
+  for (const line of text.split('\n')) {
+    const lower = line.trim().toLowerCase();
+    if (lower.startsWith('| id ') && lower.includes('| name ')) { inTable = true; continue; }
+    if (inTable) {
+      if (!line.trim().startsWith('|')) break;
+      if (/^\|[\s:-]+\|/.test(line)) continue;
+      const cols = line.split('|').map((c) => c.trim());
+      const who = cols[3];
+      if (who && who !== '-') assignees.add(who);
+    }
+  }
+  return [...assignees];
+}
+
+export function readMemberStates(missionDir: string): Array<{ member: string | null; flow: number }> {
+  if (!existsSync(missionDir)) return [];
+  const out: Array<{ member: string | null; flow: number }> = [];
+  for (const f of readdirSync(missionDir).filter(isStateFile)) {
+    try {
+      const raw = JSON.parse(readFileSync(join(missionDir, f), 'utf8')) as Record<string, unknown>;
+      const member = f === 'state.json' ? null : f.slice(0, -'.json'.length);
+      const flow = Number((raw as Record<string, unknown>).flow ?? (raw as Record<string, unknown>).wave ?? 0);
+      if (member !== null && !/^[A-Za-z0-9._-]+$/.test(member)) continue;
+      if (member === 'continue') continue;
+      out.push({ member: member as string | null, flow: Number.isFinite(flow) ? flow : 0 });
+    } catch { /* corrupt — skip */ }
+  }
+  return out;
+}
+
+export function closureBlockers(missionDir: string, mission: string): string[] {
+  const roster = rosterAssignees(missionDir);
+  const states = readMemberStates(missionDir);
+  const problems: string[] = [];
+  for (const who of roster) {
+    const s = states.find((x) => x.member === who);
+    if (!s) problems.push(`  ${who.padEnd(12)} assigned, never started`);
+    else if (s.flow < 9) problems.push(`  ${who.padEnd(12)} Flow ${s.flow}, still in flight`);
+  }
+  for (const s of states) {
+    if (s.member && roster.length && !roster.includes(s.member)) {
+      problems.push(`  ${s.member.padEnd(12)} has state but no sub-mission in plan.md`);
+    }
+  }
+  return problems;
+}
+
 function activeActor(projectDir: string): string | null {
   // state now lives at .mugiwara/missions/<mission>/[member].json — scan the
   // latest state file for its actor
@@ -169,8 +249,8 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
   return { removed, kept };
 }
 
-export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
-  const { dryRun = false } = opts;
+export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean; force?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
+  const { dryRun = false, force = false } = opts;
   const root = join(projectDir, '.mugiwara');
   // mission allowlist — same as savepoint.sh. Dot-only
   // names (".", "..") would resolve upward through join(...,"..") and let
@@ -181,6 +261,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   const dir = join(root, 'missions', mission);
   if (!existsSync(dir)) return { report: null, removed, kept };
+
+  // Closure gate: a mission is not done when a member is not done. Archive
+  // deletes session state, so closing early destroys other people's resume
+  // points. Checks both directions — assigned but not started, and started but
+  // not finished.
+  if (!dryRun) {
+    const blockers = closureBlockers(dir, mission);
+    if (blockers.length && !force) {
+      const msg = `closure blocked — mission "${mission}" is not finished:\n${blockers.join('\n')}\n\n  Every assignee must reach Flow 9. Run \`mugiwara status\` to check.\n  Use --force to archive anyway — in-flight resume points will be lost.`;
+      throw new Error(msg);
+    }
+  }
 
   // Closure integrity gate: the trail validates itself before it
   // folds. Dangling links, secrets, or missing evidence fail the archive.
@@ -234,7 +326,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       const sTokens = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
       const sBudget = typeof state.budget === 'number' ? state.budget : 0;
       const sStatus = typeof state.budget_status === 'string' ? state.budget_status : 'ok';
-      const sTeam = typeof (state as Record<string, unknown>).team_members === 'number' ? (state as Record<string, unknown>).team_members as number : 1;
+      const sTeam = rosterSize(dir); // roster-derived, replaces deleted team_members config
       const sRepeated = typeof (state as Record<string, unknown>).repeated_reads === 'number' ? (state as Record<string, unknown>).repeated_reads as number : 0;
       // posture selection (mirrors savepoint.sh logic, records to adaptation trail via decisions.md if needed)
       selectPosture({
@@ -243,7 +335,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
         independent_tasks: 0,
         order_dependent: true,
         context_pressure: sBudget > 0 && sTokens > sBudget * 0.6,
-        team_members: sTeam,
+        team_members: sTeam, // roster
         phases: 1,
         plan_lines: 0,
         governor: sStatus === 'stop' ? 'stop' : sStatus === 'warn' ? 'avoid' : 'normal',

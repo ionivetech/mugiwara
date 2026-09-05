@@ -1,6 +1,9 @@
 # Policy as code
 
-Org rules that override crew judgement. One optional file at the repo root:
+Team rules spoken in chat evaporate — the next mission rediscovers that
+migrations need the full pipeline. Policy as code exists so org rules live in
+one file the pipeline reads on every run. Org rules that override crew
+judgement. One optional file at the repo root:
 
 ```yaml
 # mugiwara.policy.yml

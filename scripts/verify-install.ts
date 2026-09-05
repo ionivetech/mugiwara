@@ -97,6 +97,8 @@ const RUNTIME_SHAPES: RegExp[] = [
   /^\.mugiwara\/missions\/<mission>\/waves\/?$/, // legacy layout, still read
   /^\.mugiwara\/missions\/<mission>\/(state\.json|<member>\.json)$/,
   /^\.mugiwara\/missions\/<mission>\/(continue\.json|continue-<member>\.json)$/,
+  /^\.mugiwara\/missions\/<mission>\/?$/,                       // mission dir itself (roster derivation scans it)
+  /^\.mugiwara\/active-member$/,                                 // roster-pick cache written by continue/join
 ];
 
 // Shape violations that exist today and are NOT fixed in this mission because

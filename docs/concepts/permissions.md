@@ -1,7 +1,10 @@
 # Permission boundaries
 
-Personas with teeth. Each crew member declares the tools its role allows;
-auditors get narrower scopes than executors.
+A reviewer with write access stops reviewing and starts rewriting — role
+boundaries stated in prose collapse under pressure. Permission boundaries exist
+so each persona's tools match its role before the work starts. Personas with
+teeth. Each crew member declares the tools its role allows; auditors get
+narrower scopes than executors.
 
 ## Declared scopes
 

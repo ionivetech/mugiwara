@@ -39,11 +39,23 @@ Map every task to a codebase area before parallelizing. Each area (e.g. `src/aut
 | <path prefix> | T1, T2 |
 
 ## Sub-missions (team only)
-When Flow 0 recorded `team_members > 1`, extend area table into sub-mission table before task detail. Full rule: `references/sub-missions.md`. Solo missions skip this entirely. Every area row maps to exactly one sub-mission; every sub-mission ends mergeable; `Depends On` is the plan's edge. Run `mugiwara initiative conflict-check <plan>` before GO — file touched by two sub-missions is a planning defect, not a merge problem.
+
+When Flow 0 recorded a roster, turn the area table into a sub-mission table
+before writing task detail. Use the **exact names from the Flow 0 roster** —
+they are the member ids the crew will use for state files. Full rule:
+`references/sub-missions.md` — 30 lines; exact roster names are the contract.
 
 | ID | Name | Assignee | Branch | Status | Depends On | Touched Files |
 |----|------|----------|--------|--------|-----------|---------------|
-| S1 | cart api | John Doe | feat/cart | [ ] | - | src/cart.ts, src/api/shared.ts |
+| S1 | api checkout | jane-doe | feat/checkout-api | [ ] | - | src/api/checkout.ts |
+| S2 | web ui | john-smith | feat/checkout-web | [ ] | S1 | src/web/checkout.tsx |
+| S3 | shared types | eleanor-vance | feat/checkout-types | [ ] | - | src/shared/types.ts |
+
+One area → one sub-mission; `Touched Files` from area map; mergeable alone;
+`Depends On` is real edge; **Assignee spelling is binding** — becomes
+`<member>.json`, lowercase, no spaces, same spelling in every row. Run
+`mugiwara initiative conflict-check .mugiwara/missions/<mission>/plan.md`
+before GO — file in two sub-missions is planning defect. Solo missions skip.
 
 ## Plan tables (wave + task index)
 Before the detail blocks, add two markdown tables so the executor can read the shape at a glance and parallelize safely:

@@ -204,4 +204,5 @@ six. **Archive** (`mugiwara archive <mission>`) folds waves + findings into
 - Understand the [lanes](concepts/lanes.md) — how work is sized before it runs.
 - Set your [mode](concepts/modes.md) — guided/semi/auto.
 - Read the [audit trail](concepts/audit-trail.md) — every artifact and how to review it.
+- Sharing the work? [Runbook: team mission](runbooks/team-mission.md) — lead and member steps for shared work.
 - See the [compliance matrix](reference/compliance-matrix.md) — rule compliance per model.

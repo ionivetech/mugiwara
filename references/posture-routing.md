@@ -11,7 +11,8 @@ no-op route — no posture change).
 
 Deterministic matrix: `src/posture.ts` `selectPosture(input)` → `{ posture,
 reason, evidence_refs }`. Inputs: lane, risk, independent_tasks, order_dependent,
-context_pressure, team_members, phases, plan_lines, governor verdict.
+context_pressure, roster size (distinct assignees from the sub-mission table),
+phases, plan_lines, governor verdict.
 
 | Trigger | Posture |
 |---------|---------|

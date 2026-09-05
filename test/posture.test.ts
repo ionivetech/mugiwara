@@ -8,7 +8,7 @@ const base: PostureInput = {
   independent_tasks: 0,
   order_dependent: true,
   context_pressure: false,
-  team_members: 1,
+  team_members: 1, // roster-derived
   phases: 1,
   plan_lines: 200,
   governor: 'normal',
@@ -31,7 +31,7 @@ describe('selectPosture — deterministic matrix', () => {
   });
 
   it('team > 1 → team-scoped', () => {
-    const r = selectPosture({ ...base, team_members: 3, independent_tasks: 4 });
+    const r = selectPosture({ ...base, team_members: 3, independent_tasks: 4 }); // roster-derived
     expect(r.posture).toBe('team-scoped');
     expect(r.evidence_refs).toContain('plan ownership map');
   });

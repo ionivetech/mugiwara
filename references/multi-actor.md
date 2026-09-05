@@ -1,10 +1,15 @@
 # Multi-Actor Workspace
 
 Mugiwara in a team repo — several engineers running missions without collision.
+Without a shared identity rule, two engineers resuming the same mission clobber
+each other's state; the roster fixes who is who before any work starts.
 
 ## State isolation
 
-Identity is **(mission, member)**, never branch. Every engineer's work lives in
+Identity is **(mission, member)**, never branch — and the member half is never
+typed freehand. It comes from the roster: the sub-mission table in `plan.md`
+(id, area, assignee), written by Nami at Flow 2 and extended by
+`mugiwara join`. Every engineer's work lives in
 its own file inside the mission folder, so parallel work never collides:
 
 ```
@@ -25,13 +30,23 @@ Branch is an implementation detail, not an identity: a member can hold several
 missions on one branch, or two members can share a mission on separate branches.
 State and continue follow the person and the plan, not the branch.
 
+## Active-member cache
+
+`.mugiwara/active-member` holds one line: your roster member id for this repo
+checkout (e.g. `jane-doe`). `mugiwara continue` writes it after you pick your
+row in the roster picker, and `mugiwara join` writes it when you join; the
+savepoint then defaults to that member when no explicit member is passed. The
+file is gitignored — it identifies the checkout, not the mission — and never
+hand-edited: re-run `mugiwara continue` to switch identity, so the cache and
+the roster cannot disagree.
+
 ## Safe reset
 
 `mugiwara reset` must refuse to wipe another actor's live mission:
 
 ```
 $ mugiwara reset
-✗ Active mission for 'john'. Use --force to override.
+✗ Active mission for 'jane-doe'. Use --force to override.
 ```
 
 `--force` still preserves `.mugiwara/lessons.md` and `config`.
@@ -44,12 +59,14 @@ All actors read and write to the same file. Append-only, never overwrite.
 ## Member namespacing
 
 `mugiwara savepoint` writes per-(mission, member) state (on Claude Code a Stop hook also writes savepoints automatically; the explicit call is the wave-boundary marker). Solo missions (no
-member argument) write `state.json`; team missions write `<member>.json`:
+member argument) write `state.json`; team missions write `<member>.json`.
+The member argument defaults to the `.mugiwara/active-member` cache — pass it
+explicitly only to act as someone else:
 
 ```bash
-mugiwara savepoint dark-mode                 # solo → missions/dark-mode/state.json
-mugiwara savepoint payment-gateway john    # team → missions/payment-gateway/john.json
-mugiwara savepoint payment-gateway patty     #        missions/payment-gateway/patty.json
+mugiwara savepoint dark-mode                        # solo → missions/dark-mode/state.json
+mugiwara savepoint payment-gateway john-smith       # team → missions/payment-gateway/john-smith.json
+mugiwara savepoint payment-gateway jane-doe         #        missions/payment-gateway/jane-doe.json
 ```
 
 The resume point follows the same scoping: `missions/<mission>/continue-<member>.json`

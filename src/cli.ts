@@ -10,9 +10,10 @@ import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
 import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
-import { resetMission, archiveMission } from './mission.ts';
+import { resetMission, archiveMission, closureBlockers, rosterAssignees } from './mission.ts';
+import { knownMembers } from './continue.ts';
 import { runScript, RUNNABLE } from './run.ts';
-import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles } from './continue.ts';
+import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles, type ContinueEntry } from './continue.ts';
 import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
@@ -77,7 +78,8 @@ export async function run(argv: string[]): Promise<void> {
     case 'status': return statusCmd(flags);
     case 'cost': return costCmd(flags, _);
     case 'run': return runCmd(flags, _);
-    case 'savepoint': return runCmd(flags, ['run', 'savepoint.sh', ..._.slice(1)]);
+    case 'savepoint': return savepointCmd(flags, _);
+    case 'join': return joinCmd(flags, _);
     case 'blame': return blameCmd(flags, _);
     case 'handoff': return handoffCmd(flags, _);
     case 'sign': return signCmd(flags, _);
@@ -86,6 +88,139 @@ export async function run(argv: string[]): Promise<void> {
     case 'initiative': return initiativeCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
+}
+
+function savepointCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const flowFlag = str(flags.flow) ?? (flag(flags.flow) ? '' : undefined);
+  // Short form: mugiwara savepoint --flow N with everything else inferred
+  if (flowFlag !== undefined || flag(flags.flow)) {
+    const flowVal = str(flags.flow) ?? '';
+    // flow may be boolean true if passed as --flow without value? Treat as error
+    if (!flowVal) {
+      console.error('usage: mugiwara savepoint --flow <N>  (or positional: savepoint <mission> [member] [flow] [mode])');
+      process.exit(1);
+    }
+    const flowNum = Number(flowVal);
+    if (!Number.isFinite(flowNum)) {
+      console.error(`invalid --flow value "${flowVal}"`);
+      process.exit(1);
+    }
+    // Mission inference: single active mission on disk, error if several
+    const missionsRoot = join(projectDir, '.mugiwara', 'missions');
+    let mission: string | null = null;
+    if (positionals[1]) mission = positionals[1];
+    else {
+      if (!existsSync(missionsRoot)) {
+        console.error('no mission on disk — specify <mission>');
+        process.exit(1);
+      }
+      const all = readdirSync(missionsRoot, { withFileTypes: true }).filter((e) => e.isDirectory() && /^[A-Za-z0-9._-]+$/.test(e.name) && !/^\.+$/.test(e.name)).map((e) => e.name);
+      if (all.length === 0) {
+        console.error('no mission on disk — specify <mission>');
+        process.exit(1);
+      }
+      if (all.length > 1) {
+        console.error(`multiple missions on disk: ${all.join(', ')} — specify <mission>`);
+        process.exit(1);
+      }
+      mission = all[0];
+    }
+    // Member from active-member cache (empty means solo)
+    let member = positionals[2] ?? '';
+    if (!member) {
+      const cache = join(projectDir, '.mugiwara', 'active-member');
+      if (existsSync(cache)) {
+        try { member = readFileSync(cache, 'utf8').trim().split(/\s+/)[0] ?? ''; } catch { member = ''; }
+      }
+    }
+    // Mode from config (project then global) — default guided
+    let mode = positionals[3] ?? '';
+    if (!mode) {
+      try {
+        const cfg = readFileSync(join(projectDir, '.mugiwara', 'config'), 'utf8');
+        const m = cfg.split(/\r?\n/).find((l) => l.trim().startsWith('mode='));
+        if (m) mode = m.split('=')[1].split('#')[0].trim();
+      } catch {}
+      if (!mode) mode = 'guided';
+    }
+    const args = [mission!, member, String(flowNum), mode].filter((a) => a !== undefined) as string[];
+    // member may be empty solo → pass '' as placeholder so flow lands correctly
+    // runScript expects positional args: mission, member, flow, mode
+    // For solo, we pass '' as second arg so that $2 is empty and $3 is flow
+    const code = runScript('savepoint.sh', args, projectDir);
+    if (code !== 0) process.exit(code);
+    return;
+  }
+  // Long positional form: mugiwara savepoint <mission> [member] [flow] [mode] — hooks depend on it
+  const code = runScript('savepoint.sh', positionals.slice(1), projectDir);
+  if (code !== 0) process.exit(code);
+}
+
+function joinCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const mission = positionals[1];
+  const member = positionals[2];
+  const area = str(flags.area);
+  const files = str(flags.files);
+  if (!mission || !member || !area) {
+    console.error('usage: mugiwara join <mission> <member> --area "<area>" [--files "a.ts,b.ts"]');
+    process.exit(1);
+  }
+  if (!/^[A-Za-z0-9._-]+$/.test(member) || /^\.+$/.test(member) || member === 'state' || member === 'continue') {
+    console.error(`invalid member name "${member}" (allowlist: [a-zA-Z0-9._-], not a dot-path, not state/continue)`);
+    process.exit(1);
+  }
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  const planPath = join(missionDir, 'plan.md');
+  if (!existsSync(planPath)) {
+    console.error(`no plan for mission "${mission}"`);
+    process.exit(1);
+  }
+  const roster = rosterAssignees(missionDir);
+  if (roster.includes(member)) {
+    console.error(`member "${member}" already in roster`);
+    process.exit(1);
+  }
+  let planText = readFileSync(planPath, 'utf8');
+  const lines = planText.split('\n');
+  let insertIdx = -1;
+  let maxId = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(/^\|\s*S(\d+)\s*\|/);
+    if (m) {
+      maxId = Math.max(maxId, Number(m[1]));
+      insertIdx = i;
+    }
+  }
+  if (insertIdx === -1) {
+    console.error('no sub-mission table found in plan.md');
+    process.exit(1);
+  }
+  const newId = `S${maxId + 1}`;
+  const branch = `feat/${member}`;
+  const touched = files ? files.split(',').map((s) => s.trim()).filter(Boolean).join(', ') : `${area.replace(/\s+/g, '-')}/`;
+  const newRow = `| ${newId} | ${area} | ${member} | ${branch} | [ ] | - | ${touched} |`;
+  lines.splice(insertIdx + 1, 0, newRow);
+  writeFileSync(planPath, lines.join('\n'));
+  const decPath = join(missionDir, 'decisions.md');
+  let decText = '';
+  try { decText = readFileSync(decPath, 'utf8'); } catch { decText = '# Decisions\n\n| # | Decision | By | Why |\n|---|---|---|---|\n'; }
+  const actor = (() => {
+    try {
+      const name = execFileSync('git', ['config', 'user.name'], { cwd: projectDir, encoding: 'utf8' }).trim();
+      const email = execFileSync('git', ['config', 'user.email'], { cwd: projectDir, encoding: 'utf8' }).trim();
+      return name && email ? `${name} <${email}>` : name || 'unknown';
+    } catch { return 'unknown'; }
+  })();
+  const date = new Date().toISOString().slice(0, 10);
+  const decRow = `| ${Date.now()} | Join: ${member} (${area}) added to ${mission} via mugiwara join | ${actor} | ${date} |`;
+  if (!decText.endsWith('\n')) decText += '\n';
+  writeFileSync(decPath, decText + decRow + '\n');
+  const cache = join(projectDir, '.mugiwara', 'active-member');
+  mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
+  writeFileSync(cache, member + '\n');
+  console.log(`joined ${mission} as ${member} (${area}) — plan updated, decisions logged, active-member set`);
 }
 
 function resetCmd(flags: Args['flags']): void {
@@ -105,7 +240,7 @@ function archive(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
   if (!mission) { console.error('usage: mugiwara archive <mission> [--project <dir>] [--dry-run]'); process.exit(1); }
-  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun) });
+  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force) });
   if (result.report) console.log(`archive target: ${result.report}`);
   else console.error(`no mission dir for "${mission}" under .mugiwara/missions/`);
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
@@ -160,14 +295,27 @@ function cleanCmd(flags: Args['flags']): void {
     );
   } else if (!flag(flags.force)) {
     const live = candidates.filter((m) => hasLiveState(m) && !staleBefore(m));
-    if (live.length) {
-      console.error(`✗ in-flight mission(s): ${live.join(', ')}. Use --force to archive them anyway.`);
+    const blocked: string[] = [];
+    for (const m of candidates) {
+      const dir = join(root, m);
+      try {
+        const b = closureBlockers(dir, m);
+        if (b.length) blocked.push(`mission "${m}" is not finished:\n${b.join('\n')}`);
+      } catch { /* ignore */ }
+    }
+    if (live.length || blocked.length) {
+      if (blocked.length) {
+        for (const msg of blocked) console.error(`mugiwara: closure blocked — ${msg}\n\n  Every assignee must reach Flow 9. Run \`mugiwara status\` to check.\n  Use --force to archive anyway — in-flight resume points will be lost.`);
+      }
+      if (live.length && !blocked.length) {
+        console.error(`✗ in-flight mission(s): ${live.join(', ')}. Use --force to archive them anyway.`);
+      }
       process.exit(1);
     }
   }
   if (!candidates.length) { console.log('nothing to clean.'); return; }
   for (const m of candidates) {
-    const r = archiveMission(projectDir, m, { dryRun });
+    const r = archiveMission(projectDir, m, { dryRun, force: flag(flags.force) });
     console.log(`${dryRun ? 'would clean' : 'cleaned'} ${m}${r.report ? ` → ${r.report}` : ''}`);
     if (r.index) console.log(`index updated: ${r.index}`);
   }
@@ -363,7 +511,59 @@ function list(flags: Args['flags']): void {
  * Exit codes: 0 = a single resume point was printed; 2 = ambiguous or absent,
  * the caller must stop and let the user pick.
  */
-function continueCmd(flags: Args['flags'], positionals: string[]): void {
+function parseRoster(missionDir: string): Array<{ id: string; name: string; assignee: string }> {
+  const plan = join(missionDir, 'plan.md');
+  if (!existsSync(plan)) return [];
+  const text = readFileSync(plan, 'utf8');
+  const out: Array<{ id: string; name: string; assignee: string }> = [];
+  let inTable = false;
+  for (const line of text.split('\n')) {
+    const lower = line.trim().toLowerCase();
+    if (lower.startsWith('| id ') && lower.includes('| name ')) { inTable = true; continue; }
+    if (inTable) {
+      if (!line.trim().startsWith('|')) break;
+      if (/^\|[\s:-]+\|/.test(line)) continue;
+      const cols = line.split('|').map((c) => c.trim());
+      if (cols.length < 4) continue;
+      const id = cols[1];
+      const name = cols[2];
+      const assignee = cols[3];
+      if (id && assignee && assignee !== '-') out.push({ id, name, assignee });
+    }
+  }
+  return out;
+}
+
+/**
+ * Write the roster pick to the active-member cache, then resume the member's
+ * state or create their initial Flow 0 savepoint. Exported for unit tests —
+ * the interactive picker above is a thin TTY wrapper around it.
+ */
+export function startOrResumeMember(projectDir: string, cachePath: string, mission: string, chosenMember: string, entries: ContinueEntry[]): void {
+  try {
+    mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
+    writeFileSync(cachePath, chosenMember + '\n');
+  } catch {}
+  const hasState = readState(projectDir).some((s) => s.mission === mission && s.member === chosenMember);
+  if (hasState) {
+    const rChosen = resolveContinue(entries, mission, chosenMember);
+    if (rChosen.kind === 'resume') {
+      console.log(formatResume(rChosen.entry));
+      const st = readState(projectDir).find((s) => s.mission === rChosen.entry.mission && s.member === rChosen.entry.member);
+      const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
+      if (stale) console.log(stale);
+      return;
+    }
+  } else {
+    try {
+      runScript('savepoint.sh', [mission, chosenMember, '0'], projectDir);
+    } catch {}
+    console.log(`Started: ${mission} [${chosenMember}], Flow 0 — state created.`);
+    return;
+  }
+}
+
+async function continueCmd(flags: Args['flags'], positionals: string[]): Promise<void> {
   const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
   schemaWarnings(projectDir);
@@ -386,6 +586,30 @@ function continueCmd(flags: Args['flags'], positionals: string[]): void {
     // entries already holds the correct continue data, no need to re-read
   }
 
+  // Task 2.1: member list = state ∪ continue (union). A deleted continue file must not erase a member whose state is intact.
+  // Merge state-derived entries into the continue list so the members table shows all known members.
+  {
+    const states = readState(projectDir);
+    for (const s of states) {
+      if (!entries.some((e) => e.mission === s.mission && e.member === s.member)) {
+        entries.push({
+          mission: s.mission,
+          member: s.member,
+          actor: s.actor,
+          branch: s.branch,
+          flow: s.flow,
+          mode: s.mode,
+          tasks_done: s.tasks_done,
+          tasks_total: s.tasks_total,
+          lane: s.lane,
+          next_action: s.next_action,
+          next_session_prompt: s.next_session_prompt,
+          updated_at: s.updated_at,
+        });
+      }
+    }
+  }
+
   // default to this actor's work; --all crosses actors on a shared checkout
   if (!flag(flags.all)) {
     const actor = gitActor(projectDir);
@@ -395,8 +619,103 @@ function continueCmd(flags: Args['flags'], positionals: string[]): void {
     if (mine.length) entries = mine;
   }
 
+  // Task 3.1: roster picker — continue starts as well as resumes, picks member by number from roster
+  // Determine effective mission for roster handling (single mission inference)
+  let effectiveMission = mission;
+  if (!effectiveMission) {
+    const uniqMissions = [...new Set(entries.map((e) => e.mission))];
+    if (uniqMissions.length === 1) effectiveMission = uniqMissions[0];
+    else if (uniqMissions.length === 0) {
+      // also check state-only missions (when continue empty but state exists)
+      const stateMissions = [...new Set(readState(projectDir).map((s) => s.mission))];
+      if (stateMissions.length === 1) effectiveMission = stateMissions[0];
+    }
+  }
+  if (effectiveMission) {
+    const missionDirForRoster = join(projectDir, '.mugiwara', 'missions', effectiveMission);
+    const roster = parseRoster(missionDirForRoster);
+    if (roster.length) {
+      const cachePath = join(projectDir, '.mugiwara', 'active-member');
+      const cached = existsSync(cachePath) ? readFileSync(cachePath, 'utf8').trim().split(/\s+/)[0] : '';
+      const cachedInRoster = cached && roster.some((r) => r.assignee === cached);
+      // If mission resolved and cache exists and is in roster → resume that member immediately, no prompt
+      if (cachedInRoster && !member) {
+        const targetMember = cached;
+        // merge already done; check if we can resume directly
+        const direct = entries.find((e) => e.mission === effectiveMission && e.member === targetMember);
+        if (direct) {
+          const rCached = resolveContinue(entries, effectiveMission, targetMember);
+          if (rCached.kind === 'resume') {
+            const memberState = readState(projectDir).find((s) => s.mission === rCached.entry.mission && s.member === rCached.entry.member);
+            if (!memberState) {
+              console.error(`✗ mission "${rCached.entry.mission}" member "${rCached.entry.member}" has a resume point but no state file.`);
+              console.error('  Run `mugiwara savepoint` to write state, or delete the orphan:');
+              console.error(`    rm .mugiwara/missions/${rCached.entry.mission}/continue-${rCached.entry.member}.json`);
+              process.exit(1);
+            }
+            console.log(formatResume(rCached.entry));
+            const st = readState(projectDir).find((s) => s.mission === rCached.entry.mission && s.member === rCached.entry.member);
+            const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
+            if (stale) console.log(stale);
+            return;
+          }
+        } else {
+          // cached member has no entry yet — not started, create initial state
+          try {
+            writeFileSync(cachePath, targetMember + '\n');
+          } catch {}
+          // create initial savepoint Flow 0
+          try {
+            runScript('savepoint.sh', [effectiveMission, targetMember, '0'], projectDir);
+          } catch {}
+          console.log(`Started: ${effectiveMission} [${targetMember}], Flow 0 — state created.`);
+          return;
+        }
+      }
+      // No cached member, roster present, no explicit member → show roster picker
+      if (!member && !cachedInRoster) {
+        // Build STATE column from entries
+        console.log(`Mission: ${effectiveMission}\n`);
+        console.log(`  #  ID  AREA           ASSIGNEE  STATE`);
+        roster.forEach((row, idx) => {
+          const st = entries.find((e) => e.mission === effectiveMission && e.member === row.assignee);
+          const stateStr = st ? `Flow ${st.flow}` : '— not started';
+          const line = `  ${String(idx + 1).padEnd(2)} ${row.id.padEnd(3)} ${row.name.padEnd(14)} ${row.assignee.padEnd(9)} ${stateStr}`;
+          console.log(line);
+        });
+        console.log(`\nWhich one are you? [1-${roster.length}]`);
+        // Interactive prompt if TTY, otherwise exit 2 after printing (verify case)
+        if (!process.stdin.isTTY) {
+          process.exit(2);
+        }
+        const rl = createRl();
+        const idx = await choose(rl, 'Which one are you?', roster.map((row) => `${row.id} ${row.name} (${row.assignee})`));
+        rl.close();
+        startOrResumeMember(projectDir, cachePath, effectiveMission, roster[idx].assignee, entries);
+        return;
+      }
+      // If member was explicitly provided and roster present, ensure cache is set
+      if (member && roster.some((r) => r.assignee === member)) {
+        try {
+          mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
+          writeFileSync(cachePath, member + '\n');
+        } catch {}
+      }
+    }
+  }
+
   const r = resolveContinue(entries, mission, member);
   if (r.kind === 'resume') {
+    // Task 2.2: refuse to resume a TEAM member when state is missing (an
+    // orphan continue-<member>.json is a guess). Solo continue.json without
+    // state.json still resumes — it is the mission's only resume point.
+    const memberState = readState(projectDir).find((s) => s.mission === r.entry.mission && s.member === r.entry.member);
+    if (!memberState && r.entry.member !== null) {
+      console.error(`✗ mission "${r.entry.mission}" member "${r.entry.member}" has a resume point but no state file.`);
+      console.error('  Run `mugiwara savepoint` to write state, or delete the orphan:');
+      console.error(`    rm .mugiwara/missions/${r.entry.mission}/continue-${r.entry.member}.json`);
+      process.exit(1);
+    }
     console.log(formatResume(r.entry));
     const st = readState(projectDir).find((s) => s.mission === r.entry.mission && s.member === r.entry.member);
     const stale = st ? stalenessLine(projectDir, st.base_sha) : null;

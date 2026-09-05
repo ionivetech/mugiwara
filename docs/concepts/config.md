@@ -23,10 +23,6 @@ commits). See [modes.md](modes.md) for the mode matrix.
 mode=guided                  # guided | semi | auto — how much the crew does without asking
 verbosity=normal             # normal | full — how much the crew echoes
 
-# -- Team -------------------------------------------------
-# team_member=              # your member id; set it and state isolates per person
-# team_members=1            # how many people on this mission; >1 enables team-scoped posture
-
 # -- Git --------------------------------------------------
 branch=feature/{type}-{issue}-{slug}
 commit=conventional
@@ -71,8 +67,10 @@ heal_max_cycles=3            # heal loop halts here and escalates
 | `delegate_threshold` | number (1-100) | 60 | % of token budget at which remaining sequential tasks dispatch to workers. **Read by `scripts/savepoint.sh`** — it computes `delegate_due` (`tokens_est ≥ threshold% of budget`) into `state.json`; the execution skill reads that flag, never the raw value. |
 | `heal_max_cycles` | number | 3 | Max heal-loop cycles before human escalation. **Read by `scripts/savepoint.sh`** — recorded in `state.json` and used to compute `heal_halt` (`heal_cycle ≥ max`), which the crew reads. |
 | `verbosity` | normal / full | normal | How much the crew echoes. `normal` hides investigation steps (reads, greps, probes) and file contents — edits, results, decisions stay visible; `full` echoes everything, including reads and reasoning. Never suppresses decisions, questions, blockers, or lane rises. **Read by `scripts/savepoint.sh`** — recorded in `state.json`. |
-| `team_member` | string | unset | Your member id; set it and state isolates per person. **Read by `scripts/savepoint.sh`** — sources `MEMBER` when positional empty. |
-| `team_members` | number | 1 | How many people on this mission; >1 enables `team-scoped` posture. **Read by `scripts/savepoint.sh`** — recorded as `team_members` in `state.json`. |
+Team identity is not a config key. The roster lives in the mission's
+sub-mission table, and `mugiwara continue` caches your choice to
+`.mugiwara/active-member`. See [runbooks/team-mission.md](../runbooks/team-mission.md).
+
 | `lane_scope_glob` | glob pattern | unset | Count only matching files when sizing the lane (monorepo scoping). **Read by `scripts/lane.sh` and `scripts/savepoint.sh`**. |
 | `context_budget_chars` | number (bytes) | unset | Ceiling on the mission trail's total size (top-level `*.md` + `flows/*`), measured at archive. Over the ceiling fails the archive like a failed test; unset = measured and printed in the report only. **Read by the closure pipeline** (`src/budget.ts`). |
 | `investigation_max_passes` | number (≥1) | 2 | Max exploration passes the Investigation Governor allows before it flags unbounded exploration as slop (§13). **Read by `readInvestigationConfig`** (`src/investigation.ts`). |
@@ -96,7 +94,7 @@ evidence:
 
 ## Machine-read vs advisory-only
 
-Code reads: `mode` (read by `scripts/savepoint.sh` — positional > env > project > global > guided, validated), `team_member`/`team_members` (read by `scripts/savepoint.sh` for isolation and `team-scoped` posture), `verbosity`, `delegate_threshold`, `heal_max_cycles`, `lane_scope_glob` (read by `scripts/savepoint.sh` and `scripts/lane.sh`), `coverage_new`/`coverage_modified` (read by the coverage gate), `context_budget_chars` (read by the closure pipeline), the three `investigation_*` keys (read by `readInvestigationConfig` into the Investigation Governor), `sign` (read by `src/sign.ts`), and `enforce` (read by `hooks/pipeline-guard.ts`). Everything else is **advisory-only** — read by the crew from this prose,
+Code reads: `mode` (read by `scripts/savepoint.sh` — positional > env > project > global > guided, validated), `verbosity`, `delegate_threshold`, `heal_max_cycles`, `lane_scope_glob` (read by `scripts/savepoint.sh` and `scripts/lane.sh`), `coverage_new`/`coverage_modified` (read by the coverage gate), `context_budget_chars` (read by the closure pipeline), the three `investigation_*` keys (read by `readInvestigationConfig` into the Investigation Governor), `sign` (read by `src/sign.ts`), and `enforce` (read by `hooks/pipeline-guard.ts`). Everything else is **advisory-only** — read by the crew from this prose,
 never by a validator or hook. Changing an advisory key changes crew behavior
 but no gate fails and no computation changes:
 

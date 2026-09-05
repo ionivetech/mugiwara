@@ -37,6 +37,17 @@ never empty. The decision + reason is logged in `.mugiwara/missions/<mission>/de
 lane escalates automatically when the work outgrows the estimate — it never
 auto-drops. See [lanes.md](lanes.md).
 
+### Solo or team
+
+Triage also settles who the mission is for. In `guided` and `semi` Luffy asks
+the solo/team question at every lane — one member or several; in `auto` it is
+never asked, derived instead from member state files on disk. A team answer
+produces the roster in `plan.md`: one sub-mission row per member carrying name
++ area, which fixes the state layout for the whole mission (`state.json` solo,
+`<member>.json` team). Never switch mid-mission — run
+`mugiwara migrate --to-team` instead, which moves the state file rather than
+forking it.
+
 ## Flow 4 — Checkpoint (Chopper)
 
 The verify-everything gate. After execution, Chopper re-runs every acceptance

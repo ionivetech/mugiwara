@@ -1,7 +1,10 @@
 # Lanes & Sizing
 
-The crew sizes a mission before it runs. Lane is computed from the diff by
-`mugiwara run lane.sh` — deterministic, not estimated.
+A typo and a migration used to get the same process — one over-processed, the
+other under-reviewed. Lanes exist so the process scales to the work instead of
+the model guessing how careful to be. The crew sizes a mission before it runs.
+Lane is computed from the diff by `mugiwara run lane.sh` — deterministic, not
+estimated.
 
 ## The lanes
 

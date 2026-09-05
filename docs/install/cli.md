@@ -125,6 +125,8 @@ mugiwara continue [mission] [member]              # resolve the resume point (ex
 mugiwara cost [--mission <id>] [--json]           # cost ledger, avoided work, live slop, trail
 mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh
 mugiwara savepoint <mission> [member] [flow stage] [mode]  # shorthand for run savepoint.sh
+mugiwara savepoint --flow <N>                   # mission/member/mode inferred
+mugiwara join <mission> <member> --area "<area>" [--files "a.ts,b.ts"]
 mugiwara migrate --to-team <member> [--mission <id>] [--dry-run]  # solo -> team (moves state.json)
 mugiwara migrate --to-solo <member> [--mission <id>] [--dry-run]  # team -> solo (refuses if >1 member)
 mugiwara lesson "<text>"                          # append a dated row to .mugiwara/lessons.md
@@ -133,4 +135,10 @@ mugiwara lesson "<text>"                          # append a dated row to .mugiw
 `status` reads `.mugiwara/missions/*/` state files and prints flow stage, tasks, lane, mode, blockers,
 heal cycle, token budget, branch, and evidence paths — no model turn involved.
 `continue` exits `0` when it resolved exactly one resume point and `2` when it
-had to list options; on `2` the caller stops and the user picks.
+had to list options; on `2` the caller stops and the user picks. On a team
+mission with no member given, `continue` shows the roster picker — a numbered
+table with a STATE column (`Flow N` or `— not started`) drawn from the
+sub-mission table in `plan.md` — and writes the pick to
+`.mugiwara/active-member`. Picking a not-started row starts that member at
+Flow 0 (initial state written, no resume); a cached pick in the roster resumes
+directly with no prompt.

@@ -794,6 +794,209 @@ describe('run() — usage errors + stalenessLine', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
+  test('join appends a roster row, logs the decision, sets the cache', async () => {
+    const dir = fixture([]);
+    const md = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(md, { recursive: true });
+    writeFileSync(join(md, 'plan.md'), [
+      '## Sub-missions',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      '| S1 | api | jane-doe | feat/a | [ ] | - | src/a.ts |',
+      '',
+    ].join('\n'));
+    writeFileSync(join(md, 'decisions.md'), '# Decisions\n');
+    try {
+      const { out } = await capture(['join', 'm', 'sophia-martinez', '--area', 'testing'], dir);
+      expect(out).toContain('joined m as sophia-martinez');
+      const plan = readFileSync(join(md, 'plan.md'), 'utf8');
+      expect(plan).toContain('| S2 | testing | sophia-martinez |');
+      expect(readFileSync(join(md, 'decisions.md'), 'utf8')).toContain('sophia-martinez');
+      expect(readFileSync(join(dir, '.mugiwara', 'active-member'), 'utf8').trim()).toBe('sophia-martinez');
+      expect(exitSpy).not.toHaveBeenCalled();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('join refuses an existing assignee and a missing area', async () => {
+    const dir = fixture([]);
+    const md = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(md, { recursive: true });
+    writeFileSync(join(md, 'plan.md'), [
+      '## Sub-missions',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      '| S1 | api | jane-doe | feat/a | [ ] | - | src/a.ts |',
+      '',
+    ].join('\n'));
+    try {
+      const dup = await capture(['join', 'm', 'jane-doe', '--area', 'testing'], dir);
+      expect(dup.err).toContain('already in roster');
+      const noArea = await capture(['join', 'm', 'sophia-martinez'], dir);
+      expect(noArea.err).toContain('usage: mugiwara join');
+      const badName = await capture(['join', 'm', 'state', '--area', 'testing'], dir);
+      expect(badName.err).toContain('invalid member name');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('join without a plan or table errors', async () => {
+    const dir = fixture([]);
+    try {
+      const noPlan = await capture(['join', 'ghost', 'sophia-martinez', '--area', 'testing'], dir);
+      expect(noPlan.err).toContain('no plan for mission');
+      const md = join(dir, '.mugiwara', 'missions', 'm');
+      mkdirSync(md, { recursive: true });
+      writeFileSync(join(md, 'plan.md'), '# Mission m\n\nno table here\n');
+      const noTable = await capture(['join', 'm', 'sophia-martinez', '--area', 'testing'], dir);
+      expect(noTable.err).toContain('no sub-mission table');
+      const noMember = await capture(['join', 'm'], dir);
+      expect(noMember.err).toContain('usage: mugiwara join');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('join creates the decision log when missing', async () => {
+    const dir = fixture([]);
+    const md = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(md, { recursive: true });
+    writeFileSync(join(md, 'plan.md'), [
+      '## Sub-missions',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      '| S1 | api | jane-doe | feat/a | [ ] | - | src/a.ts |',
+      '',
+    ].join('\n'));
+    try {
+      await capture(['join', 'm', 'grace-hopper', '--area', 'docs', '--files', 'a.md,b.md'], dir);
+      expect(readFileSync(join(md, 'decisions.md'), 'utf8')).toContain('grace-hopper');
+      expect(readFileSync(join(md, 'plan.md'), 'utf8')).toContain('a.md, b.md');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('startOrResumeMember resumes with state and starts without', async () => {
+    const { startOrResumeMember } = await import('../src/cli.ts');
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe', next_action: 'go' } },
+      { root: 'state', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+    ]);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.mocked(runScript).mockClear();
+    try {
+      const entries = [
+        { mission: 'm', member: 'jane-doe', actor: ACTOR, branch: 'main', flow: 3, mode: 'auto', tasks_done: 1, tasks_total: 4, lane: 'standard', next_action: 'go', next_session_prompt: '', updated_at: '2026-08-19T00:00:00Z' },
+      ];
+      startOrResumeMember(dir, join(dir, '.mugiwara', 'active-member'), 'm', 'jane-doe', entries as never);
+      expect(log.mock.calls.map((c) => c.join(' ')).join('\n')).toContain('Resumed: m [jane-doe]');
+      expect(readFileSync(join(dir, '.mugiwara', 'active-member'), 'utf8').trim()).toBe('jane-doe');
+      startOrResumeMember(dir, join(dir, '.mugiwara', 'active-member'), 'm', 'eleanor-vance', entries as never);
+      expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'eleanor-vance', '0'], dir);
+      expect(log.mock.calls.map((c) => c.join(' ')).join('\n')).toContain('Started: m [eleanor-vance]');
+    } finally { log.mockRestore(); rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('continue with an explicit roster member sets the cache', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe', next_action: 'go' } },
+      { root: 'state', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+    ]);
+    const md = join(dir, '.mugiwara', 'missions', 'm');
+    writeFileSync(join(md, 'plan.md'), [
+      '## Sub-missions',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      '| S1 | api | jane-doe | feat/a | [ ] | - | src/a.ts |',
+      '',
+    ].join('\n'));
+    try {
+      const { out } = await capture(['continue', 'm', 'jane-doe'], dir);
+      expect(out).toContain('Resumed: m [jane-doe]');
+      expect(readFileSync(join(dir, '.mugiwara', 'active-member'), 'utf8').trim()).toBe('jane-doe');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('continue with a cached roster member resumes without prompting', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe', next_action: 'go' } },
+      { root: 'state', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+      { root: 'continue', mission: 'm', file: 'john-smith', body: { ...state('m'), member: 'john-smith', next_action: 'go' } },
+      { root: 'state', mission: 'm', file: 'john-smith', body: { ...state('m'), member: 'john-smith' } },
+    ]);
+    const md = join(dir, '.mugiwara', 'missions', 'm');
+    writeFileSync(join(md, 'plan.md'), [
+      '## Sub-missions',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      '| S1 | api | jane-doe | feat/a | [ ] | - | src/a.ts |',
+      '| S2 | web | john-smith | feat/b | [ ] | - | src/b.ts |',
+      '',
+    ].join('\n'));
+    writeFileSync(join(dir, '.mugiwara', 'active-member'), 'john-smith\n');
+    try {
+      const { out } = await capture(['continue'], dir);
+      expect(out).toContain('Resumed: m [john-smith]');
+      expect(exitSpy).not.toHaveBeenCalled();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('continue with a roster and no cache prints the numbered picker', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe', next_action: 'go' } },
+      { root: 'state', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+    ]);
+    const md = join(dir, '.mugiwara', 'missions', 'm');
+    writeFileSync(join(md, 'plan.md'), [
+      '## Sub-missions',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      '| S1 | api | jane-doe | feat/a | [ ] | - | src/a.ts |',
+      '| S2 | web | eleanor-vance | feat/b | [ ] | - | src/b.ts |',
+      '',
+    ].join('\n'));
+    try {
+      const { out } = await capture(['continue'], dir);
+      expect(out).toContain('Which one are you?');
+      expect(out).toContain('eleanor-vance');
+      expect(out).toContain('not started');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('continue refuses a team member whose state is missing', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'eleanor-vance', body: { ...state('m'), member: 'eleanor-vance' } },
+    ]);
+    try {
+      const { err } = await capture(['continue', 'm', 'eleanor-vance'], dir);
+      expect(err).toContain('has a resume point but no state file');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('continue still resumes a solo mission whose state is missing', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'solo', file: 'state', body: state('solo') },
+    ]);
+    try {
+      const { out } = await capture(['continue', 'solo'], dir);
+      expect(out).toContain('Resumed: solo');
+      expect(exitSpy).not.toHaveBeenCalled();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('continue lists a member known only from state (union)', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe', next_action: 'go' } },
+      { root: 'state', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+      { root: 'state', mission: 'm', file: 'grace-hopper', body: { ...state('m'), member: 'grace-hopper' } },
+    ]);
+    try {
+      const { out } = await capture(['continue', 'm'], dir);
+      expect(out).toContain('grace-hopper');
+      expect(out).toContain('jane-doe');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
   test('sign --verify on a mission with no report errors', async () => {
     const dir = fixture([
       { root: 'state', mission: 's2', file: 'state', body: state('s2') },
@@ -801,6 +1004,95 @@ describe('run() — usage errors + stalenessLine', () => {
     try {
       const { out } = await capture(['sign', 's2', '--verify'], dir);
       expect(out).toContain('✗');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow infers mission, member and mode', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+    ]);
+    writeFileSync(join(dir, '.mugiwara', 'active-member'), 'jane-doe\n');
+    vi.mocked(runScript).mockClear();
+    try {
+      await capture(['savepoint', '--flow', '3'], dir);
+      expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'jane-doe', '3', 'guided'], dir);
+      expect(exitSpy).not.toHaveBeenCalled();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow with several missions demands one', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm1', file: 'state', body: state('m1') },
+      { root: 'continue', mission: 'm2', file: 'state', body: state('m2') },
+    ]);
+    try {
+      const { err } = await capture(['savepoint', '--flow', '3'], dir);
+      expect(err).toContain('multiple missions');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow with no mission on disk errors', async () => {
+    const dir = fixture([]);
+    try {
+      const { err } = await capture(['savepoint', '--flow', '3'], dir);
+      expect(err).toContain('no mission on disk');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow rejects a non-numeric flow', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'state', body: state('m') },
+    ]);
+    try {
+      const { err } = await capture(['savepoint', '--flow', 'abc'], dir);
+      expect(err).toContain('invalid --flow value');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow honors positional mission/member/mode overrides', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
+    ]);
+    writeFileSync(join(dir, '.mugiwara', 'active-member'), 'jane-doe\n');
+    vi.mocked(runScript).mockClear();
+    try {
+      await capture(['savepoint', 'm', 'john-smith', 'semi', '--flow', '5'], dir);
+      expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'john-smith', '5', 'semi'], dir);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow reads mode from config and solo when no cache', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'state', body: state('m') },
+    ]);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=semi\n');
+    vi.mocked(runScript).mockClear();
+    try {
+      await capture(['savepoint', '--flow', '6'], dir);
+      expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', '', '6', 'semi'], dir);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint --flow with an empty value prints usage', async () => {
+    const dir = fixture([
+      { root: 'continue', mission: 'm', file: 'state', body: state('m') },
+    ]);
+    try {
+      const { err } = await capture(['savepoint', '--flow', ''], dir);
+      expect(err).toContain('usage: mugiwara savepoint --flow');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('savepoint long form still dispatches positionally', async () => {
+    const dir = fixture([]);
+    vi.mocked(runScript).mockClear();
+    try {
+      await capture(['savepoint', 'm', 'jane-doe', '2', 'semi'], dir);
+      expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'jane-doe', '2', 'semi'], dir);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 

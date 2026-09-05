@@ -1,5 +1,8 @@
 # Token Cost Model
 
+Every skill mugiwara ships costs tokens each session, used or not — invisible
+spend that compounds until the budget breaks. This model exists to keep the
+always-loaded index bounded while bodies and references pay only when used.
 Three-layer token architecture. Every layer has a cost and a purpose.
 
 ## The three layers
