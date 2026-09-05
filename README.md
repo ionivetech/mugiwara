@@ -369,6 +369,8 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 **Install:** [Overview](docs/install/index.md) · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
 
+**Runbooks:** [Solo mission](docs/runbooks/solo-mission.md) · [Team mission](docs/runbooks/team-mission.md) · [Joining mid-mission](docs/runbooks/joining-a-mission.md) · [Resume after crash](docs/runbooks/resume-after-crash.md) · [Monorepo](docs/runbooks/monorepo.md) · [Signing](docs/runbooks/signing-and-attestation.md) · [Policy](docs/runbooks/policy-for-a-team.md) · [Troubleshooting](docs/runbooks/troubleshooting.md)
+
 **Troubleshooting:** [Common problems](docs/troubleshooting.md)
 
 ---
