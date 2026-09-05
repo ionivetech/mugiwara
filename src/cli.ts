@@ -13,7 +13,7 @@ import { manifestPath, readManifest, writeManifest, type Scope } from './manifes
 import { resetMission, archiveMission, closureBlockers, rosterAssignees } from './mission.ts';
 import { knownMembers } from './continue.ts';
 import { runScript, RUNNABLE } from './run.ts';
-import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles } from './continue.ts';
+import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles, type ContinueEntry } from './continue.ts';
 import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
@@ -534,6 +534,35 @@ function parseRoster(missionDir: string): Array<{ id: string; name: string; assi
   return out;
 }
 
+/**
+ * Write the roster pick to the active-member cache, then resume the member's
+ * state or create their initial Flow 0 savepoint. Exported for unit tests —
+ * the interactive picker above is a thin TTY wrapper around it.
+ */
+export function startOrResumeMember(projectDir: string, cachePath: string, mission: string, chosenMember: string, entries: ContinueEntry[]): void {
+  try {
+    mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
+    writeFileSync(cachePath, chosenMember + '\n');
+  } catch {}
+  const hasState = readState(projectDir).some((s) => s.mission === mission && s.member === chosenMember);
+  if (hasState) {
+    const rChosen = resolveContinue(entries, mission, chosenMember);
+    if (rChosen.kind === 'resume') {
+      console.log(formatResume(rChosen.entry));
+      const st = readState(projectDir).find((s) => s.mission === rChosen.entry.mission && s.member === rChosen.entry.member);
+      const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
+      if (stale) console.log(stale);
+      return;
+    }
+  } else {
+    try {
+      runScript('savepoint.sh', [mission, chosenMember, '0'], projectDir);
+    } catch {}
+    console.log(`Started: ${mission} [${chosenMember}], Flow 0 — state created.`);
+    return;
+  }
+}
+
 async function continueCmd(flags: Args['flags'], positionals: string[]): Promise<void> {
   const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
@@ -660,36 +689,10 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
           process.exit(2);
         }
         const rl = createRl();
-        const answer: string = await rl.question('');
+        const idx = await choose(rl, 'Which one are you?', roster.map((row) => `${row.id} ${row.name} (${row.assignee})`));
         rl.close();
-        const n = Number(answer.trim());
-        if (!Number.isInteger(n) || n < 1 || n > roster.length) {
-          console.error(`Invalid selection "${answer.trim()}"`);
-          process.exit(2);
-        }
-        const chosen = roster[n - 1];
-        const chosenMember = chosen.assignee;
-        try {
-          mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
-          writeFileSync(cachePath, chosenMember + '\n');
-        } catch {}
-        const hasState = readState(projectDir).some((s) => s.mission === effectiveMission && s.member === chosenMember);
-        if (hasState) {
-          const rChosen = resolveContinue(entries, effectiveMission, chosenMember);
-          if (rChosen.kind === 'resume') {
-            console.log(formatResume(rChosen.entry));
-            const st = readState(projectDir).find((s) => s.mission === rChosen.entry.mission && s.member === rChosen.entry.member);
-            const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
-            if (stale) console.log(stale);
-            return;
-          }
-        } else {
-          try {
-            runScript('savepoint.sh', [effectiveMission, chosenMember, '0'], projectDir);
-          } catch {}
-          console.log(`Started: ${effectiveMission} [${chosenMember}], Flow 0 — state created.`);
-          return;
-        }
+        startOrResumeMember(projectDir, cachePath, effectiveMission, roster[idx].assignee, entries);
+        return;
       }
       // If member was explicitly provided and roster present, ensure cache is set
       if (member && roster.some((r) => r.assignee === member)) {
