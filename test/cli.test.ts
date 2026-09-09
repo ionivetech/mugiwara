@@ -453,14 +453,18 @@ describe('run() — cost live slop', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('cost without a mission and multiple in-flight states requires --mission', async () => {
+  test('cost without a mission lists every in-flight mission plus totals', async () => {
     const dir = fixture([
       { root: 'state', mission: 'm1', file: 'state', body: state('m1') },
       { root: 'state', mission: 'm2', file: 'state', body: state('m2') },
     ]);
     try {
-      const { err } = await capture(['cost'], dir);
-      expect(err).toContain('multiple missions in flight');
+      const { out } = await capture(['cost'], dir);
+      expect(out).toContain('2 missions:');
+      expect(out).toContain('m1 —');
+      expect(out).toContain('m2 —');
+      expect(out).toContain('Total');
+      expect(out).toContain('mugiwara cost --mission <id>');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

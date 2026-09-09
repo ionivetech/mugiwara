@@ -774,33 +774,13 @@ function statusCmd(flags: Args['flags']): void {
   }
 }
 
-/** `mugiwara cost [--mission <id>] [--json] [--ledger]` — show cost ledger, avoided work, efficiency, trail. */
-function costCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolveProjectDir(str(flags.project));
-  const mission = str(flags.mission) ?? positionals[1] ?? (() => {
-    const states = readState(projectDir);
-    if (states.length === 1) return states[0].mission;
-    if (states.length > 1) {
-      console.error('multiple missions in flight — specify --mission <id>');
-      process.exit(1);
-    }
-    return null;
-  })();
-  if (!mission) {
-    console.error('usage: mugiwara cost [--mission <id>] [--json] [--ledger] [--project <dir>]');
-    process.exit(1);
-  }
+/** Build the cost ledger for one mission — shared by the single and the all-missions views. */
+function ledgerForMission(projectDir: string, mission: string) {
   const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
-  if (!existsSync(missionDir)) {
-    console.error(`No cost ledger found for mission "${mission}"`);
-    process.exit(1);
-  }
   const states = readState(projectDir).filter((s) => s.mission === mission);
   const envelope = states.length
     ? costEnvelope({ lane: (states[0] as unknown as { lane?: string }).lane, budget: (states[0] as unknown as { budget?: number }).budget, tokens_est: (states[0] as unknown as { tokens_est?: number }).tokens_est })
     : costEnvelope({ lane: 'full', tokens_est: 0 });
-  // live slop (§3.3): run existing detectors over state already available
-  // (heal cycle, context registry repeated reads) so slop_interventions is real.
   const state0 = states[0] as unknown as { heal_cycle?: number };
   let repeatedReads = 0;
   try {
@@ -810,7 +790,51 @@ function costCmd(flags: Args['flags'], positionals: string[]): void {
     repeatedReads = 0;
   }
   const liveSlop = computeLiveSlop({ heal_cycle: state0?.heal_cycle ?? 0, repeated_reads: repeatedReads });
-  const ledger = buildCostLedger({ missionDir, envelope, slopSummary: { interventions: liveSlop.interventions } });
+  return { ledger: buildCostLedger({ missionDir, envelope, slopSummary: { interventions: liveSlop.interventions } }), liveSlop };
+}
+
+/** `mugiwara cost [--mission <id>] [--json] [--ledger]` — show cost ledger, avoided work, efficiency, trail. */
+function costCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const explicit = str(flags.mission) ?? positionals[1] ?? null;
+  if (!explicit) {
+    const missions = [...new Set(readState(projectDir).map((s) => s.mission))].filter((m) =>
+      existsSync(join(projectDir, '.mugiwara', 'missions', m)));
+    if (missions.length === 0) {
+      console.error('usage: mugiwara cost [--mission <id>] [--json] [--ledger] [--project <dir>]');
+      process.exit(1);
+    }
+    if (missions.length === 1) {
+      return costOne(projectDir, missions[0], flags);
+    }
+    // default table across missions; --mission drills into one.
+    if (flag(flags.json)) {
+      console.log(JSON.stringify(missions.map((m) => JSON.parse(toCostJSON(ledgerForMission(projectDir, m).ledger))), null, 2));
+      return;
+    }
+    console.log(`${missions.length} missions:\n`);
+    let tUsed = 0, tPlanned = 0, tAvoided = 0, tTrail = 0;
+    for (const m of missions) {
+      const { ledger } = ledgerForMission(projectDir, m);
+      tUsed += ledger.envelope.used; tPlanned += ledger.envelope.planned;
+      tAvoided += ledger.avoided.tokens_avoided_est; tTrail += ledger.trail.length;
+      console.log(`  ${m} — ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned}) · avoided ~${ledger.avoided.tokens_avoided_est} · trail ${ledger.trail.length}`);
+    }
+    console.log(`\nTotal ${tUsed}/${tPlanned} · avoided ~${tAvoided} · trail ${tTrail}`);
+    console.log('Detail: mugiwara cost --mission <id> [--ledger]');
+    return;
+  }
+  return costOne(projectDir, explicit, flags);
+}
+
+/** Single-mission cost view (the pre-existing behavior, unchanged). */
+function costOne(projectDir: string, mission: string, flags: Args['flags']): void {
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(missionDir)) {
+    console.error(`No cost ledger found for mission "${mission}"`);
+    process.exit(1);
+  }
+  const { ledger, liveSlop } = ledgerForMission(projectDir, mission);
   if (flag(flags.json)) {
     console.log(toCostJSON(ledger));
     return;
