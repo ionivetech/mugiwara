@@ -1,10 +1,10 @@
 # Compliance Matrix
 
 For each model + harness + tier combination, how well mugiwara's rules hold.
-Published with failures — the first pack to admit where it breaks.
+Published with failures, the first pack to admit where it breaks.
 
 **Status of the numbers below.** They come from structured observation on this
-repository and its own missions during Aug 2026 — real runs, recorded
+repository and its own missions during Aug 2026, real runs, recorded
 verdicts, but a sample size of one codebase and few sessions per cell. Treat
 each cell as *one honest datapoint*, not a rate. Cells upgrade to measured
 rates only through the foreign-repo protocol in [Methodology](#methodology);
@@ -13,18 +13,18 @@ nothing in this file is fabricated to fill a gap.
 ## How to read
 
 - ✅ Rule holds ≥90% of the time
-- ⚠️ Rule holds 60-89% of the time — use guided mode, or expect model to miss it
-- ❌ Rule holds <60% of the time — not reliable, document the gap
+- ⚠️ Rule holds 60-89% of the time, use guided mode, or expect model to miss it
+- ❌ Rule holds <60% of the time, not reliable, document the gap
 
 ## Rules under test
 
 | # | Rule | Mechanism | Kind | Pillar |
 |---|------|-----------|------|--------|
-| R1 | Lane sizing | `mugiwara run lane.sh` | aspirational — the script is honest, nothing runs it | 2 |
+| R1 | Lane sizing | `mugiwara run lane.sh` | aspirational, the script is honest, nothing runs it | 2 |
 | R2 | Skip gates respected | Skill prose (presence checked by the validator) | enforced (presence) / aspirational (use) | 1 |
 | R3 | Evidence over claims | Chopper re-verification | aspirational | 1 |
 | R4 | Flow-stage boundaries (banner + report) | Workflow skill | aspirational | 2 |
-| R5 | Heal loop bound (≤3 cycles) | Orchestration skill | aspirational — no mechanism halts a 4th | 2 |
+| R5 | Heal loop bound (≤3 cycles) | Orchestration skill | aspirational, no mechanism halts a 4th | 2 |
 | R6 | DoD verified (5 axes) | `references/definition-of-done.md` | aspirational | 1 |
 | R7 | State written at flow-stage boundary | `mugiwara savepoint`; `hooks/auto-savepoint.ts` on Claude Code | **enforced on `claude`**, aspirational elsewhere | 2 |
 | R8 | Source-backed code (no hallucinated APIs) | `references/source-grounding.md` | aspirational | 4 |
@@ -36,7 +36,7 @@ guarantees: [enforcement.md](enforcement.md).
 
 ## Results by model
 
-### Claude Sonnet 4 — opencode (Tier 1)
+### Claude Sonnet 4, opencode (Tier 1)
 
 | Rule | Verdict | Notes |
 |------|---------|-------|
@@ -51,7 +51,7 @@ guarantees: [enforcement.md](enforcement.md).
 | R9 | ✅ | Ledger entries reliable |
 | R10 | ✅ | Closure report written |
 
-### Gemini — Gemini CLI (Tier 2)
+### Gemini, Gemini CLI (Tier 2)
 
 | Rule | Verdict | Notes |
 |------|---------|-------|
@@ -66,12 +66,12 @@ guarantees: [enforcement.md](enforcement.md).
 | R9 | ❌ | Blocker ledger often empty even on failures |
 | R10 | ⚠️ | Mission report sometimes incomplete |
 
-### Windsurf — Cline (Tier 3)
+### Windsurf, Cline (Tier 3)
 
 | Rule | Verdict | Notes |
 |------|---------|-------|
 | R1 | ✅ | Lane computed by script |
-| R2 | ❌ | Stub-only — model rarely opens refs/ body |
+| R2 | ❌ | Stub-only, model rarely opens refs/ body |
 | R3 | ❌ | Evidence discipline absent without full body loaded |
 | R4 | ❌ | Flow-stage chaining broken without orchestration body |
 | R5 | ❌ | Heal loop unenforced |

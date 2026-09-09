@@ -1,6 +1,6 @@
 # Runbook: Solo mission, start to archive
 
-A solo fix still needs a trail, but the team process assumes handles. This is the same pipeline with the crew roles folded into one actor.
+A solo fix still needs a trail. Same pipeline, crew roles folded into one actor.
 
 **When to use this:** one person does a whole mission alone, no crew handles.
 **Time:** minutes of overhead on top of the work itself.

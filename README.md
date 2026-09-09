@@ -105,7 +105,7 @@ Sixty seconds in, your skepticism has something concrete to bite: a manifest on 
 ## What Mugiwara does
 
 A crew of named roles, not one voice doing everything.
-Eleven specialists plus three internal helpers: Luffy triages and closes, Usopp interrogates vague asks, Nami plans, Zoro builds, Chopper audits, Sanji and Franky gate, Robin and Jinbe review, Brook heals, Skeptic re-verifies high-stakes work, Memory Keeper carries lessons, Resume rebuilds dead sessions, Eval Runner scores behavior.
+Eleven specialists plus three internal helpers, 11 agents (+3 internal): Luffy triages and closes, Usopp interrogates vague asks, Nami plans, Zoro builds, Chopper audits, Sanji and Franky gate, Robin and Jinbe review, Brook heals, Skeptic re-verifies high-stakes work, Memory Keeper carries lessons, Resume rebuilds dead sessions, Eval Runner scores behavior.
 Proof: [agents](docs/concepts/agents.md) names the exact moment to call each one, and Luffy never implements code.
 
 Evidence gates, never vibes.

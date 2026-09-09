@@ -370,6 +370,29 @@ const agentsDoc = join(docsDir, 'concepts', 'agents.md');
   if (docErrors === 0) console.log('✓ docs in sync with content/');
 }
 
+// --- writing-rules check: CONTRIBUTING-DOCS.md enforced on docs/ + README ---
+// Caps live in src/check-writing.ts (mirrors docs/_audit.md targets).
+// docs/_audit.md itself is excluded: it is a temporary working file.
+const writingArg = process.argv.indexOf('--check-writing');
+if (writingArg !== -1) {
+  const { checkWritingFile } = await import('../src/check-writing.ts');
+  const docsRoot = join(import.meta.dirname, '..', 'docs');
+  const targets = listFiles(docsRoot)
+    .filter((f) => f.endsWith('.md') && f !== '_audit.md')
+    .map((f) => join('docs', f));
+  targets.push('README.md');
+  let writingErrors = 0;
+  for (const rel of targets) {
+    const p = join(import.meta.dirname, '..', rel);
+    if (!existsSync(p)) { errors.push(`writing: ${rel} not found`); writingErrors++; continue; }
+    for (const e of checkWritingFile(rel, readFileSync(p, 'utf8'))) {
+      errors.push(`writing: ${e}`);
+      writingErrors++;
+    }
+  }
+  if (writingErrors === 0) console.log('✓ writing rules hold across docs/ + README.md');
+}
+
 // --- doc-integrity check: documented thresholds must match source constants ---
 // Docs are claims; a claim that drifts from the source is a lie. LANE_BASE +
 // BUDGET live in scripts/lib/lane-base.sh (validated by lane-base.ts); the
