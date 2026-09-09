@@ -26,7 +26,7 @@ Enforced by `--check-invariants` in `scripts/validate-content.ts`, which require
 | INV-resume | Never restart; resume from `continue.json` + state | code (savepoint/continue files + resume-coordinator) | all |
 | INV-role-conduct | Findings and refusal conduct (honest classification, input-not-verdicts, never refuse scope work, never answer generic) | judged per mission in review and check-ins; no static gate exists | process |
 | INV-scope-discipline | Ladder (reuse/stdlib/native first), no speculative architecture, slop control | design judgment at plan and review time | process |
-
+| INV-cli-router | State commands are deterministic (directory scan + allowlist), never a reasoning turn — run via shell, act on the exit code; never guess, never blind-retry | code `src/cli.ts` (exit-code protocol 0/1/2) + `test/cli*.test.ts` | all |
 ## Prose-only: accepted, with the reason
 
 | ID | Rule family | Why prose suffices (no machine check exists) |
