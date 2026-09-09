@@ -120,6 +120,18 @@ describe('archive closure artifacts', () => {
     expect(msg).toContain('context budget failed');
   });
 
+  it('context budget gates stateless missions too (no state.json)', () => {
+    const missionDir = join(dir, '.mugiwara', 'missions', 'demo');
+    mkdirSync(join(missionDir, 'flows'), { recursive: true });
+    writeFileSync(join(missionDir, 'plan.md'), '# Plan\n');
+    writeFileSync(join(missionDir, 'report.md'), '# Report\n');
+    writeFileSync(join(missionDir, 'notes.md'), 'x'.repeat(500));
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'context_budget_chars=10\n');
+    let msg = '';
+    try { archiveMission(dir, 'demo'); } catch (e) { msg = (e as Error).message; }
+    expect(msg).toContain('context budget failed');
+  });
+
   it('provenance note lists unique models from per-stage state files', () => {
     const m1 = buildMission({ mission: 'alpha', state: { branch: 'feat-a', base_sha: 'unknown', evidence: [], model: 'claude-x' } });
     writeFileSync(join(m1, 'zoro.json'), JSON.stringify({ mission: 'alpha', member: 'zoro', model: 'fallback-y', branch: 'feat-a', base_sha: 'unknown', evidence: [] }));

@@ -521,6 +521,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     }
   }
 
+  // Stateless missions skip the cost section above, but the context budget is
+  // a trail property, not a state property — a 200KB trail with no state.json
+  // used to archive silently. Gate it anyway (no ledger row to record: there
+  // is no state to hang the closure event on).
+  if (!dryRun && !state) {
+    const chars = measureContextChars(dir);
+    const budget = readBudgetConfig(projectDir);
+    if (budget && chars > budget) {
+      throw new Error(`closure context budget failed — ${formatFootprint(chars, budget)}. Trim the trail or raise context_budget_chars.`);
+    }
+  }
+
   // Fold order: narrative artifacts first, wave evidence last (chronological).
   const FOLD_TOP = ['decisions.md', 'blockers.md', 'review.md', 'security.md', 'spec.md'];
   const fold: string[] = [];
