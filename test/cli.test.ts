@@ -322,13 +322,13 @@ describe('run() — no-install command paths', () => {
       expect(readFileSync(join(dir, '.mugiwara', 'missions', 'done-m', 'report.md'), 'utf8')).toContain('## Archived: 06-closure.md');
       expect(existsSync(join(dir, '.mugiwara', 'index.md'))).toBe(true);
       // --all without --force: in-flight blocks (process.exit(1))
-      const { err } = await capture(['clean', '--all'], dir);
+      const { err } = await capture(['clean', '--include-live'], dir);
       expect(err).toContain('in-flight mission(s): live-m');
       expect(exitSpy).toHaveBeenCalledWith(1);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('clean --before archives stale in-flight missions, keeps fresh ones', async () => {
+  test('clean --stale archives stale in-flight missions, keeps fresh ones', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-before-'));
     try {
       const mk = (m: string, updatedAt: string) => {
@@ -339,7 +339,7 @@ describe('run() — no-install command paths', () => {
       };
       mk('stale-m', '2020-01-01T00:00:00Z');
       mk('fresh-m', new Date().toISOString());
-      const { out } = await capture(['clean', '--before', '2025-01-01'], dir);
+      const { out } = await capture(['clean', '--stale', '2025-01-01'], dir);
       expect(out).toContain('cleaned stale-m');
       expect(out).not.toContain('fresh-m');
       expect(existsSync(join(dir, '.mugiwara', 'missions', 'stale-m', 'report.md'))).toBe(true);

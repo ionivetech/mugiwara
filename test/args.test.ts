@@ -47,3 +47,10 @@ test('parses --solo for savepoint', () => {
   expect(r.flags.solo).toBe(true);
   expect(r.flags.flow).toBe('2');
 });
+
+test('parses --stale value and --include-live bool for clean', () => {
+  const r = parseArgs(['clean', '--stale', '2025-01-01', '--include-live']);
+  expect(r.command).toBe('clean');
+  expect(r.flags.stale).toBe('2025-01-01');
+  expect(r.flags.includeLive).toBe(true);
+});

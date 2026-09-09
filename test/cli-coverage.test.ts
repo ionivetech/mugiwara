@@ -231,13 +231,13 @@ describe('command usage + state errors', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('clean --before tolerates corrupt state', async () => {
+  test('clean --stale tolerates corrupt state', async () => {
     const dir = tmp();
     try {
       const d = join(dir, '.mugiwara', 'missions', 'm');
       mkdirSync(d, { recursive: true });
       writeFileSync(join(d, 'state.json'), '{corrupt\n');
-      const r = await cap(['clean', '--before', '2020-01-01', '--project', dir]);
+      const r = await cap(['clean', '--stale', '2020-01-01', '--project', dir]);
       expect(r.code).toBe(0);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });

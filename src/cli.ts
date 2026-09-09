@@ -256,8 +256,8 @@ function archive(flags: Args['flags'], positionals: string[]): void {
 /**
  * `mugiwara clean` — batch-archive every closed mission. A mission is closed
  * when its dir holds a report.md and no live state.json/<member>.json. With
- * --all, missions with live state are included too (--force overrides the
- * safety stop). --before <date> restricts to missions whose state was last
+ * --include-live, missions with live state are included too (--force overrides
+ * the safety stop). --stale <date> restricts to missions whose state was last
  * touched before that date.
  */
 function cleanCmd(flags: Args['flags']): void {
@@ -265,16 +265,16 @@ function cleanCmd(flags: Args['flags']): void {
   const dryRun = flag(flags.dryRun);
   const root = join(projectDir, '.mugiwara', 'missions');
   if (!existsSync(root)) { console.log('nothing to clean (.mugiwara/missions/ does not exist).'); return; }
-  const before = str(flags.before);
-  const beforeMs = before ? Date.parse(before) : NaN;
-  if (before && !Number.isFinite(beforeMs)) { console.error(`invalid --before date: ${before}`); process.exit(1); }
+  const stale = str(flags.stale);
+  const beforeMs = stale ? Date.parse(stale) : NaN;
+  if (stale && !Number.isFinite(beforeMs)) { console.error(`invalid --stale date: ${stale}`); process.exit(1); }
 
   let candidates = readdirSync(root, { withFileTypes: true })
     .filter((e) => e.isDirectory() && /^[A-Za-z0-9._-]+$/.test(e.name) && !/^\.+$/.test(e.name))
     .map((e) => e.name);
   // default: CLOSED missions only — a report.md present and no live session
-  // state. --all widens to every mission dir, including in-flight ones.
-  // --before additionally treats an in-flight mission as closable when its
+  // state. --include-live widens to every mission dir, including in-flight ones.
+  // --stale additionally treats an in-flight mission as closable when its
   // newest state was last touched before the date: untouched work is safe to
   // fold even without a report.md yet.
   const stateFiles = (m: string): string[] =>
@@ -293,7 +293,7 @@ function cleanCmd(flags: Args['flags']): void {
     }
     return true;
   };
-  if (!flag(flags.all)) {
+  if (!flag(flags.includeLive)) {
     candidates = candidates.filter((m) =>
       (existsSync(join(root, m, 'report.md')) && !hasLiveState(m))
       || staleBefore(m),
@@ -1175,7 +1175,7 @@ Usage:
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (missions/ + legacy dirs)
   mugiwara archive <m>   fold a closed mission's waves into its report, then remove loose files
-  mugiwara clean [--all] [--before <date>]
+  mugiwara clean [--include-live] [--stale <date>]
                          batch-archive every closed mission (report.md present, no live state)
   mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
   mugiwara continue <m> [member]
@@ -1212,9 +1212,10 @@ Flags:
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
   --check                with list: report missing files (health check)
-   --all                  with continue/status: every actor; with clean: include in-flight missions
-   --force                with clean --all: archive in-flight missions anyway
-   --before <date>        with clean: also archive missions untouched since this date
+   --all                  with continue/status: every actor
+   --include-live         with clean: include in-flight missions
+   --force                with clean --include-live: archive in-flight missions anyway
+   --stale <date>         with clean: also archive missions untouched since this date
    --keep-logs            with reset: keep lessons.md (lessons ledger survives)`);
 }
 

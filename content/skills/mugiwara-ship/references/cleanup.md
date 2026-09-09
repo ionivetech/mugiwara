@@ -22,5 +22,5 @@ dir to its durable core. Never touch anything outside `.mugiwara/`.
 Procedure: run `mugiwara archive <mission>` (dry-run first) — it folds the wave
 files into `report.md`, removes the loose files, and appends an index line to
 `.mugiwara/index.md`. Batch form for several closed missions:
-`mugiwara clean [--all] [--before <date>]`.
+`mugiwara clean [--include-live] [--stale <date>]`.
 A mission is only closed after the archive runs — the trail must survive the merge.

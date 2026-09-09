@@ -60,4 +60,4 @@ along with session state (`*.json`). The PR material
 mission root — it is the handoff to the user and must not fold away. The
 mission dir ends as durable files: `plan.md` + `report.md` +
 `pr-verdict.md` (+ rollback/provenance). Batch form for several closed
-missions: `mugiwara clean [--all] [--before <date>]`.
+missions: `mugiwara clean [--include-live] [--stale <date>]`.

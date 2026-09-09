@@ -70,7 +70,7 @@ Blocked agent appends to `.mugiwara/missions/<mission>/blockers.md`:
 ```
 Brook reads this at Flow 8. Never silently work around a blocker.
 ## Cleanup (Flow 9)
-Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec + review + security + blockers + decisions into `report.md`, removes session state (`*.json`). The dir ends as two files: plan.md + report.md. Keep cross-mission: `config`, `lessons.md`. Batch: `mugiwara clean [--all]`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec + review + security + blockers + decisions into `report.md`, removes session state (`*.json`). The dir ends as two files: plan.md + report.md. Keep cross-mission: `config`, `lessons.md`. Batch: `mugiwara clean [--include-live]`. Full layout: `references/workspace-layout.md`.
 ## Rules
 1. Evidence over claims — run checks, show output.
 2. No flow stage skipped without a reason recorded in the decision log. Cost governor — ladder (need→reuse→stdlib→native→installed dep→one line→code), terse output Decision/Action/Result/Evidence, slop taxonomy + budget reserve/projection — Full checklist: `_shared/references/cost-governor.md`; trail rows; unchecked boxes are not done.
