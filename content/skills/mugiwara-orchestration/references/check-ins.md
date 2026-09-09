@@ -60,13 +60,13 @@ and no options is a defect — flag it at review. Templates (adapt names, keep
 the shape):
 
 - Stage GO (guided): `✓ Flow 2 — Nami · plan 5 tasks + criteria → plan.md` then
-  `Lanjut ke Flow 3 — Zoro? [GO / ubah X / stop]`
-- Solo or team (Flow 0, lane 2+): `Misi ini solo atau tim? Kalau tim: sebut nama + area per orang. [solo / tim: …]`
-- Drift: `Rencana vs tujuan meleset di X. Opsi: [lanjut / coba lagi / eskalasi]. Pilih mana?`
-- Blocker: `⛔ Blocker Flow 5: <gejala>. Sudah coba: <A, B>. Butuh: <keputusan/file>. [beri X / lewati sementara]`
-- Heal halt: `🎻 Heal 3/3 — belum sembuh. Riwayat: <link>. Serahkan ke kamu: [ambil alih / buang misi]`
-- Lane rise (no question): `⬆️ Lane naik standard → full (sentuh src/auth/). Lanjut pipeline penuh.`
-- Closure: `🏁 Siap. Branch <b> pushed. PR verdict: <file>. Kamu buka PR-nya.`
+  `Proceed to Flow 3 — Zoro? [GO / change X / stop]`
+- Solo or team (Flow 0, lane 2+): `Solo or team? If team: names + area per person. [solo / team: …]`
+- Drift: `Plan vs goal drifted at X. Options: [proceed / retry / escalate]. Your call?`
+- Blocker: `⛔ Blocker Flow 5: <symptom>. Tried: <A, B>. Need: <decision/file>. [provide X / skip for now]`
+- Heal halt: `🎻 Heal 3/3 — not healed. History: <link>. Handing to you: [take over / drop mission]`
+- Lane rise (no question): `⬆️ Lane up standard → full (touches src/auth/). Continuing full pipeline.`
+- Closure: `🏁 Ready. Branch <b> pushed. PR verdict: <file>. You open the PR.`
 
 ## Approval messages — recommendation + crew voice (B+C)
 
