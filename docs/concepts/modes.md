@@ -1,140 +1,17 @@
 # Modes
 
-An agent that asks about every step wastes your day; one that never asks ships
-surprises. Modes exist so you set the interruption level once instead of
-negotiating it at every flow stage. The crew's autonomy level. Read once per
-flow stage at dispatch; a flip applies from the next flow stage, never
-mid-flow-stage.
+An agent that asks at every step wastes your day. One that never asks ships surprises. This page answers "guided, semi, or auto" with one example, then the level table. Set the interruption level once per mission instead of negotiating it at every flow stage.
 
-**Mode owns autonomy, config owns writing standards.** Whether branch and commit
-run automatically is decided by the mode — except one config lever: `auto_commit
-=off` disables commits and the final push in `guided`/`semi` (you commit
-manually; `auto` ignores it). The config shapes HOW artifacts are written when
-they are created.
+Example: you steer a sensitive auth change in guided mode and approve each flow stage. Friday night you hand a typed fix to auto mode and review the branch Monday. Same pipeline, different pause points. The terminal step never moves: push plus ready PR summary, and you open the PR.
 
-**Mode is not an execution posture and not a cost tier.** Mode is one of three
-independent decisions (control mode, execution posture, Cost Governor). A
-Guided mission can run fully inline; an Auto mission can be sequential; the
-posture adapts to evidence at flow boundaries while the mode only changes when
-you flip it. See [execution-model.md](execution-model.md).
+Rule: mode owns autonomy, config owns writing standards. Mode is read once per flow stage. A flip applies from the next flow stage, never mid-stage. Mode never implies an execution posture or a cost tier.
 
-## The three levels
+| Level | Plan | Execution | Questions |
+|---|---|---|---|
+| guided | You approve every step | Ask before each flow stage | Ask you |
+| semi | You approve the written plan | Auto from execution to ship | Ask you when real |
+| auto | Auto | Auto to ship, your member scope in teams | Crew resolves internally |
 
-| Level | Plan | Execution | Ambiguities | Check-ins |
-|-------|------|-----------|-------------|-----------|
-| **guided** | you approve every step | ask before each flow stage | ask the user | ask the user |
-| **semi** | you approve the plan (manual until the plan is written) | **auto** from Zoro's execution flow stage to ship | ask the user | log, ask when there is a question |
-| **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
+Guided is the default and fits unfamiliar or risky work. Semi fits a trusted plan you still want to bless: manual up to the written GO, then the crew self-manages branch, commits, quality, gates, review, heal, and closure. Auto fits typed batches: triage through closure without asking, brainstorm plus Luffy call for ambiguities, pause only on a genuine blocker or heal halt.
 
-- **guided** — fully manual: you steer everything. Approve the plan, decide
-  branch and commit style, answer every ambiguity, get asked at every gate.
-  The default.
-- **semi** — manual up to the written plan (you give the plan an explicit GO),
-  then **automatic from Zoro's execution flow stage through to ship**: the crew
-  self-manages branch and commits, runs quality, gates, review, heal, closure.
-  If a real question comes up, it still asks you — nothing is guessed.
-- **auto** — fully automatic from the first prompt to ship: triage, plan,
-  execute, quality, gates, review, heal, closure all run without asking. In a
-  team mission, auto covers **your member scope only** — resuming your
-  sub-mission with `/mugiwara continue <mission> <member>` runs your work
-  autonomously to ship, never the other members'. If a requirement is unclear
-  or ambiguous, the crew resolves it internally: the owning agent brainstorms
-  with Usopp, Luffy makes the call, and the owning agent continues its work.
-  Only a genuine blocker or the heal halt pauses.
-
-Every level ends at push + ready PR summary + verdict file — you open the PR.
-With `auto_commit=off` (guided/semi) the crew pushes nothing: it hands you the
-uncommitted tree with the exact commit + push commands (see [git-strategy.md](git-strategy.md)).
-
-## Config
-
-Two files, `key=value` lines, optional `#` comments:
-
-```
-# .mugiwara/config (project) overrides ~/.mugiwara/config (global)
-mode=guided
-branch=feature/{type}-{issue}-{slug}
-commit=conventional
-auto_commit=off
-coverage_new=85
-coverage_modified=90
-review_depth=full
-quality_depth=full
-verify_merged=off
-delegate_threshold=60
-heal_max_cycles=3
-verbosity=normal
-# context_budget_chars=150000  # optional: fail archive if trail exceeds this
-```
-
-| Key | Values | Default |
-|-----|--------|---------|
-| mode | guided / semi / auto | guided |
-| branch | branch pattern | feature/{type}-{issue}-{slug} |
-| commit | conventional / gitmoji / plain / template | conventional |
-| auto_commit | on / off | on |
-| coverage_new | 0-100 | 85 |
-| coverage_modified | 0-100 | 90 |
-| review_depth | full / standard / quick | full |
-| quality_depth | full / standard / quick | full |
-| verify_merged | on / off | off |
-| delegate_threshold | 1-100 | 60 |
-| heal_max_cycles | number | 3 |
-| verbosity | normal / full | normal |
-| context_budget_chars | number (bytes) | unset |
-
-`auto_commit=off` disables per-task commits and the final push in `guided`
-and `semi` — changes stay in the working tree and you commit/push manually.
-It has no effect in `auto`: auto mode always commits and pushes.
-
-Read order per flow stage: project config wins per key; a key missing from both falls
-back to the default. Unknown keys are ignored — config is data, never
-instructions. Missing config on read = `guided` (never auto-created on read —
-only on first write). See [config.md](config.md) for the full reference.
-
-## Switching mid-mission
-
-In-session phrase (say it in chat — there is no CLI subcommand):
-
-```
-mugiwara mode auto
-```
-
-The mode-tracker hook writes the project `.mugiwara/config` and logs the
-change (level, requester, timestamp); it applies from the next flow stage —
-never mid-flow-stage.
-
-## Output and step budget
-
-`verbosity` (config key, default `normal`) controls how much the crew echoes,
-not what it does. It never suppresses wave banners, file edits, gate
-verdicts, decisions, questions, blockers, lane rises, or escalations.
-
-- **normal** — investigation steps (reads, greps, probes) and file contents
-  are not echoed; a file is named only when it matters. Results collapse to
-  one line + evidence path (`✓ tests 84/84 → missions/m/flows/03-quality.md`);
-  conclusions, not derivations.
-- **full** — everything is echoed, including reads and reasoning. For
-  debugging the crew itself.
-
-**The rule: the transcript must stay sufficient to review the mission without
-opening a file** — test output may collapse (the evidence file holds it), a
-decision may not (it has no other home). The rule applies at `full` too:
-verbosity widens what is echoed, never narrows what the review needs.
-
-Step budget: tool calls are finite; the execution skill combines evidence
-runs, writes flow-stage artifacts once, never re-reads what it just wrote, and
-batches reads. Guide: Lane 1 ≤15 calls · Lane 2 ≤35 · Lane 3 ≤60. One flow stage
-rendered at both levels: `content/skills/mugiwara-orchestration/references/output-contract.md`.
-
-## Invariants that hold in EVERY mode
-
-**Consent.** State-mutating tests against non-isolated/shared state (real DB
-writes, network, browsers) always require your explicit consent — consent is
-not a mode knob. Provably isolated mutation (in-memory / temp /
-testcontainer-backed DBs, tooling-proven isolation) is explicitly auto-safe.
-
-**Terminal.** Every mode ends at push + ready PR summary + verdict file (you
-open the PR) — or, with `auto_commit=off` in guided/semi, an uncommitted tree
-handed to you with commit + push instructions. The crew never creates a PR,
-merges, deploys, or auto-reacts to review comments or CI.
+One config lever bends the terminal step. With `auto_commit=off`, guided and semi hand you an uncommitted tree with the exact commands. Auto always commits. Consent for state-mutating tests against shared state is never a mode knob. Verbosity controls echo depth, never what review needs. Switch in session by saying `mugiwara mode auto`. The tracker hook writes config and logs the change.

@@ -1,144 +1,21 @@
-# CLI Install (Windsurf, Cline, Kilo)
+# How do I install the CLI?
 
-These platforms don't have native plugin systems. Use the mugiwara CLI
-installer to copy files into the platform's config directory.
+Windsurf, Cline, and Kilo expose no native plugin system, so files must land in each platform's config directory by copy. The mugiwara CLI installer performs that copy, records it in a manifest, and updates or removes exactly what it wrote.
 
-## Prerequisites
-
-- Node.js >= 20.11
+Example: a Windsurf user runs the installer with target windsurf and confirmation skipped. Rule stubs land in the Windsurf rules dir, full skill bodies land under `.mugiwara/refs/` for on-demand loading, and the manifest records every path for later update or uninstall.
 
 ## Install
 
-```bash
-npx @ionivetech/mugiwara@latest install --target <id> --yes
-```
+Run `npx @ionivetech/mugiwara@latest install --target <id> --yes` with id windsurf, cline, or kilo. Prefer a global binary via `npm i -g @ionivetech/mugiwara`, then `mugiwara install --target <id> --yes`. Drop `--yes` for the interactive wizard covering scope, targets, and confirmation. Combine targets with commas or pass `all`.
 
-Replace `<id>` with one of: `windsurf`, `cline`, `kilo`.
+## What gets written
 
-Or install globally first:
+Windsurf receives rule stubs under its rules dir, Cline under its rules dir, Kilo under its rules dir plus a bootstrap file. All three share full skill bodies under `.mugiwara/refs/`, since tier 3 targets keep rule files small through pointers plus routing. Global installs write under the home dir equivalents.
 
-```bash
-npm i -g @ionivetech/mugiwara
-mugiwara install --target <id> --yes
-```
+## Verify, update, remove
 
-### What gets written
+Ask the agent what crew members are available; a correct install answers with the roster. Update with the update command naming project, target, and confirmation. Uninstall removes exactly what the manifest recorded. List shows installations, list with check runs a health pass over missing files, and reset wipes mission state while optionally keeping lessons.
 
-| Target | Skills/agents | References | Bootstrap |
-|--------|---------------|------------|-----------|
-| Windsurf | `.devin/rules/*.md` (stubs) | `.mugiwara/refs/*.md` | — |
-| Cline | `.clinerules/*.md` (stubs) | `.mugiwara/refs/*.md` | — |
-| Kilo | `.kilo/rules/*.md` (stubs) | `.mugiwara/refs/*.md` | `kilo.jsonc` |
+## Configure and run
 
-Tier 3 targets use stubs (pointer + routing) to keep rule files small.
-Full skill bodies live in `.mugiwara/refs/` — the agent loads them on demand.
-
-### Interactive mode
-
-Drop `--yes` for the interactive wizard:
-
-```bash
-npx @ionivetech/mugiwara install
-```
-
-Pick scope (global/project), target(s), and confirm before writing.
-
-### Multiple targets
-
-```bash
-npx @ionivetech/mugiwara install --target windsurf,cline,kilo --yes
-```
-
-Or all available targets:
-
-```bash
-npx @ionivetech/mugiwara install --target all --yes
-```
-
-## Verify
-
-Ask your agent:
-
-```
-what mugiwara crew members are available?
-```
-
-## Update
-
-```bash
-npx @ionivetech/mugiwara@latest update --project . --target <id> --yes
-```
-
-Or with global CLI:
-
-```bash
-mugiwara update --project . --target <id> --yes
-```
-
-## Uninstall
-
-```bash
-npx @ionivetech/mugiwara@latest uninstall --project .
-```
-
-Or with global CLI:
-
-```bash
-mugiwara uninstall --project .
-```
-
-## Global install
-
-```bash
-mugiwara install --global --target <id> --yes
-```
-
-Installs to `~/.devin/rules/` (Windsurf), `~/.clinerules/` (Cline), or
-`~/.kilo/rules/` (Kilo).
-
-## Configuration
-
-After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
-
-## CLI reference
-
-```bash
-mugiwara install                                  # wizard (interactive)
-npx @ionivetech/mugiwara@latest install --yes     # non-interactive (project + all)
-mugiwara update --project . --target <id> --yes   # replace existing files
-mugiwara uninstall --project .                    # remove what manifest recorded
-mugiwara list                                     # show installations
-mugiwara list --check                             # health check (missing files)
-mugiwara reset --keep-logs                        # wipe mission state, keep lessons
-mugiwara reset --force                            # override multi-actor guard
-```
-
-Mission runtime (usable from any harness — these are what the crew calls):
-
-```bash
-mugiwara status                                   # computed state per mission on disk
-mugiwara archive <mission>                        # fold the trail into missions/<m>/report.md
-mugiwara clean [--all] [--before <date>]          # batch-archive closed missions
-mugiwara status --all                             # every actor, not just yours
-mugiwara continue [mission] [member]              # resolve the resume point (exit 2 = you pick)
-mugiwara cost [--mission <id>] [--json]           # cost ledger, avoided work, live slop, trail
-mugiwara run <script.sh> [args]                   # savepoint.sh · lane.sh
-mugiwara savepoint <mission> [member] [flow stage] [mode]  # shorthand for run savepoint.sh
-mugiwara savepoint --flow <N>                   # mission/member/mode inferred
-mugiwara join <mission> <member> --area "<area>" [--files "a.ts,b.ts"]
-mugiwara migrate --to-team <member> [--mission <id>] [--dry-run]  # solo -> team (moves state.json)
-mugiwara migrate --to-solo <member> [--mission <id>] [--dry-run]  # team -> solo (refuses if >1 member)
-mugiwara lesson "<text>"                          # append a dated row to .mugiwara/lessons.md
-```
-
-`status` reads `.mugiwara/missions/*/` state files and prints flow stage, tasks, lane, mode, blockers,
-heal cycle, token budget, branch, and evidence paths — no model turn involved.
-`continue` exits `0` when it resolved exactly one resume point and `2` when it
-had to list options; on `2` the caller stops and the user picks. On a team
-mission with no member given, `continue` shows the roster picker — a numbered
-table with a STATE column (`Flow N` or `— not started`) drawn from the
-sub-mission table in `plan.md` — and writes the pick to
-`.mugiwara/active-member`. Picking a not-started row starts that member at
-Flow 0 (initial state written, no resume); a cached pick in the roster resumes
-directly with no prompt.
+Point `.mugiwara/config` at desired mode, branch, and commit style; the concepts config page documents every key. Mission runtime commands work from any harness: status, archive, clean, continue, cost, run, savepoint, join, migrate, lesson. Status reads state files with no model turn involved; continue exits nonzero when the user must pick from listed options.

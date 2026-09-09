@@ -1,84 +1,9 @@
-# Claude Code Install
+# How do I use it with claude?
 
-Mugiwara is a full Claude Code native plugin with agents, skills, and a
-session-start hook.
+Claude Code reads crew files natively, so install means registering the marketplace plugin once. No copying, no path registration by hand.
 
-## Prerequisites
+Example: run `/plugin marketplace add ionivetech/mugiwara` then `/plugin install mugiwara`. Ask what crew members are available; the full roster of 11 agents plus 21 skills answers back, and the session hook announces the crew at every start.
 
-- [Claude Code](https://claude.ai/code) installed
-- Node.js >= 20.11
+## Details
 
-## Install
-
-```bash
-/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
-```
-
-## How it works
-
-Claude Code clones the repo and reads from:
-
-- `skills/` and `agents/` — symlinks to `content/skills/` and
-  `content/agents/`. Claude Code auto-discovers all 21 skills and 11 agents (+3 internal).
-- `hooks/hooks.json` — defines a SessionStart hook that runs
-  `hooks/session-start.ts`, injecting the crew announce header at every
-  session start.
-
-The hook announces: "Mugiwara crew available. The workflow auto-activates
-for non-trivial requests..."
-
-## Verify
-
-Ask:
-
-```
-what mugiwara crew members are available?
-```
-
-Or start any task — the crew auto-activates at session start.
-
-## Update
-
-```
-/plugin update mugiwara
-```
-
-## Uninstall
-
-```
-/plugin uninstall mugiwara
-```
-
-## Configuration
-
-After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
-
-Switch autonomy mode with `/mugiwara-mode guided|semi|auto`.
-
-Or set permanently in `.mugiwara/config`: `mode=guided`.
-
-## Troubleshooting
-
-### Plugin not showing up
-
-1. Verify marketplace is registered: `/plugin marketplace list`
-2. If not, re-run the marketplace add command
-3. Check Claude Code is up to date
-
-### Skills not found
-
-1. Check that `skills/` and `agents/` symlinks resolve correctly
-2. Reinstall: `/plugin uninstall mugiwara` then reinstall
-
-### Hook not running
-
-The session-start hook requires Claude Code plugin hook support. Ensure
-you're on a recent Claude Code version.
-
-### Permission boundaries (optional, tier 1)
-
-Claude Code is tier 1: per-persona tool scopes can be enforced by the harness
-itself. Deny-config snippets for the auditor/reviewer/healer scopes live in
-[concepts/permissions.md](../concepts/permissions.md) — attach them scoped to
-the agent's invocation context, not globally.
+The plugin symlinks skills and agents into `content/`, auto-discovering everything, while the SessionStart hook injects the announce header. Update with `/plugin update mugiwara`, remove with `/plugin uninstall mugiwara`. Set mode with `/mugiwara-mode guided|semi|auto` or pin it in `.mugiwara/config`; every key is documented on the [config page](../concepts/config.md). Claude Code is tier 1, so auditor and reviewer deny-scopes from [permissions](../concepts/permissions.md) attach to the agent invocation context when you want them.

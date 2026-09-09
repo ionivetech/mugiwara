@@ -1,61 +1,23 @@
-# Provenance
+# Where did this come from?
 
-Who wrote this code, under what lane, verified by what — attached to the
-commit instead of lost at closure. `git blame` answers _who_; provenance
-answers _what checked it_.
+`git blame` answers who touched a line, then stops. It never says under which lane, which model, or which evidence the change passed. Provenance attaches that record to the commit instead of losing it at closure.
 
-## What is recorded
-
-At `mugiwara archive`, the mission's state produces one provenance block:
+Example: an archived mission leaves this block beside its report:
 
 ```
 mission: invitation-accepted
-agent: zoro <z@team> · claude-sonnet-4.6 · lane full · mode auto
+agent: zoro · lane full · mode auto
 tasks: 5/5
 gates/evidence: flows/04-gates.md · review.md · security.md
-branch: feat/invitation-accepted
 human review: pending (PR review is the terminal gate)
 ```
 
-The model line comes from `MUGIWARA_MODEL` (or `ANTHROPIC_MODEL`) when set;
-otherwise it says so plainly instead of inventing an attribution.
-
-Every savepoint also records the active model into state (`model` in the
-stage's state file). At closure, provenance renders the unique set across all
-stages as `model(s): a, b` — so switching models mid-mission stays visible
-instead of every line attributing to the last env value. **Set
-`MUGIWARA_MODEL` whenever you switch models**; that is the value each stage
-records.
+The model line renders from `MUGIWARA_MODEL` when set and says so plainly otherwise; mid-mission model switches render as a set, never silently as the last value.
 
 ## Two layers
 
-| Layer | Where | Who sees it |
-|-------|-------|-------------|
-| Git note | `refs/notes/mugiwara` on the branch head | CLI users |
-| `provenance.md` | inside the archived mission dir; PR-paste-ready | everyone, any host |
-
-Hosting UIs never render git notes and a plain clone does not fetch them —
-so the note is the local precision archive, and the markdown file (paste it
-into the PR description or a comment) is the distribution channel.
-
-## Commands
-
-```bash
-# attach + write (automatic at archive)
-mugiwara archive <mission>
-
-# query after fetching notes from the remote
-git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara'
-mugiwara blame src/auth/invitation.ts
-```
-
-`mugiwara blame <path>` prints the last commit that touched the path plus its
-note; commits without one say so honestly.
+The git note on the branch head is the local precision archive for CLI users. The `provenance.md` file in the mission dir is paste-ready for PR descriptions on any host, since hosting UIs never render notes and plain clones never fetch them.
 
 ## Hygiene
 
-- Notes live outside history: SHAs, diffs, and rebases are untouched.
-  `notes.rewriteRef=refs/notes/mugiwara` keeps them attached across rebases.
-- Delete the ref to remove every note at once — no residue in history.
-- Sharing: push the ref once (`git push origin refs/notes/mugiwara`);
-  teammates add the matching fetch refspec.
+Notes live outside history: SHAs, diffs, and rebases stay untouched, with rewrite refs keeping notes attached across rebases. Delete the ref to remove every note at once. Push the ref once for sharing; teammates add the matching fetch refspec. Query with `mugiwara blame <path>`, which prints the last touching commit plus its note and admits when a commit carries none.

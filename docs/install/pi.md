@@ -1,46 +1,26 @@
 # Pi Install
 
-Mugiwara installs as a Pi package.
+You run Pi and want the crew through its own marketplace manifest, not a file copy. The CLI refuses `--target pi` on purpose and tells you so; install happens on the host side, while state commands still run through npx.
 
-## Prerequisites
-
-- [Pi](https://github.com/pi) CLI installed
+Example: register the repo URL in Pi's package install flow, then ask what crew members are available. The roster answers back with the same crew every other harness serves.
 
 ## Install
 
-```bash
-pi install git:github.com/ionivetech/mugiwara
-```
-
-## How it works
-
-Pi reads `package.json` `pi` field (`skills: ["./content/skills"]`) and
-loads all 21 skills. The Pi extension (`pi-extension/`) registers runtime
-hooks if present.
-
-## Verify
-
-Ask:
-
-```
-what mugiwara crew members are available?
-```
-
-## Update
-
-Reinstall with the same command:
+1. In Pi, install the package from the repo URL (`pi install` with the `github.com/ionivetech/mugiwara` git source, untested on this host, verify the exact syntax on Pi's plugin page before running).
+2. Confirm the refusal below if you try the CLI path, which proves marketplace-only routing is intact.
 
 ```bash
-pi install git:github.com/ionivetech/mugiwara
+mugiwara install --target pi --yes
 ```
 
-## Uninstall
-
-```bash
-pi remove mugiwara
+```text
+mugiwara: pi installs through its marketplace manifest, not --target.
 ```
 
-## Configuration
+*Verbatim output from a real CLI run.*
 
-After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
+## Verify, update, remove
+
+Ask what crew members are available; a correct install answers with the roster. Pi resolves through the host plugin manifest with content pointers, per the [harness matrix](../reference/harness-matrix.md). Run state commands (`status`, `continue`, `cost`) via `npx @ionivetech/mugiwara@latest` with no install step needed. Without the CLI the crew still runs the pipeline but resume, budget tracking, and the closure gate stay off. Removal happens on the host side through Pi's own uninstall flow.
+
+Set mode and branch in `.mugiwara/config` per the [config page](../concepts/config.md), then open [Getting started](../getting-started.md) and hand the crew one real task.

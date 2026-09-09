@@ -1,72 +1,21 @@
-# Adoption Guide
+# How do I adopt it?
 
-How to take the crew into your workflow without fighting it.
+A crew that fights your workflow loses to your workflow. Adoption works when the harness, the mode, and the pipeline size fit how your team already builds. This guide fits all three before your first mission.
+
+Example: a Claude Code team wanting the full pipeline installs natively, sets `mode=guided` in `.mugiwara/config`, and runs trivial fixes at Lane 0 with zero flow stages. Same crew, same week: small fixes stay light while payment work gets all nine stages.
 
 ## Pick your harness
 
-The crew ships native skills + agents where the harness supports them, and
-markdown rule files everywhere else.
-
-| Situation | Pick |
-|-----------|------|
-| You live in Claude Code or opencode | Native install — agents + skills + (Claude) session hook |
-| You want the full crew pipeline | Claude Code, opencode |
-| You want skills-only, any tool | `npx skills add ionivetech/mugiwara` (agentskills.io layout) |
-| You only use one niche tool | Its per-harness guide (index → install by harness) |
-
-Native targets (Claude Code, opencode, Copilot) register the 11 agents (+3 internal) directly.
-Rule-based targets (Gemini, Codex, Cursor, Windsurf, Cline, Kilo, Antigravity)
-get the same 21 skills as markdown rules plus a bootstrap pointer, so the crew
-is still steered even where subagents don't exist.
+Native installs (Claude Code, opencode, Copilot) register agents plus skills directly. Skills-only installs serve every other tool through the agentskills.io layout. Single-tool users follow their per-harness page from the [install index](../install/index.md).
 
 ## Pick your mode
 
-Modes live in `.mugiwara/config` (project) or `~/.mugiwara/config` (global):
+Guided asks everything: plan, branch, commits, ambiguities, check-ins. Semi asks the written plan only, then runs automatically from Flow 3 while still asking real questions. Auto asks nothing, resolving ambiguities internally. Missing config reads as guided; a flip applies from the next flow stage, never mid-stage. State-mutating tests against shared state always need explicit consent, in every mode, with no knob to disable it.
 
-```
-mode=guided
-branch=feature/{type}-{issue}-{slug}
-commit=conventional
-```
+## Fit the pipeline
 
-| Level | What it asks you |
-|-------|------------------|
-| `guided` | Everything — plan, branch, commits, ambiguities, check-ins |
-| `semi` | The written plan only (GO); execution from Flow 3 is automatic; real questions are still asked |
-| `auto` | Nothing — fully automatic from the first prompt to ship; ambiguities resolved internally (brainstorm → Luffy decides) |
+Trivial one-liners route to Lane 0 and run with zero flow stages. Medium features run triage, plan, execute, checkpoint, quality, gates, review, closure. High-stakes work involving money, security, data, or public API always runs the full pipeline with the adversarial pass and the heal loop. Repos with history read the lessons ledger at triage, so each mission stands on previous ones.
 
-State-mutating tests against shared state (real DB writes, network, browsers)
-always need your explicit consent — in every mode. That consent is not a knob.
+## What the crew never does
 
-Missing config on read = `guided`. A flip applies from the next flow stage, never
-mid-flow-stage.
-
-## Fit the crew to your workflow
-
-- **Trivial one-liners** don't need the crew's full pipeline — Luffy routes them
-  to Lane 0 and they run with zero flow stages. The process scales to the work.
-- **Medium features** run the standard pipeline: triage → plan → execute →
-  checkpoint → quality → gates → review → closure.
-- **High-stakes work** (money, security, data, public API) always gets the full
-  pipeline, including Skeptic's adversarial pass and Brook's heal loop.
-- **Repos the crew has touched before** read the lessons ledger at triage, so
-  every mission stands on the previous ones.
-
-## The execution model, in one sentence
-
-The crew runs **inline in your main conversation**; subagents are used only for
-independent `[PARALLEL]` task batches and background checks. You see every flow stage
-as it happens. See [execution-model.md](../concepts/execution-model.md).
-
-## What the crew will never do
-
-- Merge a PR, or deploy. It pushes the branch and hands you the verdict file —
-  PR review is the terminal gate.
-- Auto-react to review comments or CI.
-- Let a flow stage pass on a spoken claim — evidence or it didn't happen.
-- Work around a blocker silently — everything lands in the ledger.
-
-## Going further
-
-- [Developer onboarding](developer-onboarding.md) if you want to contribute.
-- [Comparison](../concepts/comparison.md) if you're weighing mugiwara against alternatives.
+It never merges, deploys, or reacts to review comments or CI on its own. It pushes the branch and hands over the verdict file, since PR review is the terminal gate. No flow stage passes on a spoken claim, and no blocker is worked around silently; everything lands in the ledger. Contributors continue at [developer onboarding](developer-onboarding.md).

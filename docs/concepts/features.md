@@ -1,742 +1,173 @@
-# Mugiwara Feature Inventory
-
-Everything mugiwara does, with how to use it and a real scenario for each.
-This is the companion to the feature table in the
-[README](../../README.md#all-features) — the README lists, this doc explains.
-
-## Table of contents
-
-- [1. The Flow 0–9 crew pipeline](#1-the-9-flow-stage-crew-pipeline)
-- [2. Multi-persona crew agents](#2-multi-persona-crew-agents)
-- [3. Inline execution model](#3-inline-execution-model)
-- [4. Autonomy modes](#4-autonomy-modes)
-- [5. Config system](#5-config-system)
-- [6. Lane sizing](#6-lane-sizing)
-- [7. Configurable depth](#7-configurable-depth)
-- [8. Savepoint state](#8-savepoint-state)
-- [9. Resume & continue](#9-resume--continue)
-- [10. Lessons ledger](#10-lessons-ledger)
-- [11. Sonar-style quality](#11-sonar-style-quality)
-- [12. Gates](#12-gates)
-- [13. Security](#13-security)
-- [14. Self-healing](#14-self-healing)
-- [15. Adversarial verification](#15-adversarial-verification)
-- [16. Ship gate](#16-ship-gate)
-- [17. Git discipline](#17-git-discipline)
-- [18. TDD & user tests as oracle](#18-tdd--user-tests-as-oracle)
-- [19. Multi-platform install](#19-multi-platform-install)
-- [20. CLI](#20-cli)
-- [21. Cost tracking](#21-cost-tracking)
-- [22. Eval harness & self-testing gates](#22-eval-harness--self-testing-gates)
-- [23. Enforcement mechanisms](#23-enforcement-mechanisms)
-- [24. Engineering practice skills](#24-engineering-practice-skills)
-- [25. Provenance ledger](#25-provenance-ledger)
-- [26. Policy as code](#26-policy-as-code)
-- [27. Closure tools](#27-closure-tools)
-- [28. Permission boundaries & tool-surface governance](#28-permission-boundaries--tool-surface-governance)
-- [29. Adaptive execution & three-decision model](#29-adaptive-execution--three-decision-model)
-
-## 1. The Flow 0–9 crew pipeline
-
-**What.** Non-trivial work runs a ten-flow pipeline (Flow 0 triage + Flow stages
-1-9). Each flow stage is owned by one crew member, and every flow stage passes only on
-**evidence** — the owning agent runs the check and shows the output, never a
-spoken claim.
-
-| Flow stage | Owner | Skill | Output |
-|------|-------|-------|--------|
-| 0 Triage | Luffy | `mugiwara-orchestration` | route decision + reason |
-| 1 Brainstorm | Usopp | `mugiwara-brainstorm` | options + recommendation |
-| 2 Planning | Nami | `mugiwara-planning` | plan doc: plan waves, tasks, criteria |
-| 3 Execution | Zoro | `mugiwara-execution` | implemented tasks with evidence |
-| 4 Checkpoint | Chopper | `mugiwara-checkpoint` | audit report + failure ledger |
-| 4.5 Adversarial | Skeptic | `mugiwara-claim-audit` | findings (optional) |
-| 5 Quality | Sanji | `mugiwara-quality` | format / lint / test results |
-| 6 Gates | Franky | `mugiwara-gates` | coverage + build + DoD verdict |
-| 7 Review | Robin ∥ Jinbe | `mugiwara-review` + `mugiwara-security` | severity-tagged findings |
-| 8 Healing | Brook | `mugiwara-healing` | fixes; loops to Flow 4, ≤3 cycles |
-| 9 Closure | Luffy | `mugiwara-orchestration` | closure report + push + PR verdict |
-
-**How to use.** Ask for something non-trivial. The pipeline auto-activates and
-routes itself — no agent names to memorize, no pipeline config to write:
-
-```
-> add role-based access control: admin, editor, viewer
-```
-
-**Scenario.** A 15-file refactor that touches the auth surface routes to
-Lane 3 (Full) and runs all 9 flow stages: Nami plans, Zoro executes test-first,
-Chopper re-runs every acceptance criterion, Sanji lint-tests, Franky checks
-coverage, Robin and Jinbe review the diff in parallel, Brook heals any
-failures, and Luffy closes with a pushed branch and ready PR summary.
-
-→ [Full pipeline](workflow.md) · [README pipeline diagram](../../README.md#the-pipeline)
-
----
-
-## 2. Multi-persona crew agents
-
-**What.** 11 user-facing specialists (+3 internal). Each has role boundaries —
-auditors and reviewers are **read-only** (they report, never fix). The main
-thread embodies each persona inline, or you can summon any member by name.
-
-**How to use.**
-
-```
-> Jinbe, audit auth middleware              # security only, read-only
-> Brook, fix the failing login test         # healer only
-> Nami, plan this out                       # planner directly
-> Chopper, audit the last flow stage              # checkpoint directly
-```
-
-**Detail.** Luffy still records the route and its reason in the decision log,
-and direct calls do not skip check-ins. Crew members never dispatch each
-other; workers are subagents, never crew.
-
-**Scenario.** Before a release you want only the security pass, no pipeline —
-`/mugiwara-security` or "Jinbe, audit X" runs STRIDE + OWASP read-only and
-reports findings without touching code.
-
-→ [All agents](agents.md) · [Agent anatomy](../reference/agent-anatomy.md)
-
----
+# Features
 
-## 3. Inline execution model
+You inherited a change with unclear size and no obvious entry point.
+This index maps each need to the page that owns it.
+Detail lives on the linked pages, never here.
 
-**What.** The crew runs **inline** in your main conversation by default. Every
-flow stage plays out where you can see it; evidence lands in `.mugiwara/` files and
-the chat carries terse verdicts and evidence pointers. Subagents exist to
-parallelize, never to hide work.
+Example: you ask for role-based access control across an API.
+Luffy sizes the diff to a full lane, Usopp sharpens the vague edges, Nami plans waves with acceptance checks, Zoro implements with evidence per task, Chopper re-runs each check, Sanji and Franky gate, Robin and Jinbe review, Brook heals failures, Luffy closes with a report plus a ready PR summary.
+The product is the branch plus `.mugiwara/missions/<mission>/report.md`.
 
-**How to use.** Nothing to configure. Watch wave banners
-(`## ⚔️ Flow 3 — Zoro (Execution)` —
-never ANSI escapes; the harness plugin applies colour) and checkpoint
-reports in the chat.
+Rule: this page answers "what can it do" at index depth.
+When a section below matches your need, open its link.
+That page owns the mechanism.
+Sections follow four reader jobs: run missions, review proof, adopt as a team, extend the crew.
 
-**Detail.** Subagents are used only for genuinely parallel work:
-`[PARALLEL]` task batches (one worker per task), Brook's parallel heal fixes,
-background checks, and independent re-runs by Chopper/Robin/Jinbe. Sequential
-work stays inline. Results return as reports; the main thread summarizes.
+## Run missions
 
-**Scenario.** A feature with three file-disjoint tasks executes all three in
-parallel workers, then each worker's evidence is folded back inline before the
-next batch starts.
+### Lane sizing that fits the diff
 
-→ [Execution model](execution-model.md)
+Problem: every change pays the same ceremony, so typos queue behind migrations or migrations ship with typo-level care.
+What: the lane is computed from git diff and only ever rises, from direct (no stages) through lean and standard to full (nine stages plus security review). The orchestration and workflow skills own the routing, Luffy announces it at triage.
+Proof: `mugiwara status` prints the lane with its reason, for example `lane full (floor; computed lean)`, beside blockers and token budget.
+For mixed-size teams. Not for solo scripts nobody reviews. Trade-off: borderline diffs land one lane high, and that caution costs minutes.
 
----
+### Brainstorm before you plan
 
-## 4. Autonomy modes
+Problem: the request is a paragraph with three possible meanings, and planning any one of them wastes a wave.
+What: the brainstorm skill interrogates the idea, researches with the web where facts matter, and returns options with trade-offs instead of a stamp. Usopp runs it before Nami plans anything.
+Proof: the surviving option enters `plan.md` with owners attached, and the rejected options stay recorded in the trail with reasons.
+For vague ideas and architecture forks. Not for typed fixes with an obvious shape. Trade-off: interrogation adds a round trip, and thin asks get questioned harder than their author hoped.
 
-**What.** One lever decides how much the crew does without asking. Three
-levels, read once per flow stage — a flip applies from the next flow stage.
+### Plans with acceptance checks
 
-| Level | Plan | Execution | Ambiguities | Check-ins |
-|-------|------|-----------|-------------|-----------|
-| **guided** | you approve every step | ask before each flow stage | ask the user | ask the user |
-| **semi** | you approve the written plan | **auto** from Zoro's flow stage to ship | ask the user | log, ask when there is a question |
-| **auto** | auto | auto all the way to ship (your member scope in a team) | crew resolves internally (brainstorm → Luffy decides) | log, no pause |
+Problem: the agent edits before anyone agrees what done means.
+What: the planning skill turns the idea into waves with owners and per-task checks, recorded in `plan.md` before Zoro touches code. Nami owns the document.
+Proof: `mugiwara continue <mission>` prints the exact resume point, and exits nonzero when you must pick from listed options.
+For leads who sign off before code exists. Not for one-line fixes, which skip planning by lane rule. Trade-off: planning adds a round trip, and vague asks bounce back with questions. Detail: [workflow](workflow.md).
 
-`auto` runs fully automatic from the first prompt to ship: triage, plan,
-execute, quality, gates, review, heal, closure — no user GO. In a team plan
-auto covers **your member scope only**: resuming your sub-mission runs it
-autonomously to ship, never the other members'. If a requirement is unclear,
-the owning agent brainstorms with Usopp, Luffy makes the call, and the crew
-proceeds. Only a genuine blocker or the heal halt pauses.
+### Contracts before code
 
-**How to use.** Say `mugiwara mode <guided|semi|auto>` in session — no CLI flag,
-no slash command — or edit `.mugiwara/config`.
+Problem: the API shape gets negotiated in review comments after the implementation already depends on it.
+What: the contract-first skill writes the interface, the error semantics, and the versioning discipline first, with boundary validation named before behavior. Review then checks conformance, not taste.
+Proof: breaking-change callers land in the plan as named tasks, and Robin verifies each one against the written contract at review.
+For APIs and interfaces other code will depend on. Not for internal refactors with no boundary. Trade-off: the contract round trip slows day one to protect month six.
 
-**Scenario.** Day session in `guided` so you steer every decision; a Friday
-night batch in `auto` so the crew ships the plan and you review the branch on
-Monday. The terminal stop-at-push invariant holds in every mode.
+### Execution with evidence per task
 
-→ [Modes](modes.md)
+Problem: "tests pass" in chat, with no output attached and no commit per change.
+What: the execution skill commits per logical task and records the evidence path for each, so every report claim points at a file. Backend and frontend skills carry repo standards into the change, and the git skill keeps commits atomic with save-points along the way. Zoro runs all of it.
+Proof: the closing report lists counts, for example 11 files, +340 / -82, naming sensitive paths such as `src/auth/invitation.ts` outright.
+For reviewers who verify instead of trusting. Not for explorations with no branch. Trade-off: commit-per-task slows the middle of the work to speed its review.
 
----
+### Modes for how closely you watch
 
-## 5. Config system
+Problem: an agent that asks at every step wastes your day, and one that never asks ships surprises.
+What: guided asks before each flow stage, semi runs from an approved plan, auto runs triage to closure and pauses only on a genuine blocker. A flip applies from the next stage, never mid-stage.
+Proof: the report header records the mode, for example `lane full, mode guided`, and the terminal step never moves: push plus a ready PR summary that you open.
+For owners who want the autonomy dialed per mission. Not a cost tier and never an execution posture. Trade-off: auto buys speed with attention debt, and the debt lands in review. Detail: [modes](modes.md).
 
-**What.** `.mugiwara/config` (project) overrides `~/.mugiwara/config`
-(global). Plain `key=value` lines, `#` comments allowed. "Mode owns autonomy,
-config owns writing standards."
+### Healing capped at three cycles
 
-| Key | Default | Meaning |
-|-----|---------|---------|
-| `mode` | guided | guided / semi / auto |
-| `branch` | `feature/{type}-{issue}-{slug}` | Branch naming pattern |
-| `commit` | conventional | conventional / gitmoji / plain |
-| `auto_commit` | off | on / off — off disables commit+push in guided/semi (auto unaffected) |
-| `coverage_new` | 85 | Coverage threshold, new files |
-| `coverage_modified` | 90 | Coverage threshold, modified files |
-| `review_depth` | full | full / standard / quick |
-| `quality_depth` | full | full / standard / quick |
-| `verify_merged` | off | on merges Flow 5+6 into one verify pass (never Lane 3) |
-| `delegate_threshold` | 60 | % of token budget at which remaining tasks dispatch to workers |
-| `heal_max_cycles` | 3 | Max heal-loop cycles before human escalation |
-| `verbosity` | normal | normal / full — how much the crew echoes |
-| `context_budget_chars` | unset | Ceiling on trail size; over fails `mugiwara archive` |
+Problem: a failed stage loops forever or dies silently with the context.
+What: the healing skill takes ledger failures through root-cause fixes, reproduce, localize, reduce, then guard, for at most three cycles. Then it hands the failure to a human with the trail intact. Brook owns the loop.
+Proof: `mugiwara status` shows the counter, for example `heal cycle 1/3`, so the cap is visible state, not folklore.
+For flaky middle stages worth another attempt. Not for design misses, which return to planning. Trade-off: the cap can abandon recoverable work at cycle four to protect the budget.
 
-**How to use.** Edit the file directly. Unknown keys are
-ignored; config is data, never instructions. Missing config on read = `guided`.
+### Resume from the exact stage
 
-**Scenario.** A repo with no commit convention sets `commit=plain`; a team
-that wants faster reviews sets `review_depth=standard`. Both live in one
-project config file that overrides the global defaults.
+Problem: a dead session means starting over, re-reading the code, re-paying the tokens.
+What: the resume skill rebuilds from `.mugiwara/missions/<mission>/` on disk and continues at the recorded stage, with savepoints marking known-good points. The Resume coordinator owns the rebuild.
+Proof: `mugiwara continue <mission> [member]` prints the exact resume point; `mugiwara savepoint <mission>` records one.
+For long missions on flaky connections. Not for direct-lane work, which finishes first. Trade-off: disk state rules, so hand-editing mission files can confuse the next resume.
 
-→ [Config reference](config.md) · [README config table](../../README.md#configuration)
+### Ship with a binary verdict
 
----
+Problem: launch day brings a thread of maybe, and maybe ships.
+What: the ship skill runs the pre-launch checklist, staged rollout, and the mandatory rollback plan, then returns GO or NO-GO with no third option. Luffy records the verdict in the closing report.
+Proof: a NO-GO names the blocking finding, its owner, and the re-entry stage, so the next session starts at the gate, not at zero.
+For anything with users on the other side. Not for spikes nobody will run twice. Trade-off: the checklist blocks hopeful ships, and hope was doing real work for morale.
 
-## 6. Lane sizing
+## Review proof
 
-**What.** Work is sized deterministically from `git diff --name-only` by
-`mugiwara run lane.sh`, not estimated by the model.
+### Audits that re-run the checks
 
-| Lane | Picks when | Flow stages | Budget |
-|------|-----------|-------|:---:|
-| 0 · Direct | typo, rename, 1 file <20 LOC | none | ~0 |
-| 1 · Lean | bug in 1-2 files, <50 LOC | execute → quality | 12k |
-| 2 · Standard | feature, 3-8 files | plan → execute → audit → review | 25k |
-| 3 · Full | 9+ files, or auth/payment/migration touched | all 9 flow stages | 50k |
-| 4 · Spike | exploratory | brainstorm → re-triage | 3k |
+Problem: the last stage finished, and nobody independent confirmed it.
+What: the checkpoint skill audits each finished stage against the plan and files findings without fixing them. The claim-audit skill double-checks done claims with an extract, doubt, and reconcile pass. Chopper runs the audit, and high-stakes missions add the Skeptic for adversarial re-verification.
+Proof: the report carries a gates ledger, for example checkpoint PASS, quality PASS, coverage PASS with new-code and modified-code percentages.
+For teams where the author never grades their own work. Trade-off: findings can send finished work back, and that sting is the feature. Detail: [audit-trail](audit-trail.md).
 
-**How to use.** Automatic. View the result in `.mugiwara/missions/<mission>/[member].json`
-(`lane`, `lane_reason`, `lane_rose`). Machine output:
+### Quality and coverage gates
 
-```bash
-mugiwara run lane.sh main --json
-```
+Problem: format, lint, and coverage drift per author mood and per deadline.
+What: the quality skill runs the repo's real tooling for format, lint, duplication, and complexity. The gates skill applies coverage, build, and Definition of Done verdicts as binary PASS or FAIL. Sanji finds the tooling, Franky calls the verdict.
+Proof: a failing gate blocks the GO verdict until Brook heals it or a human defers it with an owner named.
+For repos with tooling configured. Not for prototypes with no test runner. Trade-off: the gate never negotiates, so weak-coverage legacy code pays debt before shipping.
 
-**Detail.** Sensitive paths (`auth/ payment/ billing/ crypto/ secrets/ .env`
-`migration/ .sql schema. .prisma .terraform .tf`) always escalate to Full.
-A lane can **rise** mid-mission (diff grew, sensitive path appeared) — it
-never auto-drops.
+### Review plus security before merge
 
-**Scenario.** You promise a one-line fix; it turns out to touch a DB migration
-file. Savepoint detects the sensitive path, the lane rises to Full, and the
-check-in protocol flags the escalation instead of shipping under-processed.
+Problem: breaking changes hide in large diffs and auth paths ship without a threat pass.
+What: the review skill maps every breaking change with caller lists across five axes. The security skill runs STRIDE plus OWASP Top 10 plus secrets plus license checks. Robin and Jinbe run them, and neither implements, so findings go to Brook.
+Proof: the security line reads 0 high or the mission does not close GO; deferred findings carry an owner in the loose ends.
+For auth, payments, and migrations. Not for docs-only lanes, which skip security by rule. Trade-off: review adds latency exactly where rushing hurts most.
 
-→ [Lanes](lanes.md)
+### User test cases as immutable gold
 
----
+Problem: acceptance lives in a chat message, and the message scrolls away before review.
+What: the testcases skill takes declared user cases in any intake format and freezes them as immutable gold. Runs then pass against the frozen cases, and a failure goes to adjudication, never to silent editing of the expectation.
+Proof: the report cites each case by id with its verdict, and a changed expectation appears in the trail as a human decision with a name.
+For missions where the requester names the acceptance outright. Not for exploratory work with no oracle. Trade-off: frozen cases can encode a misunderstanding, and thawing one costs a recorded decision.
 
-## 7. Configurable depth
+### Outcome honesty, including what is missing
 
-**What.** Robin's review and Sanji's quality each have three depths, set per
-project.
+Problem: every tool page claims superiority, and none shows the study.
+What: the Eval Runner scores skill behavior in the harness so regressions surface in CI. The comparison this page absorbs names the structural difference instead of inventing a winner: one report plus per-task evidence versus a chat log.
+Proof: the defensible comparison is structural, because outcome studies against other approaches are not measured yet, and the measured rollup below keeps that row empty.
+For teams bottlenecked on review confidence, not typing speed. Not for generating volume. Trade-off: ceremony costs tokens on small work, and the direct lane keeps that cost near zero.
 
-| Depth | Review (Robin) | Quality (Sanji) |
-|-------|----------------|-----------------|
-| full | breaking-change map + five-axis + sonar | format+lint+test+duplication+complexity+attributes |
-| standard | five-axis only | format+lint+test+duplication |
-| quick | severity only | format+lint+test |
+## Adopt as a team
 
-**How to use.** `review_depth=standard`, `quality_depth=quick` in
-`.mugiwara/config`.
+### Team split without merge pain
 
-**Scenario.** An internal library doesn't need a breaking-change caller map —
-`review_depth=standard` cuts review time while keeping five-axis coverage.
+Problem: two agents on one mission overwrite each other and merge the wreckage.
+What: one shared plan, per-person state files, conflicts flagged before merge, solo state migrating via `mugiwara migrate --to-team <member>`.
+Proof: `mugiwara status --all` reports every actor's wave, tasks, and blockers on one screen.
+For pairs and small crews on one mission. Not for solo work. Trade-off: teammates wait on planning before parallel execution starts.
 
-→ [Config reference](config.md)
+### Cost ledger per mission
 
----
+Problem: token spend stays invisible until the invoice.
+What: every mission carries a budget by lane, warns then stops at the limit, and reports spend in the closing report plus `mugiwara cost --ledger` in human and JSON form. The governor phases behind it record decisions to the trail without ever forcing the model.
+Proof: the sample report shows `8,781 of 12,000 tokens (73 percent)` beside the verdict, with avoided work and efficiency beside raw spend.
+For leads who budget AI spend. Not for flat-rate seats with no metering. Trade-off: the stop is hard, so a mission can halt mid-stage until a human raises the cap. Detail: [cost](cost.md).
 
-## 8. Savepoint state
+### One crew on every harness
 
-**What.** `mugiwara savepoint` writes
-`.mugiwara/missions/<mission>/[member].json` at every flow-stage boundary. Every field
-is **computed from git + file counts**, never model-supplied: mission, member,
-actor, branch, lane, flow stage, mode, base/head SHA, files touched, LOC delta,
-sensitive paths, task counts, open blockers, heal cycle, token estimate,
-budget status, evidence file list. Identity = (mission, member); solo writes
-`state.json`.
+Problem: switching editors strands your process behind a half-ported workflow.
+What: the same 21 skills and 14 agents ship to Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Windsurf, Cline, Kilo, and Antigravity; only the loading path changes per tier.
+Proof: 318 pointers resolve with 0 broken across 9 targets; 216 retrieval probes rank 1 at 95.9 percent, all enforced in CI.
+For developers in more than one editor. Not for single-harness shops. Trade-off: tier 3 targets run inline from stub pointers, so large crews run slower there. Detail: [harness matrix](../reference/harness-matrix.md).
 
-**How to use.** Read it to answer "where are we, how big, any blockers?"
-without opening many files. Written by the crew automatically.
+### Lessons that survive the mission
 
-```bash
-mugiwara savepoint <mission> [member] [flow stage] [mode]
-mugiwara savepoint --flow <N>   # mission/member/mode inferred (member from the active-member cache)
-```
+Problem: every mission re-learns the migrator flag, then forgets it.
+What: the lessons skill has the Memory Keeper read `.mugiwara/lessons.md` at triage and append at closure; `mugiwara lesson "<text>"` adds a dated row by hand.
+Proof: `mugiwara reset --keep-logs` wipes mission state while the lessons ledger survives, which is the point in one flag.
+For teams running repeated missions in one repo. Not for one-off visits elsewhere. Trade-off: lessons are repo-local prose, so each codebase earns its own.
 
-**Scenario.** After a context loss you open `.mugiwara/missions/<mission>/state.json`:
-Flow 3, 5/5 tasks done in the first batch, 0 blockers, mode semi — a one-file
-picture of the whole mission.
+### Provenance and signed reports
 
-**Multi-actor safe.** State is scoped by (mission, member), so any number of
-engineers can share one repo without colliding — each member has their own
-file in the mission folder. `mugiwara reset` refuses to wipe another actor's
-live mission without `--force`.
+Problem: months later nobody proves who ran what or whether the report changed since.
+What: `mugiwara blame <path>` notes the last commit touching a path, `mugiwara handoff <mission>` writes the report the next engineer acts on, `mugiwara sign <mission>` attests the report.
+Proof: `mugiwara sign <mission> --verify` checks the attestation; blame documents the notes ref it reads.
+For regulated paths and owner handoffs. Not for internal spikes. Trade-off: signing adds key management, ed25519 by default, that small teams skip until they need it.
 
-→ [Audit trail](audit-trail.md) · [savepoint.test.ts](../../test/savepoint.test.ts)
+## Extend the crew
 
----
+### Every skill, no gaps
 
-## 9. Resume & continue
+Problem: a catalog that names ten favorites hides the eleventh you needed.
+What: all 21 skills, each owned by the sections above. Run missions: orchestration, workflow, brainstorm, planning, contract-first, execution, backend, frontend, git, healing, root-cause, resume, ship. Review proof: checkpoint, claim-audit, quality, gates, review, security, testcases. Adopt and extend: lessons.
+Proof: the skill index holds 21 entries in CI, and every name in this list resolves to `content/skills/<name>/SKILL.md` in the repo.
+For anyone checking cover before adopting. Trade-off: the roster looks large on first read, and the lane system exists so small work never loads all of it. Detail: [skills](skills.md).
 
-**What.** Rebuild the mission from disk state and continue — never restart.
-`resume-coordinator` reads the state + continue JSON, reports one line
-("Resumed: <mission> [<member>], Flow 3, 2/5 tasks, 0 blockers, mode semi"),
-and hands off to the next flow stage without re-running completed work.
+### Every agent, no gaps
 
-**How to use.**
+Problem: a role with no name never gets called.
+What: all 14 agents. Captain Luffy triages, runs check-ins, records decisions, closes. Usopp interrogates vague ideas. Nami plans. Zoro executes. Chopper audits. Skeptic re-verifies. Sanji runs quality tooling. Franky calls gate verdicts. Robin reviews diffs. Jinbe runs security. Brook heals. Resume rebuilds dead sessions. Memory Keeper carries lessons. Eval Runner scores behavior.
+Proof: every install ships the whole crew, 11 specialists plus 3 internal helpers, with the call moment per member in [agents](agents.md).
+For leads assigning ownership per stage. Trade-off: fourteen names take one reading to learn, and after that the call is one sentence.
 
-```
-/mugiwara continue                 # list in-flight (never auto-start)
-/mugiwara continue <mission>       # solo → resume; team → list members
-/mugiwara continue <mission> <member>  # resume that member's work
-```
+Measured rollup: 21 skills indexed, 318 pointers with 0 broken, 216 probes at 95.9 percent rank 1 over 170 positives and 82 negatives across 293 terms. Every number comes from `.metrics/latest.json`.
 
-On a team mission with no member given, `continue` shows the roster picker —
-a numbered table with a STATE column — and caches the pick to
-`.mugiwara/active-member`; picking a not-started row starts it at Flow 0.
-New arrivals join with `mugiwara join <mission> <member> --area "<area>"`.
-
-or just say "where were we?" at session start. In **auto mode** the
-`session-start` hook scans `.mugiwara/missions/<mission>/continue*.json` for the current git
-actor and surfaces an `AUTO-RESUME` context (single mission → resume hint;
-multiple → list) — it never auto-resumes an ambiguous mission.
-
-**Where the resume point lives.** `mugiwara savepoint` writes
-`.mugiwara/missions/<mission>/continue*.json` at every flow-stage boundary with the position
-fields (mission, member, branch, flow stage, mode, tasks done/total, lane,
-next_action) — machine written, same trust as `state.json`. The
-`next_session_prompt` field is crew-written and preserved across savepoints.
-The resume skill verifies every field against the plan + todos before acting;
-a contradiction escalates.
-
-**Scenario.** Session dies mid-execution on Friday. Monday you open the same
-repo: the crew reads state + continue, verifies `next_action` against todos,
-and picks up at the exact task — no re-run, no restart.
-
-→ [Resume skill](../../content/skills/mugiwara-resume/SKILL.md)
-
----
-
-## 10. Lessons ledger
-
-**What.** Cross-mission institutional memory. At Flow 0 the crew surfaces
-relevant past lessons; at closure it appends new ones. Append-only, one
-actionable row per real lesson, platitudes rejected.
-
-**How to use.** Automatic. Inspect `.mugiwara/lessons.md`. Kept by
-`mugiwara reset --keep-logs`. Manual: `mugiwara lesson "<text>"` appends a dated row (`| YYYY-MM-DD | manual | general | <text> |`).
-
-**Scenario.** Mission A learns "never auto-migrate a DB without a rollback
-plan." Mission B, which touches a DB, receives that lesson at triage and plans
-a rollback from the start.
-
-→ [Lessons skill](../../content/skills/mugiwara-lessons/SKILL.md)
-
----
-
-## 11. Sonar-style quality
-
-**What.** Sanji discovers the project's real tooling from configs and package
-manifests (never invents tooling), then runs format, lint, tests, duplication
-detection, cyclomatic complexity scoring (McCabe, measured per changed
-function), maintainability rating (A-E), and code-attribute checks. Never
-weakens a config to make red go green.
-
-**How to use.** Automatic in Flow 5. No tooling exists → the gap is reported
-honestly, never silently skipped.
-
-**Scenario.** Sanji finds a linter warning in new code. Instead of adding an
-ignore comment, the failure is reported; Brook later fixes the root cause so
-the check stays green.
-
-→ [Quality skill](../../content/skills/mugiwara-quality/SKILL.md)
-
----
-
-## 12. Gates
-
-**What.** Franky issues binary verdicts backed by evidence: coverage
-(≥85% new / ≥90% modified by default), build, Definition of Done, and a
-granular sonar gate with per-condition thresholds (vulnerabilities, bugs,
-code smells, duplications). Missing coverage tooling is a reported gap, never
-a silent pass.
-
-**How to use.** Automatic in Flow 6. Thresholds via config
-(`coverage_new`, `coverage_modified`). Local full gate run: `bun run gate`.
-
-**Scenario.** A mission adds 40 new lines with 70% coverage. The gate reads
-`FAIL` with the numbers shown; the crew heals before the mission moves on.
-
-→ [Gates skill](../../content/skills/mugiwara-gates/SKILL.md)
-
----
-
-## 13. Security
-
-**What.** Jinbe audits with STRIDE threat modeling first, then the checklist
-in order: OWASP Top 10 (for payment/health/PII), secret scan, injection
-checks, authn/authz, dependency audit, SCA license review, security hotspots,
-CVSS-style severity (exploitability × impact). Read-only.
-
-**How to use.**
-
-```
-/mugiwara-security
-> Jinbe, audit the auth middleware for security gaps
-```
-
-**Scenario.** Before a release touching payment code, Jinbe maps the surfaces
-to STRIDE, finds a hardcoded secret at the trust boundary, and flags it
-Critical. Brook fixes it and the audit is re-run before closure.
-
-→ [Security skill](../../content/skills/mugiwara-security/SKILL.md)
-
----
-
-## 14. Self-healing
-
-**What.** Brook reads the entire blocker ledger at once, triages and groups
-failures, fixes **root causes** with minimal diffs, and proves each fix by
-re-running the check that failed. The loop returns to Flow 4 — max 3 cycles,
-then escalation to the human with full history.
-
-**How to use.** Automatic in Flow 8 — Luffy routes to Brook when the audit or review leaves failures.
-
-**Scenario.** Chopper's audit surfaces five failures. Brook fixes them in one
-pass with root-cause changes, re-runs each failed check, and hands back to
-Chopper for re-audit. Three failed cycles in a row halts the mission and asks
-you.
-
-→ [Healing skill](../../content/skills/mugiwara-healing/SKILL.md)
-
----
-
-## 15. Adversarial verification
-
-**What.** The optional Flow 4.5. Skeptic finds what is **wrong** — it never
-validates. It doubts claims, plans, and verdicts; classifies findings
-(actionable vs noise); and runs a bounded loop (3 cycles max). Read-only.
-
-**How to use.** Automatic on high-stakes missions (Luffy summons it), or
-on-demand for any plan/verdict.
-
-**Scenario.** A payment mission's plan is adversarially checked before
-execution. Skeptic catches an unstated assumption ("every user has a payment
-method") and the plan is amended before code is written.
-
-→ [Claim-audit skill](../../content/skills/mugiwara-claim-audit/SKILL.md)
-
----
-
-## 16. Ship gate
-
-**What.** A binary GO/NO-GO at release: pre-launch checklist, feature flags,
-staged rollout, and a mandatory rollback plan. A critical finding or a missing
-rollback plan → NO-GO.
-
-**How to use.** Automatic at closure — the final gate before the terminal step.
-
-**Scenario.** The mission passes all gates but has no rollback plan for the
-DB change. The ship gate says NO-GO; the plan is added before the branch is
-pushed.
-
-→ [Ship skill](../../content/skills/mugiwara-ship/SKILL.md)
-
----
-
-## 17. Git discipline
-
-**What.** Atomic commits, one logical task per commit, save-points before
-risky work, commit style matched to the repo's history, multi-commit
-splitting, and bisect/blame debugging support.
-
-**How to use.** Automatic (Zoro applies it during execution; Brook during
-healing). Commit style via config (`commit=conventional|gitmoji|plain`, or a
-template like `{issue}: {title}`). Manual debugging: `mugiwara-git` skill.
-
-**Scenario.** A task's commit contains exactly the files that task declared —
-never commingled with a neighbor. Before a risky migration, a save-point
-commit lets the crew roll back cleanly.
-
-→ [Git strategy](git-strategy.md) · [Git skill](../../content/skills/mugiwara-git/SKILL.md)
-
----
-
-## 18. TDD & user tests as oracle
-
-**What.** Every production-code task is test-first (RED-GREEN-REFACTOR), and
-user-declared tests are the **oracle** — immutable gold. A user test is never
-edited or skipped; a change needs your consent plus a ledger row. Executable
-tests fail first, then go green; declarative ACs become project test files.
-
-**How to use.** Declare tests in the mission prompt or reference a repo path.
-The crew maps every acceptance criterion to a check and runs it.
-
-**Scenario.** You paste a failing test for the login bug. Zoro watches it fail,
-fixes the root cause, re-runs green, and the test stays untouched end to end.
-
-→ [Testcases skill](../../content/skills/mugiwara-testcases/SKILL.md) · [TDD reference](../../content/skills/mugiwara-execution/references/tdd.md)
-
----
-
-## 19. Multi-platform install
-
-**What.** The same crew installs to 12 platforms with no feature gaps: Claude
-Code, opencode, GitHub Copilot, Gemini, Codex, Cursor, Kimi, Pi, Antigravity,
-Windsurf, Cline, Kilo — plus the CLI.
-
-**How to use.** Per platform (README install section). opencode:
-
-```json
-{ "plugin": ["@ionivetech/mugiwara"] }
-```
-
-Claude Code: `/plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara`
-
-Any platform: `npx @ionivetech/mugiwara@latest install --target all --yes`
-
-**Scenario.** The same repo opened in Claude Code at work and opencode at home
-runs the identical crew with identical behavior.
-
-→ [Install guides](../install/index.md) · [README install](../../README.md#install)
-
----
-
-## 20. CLI
-
-**What.** A small Node CLI for lifecycle management: install wizard, update,
-uninstall via manifest, list + health check, reset with protection, plus the
-mission subcommands `continue`, `status`, `run`, and `savepoint`.
-
-**How to use.**
-
-```bash
-mugiwara install --target all --yes    # non-interactive
-mugiwara update --target <id> --yes    # overwrite to latest
-mugiwara list --check                  # health check, missing files
-mugiwara uninstall                     # remove installed files
-mugiwara reset --keep-logs             # wipe state, keep lessons
-mugiwara continue                      # list in-flight missions (every mode)
-mugiwara continue <mission> [member]   # exact resume point
-mugiwara status                        # computed state: flow stage, tasks, lane, blockers, budget
-mugiwara run <script.sh> [args]        # run a bundled harness script (savepoint.sh · lane.sh)
-mugiwara savepoint <mission> [member] [flow stage] [mode]
-mugiwara savepoint --flow <N>          # mission/member/mode inferred
-mugiwara join <mission> <member> --area "<area>" [--files "a.ts,b.ts"]
-mugiwara archive <mission>             # fold a closed mission's evidence into its report
-mugiwara --version                     # version
-```
-
-**Scenario.** A broken install after a manual edit is diagnosed with
-`mugiwara list --check`; the missing files are restored with `mugiwara
-update --force`. Mid-mission, `mugiwara status` shows where the crew is and
-`mugiwara continue` resumes it.
-
-→ [CLI reference](../install/cli.md) · [src/cli.ts](../../src/cli.ts)
-
----
-
-## 21. Cost tracking
-
-**What.** Per-lane token budgets (lean 12k, standard 25k, full 50k). Status
-writes to `.mugiwara/missions/<mission>/[member].json` (or `state.json` for solo) (`tokens_est`, `budget`,
-`budget_status`): warn at 1.5×, stop at 3×. `tokens_est` is a work/churn
-estimate (LANE_BASE + doc words ×1.35 + changed LOC ×12), not measured usage.
-Surfaced in the mission report as cost delta vs. lane budget.
-
-**How to use.** Automatic. Read `.mugiwara/missions/<mission>/[member].json` or
-the mission report.
-
-**Scenario.** A standard mission's estimated load passes 15k tokens → `warn`
-logged; 30k → `stop`, state written, and the mission pauses for a human
-decision.
-
-**Live slop governor.** Runs the slop detectors live at ledger build — a heal
-cycle at its limit, repeated reads, useless abstraction. `mugiwara cost` shows
-the count attributed to the crew member that caused it (healing→Brook,
-context→all). This makes wasted spend visible per mission, not hidden in a
-benchmark.
-
-→ [Cost model](cost.md)
-
----
-
-## 22. Eval harness & self-testing gates
-
-**What.** The harness proves itself: `run-evals.ts` behavioral evals,
-`retrieval-eval.ts` retrieval ranking with a floor ratchet, and
-`gate-selftest.ts` which proves every gate can fail (anti-rot). The
-`eval-runner` agent judges with a fresh agent, never the skill's author; a
-failing case means fix the skill, never the eval.
-
-**How to use.**
-
-```bash
-bun run gate          # everything CI runs on a PR
-bun scripts/run-evals.ts
-bun scripts/gate-selftest.ts
-```
-
-**Scenario.** Before a release the full eval suite runs. A changed skill's
-case fails under a fresh judge → the skill is fixed, the eval is not touched.
-
-→ [Developer onboarding](../reference/developer-onboarding.md) · [Evals](../../evals/cases/)
-
----
-
-## 23. Enforcement mechanisms
-
-**What.** What keeps the pipeline honest when markdown alone can't force a
-model: computed mechanisms leave a trace regardless of model cooperation —
-lane sizing, savepoint state, index-budget validation, manifest sync, and
-skill format checks. Discipline rules (skip gates, evidence over claims,
-flow-stage banners, bounded heal loop) rely on the model reading and
-following them.
-
-**Machine enforcement added by the seamless-rework mission:**
-- **`enforce` config key** (`off` / `warn` / `block`, default `block`) — the
-  pipeline guard reads it; `off` disables the hooks, `warn` reports, `block`
-  fails the turn.
-- **Coverage thresholds** (`coverage_new` / `coverage_modified` in
-  `.mugiwara/config`, default 85/90) are gate-enforced on the diff by
-  `scripts/coverage-gate.ts`; `0` disables a threshold; no test suite = SKIP
-  with a reason, never a fake pass.
-- **Five hooks** (Claude Code only): `session-start`, `mugiwara-mode-tracker`,
-  `auto-savepoint`, `pipeline-guard`, `engagement-marker`. They run on
-  SessionStart / UserPromptSubmit / PostToolUse / Stop / SubagentStop.
-- **Per-target enforcement**: `claude` = enforced (hooks run); `opencode` +
-  the other 7 targets = advisory (prose + validator only). Full split:
-  [enforcement.md](../reference/enforcement.md).
-
-**How to use.** Automatic. Run locally with `bun run gate`; mechanisms run
-in CI on every PR.
-
-**Scenario.** A model skips a flow stage or passes on a claim — savepoint and lane
-still write state, so the trace exposes
-the shortcut even when the model cooperates poorly.
-
-→ [Enforcement](../reference/enforcement.md)
-
----
-
-## 24. Engineering practice skills
-
-**What.** Beyond the pipeline, the skill catalog encodes portable engineering
-practices the crew loads on demand: `mugiwara-contract-first` (contract-first
-API design, error semantics, backward compatibility) and `mugiwara-root-cause`
-(4-phase reproduce → localize → reduce → fix + guard), plus domain skills —
-`mugiwara-frontend` (anti-slop UI, design-system extraction, WCAG 2.1 AA),
-`mugiwara-backend` (repo standards first, source-backed code, data
-integrity).
-
-**How to use.** Automatic — the skill fires when the task matches its
-description. Frontend tasks in Flow 3 always apply `mugiwara-frontend`.
-
-**Scenario.** A new REST API is planned; `mugiwara-contract-first` shapes the
-contract before implementation, so backward-compatibility and error semantics
-are decided up front instead of retrofitted.
-
-→ [All skills](skills.md) · [Skill anatomy](../reference/skill-anatomy.md)
-
----
-
-## 25. Provenance ledger
-
-**What.** Every archived mission attaches a provenance block — agent, model,
-lane, tasks, evidence paths — to its branch head as a git note
-(`refs/notes/mugiwara`) and writes a PR-paste-ready `provenance.md` beside
-the report. `mugiwara blame <path>` answers "what verified this file".
-
-**How to use.** Automatic at archive; `mugiwara blame <path>` to query after
-fetching notes.
-
-**Scenario.** An AI-usage policy asks _which of this was AI-written?_ The
-answer is one command, not an archaeology dig.
-
-→ [Provenance](provenance.md)
-
----
-
-## 26. Policy as code
-
-**What.** `mugiwara.policy.yml` at the repo root: force_full lane globs,
-coverage threshold raises, human-approval paths, required evidence kinds.
-Upward only; absent means default behavior.
-
-**How to use.** Commit the file; `lane.sh`, `savepoint.sh`, and the coverage
-gate read it on their next run.
-
-**Scenario.** Security team declares migrations always run the full
-pipeline — encoded once, enforced on every mission, no prose to remember.
-
-→ [Policy as code](policy-as-code.md)
-
----
-
-## 27. Closure tools
-
-**What.** Six deterministic mechanisms at archive: the team gate (every roster
-assignee must reach Flow 9 — shared with `clean --all` via `closureBlockers`),
-the integrity gate (dangling links, secrets, missing evidence fail the
-archive), an executable rollback map, review routing (ranked reading order in
-the report), a context footprint line with optional ceiling, and optional
-minisign attestation. Plus staleness warnings on resume and `mugiwara handoff`.
-
-**How to use.** Automatic at archive/continue; `mugiwara sign <mission>
-[--verify]`, `mugiwara handoff <mission>` opt-in.
-
-**Scenario.** A reviewer opens the report and reads 40 ranked lines instead
-of skimming 2,000; when the deploy misbehaves at 2am, rollback.sh has the
-exact revert commands.
-
-→ [Closure tools](closure-tools.md)
-
----
-
-## 28. Permission boundaries & tool-surface governance
-
-**What.** Per-persona tool scopes declared in agent files (auditors
-read-only, healer no-network), with a tier enforcement matrix and harness
-deny-config snippets. Flow 0 records a tool-surface inventory — every MCP
-server visible to the session — into the decision log before any dispatch.
-
-**How to use.** Automatic declaration; tier-1 teams wire the deny snippets
-from [permissions](permissions.md).
-
-**Scenario.** Robin finds something suspicious but cannot mutate the tree to
-"check quickly" — the finding goes through Jinbe instead.
-
-→ [Permission boundaries](permissions.md)
-
----
-
-## 29. Adaptive execution & three-decision model
-
-**What.** Three independent decisions per mission: **control mode** (how much
-you approve), **execution posture** (how work runs), and **Cost Governor**
-(what is safe to spend). Luffy records an initial posture at Flow 0; Nami
-proposes the resolved posture at Flow 2; it re-evaluates only at flow-stage /
-task-batch boundaries, never mid-task. Postures: `inline-sequential` (default),
-`parallel-workers`, `context-relief`, `phase-isolated`, `team-scoped`.
-
-**How to use.** Automatic and deterministic (`src/posture.ts`) — posture is
-chosen from lane, risk, dependency topology, context pressure, and governor
-verdicts, and produces a reason + evidence refs (never an opaque score).
-Evaluated in `scripts/savepoint.sh` (writes `posture`/`posture_reason`/roster-derived team size to state) and `src/mission.ts` (report Adaptation section).
-Recorded in `decisions.md` and surfaced in the report's Adaptation section.
-A switch never changes control mode or crew roles. Old missions default to
-inline.
-
-**Scenario.** Nami declares two file-disjoint tasks → posture becomes
-`parallel-workers`; mid-mission context crosses the threshold → switches to
-`context-relief` (one worker at a time, order preserved); a governor stop →
-safe pause with state + continue emitted.
-
-→ [Adaptive execution](execution-model.md)
-
----
-
-## Where to go next
-
-- [README — all features table](../../README.md#all-features)
-- [Getting started](../getting-started.md) — install and first mission
-- [Workflow](workflow.md) — the flow pipeline in detail
-- [Agents](agents.md) — the 11 + 3 crew members
-- [Skills](skills.md) — the 21 techniques
+Open [Getting started](../getting-started.md) and hand the crew one real task.

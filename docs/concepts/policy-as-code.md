@@ -1,9 +1,8 @@
 # Policy as code
 
-Team rules spoken in chat evaporate — the next mission rediscovers that
-migrations need the full pipeline. Policy as code exists so org rules live in
-one file the pipeline reads on every run. Org rules that override crew
-judgement. One optional file at the repo root:
+Team rules spoken in chat evaporate. The next mission rediscovers that
+migrations need the full pipeline. Policy as code puts org rules in one file
+the pipeline reads on every run. One optional file at the repo root:
 
 ```yaml
 # mugiwara.policy.yml
@@ -34,7 +33,7 @@ flag, no daemon.
 
 Policy pushes **up**, never down. A forced lane can raise `standard → full`;
 it can never shrink a sensitive-path escalation. Coverage thresholds take the
-max of `.mugiwara/config` and policy. An unknown root key fails loudly — a
+max of `.mugiwara/config` and policy. An unknown root key fails loudly. A
 typo'd policy must not silently disable the rule it carried.
 
 ## What reads it
@@ -46,8 +45,8 @@ typo'd policy must not silently disable the rule it carried.
 | gates flow stage (crew) | `gates.require_human_approval` | listed in gate output; human sign-off required before ship |
 | planning + execution | `evidence.required` | minimum evidence kinds the plan must produce |
 | `src/sign.ts` `verifyReport` | `attestation.trusted_keys` / `revoked` | `mugiwara sign --verify` checks signature **and** that signer `ed25519:BASE64` is in `trusted_keys` and not in `revoked` (by `id` or `pubkey`) |
-| `src/mission.ts` `archiveMission` | `attestation.required` | when `true`, archive fails `closure integrity gate failed — attestation required but report not signed/trusted` if `report.md` is unsigned or signer is untrusted/revoked |
-| `src/cli.ts` `enforceHarnessPolicy` / `src/policy.ts` `isEnforcedHarness` | `harness.require_enforcement` | when `true`, CLI refuses to run on rules-based harnesses (only `opencode` passes); error `harness enforcement required but current harness is rules-based only — use opencode or set harness.require_enforcement:false` |
+| `src/mission.ts` `archiveMission` | `attestation.required` | when `true`, archive fails `closure integrity gate failed: attestation required but report not signed/trusted` if `report.md` is unsigned or signer is untrusted/revoked |
+| `src/cli.ts` `enforceHarnessPolicy` / `src/policy.ts` `isEnforcedHarness` | `harness.require_enforcement` | when `true`, CLI refuses to run on rules-based harnesses (only `opencode` passes); error `harness enforcement required but current harness is rules-based only. Use opencode or set harness.require_enforcement:false` |
 
 Glob semantics: `**` crosses directories (`src/auth/**` matches
 `src/auth/deep/x.ts`), `*` stays within one segment.
@@ -86,11 +85,11 @@ revoked:
 
 ## Harness enforcement (enterprise)
 
-`harness.require_enforcement: true` requires the runtime-enforced path — only
+`harness.require_enforcement: true` requires the runtime-enforced path. Only
 **opencode** passes. All other harnesses (Claude Code, Copilot, Gemini, Codex,
 Windsurf, Cline, Kilo, Antigravity, Cursor, Kimi, Pi) are rules-based and are
-refused with `harness enforcement required but current harness is rules-based
-only — use opencode or set harness.require_enforcement:false`. Detection mirrors
+refused with `harness enforcement required but current harness is rules-based.
+Use opencode or set harness.require_enforcement:false`. Detection mirrors
 `scripts/savepoint.sh` (`OPENCODE` / `OPENCODE_TOKENS_FILE` env or
 `.opencode/config.json` ⇒ opencode; `CLAUDECODE` / `CLAUDE_CODE_ENTRYPOINT` /
 `ANTHROPIC_MODEL` containing `claude` ⇒ claude; otherwise `unknown` / `cursor`).

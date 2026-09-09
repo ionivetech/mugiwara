@@ -1,6 +1,6 @@
 # Skill Anatomy
 
-Every mugiwara skill is a single `SKILL.md` file. No code, no runtime — just
+Every mugiwara skill ships as one `SKILL.md` file. No code, no runtime, only
 frontmatter plus a playbook the agent follows.
 
 ## The three layers
@@ -18,7 +18,7 @@ only shrinks.
 you open after deciding to do the work. *If the agent must open a file to know
 whether a rule applies, that rule effectively does not exist.*
 
-**Measured at v0.6.4:** index 1.2k tokens across 21 skills and 14 agents — 3.1%
+**Measured at v0.6.4:** index 1.2k tokens across 21 skills and 14 agents, 3.1%
 of total content. Body averages 764 words per skill; references hold 12,627
 words across 40 files. 96.9% of the pack costs nothing until it is needed.
 
@@ -26,12 +26,12 @@ words across 40 files. 96.9% of the pack costs nothing until it is needed.
 
 1. Three layers, one-way movement.
 2. Description carries trigger vocabulary, never procedure.
-3. Index budget gate in CI — without a hard number it grows back.
-4. Section-length gate (warn 15, fail 20) — forces offload, not compression.
-5. `Skip when` in every skill — negative space lets descriptions stay short.
-6. Tables for adversarial handling — denser than prose.
+3. Index budget gate in CI, without a hard number it grows back.
+4. Section-length gate (warn 15, fail 20), forces offload, not compression.
+5. `Skip when` in every skill, negative space lets descriptions stay short.
+6. Tables for adversarial handling, denser than prose.
 7. One-line Iron Law instead of paragraphs of rules.
-8. **Retrieval eval as the feedback loop** — you can cut aggressively only
+8. **Retrieval eval as the feedback loop**, you can cut aggressively only
    because rank-1 tells you when you cut too far.
 
 Mechanism 8 is what makes the rest safe. Without it, trimming is guessing —
@@ -40,7 +40,7 @@ which is exactly how the v0.5.0 trim dropped rank-1 to 33% with nobody noticing.
 **Pointers must be actionable:**
 
     ❌ Full checklist: references/checklist.md
-    ✅ Before calling a view done, run references/checklist.md — 37 WCAG 2.1 AA
+    ✅ Before calling a view done, run references/checklist.md, 37 WCAG 2.1 AA
        items; unchecked boxes are not done.
 
 ## File structure
@@ -70,14 +70,14 @@ description: Use after an execution flow stage to audit results against the plan
 
 ## Playbook body
 
-1. **Title + one-line identity** — role name and what it does/doesn't do.
-2. **Skip when** — required. ≤4 bullets, numeric threshold. Validator fails
+1. **Title + one-line identity**, role name and what it does/doesn't do.
+2. **Skip when**, required. ≤4 bullets, numeric threshold. Validator fails
    build without it.
-3. **Protocol** — numbered steps, exact commands, exact file paths.
-4. **Decision tables** — signal → action.
-5. **Iron law** — one memorable non-negotiable line.
-6. **Common rationalizations** — excuses + correct reply.
-7. **Red flags** — stop conditions + what to do.
+3. **Protocol**, numbered steps, exact commands, exact file paths.
+4. **Decision tables**, signal → action.
+5. **Iron law**, one memorable non-negotiable line.
+6. **Common rationalizations**, excuses + correct reply.
+7. **Red flags**, stop conditions + what to do.
 
 ## Style rules
 

@@ -1,44 +1,28 @@
 # Codex Install
 
-Mugiwara installs as a native Codex plugin.
+You run Codex and want the crew as rules it reads per task, not a plugin to babysit. Install copies full skill bodies plus agent markdown into your project, and Codex picks them up from there.
 
-## Prerequisites
-
-- [Codex](https://github.com/openai/codex) CLI or app installed
+Example: one CLI command writes 91 files under `.codex/mugiwara/`. Ask what crew members are available and the roster answers back with the same crew every other harness serves.
 
 ## Install
 
-```bash
-codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
-```
-
-## How it works
-
-Codex reads `.codex-plugin/plugin.json` which references `content/skills/`.
-All 21 skills are auto-discovered. Agents come from `content/agents/` via the
-`agents/` symlink.
-
-## Verify
-
-Ask:
-
-```
-what mugiwara crew members are available?
-```
-
-## Update
+1. Run `npx @ionivetech/mugiwara@latest install --target codex --yes` in your project. Drop `--yes` for the interactive wizard covering scope, targets, and confirmation.
+2. Confirm `.codex/mugiwara/` holds the skill and agent files, plus `.mugiwara/config` and the install manifest.
 
 ```bash
-codex plugin update mugiwara
+npx @ionivetech/mugiwara@latest install --target codex --yes
 ```
 
-## Uninstall
-
-```bash
-codex plugin remove mugiwara
+```text
+-> Codex (project)
+   written 91, skipped 0, backed up 0
+OK mugiwara 0.9.2 installed [...]
 ```
 
-## Configuration
+*Anchor lines from a real run; manifest path and notes trimmed.*
 
-After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
+## Verify, update, remove
+
+Ask what crew members are available; a correct install answers with the roster. `mugiwara list --check` reports missing files as a health pass. Update with the update command naming project, target, and confirmation; uninstall removes exactly what the manifest recorded. Codex is tier 2, so skills load as rules files the model selects per task, with references under `.mugiwara/refs/`. A host-native `codex plugin add` path is untested on this host; the CLI path above is the verified one.
+
+Set mode and branch in `.mugiwara/config` per the [config page](../concepts/config.md), then open [Getting started](../getting-started.md) and hand the crew one real task.

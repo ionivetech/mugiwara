@@ -1,67 +1,17 @@
-# Git Strategy
+# How are branches handled?
 
-Commits, branches, save-points — and why the executor commits, not the closer.
+A closer re-slicing history at mission end produces one giant diff with no save-points and a painful bisect. Mugiwara avoids that by having the executor commit during the work, per logical task, while the closer only pushes and reports.
 
-## Who commits and when
+Example: Zoro finishes the renderer task and its acceptance checks pass, so Zoro commits that task now with its name. Three tasks later a regression appears, and `git bisect` points at the exact task commit that introduced it.
 
-**Zoro commits during execution, per logical task.** The executor is the one
-making the changes, so it commits at the moment each unit of work passes its
-acceptance criteria. This gives:
+## Commit granularity
 
-- **Save-points** — rollback is one `git reset --hard <save-point>` away.
-- **Reversibility** — every commit is one logical change you can name.
-- **Bisectability** — a regression points at the exact commit that introduced it.
+One commit covers one logical change: a feature, fix, or refactor. Adjacent trivial edits fold into the neighboring task commit. Group over-sliced plan tasks into one commit and note the grouping in the execution report.
 
-Luffy does NOT re-commit at closure. The closer pushes the mission branch and
-writes the PR verdict — re-slicing history at the end means one giant diff, no
-save-points, and a painful bisect.
+## The rules
 
-## Commit granularity: logical tasks, not micro-steps
+Atomic commits that compile and pass relevant checks; exact staging of named paths, never sweeping adds; save-point commits before risky refactors, migrations, or merges; repo style matched from recent log lines before the first commit; no secrets, with an already-committed secret treated as compromised (rotate, purge, file a finding).
 
-A commit = one **logical change** (a feature, a fix, a refactor). The plan's
-tasks are sized at that granularity — see `mugiwara-planning`.
+## Branches and the terminal step
 
-- Adjacent trivial changes (typo, formatting, one-line tweak) fold into the
-  neighboring logical task's commit.
-- Never one commit per keystroke; never a flow stage of micro-commits.
-- If the plan slices finer than a logical change, group adjacent tasks into one
-  commit and note the grouping in the execution report.
-
-## The rules (from `mugiwara-git`)
-
-1. **Atomic commits.** One logical change per commit; each commit compiles and
-   passes the relevant checks — never commit a broken tree.
-2. **Exact staging.** `git add` specific files and paths, never `git add -A`
-   sweeping an unrelated commit.
-3. **Save-points before risky work.** Commit the working state with a naming
-   intent message (`checkpoint: before renderer migration`) before refactors,
-   migrations, or merges.
-4. **Match repo style.** Inspect `git log --oneline -20` before the first
-   commit and copy the observed conventions (prefix style, case, body usage).
-5. **Never commit secrets.** Scan for `.env*`, keys, tokens before every
-   commit. A secret already committed = treat as compromised, rotate, purge,
-   file a security finding.
-
-## Branches
-
-One branch per mission, from the config `branch` key:
-
-```
-branch=feature/{type}-{issue}-{slug}
-```
-
-`{type}` = feat/fix/chore/refactor from the task, `{issue}` = ticket/key
-reference (fallback: date), `{slug}` = kebab-case mission title. Created before
-the first task commit; never force-push once pushed. No mugiwara-prefixed
-branch names. Any pattern with these placeholders works — e.g.
-`branch={issue}-{slug}` yields `CR-5432-testing-button`. Commit messages
-follow the `commit` key: a style name (conventional/gitmoji/plain) or a
-template with `{type}` `{issue}` `{title}` (e.g. `commit={issue}: {title}` →
-`CR-5432: Testing button`). Full guide: [config.md](config.md).
-
-## Terminal step
-
-Every mode ends the same way: save-point commit → `git push -u origin <branch>`
-→ PR verdict file written (`.mugiwara/missions/<mission>/flows/07-pr-verdict.md`, a
-ready-to-paste PR summary) → branch + verdict handed to you,
-who opens the PR. The crew never creates a PR, merges, or deploys.
+One branch per mission from the `branch` config key, created before the first task commit and never force-pushed once pushed. Every mode ends identically: save-point commit, push, a ready-to-paste PR verdict file under the mission flows dir, then handoff. The crew never opens the PR, merges, or deploys; the human performs the terminal step.

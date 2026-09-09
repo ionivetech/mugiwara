@@ -1,45 +1,26 @@
 # Cursor Install
 
-Mugiwara installs through Cursor's plugin marketplace.
+You run Cursor and want the crew behind a slash command, not a file copy. The CLI refuses `--target cursor` on purpose and tells you so; install happens on the host side, while state commands still run through npx.
 
-## Prerequisites
-
-- [Cursor](https://cursor.com) installed
+Example: add the plugin on the host (`/add-plugin mugiwara`, untested on this host, verify the exact syntax on Cursor's plugin page before running), then ask what crew members are available. The roster answers back.
 
 ## Install
 
-```
-/add-plugin mugiwara
-```
+1. In Cursor, add the mugiwara plugin through the host marketplace flow.
+2. Confirm the refusal below if you try the CLI path, which proves marketplace-only routing is intact.
 
-## How it works
-
-Cursor reads `.cursor-plugin/plugin.json` and auto-discovers skills from
-`content/skills/`.
-
-## Verify
-
-Ask:
-
-```
-what mugiwara crew members are available?
+```bash
+mugiwara install --target cursor --yes
 ```
 
-## Update
-
-Re-run:
-
-```
-/add-plugin mugiwara
+```text
+mugiwara: cursor installs through its marketplace manifest, not --target.
 ```
 
-## Uninstall
+*Verbatim output from a real CLI run.*
 
-```
-/remove-plugin mugiwara
-```
+## Verify, update, remove
 
-## Configuration
+Ask what crew members are available; a correct install answers with the roster. Cursor resolves through the host plugin manifest with content pointers, per the [harness matrix](../reference/harness-matrix.md). Run state commands (`status`, `continue`, `cost`) via `npx @ionivetech/mugiwara@latest` with no install step needed. Without the CLI the crew still runs the pipeline but resume, budget tracking, and the closure gate stay off. Removal happens on the host side through Cursor's own uninstall flow.
 
-After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
+Set mode and branch in `.mugiwara/config` per the [config page](../concepts/config.md), then open [Getting started](../getting-started.md) and hand the crew one real task.

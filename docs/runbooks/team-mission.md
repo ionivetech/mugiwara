@@ -1,5 +1,7 @@
 # Runbook: Crew mission, lead plus handles
 
+Three people editing one plan collide without named slices. The lead cuts the work into owned areas, then each handle runs its own lane and branch.
+
 **When to use this:** work splits across named handles with separate lanes and branches.
 **Time:** Flow 0 setup ~15 min; per-handle overhead minutes per stage.
 **You need:** git repo, crew installed, lead plus handle names (slugs, lowercase).
@@ -10,18 +12,29 @@
    ```bash
    git switch -c feat/crew1
    ```
+   ```
+   Switched to a new branch 'feat/crew1'
+   ```
    Example split: `jane-doe` owns api, `john-smith` owns web, `eleanor-vance` owns docs.
 3. Lead: write one sub-mission row per handle in `plan.md`, then check overlap.
    ```bash
-   mugiwara initiative conflict-check plan.md
+   mugiwara initiative conflict-check .mugiwara/missions/crew1/plan.md
+   ```
+   ```
+   no conflicts: no file is touched by two sub-missions
    ```
 4. Lead: `git add` the plan, `git commit`, `git push -u origin feat/crew1`.
-5. Handle: sync, resume, pick a number when asked.
+5. Handle: sync, resume, pick a number when asked. Next day, pass your handle
+   explicitly (`mugiwara continue crew1 jane-doe`) to skip the picker.
    ```bash
    git pull
+   ```
+   ```
+   Already up to date.
+   ```
+   ```bash
    mugiwara continue crew1
    ```
-   Expected output:
    ```
    Mission: crew1
 
@@ -31,32 +44,25 @@
 
    Which one are you? [1-2]
    ```
-6. Handle: work the stage, then record it (short form infers mission and handle).
+6. Handle: work the stage, then record it. With one mission on disk the short
+   form infers mission and handle from `.mugiwara/active-member`.
    ```bash
    mugiwara savepoint --flow 3
    ```
-   Expected output:
    ```
-   ✓ savepoint written: .mugiwara/missions/demo/sophia-martinez.json (lane=direct, flow=2, files=0)
+   ✓ savepoint written: .mugiwara/missions/crew1/jane-doe.json (lane=direct, flow=3, files=0)
    ```
-7. Handle, next day: `mugiwara continue crew1 jane-doe` prints the exact resume point.
-   ```
-   Resumed: m [jane-doe], Flow 1, 0/0 tasks — next_action: verify this wave against the plan, then continue per plan (next wave or closure) — run: (no next_session_prompt recorded)
-   ```
-8. Closing: every assignee reaches Flow 9, then lead verifies, folds, attests.
+7. Closing: every assignee reaches Flow 9, then the lead folds and attests
+   (`mugiwara status` to check, then `mugiwara archive crew1`, then
+   `mugiwara sign crew1`). Until then closure refuses:
    ```bash
-   mugiwara status
    mugiwara archive crew1
-   mugiwara sign crew1
    ```
-   Closure refuses early folds:
    ```
-    mugiwara: closure blocked — mission "crew1" is not finished:
+   mugiwara: closure blocked — mission "crew1" is not finished:
      jane-doe     Flow 2, still in flight
      john-smith   Flow 2, still in flight
-
-     Every assignee must reach Flow 9. Run `mugiwara status` to check.
-     Use --force to archive anyway — in-flight resume points will be lost.
+   … [trimmed]
    ```
 
 ## If something goes wrong

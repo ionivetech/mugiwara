@@ -1,53 +1,44 @@
-# The Crew — 11 Agents (+3 Internal)
+# Who does what?
 
-Every agent is a focused specialist. The main thread embodies each role inline
-using its skill; you can also summon any member directly.
+Eleven specialists plus three internal helpers look like an answer. They form a roster: 11 agents (+3 internal). The question at mission start is which member to call for the work in front of you. Each agent below names its role and the moment to summon it.
 
-| Agent | Crew member | Role | Summon for |
-|-------|-------------|------|------------|
-| `luffy-orchestrator` | Luffy | Captain — 5-way triage, check-ins, decisions, closure | mission start, flow-stage boundaries, escalations |
-| `usopp-brainstorm` | Usopp | Critical friend — interrogates, researches, no rubber-stamps | vague ideas, direction, options |
-| `nami-planner` | Nami | Planner — interview-first, full-context scan, scaled plans | turning an idea into an execution plan |
-| `zoro-execution` | Zoro | Executor — inline sequential tasks, parallel worker batches, evidence per task | executing an approved plan |
-| `chopper-checkpoint` | Chopper | Auditor — verify-everything, deduped re-runs, failure ledger | auditing a flow stage.s results |
-| `sanji-quality` | Sanji | Quality — discover real tooling, format/lint/test/duplication/complexity/attributes | after checkpoint passes |
-| `franky-gates` | Franky | Gates — coverage, build, DoD, granular quality gate with per-condition thresholds | after quality checks |
-| `robin-reviewer` | Robin | Reviewer — doubt-driven diff review, breaking-change map, reliability rating, code attribute deep review | after gates pass |
-| `jinbe-security` | Jinbe | Security — STRIDE, OWASP, secrets, injection, hotspots, SCA license | security audit of a diff |
-| `brook-healing` | Brook | Healer — reads the ledger, root-cause fixes, ≤3 cycles | any flow stage produced failures |
-| `resume-coordinator` | Resume | Resumer — rebuilds state from `.mugiwara/`, continues never restarts | context loss, new session mid-mission |
+Example: the last flow stage finished and you want it checked. Say "Chopper, audit the last flow stage against the plan". Luffy records the route, Chopper audits, findings land in the ledger. Direct calls never skip check-ins.
 
-**Internal agents** (dispatch-only, not user-facing):
+## The crew
 
-| Agent | Role | Used by |
-|-------|------|---------|
-| `skeptic-verifier` | Adversarial verifier — doubts every claim | Flow 4.5, high-stakes missions |
-| `eval-runner` | Harness tester — task suites, judge rubric | `bun scripts/run-evals.ts` |
-| `memory-keeper` | Lessons ledger — surface + capture | Flow 0 (read), Flow 9 (write) |
+Captain: Luffy triages, runs check-ins, records decisions, closes missions. Luffy never implements code.
 
-## How to summon
+Planning: Usopp interrogates vague ideas and researches before recommending. Nami turns the surviving idea into an execution plan.
 
-Say a crew member's name in your request:
+Execution: Zoro runs approved plans with evidence per task and commits per logical change.
 
-```
-> Chopper, audit the last flow stage against the plan
-> Nami, plan this out
-```
+Audit: Chopper verifies flow-stage results and reports failures without fixing them. Skeptic re-verifies adversarially on high-stakes missions.
 
-Luffy still records the route and its reason, and direct calls do not skip
-check-ins. The harness stays coherent either way.
+Quality and gates: Sanji finds the repo's real tooling and runs format, lint, tests, duplication, complexity. Franky applies coverage, build, and Definition of Done verdicts.
 
-## Who never does what
+Review and security: Robin maps breaking changes and rates the diff. Jinbe runs STRIDE, OWASP Top 10, secrets, and license checks. Neither implements; findings go to Brook.
 
-- **Luffy** never implements code.
-- **Chopper** never fixes findings — reports them.
-- **Robin/Jinbe** never implement — findings to Brook.
-- Crew members never dispatch each other. Workers are subagents, never crew.
+Recovery and memory: Brook fixes ledger failures in at most three cycles. Resume rebuilds state after context loss and continues without restarting. Memory Keeper reads lessons at triage and writes them at closure. Eval Runner scores skill behavior in the harness.
 
-## The crew ships whole
+## Shape of the install
 
-Every install gets all 11 agents (+3 internal) and all 21 skills. No project-type selection —
-the harness routes each task to the right specialist.
+Every install ships the whole crew: 11 agents plus 3 internal, alongside 21 skills. No selection step, the router picks the specialist per task. Agent file layout lives in [agent anatomy](../reference/agent-anatomy.md); technique catalog in [skills](skills.md).
 
-See [skills.md](skills.md) for the 21 techniques, or
-[workflow.md](workflow.md) for the pipeline.
+## Roster
+
+Eleven user-facing, three internal (file slug in `content/agents/` beside each summon moment):
+
+- Captain `luffy-orchestrator`, triage to closure
+- Sparring partner `usopp-brainstorm`, vague ideas
+- Planner `nami-planner`, spec to task plan
+- Executor `zoro-execution`, approved plans only
+- Auditor `chopper-checkpoint`, flow-stage verdicts
+- Adversarial check `skeptic-verifier`, high-stakes second look
+- Quality `sanji-quality`, format, lint, tests
+- Gates `franky-gates`, coverage, build, Definition of Done
+- Reviewer `robin-reviewer`, breaking-change map
+- Security `jinbe-security`, STRIDE and secrets
+- Healer `brook-healing`, bounded fix cycles
+- Resumer `resume-coordinator`, dead sessions continue
+- Memory `memory-keeper`, lessons across missions
+- Eval runner `eval-runner`, behavior scores
