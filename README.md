@@ -14,7 +14,8 @@ The typo is free. The auth migration gets nine stages.
 An AI agent can write 400 lines in five minutes and say tests pass.
 Nothing remains to open, read, or attach to a PR.
 Review becomes a formality, and a formality launders the change through a human name.
-The risk is not slowness. The risk is a change nobody can reconstruct three weeks later when it breaks at midnight.
+The risk is not slowness.
+The risk is a change nobody can reconstruct three weeks later when it breaks at midnight.
 
 ## What you get back
 
@@ -32,13 +33,15 @@ Left unverified: mobile deep-link fallback on old clients.
 
 *Sample built from test/fixtures/report-sample.md.*
 
-That file is the product. The branch holds the code, the report holds the reason every gate believed it.
+That file is the product.
+The branch holds the code, the report holds the reason every gate believed it.
 A reviewer opens one page, sees the verdict, the evidence, and the single loose end with its name on it.
 
 ## The process fits the work
 
 The lane is computed from git diff, never guessed, and it only ever rises.
-A one-line fix never pays for a nine-stage pipeline. A payments migration never ships on a handshake.
+A one-line fix never pays for a nine-stage pipeline.
+A payments migration never ships on a handshake.
 
 | Your change | Lane | What runs |
 |---|---|---|
@@ -95,16 +98,53 @@ Then ask for something real:
 > fix the typo in the header comment
 ```
 
-You choose none of the routing. The first request lands in triage, the lane is computed from the diff, and the crew announces the plan before it touches code.
+You choose none of the routing.
+The first request lands in triage, the lane is computed from the diff, and the crew announces the plan before it touches code.
 Sixty seconds in, your skepticism has something concrete to bite: a manifest on disk, a version string, a plan with named owners.
 
 ## What Mugiwara does
 
-- Lane sizing: the process scales to the diff, computed from git diff, and `mugiwara status` prints the lane with blockers and token budget on demand.
-- Evidence gates: a stage passes only when its check ran, and `mugiwara continue <mission>` prints the exact resume point instead of restarting.
-- Team split: one shared plan, per-person state files, conflicts flagged before merge, solo state migrates with `mugiwara migrate --to-team`.
-- Cost ledger: every mission reports tokens against budget, and `mugiwara cost --ledger` shows spend, avoided work, and the trail in human plus JSON form.
-- Twelve platforms: the same 21 skills and 14 agents on Claude Code, opencode, Copilot, Gemini, and more, with 318 of 318 reference pointers resolving across 9 targets in CI.
+A crew of named roles, not one voice doing everything.
+Eleven specialists plus three internal helpers: Luffy triages and closes, Usopp interrogates vague asks, Nami plans, Zoro builds, Chopper audits, Sanji and Franky gate, Robin and Jinbe review, Brook heals, Skeptic re-verifies high-stakes work, Memory Keeper carries lessons, Resume rebuilds dead sessions, Eval Runner scores behavior.
+Proof: [agents](docs/concepts/agents.md) names the exact moment to call each one, and Luffy never implements code.
+
+Evidence gates, never vibes.
+A stage passes only when its check ran and the ledger says so.
+Chopper files findings without fixing them.
+Franky returns binary PASS or FAIL.
+Proof: the closing report carries checkpoint PASS, quality PASS, coverage with new-code and modified-code percentages, security with a high-finding count.
+
+Lane sizing from the diff, shown above.
+The table is the feature: computed routing with no appeal process.
+Proof: `mugiwara status` prints the lane with its reason, such as `lane full (floor; computed lean)`, beside blockers and token budget.
+
+Modes for how closely you watch.
+Guided asks before each flow stage, semi runs from an approved plan, auto runs triage to closure and pauses only on a genuine blocker.
+Proof: the report header records the mode, and a mid-mission flip applies from the next stage, never mid-stage. Detail: [modes](docs/concepts/modes.md).
+
+Team split without merge pain.
+One shared plan, per-person state files, conflicts flagged before merge, solo state migrating with `mugiwara migrate --to-team`.
+Proof: `mugiwara status --all` reports every actor's wave, tasks, and blockers on one screen.
+
+Resume from the exact stage.
+Resume rebuilds from `.mugiwara/missions/<mission>/` on disk and continues at the recorded point, with savepoints marking known-good spots.
+Proof: `mugiwara continue <mission>` prints the resume point instead of restarting, and exits nonzero when you must pick from listed options.
+
+Provenance and signed reports.
+`mugiwara blame <path>` notes the last commit touching a path, `mugiwara handoff` writes the report the next engineer acts on, `mugiwara sign` attests it with ed25519.
+Proof: `mugiwara sign <mission> --verify` checks the attestation. Detail: [provenance](docs/concepts/provenance.md).
+
+An outcome loop, stated honestly.
+Eval Runner scores skill behavior in the harness, and the Memory Keeper carries repo-local lessons from triage to closure.
+What is missing is said aloud: outcome comparison against other approaches is not measured yet, and the table below keeps that row empty until a study exists.
+
+One crew on every harness.
+The same 21 skills and 14 agents ship to all ten install targets; only the loading path changes per tier.
+Proof: 318 of 318 reference pointers resolve across 9 targets, and 216 retrieval probes rank 1 at 95.9 percent, both enforced in CI. Detail: [harness matrix](docs/reference/harness-matrix.md).
+
+A cost governor with teeth.
+Every mission carries a budget by lane, warns then stops at the limit, and reports spend beside avoided work in human and JSON form.
+Proof: the sample report above shows `8,781 of 12,000 tokens (73 percent)` beside the verdict, and `mugiwara cost --ledger` shows the trail. Detail: [cost](docs/concepts/cost.md).
 
 Full index: [Every feature](docs/concepts/features.md).
 
