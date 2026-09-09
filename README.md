@@ -55,7 +55,7 @@ The routing decision is computed state, visible in `mugiwara status`, not a vibe
 
 ## Install
 
-One crew, ten pages, twelve platforms — 9 via install, 3 via marketplace manifest. Pick your harness, follow its page, end at the same roster question as proof.
+One crew, ten pages, 12 platforms — 9 via install, 3 via marketplace manifest. Pick your harness, follow its page, end at the same roster question as proof.
 
 | Harness | How the crew loads | Install page |
 |---|---|---|
