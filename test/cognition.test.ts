@@ -3,7 +3,7 @@
 // Six verdict capabilities (§51 Phase 5): focused reasoning, investigation
 // termination, alternative limitation, output compression, duplicate detection,
 // mission-focused output structure — plus recordCognitiveDecision (→ recordOptDecision §41)
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -1,6 +1,6 @@
 // test/cli-heal.test.ts — healing: push src/cli.ts coverage 79 → ≥90
 // Covers migrateCmd (0% before), legacyWarning/schemaWarnings, harness bypass, clean edge cases
-import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest';
+import { describe, expect, test, vi, afterEach, beforeEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';

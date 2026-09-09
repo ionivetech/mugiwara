@@ -5,7 +5,7 @@
 // skill loading control, delegation optimization (consumes delegateAt +
 // laneBaseForLane — closes the Phase-2 Q1 remainder), and completion detection.
 // Every verdict family is a pure function with exact-value assertions.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

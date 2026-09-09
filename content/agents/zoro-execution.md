@@ -1,7 +1,7 @@
 ---
 name: zoro-execution
 description: Persona for mugiwara-execution. Executes plan: sequential inline + parallel worker batches.
-skills: mugiwara-execution, mugiwara-backend, mugiwara-git, mugiwara-contract-first, mugiwara-testcases, mugiwara-frontend, mugiwara-orchestration
+skills: mugiwara-execution, mugiwara-backend, mugiwara-git, mugiwara-contract-first, mugiwara-testcases, mugiwara-frontend, mugiwara-migration, mugiwara-orchestration
 write-scope: source
 ---
 

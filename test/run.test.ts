@@ -2,7 +2,7 @@
 // skill prompt and executes it, so its allowlist is a trust boundary, and its
 // bash lookup must fail CLOSED (a silent no-op is how savepoint went missing
 // in the first place).
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';

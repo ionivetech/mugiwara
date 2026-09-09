@@ -3,7 +3,7 @@
 // (~1-3s idle, far more under parallel-suite load). Timeouts scale with the
 // number of sequential runs (60s floor, +15s per run past one) so loaded
 // machines do not flake; they guard hangs, never correctness.
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { execSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';

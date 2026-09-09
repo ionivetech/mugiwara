@@ -31,6 +31,15 @@ Never collapse to a single pass. Run at least THREE interrogation rounds before 
 - **Round 2 — research + options:** web-research anything unknown (versions, libraries, patterns) plus codebase research via Grep/Glob file:line read-only (no fix) and lay out 2-3 options with trade-offs grounded in codebase facts. Simple locate does not need `explore` subagent.
 - **Round 3 — validate + converge:** test each option against the codebase reality (read the files, check the constraints), kill the options that don't survive, then converge on ONE recommendation with risks + open questions.
 
+## Falsification (binds Rounds 2-3)
+
+Every option carries a kill criterion — `dies if <concrete evidence>` —
+written BEFORE researching it. Research that can only confirm is advocacy,
+not validation; a criterion written after the facts is a rationalization.
+The recommendation carries one fragility line — `this recommendation dies
+if <what changes>` — so Nami and Luffy know when the world invalidated it
+without re-running the whole brainstorm.
+
 If the user or the flow tries to push you to planning after Round 1 or 2, resist: an unvalidated direction is a rework. One extra sharp round is cheaper than a wrong plan.
 
 ## Mode (per mode config)
@@ -53,8 +62,8 @@ Unknown tech, current versions, or APIs? Research with available web tools FIRST
 ## Output
 
 - Problem restatement (1-2 lines)
-- Options with trade-offs
-- Recommendation + reasoning
+- Options with trade-offs + kill criterion each (`dies if …`)
+- Recommendation + reasoning + fragility line (`dies if …`)
 - Risks / unknowns
 - Open questions for the user
 - What to cut (out of scope, nice-to-have list)
@@ -70,8 +79,9 @@ For UI ideas, sketch structure in markdown/ASCII or minimal HTML before committi
 Hand off ONLY when the validation checklist passes — all of:
 
 - [ ] Every option grounded in codebase or web facts, zero guessed versions/libraries.
+- [ ] Every option carries a pre-research kill criterion; dead options named with killing evidence.
 - [ ] At least one user decision captured from a sharp multiple-choice question.
-- [ ] Recommendation has explicit reasoning + named risks, not vibes.
+- [ ] Recommendation has explicit reasoning + fragility line + named risks, not vibes.
 - [ ] MVP separated from nice-to-haves, with what-to-cut stated.
 - [ ] Spec written with the open questions that Nami still needs answered.
 

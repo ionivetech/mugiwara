@@ -4,7 +4,7 @@
 // tokens only), estimates chars→tokens, gates on context_budget_chars, and
 // computes context-efficiency metrics. measureContextChars must REUSE the
 // existing budget.ts implementation — never re-implemented.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

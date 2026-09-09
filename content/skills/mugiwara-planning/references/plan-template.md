@@ -18,9 +18,9 @@ Scaled plan skeleton. Nami picks Quick/Standard/Full based on mission size.
 
 ## Task index
 
-| # | Task | Files | Size | Depends-on | Acceptance |
-|---|------|-------|------|------------|------------|
-| T1 | <title> | <paths> | S | — | <one-line check> |
+| # | Task | Files | Size | Depends-on | Unblocks | Acceptance |
+|---|------|-------|------|------------|----------|------------|
+| T1 | <title> | <paths> | S | — | T2 | <one-line check> |
 
 ## Detail: T1 — <title>
 - Files: <exact paths>
@@ -32,6 +32,41 @@ Scaled plan skeleton. Nami picks Quick/Standard/Full based on mission size.
 ## Standard (1 wave, 2-8 tasks)
 
 Add: Architecture overview, Context scan, Implementation graph, Acceptance per task.
+
+## Implementation graph — layered DAG (Standard+)
+
+List edges nowhere alone — draw execution layers top-down. Each layer runs
+only after the layer above is proven done; tasks inside one layer run
+together only with a stated disjoint proof. Every node carries its files,
+every arrow its wait reason, and the critical path is named.
+
+```markdown
+## Implementation graph
+L0 (start first, no dependencies)
+  T1 branch ──┐
+  T2 baseline ─┤ (runs only, no files)
+              ▼ needs branch (T1) + numbers (T2)
+L1
+  T3 swap runner (package.json, vitest.config.ts)
+              ▼ needs the new test scripts from T3
+L2 (parallel-proof: pairwise file-disjoint, no shared interface)
+  T4 test seams (test/) ─┬─
+  T5 lcov gate (scripts/coverage-gate.ts) ─┤
+  T6 selftest (scripts/gate-selftest.ts) ──┤
+  T7 docs (AGENTS.md, skills/) ────────────┤
+  T8 CI pin (.github/) ────────────────────┘
+              ▼ needs T4+T5+T6 green
+L3 (close)
+  T9 verify + DoD (runs only)
+Critical path: T1 → T3 → T4 → T9
+```
+
+Rules: task numbers are topological (T1..Tn IS the run order); a `[PARALLEL]`
+set shares one layer and states its disjoint proof on the layer line; tasks
+carrying `Break:` split mid-execution when files exceed 8 or concerns
+diverge — re-index the tail (T5 → T5a/T5b, layers below shift, never
+renumber what already ran). The task index mirrors the graph: `Depends-on`
+looks back, `Unblocks` looks forward — both name files, never bare ids.
 
 ## Full (multi-wave, parallel, risk)
 
@@ -100,6 +135,50 @@ files being touched, and one existing example of the pattern — a plan built
 on thousands of lines of unrelated context drifts as surely as one built on
 nothing. A convention the plan doesn't state does not exist for the executor:
 write it down.
+
+## Effort & wave load (Standard+)
+
+Size is a label; Effort calibrates it. Score XS=1, S=2, M=4, L=8; a wave
+above 12 rebalances (split the wave or shrink a task) — a wave holding 3×
+execution capacity is a planning defect, not ambition. The one-line why
+(`M — new parser + 40-line rewrite`) lets the executor challenge the number.
+
+## Inter-task contracts (any parallel wave)
+
+`consumes/produces` names the symbol, its shape, and one I/O example —
+never a bare file:
+
+```markdown
+- Interfaces: consumes `parseArgs(argv: string[]): Parsed` from T2 →
+  produces `runScript(name: string): number` for T4.
+  Example: `parseArgs(['install','--yes'])` → `{command:'install',…}`.
+```
+
+A consumer task whose producer changed signature fails review, not
+execution — the contract is checked at the wave gate (`grep` the symbol).
+
+## Green per wave gate (Standard+)
+
+Each wave gate row carries the command AND one example of correct output:
+
+```markdown
+| Wave | Focus | Tasks | Gate |
+| 3 | Runner swap | T4–T6 | `bun test` → `969 pass, 0 fail` + `coverage-gate` → `PASS` |
+```
+
+## Pre-mortem (Full)
+
+One paragraph before handoff, in the plan:
+
+```markdown
+## Pre-mortem
+Assuming this mission failed, the most likely cause is the lcov/DA mapping
+in T5 silently weakening the gate — countered by the exact-parity check
+against the T2 baseline at the T5 gate.
+```
+
+If no counter exists, add it before handoff — a known death with no counter
+is a shipped hole.
 
 ## Anti-patterns to avoid
 

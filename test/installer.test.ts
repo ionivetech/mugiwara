@@ -1,5 +1,5 @@
 // test/installer.test.ts
-import { test, describe, expect } from 'vitest';
+import { test, describe, expect } from 'bun:test';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, statSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

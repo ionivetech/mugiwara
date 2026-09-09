@@ -1,7 +1,7 @@
 // test/cli-coverage.test.ts — cover legacy CLI branches the gate measures
 // file-wide (migrate team switches, lesson, archive/continue/status/cost/
 // handoff errors, sign keygen, unknown target). Uses run() + exit mock.
-import { describe, test, expect, vi, afterEach } from 'vitest';
+import { describe, test, expect, vi, afterEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -44,6 +44,8 @@ Build `Button`, `Input`, `Card`, `Stack` from tokens; compose every screen from 
 - Variants over props soup: 3+ boolean props = split the component; children/slots over config flags.
 ## Server Actions (React)
 
+React-only below — other stacks apply the same patterns (pending/error/
+disabled states, keyboard paths, live regions) in their own idioms.
 `useActionState(fn, initial)` returns `[state, formAction, isPending]`; pass `formAction` to `<form action>`. Progressive enhancement works even before hydration.
 - Disable submit while `isPending` (`useFormStatus` for nested buttons).
 - Render `state.error` into a `role="alert"`/`aria-live` region; every async region gets a `data-testid`.

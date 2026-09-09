@@ -32,3 +32,9 @@ scripts/validate-content.ts --check-writing` enforces the testable ones in CI.
     Density never trades away completeness.
 15. Budget follows function. Entry pages persuade, reference pages complete,
     runbooks guide. Length serves the reader question named in the audit.
+16. Long matrices fold, never cut. A matrix over 8 rows lives in a
+    `<details>` block behind one summary line; the quickstart stays above
+    the fold. Folding is presentation, cutting is loss.
+17. Every shipped skill owns a features section, or is named with its job
+    inside one. A roster line that neither explains nor points is an
+    undocumented feature; fix it in the same change that ships the skill.

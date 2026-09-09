@@ -7,11 +7,11 @@
     "allowJs": true,
     "strict": true,
     "noEmit": true,
-    "types": ["node"],
+    "types": ["node", "bun"],
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo"
   },
-  "include": ["src", "test", "scripts", "hooks", "vitest.config.ts"]
+  "include": ["src", "test", "scripts", "hooks"]
 }

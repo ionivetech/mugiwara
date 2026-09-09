@@ -27,9 +27,9 @@ For every task in the completed flow stage, in order:
 2. **Per-task audit table.** For each `Acceptance` record `task | acceptance | command run | evidence | status`. Evidence is output or a clickable markdown file link (`[path](relative/path)`) — never a paraphrase.
 3. **Scope by diff.** Before re-running, inspect what changed (`git diff --name-only <flow-base>..HEAD`). Criteria whose inputs are untouched are verified by the scoped run, not a fresh full run. An `Acceptance` with NO command or file to point at is unverifiable — fail it, never waive it.
 4. **Dedupe re-runs.** Several criteria share the same command. Run each UNIQUE check ONCE per flow stage, scope it to the files this flow stage changed, attach the same evidence row to every criterion it covers. Do not re-run the same suite N times for N tasks.
-5. **Commit hygiene.** Run `git log --stat <flow-base>..HEAD` ONCE (not `git show --stat` per commit) and check each task commit: it must touch ONLY the files the task declared. Undeclared files added or declared files missing = fail.
+5. **Commit hygiene.** Run `git log --stat <flow-base>..HEAD` ONCE (not `git show --stat` per commit) and check each task commit: it must touch ONLY the files the task declared, and its message must carry the task id (`fix(T4): …` per `mugiwara-execution`). Undeclared files added, declared files missing, or message without its id = fail.
 6. **Parallel-conflict check.** Run `git diff --name-only` across parallel task commits: no file may be touched by 2 tasks. A shared file means the parallel claim was false.
-7. **Honest classification.** Classify every failure truthfully as code or env. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code.
+7. **Honest classification.** Classify every failure truthfully as code, env, or flaky. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code. A check that passes sometimes and fails sometimes — executor green / auditor red, or red → green with no code change — is `flaky`, never PASS: run it 3×, record all three results, quarantine it with an owner in the ledger. A flake filed as pass is a lie with a timestamp.
 
 ## Read-only tree
 
@@ -48,7 +48,7 @@ Append each failing criterion as one row to `.mugiwara/missions/<mission>/blocke
 
 `| flow stage | task | symptom | attempted | help-needed |`
 
-Category goes in `symptom` or `help-needed` as context. Categories: `test-fail` (test/lint/build command fails), `missing-impl` (criterion unverifiable, artifact absent), `parallel-conflict` (concurrent tasks modified shared state), `env` (environment, proven), `regression` (previously passing check now fails). Reuse the existing blocker ledger; create it only if absent.
+Category goes in `symptom` or `help-needed` as context. Categories: `test-fail` (test/lint/build command fails), `missing-impl` (criterion unverifiable, artifact absent), `parallel-conflict` (concurrent tasks modified shared state), `env` (environment, proven), `flaky` (nondeterministic pass/fail across 3 runs, quarantined with owner), `regression` (previously passing check now fails). Reuse the existing blocker ledger; create it only if absent.
 
 ## Heal loop
 
@@ -95,6 +95,7 @@ TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must
 - An `Acceptance` marked pass from a claim or a prior run, without re-running the check.
 - Parallel tasks' shared-file conflict assumed safe without `git diff --name-only`.
 - A code failure filed as `env` to soften the report.
+- A flaky check filed as pass, or quarantined with no owner.
 - Commits containing undeclared files, or missing declared files.
 - The working tree mutated during the audit (stash, checkout, reset, clean).
 - A DoD axis passed with no evidence.

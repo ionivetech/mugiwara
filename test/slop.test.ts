@@ -1,6 +1,6 @@
 // test/slop.test.ts
 // Phase 6 Stop-Slop — src/slop.ts unit tests (11 capabilities).
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -30,7 +30,7 @@ describe('classifySlop — slop taxonomy (§21)', () => {
   });
   it('LOC increases without acceptance → code or scope', () => {
     const k = classifySlop('LOC increases without acceptance');
-    expect(['code', 'scope']).toContain(k);
+    expect(['code', 'scope'] as (string | null)[]).toContain(k);
   });
   it('unknown signal → null', () => {
     expect(classifySlop('totally unrelated gibberish xyz')).toBeNull();

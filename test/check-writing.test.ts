@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { checkWritingFile, stripFences, WRITING_CAPS } from '../src/check-writing.ts';

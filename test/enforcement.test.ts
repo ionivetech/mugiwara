@@ -5,7 +5,7 @@
 // hooks.json wires the .js files, and those files were untracked and stale for
 // a whole release without anything noticing. A test against the .ts would have
 // stayed green through exactly that failure.
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';

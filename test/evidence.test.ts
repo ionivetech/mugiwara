@@ -3,7 +3,7 @@
 // Content-fingerprint registry: stable E### references (spec §11) + duplicate
 // detection (spec §12). Reuse-or-create: a repeat read returns the existing
 // reference instead of a new one. Persisted as append-only context-registry.jsonl.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

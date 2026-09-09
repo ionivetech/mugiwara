@@ -1,6 +1,6 @@
 # What skills exist?
 
-A role without a playbook improvises. Each skill below carries the portable markdown playbook the crew follows when it embodies a role: 20 skills, loaded on demand, measured at 95.9% rank-1 over 216 retrieval probes with 322 pointers resolving and 0 broken.
+A role without a playbook improvises. Each skill below carries the portable markdown playbook the crew follows when it embodies a role: 21 skills, loaded on demand, measured at 95.4% rank-1 over 221 retrieval probes with 342 pointers resolving and 0 broken.
 
 Example: a vague request arrives and Luffy must decide the route. Luffy loads `mugiwara-orchestration`, runs the 5-way triage, and records the decision. The playbook decided the shape before any work started.
 
@@ -14,6 +14,6 @@ Mission control: atomic commits and save-points (`mugiwara-git`), user-test inta
 
 ## Domain
 
-Frontend redesigns (`mugiwara-frontend`), backend and data integrity (`mugiwara-backend`).
+Frontend redesigns (`mugiwara-frontend`), backend and data integrity (`mugiwara-backend`), schema/data/framework migrations (`mugiwara-migration`).
 
 Skill file layout and the one-line pointer rule live in the [skill anatomy](../reference/skill-anatomy.md).
