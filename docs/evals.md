@@ -1,102 +1,17 @@
-# Evals
+# How is it evaluated?
 
-The eval suite is how mugiwara proves a skill still behaves the way its
-description promises. `content/agents/eval-runner.md` mandates following this
-document exactly; this is that document.
+A skill whose prose drifted from its promise fails silently: the description advertises behavior the body no longer teaches. The eval suite catches that rot by scoring skill behavior against rubrics, in CI, with no model needed for the structural gates.
 
-Harness: `scripts/run-evals.ts`. Cases: `evals/cases/**.json`.
-
-## Two modes
-
-```bash
-bun scripts/run-evals.ts          # validate the suite — structure + coverage gates. CI-safe, no model.
-bun scripts/run-evals.ts --run    # execute every case against a model CLI and score the rubric.
-```
-
-`--run` invokes `claude -p` by default. Override with `MUGIWARA_EVAL_CMD`
-(e.g. `MUGIWARA_EVAL_CMD="opencode run"`). The command must print only the
-model's answer on stdout.
+Example: the execution skill promises worker surfacing with evidence links. Its case file names the skill, describes the finished batch as the task, and lists surfacing rule, evidence link, and inline summary as rubric items. The harness scores each item by keyword match and the case passes at 70% or more.
 
 ## Suite format
 
-One JSON file per case, anywhere under `evals/cases/` (subdirectories allowed):
-
-```json
-{
-  "name": "execution-worker-surfacing",
-  "skill": "mugiwara-execution",
-  "type": "positive",
-  "behavioral": [
-    {
-      "task": "A parallel batch of three tasks finished in worker subagents.",
-      "rubric": ["surfacing rule", "evidence link", "inline summary"]
-    }
-  ]
-}
-```
-
-| Field | Required | Meaning |
-|---|---|---|
-| `name` | yes | Case id, unique across the suite. |
-| `skill` | yes | Skill directory under `content/skills/`. Must exist. |
-| `type` | no | `positive` \| `negative` \| `adversarial` \| `lane`. Inferred from the filename when omitted. |
-| `behavioral[]` | yes[^1] | One entry per scored task. Each needs a `task` string and a non-empty `rubric` array. |
-| `expect_lane` | no | Expected lane for `lane`-type cases. |
-
-[^1]: A file with no `behavioral` section (or `"skill": "_no-skill"`) is skipped
-by the scorer — those files exist to hold trigger fixtures only.
-
-Every `behavioral` entry registers as its own case, so a file with three tasks
-contributes three rows to the report.
+One JSON file per case under `evals/cases/`, subdirectories allowed. Each file names a unique case id, a skill directory that must exist under `content/skills/`, an optional type among positive, negative, adversarial, and lane (inferred from filename when omitted), and behavioral entries pairing a task string with a non-empty rubric array. Files without behavioral sections hold trigger fixtures only and the scorer skips them. Every behavioral entry counts as its own case in the report.
 
 ## Coverage gates
 
-Validation fails — exit 1, no model invoked — unless:
+Validation fails with no model invoked unless the suite holds at least one behavioral case, every skill names a real directory, every type is allowed, and the suite carries 2 or more adversarial cases plus 1 or more lane cases. Adversarial and lane coverage are mandatory because positive-only suites prove nothing under pressure.
 
-- at least one behavioral case exists;
-- every `skill` names a real directory under `content/skills/`;
-- every `type` is one of the four allowed values;
-- the suite has **≥ 2 adversarial** cases;
-- the suite has **≥ 1 lane** case.
+## Judge protocol and loop
 
-Adversarial and lane coverage are mandatory because a suite of only positive
-cases proves nothing about routing under pressure.
-
-## Judge protocol
-
-1. **Fresh judge.** Never judge a case with the agent that authored the skill
-   under test. A self-judging skill scores its own intent, not its text.
-2. The harness scores each rubric item by keyword match: the item is met when
-   the answer contains any of its significant terms (>3 characters, stopwords
-   removed).
-3. A case passes at **≥ 70%** of its rubric items.
-4. The suite passes at **≥ 70%** overall; below that `run-evals` exits non-zero.
-5. Ranking or selection cases use tournament judging — pairwise comparison, a
-   fresh judge per match (see `mugiwara-orchestration`, adversarial verification).
-
-The keyword scorer is deliberately blunt. It catches skill rot — prose that
-stopped naming the concept it teaches — not nuance. Treat a borderline score
-as a prompt to read the skill, not as a verdict.
-
-## Loop and bound
-
-1. Run the suite.
-2. A failing case means **fix the skill, never the eval.** Rewriting a rubric
-   to match a degraded skill is the one thing this harness cannot survive.
-3. Re-run. **Bound: 3 cycles.** Still failing after the third → stop, write the
-   row to `.mugiwara/missions/<mission>/blockers.md` with category
-   `eval-fail`, and escalate to Brook (healing) via Luffy.
-4. Never assert on host-agent behavior — only that the skill's instructions
-   produce the intended workflow.
-
-## Reporting
-
-Write the pass/fail table to `.mugiwara/missions/<mission>/flows/eval.md`, summarize
-inline for Luffy, and route failures through the blocker ledger.
-
-## When to run
-
-- On any skill or agent change, after the edit lands.
-- Before release, as a full-suite run.
-- On demand, to prove a skill or agent works.
-- Whenever skill rot is suspected.
+Never judge a case with the agent that authored the skill under test. Keyword scoring stays deliberately blunt: it catches prose that stopped naming its concept, not nuance, so treat borderline scores as reading prompts. Suite passes at 70% overall. A failing case means fixing the skill, never the eval; rewriting rubrics to match degraded skills is the one survival failure. Bound retries at three cycles, then ledger the row as eval-fail and escalate through Luffy to Brook. Results land in the mission flows dir with an inline summary. Run on every skill or agent change, before release, on demand, and whenever rot is suspected.

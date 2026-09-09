@@ -1,72 +1,13 @@
-# Adoption kit
+# Should my team adopt it?
 
-Make the second mission as easy as the first — on a new repo, a new stack,
-or a new teammate.
+A second mission on a new repo, stack, or teammate should cost no more than the first. This kit makes that true: a template recipe, a worked-example standard, and a lessons exchange, each small enough to run in an afternoon.
 
-## Template repository recipe
+Example: a team templates its web stack with preinstalled config, one archived example mission covering a single endpoint plus its test and gate run, and a commented policy seed for auth and migration paths. Newcomers read the real trail before running anything, and their first mission follows tracks instead of cutting them.
 
-A mugiwara template repo per stack ships four things:
+## Template checklist
 
-1. **Preinstalled pack** — `.mugiwara/config` committed with the lane, mode,
-   and coverage thresholds the stack's maintainers recommend.
-2. **One worked example mission** — an archived `missions/<name>/` with
-   `plan.md` + `report.md` in the tree, so newcomers read a real trail before
-   running their first mission. The example is small on purpose: one endpoint,
-   one test file, one gate run.
-3. **Stack-specific policy seed** — a commented-out `mugiwara.policy.yml`
-   covering the framework's sensitive paths (auth/, migrations/ for web;
-   schema/ + handlers/ for services).
-4. **README section** — three commands: install, start a mission, archive it.
+Ship preinstalled pack config with recommended lane, mode, and thresholds; one worked example mission reading as a real trail; a stack-specific policy seed staying commented until needed; a README section giving three commands (install, start, archive). Publish only after clean install from fresh clone, green gates with zero missions, untouched dry-run over the example, and zero real secrets in artifacts.
 
-Template checklist before publishing:
+## Example validity and lesson exchange
 
-- [ ] `mugiwara install --yes --target all` completes clean in a fresh clone
-- [ ] `bun run gate` (or the stack's equivalent) passes with zero missions
-- [ ] The example trail passes `mugiwara clean --dry-run` untouched
-- [ ] No real secrets anywhere in the example artifacts
-
-## Worked example standard
-
-An example mission is valid when every artifact in it was produced by an
-actual run — never hand-written to look right. A fabricated example teaches
-the wrong trail shape; regenerate it whenever the pipeline changes what
-closure writes (report sections, provenance.md, rollback.sh).
-
-## Lessons-ledger exchange
-
-`.mugiwara/lessons.md` is append-only and local by default. Opt-in exchange
-ships one entry at a time, anonymized:
-
-```json
-{
-  "lesson": "ORM lazy-loading caused N+1 on the invoice list endpoint",
-  "category": "performance",
-  "stack_tags": ["prisma", "nextjs"],
-  "gate_that_would_have_caught_it": "review:sonar-n-plus-one"
-}
-```
-
-Rules: no code snippets over 3 lines, no file paths from the source repo, no
-names of people or companies. A lesson that cannot be told under those rules
-is not shipped. Consumers append the rows to their own `.mugiwara/lessons.md` by hand. There is
-no import command.
-
-## Marketplace listing checklist
-
-- Screenshot of a closed mission report (the trail IS the product)
-- One sentence on lanes: process scales with change size
-- Supported-harness table copied from docs/reference/harness-matrix.md
-
-## Adaptive execution — migration & rollback
-
-Mugiwara's three-decision model (control mode / execution model-posture /
-Cost Governor) is the adaptive-execution foundation. Posture is chosen
-deterministically at flow boundaries and recorded in the decision trail; it is
-independent of control mode.
-
-- **Backwards compatible:** existing missions/configs default to
-  `inline-sequential` — no migration to resume them.
-- **Downgrade / rollback:** set the posture to `inline-sequential` (the safe
-  operational fallback) to disable parallel/relief dispatch.
-- **No Control Plane / Trust Layer:** posture records are local markdown +
-  state, no remote runtime required.
+An example counts only when an actual run produced every artifact; regenerate whenever closure output changes shape. Lessons travel one anonymized entry at a time under tight rules (no long snippets, no source paths, no names), appended by hand with no import command. The team rollout path continues in the [adoption guide](reference/adoption-guide.md); this page links instead of repeating it.
