@@ -179,6 +179,11 @@ export function closureBlockers(missionDir: string, mission: string): string[] {
       problems.push(`  ${s.member.padEnd(12)} has state but no sub-mission in plan.md`);
     }
   }
+  // Solo mission (state.json, no member files) whose plan still names people:
+  // the common cause is a literal "solo" assignee — solo rows use "-".
+  if (states.some((x) => !x.member) && !states.some((x) => x.member) && roster.length) {
+    problems.push(`  plan names ${roster.length} assignee(s) but mission is solo — use "-" for solo rows or run: mugiwara migrate --to-team <member>`);
+  }
   return problems;
 }
 

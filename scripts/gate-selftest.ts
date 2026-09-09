@@ -1038,12 +1038,12 @@ console.log('\nE3 — source-only predicate');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('source-only predicate → artifact case fails', false, () => run('E3', 'bunx vitest run test/hooks.test.ts -t "artifacts written"'));
+      assert('source-only predicate → artifact case fails', false, () => run('E3', 'bun x vitest run test/hooks.test.ts -t "artifacts written"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → artifact case passes', true, () => run('E3-restore', 'bunx vitest run test/hooks.test.ts -t "artifacts written"'));
+    assert('restored → artifact case passes', true, () => run('E3-restore', 'bun x vitest run test/hooks.test.ts -t "artifacts written"'));
   }
 }
 
@@ -1060,12 +1060,12 @@ console.log('\nE4 — forbidden table');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('missing pr-create row → deny case fails', false, () => run('E4', 'bunx vitest run test/hooks.test.ts -t "gh pr create"'));
+      assert('missing pr-create row → deny case fails', false, () => run('E4', 'bun x vitest run test/hooks.test.ts -t "gh pr create"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → deny case passes', true, () => run('E4-restore', 'bunx vitest run test/hooks.test.ts -t "gh pr create"'));
+    assert('restored → deny case passes', true, () => run('E4-restore', 'bun x vitest run test/hooks.test.ts -t "gh pr create"'));
   }
 }
 
@@ -1082,12 +1082,12 @@ console.log('\nE4b — tree-mutation row');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('missing stash row → stash deny case fails', false, () => run('E4b', 'bunx vitest run test/hooks.test.ts -t "pretool: git stash"'));
+      assert('missing stash row → stash deny case fails', false, () => run('E4b', 'bun x vitest run test/hooks.test.ts -t "pretool: git stash"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → stash deny case passes', true, () => run('E4b-restore', 'bunx vitest run test/hooks.test.ts -t "pretool: git stash"'));
+    assert('restored → stash deny case passes', true, () => run('E4b-restore', 'bun x vitest run test/hooks.test.ts -t "pretool: git stash"'));
   }
 }
 
@@ -1107,12 +1107,12 @@ console.log('\nE5 — over-broad push matcher');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('push-all matcher → feature-push case fails', false, () => run('E5', 'bunx vitest run test/hooks.test.ts -t "feature-branch push"'));
+      assert('push-all matcher → feature-push case fails', false, () => run('E5', 'bun x vitest run test/hooks.test.ts -t "feature-branch push"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → feature-push passes', true, () => run('E5-restore', 'bunx vitest run test/hooks.test.ts -t "feature-branch push"'));
+    assert('restored → feature-push passes', true, () => run('E5-restore', 'bun x vitest run test/hooks.test.ts -t "feature-branch push"'));
   }
 }
 
@@ -1148,11 +1148,11 @@ console.log('\nE7 — todos mirror');
       failed++;
     } else {
       writeFileSync(sf, broken);
-      assert('missing mirror → mirror test fails', false, () => run('E7', 'bunx vitest run test/savepoint.test.ts -t "todos mirror"'));
+      assert('missing mirror → mirror test fails', false, () => run('E7', 'bun x vitest run test/savepoint.test.ts -t "todos mirror"'));
     }
   } finally {
     writeFileSync(sf, original);
-    assert('restored → mirror test passes', true, () => run('E7-restore', 'bunx vitest run test/savepoint.test.ts -t "todos mirror"'));
+    assert('restored → mirror test passes', true, () => run('E7-restore', 'bun x vitest run test/savepoint.test.ts -t "todos mirror"'));
   }
 }
 

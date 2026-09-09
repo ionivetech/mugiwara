@@ -11,7 +11,7 @@ const BOOL_FLAGS: Record<string, string> = {
   '--global': 'global', '--yes': 'yes', '-y': 'yes', '--force': 'force',
   '--dry-run': 'dryRun', '--keep-logs': 'keepLogs', '--check': 'check', '--all': 'all', '--verify': 'verify',
   '--gen-key': 'genKey', '--help': 'help', '-h': 'help', '--version': 'version', '-v': 'version',
-  '--json': 'json', '--ledger': 'ledger',
+  '--json': 'json', '--ledger': 'ledger', '--solo': 'solo',
 };
 
 export function parseArgs(argv: string[]): Args {

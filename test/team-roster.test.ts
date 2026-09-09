@@ -108,7 +108,25 @@ describe('team-roster', () => {
     savepoint(dir, 'proj', 'sophia-martinez', 5);
     const blockers = closureBlockers(join(dir, '.mugiwara', 'missions', 'proj'), 'proj');
     expect(blockers.join('\n')).toMatch(/sophia-martinez/);
+
     expect(blockers.join('\n')).toMatch(/has state but no sub-mission/);
+  });
+
+  it('12: solo state + plan naming people -> closure hints "-" rows', { timeout: 120000 }, () => {
+    writePlan(dir, 'solo1', `## Sub-missions\n| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |\n|----|------|----------|--------|--------|-----------|---------------|\n| S1 | core | solo | feat/s | [ ] | - | src/a.ts |\n`);
+    savepoint(dir, 'solo1', '', 9);
+    const blockers = closureBlockers(join(dir, '.mugiwara', 'missions', 'solo1'), 'solo1');
+    expect(blockers.join('\n')).toMatch(/mission is solo/);
+
+    expect(blockers.join('\n')).toMatch(/migrate --to-team/);
+  });
+
+  it('13: MUGIWARA_SOLO=1 ignores active-member cache', { timeout: 120000 }, () => {
+    mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'active-member'), 'jane-doe\n');
+    const script = join(process.cwd(), 'scripts', 'savepoint.sh');
+    execFileSync('bash', [script, 'solom', '', '0', 'guided'], { cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_SOLO: '1' } });
+    expect(existsSync(join(dir, '.mugiwara', 'missions', 'solom', 'state.json'))).toBe(true);
   });
 
   it('11: --force with blockers -> closure proceeds (archive with force)', { timeout: 120000 }, async () => {

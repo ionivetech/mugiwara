@@ -8,7 +8,7 @@
 // so every savepoint / lane call silently did
 // nothing. Resolving from the package root fixes it for every install target at
 // once.
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -67,8 +67,7 @@ export function runScript(name: string, args: string[], projectDir: string): num
   }
   const script = join(SCRIPTS_DIR, name);
   if (!existsSync(script)) {
-    const have = existsSync(SCRIPTS_DIR) ? readdirSync(SCRIPTS_DIR).filter((f) => f.endsWith('.sh')) : [];
-    throw new Error(`script not found: ${name}${have.length ? ` (available: ${have.join(', ')})` : ''}`);
+    throw new Error(`script not found: ${name} (runnable: ${RUNNABLE.join(', ')})`);
   }
   const bash = findBash();
   if (!bash) throw new Error(noBashMessage());

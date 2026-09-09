@@ -21,3 +21,5 @@ Measured: the catalog index holds 21 skills (**Current:** 4,741 chars). Pointer 
 Provider path: set `MUGIWARA_TOKENS` to a total, or write `input_tokens` plus `output_tokens` JSON and pass it with `--tokens-file` at savepoint. State flips to reported source and the report prints the provider-backed total. Tiers without a usage API keep the estimator. The rollup line stays absent there. No numbers are invented to fill the gap.
 
 Governor phases (reserve, project, avoid, stop, plus scope, cognition, slop, budget, reporting, benchmark) produce verdicts the crew acts on. They record decisions to the trail. They never force the model. Read `src/cost.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`, `src/slop.ts`, `src/reporting.ts` for the verdict shapes.
+
+Trail scope: `mugiwara cost` counts governor-verdict rows (`## Cost governor decisions` / `## Budget` sections of `decisions.md`) only. Hand-written decision-table rows are the audit trail and stay folded into the report — they are not ledger rows.

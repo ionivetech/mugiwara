@@ -67,7 +67,9 @@ MISSION="${1:-${STATE_MISSION:-}}"
 # `mugiwara continue` after the user picks from the roster — never typed by
 # hand, so it cannot disagree with the plan. Empty means solo.
 MEMBER="${2:-${STATE_MEMBER:-}}"
-if [ -z "$MEMBER" ] && [ -f "$MUGIWARA_DIR/active-member" ]; then
+# MUGIWARA_SOLO=1 (from `mugiwara savepoint --solo`) forces solo even when a
+# cache exists — an explicit "" alone cannot, it reads as absent.
+if [ -z "$MEMBER" ] && [ -z "${MUGIWARA_SOLO:-}" ] && [ -f "$MUGIWARA_DIR/active-member" ]; then
   MEMBER=$(head -1 "$MUGIWARA_DIR/active-member" 2>/dev/null | tr -d '[:space:]')
 fi
 WAVE="${3:-${STATE_WAVE:-1}}"

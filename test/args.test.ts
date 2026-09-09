@@ -40,3 +40,10 @@ test('unknown flag throws', () => {
 test('flag missing value throws', () => {
   expect(() => parseArgs(['--target'])).toThrow(/missing value/i);
 });
+
+test('parses --solo for savepoint', () => {
+  const r = parseArgs(['savepoint', 'm', '--flow', '2', '--solo']);
+  expect(r.command).toBe('savepoint');
+  expect(r.flags.solo).toBe(true);
+  expect(r.flags.flow).toBe('2');
+});

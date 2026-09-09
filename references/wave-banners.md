@@ -10,17 +10,20 @@ keep the table format exact (one row per agent, pipes, no extra columns).
 Every flow stage opens with this line and closes with a handoff:
 
     ## ⚔️ Flow 3 — Zoro (Execution)
-    → Flow 4 — Chopper
+    → 🩺 Flow 4 — Chopper
 
 Rules, all unconditional:
 
 - A markdown heading (`## `), the crew emoji, then `Flow N — Crew (Role)`.
+- The handoff carries the NEXT crew's emoji too — `→ <emoji> Flow N+1 — Crew`.
+  The literal `Flow N —` plus the crew name stay exact (check-in protocol and
+  handoff-target gates read them); the emoji is decoration around them.
 - **Never emit ANSI escapes.** The model cannot tell a terminal from a markdown
   UI, so it must not try. Colour is applied by the harness plugin, which knows
   the surface — see "Colour" below.
 - Keep `Flow N —` literal: the check-in protocol reads it.
 - Handoff is the LAST line of the stage's final response. Flow 9 closes with
-  `→ closure`.
+  `→ 🏁 closure`. Flow 8 hands back with `→ 🩺 Flow 4 — Chopper`.
 
 ## Colour (harness, not model)
 

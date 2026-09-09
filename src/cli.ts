@@ -92,6 +92,10 @@ export async function run(argv: string[]): Promise<void> {
 
 function savepointCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
+  // --solo (or an explicit "" member) forces solo for BOTH the short and the
+  // long form: the script reads the active-member cache itself, so the flag
+  // must travel as env, not just as an empty positional.
+  if (flag(flags.solo) || positionals[2] === '') process.env.MUGIWARA_SOLO = '1';
   const flowFlag = str(flags.flow) ?? (flag(flags.flow) ? '' : undefined);
   // Short form: mugiwara savepoint --flow N with everything else inferred
   if (flowFlag !== undefined || flag(flags.flow)) {
@@ -126,9 +130,11 @@ function savepointCmd(flags: Args['flags'], positionals: string[]): void {
       }
       mission = all[0];
     }
-    // Member from active-member cache (empty means solo)
-    let member = positionals[2] ?? '';
-    if (!member) {
+    // Member from active-member cache (empty means solo) — unless --solo
+    // forces solo explicitly even when a cache exists.
+    const solo = flag(flags.solo) || positionals[2] === '';
+    let member = solo ? '' : positionals[2] ?? '';
+    if (!solo && !member) {
       const cache = join(projectDir, '.mugiwara', 'active-member');
       if (existsSync(cache)) {
         try { member = readFileSync(cache, 'utf8').trim().split(/\s+/)[0] ?? ''; } catch { member = ''; }
@@ -1102,6 +1108,9 @@ export function migrateCmd(flags: Args['flags'], positionals: string[] = []): vo
 
   for (const m of moves) {
     console.log(`${dryRun ? 'would migrate' : 'migrated'} ${m.src} → ${m.dest}`);
+    if (dirname(m.dest) === missionsRoot) {
+      console.error(`warning: ${m.dest} is a file, not a mission dir — legacy shape is state/<mission>/<member>.json`);
+    }
     if (!dryRun) {
       mkdirSync(dirname(m.dest), { recursive: true });
       try {
@@ -1197,6 +1206,7 @@ Usage:
                           run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [flow] [mode]
                           shorthand for: mugiwara run savepoint.sh ...
+                          (--solo forces solo even with an active-member cache)
   mugiwara --help        this help
   mugiwara --version     print version
 
