@@ -23,3 +23,22 @@ Recovery and memory: Brook fixes ledger failures in at most three cycles. Resume
 ## Shape of the install
 
 Every install ships the whole crew: 11 agents plus 3 internal, alongside 21 skills. No selection step, the router picks the specialist per task. Agent file layout lives in [agent anatomy](../reference/agent-anatomy.md); technique catalog in [skills](skills.md).
+
+## Roster
+
+Eleven user-facing, three internal (file slug in `content/agents/` beside each summon moment):
+
+- Captain `luffy-orchestrator`, triage to closure
+- Sparring partner `usopp-brainstorm`, vague ideas
+- Planner `nami-planner`, spec to task plan
+- Executor `zoro-execution`, approved plans only
+- Auditor `chopper-checkpoint`, flow-stage verdicts
+- Adversarial check `skeptic-verifier`, high-stakes second look
+- Quality `sanji-quality`, format, lint, tests
+- Gates `franky-gates`, coverage, build, Definition of Done
+- Reviewer `robin-reviewer`, breaking-change map
+- Security `jinbe-security`, STRIDE and secrets
+- Healer `brook-healing`, bounded fix cycles
+- Resumer `resume-coordinator`, dead sessions continue
+- Memory `memory-keeper`, lessons across missions
+- Eval runner `eval-runner`, behavior scores

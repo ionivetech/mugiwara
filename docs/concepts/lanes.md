@@ -14,7 +14,7 @@ Example: you rename one variable in one file. `mugiwara run lane.sh` reports `di
 | **3 Full** | architecture, migration, 9+ files, or auth/payment/API touched | all nine flow stages |
 | **4 Spike** | exploratory, needs direction | brainstorm, re-triage |
 
-Token budgets ride with the lane: warn at 1.5x, stop at 3x the lane base. `mugiwara savepoint` checks the estimate at each flow-stage boundary and records the status in mission state.
+Token budgets ride with the lane: warn at 1.5x, stop at 3x the lane base. Lane bases run 8,000 (lean), 13,000 (standard), 22,000 (full); budgets run 12,000, 25,000, 50,000. `mugiwara savepoint` checks the estimate at each flow-stage boundary and records the status in mission state.
 
 ## How lane is computed
 

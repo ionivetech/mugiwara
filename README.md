@@ -161,9 +161,10 @@ Mugiwara is for teams who review. If nobody reads the report, install nothing.
 
 | Claim | Status |
 |---|---|
-| Retrieval routing rank-1 | 95.9 percent, 216 probes (170 positive, 82 negative, 293 terms), in CI |
-| Reference pointers resolve | 318 of 318 across 9 targets, in CI |
+| Retrieval routing rank-1 | **95.9%**, 216 probes (170 positive, 82 negative), in CI |
+| Reference pointers resolve | **318/318**, 9 targets, in CI |
 | Skill index cover | 21 skills indexed, in CI |
+| Lane bases / budgets | 8,000 / 12,000 lean, 13,000 / 25,000 standard, 22,000 / 50,000 full |
 | Outcome vs other approaches | not measured |
 
 Numbers here come from `.metrics/latest.json`, refreshed by `bun run gate`. Nothing in this table is an estimate, and the last row stays empty until a comparison study exists.
