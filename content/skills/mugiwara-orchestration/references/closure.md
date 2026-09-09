@@ -24,16 +24,16 @@ to local closure report.
 
 **Verdict file = ready PR material.** ONE document the user pastes into their
 PR. Every section below is mandatory and in order; a section with nothing to
-say writes `None.` explicitly — never omit, never one-line the whole file.
-Draw every verdict from captured evidence, never assertion. Scan the file for
+say writes `None.` explicitly — an omitted section or a one-lined whole file
+fails review. Draw every verdict from captured evidence, never assertion. Scan the file for
 secret patterns before handoff — on a match, redact and log; a leaked secret
 in a pasted PR description is irreversible. Interpolated identifiers (branch,
 owner/repo) come from git config/remote only — validate against a safe
 charset (`[A-Za-z0-9._/-]`) and quote them in shell commands.
 
 Checklist rule: the Tests, Checks, and Deferred sections are ALWAYS one item
-per line with `- [x]` done / `- [ ]` open — the todo shape, never a paragraph,
-never comma-joined. An unchecked box names its owner.
+per line with `- [x]` done / `- [ ]` open — the todo shape; a paragraph or a
+comma-joined list here fails review. An unchecked box names its owner.
 
 ```
 # PR verdict: <mission> → <branch>
