@@ -51,7 +51,7 @@
   },
   "scripts": {
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --maxWorkers=2",
     "coverage-gate": "bun scripts/coverage-gate.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

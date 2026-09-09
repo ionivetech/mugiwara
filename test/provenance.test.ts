@@ -13,7 +13,9 @@ function gitRepo(): string {
 }
 
 describe('provenance blame across mission range (D2)', () => {
-  it('attaches note to every commit in base..branch and blame resolves each file', () => {
+  // Explicit timeout: git notes + blame subprocesses exceed the 5s default
+  // under parallel-suite load (same class as savepoint.test.ts timeouts).
+  it('attaches note to every commit in base..branch and blame resolves each file', { timeout: 60000 }, () => {
     const repo = gitRepo();
     const baseSha = execSync('git rev-parse HEAD', { cwd: repo, encoding: 'utf8' }).trim();
 

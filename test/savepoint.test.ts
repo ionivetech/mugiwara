@@ -1,6 +1,8 @@
 // test/savepoint.test.ts — G3: every state.json field has a non-trivial assertion.
-// Layout: .mugiwara/missions/<mission>/{state.json|<member>.json} +
-// {continue.json|continue-<member>.json} (D10). Identity = (mission, member).
+// Timeout policy: every runSavepoint() spawns a full bash+git+node pipeline
+// (~1-3s idle, far more under parallel-suite load). Timeouts scale with the
+// number of sequential runs (60s floor, +15s per run past one) so loaded
+// machines do not flake; they guard hangs, never correctness.
 import { test, expect } from 'vitest';
 import { execSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
@@ -31,7 +33,7 @@ function continuePath(dir: string, mission: string, member = '') {
   return join(dir, '.mugiwara', 'missions', mission, member ? `continue-${member}.json` : 'continue.json');
 }
 
-test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', { timeout: 30000 }, () => {
+test('savepoint writes all state fields with non-trivial values (lane direct, no diff)', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-'));
   try {
     setupGit(dir);
@@ -92,7 +94,7 @@ test('savepoint records model per stage: MUGIWARA_MODEL > ANTHROPIC_MODEL > unkn
   }
 });
 
-test('savepoint --tokens-file flips source to reported with exact sum (T4)', { timeout: 30000 }, () => {
+test('savepoint --tokens-file flips source to reported with exact sum (T4)', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-tokens-'));
   try {
     setupGit(dir);
@@ -107,7 +109,7 @@ test('savepoint --tokens-file flips source to reported with exact sum (T4)', { t
   }
 });
 
-test('savepoint records verbosity from config (full) and defaults to normal', { timeout: 30000 }, () => {
+test('savepoint records verbosity from config (full) and defaults to normal', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-verb-'));
   try {
     setupGit(dir);
@@ -135,7 +137,7 @@ test('savepoint records verbosity from config (full) and defaults to normal', { 
   }
 });
 
-test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
+test('savepoint state.json has correct structure', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-struct-'));
   try {
     setupGit(dir);
@@ -160,7 +162,7 @@ test('savepoint state.json has correct structure', { timeout: 30000 }, () => {
   }
 });
 
-test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the word "heal"', { timeout: 30000 }, () => {
+test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the word "heal"', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-heal-'));
   try {
     setupGit(dir);
@@ -208,7 +210,7 @@ test('4a: heal_cycle counts Wave-8 healing sections in the decision log, not the
   }
 });
 
-test('4f: savepoint reads heal_max_cycles and delegate_threshold from config', { timeout: 30000 }, () => {
+test('4f: savepoint reads heal_max_cycles and delegate_threshold from config', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-cfgwire-'));
   try {
     setupGit(dir);
@@ -239,7 +241,7 @@ test('4f: savepoint reads heal_max_cycles and delegate_threshold from config', {
   }
 });
 
-test('4f: delegate_due is true when tokens_est crosses delegate_threshold% of budget', { timeout: 15000 }, () => {
+test('4f: delegate_due is true when tokens_est crosses delegate_threshold% of budget', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-delegate-'));
   try {
     setupGit(dir);
@@ -267,7 +269,7 @@ test('4f: delegate_due is true when tokens_est crosses delegate_threshold% of bu
   }
 });
 
-test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS overrides as reported', { timeout: 15000 }, () => {
+test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS overrides as reported', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-tokens-'));
   try {
     setupGit(dir);
@@ -305,7 +307,7 @@ test('F7: tokens_est is a deterministic non-zero proxy; MUGIWARA_TOKENS override
   }
 });
 
-test('savepoint team member writes state to state/<mission>/<member>.json', { timeout: 30000 }, () => {
+test('savepoint team member writes state to state/<mission>/<member>.json', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-member-'));
   try {
     setupGit(dir);
@@ -327,7 +329,7 @@ test('savepoint team member writes state to state/<mission>/<member>.json', { ti
   }
 });
 
-test('reserved member names (state, continue) are rejected — they would clobber solo files', { timeout: 20000 }, () => {
+test('reserved member names (state, continue) are rejected — they would clobber solo files', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-savepoint-resv-'));
   try {
     setupGit(dir);
@@ -347,7 +349,7 @@ test('reserved member names (state, continue) are rejected — they would clobbe
   }
 });
 
-test('D10: savepoint writes continue JSON position block at wave boundary', { timeout: 20000 }, () => {
+test('D10: savepoint writes continue JSON position block at wave boundary', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-cont-'));
   try {
     setupGit(dir);
@@ -375,7 +377,7 @@ test('D10: savepoint writes continue JSON position block at wave boundary', { ti
   }
 });
 
-test('D10: continue is (mission, member) scoped — team members never clobber', { timeout: 20000 }, () => {
+test('D10: continue is (mission, member) scoped — team members never clobber', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-contmem-'));
   try {
     setupGit(dir);
@@ -394,7 +396,7 @@ test('D10: continue is (mission, member) scoped — team members never clobber',
   }
 });
 
-test('D10: branch field reflects git branch (sanitized slug)', { timeout: 20000 }, () => {
+test('D10: branch field reflects git branch (sanitized slug)', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-contbr2-'));
   try {
     setupGit(dir);
@@ -408,7 +410,7 @@ test('D10: branch field reflects git branch (sanitized slug)', { timeout: 20000 
   }
 });
 
-test('D10: continue writer sanitizes wave/mode fields (N2)', { timeout: 20000 }, () => {
+test('D10: continue writer sanitizes wave/mode fields (N2)', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-contn2-'));
   try {
     setupGit(dir);
@@ -422,7 +424,7 @@ test('D10: continue writer sanitizes wave/mode fields (N2)', { timeout: 20000 },
   }
 });
 
-test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 15000 }, () => {
+test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-budget-'));
   try {
     setupGit(dir);
@@ -445,7 +447,7 @@ test('budget_status: warn at 1.5x budget, stop at 3x (case 12)', { timeout: 1500
   }
 });
 
-test('B3: task counting — anchored, code-block aware, case-insensitive, no prose leakage (6 cases)', { timeout: 30000 }, () => {
+test('B3: task counting — anchored, code-block aware, case-insensitive, no prose leakage (6 cases)', { timeout: 120000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-tasks-'));
   try {
     setupGit(dir);
@@ -496,7 +498,7 @@ test('B3: task counting — anchored, code-block aware, case-insensitive, no pro
   }
 });
 
-test('todos mirror wins over plan.md when it has boxes (provenance 0/N fix)', { timeout: 30000 }, () => {
+test('todos mirror wins over plan.md when it has boxes (provenance 0/N fix)', { timeout: 60000 }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-mirror-'));
   try {
     setupGit(dir);
