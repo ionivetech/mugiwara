@@ -1,5 +1,7 @@
 # Runbook: Joining a mission already in flight
 
+The crew started without you and the plan moved on. This gets you a named slice without colliding with anyone holding one.
+
 **When to use this:** a mission exists with a plan and you take a slice of it.
 **Time:** ~5 min.
 **You need:** the mission name, your handle, an agreed area.
@@ -8,23 +10,34 @@
 1. Sync and confirm the mission exists.
    ```bash
    git pull
+   ```
+   ```
+   Already up to date.
+   ```
+   ```bash
    mugiwara continue demo
+   ```
+   ```
+   Mission "demo" has 1 members in flight:
+
+     MISSION  MEMBER    FLOW  TASKS  LANE    MODE
+     demo     jane-doe  1     0/0    direct  guided
+
+   Pick one: mugiwara continue demo <member>
    ```
 2. Join with your area (writes a plan row, a decisions row, sets active handle).
    ```bash
    mugiwara join demo sophia-martinez --area testing
    ```
-   Expected output:
    ```
    joined demo as sophia-martinez (testing) — plan updated, decisions logged, active-member set
    ```
 3. Read your new row in `plan.md` (id, area, branch `feat/sophia-martinez`) plus the
    surrounding rows so your slice does not collide.
-4. Start Flow 0 state for your slice, then work and record each stage.
+4. Start Flow 2 state for your slice, then work and record each stage.
    ```bash
    mugiwara savepoint --flow 2
    ```
-   Expected output:
    ```
    ✓ savepoint written: .mugiwara/missions/demo/sophia-martinez.json (lane=direct, flow=2, files=0)
    ```

@@ -1,5 +1,7 @@
 # Runbook: Monorepo with per-package lanes
 
+One repo-wide lane sizes a one-package fix like a whole-repo migration. Scoping the lane to your package stops that.
+
 **When to use this:** one repo holds several packages and a repo-wide lane oversizes small slices.
 **Time:** ~10 min setup, then normal per-handle flow.
 **You need:** monorepo checkout, package paths, one mission per package slice or per handle.
@@ -9,11 +11,10 @@
    ```ini
    lane_scope_glob=packages/api/**
    ```
-2. Record a savepoint — the lane now sizes from matching files only.
+2. Record a savepoint. The lane now sizes from matching files only.
    ```bash
    mugiwara savepoint --flow 1
    ```
-   Expected output:
    ```
    ✓ savepoint written: .mugiwara/missions/m/state.json (lane=direct, flow=1, files=0)
    ```
@@ -26,7 +27,7 @@
 ## If something goes wrong
 | Symptom | Cause | Fix |
 |---|---|---|
-| lane looks too big for a tiny package change | glob unset — whole repo counted | set `lane_scope_glob` to the package path, re-run savepoint |
+| lane looks too big for a tiny package change | glob unset, so the whole repo counts | set `lane_scope_glob` to the package path, re-run savepoint |
 | conflict check flags two packages | overlapping file sets in plan rows | narrow each row's Files column to its package dir |
 | `multiple missions on disk … — specify <mission>` | short form cannot infer | pass the mission: `mugiwara savepoint --flow 2 <mission>` |
 
