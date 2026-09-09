@@ -1,6 +1,6 @@
 {
   "name": "routing-claim-audit",
-  "skill": "mugiwara-claim-audit",
+  "skill": "mugiwara-checkpoint",
   "trigger": {
     "positive": [
       {
@@ -27,7 +27,7 @@
       "task": "The agent claims the migration is complete and all data is intact. Verify this before proceeding.",
       "rubric": [
         "extracts the specific claim from the agent's statement",
-        "doubts by default \u2014 looks for evidence against the claim",
+        "doubts by default — looks for evidence against the claim",
         "does not take the spoken assertion at face value"
       ]
     }

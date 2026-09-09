@@ -1,6 +1,6 @@
 ---
 name: mugiwara-checkpoint
-description: Use after an execution flow stage to audit results — re-run acceptance criteria, verify commit hygiene, classify failures honestly, issue DoD verdict. Auditor only.
+description: Audit results after an execution flow stage — re-run acceptance criteria, commit hygiene, classify failures, issue DoD verdict. Doubt-driven double-check of done claims: CLAIM, EXTRACT, DOUBT, RECONCILE. Auditor only.
 gate_artifact: flows/02-audit.md — per-task acceptance evidence
 ---
 
@@ -63,6 +63,14 @@ A failed audit feeds the healer, not the auditor. Flow:
 
 Per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one flow-stage verdict. Full definitions: `_shared/references/definition-of-done.md`. Any FAIL axis → flow-stage verdict FAIL.
 
+## Adversarial depth (high-stakes calls)
+
+The checklist above audits finished work. For in-flight decisions touching
+money, security, data, or public contracts — or confident outputs produced
+fast — run the doubt pass: CLAIM → EXTRACT → DOUBT → RECONCILE → STOP, max 3
+rounds, fresh context, never validate. Full method: `references/adversarial.md`.
+Output is the doubt trail. Skeptic runs this at Flow 4.5.
+
 ## Auditor only
 
 Never edit code. Findings only. Any urge to fix a finding means the audit has stopped being an audit.
@@ -93,5 +101,6 @@ TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must
 - `heal_halt` reading `true` with healing still continuing.
 - Any urge to edit code instead of reporting the finding.
 - Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
+- A high-stakes call waved through without the adversarial doubt trail.
 
 All mean: the audit is incomplete. Finish it before issuing the verdict.

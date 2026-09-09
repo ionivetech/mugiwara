@@ -22,7 +22,7 @@ Recovery and memory: Brook fixes ledger failures in at most three cycles. Resume
 
 ## Shape of the install
 
-Every install ships the whole crew: 11 agents plus 3 internal, alongside 21 skills. No selection step, the router picks the specialist per task. Agent file layout lives in [agent anatomy](../reference/agent-anatomy.md); technique catalog in [skills](skills.md).
+Every install ships the whole crew: 11 agents plus 3 internal, alongside 20 skills. No selection step, the router picks the specialist per task. Agent file layout lives in [agent anatomy](../reference/agent-anatomy.md); technique catalog in [skills](skills.md).
 
 ## Roster
 

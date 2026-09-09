@@ -1,6 +1,6 @@
 # How do I install it?
 
-Your editor is open and the crew is not in it. You want the smallest install that puts all 21 skills and 14 agents behind your prompts, with a manifest so update and uninstall touch exactly what install wrote. Pick your harness below and follow its page.
+Your editor is open and the crew is not in it. You want the smallest install that puts all 20 skills and 14 agents behind your prompts, with a manifest so update and uninstall touch exactly what install wrote. Pick your harness below and follow its page.
 
 Example: an OpenCode user adds one plugin line to `opencode.json` and restarts, while a Codex user runs one CLI command that writes 91 files under `.codex/mugiwara/`. Both then ask "what mugiwara crew members are available" and receive the same roster. Same crew, different doors.
 

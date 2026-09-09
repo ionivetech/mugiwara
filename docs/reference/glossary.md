@@ -28,4 +28,4 @@ Example: a plan document schedules work in "waves" while the pipeline runs "flow
 - **Policy**: `mugiwara.policy.yml`, org rules pushing lanes and thresholds up only. See [policy as code](../concepts/policy-as-code.md).
 - **Index budget**: the 5,500-char ceiling on skill plus agent descriptions loaded cold each session.
 
-Counts govern everywhere: 21 skills, 11 user-facing agents plus 3 internal.
+Counts govern everywhere: 20 skills, 11 user-facing agents plus 3 internal.

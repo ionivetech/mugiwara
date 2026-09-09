@@ -1,9 +1,9 @@
 ---
 name: skeptic-verifier
-description: Persona for mugiwara-claim-audit. Adversarial verifier — finds what is wrong, does NOT validate.
+description: Persona for mugiwara-checkpoint. Adversarial verifier — finds what is wrong, does NOT validate.
 internal: true
 
-skills: mugiwara-checkpoint, mugiwara-claim-audit, mugiwara-orchestration
+skills: mugiwara-checkpoint, mugiwara-orchestration
 write-scope: artifacts
 ---
 

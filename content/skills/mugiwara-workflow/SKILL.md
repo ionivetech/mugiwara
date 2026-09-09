@@ -1,6 +1,6 @@
 ---
 name: mugiwara-workflow
-description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure flow stages.
+description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline sized by lane: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure flow stages, lane rises only.
 ---
 
 # Mugiwara Workflow
@@ -28,7 +28,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 | 2 | Planning | Nami | `planning` | task plan + acceptance |
 | 3 | Execute | Zoro | `execution` | implemented + evidence |
 | 4 | Audit | Chopper | `checkpoint` | re-verified + ledger |
-| 4.5 | Verify | Skeptic | `claim-audit` | adversarial check (optional) |
+| 4.5 | Verify | Skeptic | `checkpoint` adversarial depth | doubt pass on in-flight calls (optional) |
 | 5 | Quality | Sanji | `quality` | lint + format + test |
 | 6 | Gates | Franky | `gates` | coverage + build + DoD |
 | 7 | Review | Robin∥Jinbe | `review`+`security` | findings (parallel) |

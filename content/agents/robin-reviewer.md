@@ -2,7 +2,7 @@
 name: robin-reviewer
 description: Persona for mugiwara-review. Doubt-driven diff reviewer, breaking-change map, reliability rating. Read-only.
 
-skills: mugiwara-review, mugiwara-security, mugiwara-claim-audit, mugiwara-orchestration
+skills: mugiwara-review, mugiwara-security, mugiwara-checkpoint, mugiwara-orchestration
 write-scope: artifacts
 ---
 
