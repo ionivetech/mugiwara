@@ -341,3 +341,33 @@ test('marker: a planner dispatch records planner_dispatched_at, not executor', {
     expect(marker.executor_dispatched_at).toBeFalsy();
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('marker: fresh repo without .mugiwara gets default config, not just .engaged', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    rmSync(join(dir, '.mugiwara'), { recursive: true, force: true });
+    engage(dir);
+    expect(existsSync(join(dir, '.mugiwara', '.engaged'))).toBe(true);
+    const config = join(dir, '.mugiwara', 'config');
+    expect(existsSync(config)).toBe(true);
+    expect(readFileSync(config, 'utf8')).toContain('mode=');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('marker: existing custom config is never overwritten', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=semi\n');
+    engage(dir);
+    expect(readFileSync(join(dir, '.mugiwara', 'config'), 'utf8')).toBe('mode=semi\n');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('marker: non-mugiwara tool use creates no .mugiwara dir at all', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    rmSync(join(dir, '.mugiwara'), { recursive: true, force: true });
+    hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'general-purpose' }, session_id: 's1' });
+    expect(existsSync(join(dir, '.mugiwara'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

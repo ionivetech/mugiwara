@@ -19,6 +19,10 @@ export const FORBIDDEN: Array<[RegExp, string]> = [
   [/\bterraform\s+(apply|destroy)\b/, 'changing infrastructure'],
   [/\bdocker\s+push\b/, 'pushing an image'],
   [/\baws\s+\w+\s+(create|delete|update|put)\b/, 'changing cloud resources'],
+  [/\bgit\s+stash\b/, 'stashing away uncommitted work'],
+  [/\bgit\s+reset\s+--hard\b/, 'discarding uncommitted work'],
+  [/\bgit\s+clean\s+-f/, 'deleting untracked files'],
+  [/\bgit\s+checkout\s+--(\s|$)/, 'discarding uncommitted work'],
 // GUARDS-TABLE-END
 ];
 

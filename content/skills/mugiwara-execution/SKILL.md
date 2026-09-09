@@ -71,10 +71,10 @@ Full protocol: `references/dispatch.md` — output rule, batch report format, si
 ## Surfacing rule
 
 > **Delegated work is not hidden work.** A worker may run out of view; its
-> result may not. Every worker returns a flow stage banner, a one-line verdict,
-> and an evidence link into the main thread. The user never clicks into a
-> subagent to know what happened. Isolation is for context and permission,
-> never for autonomy.
+> result may not. Every worker returns a one-line verdict and an evidence link —
+> never a banner. The user never clicks into a subagent to know what happened:
+> banner + handoff stay in the main thread. Isolation is for context and
+> permission, never for autonomy.
 
 ## TDD discipline & user tests
 

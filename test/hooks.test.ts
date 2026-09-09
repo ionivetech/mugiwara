@@ -150,6 +150,32 @@ test('pretool: git merge → denies', { timeout: 20000 }, () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('pretool: git stash → denies (auditor tree stays untouched)', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    const { out } = bash(dir, 'git stash push -m wip');
+    expect(blocked(out)).toBe(true);
+    expect(out).toContain('stashing away uncommitted work');
+    expect(blocked(bash(dir, 'git stash pop').out)).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('pretool: git reset --hard → denies', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    expect(blocked(bash(dir, 'git reset --hard HEAD').out)).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('pretool: checkout -b and commit stay allowed (over-correction guard)', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    // The crew's own branch and commit flow must survive the new rows.
+    expect(bash(dir, 'git checkout -b feat/x').out).toBe('');
+    expect(bash(dir, 'git status -s').out).toBe('');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('pretool: feature-branch push stays allowed (over-correction guard)', { timeout: 20000 }, () => {
   const dir = repo();
   try {

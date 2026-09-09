@@ -1069,6 +1069,28 @@ console.log('\nE4 — forbidden table');
   }
 }
 
+// --- E4b: remove git stash from the FORBIDDEN table → stash deny case fails ---
+console.log('\nE4b — tree-mutation row');
+{
+  const gf = join(root, 'src', 'guards.ts');
+  const original = readFileSync(gf, 'utf8');
+  try {
+    const broken = original.replace("  [/\\bgit\\s+stash\\b/, 'stashing away uncommitted work'],\n", '');
+    if (broken === original) {
+      console.error('✗ E4b: mutation target not found');
+      failed++;
+    } else {
+      writeFileSync(gf, broken);
+      execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+      assert('missing stash row → stash deny case fails', false, () => run('E4b', 'bunx vitest run test/hooks.test.ts -t "pretool: git stash"'));
+    }
+  } finally {
+    writeFileSync(gf, original);
+    execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
+    assert('restored → stash deny case passes', true, () => run('E4b-restore', 'bunx vitest run test/hooks.test.ts -t "pretool: git stash"'));
+  }
+}
+
 // --- E5-overcorrection: block every git push → feature-push case fails ---
 console.log('\nE5 — over-broad push matcher');
 {
