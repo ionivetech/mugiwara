@@ -70,8 +70,9 @@ Before the detail blocks, add two markdown tables so the executor can read the s
 ```
 **Task N: <title>** `[PARALLEL]` | `[SEQUENTIAL, depends-on: Task M (file: <path>)]`
 - Files: create/modify <exact paths>
-- Interfaces: consumes <file> from Task M → produces <file> for Task N
+- Interfaces: consumes <symbol: fn/type> from Task M → produces <symbol> for Task N, with one I/O example
 - Size: XS | S | M | L | XL  (XL = 8+ files → split)
+- Effort: <same scale + one-line why — calibrates wave load, format: `references/plan-template.md`>
 - Break: none | <split condition when this task may exceed 8 files or diverge>
 - Steps: [ ] <TDD: failing test → run → implement → run → commit>
 - Acceptance: <command-verifiable>
@@ -81,7 +82,7 @@ Before the detail blocks, add two markdown tables so the executor can read the s
 **Task size = commit granularity.** The executor commits per LOGICAL task, not per micro-step. Size tasks as meaningful units of work (a feature, a fix, a refactor), not keystrokes — a "fix typo" or "rename variable" task folds into its neighboring logical task, never standalone. A plan full of XS tasks is a history-littering plan; merge them up before writing. Rule: one task = one commit, no exceptions.
 
 ## Waves
-Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALLEL]` ONLY when tasks share no file AND no interface dependency AND no shared CODEOWNERS area (state the proof); otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption. Per-wave gate: acceptance checks run with evidence; a wave starts only when its dependencies are proven done.
+Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALLEL]` ONLY when tasks share no file AND no interface dependency AND no shared CODEOWNERS area (state the proof); otherwise `[SEQUENTIAL, depends-on: Task M (file: <path>)].` Never mark parallel on assumption. Per-wave gate: acceptance checks run with evidence; a wave starts only when its dependencies are proven done. Each wave gate states its green literally — the command AND one example of correct output (`969 pass, 0 fail`): the executor compares, never interprets.
 
 **Rollback per wave.** Every wave names its rollback point — a tag at the last proven-good commit — in the wave table. Rule: wave N starts only when wave N-1's rollback point is recorded; a failed wave gate means revert (`git revert <wave-N-tag>`), fix, re-run the gate. A wave with no named rollback point is a planning defect.
 
@@ -113,6 +114,7 @@ Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant
 Full checklist: `references/large-campaign-subplan.md` — 6 items; trigger `>3 phases` or `>1500 lines`, `sub-plan/NN-phaseNN-<slug>.md`, master index pattern.
 ## Handoff
 STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to the orchestrator.** Present a 2-3 line summary (waves, task count, key risks) and hand off for the GO decision. The orchestrator decides: approve → executor, revise → back to you, or escalate.
+Before handoff, write one pre-mortem paragraph in the plan: assuming this mission failed, the most likely cause is X — and the plan already counters it at Task N (or add the counter before handing off).
 
 Never hand to the executor without a GO. In `guided` mode, the orchestrator asks the user before delegating. In `semi`/`auto`, the orchestrator may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, the orchestrator routes.
 

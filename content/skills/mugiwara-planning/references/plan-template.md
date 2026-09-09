@@ -136,6 +136,50 @@ on thousands of lines of unrelated context drifts as surely as one built on
 nothing. A convention the plan doesn't state does not exist for the executor:
 write it down.
 
+## Effort & wave load (Standard+)
+
+Size is a label; Effort calibrates it. Score XS=1, S=2, M=4, L=8; a wave
+above 12 rebalances (split the wave or shrink a task) — a wave holding 3×
+execution capacity is a planning defect, not ambition. The one-line why
+(`M — new parser + 40-line rewrite`) lets the executor challenge the number.
+
+## Inter-task contracts (any parallel wave)
+
+`consumes/produces` names the symbol, its shape, and one I/O example —
+never a bare file:
+
+```markdown
+- Interfaces: consumes `parseArgs(argv: string[]): Parsed` from T2 →
+  produces `runScript(name: string): number` for T4.
+  Example: `parseArgs(['install','--yes'])` → `{command:'install',…}`.
+```
+
+A consumer task whose producer changed signature fails review, not
+execution — the contract is checked at the wave gate (`grep` the symbol).
+
+## Green per wave gate (Standard+)
+
+Each wave gate row carries the command AND one example of correct output:
+
+```markdown
+| Wave | Focus | Tasks | Gate |
+| 3 | Runner swap | T4–T6 | `bun test` → `969 pass, 0 fail` + `coverage-gate` → `PASS` |
+```
+
+## Pre-mortem (Full)
+
+One paragraph before handoff, in the plan:
+
+```markdown
+## Pre-mortem
+Assuming this mission failed, the most likely cause is the lcov/DA mapping
+in T5 silently weakening the gate — countered by the exact-parity check
+against the T2 baseline at the T5 gate.
+```
+
+If no counter exists, add it before handoff — a known death with no counter
+is a shipped hole.
+
 ## Anti-patterns to avoid
 
 - "TBD" or "add appropriate error handling" in a step.
