@@ -6,7 +6,7 @@ Example: a skill ships without its `Skip when` block. The validator fails the bu
 
 ## Enforced: a validator or hook fails the build
 
-Something other than a model checks each row below, and drift breaks CI. Presence of skip gates with numeric thresholds, skill body line ceilings, description bounds with no duplicate names, the 5,500-char index budget, manifest parity with `content/`, lane thresholds equal to source constants, write-scope limited to the executor and healer skills, generated target files matching `content/`, retrieval quality never regressing below its floor (95.9% rank-1 over 216 probes, 318 pointers resolving with 0 broken), and the turn-end savepoint hook refreshing mission state on Claude Code. That hook is the only mechanism producing an artifact without model involvement, and it never advances a flow stage.
+Something other than a model checks each row below, and drift breaks CI. Presence of skip gates with numeric thresholds, skill body line ceilings, description bounds with no duplicate names, the 5,500-char index budget, manifest parity with `content/`, lane thresholds equal to source constants, write-scope limited to the executor and healer skills, generated target files matching `content/`, retrieval quality never regressing below its floor (95.9% rank-1 over 216 probes, 322 pointers resolving with 0 broken), and the turn-end savepoint hook refreshing mission state on Claude Code. That hook is the only mechanism producing an artifact without model involvement, and it never advances a flow stage.
 
 Full mechanism mapping lives in the validator source and the hooks manifest; this page states the split, not the wiring.
 
