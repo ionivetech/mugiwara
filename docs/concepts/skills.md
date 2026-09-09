@@ -1,50 +1,19 @@
-# The Techniques — 21 Skills
+# What skills exist?
 
-Each skill is a portable markdown playbook — the "how to" the crew follows when
-it embodies a role.
+A role without a playbook improvises. Each skill below is the portable markdown playbook the crew follows when it embodies a role: 21 skills, loaded on demand, measured at 95.9% rank-1 over 216 retrieval probes with 318 pointers resolving and 0 broken.
+
+Example: a vague request arrives and Luffy must decide the route. Luffy loads `mugiwara-orchestration`, runs the 5-way triage, and records the decision. The playbook decided the shape before any work started.
 
 ## Core pipeline
 
-| Skill | Teaches |
-|-------|---------|
-| `mugiwara-workflow` | Harness entry: inline execution, gateway triage, flow pipeline, workspace, blocker protocol, cleanup |
-| `mugiwara-orchestration` | Captain: 5-way classifier, check-ins, work splitting, decision log, closure |
-| `mugiwara-brainstorm` | Critical sparring: interrogate, research facts, cut over-engineering, recommend |
-| `mugiwara-planning` | Interview-first, full-context scan, scaled plan waves with parallel/sequential markers |
-| `mugiwara-execution` | Todo list, sequential inline + parallel worker batches, 6-field delegation, one commit per task |
-| `mugiwara-checkpoint` | Verify-everything audit — deduped re-runs scoped to flow-stage diff; failure rows to blocker ledger |
-| `mugiwara-quality` | Discover project tooling; formatter, linter, duplication detection, complexity scoring, maintainability rating (A–E), code attribute checks, unit tests |
-| `mugiwara-gates` | Coverage ≥85% new / ≥90% modified, build, DoD, granular sonar gate: vulnerabilities, bugs, code smells, duplications — per-condition thresholds |
-| `mugiwara-review` | Doubt-driven review: breaking-change map, five-axis, reliability rating (A–E), code attribute deep review, severity-tagged findings |
-| `mugiwara-security` | STRIDE-first security review, OWASP Top 10, security hotspots, SCA license, authn/authz, secrets, responsibility attribute |
-| `mugiwara-healing` | Reads the ledger, Stop-the-Line + Prove-It root-cause fixes, rollback prep |
+Workflow entry and gateway triage: `mugiwara-workflow`. Captain duties: `mugiwara-orchestration`. Critical sparring on vague ideas: `mugiwara-brainstorm`. Interview-first planning: `mugiwara-planning`. Plan execution with evidence per task: `mugiwara-execution`. Flow-stage audits: `mugiwara-checkpoint`. Adversarial verification: `mugiwara-claim-audit`. Quality tooling: `mugiwara-quality`. Coverage, build, and Definition of Done: `mugiwara-gates`. Diff review: `mugiwara-review`. Security review: `mugiwara-security`. Failure recovery in bounded cycles: `mugiwara-healing`.
 
-## Mission control
+## Mission control and practice
 
-| Skill | Teaches |
-|-------|---------|
-| `mugiwara-git` | Atomic commits, save-points, multi-commit splitting, bisect/blame debugging |
-| `mugiwara-testcases` | User-test intake: immutable-gold rule, declarative-AC routing, consent, failure adjudication |
-| `mugiwara-ship` | GO/NO-GO ship gate: pre-launch checklist, feature flags, rollback plan |
-| `mugiwara-resume` | Session resume: rebuild state from `.mugiwara/missions/<mission>/[member].json`; never restart |
-| `mugiwara-lessons` | Cross-mission memory: actionable lessons ledger, read at triage, written at closure |
-
-## Engineering practice
-
-| Skill | Teaches |
-|-------|---------|
-| `mugiwara-root-cause` | 4-phase: reproduce → localize → reduce → fix + guard; stop-the-line |
-| `mugiwara-contract-first` | Contract-first design, error semantics, boundary validation, backward compatibility |
-| `mugiwara-claim-audit` | Adversarial verification: CLAIM → EXTRACT → DOUBT → RECONCILE → STOP |
+Mission control: atomic commits and save-points (`mugiwara-git`), user-test intake (`mugiwara-testcases`), ship verdicts (`mugiwara-ship`), session resume (`mugiwara-resume`), cross-mission memory (`mugiwara-lessons`). Engineering practice: root-cause discipline (`mugiwara-root-cause`), contract-first design (`mugiwara-contract-first`).
 
 ## Domain
 
-| Skill | Teaches |
-|-------|---------|
-| `mugiwara-frontend` | Anti-slop frontend: audit-first redesigns, design-system extraction, WCAG 2.1 AA |
-| `mugiwara-backend` | Backend/server code: repo standards first, source-backed code, data integrity |
+Frontend redesigns (`mugiwara-frontend`), backend and data integrity (`mugiwara-backend`).
 
-## Anatomy
-
-Every skill is a `SKILL.md` with frontmatter + playbook body. See
-[skill-anatomy.md](../reference/skill-anatomy.md).
+Skill file layout and the one-line pointer rule live in the [skill anatomy](../reference/skill-anatomy.md).
