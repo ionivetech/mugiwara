@@ -18,6 +18,11 @@ const DENY: Array<[string, string]> = [
   ['terraform apply', 'changing infrastructure'],
   ['docker push img:tag', 'pushing an image'],
   ['aws s3api create-bucket --bucket b', 'changing cloud resources'],
+  ['git stash push -m wip', 'stashing away uncommitted work'],
+  ['git stash pop', 'stashing away uncommitted work'],
+  ['git reset --hard HEAD', 'discarding uncommitted work'],
+  ['git clean -fd', 'deleting untracked files'],
+  ['git checkout -- src/x.ts', 'discarding uncommitted work'],
 ];
 
 const ALLOW = [
@@ -27,10 +32,14 @@ const ALLOW = [
   'terraform plan',
   'git log --oneline',
   'kubectl get pods',
+  'git checkout -b feat/x',
+  'git commit -m feat(x): y',
+  'git status -s',
+  'git diff --name-only main..HEAD',
 ];
 
 test('guards: every forbidden class resolves to its action', () => {
-  expect(FORBIDDEN).toHaveLength(10);
+  expect(FORBIDDEN).toHaveLength(14);
   for (const [command, action] of DENY) {
     expect(checkCommand(command), command).toBe(action);
   }
