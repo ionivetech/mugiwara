@@ -22,7 +22,7 @@ One repo-wide lane sizes a one-package fix like a whole-repo migration. Scoping 
    `mugiwara plan conflict-check plan.md` compares file sets per package.
 4. Handles in other packages repeat step 1 with their own glob
    (`packages/web/**`) on their branch before their first savepoint.
-5. Close per package: `mugiwara archive <mission>` folds only that mission's waves.
+5. Close per package: `mugiwara archive <mission>` folds only that mission's waves. State commands (the orchestration router: `archive`, `clean`, `handoff`, `sign`, `status`, `continue`, `cost`, `lesson`, `migrate`) work identically in every harness; a bare `archive` / `handoff` / `sign` lists the missions to pick (exit 2) instead of guessing. On Claude Code and opencode the same router is surfaced as `/mugiwara`.
 
 ## If something goes wrong
 | Symptom | Cause | Fix |

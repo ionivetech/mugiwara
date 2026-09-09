@@ -1,5 +1,5 @@
 ---
-description: Mugiwara crew router — modes, mission state commands (archive, clean, continue, status, cost, handoff, sign, lesson, migrate), workflow entry
+description: Mugiwara crew router — modes, state commands (archive, clean, continue, status, cost, handoff, sign, lesson, migrate), workflow entry
 ---
 Mugiwara: $ARGUMENTS
 
@@ -21,34 +21,33 @@ silently, never ignore. Valid modes: guided, semi, auto.
 
 ## 2. State commands (run the CLI, print verbatim)
 
-`mugiwara <cmd>` means the global binary if present, else
-`npx -y @ionivetech/mugiwara@latest <cmd>` (same fallback as mugiwara-workflow).
-Run it via bash, print stdout/stderr verbatim, then follow the exit code:
+The state-command router is a crew-wide capability — the canonical routing
+table and exit-code protocol live in the orchestration skill at
+`mugiwara-orchestration/references/state-router.md`. Every harness's agent
+loads orchestration and follows that table; this slash command is that same
+router surfaced for the hosts that have slash commands.
 
-| `/mugiwara ...` | Runs | Needs |
-|---|---|---|
-| `archive [<m>]` | `mugiwara archive` | mission optional — bare lists missions to pick from |
-| `clean [--include-live] [--stale <date>]` | `mugiwara clean` | nothing |
-| `continue [<m> [member]]` | `mugiwara continue` | see `/mugiwara continue` |
-| `status [--all]` | `mugiwara status` | nothing |
-| `cost [--mission <id>] [--ledger]` | `mugiwara cost` | nothing |
-| `handoff [<m>] [--path <file>]` | `mugiwara handoff` | mission optional — bare lists in-flight |
-| `sign [<m>] [--verify]` / `sign --gen-key` | `mugiwara sign` | mission optional — bare lists signable |
-| `lesson "<text>"` | `mugiwara lesson` | the text |
-| `migrate [--dry-run] [--to-team\|--to-solo <member>]` | `mugiwara migrate` | `--dry-run` first |
+Run it through the CLI — `mugiwara <cmd>` = global binary if present, else
+`npx -y @ionivetech/mugiwara@latest <cmd>` — print stdout/stderr verbatim, then
+follow the exit code from the reference:
 
-Exit-code protocol (same as `/mugiwara continue`):
+| `/mugiwara ...` | Runs |
+|---|---|
+| `archive [<m>]` | `mugiwara archive` — bare lists missions to pick |
+| `clean [--include-live] [--stale <date>]` | `mugiwara clean` |
+| `continue [<m> [member]]` | `mugiwara continue` |
+| `status [--all]` | `mugiwara status` |
+| `cost [--mission <id>] [--ledger]` | `mugiwara cost` |
+| `handoff [<m>] [--path <file>]` | `mugiwara handoff` — bare lists in-flight |
+| `sign [<m>] [--verify]` / `sign --gen-key` | `mugiwara sign` — bare lists signable |
+| `lesson "<text>"` | `mugiwara lesson` |
+| `migrate [--dry-run] [--to-team\|--to-solo <member>]` | `mugiwara migrate` |
 
-- `0` → done, report briefly.
-- `2` → picker list printed. STOP. The user picks. Never guess a mission.
-- `1` → error printed verbatim. Fix or escalate, never retry blindly.
-
-Destructive first: `archive`/`clean` on a live mission (`--force`,
-`--include-live`) and any `reset` need explicit user confirmation — show the
-`--dry-run` output, then ask. Never `--force` on your own.
-
-Unknown word (not a mode, not a table row): do NOT ignore it — print the table
-above and ask which job was meant.
+Exit-code protocol: `0` done; `2` picker printed, STOP and let the user pick;
+`1` error printed verbatim, fix or escalate. Destructive (`archive`/`clean` on
+a live mission, `migrate`, `reset`) needs `--dry-run` + explicit confirmation
+first. Unknown word (not a mode, not a table row): do NOT ignore it — show the
+table and ask which job was meant.
 
 ## 3. Workflow entry
 
