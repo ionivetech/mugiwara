@@ -18,3 +18,19 @@ Tier 1 auto-triggers on description match and supports progressive disclosure fr
 Without the CLI there is no machine-readable state. Savepoint, archive, continue, and sign need it. The crew still runs the pipeline and still writes an inline report, but resume, budget tracking, lane memory, and the closure integrity gate stay inactive. The crew announces this at Flow 0.
 
 Write scope is runtime-enforced on opencode for internal agents only. Claude Code blocks edits for artifact agents with partial cover. All other targets carry the constraint as prose plus validator gates. Worker dispatch is native on Claude Code, opencode, and Copilot. Elsewhere the fallback is savepoint plus checkpoint plus a fresh session through resume. The plan doc stays the source of truth on every host.
+
+## Enforcement per target
+
+Hooks are the only mechanism that produces a mission artifact without a model choosing to, and they are not portable.
+
+| Target | Turn-end enforcement | Basis |
+|--------|----------------------|-------|
+| `claude` | **enforced** | `Stop` + `SubagentStop` run `hooks/auto-savepoint.ts` |
+| `opencode` | warning at session end | `event` `session.idle` surfaces work-without-triage |
+| the other 7 targets | advisory only | no hook mechanism at all |
+
+| Target | Irreversible-command guard | Basis |
+|--------|----------------------------|-------|
+| `claude` | **enforced** | `PreToolUse` on Bash runs `hooks/pretool-guard.js` |
+| `opencode` | **enforced** | `tool.execute.before` on bash throws (same table as `src/guards.ts`, parity-tested) |
+| the other 7 targets | prose only | no hook mechanism at all |

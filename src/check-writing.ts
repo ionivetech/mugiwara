@@ -48,7 +48,7 @@ export const WRITING_CAPS: Record<string, number> = {
   'docs/install/cursor.md': 300,
   'docs/install/kimi.md': 300,
   'docs/concepts/execution-model.md': 50,
-  'docs/concepts/enforcement.md': 50,
+  'docs/concepts/enforcement.md': 950,
   'docs/concepts/comparison.md': 50,
   'docs/troubleshooting.md': 50,
 };

@@ -12,18 +12,28 @@ coverage_new=85
 heal_max_cycles=3
 ```
 
-Rule: mode owns autonomy, config owns writing standards. Code reads nine keys through savepoint, lane, coverage gate, closure, sign, and guard hooks. The rest are advisory: the crew reads them from this file at stage start, no validator fires.
+Rule: mode owns autonomy, config owns writing standards. Code reads every key below through savepoint, lane, coverage gate, closure, sign, and guard hooks. Optional keys ship commented; uncomment to set. Prose on this page never overrides the table.
 
-| Keys | Default | Meaning |
+| Key | Default | Meaning |
 |---|---|---|
-| `mode` | guided | Autonomy level, read per flow stage |
-| `branch`, `commit` | pattern, conventional | Naming styles, advisory, crew-read |
-| `auto_commit` | off | Commit and push in guided and semi, no effect in auto |
-| `coverage_new`, `coverage_modified` | 85, 90 | Gate thresholds, policy can raise only |
-| `review_depth`, `quality_depth` | full | Review and quality depth, advisory |
-| `verify_merged`, `verbosity` | off, normal | Merged verify pass outside lane 3; echo level |
-| `delegate_threshold`, `heal_max_cycles` | 60, 3 | Dispatch flag; heal halt, both computed to state |
-| `context_budget_chars`, `lane_scope_glob` | unset | Archive ceiling; monorepo scope |
-| `investigation_*`, `sign`, `enforce` | 2, 5, 2, auto, block | Investigation caps; attestation; guard policy |
+| `mode` | guided / semi / auto | Autonomy per flow stage; flips apply next stage |
+| `verbosity` | normal / full | Echo depth; review needs never collapse |
+| `branch` | feature/{type}-{issue}-{slug} | Branch pattern for mission work |
+| `commit` | conventional | Commit message style |
+| `auto_commit` | off | Commit and push in guided and semi; no effect in auto |
+| `coverage_new` | 85 | Gate threshold, new code; policy raises only |
+| `coverage_modified` | 90 | Gate threshold, modified code; policy raises only |
+| `review_depth` | full / standard / quick | Review pass depth |
+| `quality_depth` | full / standard / quick | Quality pass depth |
+| `verify_merged` | on / off | Merged verify pass outside lane 3 |
+| `delegate_threshold` | 60 | Percent of budget before delegation is advised |
+| `heal_max_cycles` | 3 | Heal loop halts here and escalates |
+| `lane_scope_glob` | unset | Monorepo scope; escalation still reads the full diff |
+| `context_budget_chars` | 150000 | Archive refuses past this trail size |
+| `investigation_max_passes` | 2 | Investigator pass cap per stage |
+| `investigation_max_unrelated_files` | 5 | Unrelated-file tolerance per investigation |
+| `investigation_repeated_read_threshold` | 2 | Repeat-read flag threshold |
+| `sign` | off / minisign / pure / auto | Report attestation backend |
+| `enforce` | off / warn / block | Pipeline-guard policy |
 
 Missing config on read means guided. Flip mid-mission by saying `mugiwara mode auto` in session. It applies from the next flow stage. Policy file `mugiwara.policy.yml` can raise coverage, never lower it. Full consumer map lives in code: `scripts/savepoint.sh`, `scripts/lane.sh`, coverage gate, `src/sign.ts`, guard hooks.

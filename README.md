@@ -55,7 +55,7 @@ The routing decision is computed state, visible in `mugiwara status`, not a vibe
 
 ## Install
 
-One crew, ten doors. Pick your harness, follow its page, end at the same roster question as proof.
+One crew, ten pages, twelve platforms — 9 via install, 3 via marketplace manifest. Pick your harness, follow its page, end at the same roster question as proof.
 
 | Harness | How the crew loads | Install page |
 |---|---|---|
@@ -139,7 +139,7 @@ Eval Runner scores skill behavior in the harness, and the Memory Keeper carries 
 What is missing is said aloud: outcome comparison against other approaches is not measured yet, and the table below keeps that row empty until a study exists.
 
 One crew on every harness.
-The same 21 skills and 14 agents ship to all ten install targets; only the loading path changes per tier.
+The same 21 skills and 14 agents ship to all twelve platforms; only the loading path changes per tier.
 Proof: 318 of 318 reference pointers resolve across 9 targets, and 216 retrieval probes rank 1 at 95.9 percent, both enforced in CI. Detail: [harness matrix](docs/reference/harness-matrix.md).
 
 A cost governor with teeth.
