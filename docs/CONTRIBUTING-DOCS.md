@@ -19,3 +19,10 @@ scripts/validate-content.ts --check-writing` enforces the testable ones in CI.
 9. Every command block is followed by its real output block. No invented
    output. Trim long output and mark the trim.
 10. A page that duplicates another page's answer links instead of repeating.
+11. Hook, prove, close. Every entry page opens with the reader's problem and
+    its stakes, pairs each capability claim with a number, a command, or an
+    output, and closes with exactly one call to action.
+12. Take a stance. Name who the page is for and not for, state one trade-off.
+    A page with no opinion reads as machine-written.
+13. README floor: 1,000 to 1,400 words. Banner image and install matrix are
+    required, never cut.
