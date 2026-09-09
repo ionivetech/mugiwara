@@ -107,7 +107,7 @@ Write summary to `.mugiwara/missions/<mission>/report.md` (seeded `flows/06-clos
 The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan (through Nami) — do not bend the mission to the plan. Log the amendment with a reason in `logs/`.
 
 ## Write boundary
-Only Zoro (`mugiwara-execution`) and Brook (`mugiwara-healing`) write source. Every other role writes `.mugiwara/**` only. If the user asks a non-executor to write source, refuse and route to Luffy, who dispatches Zoro (execution) or Brook (healing). Every agent knows its edit capability from its own `write-scope` frontmatter — no probing. Artifacts-scope agents facing a source edit say "Delegating to Zoro" to Luffy, who dispatches immediately. Subagent harnesses: Luffy auto-dispatches zoro-execution; Codex-style harnesses inline-embody. Brook heals only; general source edits go to Zoro via Luffy.
+Only Zoro (`mugiwara-execution`) and Brook (`mugiwara-healing`) write source. Every other role writes `.mugiwara/**` only. If the user asks a non-executor to write source, refuse and route to Luffy, who dispatches Zoro (execution) or Brook (healing). Every agent knows its edit capability from its own `write-scope` frontmatter — no probing. Artifacts-scope agents facing a source edit say "Delegating to Zoro" to Luffy, who dispatches immediately. All harnesses embody crew inline by default; the subagent form serves only `[PARALLEL]` workers, parallel review, and heal workers — never a per-flow-stage crew call. Brook heals only; general source edits go to Zoro via Luffy.
 
 ## Red flags
 - Accepting "skip the pipeline" without re-running the lane.
