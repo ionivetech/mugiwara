@@ -52,7 +52,8 @@ Full taxonomy: `references/failure-taxonomy.md`.
 |---------|--------|
 | lint/format error | auto-fix (formatter when supported), re-run |
 | type error / simple test fail | minimal diff at ROOT CAUSE — grep all callers before patching; never fix only the symptom path |
-| flaky / env failure | mark `env`, do not patch code, note for rerun |
+| flaky failure | 3-run rule per `mugiwara-checkpoint`: mixed results → quarantine with owner, never PASS, never code patch |
+| env failure (proven) | mark `env`, do not patch code, note for rerun |
 | blocker security/review finding | smallest safe diff; add or extend the test that catches it |
 | architectural finding / high-risk change | DO NOT auto-fix — prepare fix/rollback plan, escalate to Luffy → human |
 
@@ -60,7 +61,7 @@ Env rule: `env` must reproduce on a clean checkout in the same environment, or f
 
 ## Cycle counter (`heal_halt`)
 
-Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` — savepoint writes it as `heal_cycle ≥ heal_max_cycles`, config default 3. After this flow stage, flow returns to Flow 4 (Chopper) for re-audit. **When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag.** Red flags are prose; the counter is state. Never re-run past `heal_max_cycles`.
+Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` — savepoint writes it as `heal_cycle ≥ heal_max_cycles`, config default 3. The counter is global AND per-row: one row gets max 2 attempts, then it escalates (finding → plan → owner) while other rows continue — a stubborn row never starves the rest. After this flow stage, flow returns to Flow 4 (Chopper) for re-audit. **When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag.** Escalations use the stop-handoff shape (`_shared/references/cost-governor.md`: facts, dead ends, next step + owner) — "full history" without that shape is a dump, not a handoff. Red flags are prose; the counter is state. Never re-run past `heal_max_cycles`.
 
 ## Worker subagents
 

@@ -17,9 +17,13 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 
 - Usopp → return brainstorm → Luffy routes to Nami or Zoro
 - Nami → return plan → guided/semi: Luffy asks the user for GO; auto: Luffy delegates to Zoro
+- Zoro → return execution → Luffy routes to Chopper
+- Chopper → return audit → PASS: Luffy routes onward; FAIL: Luffy routes to Brook
+- Brook → return healing → Luffy routes to Chopper for re-audit
 - Sanji → return quality → Luffy routes pass/fail
 - Franky → return gates → Luffy routes pass/fail
 - Robin/Jinbe → return findings → Luffy routes to Brook/Zoro/defer
+- Skeptic → return doubt trail → Luffy routes to Nami (plan fix) or onward
 
 **Control commands (pre-flow):** `mugiwara continue`/`status` are read-only,
 pre-flow — never create config, never start a flow stage; exit 2 = user selects.
