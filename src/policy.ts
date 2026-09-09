@@ -105,7 +105,47 @@ function scalar(v: string): unknown {
   if (/^-?\d+(\.\d+)?$/.test(t)) return Number(t);
   if (t === 'true') return true;
   if (t === 'false') return false;
+  // Flow-style array: `key: ["a", "b"]` — the documented form. Split
+  // top-level commas (quote- and brace-aware) so list keys (lanes.force_full,
+  // gates.*, evidence.*) receive a real array instead of a dead string.
+  // Previously the string silently failed every Array.isArray check and the
+  // whole policy went fail-open with zero warning.
+  if (t.startsWith('[') && t.endsWith(']')) return splitFlowArray(t.slice(1, -1));
   return t;
+}
+
+/** Split a flow-array body on top-level commas; quotes and `{...}` respected. */
+function splitFlowArray(body: string): unknown[] {
+  const out: unknown[] = [];
+  let cur = '';
+  let quote: string | null = null;
+  let depth = 0;
+  const push = () => {
+    const s = cur.trim();
+    if (s) out.push(scalar(s));
+    cur = '';
+  };
+  for (const ch of body) {
+    if (quote) {
+      cur += ch;
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      cur += ch;
+    } else if (ch === '{') {
+      depth++;
+      cur += ch;
+    } else if (ch === '}') {
+      depth = Math.max(0, depth - 1);
+      cur += ch;
+    } else if (ch === ',' && depth === 0) {
+      push();
+    } else {
+      cur += ch;
+    }
+  }
+  push();
+  return out;
 }
 
 /**

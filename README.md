@@ -131,7 +131,7 @@ Resume rebuilds from `.mugiwara/missions/<mission>/` on disk and continues at th
 Proof: `mugiwara continue <mission>` prints the resume point instead of restarting, and exits nonzero when you must pick from listed options.
 
 Provenance and signed reports.
-`mugiwara blame <path>` notes the last commit touching a path, `mugiwara handoff` writes the report the next engineer acts on, `mugiwara sign` attests it with ed25519.
+`mugiwara handoff` writes the report the next engineer acts on (`--path` adds the provenance note), `mugiwara sign` attests it with ed25519.
 Proof: `mugiwara sign <mission> --verify` checks the attestation. Detail: [provenance](docs/concepts/provenance.md).
 
 An outcome loop, stated honestly.
@@ -139,8 +139,8 @@ Eval Runner scores skill behavior in the harness, and the Memory Keeper carries 
 What is missing is said aloud: outcome comparison against other approaches is not measured yet, and the table below keeps that row empty until a study exists.
 
 One crew on every harness.
-The same 21 skills and 14 agents ship to all twelve platforms; only the loading path changes per tier.
-Proof: 318 of 318 reference pointers resolve across 9 targets, and 216 retrieval probes rank 1 at 95.9 percent, both enforced in CI. Detail: [harness matrix](docs/reference/harness-matrix.md).
+The same 20 skills and 14 agents ship to all twelve platforms; only the loading path changes per tier.
+Proof: 322 of 322 reference pointers resolve across 9 targets, and 216 retrieval probes rank 1 at 95.9 percent, both enforced in CI. Detail: [harness matrix](docs/reference/harness-matrix.md).
 
 A cost governor with teeth.
 Every mission carries a budget by lane, warns then stops at the limit, and reports spend beside avoided work in human and JSON form.
@@ -162,8 +162,8 @@ Mugiwara is for teams who review. If nobody reads the report, install nothing.
 | Claim | Status |
 |---|---|
 | Retrieval routing rank-1 | **95.9%**, 216 probes (170 positive, 82 negative), in CI |
-| Reference pointers resolve | **318/318**, 9 targets, in CI |
-| Skill index cover | 21 skills indexed, in CI |
+| Reference pointers resolve | **322/322**, 9 targets, in CI |
+| Skill index cover | 20 skills indexed, in CI |
 | Lane bases / budgets | 8,000 / 12,000 lean, 13,000 / 25,000 standard, 22,000 / 50,000 full |
 | Outcome vs other approaches | not measured |
 

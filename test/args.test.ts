@@ -40,3 +40,17 @@ test('unknown flag throws', () => {
 test('flag missing value throws', () => {
   expect(() => parseArgs(['--target'])).toThrow(/missing value/i);
 });
+
+test('parses --solo for savepoint', () => {
+  const r = parseArgs(['savepoint', 'm', '--flow', '2', '--solo']);
+  expect(r.command).toBe('savepoint');
+  expect(r.flags.solo).toBe(true);
+  expect(r.flags.flow).toBe('2');
+});
+
+test('parses --stale value and --include-live bool for clean', () => {
+  const r = parseArgs(['clean', '--stale', '2025-01-01', '--include-live']);
+  expect(r.command).toBe('clean');
+  expect(r.flags.stale).toBe('2025-01-01');
+  expect(r.flags.includeLive).toBe(true);
+});

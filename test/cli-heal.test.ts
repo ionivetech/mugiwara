@@ -236,13 +236,13 @@ describe('heal: clean edge branches', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('clean with invalid --before exits 1', async () => {
+  test('clean with invalid --stale exits 1', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-clean-before-'));
     try {
       mkdirSync(join(dir, '.mugiwara', 'missions'), { recursive: true });
       writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=auto\n');
-      const { err } = await cap(['clean', '--before', 'not-a-date'], dir);
-      expect(err).toContain('invalid --before date');
+      const { err } = await cap(['clean', '--stale', 'not-a-date'], dir);
+      expect(err).toContain('invalid --stale date');
       expect(exitSpy).toHaveBeenCalledWith(1);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });

@@ -106,7 +106,7 @@ fi
 # .opencode/, .claude/, evals/ — everything else is docs/config/asset.
 # With lane_scope_glob the check applies to the scoped set — sensitive still wins unfiltered.
 if [ "$LANE" = "full" ] && [ "$HAS_SENSITIVE" -eq 0 ] && [ -n "$SCOPED" ]; then
-  CODE_COUNT=$(echo "$SCOPED" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+  CODE_COUNT=$(echo "$SCOPED" | grep -E "$PRODUCT_PAT|$CODE_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
     LANE="standard"

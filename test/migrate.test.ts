@@ -147,3 +147,16 @@ test('savepoint writes schema_version 2', { timeout: 30000 }, () => {
     expect(state.schema_version).toBe(CURRENT_SCHEMA_VERSION);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('flat legacy file warns it is not a mission dir', () => {
+  const dir = tmp();
+  try {
+    const base = join(dir, '.mugiwara', 'state');
+    mkdirSync(base, { recursive: true });
+    writeFileSync(join(base, 'flat.json'), JSON.stringify({ mission: 'flat', flow: 1 }));
+    const r = spawnSync('bun', [join(import.meta.dirname, '..', 'src', 'cli.ts'), 'migrate', '--project', dir], { encoding: 'utf8' });
+    const out = r.stdout + r.stderr;
+    expect(out).toContain('not a mission dir');
+    expect(out).toContain('state/<mission>/<member>.json');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

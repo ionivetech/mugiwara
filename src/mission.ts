@@ -179,6 +179,11 @@ export function closureBlockers(missionDir: string, mission: string): string[] {
       problems.push(`  ${s.member.padEnd(12)} has state but no sub-mission in plan.md`);
     }
   }
+  // Solo mission (state.json, no member files) whose plan still names people:
+  // the common cause is a literal "solo" assignee — solo rows use "-".
+  if (states.some((x) => !x.member) && !states.some((x) => x.member) && roster.length) {
+    problems.push(`  plan names ${roster.length} assignee(s) but mission is solo — use "-" for solo rows or run: mugiwara migrate --to-team <member>`);
+  }
   return problems;
 }
 
@@ -518,6 +523,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     // T4: over 80% already compressed above; hard fail only at 100% preserves gate-selftest.
     if (budget && chars > budget) {
       throw new Error(`closure context budget failed — ${footprintLine}. Trim the trail or raise context_budget_chars.`);
+    }
+  }
+
+  // Stateless missions skip the cost section above, but the context budget is
+  // a trail property, not a state property — a 200KB trail with no state.json
+  // used to archive silently. Gate it anyway (no ledger row to record: there
+  // is no state to hang the closure event on).
+  if (!dryRun && !state) {
+    const chars = measureContextChars(dir);
+    const budget = readBudgetConfig(projectDir);
+    if (budget && chars > budget) {
+      throw new Error(`closure context budget failed — ${formatFootprint(chars, budget)}. Trim the trail or raise context_budget_chars.`);
     }
   }
 

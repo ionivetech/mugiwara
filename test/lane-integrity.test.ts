@@ -365,6 +365,20 @@ test('case 29: docs-only change does not escalate to full (path-weighted)', { ti
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('case 34: non-JS code outside product dirs still escalates to full (CODE_PAT)', { timeout: SLOW }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-py-'));
+  try {
+    baseRepo(dir);
+    execSync('mkdir -p pkg', { cwd: dir });
+    const pys: Record<string, string> = {};
+    for (let i = 0; i < 10; i++) pys[`pkg/mod${i}.py`] = 'x = 1\n';
+    for (const [p, c] of Object.entries(pys)) { writeFileSync(join(dir, p), c); }
+    execSync('git add -A && git commit -qm wip', { cwd: dir });
+    const r = run(LANE, ['main', '--json'], dir);
+    expect(JSON.parse(r.stdout).lane).toBe('full'); // 10 code files, no product dir
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('case 30: deleted sources -> full via sensitive-path removal keeps clamp (D2 regression)', { timeout: SLOW }, () => {
   const dir = fixtureDir('sensitive-paths');
   try {

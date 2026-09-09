@@ -29,11 +29,11 @@ Whatever the level, these are always visible — they are the audit surface:
 ## `normal` — default
 
 ```
-## `Flow 3 — Zoro (Execution)`
+## ⚔️ Flow 3 — Zoro (Execution)
 ✎ src/auth/invitation.ts   +42/-8   token validation + redirect guard
 ✎ src/routes/index.ts      +6/-0    route registration
 ✓ tests 84/84 · lint 0     → results/m/03-quality.md
-→ Flow 4 — Chopper (Checkpoint)
+→ 🩺 Flow 4 — Chopper (Checkpoint)
 ```
 
 Commands ran and passed; output collapsed to one line per gate with the

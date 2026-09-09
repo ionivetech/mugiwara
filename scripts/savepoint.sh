@@ -67,7 +67,9 @@ MISSION="${1:-${STATE_MISSION:-}}"
 # `mugiwara continue` after the user picks from the roster — never typed by
 # hand, so it cannot disagree with the plan. Empty means solo.
 MEMBER="${2:-${STATE_MEMBER:-}}"
-if [ -z "$MEMBER" ] && [ -f "$MUGIWARA_DIR/active-member" ]; then
+# MUGIWARA_SOLO=1 (from `mugiwara savepoint --solo`) forces solo even when a
+# cache exists — an explicit "" alone cannot, it reads as absent.
+if [ -z "$MEMBER" ] && [ -z "${MUGIWARA_SOLO:-}" ] && [ -f "$MUGIWARA_DIR/active-member" ]; then
   MEMBER=$(head -1 "$MUGIWARA_DIR/active-member" 2>/dev/null | tr -d '[:space:]')
 fi
 WAVE="${3:-${STATE_WAVE:-1}}"
@@ -294,7 +296,7 @@ fi
 # escalation above still wins. With lane_scope_glob the check applies to the
 # scoped set — but sensitive wins unfiltered above, so safety never shrinks.
 if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$SCOPED_FILES" ]; then
-  CODE_COUNT=$(echo "$SCOPED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+  CODE_COUNT=$(echo "$SCOPED_FILES" | grep -E "$PRODUCT_PAT|$CODE_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
     LANE="standard"

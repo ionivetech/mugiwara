@@ -5,11 +5,11 @@
   "retrieval_rank1_count": 163,
   "retrieval_positives": 170,
   "retrieval_negatives": 82,
-  "retrieval_index_size": 21,
-  "retrieval_index_terms": 293,
-  "pointers_total": 318,
+  "retrieval_index_size": 20,
+  "retrieval_index_terms": 284,
+  "pointers_total": 322,
   "pointers_targets": 9,
   "pointers_broken": 0,
-  "index_size": 21,
-  "updated": "2026-09-04"
+  "index_size": 20,
+  "updated": "2026-09-09"
 }

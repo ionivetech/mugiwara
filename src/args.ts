@@ -6,12 +6,12 @@ export type Args = {
   flags: Record<string, FlagValue>;
 };
 
-const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target', '--before': 'before', '--backend': 'backend', '--mission': 'mission', '--to-team': 'toTeam', '--to-solo': 'toSolo', '--flow': 'flow', '--area': 'area', '--files': 'files' };
+const VALUE_FLAGS: Record<string, string> = { '--project': 'project', '--target': 'target', '--stale': 'stale', '--backend': 'backend', '--mission': 'mission', '--to-team': 'toTeam', '--to-solo': 'toSolo', '--flow': 'flow', '--area': 'area', '--files': 'files', '--path': 'path' };
 const BOOL_FLAGS: Record<string, string> = {
   '--global': 'global', '--yes': 'yes', '-y': 'yes', '--force': 'force',
   '--dry-run': 'dryRun', '--keep-logs': 'keepLogs', '--check': 'check', '--all': 'all', '--verify': 'verify',
   '--gen-key': 'genKey', '--help': 'help', '-h': 'help', '--version': 'version', '-v': 'version',
-  '--json': 'json', '--ledger': 'ledger',
+  '--json': 'json', '--ledger': 'ledger', '--solo': 'solo', '--include-live': 'includeLive',
 };
 
 export function parseArgs(argv: string[]): Args {

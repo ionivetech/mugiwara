@@ -47,8 +47,9 @@ describe('unknown script', () => {
     let msg = '';
     try { runScript('not-a-real-script.sh', [], DIR); } catch (e) { msg = (e as Error).message; }
     expect(msg).toMatch(/script not found: not-a-real-script\.sh/);
-    expect(msg).toContain('available:');
+    expect(msg).toContain('runnable:');
     expect(msg).toContain('savepoint.sh');
+    expect(msg).toContain('lane.sh');
   });
 });
 

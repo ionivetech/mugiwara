@@ -19,7 +19,7 @@ One repo-wide lane sizes a one-package fix like a whole-repo migration. Scoping 
    ✓ savepoint written: .mugiwara/missions/m/state.json (lane=direct, flow=1, files=0)
    ```
 3. Give each package its own sub-mission row (assignee per package), so
-   `mugiwara initiative conflict-check plan.md` compares file sets per package.
+   `mugiwara plan conflict-check plan.md` compares file sets per package.
 4. Handles in other packages repeat step 1 with their own glob
    (`packages/web/**`) on their branch before their first savepoint.
 5. Close per package: `mugiwara archive <mission>` folds only that mission's waves.

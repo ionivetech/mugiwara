@@ -54,7 +54,7 @@ they are the member ids the crew will use for state files. Full rule:
 One area → one sub-mission; `Touched Files` from area map; mergeable alone;
 `Depends On` is real edge; **Assignee spelling is binding** — becomes
 `<member>.json`, lowercase, no spaces, same spelling in every row. Run
-`mugiwara initiative conflict-check .mugiwara/missions/<mission>/plan.md`
+`mugiwara plan conflict-check .mugiwara/missions/<mission>/plan.md`
 before GO — file in two sub-missions is planning defect. Solo missions skip.
 
 ## Plan tables (wave + task index)

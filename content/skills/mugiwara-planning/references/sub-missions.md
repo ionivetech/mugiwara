@@ -24,7 +24,7 @@ Rules:
 
 Then run this **before** asking for the GO:
 
-    mugiwara initiative conflict-check .mugiwara/missions/<mission>/plan.md
+    mugiwara plan conflict-check .mugiwara/missions/<mission>/plan.md
 
 A file appearing in two sub-missions is a planning defect, not a merge problem.
 Fix it by moving the file into one owner's area or by adding a dependency edge.

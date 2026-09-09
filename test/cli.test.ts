@@ -322,13 +322,13 @@ describe('run() — no-install command paths', () => {
       expect(readFileSync(join(dir, '.mugiwara', 'missions', 'done-m', 'report.md'), 'utf8')).toContain('## Archived: 06-closure.md');
       expect(existsSync(join(dir, '.mugiwara', 'index.md'))).toBe(true);
       // --all without --force: in-flight blocks (process.exit(1))
-      const { err } = await capture(['clean', '--all'], dir);
+      const { err } = await capture(['clean', '--include-live'], dir);
       expect(err).toContain('in-flight mission(s): live-m');
       expect(exitSpy).toHaveBeenCalledWith(1);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('clean --before archives stale in-flight missions, keeps fresh ones', async () => {
+  test('clean --stale archives stale in-flight missions, keeps fresh ones', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-before-'));
     try {
       const mk = (m: string, updatedAt: string) => {
@@ -339,7 +339,7 @@ describe('run() — no-install command paths', () => {
       };
       mk('stale-m', '2020-01-01T00:00:00Z');
       mk('fresh-m', new Date().toISOString());
-      const { out } = await capture(['clean', '--before', '2025-01-01'], dir);
+      const { out } = await capture(['clean', '--stale', '2025-01-01'], dir);
       expect(out).toContain('cleaned stale-m');
       expect(out).not.toContain('fresh-m');
       expect(existsSync(join(dir, '.mugiwara', 'missions', 'stale-m', 'report.md'))).toBe(true);
@@ -453,24 +453,31 @@ describe('run() — cost live slop', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('cost without a mission and multiple in-flight states requires --mission', async () => {
+  test('cost without a mission lists every in-flight mission plus totals', async () => {
     const dir = fixture([
       { root: 'state', mission: 'm1', file: 'state', body: state('m1') },
       { root: 'state', mission: 'm2', file: 'state', body: state('m2') },
     ]);
     try {
-      const { err } = await capture(['cost'], dir);
-      expect(err).toContain('multiple missions in flight');
+      const { out } = await capture(['cost'], dir);
+      expect(out).toContain('2 missions:');
+      expect(out).toContain('m1 —');
+      expect(out).toContain('m2 —');
+      expect(out).toContain('Total');
+      expect(out).toContain('mugiwara cost --mission <id>');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
 
-describe('run() — blame', () => {
-  test('blame prints a provenance note for a path', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-blame-'));
+describe('run() — handoff --path', () => {
+  test('handoff --path appends a provenance note for the path', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'm', file: 'state', body: state('m') },
+    ]);
     try {
-      const { out } = await capture(['blame', 'src/cli.ts'], dir);
-      expect(out.length).toBeGreaterThan(0);
+      const { out } = await capture(['handoff', 'm', '--path', 'src/cli.ts'], dir);
+      expect(out).toContain('## Provenance');
+      expect(readFileSync(join(dir, '.mugiwara', 'missions', 'm', 'handoff.md'), 'utf8')).toContain('## Provenance');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
@@ -619,12 +626,8 @@ describe('run() — usage errors + stalenessLine', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('blame with no path prints usage and exits 1', async () => {
-    const dir = fixture([]);
-    try {
-      const { err } = await capture(['blame'], dir);
-      expect(err).toContain('usage: mugiwara blame <file-path>');
-    } finally { rmSync(dir, { recursive: true, force: true }); }
+  test('removed blame command is rejected', async () => {
+    await expect(capture(['blame'])).rejects.toThrow(/Unknown command: blame/);
   });
 
   test('continue with an unknown mission prints known missions and exits 2', async () => {

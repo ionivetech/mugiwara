@@ -20,4 +20,4 @@ The git note on the branch head is the local precision archive for CLI users. Th
 
 ## Hygiene
 
-Notes live outside history: SHAs, diffs, and rebases stay untouched, with rewrite refs keeping notes attached across rebases. Delete the ref to remove every note at once. Push the ref once for sharing; teammates add the matching fetch refspec. Query with `mugiwara blame <path>`, which prints the last touching commit plus its note and admits when a commit carries none.
+Notes live outside history: SHAs, diffs, and rebases stay untouched, with rewrite refs keeping notes attached across rebases. Delete the ref to remove every note at once. Push the ref once for sharing; teammates add the matching fetch refspec. Query with `mugiwara handoff <mission> --path <path>`, which appends the last touching commit plus its note and admits when a commit carries none.

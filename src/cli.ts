@@ -80,18 +80,21 @@ export async function run(argv: string[]): Promise<void> {
     case 'run': return runCmd(flags, _);
     case 'savepoint': return savepointCmd(flags, _);
     case 'join': return joinCmd(flags, _);
-    case 'blame': return blameCmd(flags, _);
     case 'handoff': return handoffCmd(flags, _);
     case 'sign': return signCmd(flags, _);
     case 'migrate': return migrateCmd(flags, _);
     case 'lesson': return lessonCmd(flags, _);
-    case 'initiative': return initiativeCmd(flags, _);
+    case 'plan': return planCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
 
 function savepointCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
+  // --solo (or an explicit "" member) forces solo for BOTH the short and the
+  // long form: the script reads the active-member cache itself, so the flag
+  // must travel as env, not just as an empty positional.
+  if (flag(flags.solo) || positionals[2] === '') process.env.MUGIWARA_SOLO = '1';
   const flowFlag = str(flags.flow) ?? (flag(flags.flow) ? '' : undefined);
   // Short form: mugiwara savepoint --flow N with everything else inferred
   if (flowFlag !== undefined || flag(flags.flow)) {
@@ -126,9 +129,11 @@ function savepointCmd(flags: Args['flags'], positionals: string[]): void {
       }
       mission = all[0];
     }
-    // Member from active-member cache (empty means solo)
-    let member = positionals[2] ?? '';
-    if (!member) {
+    // Member from active-member cache (empty means solo) — unless --solo
+    // forces solo explicitly even when a cache exists.
+    const solo = flag(flags.solo) || positionals[2] === '';
+    let member = solo ? '' : positionals[2] ?? '';
+    if (!solo && !member) {
       const cache = join(projectDir, '.mugiwara', 'active-member');
       if (existsSync(cache)) {
         try { member = readFileSync(cache, 'utf8').trim().split(/\s+/)[0] ?? ''; } catch { member = ''; }
@@ -251,8 +256,8 @@ function archive(flags: Args['flags'], positionals: string[]): void {
 /**
  * `mugiwara clean` — batch-archive every closed mission. A mission is closed
  * when its dir holds a report.md and no live state.json/<member>.json. With
- * --all, missions with live state are included too (--force overrides the
- * safety stop). --before <date> restricts to missions whose state was last
+ * --include-live, missions with live state are included too (--force overrides
+ * the safety stop). --stale <date> restricts to missions whose state was last
  * touched before that date.
  */
 function cleanCmd(flags: Args['flags']): void {
@@ -260,16 +265,16 @@ function cleanCmd(flags: Args['flags']): void {
   const dryRun = flag(flags.dryRun);
   const root = join(projectDir, '.mugiwara', 'missions');
   if (!existsSync(root)) { console.log('nothing to clean (.mugiwara/missions/ does not exist).'); return; }
-  const before = str(flags.before);
-  const beforeMs = before ? Date.parse(before) : NaN;
-  if (before && !Number.isFinite(beforeMs)) { console.error(`invalid --before date: ${before}`); process.exit(1); }
+  const stale = str(flags.stale);
+  const beforeMs = stale ? Date.parse(stale) : NaN;
+  if (stale && !Number.isFinite(beforeMs)) { console.error(`invalid --stale date: ${stale}`); process.exit(1); }
 
   let candidates = readdirSync(root, { withFileTypes: true })
     .filter((e) => e.isDirectory() && /^[A-Za-z0-9._-]+$/.test(e.name) && !/^\.+$/.test(e.name))
     .map((e) => e.name);
   // default: CLOSED missions only — a report.md present and no live session
-  // state. --all widens to every mission dir, including in-flight ones.
-  // --before additionally treats an in-flight mission as closable when its
+  // state. --include-live widens to every mission dir, including in-flight ones.
+  // --stale additionally treats an in-flight mission as closable when its
   // newest state was last touched before the date: untouched work is safe to
   // fold even without a report.md yet.
   const stateFiles = (m: string): string[] =>
@@ -288,7 +293,7 @@ function cleanCmd(flags: Args['flags']): void {
     }
     return true;
   };
-  if (!flag(flags.all)) {
+  if (!flag(flags.includeLive)) {
     candidates = candidates.filter((m) =>
       (existsSync(join(root, m, 'report.md')) && !hasLiveState(m))
       || staleBefore(m),
@@ -769,33 +774,13 @@ function statusCmd(flags: Args['flags']): void {
   }
 }
 
-/** `mugiwara cost [--mission <id>] [--json] [--ledger]` — show cost ledger, avoided work, efficiency, trail. */
-function costCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolveProjectDir(str(flags.project));
-  const mission = str(flags.mission) ?? positionals[1] ?? (() => {
-    const states = readState(projectDir);
-    if (states.length === 1) return states[0].mission;
-    if (states.length > 1) {
-      console.error('multiple missions in flight — specify --mission <id>');
-      process.exit(1);
-    }
-    return null;
-  })();
-  if (!mission) {
-    console.error('usage: mugiwara cost [--mission <id>] [--json] [--ledger] [--project <dir>]');
-    process.exit(1);
-  }
+/** Build the cost ledger for one mission — shared by the single and the all-missions views. */
+function ledgerForMission(projectDir: string, mission: string) {
   const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
-  if (!existsSync(missionDir)) {
-    console.error(`No cost ledger found for mission "${mission}"`);
-    process.exit(1);
-  }
   const states = readState(projectDir).filter((s) => s.mission === mission);
   const envelope = states.length
     ? costEnvelope({ lane: (states[0] as unknown as { lane?: string }).lane, budget: (states[0] as unknown as { budget?: number }).budget, tokens_est: (states[0] as unknown as { tokens_est?: number }).tokens_est })
     : costEnvelope({ lane: 'full', tokens_est: 0 });
-  // live slop (§3.3): run existing detectors over state already available
-  // (heal cycle, context registry repeated reads) so slop_interventions is real.
   const state0 = states[0] as unknown as { heal_cycle?: number };
   let repeatedReads = 0;
   try {
@@ -805,7 +790,51 @@ function costCmd(flags: Args['flags'], positionals: string[]): void {
     repeatedReads = 0;
   }
   const liveSlop = computeLiveSlop({ heal_cycle: state0?.heal_cycle ?? 0, repeated_reads: repeatedReads });
-  const ledger = buildCostLedger({ missionDir, envelope, slopSummary: { interventions: liveSlop.interventions } });
+  return { ledger: buildCostLedger({ missionDir, envelope, slopSummary: { interventions: liveSlop.interventions } }), liveSlop };
+}
+
+/** `mugiwara cost [--mission <id>] [--json] [--ledger]` — show cost ledger, avoided work, efficiency, trail. */
+function costCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const explicit = str(flags.mission) ?? positionals[1] ?? null;
+  if (!explicit) {
+    const missions = [...new Set(readState(projectDir).map((s) => s.mission))].filter((m) =>
+      existsSync(join(projectDir, '.mugiwara', 'missions', m)));
+    if (missions.length === 0) {
+      console.error('usage: mugiwara cost [--mission <id>] [--json] [--ledger] [--project <dir>]');
+      process.exit(1);
+    }
+    if (missions.length === 1) {
+      return costOne(projectDir, missions[0], flags);
+    }
+    // default table across missions; --mission drills into one.
+    if (flag(flags.json)) {
+      console.log(JSON.stringify(missions.map((m) => JSON.parse(toCostJSON(ledgerForMission(projectDir, m).ledger))), null, 2));
+      return;
+    }
+    console.log(`${missions.length} missions:\n`);
+    let tUsed = 0, tPlanned = 0, tAvoided = 0, tTrail = 0;
+    for (const m of missions) {
+      const { ledger } = ledgerForMission(projectDir, m);
+      tUsed += ledger.envelope.used; tPlanned += ledger.envelope.planned;
+      tAvoided += ledger.avoided.tokens_avoided_est; tTrail += ledger.trail.length;
+      console.log(`  ${m} — ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned}) · avoided ~${ledger.avoided.tokens_avoided_est} · trail ${ledger.trail.length}`);
+    }
+    console.log(`\nTotal ${tUsed}/${tPlanned} · avoided ~${tAvoided} · trail ${tTrail}`);
+    console.log('Detail: mugiwara cost --mission <id> [--ledger]');
+    return;
+  }
+  return costOne(projectDir, explicit, flags);
+}
+
+/** Single-mission cost view (the pre-existing behavior, unchanged). */
+function costOne(projectDir: string, mission: string, flags: Args['flags']): void {
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(missionDir)) {
+    console.error(`No cost ledger found for mission "${mission}"`);
+    process.exit(1);
+  }
+  const { ledger, liveSlop } = ledgerForMission(projectDir, mission);
   if (flag(flags.json)) {
     console.log(toCostJSON(ledger));
     return;
@@ -836,14 +865,6 @@ function runCmd(flags: Args['flags'], positionals: string[]): void {
   if (code !== 0) process.exit(code);
 }
 
-/** `mugiwara blame <path>` — provenance note on the last commit touching path. */
-function blameCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolveProjectDir(str(flags.project));
-  const path = positionals[1];
-  if (!path) { console.error('usage: mugiwara blame <file-path>'); process.exit(1); }
-  console.log(blamePath(projectDir, path));
-}
-
 /**
  * Staleness: has main moved since the mission's recorded base?
  * N commits behind = the ground this mission started from has shifted.
@@ -869,11 +890,11 @@ export function stalenessLine(projectDir: string, baseSha: string): string | nul
   } catch { return null; }
 }
 
-/** `mugiwara handoff <mission>` — a report the next engineer can act on. */
+/** `mugiwara handoff <mission> [--path <file>]` — a report the next engineer can act on. */
 function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
-  if (!mission) { console.error('usage: mugiwara handoff <mission> [--project <dir>]'); process.exit(1); }
+  if (!mission) { console.error('usage: mugiwara handoff <mission> [--path <file>] [--project <dir>]'); process.exit(1); }
   const states = readState(projectDir).filter((s) => s.mission === mission);
   const bad = unreadableStateFiles().filter((p) => p.startsWith(`${mission}/`));
   if (bad.length) {
@@ -903,6 +924,10 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   }
   lines.push('', '## Resuming', '', `\`mugiwara continue ${mission}\` prints the exact resume point.`);
   lines.push('Verify `next_action` against plan.md before executing — the table above is computed state, not judgement.');
+  const blameTarget = str(flags.path);
+  if (blameTarget) {
+    lines.push('', '## Provenance', '', blamePath(projectDir, blameTarget));
+  }
   const out = join('.mugiwara', 'missions', mission, 'handoff.md');
   writeFileSync(resolve(projectDir, out), lines.join('\n') + '\n');
   console.log(lines.join('\n'));
@@ -931,8 +956,8 @@ function lessonCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`lesson appended: ${line}`);
 }
 
-/** `mugiwara initiative <status|conflict-check> <plan>` — sub-mission checks. */
-function initiativeCmd(_flags: Args['flags'], positionals: string[]): void {
+/** `mugiwara plan <status|conflict-check> <plan>` — sub-mission checks. */
+function planCmd(_flags: Args['flags'], positionals: string[]): void {
   const r = runInitiative(positionals[1], positionals[2]);
   process.stdout.write(r.output);
   if (r.code !== 0) process.exit(r.code);
@@ -1102,6 +1127,9 @@ export function migrateCmd(flags: Args['flags'], positionals: string[] = []): vo
 
   for (const m of moves) {
     console.log(`${dryRun ? 'would migrate' : 'migrated'} ${m.src} → ${m.dest}`);
+    if (dirname(m.dest) === missionsRoot) {
+      console.error(`warning: ${m.dest} is a file, not a mission dir — legacy shape is state/<mission>/<member>.json`);
+    }
     if (!dryRun) {
       mkdirSync(dirname(m.dest), { recursive: true });
       try {
@@ -1171,7 +1199,7 @@ Usage:
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (missions/ + legacy dirs)
   mugiwara archive <m>   fold a closed mission's waves into its report, then remove loose files
-  mugiwara clean [--all] [--before <date>]
+  mugiwara clean [--include-live] [--stale <date>]
                          batch-archive every closed mission (report.md present, no live state)
   mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
   mugiwara continue <m> [member]
@@ -1179,10 +1207,9 @@ Usage:
   mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
   mugiwara cost [--mission <id>] [--json] [--ledger]
                          show cost ledger, avoided work, efficiency, trail (human + JSON)
-  mugiwara blame <path>  provenance note on the last commit touching <path>
-                         (fetch notes first: git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara')
   mugiwara handoff <m>   write .mugiwara/missions/<m>/handoff.md — a report the next
                          engineer can act on (computed state + staleness check)
+                         [--path <file>: append the provenance note for <file>]
   mugiwara sign <m>      attestation: sign report.md (auto/minisign/pure/off; --verify to check)
   mugiwara sign --gen-key [--backend pure|minisign]
                          create signing keys (pure ed25519 default)
@@ -1197,6 +1224,7 @@ Usage:
                           run a bundled harness script here (${RUNNABLE.join(', ')})
   mugiwara savepoint <mission> [member] [flow] [mode]
                           shorthand for: mugiwara run savepoint.sh ...
+                          (--solo forces solo even with an active-member cache)
   mugiwara --help        this help
   mugiwara --version     print version
 
@@ -1208,9 +1236,10 @@ Flags:
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
   --check                with list: report missing files (health check)
-   --all                  with continue/status: every actor; with clean: include in-flight missions
-   --force                with clean --all: archive in-flight missions anyway
-   --before <date>        with clean: also archive missions untouched since this date
+   --all                  with continue/status: every actor
+   --include-live         with clean: include in-flight missions
+   --force                with clean --include-live: archive in-flight missions anyway
+   --stale <date>         with clean: also archive missions untouched since this date
    --keep-logs            with reset: keep lessons.md (lessons ledger survives)`);
 }
 

@@ -83,7 +83,7 @@ For anything with users on the other side. Not for spikes nobody will run twice.
 ### Audits that re-run the checks
 
 Problem: the last stage finished, and nobody independent confirmed it.
-What: the checkpoint skill audits each finished stage against the plan and files findings without fixing them. The claim-audit skill double-checks done claims with an extract, doubt, and reconcile pass. Chopper runs the audit, and high-stakes missions add the Skeptic for adversarial re-verification.
+What: the checkpoint skill audits each finished stage against the plan and files findings without fixing them. The checkpoint skill carries an adversarial depth that double-checks done claims with an extract, doubt, and reconcile pass. Chopper runs the audit, and high-stakes missions add the Skeptic for adversarial re-verification.
 Proof: the report carries a gates ledger, for example checkpoint PASS, quality PASS, coverage PASS with new-code and modified-code percentages.
 For teams where the author never grades their own work. Trade-off: findings can send finished work back, and that sting is the feature. Detail: [audit-trail](audit-trail.md).
 
@@ -134,8 +134,8 @@ For leads who budget AI spend. Not for flat-rate seats with no metering. Trade-o
 ### One crew on every harness
 
 Problem: switching editors strands your process behind a half-ported workflow.
-What: the same 21 skills and 14 agents ship to Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Windsurf, Cline, Kilo, and Antigravity; only the loading path changes per tier.
-Proof: 318 pointers resolve with 0 broken across 9 targets; 216 retrieval probes rank 1 at 95.9 percent, all enforced in CI.
+What: the same 20 skills and 14 agents ship to Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Windsurf, Cline, Kilo, and Antigravity; only the loading path changes per tier.
+Proof: 322 pointers resolve with 0 broken across 9 targets; 216 retrieval probes rank 1 at 95.9 percent, all enforced in CI.
 For developers in more than one editor. Not for single-harness shops. Trade-off: tier 3 targets run inline from stub pointers, so large crews run slower there. Detail: [harness matrix](../reference/harness-matrix.md).
 
 ### Lessons that survive the mission
@@ -148,7 +148,7 @@ For teams running repeated missions in one repo. Not for one-off visits elsewher
 ### Provenance and signed reports
 
 Problem: months later nobody proves who ran what or whether the report changed since.
-What: `mugiwara blame <path>` notes the last commit touching a path, `mugiwara handoff <mission>` writes the report the next engineer acts on, `mugiwara sign <mission>` attests the report.
+What: `mugiwara handoff <mission>` writes the report the next engineer acts on (with `--path`, plus the provenance note for that path), `mugiwara sign <mission>` attests the report.
 Proof: `mugiwara sign <mission> --verify` checks the attestation; blame documents the notes ref it reads.
 For regulated paths and owner handoffs. Not for internal spikes. Trade-off: signing adds key management, ed25519 by default, that small teams skip until they need it.
 
@@ -157,8 +157,8 @@ For regulated paths and owner handoffs. Not for internal spikes. Trade-off: sign
 ### Every skill, no gaps
 
 Problem: a catalog that names ten favorites hides the eleventh you needed.
-What: all 21 skills, each owned by the sections above. Run missions: orchestration, workflow, brainstorm, planning, contract-first, execution, backend, frontend, git, healing, root-cause, resume, ship. Review proof: checkpoint, claim-audit, quality, gates, review, security, testcases. Adopt and extend: lessons.
-Proof: the skill index holds 21 entries in CI, and every name in this list resolves to `content/skills/<name>/SKILL.md` in the repo.
+What: all 20 skills, each owned by the sections above. Run missions: orchestration, workflow, brainstorm, planning, contract-first, execution, backend, frontend, git, healing, root-cause, resume, ship. Review proof: checkpoint (with adversarial depth), quality, gates, review, security, testcases. Adopt and extend: lessons.
+Proof: the skill index holds 20 entries in CI, and every name in this list resolves to `content/skills/<name>/SKILL.md` in the repo.
 For anyone checking cover before adopting. Trade-off: the roster looks large on first read, and the lane system exists so small work never loads all of it. Detail: [skills](skills.md).
 
 ### Every agent, no gaps
@@ -168,6 +168,6 @@ What: all 14 agents. Captain Luffy triages, runs check-ins, records decisions, c
 Proof: every install ships the whole crew, 11 specialists plus 3 internal helpers, with the call moment per member in [agents](agents.md).
 For leads assigning ownership per stage. Trade-off: fourteen names take one reading to learn, and after that the call is one sentence.
 
-Measured rollup: 21 skills indexed, 318 pointers with 0 broken, 216 probes at 95.9 percent rank 1 over 170 positives and 82 negatives across 293 terms. Every number comes from `.metrics/latest.json`.
+Measured rollup: 20 skills indexed, 322 pointers with 0 broken, 216 probes at 95.9 percent rank 1 over 170 positives and 82 negatives across 284 terms. Every number comes from `.metrics/latest.json`.
 
 Open [Getting started](../getting-started.md) and hand the crew one real task.

@@ -1,6 +1,6 @@
 ---
 name: mugiwara-workflow
-description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure flow stages.
+description: Use at start of any non-trivial mission — Luffy triage gateway, full pipeline sized by lane: brainstorm/plan/execute/checkpoint/quality/gates/review/heal/closure flow stages, lane rises only.
 ---
 
 # Mugiwara Workflow
@@ -28,7 +28,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 | 2 | Planning | Nami | `planning` | task plan + acceptance |
 | 3 | Execute | Zoro | `execution` | implemented + evidence |
 | 4 | Audit | Chopper | `checkpoint` | re-verified + ledger |
-| 4.5 | Verify | Skeptic | `claim-audit` | adversarial check (optional) |
+| 4.5 | Verify | Skeptic | `checkpoint` adversarial depth | doubt pass on in-flight calls (optional) |
 | 5 | Quality | Sanji | `quality` | lint + format + test |
 | 6 | Gates | Franky | `gates` | coverage + build + DoD |
 | 7 | Review | Robin∥Jinbe | `review`+`security` | findings (parallel) |
@@ -70,7 +70,7 @@ Blocked agent appends to `.mugiwara/missions/<mission>/blockers.md`:
 ```
 Brook reads this at Flow 8. Never silently work around a blocker.
 ## Cleanup (Flow 9)
-Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec + review + security + blockers + decisions into `report.md`, removes session state (`*.json`). The dir ends as two files: plan.md + report.md. Keep cross-mission: `config`, `lessons.md`. Batch: `mugiwara clean [--all]`. Full layout: `references/workspace-layout.md`.
+Archive, never delete: run `mugiwara archive <mission>` — folds waves + spec + review + security + blockers + decisions into `report.md`, removes session state (`*.json`). The dir ends as two files: plan.md + report.md. Keep cross-mission: `config`, `lessons.md`. Batch: `mugiwara clean [--include-live]`. Full layout: `references/workspace-layout.md`.
 ## Rules
 1. Evidence over claims — run checks, show output.
 2. No flow stage skipped without a reason recorded in the decision log. Cost governor — ladder (need→reuse→stdlib→native→installed dep→one line→code), terse output Decision/Action/Result/Evidence, slop taxonomy + budget reserve/projection — Full checklist: `_shared/references/cost-governor.md`; trail rows; unchecked boxes are not done.

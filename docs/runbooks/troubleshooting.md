@@ -26,8 +26,8 @@ A command failed and the message is your starting point. Match it below, apply t
 | `closure blocked` naming an unfinished mission | assignee below Flow 9 | finish every handle, or archive with `--force` knowing resume points die |
 | `has state but no sub-mission in plan.md` | handle started without a roster row | `mugiwara join crew1 eleanor-vance --area <area>`, or fix the handle spelling |
 | `savepoint: not a git repository` | ran outside git | `git init`, commit, retry |
-| `blame: not a git repository (…)` | `mugiwara blame` needs git history | run inside the repo |
-| `no mugiwara provenance note` from `mugiwara blame` | notes are not fetched by clone or pull | `git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara'` |
+| `handoff --path` outside git (…)` | provenance needs git history | run inside the repo |
+| `no mugiwara provenance note` from `handoff --path` | notes are not fetched by clone or pull | `git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara'` |
 | `closure integrity gate failed` from `mugiwara archive` | missing file link, secret-shaped string, or bad evidence path | fix the flagged file and re-archive. There is no bypass flag |
 | `invalid member name "x"` | spaces or reserved word | slug such as `grace-hopper` |
 | `conflict (not overwritten; run update to replace with backup)` from install | target file differs from what install writes | `mugiwara update`, which backs up first |

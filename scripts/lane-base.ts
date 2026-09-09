@@ -23,7 +23,7 @@ const WAVE_OWNER: Record<string, [string, string]> = {
   '2': ['mugiwara-planning', 'nami-planner'],
   '3': ['mugiwara-execution', 'zoro-execution'],
   '4': ['mugiwara-checkpoint', 'chopper-checkpoint'],
-  '4.5': ['mugiwara-claim-audit', 'skeptic-verifier'],
+  '4.5': ['mugiwara-checkpoint', 'skeptic-verifier'],
   '5': ['mugiwara-quality', 'sanji-quality'],
   '6': ['mugiwara-gates', 'franky-gates'],
   '7': ['mugiwara-review', 'robin-reviewer'],
