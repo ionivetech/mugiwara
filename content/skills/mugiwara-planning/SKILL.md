@@ -58,15 +58,13 @@ One area → one sub-mission; `Touched Files` from area map; mergeable alone;
 before GO — file in two sub-missions is planning defect. Solo missions skip.
 
 ## Plan tables (wave + task index)
-Before the detail blocks, add two markdown tables so the executor can read the shape at a glance and parallelize safely:
-
+Before the detail blocks, add two markdown tables so the executor can read the shape at a glance and parallelize safely. Numbers are topological: T1..Tn reads as execution order — parallel sets share a wave, never a scrambled number the executor must re-sort. `Unblocks` names who waits on this task — the widest unblocker runs first when the executor picks its own order:
 | Wave | Focus | Tasks | Gate |
 |------|-------|-------|------|
 | 3 | <what this wave delivers> | T1-T3 | <the command-verifiable exit check> |
-
-| # | Task | Files | Size | Depends-on | Acceptance |
-|---|------|-------|------|------------|------------|
-| T1 | <title> | <paths> | S | — | <one-line check> |
+| # | Task | Files | Size | Depends-on | Unblocks | Acceptance |
+|---|------|-------|------|------------|----------|------------|
+| T1 | <title> | <paths> | S | — | T2, T3 | <one-line check> |
 
 ## Unified task template
 ```
@@ -88,7 +86,7 @@ Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALL
 **Rollback per wave.** Every wave names its rollback point — a tag at the last proven-good commit — in the wave table. Rule: wave N starts only when wave N-1's rollback point is recorded; a failed wave gate means revert (`git revert <wave-N-tag>`), fix, re-run the gate. A wave with no named rollback point is a planning defect.
 
 ## Implementation graph
-Every edge names its file: `consumes <file> from Task M → produces <file> for Task N`; flag cross-file risk edges (two tasks reading the same file — never parallel). Tasks carrying `Break:` split mid-execution when files exceed 8 or concerns diverge — re-index the tail.
+Draw layers, not edge lists: L0 (no deps) → L1 → L2, one node per task carrying its files, each arrow carrying its wait reason; name the critical path. A graph the executor must re-sort in its head is a planning defect. Keep the per-edge file rule (`consumes <file> from M → produces <file> for N`); flag cross-file risk edges (two tasks reading the same file — never parallel). Full shape + example: `references/plan-template.md`.
 
 ## Acceptance vs Definition of Done
 - **Acceptance** = "did we build the right thing?" — per task, command-verifiable. **Definition of Done** = "finished to standard?" — correctness, quality, integration, docs, ship-readiness; checked at the final wave.

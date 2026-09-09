@@ -18,9 +18,9 @@ Scaled plan skeleton. Nami picks Quick/Standard/Full based on mission size.
 
 ## Task index
 
-| # | Task | Files | Size | Depends-on | Acceptance |
-|---|------|-------|------|------------|------------|
-| T1 | <title> | <paths> | S | — | <one-line check> |
+| # | Task | Files | Size | Depends-on | Unblocks | Acceptance |
+|---|------|-------|------|------------|----------|------------|
+| T1 | <title> | <paths> | S | — | T2 | <one-line check> |
 
 ## Detail: T1 — <title>
 - Files: <exact paths>
@@ -32,6 +32,41 @@ Scaled plan skeleton. Nami picks Quick/Standard/Full based on mission size.
 ## Standard (1 wave, 2-8 tasks)
 
 Add: Architecture overview, Context scan, Implementation graph, Acceptance per task.
+
+## Implementation graph — layered DAG (Standard+)
+
+List edges nowhere alone — draw execution layers top-down. Each layer runs
+only after the layer above is proven done; tasks inside one layer run
+together only with a stated disjoint proof. Every node carries its files,
+every arrow its wait reason, and the critical path is named.
+
+```markdown
+## Implementation graph
+L0 (start first, no dependencies)
+  T1 branch ──┐
+  T2 baseline ─┤ (runs only, no files)
+              ▼ needs branch (T1) + numbers (T2)
+L1
+  T3 swap runner (package.json, vitest.config.ts)
+              ▼ needs the new test scripts from T3
+L2 (parallel-proof: pairwise file-disjoint, no shared interface)
+  T4 test seams (test/) ─┬─
+  T5 lcov gate (scripts/coverage-gate.ts) ─┤
+  T6 selftest (scripts/gate-selftest.ts) ──┤
+  T7 docs (AGENTS.md, skills/) ────────────┤
+  T8 CI pin (.github/) ────────────────────┘
+              ▼ needs T4+T5+T6 green
+L3 (close)
+  T9 verify + DoD (runs only)
+Critical path: T1 → T3 → T4 → T9
+```
+
+Rules: task numbers are topological (T1..Tn IS the run order); a `[PARALLEL]`
+set shares one layer and states its disjoint proof on the layer line; tasks
+carrying `Break:` split mid-execution when files exceed 8 or concerns
+diverge — re-index the tail (T5 → T5a/T5b, layers below shift, never
+renumber what already ran). The task index mirrors the graph: `Depends-on`
+looks back, `Unblocks` looks forward — both name files, never bare ids.
 
 ## Full (multi-wave, parallel, risk)
 
