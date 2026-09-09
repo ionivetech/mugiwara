@@ -60,6 +60,17 @@ A fixed cross-project bar. Full definitions: `_shared/references/definition-of-d
 - Docs — user-facing and internal docs updated where change requires.
 - Ship-readiness — no blocker rows in issues ledger.
 
+## Waiver record
+
+Waivers happen; unformatted waivers rot into fake passes. A waived gate
+leaves one record in the verdict file — no record, no waiver:
+
+`| gate | waived by | reason | scope (files/tasks) | expires (mission/date) |`
+
+Scope is minimal (the gate, not the mission); expiry is mandatory — an
+unexpired waiver blocks the NEXT mission's gate until re-decided. A waiver
+without an explicit user decision is a fail wearing a costume.
+
 ## Lane-aware gates
 
 Direct (1 file <20 LOC) → 3 steps: `build-hooks:check`, `typecheck`, `build`. Lean → +`validate-content`, `lane-base`, `check-doc-links` (6). Standard → +`test:coverage`, `coverage-gate`, `verify-install` (9). Full → +`run-evals`, `retrieval-eval`, `conformance` (+`benchmark-governor` via `conformance` lane) (12). Policy `src/policy.ts:gatesForLane` is source of truth — `gate` counts steps by lane. Conformance 12-platform goldens unchanged — full still passes; direct skips heavy gates.
@@ -75,7 +86,7 @@ PASS only when coverage AND sonar AND build AND diff-size AND DoD all pass with 
 - PASS verdict with no evidence.
 - Coverage measured against wrong base.
 - FAIL negotiated to pass.
-- Gate waived without explicit user decision.
+- Gate waived without explicit user decision and a waiver record.
 - PASS on coverage/build while DoD fails.
 - Sonar PASS with unverified or faked data.
 - Diff > 400 LOC passed without split.
