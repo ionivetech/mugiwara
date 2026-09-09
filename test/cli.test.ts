@@ -14,10 +14,21 @@ import { run } from '../src/cli.ts';
 import { stalenessLine } from '../src/cli.ts';
 import { runScript } from '../src/run.ts';
 
-vi.mock('../src/run.ts', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../src/run.ts')>();
-  return { ...actual, runScript: vi.fn(() => 0) };
-});
+// bun:test's vi shim passes no `importOriginal` to the factory, so the mock
+// lists the full `src/run.ts` surface literally (`src/cli.ts` uses only
+// `runScript` + `RUNNABLE` from this module — verified).
+vi.mock('../src/run.ts', () => ({
+  SCRIPTS_DIR: 'mocked',
+  RUNNABLE: ['savepoint.sh', 'lane.sh'] as const,
+  findBash: () => null,
+  noBashMessage: () => 'no bash found (mocked)',
+  runScript: vi.fn(() => 0),
+}));
+
+// bun:test's vitest shim has no vi.mocked() — the factory above installs a
+// vi.fn, so a structural cast reaches the same instance.
+const mockedRunScript = () =>
+  runScript as unknown as { mockClear: () => void; mock: { calls: unknown[][] } };
 
 // A real process.exit stops execution. A no-op mock would let a command fall
 // through past its exit point — so the mock THROWS, preserving real "stop
@@ -218,7 +229,7 @@ describe('run() — run / savepoint dispatch', () => {
 
   test('savepoint dispatches to runCmd → runScript(savepoint.sh, ...)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-sp-'));
-    const mockRun = vi.mocked(runScript);
+    const mockRun = mockedRunScript();
     mockRun.mockClear();
     try {
       await capture(['savepoint', 'seamless'], dir);
@@ -883,7 +894,7 @@ describe('run() — usage errors + stalenessLine', () => {
       { root: 'state', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
     ]);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.mocked(runScript).mockClear();
+    mockedRunScript().mockClear();
     try {
       const entries = [
         { mission: 'm', member: 'jane-doe', actor: ACTOR, branch: 'main', flow: 3, mode: 'auto', tasks_done: 1, tasks_total: 4, lane: 'standard', next_action: 'go', next_session_prompt: '', updated_at: '2026-08-19T00:00:00Z' },
@@ -1015,7 +1026,7 @@ describe('run() — usage errors + stalenessLine', () => {
       { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
     ]);
     writeFileSync(join(dir, '.mugiwara', 'active-member'), 'jane-doe\n');
-    vi.mocked(runScript).mockClear();
+    mockedRunScript().mockClear();
     try {
       await capture(['savepoint', '--flow', '3'], dir);
       expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'jane-doe', '3', 'guided'], dir);
@@ -1060,7 +1071,7 @@ describe('run() — usage errors + stalenessLine', () => {
       { root: 'continue', mission: 'm', file: 'jane-doe', body: { ...state('m'), member: 'jane-doe' } },
     ]);
     writeFileSync(join(dir, '.mugiwara', 'active-member'), 'jane-doe\n');
-    vi.mocked(runScript).mockClear();
+    mockedRunScript().mockClear();
     try {
       await capture(['savepoint', 'm', 'john-smith', 'semi', '--flow', '5'], dir);
       expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'john-smith', '5', 'semi'], dir);
@@ -1072,7 +1083,7 @@ describe('run() — usage errors + stalenessLine', () => {
       { root: 'continue', mission: 'm', file: 'state', body: state('m') },
     ]);
     writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=semi\n');
-    vi.mocked(runScript).mockClear();
+    mockedRunScript().mockClear();
     try {
       await capture(['savepoint', '--flow', '6'], dir);
       expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', '', '6', 'semi'], dir);
@@ -1092,7 +1103,7 @@ describe('run() — usage errors + stalenessLine', () => {
 
   test('savepoint long form still dispatches positionally', async () => {
     const dir = fixture([]);
-    vi.mocked(runScript).mockClear();
+    mockedRunScript().mockClear();
     try {
       await capture(['savepoint', 'm', 'jane-doe', '2', 'semi'], dir);
       expect(runScript).toHaveBeenCalledWith('savepoint.sh', ['m', 'jane-doe', '2', 'semi'], dir);

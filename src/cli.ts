@@ -2,7 +2,7 @@
 // src/cli.ts
 import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { homedir } from 'node:os';
+import { homeDir } from './home.ts';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs, type FlagValue, type Args } from './args.ts';
@@ -370,7 +370,7 @@ async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; pro
 
 async function install(flags: Args['flags']): Promise<void> {
   const { scope, projectDir, targetIds } = await resolveOptions(flags);
-  const home = homedir();
+  const home = homeDir();
   const allFiles: string[] = [];
   const allNotes: string[] = [];
   const installed: string[] = [];
@@ -413,7 +413,7 @@ async function install(flags: Args['flags']): Promise<void> {
 async function uninstall(flags: Args['flags']): Promise<void> {
   const scope: Scope = flag(flags.global) ? 'global' : 'project';
   const projectDir = resolveProjectDir(str(flags.project));
-  const home = homedir();
+  const home = homeDir();
   const file = manifestPath({ scope, projectDir, home });
   const manifest = readManifest(file);
   if (!manifest) {
@@ -484,7 +484,7 @@ function schemaWarnings(projectDir: string): void {
 }
 
 function list(flags: Args['flags']): void {
-  const home = homedir();
+  const home = homeDir();
   const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
   let found = false;
@@ -1165,7 +1165,7 @@ function signCmd(flags: Args['flags'], _: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   if (flag(flags.genKey)) {
     const backend = str(flags.backend) ?? 'auto';
-    const home = homedir();
+    const home = homeDir();
     if (backend === 'minisign') {
       if (!hasMinisign()) { console.error('✗ minisign not installed — cannot generate keys with this backend'); process.exit(1); }
       try {

@@ -10,7 +10,7 @@
 import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
-import { homedir } from 'node:os';
+import { homeDir } from './home.ts';
 import { join } from 'node:path';
 import { readConfig } from './config.ts';
 import { loadPolicy } from './policy.ts';
@@ -33,7 +33,7 @@ export function hasMinisign(): boolean {
 }
 
 function defaultKey(flag: 'secret' | 'public'): string {
-  return join(homedir(), '.mugiwara', flag === 'secret' ? 'minisign.key' : 'minisign.pub');
+  return join(homeDir(), '.mugiwara', flag === 'secret' ? 'minisign.key' : 'minisign.pub');
 }
 
 // --- pure ed25519 backend ------------------------------------------------
@@ -181,7 +181,7 @@ export function signReport(projectDir: string, missionDir: string): { ok: boolea
   }
 
   // pure backend
-  const dir = ensurePureKey(homedir());
+  const dir = ensurePureKey(homeDir());
   const seed = process.env.MUGIWARA_SIGN_KEY?.trim() || readFileSyncSafe(join(dir, 'mugiwara.key'));
   const pub = process.env.MUGIWARA_SIGN_PUB?.trim() || readFileSyncSafe(join(dir, 'mugiwara.pub'));
   if (!seed || !pub) return { ok: false, message: 'pure keys missing — run `mugiwara sign --gen-key --backend pure`' };

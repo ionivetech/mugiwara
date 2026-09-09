@@ -1,6 +1,5 @@
 import { vi, describe, it, expect, beforeEach, afterAll } from 'vitest';
 
-vi.setConfig({ testTimeout: 30000 });
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

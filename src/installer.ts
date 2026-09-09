@@ -1,7 +1,7 @@
 // src/installer.ts
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, copyFileSync, rmSync, lstatSync, chmodSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { homedir } from 'node:os';
+import { homeDir } from './home.ts';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
 import { DEFAULT_CONFIG } from './config.ts';
@@ -94,7 +94,7 @@ function collectRefs(skillDir: string): { relPath: string; text: string }[] {
 
 export function installTo(target: Target, opts: InstallOptions): InstallResult {
   const { scope, projectDir, dryRun = false, force = false } = opts;
-  const home = opts.home ?? homedir();
+  const home = opts.home ?? homeDir();
   const { skills, agents, sharedRefs } = collectContent();
   const dirs = target.paths({ scope, projectDir, home });
   const backupRoot = join(scope === 'global' ? home : projectDir, '.mugiwara');
