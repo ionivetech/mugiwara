@@ -1,5 +1,5 @@
 // test/manifest.test.ts
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

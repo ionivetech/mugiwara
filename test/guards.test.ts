@@ -3,7 +3,7 @@
 // The hook tests exercise the guard through spawned node processes, so the
 // shared predicate module itself read ~0% in-process coverage. These vectors
 // pin the table directly: fast, no subprocess, no timeout surface.
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { checkCommand, refusalMessage, FORBIDDEN } from '../src/guards.ts';
 
 const DENY: Array<[string, string]> = [

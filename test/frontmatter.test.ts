@@ -1,5 +1,5 @@
 // test/frontmatter.test.ts
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { parseFrontmatter, stringifyFrontmatter } from '../src/frontmatter.ts';
 
 test('parses flat frontmatter', () => {

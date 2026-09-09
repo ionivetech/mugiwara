@@ -5,7 +5,7 @@
 // continue over a fake .mugiwara tree, and the dispatch paths that don't need
 // a real install. runScript is mocked so `savepoint` dispatch is provable
 // without spawning the real harness.
-import { describe, expect, test, vi, afterEach } from 'vitest';
+import { describe, expect, test, vi, afterEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';

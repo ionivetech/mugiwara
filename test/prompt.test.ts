@@ -1,5 +1,5 @@
 // test/prompt.test.ts
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { choose, multiChoose, confirm, type Rl } from '../src/prompt.ts';
 
 function mockRl(answers: string[]): Rl {

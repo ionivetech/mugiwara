@@ -3,7 +3,7 @@
 // Bounded investigation state machine (spec §13): max passes, max unrelated
 // files, repeated-read threshold, plus an objective-met stop. Emits stop
 // verdicts as optimization decision records (reuses sanitized recordOptDecision).
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -1,6 +1,6 @@
 // test/direct-seamless.test.ts — T8 seamless verification
 // Solo Lane 0 mission 1 file <20 LOC should be 3 gates, 1 dispatch, cost direct budget, no review/security/heal.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

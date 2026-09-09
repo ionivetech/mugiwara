@@ -1,5 +1,5 @@
 // test/args.test.ts
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { parseArgs } from '../src/args.ts';
 
 test('default command is install', () => {

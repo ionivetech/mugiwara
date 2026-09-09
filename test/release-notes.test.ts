@@ -2,7 +2,7 @@
 // scripts/release-notes.ts is exercised without invoking real git (buildNotes
 // is pure). Also proves R4: the breaking `!` marker is only honored in the
 // type/scope position, not anywhere in the subject.
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { buildNotes } from '../scripts/release-notes';
 
 test('scoped commits group into per-scope sections with type labels', () => {

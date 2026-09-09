@@ -1,5 +1,5 @@
 // test/benchmark.test.ts — Phase 9 benchmark harness pure helpers
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import {
   isOverBudget,
   checkRegression,

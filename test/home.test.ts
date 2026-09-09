@@ -1,4 +1,4 @@
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { homedir } from 'node:os';
 import { homeDir } from '../src/home.ts';
 

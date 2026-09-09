@@ -4,7 +4,7 @@
 //   allowlist/traversal, heal_cycle counting, blockers_open rows,
 //   standard/full budget boundaries, savepoint/lane.sh lane parity,
 //   lane_rose escalation.
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';

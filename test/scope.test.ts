@@ -5,7 +5,7 @@
 // sufficient implementation policy, code waste detection, and change-surface
 // measurement — plus recordScopeDecision (→ recordOptDecision §41, scope-governor
 // actor). Every verdict family is a pure function with exact-value assertions.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

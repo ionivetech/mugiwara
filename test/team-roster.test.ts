@@ -1,5 +1,5 @@
 // test/team-roster.test.ts — 18 cases covering roster, closure, state integrity (Parts 1-3)
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { existsSync, mkdirSync, rmSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync, execSync } from 'node:child_process';
@@ -159,7 +159,7 @@ describe('team-roster', () => {
       out = execFileSync('npx', ['tsx', join(process.cwd(), 'src', 'cli.ts'), 'continue', 'm', '--all'], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     } catch (e: unknown) {
       const err = e as { status?: number; stdout?: string | Buffer; stderr?: string | Buffer };
-      expect([2]).toContain(err.status);
+      expect([2] as (number | undefined)[]).toContain(err.status);
       out = String(err.stdout ?? '') + String(err.stderr ?? '');
     }
     expect(out).toMatch(/jane-doe/);

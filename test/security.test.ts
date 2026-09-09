@@ -1,7 +1,7 @@
 // test/security.test.ts — prompt-injection surfaces (W2 hardening).
 // Artifact-trust rule, traversal rejection.
 // Assertions are non-trivial — presence without a value check is not coverage.
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect } from 'bun:test';
 import { readFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';

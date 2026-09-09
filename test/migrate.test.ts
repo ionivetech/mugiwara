@@ -1,5 +1,5 @@
 // test/migrate.test.ts — D5: legacy layout detection + migrate + schema_version
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

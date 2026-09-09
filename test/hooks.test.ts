@@ -5,7 +5,7 @@
 // case here names the gap it closes; a case duplicating that file is a defect.
 // Like that file, tests run the BUILT hooks/*.js — the wired artifact, never
 // the .ts source.
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
