@@ -64,4 +64,14 @@ secrets?.ya?ml
 
 At each boundary, savepoint re-checks the diff. A lane rises when the work grows or a sensitive path appears, and never falls back within the mission: the peak persists in state, flagged for the record. Over-processing a small change costs less than under-processing a large one. Say the word and Luffy escalates manually, recorded in the decision log.
 
+## Path-weighted sizing (docs-only downgrade)
+
+File count alone never escalates to full when nothing code-like changed: a
+change whose files match neither the product dirs (`content/`, `src/`,
+`scripts/`, `test/`, `hooks/`, `.opencode/`, `.claude/`, `evals/`) nor a code
+extension (`.py`, `.go`, `.rs`, `.js`, `.ts`, … — the full list lives in
+`scripts/lib/patterns.sh` as `CODE_PAT`) is sized `standard`, not `full`.
+Thirteen markdown files are docs, not architecture. Sensitive-path escalation
+always wins over this downgrade, and policy `force_full` wins over both.
+
 For monorepos, `lane_scope_glob` in `.mugiwara/config` sizes the lane from one package glob. Escalation still reads the unfiltered diff, so safety never shrinks with the scope.

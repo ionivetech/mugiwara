@@ -20,6 +20,15 @@ SENSITIVE_PATS="auth/|oauth2?/|payment/|payments/|billing/|crypto/|secrets/|cred
 # count alone (path-weighted sizing).
 PRODUCT_PAT="^content/|^src/|^scripts/|^test/|^hooks/|^\.opencode/|^\.claude/|^evals/"
 
+# Code-by-extension: a changed file with a code extension counts as product
+# surface wherever it lives. PRODUCT_PAT above is mugiwara's own layout; a
+# consumer repo in another stack (13 *.py at root, a Go service, a Rust crate)
+# holds real code outside those dirs, and sizing it docs-only under-processes
+# the mission. Extensions are language facts, not repo layout, so they apply
+# in every repo including mugiwara's own. Docs/config/assets stay out by
+# design — only code extensions match.
+CODE_PAT="\.(js|jsx|ts|tsx|mjs|cjs|py|pyi|go|rs|rb|php|java|kt|kts|swift|cs|scala|c|h|cpp|hpp|cc|vue|svelte|sol|tf)$"
+
 # Installed-harness rules dirs — what `mugiwara install` writes into a project
 # (~50 files across the 9 targets). In a CONSUMER project these are installed
 # config, no different from the crew's own .mugiwara/ bookkeeping: the first

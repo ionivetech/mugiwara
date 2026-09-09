@@ -294,7 +294,7 @@ fi
 # escalation above still wins. With lane_scope_glob the check applies to the
 # scoped set — but sensitive wins unfiltered above, so safety never shrinks.
 if [ "$LANE" = "full" ] && [ -z "$SENSITIVE_PATHS" ] && [ -n "$SCOPED_FILES" ]; then
-  CODE_COUNT=$(echo "$SCOPED_FILES" | grep -E "$PRODUCT_PAT" 2>/dev/null | grep -c . || true)
+  CODE_COUNT=$(echo "$SCOPED_FILES" | grep -E "$PRODUCT_PAT|$CODE_PAT" 2>/dev/null | grep -c . || true)
   if [ -z "$CODE_COUNT" ] || [ "$CODE_COUNT" -eq 0 ] 2>/dev/null; then
     PREV="$LANE"
     LANE="standard"
