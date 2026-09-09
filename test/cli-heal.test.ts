@@ -297,13 +297,13 @@ describe('heal: status/cost/continue/cover remaining branches', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('sign with no mission arg exits 1', async () => {
+  test('sign with no mission arg and no reports says nothing to sign', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-sign-noarg-'));
     try {
       mkdirSync(join(dir, '.mugiwara'), { recursive: true });
       writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=auto\n');
-      const { err } = await cap(['sign'], dir);
-      expect(err).toContain('usage: mugiwara sign');
+      const { out } = await cap(['sign'], dir);
+      expect(out).toContain('nothing to sign');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

@@ -201,8 +201,8 @@ describe('CLI in-process coverage', () => {
     try { await runCliInProcess(['--help']); } finally { console.log = orig; }
     const all = logged.join('\n');
     expect(all).toContain('[--path <file>');
-    expect(all).toContain('mugiwara handoff <m>');
-    expect(all).toContain('mugiwara sign <m>');
+    expect(all).toContain('mugiwara handoff [<m>]');
+    expect(all).toContain('mugiwara sign [<m>]');
   });
 
   it('handoff runs in-process and writes the report', async () => {
