@@ -170,7 +170,14 @@ Numbers here come from `.metrics/latest.json`, refreshed by `bun run gate`. Noth
 
 ## Docs
 
-Start: [Getting started](docs/getting-started.md). How work runs: [Workflow](docs/concepts/workflow.md), [Lanes](docs/concepts/lanes.md), [Modes](docs/concepts/modes.md), [Cost](docs/concepts/cost.md). Who does what: [Agents](docs/concepts/agents.md). Setup: [Install](docs/install/index.md). Team runs: [Solo](docs/runbooks/solo-mission.md), [Team](docs/runbooks/team-mission.md). Proof: [Harness matrix](docs/reference/harness-matrix.md), [Compliance matrix](docs/reference/compliance-matrix.md). Stuck: [Troubleshooting](docs/runbooks/troubleshooting.md). Issues: [tracker](https://github.com/ionivetech/mugiwara/issues).
+Start: [Getting started](docs/getting-started.md).
+How work runs: [Workflow](docs/concepts/workflow.md), [Lanes](docs/concepts/lanes.md), [Modes](docs/concepts/modes.md), [Cost](docs/concepts/cost.md).
+Who does what: [Agents](docs/concepts/agents.md).
+Setup: [Install](docs/install/index.md).
+Team runs: [Solo](docs/runbooks/solo-mission.md), [Team](docs/runbooks/team-mission.md).
+Proof: [Harness matrix](docs/reference/harness-matrix.md), [Compliance matrix](docs/reference/compliance-matrix.md).
+Stuck: [Troubleshooting](docs/runbooks/troubleshooting.md).
+Issues: [tracker](https://github.com/ionivetech/mugiwara/issues).
 
 MIT. See LICENSE.
 
