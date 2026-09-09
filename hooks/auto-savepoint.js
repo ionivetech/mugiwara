@@ -2,11 +2,11 @@
 // @bun
 
 // hooks/auto-savepoint.ts
-import { existsSync as existsSync2, readFileSync, readdirSync as readdirSync2 } from "fs";
+import { existsSync as existsSync2, readFileSync, readdirSync } from "fs";
 import { spawnSync as spawnSync2 } from "child_process";
 
 // src/run.ts
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -42,10 +42,10 @@ function bootstrapMission() {
   const base = join2(cwd, ".mugiwara", "missions");
   if (!existsSync2(base))
     return null;
-  for (const e of readdirSync2(base, { withFileTypes: true })) {
+  for (const e of readdirSync(base, { withFileTypes: true })) {
     if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name))
       continue;
-    const files = readdirSync2(join2(base, e.name));
+    const files = readdirSync(join2(base, e.name));
     const hasState = files.some((f) => {
       if (!f.endsWith(".json"))
         return false;
@@ -75,10 +75,10 @@ function activeMission() {
   if (!existsSync2(base))
     return bootstrapMission();
   let best = null;
-  for (const e of readdirSync2(base, { withFileTypes: true })) {
+  for (const e of readdirSync(base, { withFileTypes: true })) {
     if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name))
       continue;
-    for (const f of readdirSync2(join2(base, e.name))) {
+    for (const f of readdirSync(join2(base, e.name))) {
       if (!f.endsWith(".json"))
         continue;
       const stem = f.slice(0, -5);
