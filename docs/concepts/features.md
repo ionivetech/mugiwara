@@ -50,6 +50,13 @@ What: the execution skill commits per logical task and records the evidence path
 Proof: the closing report lists counts, for example 11 files, +340 / -82, naming sensitive paths such as `src/auth/invitation.ts` outright.
 For reviewers who verify instead of trusting. Not for explorations with no branch. Trade-off: commit-per-task slows the middle of the work to speed its review.
 
+### Migrations that prove the way back
+
+Problem: a schema change ships and the rows it lost cannot be reverted, only mourned.
+What: the migration skill runs expand-contract only — new shape alongside the old, dual-write, batched backfill, counts verified, cutover, then drop. Destructive operations need a restore-tested backup plus named consent, and the rollback ships before the migration, proven on scratch.
+Proof: the evidence log carries row counts before and after per table, and the rollback commands with their drill output.
+For any change with stored rows or a live contract behind it. Not for code-only refactors with zero rows. Trade-off: six steps where one ALTER would do, because the one time it matters pays for all of them.
+
 ### Modes for how closely you watch
 
 Problem: an agent that asks at every step wastes your day, and one that never asks ships surprises.

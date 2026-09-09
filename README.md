@@ -55,25 +55,7 @@ The routing decision is computed state, visible in `mugiwara status`, not a vibe
 
 ## Install
 
-One crew, ten pages, 12 platforms — 9 via install, 3 via marketplace manifest. Pick your harness, follow its page, end at the same roster question as proof.
-
-| Harness | How the crew loads | Install page |
-|---|---|---|
-| Claude Code | native plugin plus session hook | [claude](docs/install/claude.md) |
-| opencode | plugin line in `opencode.json`, restart | [opencode](docs/install/opencode.md) |
-| CLI copy | installer copies rules into Windsurf, Cline, or Kilo dirs | [cli](docs/install/cli.md) |
-| Codex | full bodies as rules under `.codex/mugiwara/` | [codex](docs/install/codex.md) |
-| Gemini CLI | full bodies as rules under `.gemini/mugiwara/` | [gemini](docs/install/gemini.md) |
-| Copilot | full bodies as rules under `.github/` | [copilot](docs/install/copilot.md) |
-| Antigravity | stub pointers under `.agents/`, bodies in `.mugiwara/refs/` | [antigravity](docs/install/antigravity.md) |
-| Pi | host marketplace manifest plus content pointers | [pi](docs/install/pi.md) |
-| Cursor | host marketplace manifest plus content pointers | [cursor](docs/install/cursor.md) |
-| Kimi Code | host marketplace manifest plus content pointers | [kimi](docs/install/kimi.md) |
-
-Every target needs Node.js 20.11 or newer for the CLI state commands.
-Without the CLI the crew still runs the pipeline, but resume, budget tracking, and the closure gate stay off, and the crew says so at Flow 0.
-
-## First run in 60 seconds
+One crew, 12 platforms: 9 install directly, 3 load via marketplace manifest. The 60-second run below proves the install; the full matrix waits behind the fold.
 
 ```bash
 npx @ionivetech/mugiwara@latest install --target claude --yes
@@ -101,6 +83,28 @@ Then ask for something real:
 You choose none of the routing.
 The first request lands in triage, the lane is computed from the diff, and the crew announces the plan before it touches code.
 Sixty seconds in, your skepticism has something concrete to bite: a manifest on disk, a version string, a plan with named owners.
+
+<details>
+<summary>All 12 platforms (click to expand)</summary>
+
+| Harness | How the crew loads | Install page |
+|---|---|---|
+| Claude Code | native plugin plus session hook | [claude](docs/install/claude.md) |
+| opencode | plugin line in `opencode.json`, restart | [opencode](docs/install/opencode.md) |
+| CLI copy | installer copies rules into Windsurf, Cline, or Kilo dirs | [cli](docs/install/cli.md) |
+| Codex | full bodies as rules under `.codex/mugiwara/` | [codex](docs/install/codex.md) |
+| Gemini CLI | full bodies as rules under `.gemini/mugiwara/` | [gemini](docs/install/gemini.md) |
+| Copilot | full bodies as rules under `.github/` | [copilot](docs/install/copilot.md) |
+| Antigravity | stub pointers under `.agents/`, bodies in `.mugiwara/refs/` | [antigravity](docs/install/antigravity.md) |
+| Pi | host marketplace manifest plus content pointers | [pi](docs/install/pi.md) |
+| Cursor | host marketplace manifest plus content pointers | [cursor](docs/install/cursor.md) |
+| Kimi Code | host marketplace manifest plus content pointers | [kimi](docs/install/kimi.md) |
+
+Every target needs Node.js 20.11 or newer for the CLI state commands.
+Pick your harness, follow its page, end at the same roster question as proof.
+Without the CLI the crew still runs the pipeline, but resume, budget tracking, and the closure gate stay off, and the crew says so at Flow 0.
+
+</details>
 
 ## What Mugiwara does
 
