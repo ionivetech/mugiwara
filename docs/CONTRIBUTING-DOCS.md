@@ -24,5 +24,11 @@ scripts/validate-content.ts --check-writing` enforces the testable ones in CI.
     output, and closes with exactly one call to action.
 12. Take a stance. Name who the page is for and not for, state one trade-off.
     A page with no opinion reads as machine-written.
-13. README floor: 1,000 to 1,400 words. Banner image and install matrix are
-    required, never cut.
+13. README span: 1,200 to 1,800 words. Required sections: hook, banner,
+    problem, report sample, lane table, install matrix, quickstart, feature
+    tour, when-not-to-use, measured, CTA, links. Banner image and install
+    matrix are never cut.
+14. No forced inline. One idea per line, newlines allowed, prose breathes.
+    Density never trades away completeness.
+15. Budget follows function. Entry pages persuade, reference pages complete,
+    runbooks guide. Length serves the reader question named in the audit.
