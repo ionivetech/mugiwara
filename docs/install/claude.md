@@ -2,7 +2,7 @@
 
 Claude Code reads crew files natively, so install means registering the marketplace plugin once. No copying, no path registration by hand.
 
-Example: run `/plugin marketplace add ionivetech/mugiwara` then `/plugin install mugiwara`. Ask what crew members are available; the full roster of 11 agents plus 20 skills answers back, and the session hook announces the crew at every start.
+Example: run `/plugin marketplace add ionivetech/mugiwara` then `/plugin install mugiwara`. Ask what crew members are available; the full roster of 11 agents plus 21 skills answers back, and the session hook announces the crew at every start.
 
 ## Details
 

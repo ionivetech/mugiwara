@@ -139,8 +139,8 @@ Eval Runner scores skill behavior in the harness, and the Memory Keeper carries 
 What is missing is said aloud: outcome comparison against other approaches is not measured yet, and the table below keeps that row empty until a study exists.
 
 One crew on every harness.
-The same 20 skills and 14 agents ship to all twelve platforms; only the loading path changes per tier.
-Proof: 322 of 322 reference pointers resolve across 9 targets, and 216 retrieval probes rank 1 at 95.9 percent, both enforced in CI. Detail: [harness matrix](docs/reference/harness-matrix.md).
+The same 21 skills and 14 agents ship to all twelve platforms; only the loading path changes per tier.
+Proof: 342 of 342 reference pointers resolve across 9 targets, and 221 retrieval probes rank 1 at 95.4 percent, both enforced in CI. Detail: [harness matrix](docs/reference/harness-matrix.md).
 
 A cost governor with teeth.
 Every mission carries a budget by lane, warns then stops at the limit, and reports spend beside avoided work in human and JSON form.
@@ -161,9 +161,9 @@ Mugiwara is for teams who review. If nobody reads the report, install nothing.
 
 | Claim | Status |
 |---|---|
-| Retrieval routing rank-1 | **95.9%**, 216 probes (170 positive, 82 negative), in CI |
-| Reference pointers resolve | **322/322**, 9 targets, in CI |
-| Skill index cover | 20 skills indexed, in CI |
+| Retrieval routing rank-1 | **95.4%**, 221 probes (174 positive, 83 negative), in CI |
+| Reference pointers resolve | **342/342**, 9 targets, in CI |
+| Skill index cover | 21 skills indexed, in CI |
 | Lane bases / budgets | 8,000 / 12,000 lean, 13,000 / 25,000 standard, 22,000 / 50,000 full |
 | Outcome vs other approaches | not measured |
 

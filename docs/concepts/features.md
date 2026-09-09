@@ -134,8 +134,8 @@ For leads who budget AI spend. Not for flat-rate seats with no metering. Trade-o
 ### One crew on every harness
 
 Problem: switching editors strands your process behind a half-ported workflow.
-What: the same 20 skills and 14 agents ship to Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Windsurf, Cline, Kilo, and Antigravity; only the loading path changes per tier.
-Proof: 322 pointers resolve with 0 broken across 9 targets; 216 retrieval probes rank 1 at 95.9 percent, all enforced in CI.
+What: the same 21 skills and 14 agents ship to Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Windsurf, Cline, Kilo, and Antigravity; only the loading path changes per tier.
+Proof: 342 pointers resolve with 0 broken across 9 targets; 221 retrieval probes rank 1 at 95.4 percent, all enforced in CI.
 For developers in more than one editor. Not for single-harness shops. Trade-off: tier 3 targets run inline from stub pointers, so large crews run slower there. Detail: [harness matrix](../reference/harness-matrix.md).
 
 ### Lessons that survive the mission
@@ -157,8 +157,8 @@ For regulated paths and owner handoffs. Not for internal spikes. Trade-off: sign
 ### Every skill, no gaps
 
 Problem: a catalog that names ten favorites hides the eleventh you needed.
-What: all 20 skills, each owned by the sections above. Run missions: orchestration, workflow, brainstorm, planning, contract-first, execution, backend, frontend, git, healing, root-cause, resume, ship. Review proof: checkpoint (with adversarial depth), quality, gates, review, security, testcases. Adopt and extend: lessons.
-Proof: the skill index holds 20 entries in CI, and every name in this list resolves to `content/skills/<name>/SKILL.md` in the repo.
+What: all 21 skills, each owned by the sections above. Run missions: orchestration, workflow, brainstorm, planning, contract-first, execution, backend, frontend, git, healing, root-cause, resume, ship. Review proof: checkpoint (with adversarial depth), quality, gates, review, security, testcases. Adopt and extend: lessons, migration.
+Proof: the skill index holds 21 entries in CI, and every name in this list resolves to `content/skills/<name>/SKILL.md` in the repo.
 For anyone checking cover before adopting. Trade-off: the roster looks large on first read, and the lane system exists so small work never loads all of it. Detail: [skills](skills.md).
 
 ### Every agent, no gaps
@@ -168,6 +168,6 @@ What: all 14 agents. Captain Luffy triages, runs check-ins, records decisions, c
 Proof: every install ships the whole crew, 11 specialists plus 3 internal helpers, with the call moment per member in [agents](agents.md).
 For leads assigning ownership per stage. Trade-off: fourteen names take one reading to learn, and after that the call is one sentence.
 
-Measured rollup: 20 skills indexed, 322 pointers with 0 broken, 216 probes at 95.9 percent rank 1 over 170 positives and 82 negatives across 284 terms. Every number comes from `.metrics/latest.json`.
+Measured rollup: 21 skills indexed, 342 pointers with 0 broken, 221 probes at 95.4 percent rank 1 over 174 positives and 83 negatives across 294 terms. Every number comes from `.metrics/latest.json`.
 
 Open [Getting started](../getting-started.md) and hand the crew one real task.
