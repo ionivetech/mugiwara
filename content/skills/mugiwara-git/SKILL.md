@@ -35,6 +35,7 @@ Git hygiene keeps the mission reversible: one logical change per commit, a save-
 
 1. Imperative mood subject, capitalized, <= 50 chars: `Add route guard for /api`.
 2. Scoped subject when scope is not obvious: `feat(auth): enforce session TTL`.
+3. Mission commits carry the task id (`fix(T4): test seams` per `mugiwara-execution`) — style detection copies the repo's case/prefix habits but never drops the id; traceability beats local style.
 3. Body (after a blank line) explains WHY, not what. What is visible in the diff; why is not.
 4. Match the repo's existing style — detect it before writing messages (below).
 5. Config `commit` may be a template: any value containing `{` is a template with

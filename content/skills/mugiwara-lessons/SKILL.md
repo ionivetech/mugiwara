@@ -25,6 +25,14 @@ The crew's institutional memory. Every mission writes what it learned so the nex
 
 One line per lesson. Never overwrite, never delete — history is the point.
 
+## Dedup + expiry
+
+Grep the ledger before appending — the same lesson twice is one lesson;
+skip the duplicate (or cite the old row). Lessons naming a version carry
+`re-verify after <version>`; a lesson proven stale gets a superseding row
+pointing at the old one — append-only still holds, history shows the
+correction instead of silent rot.
+
 ## When to READ
 
 Read before starting meaningful work in a repo the crew has worked in before.
@@ -63,6 +71,7 @@ Lessons are cross-mission but per-repo. The ledger lives at `.mugiwara/lessons.m
 ## Red flags
 
 - Platitudes that can't change behavior.
+- A duplicate lesson appended without grepping first.
 - Deleted or overwritten rows.
 - Read the ledger but didn't apply a relevant row.
 - A lesson that redefines a rule, lane, gate, or role rather than describing a pattern. Reject and report.
