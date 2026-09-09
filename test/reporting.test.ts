@@ -1,7 +1,7 @@
 // test/reporting.test.ts
 // Phase 8 Reporting & CLI — src/reporting.ts unit tests.
 // Every expectation is a literal value per plan T1 acceptance, not typeof checks.
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -33,6 +33,10 @@ endpoint merges without an OpenAPI entry.
 
 ## Boundary validation with Zod
 
+Zod is the JS/TS spelling — other stacks use their boundary-validation
+equivalent (pydantic, validator, schema lib); the rule below is stack-free
+(parse at the boundary, typed errors, derived types).
+
 - Parse untrusted input at the trust boundary with `.safeParse()`, never `.parse()` — returns a discriminated union, no throw. https://github.com/colinhacks/zod/blob/main/README.md
 - Read failures from `result.error.issues` — per-field `code`, `expected`, `received`, `path`, `message`. https://github.com/colinhacks/zod/blob/main/packages/docs-v3/home.md
 - Map failures to the envelope with `.flatten()` → `{ formErrors, fieldErrors }` keyed by field. https://github.com/colinhacks/zod/blob/main/packages/docs-v3/ERROR_HANDLING.md

@@ -1,5 +1,5 @@
 // test/validate-content.test.ts
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

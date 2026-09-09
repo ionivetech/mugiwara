@@ -4,7 +4,7 @@
 // script readers. Shell tools (savepoint.sh, lane.sh) read the file directly;
 // this module serves TypeScript consumers (src/ and scripts/*.ts).
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { homeDir } from './home.ts';
 import { join } from 'node:path';
 
 /** The default config body, identical to what the installer has always written. */
@@ -46,7 +46,7 @@ export const DEFAULT_CONFIG = [
 
 /** Config file path candidates: project first, then user home. */
 function configPaths(projectDir: string): string[] {
-  return [join(projectDir, '.mugiwara', 'config'), join(homedir(), '.mugiwara', 'config')];
+  return [join(projectDir, '.mugiwara', 'config'), join(homeDir(), '.mugiwara', 'config')];
 }
 
 /**

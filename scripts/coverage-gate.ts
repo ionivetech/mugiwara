@@ -16,7 +16,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
-import { join, relative, sep } from 'node:path';
+import { join } from 'node:path';
 
 const root = join(import.meta.dirname, '..');
 const SHOW = process.argv.includes('--show');
@@ -62,10 +62,8 @@ function git(args: string[]): string {
 
 // ---- 1. is there anything to measure at all? -------------------------------
 
-const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
-const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-if (!deps['@vitest/coverage-v8'] && !deps['@vitest/coverage-istanbul'])
-  skip('no coverage tooling installed (no @vitest/coverage-* in package.json)');
+// Coverage comes from the runtime itself (`bun test --coverage`), not a
+// dependency — the only way to have no tooling is to have no runner.
 if (!existsSync(join(root, 'test')))
   skip('no test suite found (no test/ directory)');
 
@@ -110,7 +108,7 @@ if (!changed.length) skip(`no added or modified files between ${base.slice(0, 7)
 
 // ---- 3. measure ------------------------------------------------------------
 
-const summaryPath = join(root, 'coverage', 'coverage-summary.json');
+const summaryPath = join(root, 'coverage', 'lcov.info');
 const needsRun =
   !existsSync(summaryPath) ||
   statSync(summaryPath).mtimeMs < Math.max(...changed
@@ -119,8 +117,8 @@ const needsRun =
     .map((p) => statSync(p).mtimeMs), 0);
 
 if (needsRun) {
-  console.log('coverage-gate: measuring (vitest run --coverage)...');
-  const r = spawnSync('npx', ['vitest', 'run', '--coverage', '--silent'], {
+  console.log('coverage-gate: measuring (bun test --coverage)...');
+  const r = spawnSync('bun', ['test', '--coverage', '--coverage-reporter=lcov', '--parallel'], {
     cwd: root, stdio: 'inherit', shell: process.platform === 'win32',
   });
   if (r.status !== 0) {
@@ -129,14 +127,29 @@ if (needsRun) {
   }
 }
 if (!existsSync(summaryPath))
-  skip('coverage run produced no coverage-summary.json (json-summary reporter not configured)');
+  skip('coverage run produced no lcov.info (coverage-reporter=lcov not configured)');
 
-const summary = JSON.parse(readFileSync(summaryPath, 'utf8'));
-// keys are absolute OS paths; normalise to repo-relative posix to match git
-const measured = new Map<string, number>();
-for (const [k, v] of Object.entries<any>(summary)) {
-  if (k === 'total') continue;
-  measured.set(relative(root, k).split(sep).join('/'), v.lines?.pct ?? 0);
+const measured = parseLcov(readFileSync(summaryPath, 'utf8'));
+function parseLcov(text: string): Map<string, number> {
+  // Minimal LCOV reader: per SF record, LF = lines found, LH = lines hit.
+  // Line% = LH/LF — the same population v8's lines.pct measured, so the
+  // new/modified thresholds apply unchanged.
+  const out = new Map<string, number>();
+  let file = '';
+  let found = 0;
+  let hit = 0;
+  const flush = () => {
+    if (file) out.set(file, found === 0 ? 100 : (hit / found) * 100);
+    file = ''; found = 0; hit = 0;
+  };
+  for (const line of text.split(/\r?\n/)) {
+    if (line.startsWith('SF:')) { flush(); file = line.slice(3).replace(/^\.\//, ''); }
+    else if (line.startsWith('LF:')) found = Number(line.slice(3)) || 0;
+    else if (line.startsWith('LH:')) hit = Number(line.slice(3)) || 0;
+    else if (line === 'end_of_record') flush();
+  }
+  flush();
+  return out;
 }
 
 // ---- 4. apply the two thresholds ------------------------------------------

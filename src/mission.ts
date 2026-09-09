@@ -31,6 +31,15 @@ function isStateFile(f: string): boolean {
   return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
 }
 
+/** Deterministic state-file order: solo state.json first, members
+ * alphabetical. Raw readdir order is unspecified — Bun returns newest
+ * first, Node oldest first — so any user-visible sequence built from it
+ * must sort (the provenance model list depended on it and flipped). */
+function orderedStateFiles(files: string[]): string[] {
+  return files.filter(isStateFile).sort((a, b) =>
+    a === 'state.json' ? -1 : b === 'state.json' ? 1 : a.localeCompare(b));
+}
+
 /** Primary state for closure artifacts: solo state.json wins over members. */
 function primaryState(dir: string, files: string[]): Record<string, unknown> | null {
   const name = files.includes('state.json') ? 'state.json' : files.find((f) => f.endsWith('.json') && f !== 'continue.json' && !f.startsWith('continue-'));
@@ -152,7 +161,7 @@ export function rosterAssignees(missionDir: string): string[] {
 export function readMemberStates(missionDir: string): Array<{ member: string | null; flow: number }> {
   if (!existsSync(missionDir)) return [];
   const out: Array<{ member: string | null; flow: number }> = [];
-  for (const f of readdirSync(missionDir).filter(isStateFile)) {
+  for (const f of orderedStateFiles(readdirSync(missionDir))) {
     try {
       const raw = JSON.parse(readFileSync(join(missionDir, f), 'utf8')) as Record<string, unknown>;
       const member = f === 'state.json' ? null : f.slice(0, -'.json'.length);
@@ -385,7 +394,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
   // unique models across every stage's state file (A4) — collected HERE,
   // before the fold deletes the .json files; team members and solo
   // re-savepoints each record the model that ran their stage.
-  const stageModels = [...new Set(files.filter(isStateFile).map((f) => {
+  const stageModels = [...new Set(orderedStateFiles(files).map((f) => {
     try {
       const s = JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>;
       return typeof s.model === 'string' ? s.model : '';

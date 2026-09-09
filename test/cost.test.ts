@@ -3,7 +3,7 @@
 // Every expectation is a literal value asserted against scripts/lib/lane-base.sh
 // and scripts/savepoint.sh math (D5 single source of truth), never a truthy
 // typeof check.
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import { readFileSync, mkdtempSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

@@ -44,6 +44,20 @@ Detectors — six categories:
 
 Trail row `slop-governor`.
 
+## On stop — findings handoff (mandatory)
+
+Every stop (investigation limit, breaker trip, heal halt, budget stop) leaves
+a handoff — stopped work without one is wasted work. Write it where the work
+lived (decision log, or the mission dir for mission work):
+
+- Findings so far (facts with evidence, no conclusions without them)
+- Dead ends tried (action + result — the next attempt must not repeat these)
+- Next step + owner (concrete action, who runs it: user, next session, named crew)
+- Re-entry cost (what must be re-read/re-run to resume — keep it small)
+
+One paragraph each, max. A stop with no handoff is a defect — flag it at
+review like a missing test.
+
 ## Budget — reserve, projection, thresholds, breaker
 
 Reserve expected max before expensive stages (Review/Security/Healing). Continuously project `current + remaining required + expected conditional + possible healing` (§26).
@@ -99,6 +113,7 @@ Ledger aggregates envelope+events+registry+trail; `mugiwara cost` surfaces ledge
 - [ ] slop: taxonomy classified, signals measured, intervention applied
 - [ ] budget: reserved, projected, thresholds respected, breaker armed
 - [ ] benchmark: 4 cost + 12 slop + 3 stress green, thresholds ratcheted
+- [ ] every stop left a findings handoff (facts, dead ends, next step + owner)
 - [ ] trail rows written for every non-trivial verdict
 
 Unchecked boxes are not done.

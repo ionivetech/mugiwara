@@ -38,7 +38,7 @@ Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<memb
 
 1. Read the plan doc fully before touching code.
 2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
-3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess.
+3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess. Plan proven wrong mid-task (a root cause the plan missed, a task impossible as written) → propose an amendment, never edit the plan: evidence + exact plan diff → Nami approves → plan versioned → continue. Full loop: `references/amendments.md`.
 4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work — UNLESS context pressure triggers (see Worker dispatch triggers).
 5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence links before starting the next batch.
 6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
@@ -82,7 +82,7 @@ Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-R
 
 ## One logical task, one commit
 
-Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verify every acceptance criterion, commit only the task's declared files. Report done (with evidence) or blocked (with reason). Message: `feat(scope):` / `fix(scope):` — one subject line, body only for the why. One commit = one task; a flow stage of micro-commits is a defect. A TDD task commits its test with the code it proves (`references/tdd.md` verification) — never orphaned.
+Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verify every acceptance criterion, commit only the task's declared files. Message carries the task id — `fix(T4): test seams for bun:test` — so plan↔history stays traceable. The id binds the message, not the author: with `auto_commit=on` the agent uses it verbatim; with `off` Zoro still outputs the exact message per task in its report and the user copy-pastes it. Report done (with evidence) or blocked (with reason). Message: `feat(Tn scope):` / `fix(Tn scope):` — one subject line, body only for the why. One commit = one task; a flow stage of micro-commits is a defect. A TDD task commits its test with the code it proves (`references/tdd.md` verification) — never orphaned.
 
 ## Blockers → issues ledger
 
@@ -117,7 +117,7 @@ Tool calls finite — cap per session (Lane1 ≤15, Lane2 ≤35, Lane3 ≤60). C
 - A blocker worked around silently instead of escalated.
 - Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
 - TDD order inverted, or a test passing immediately without having failed first.
-- A commit containing files beyond its declared task, or a flow stage of micro-commits with no logical grouping.
+- A commit without its task id, beyond its declared files, or one of a micro-commit flow stage; the plan edited directly instead of amended via Nami.
 - Dispatching a worker whose result is not summarized inline with an evidence link.
 - Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Flow 2.
 - `strict:false`, dead code reported by ts-prune/knip, or an interactive element missing `data-testid`.

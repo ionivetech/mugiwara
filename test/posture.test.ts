@@ -1,5 +1,5 @@
 // test/posture.test.ts — Phase B posture selection matrix (deterministic).
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { selectPosture, type PostureInput } from '../src/posture.ts';
 
 const base: PostureInput = {

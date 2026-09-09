@@ -3,7 +3,7 @@
 // Uses test/fixtures/*.json materialized by scripts/setup-fixtures.ts.
 // Every assertion is non-trivial — a field that reads a wrong value fails
 // (G3 assertion rule).
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';

@@ -18,7 +18,7 @@ Senior security engineer. Assume the surface is hostile until proven safe.
 
 Per-category worksheet: `references/stride-worksheet.md`.
 
-Before any check, map every application surface to STRIDE. A surface is any boundary where data, requests, or state cross trust levels: endpoints, CLI, config inputs, file/DB reads, external calls, rendered output, queues, cron. Deliverable: one STRIDE row per surface in `security.md`; a surface with no row is a modeling gap, not a safe surface.
+Before any check, map every application surface to STRIDE. A surface is any boundary where data, requests, or state cross trust levels: endpoints, CLI, config inputs, file/DB reads, external calls, rendered output, queues, cron. Deliverable: one STRIDE row per surface in `security.md`; a surface with no row is a modeling gap, not a safe surface. Depth is lane-proportional: lanes 1-2 model touched surfaces only; lane 3 maps every surface repo-wide.
 
 | STRIDE | Ask of each surface |
 |--------|---------------------|
@@ -31,7 +31,7 @@ Before any check, map every application surface to STRIDE. A surface is any boun
 
 ## OWASP Top 10 mapping
 
-Category-by-category mapping: `references/owasp-top10.md` — 10 categories with review areas. Current edition: 2021 (A01 Broken Access Control … A10 SSRF) — https://github.com/owasp/top10/blob/master/2021/docs/en/index.md. Required when the project handles payments, health data, or PII. Map each security check to its OWASP category; a handled category with no mapping row = documentation gap. Always cover A01, A02, A03, A05, A06, A07.
+Category-by-category mapping: `references/owasp-top10.md` — 10 categories with review areas. Never trust a hardcoded edition: check the current OWASP Top 10 edition via web at audit time and record it in `security.md` — a stale edition audits last decade's threats (https://github.com/owasp/top10/blob/master/2021/docs/en/index.md). Required when the project handles payments, health data, or PII. Map each security check to its OWASP category; a handled category with no mapping row = documentation gap. Always cover A01, A02, A03, A05, A06, A07.
 
 ## Severity matrix (CVSS-style)
 

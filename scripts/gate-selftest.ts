@@ -1,6 +1,10 @@
 #!/usr/bin/env bun
 // scripts/gate-selftest.ts — G2: prove each gate can fail.
 // Mutate → assert RED → restore → assert GREEN. Exit 0 when all pass.
+//
+// `bun scripts/gate-selftest.ts --fast` narrows the two full-file test runs
+// (G3) to their single proving test — same RED proof, no full-file wall.
+// Full mode stays the pre-release/weekly G3 gate; --fast never replaces it.
 
 import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, copyFileSync, renameSync, unlinkSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
@@ -10,6 +14,7 @@ import { gatesForLane } from '../src/policy.ts';
 import { budgetForLane } from '../src/cost.ts';
 
 const root = join(import.meta.dirname, '..');
+const FAST = process.argv.includes('--fast');
 let passed = 0;
 let failed = 0;
 
@@ -122,10 +127,17 @@ if (!existsSync(join(root, 'test', 'savepoint.test.ts'))) {
       "expect(state.lane).toBe('NONEXISTENT')"
     );
     writeFileSync(testFile, broken);
-    assert('broken assertion → gate fails', false, () => run('G3', 'bun run test -- savepoint'));
+    // --fast: the broken assertion lives in one test; the full file proves
+    // nothing more for this mutation. Same RED proof, ~10s less wall.
+    const g3cmd = FAST
+      ? 'bun test test/savepoint.test.ts -t "non-trivial values"'
+      : 'bun run test -- savepoint';
+    assert('broken assertion → gate fails', false, () => run('G3', g3cmd));
   } finally {
     writeFileSync(testFile, original);
-    assert('restored → gate passes', true, () => run('G3', 'bun run test -- savepoint'));
+    assert('restored → gate passes', true, () => run('G3', FAST
+      ? 'bun test test/savepoint.test.ts -t "non-trivial values"'
+      : 'bun run test -- savepoint'));
   }
 }
 
@@ -1038,12 +1050,12 @@ console.log('\nE3 — source-only predicate');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('source-only predicate → artifact case fails', false, () => run('E3', 'bun x vitest run test/hooks.test.ts -t "artifacts written"'));
+      assert('source-only predicate → artifact case fails', false, () => run('E3', 'bun test test/hooks.test.ts -t "artifacts written"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → artifact case passes', true, () => run('E3-restore', 'bun x vitest run test/hooks.test.ts -t "artifacts written"'));
+    assert('restored → artifact case passes', true, () => run('E3-restore', 'bun test test/hooks.test.ts -t "artifacts written"'));
   }
 }
 
@@ -1060,12 +1072,12 @@ console.log('\nE4 — forbidden table');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('missing pr-create row → deny case fails', false, () => run('E4', 'bun x vitest run test/hooks.test.ts -t "gh pr create"'));
+      assert('missing pr-create row → deny case fails', false, () => run('E4', 'bun test test/hooks.test.ts -t "gh pr create"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → deny case passes', true, () => run('E4-restore', 'bun x vitest run test/hooks.test.ts -t "gh pr create"'));
+    assert('restored → deny case passes', true, () => run('E4-restore', 'bun test test/hooks.test.ts -t "gh pr create"'));
   }
 }
 
@@ -1082,12 +1094,12 @@ console.log('\nE4b — tree-mutation row');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('missing stash row → stash deny case fails', false, () => run('E4b', 'bun x vitest run test/hooks.test.ts -t "pretool: git stash"'));
+      assert('missing stash row → stash deny case fails', false, () => run('E4b', 'bun test test/hooks.test.ts -t "pretool: git stash"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → stash deny case passes', true, () => run('E4b-restore', 'bun x vitest run test/hooks.test.ts -t "pretool: git stash"'));
+    assert('restored → stash deny case passes', true, () => run('E4b-restore', 'bun test test/hooks.test.ts -t "pretool: git stash"'));
   }
 }
 
@@ -1107,12 +1119,12 @@ console.log('\nE5 — over-broad push matcher');
     } else {
       writeFileSync(gf, broken);
       execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-      assert('push-all matcher → feature-push case fails', false, () => run('E5', 'bun x vitest run test/hooks.test.ts -t "feature-branch push"'));
+      assert('push-all matcher → feature-push case fails', false, () => run('E5', 'bun test test/hooks.test.ts -t "feature-branch push"'));
     }
   } finally {
     writeFileSync(gf, original);
     execSync('bun scripts/build-hooks.ts', { cwd: root, stdio: 'pipe', timeout: 120000 });
-    assert('restored → feature-push passes', true, () => run('E5-restore', 'bun x vitest run test/hooks.test.ts -t "feature-branch push"'));
+    assert('restored → feature-push passes', true, () => run('E5-restore', 'bun test test/hooks.test.ts -t "feature-branch push"'));
   }
 }
 
@@ -1148,11 +1160,11 @@ console.log('\nE7 — todos mirror');
       failed++;
     } else {
       writeFileSync(sf, broken);
-      assert('missing mirror → mirror test fails', false, () => run('E7', 'bun x vitest run test/savepoint.test.ts -t "todos mirror"'));
+      assert('missing mirror → mirror test fails', false, () => run('E7', 'bun test test/savepoint.test.ts -t "todos mirror"'));
     }
   } finally {
     writeFileSync(sf, original);
-    assert('restored → mirror test passes', true, () => run('E7-restore', 'bun x vitest run test/savepoint.test.ts -t "todos mirror"'));
+    assert('restored → mirror test passes', true, () => run('E7-restore', 'bun test test/savepoint.test.ts -t "todos mirror"'));
   }
 }
 
@@ -1316,7 +1328,7 @@ console.log('\nN9 — platform-count mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      ' — 9 via install, 3 via marketplace manifest.',
+      ': 9 install directly, 3 load via marketplace manifest.',
       '.',
     );
     if (broken === original) {
@@ -1454,5 +1466,5 @@ console.log('\nT6 — fake-runbook-command mutation');
   }
 }
 
-console.log(`\n${passed} passed, ${failed} failed`);
+console.log(`\n${passed} passed, ${failed} failed${FAST ? ' (--fast)' : ''}`);
 process.exit(failed > 0 ? 1 : 0);

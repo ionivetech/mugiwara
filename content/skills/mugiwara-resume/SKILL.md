@@ -21,11 +21,11 @@ What happens when a skill changes shape mid-mission: `_shared/references/skill-v
 Resume reads per-(mission, member) files. Identity is (mission, member), never branch. Solo missions use member-less files named `state.json`.
 
 ```
-.mugiwara/
-├── state/<mission>/state.json       # solo computed state
-├── state/<mission>/<member>.json    # team member computed state
-├── continue/<mission>/state.json    # solo resume point (D10)
-├── continue/<mission>/<member>.json # team member resume point
+.mugiwara/missions/<mission>/
+├── state.json               # solo computed state
+├── <member>.json            # team member computed state
+├── continue.json            # solo resume point (D10)
+├── continue-<member>.json   # team member resume point
 ```
 
 All position data is computed at every flow-stage boundary by `mugiwara savepoint`. On Claude Code a Stop hook writes one automatically at every turn end, so the crew's explicit call marks the flow-stage boundary rather than being the only thing keeping state alive. State JSON shape (solo example):

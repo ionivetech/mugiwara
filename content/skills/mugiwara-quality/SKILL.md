@@ -21,6 +21,15 @@ Never assume `npm test`. Detect the project's real commands from package.json sc
 
 Reuse across flow stages: a check whose result is already recorded in `flows/02-audit.md` for an unchanged diff (same flow-base) is cited, not re-run; a changed diff re-runs fresh.
 
+## Delta vs base, configs proven untouched
+
+Duplication and complexity are judged on the DELTA against the flow-base,
+not the absolute file: a file already at 290 LOC before the mission is
+pre-existing condition, not this mission's debt — what the mission ADDED is
+what fails. Same for configs: `git diff <flow-base>..HEAD` on lint/format/
+typecheck configs must be empty, or each hunk carries an explicit user
+approval. "Never weakens configs" without that diff is a claim, not a fact.
+
 ## Order
 
 Full checklist: `references/order-checklist.md` — 11 steps; see file for thresholds and evidence.
@@ -75,6 +84,7 @@ Per check: command run, exit status, key output excerpt, pass/fail → to `.mugi
 
 - Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
 - Weakening configs or disabling rules to make checks pass.
+- Claiming configs unweakened without the empty-diff proof against flow-base.
 - Asserting test results without running the suite.
 - Silently skipping the flow stage when no tooling is found.
 - Running state-mutating user tests without consent.

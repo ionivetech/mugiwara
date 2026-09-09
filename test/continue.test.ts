@@ -1,6 +1,6 @@
 // test/continue.test.ts — src/continue.ts had zero tests. It decides which
 // mission gets resumed; a wrong answer resumes someone else's work.
-import { describe, expect, test, beforeEach, afterEach, afterAll } from 'vitest';
+import { describe, expect, test, beforeEach, afterEach, afterAll } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

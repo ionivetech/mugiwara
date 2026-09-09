@@ -200,6 +200,6 @@ references/         — shared reference files (definition-of-done, source-groun
 docs/               — user-facing documentation
 scripts/            — validation + tooling scripts
 src/                — CLI TypeScript source
-test/               — vitest tests
+test/               — bun tests
 evals/cases/        — eval case JSON files
 ```

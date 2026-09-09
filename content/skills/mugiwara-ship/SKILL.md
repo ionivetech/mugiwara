@@ -36,6 +36,7 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 1. Ship in stages: internal/canary first, then a small subset, then general.
 2. Each stage has a pass criterion and an owner who checks it before the next stage.
 3. Never promote to the next stage without the previous stage's evidence.
+4. After the final stage: smoke-verify in production — the owner runs the pass criterion once more against prod. A rollout without a prod check is a claim.
 
 ## Mandatory rollback plan
 

@@ -21,7 +21,7 @@ Worked example — endpoint built from the docs: `references/source-backed-examp
 
 ## Existing-repo standard FIRST
 
-Before writing a line, learn how this repo already does backend: framework/language, layout (controllers/services/repos), error model, logging, config loading, DB access (ORM vs raw SQL), endpoint patterns, auth middleware. Match it. Never invent a parallel architecture, a second error model, or a second DB layer. No repo standard → pick boring idiomatic defaults, note the choice.
+Before writing a line, learn how this repo already does backend: framework/language, layout (controllers/services/repos), error model, logging, config loading, DB access (ORM vs raw SQL), endpoint patterns, auth middleware. Match it. Never invent a parallel architecture, a second error model, or a second DB layer. No repo standard → pick boring idiomatic defaults, note the choice. Stack-gate: the Prisma / Express sections below apply only when that stack is detected — other stacks follow the same rules grounded in their own docs per the protocol above.
 
 ## Clean architecture (measured)
 

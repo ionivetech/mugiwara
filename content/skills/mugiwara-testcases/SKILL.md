@@ -16,7 +16,7 @@ User tests are the crew's acceptance oracle. This is the single home for the ATD
 
 What each format must carry to be usable: `references/intake-formats.md`.
 
-1. Existing repo test files (vitest / pytest / playwright / JUnit).
+1. Existing repo test files (bun:test / vitest / pytest / playwright / JUnit).
 2. User-written acceptance criteria — Gherkin AND plain markdown.
 
 ## Intake

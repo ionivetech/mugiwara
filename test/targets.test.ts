@@ -1,5 +1,5 @@
 // test/targets.test.ts
-import { test, expect } from 'vitest';
+import { test, expect } from 'bun:test';
 import { existsSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

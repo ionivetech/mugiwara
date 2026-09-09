@@ -89,6 +89,12 @@ Never pass the implementer's CLAIM. For each claim:
 4. Reconcile findings into categories: contract-misread / actionable / trade-off / noise. Report only the first three.
 5. Max 3 cycles. After 3, stop — or escalate to the orchestrator with the unresolved claim.
 
+## Re-review scope
+
+Cycle N+1 re-reviews ONLY the fixed findings plus their callers — never the
+full diff again. A fix that touches new callers extends the scope to those
+callers, nothing else. Full-diff re-review is waste wearing diligence.
+
 ## Documentation
 
 Public API changes must be reflected in README/docs/changelog where the repo has them.
