@@ -131,4 +131,30 @@ describe('harness.require_enforcement policy', () => {
     expect(r2.status).toBe(0);
     expect((r2.stderr + r2.stdout)).not.toContain('harness enforcement required');
   });
+
+  it('flow-style arrays parse to real arrays (fail-open regression)', () => {
+    const raw = parsePolicyYaml(
+      'lanes:\n  force_full: ["docs/**", "src/auth/**"]\ngates:\n  require_human_approval: ["src/payments/**"]\nevidence:\n  required: [test, lint]\n',
+    );
+    expect((raw.lanes as Record<string, unknown>).force_full).toEqual(['docs/**', 'src/auth/**']);
+    expect(((raw.gates as Record<string, unknown>).require_human_approval as unknown[])).toEqual(['src/payments/**']);
+    expect(((raw.evidence as Record<string, unknown>).required as unknown[])).toEqual(['test', 'lint']);
+  });
+
+  it('loadPolicy keeps flow-style force_full end to end', () => {
+    writeFileSync(join(dir, 'mugiwara.policy.yml'), 'lanes:\n  force_full: ["docs/**"]\n');
+    const p = loadPolicy(dir);
+    expect(p?.lanes?.force_full).toEqual(['docs/**']);
+  });
+
+  it('block-style lists still parse', () => {
+    const raw = parsePolicyYaml('lanes:\n  force_full:\n    - docs/**\n    - src/auth/**\n');
+    expect((raw.lanes as Record<string, unknown>).force_full).toEqual(['docs/**', 'src/auth/**']);
+  });
+
+  it('non-array scalars untouched by flow parsing', () => {
+    const raw = parsePolicyYaml('harness:\n  require_enforcement: true\ngates:\n  coverage:\n    new: 95\n');
+    expect((raw.harness as Record<string, unknown>).require_enforcement).toBe(true);
+    expect((((raw.gates as Record<string, unknown>).coverage) as Record<string, unknown>).new).toBe(95);
+  });
 });
