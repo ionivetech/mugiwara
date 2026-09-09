@@ -23,7 +23,7 @@ Blocker ledger row format used by Chopper (flow-audit) and Brook (healing).
 ```
 | 4 | T3 | test-fail: formatDate returns wrong locale | re-ran with en-US locale explicitly | locale detection differs between Node 18 and 20 |
 | 4 | T5 | missing-impl: no thumbnail endpoint | searched routes/ dir, not found | endpoint was in a different plan flow stage |
-| 5 | T2 | env: vitest hangs on CI | re-ran locally, passes | needs --pool=forks flag on CI |
+| 5 | T2 | env: bun test hangs on CI | re-ran locally, passes | needs --shard split on CI |
 ```
 
 ## Rules
