@@ -36,9 +36,9 @@ For every task in the completed flow stage, in order:
 The audit never mutates the working tree. Forbidden: `git stash` (push and
 pop — including `stash list` reads, which normalize the habit), `git checkout
 -- <path>`, `git reset --hard`, `git clean -fd`. The tool guard blocks these;
-a blocked command is a finding about the audit setup, never a cue to work
-around it. Proving a regression on a clean tree uses `git worktree add`
-(per `mugiwara-git`) or `git show <base>:<path>` — never stash.
+a blocked command is a finding about the audit setup — the audit stays read-only,
+never a cue to work around it. Proving a regression on a clean tree uses
+`git worktree add` (per `mugiwara-git`) or `git show <base>:<path>` — never stash; the tree stays untouched.
 
 ## Failure ledger
 
