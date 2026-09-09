@@ -85,7 +85,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'sign': return signCmd(flags, _);
     case 'migrate': return migrateCmd(flags, _);
     case 'lesson': return lessonCmd(flags, _);
-    case 'initiative': return initiativeCmd(flags, _);
+    case 'plan': return planCmd(flags, _);
     default: throw new Error(`Unknown command: ${command}`);
   }
 }
@@ -937,8 +937,8 @@ function lessonCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`lesson appended: ${line}`);
 }
 
-/** `mugiwara initiative <status|conflict-check> <plan>` — sub-mission checks. */
-function initiativeCmd(_flags: Args['flags'], positionals: string[]): void {
+/** `mugiwara plan <status|conflict-check> <plan>` — sub-mission checks. */
+function planCmd(_flags: Args['flags'], positionals: string[]): void {
   const r = runInitiative(positionals[1], positionals[2]);
   process.stdout.write(r.output);
   if (r.code !== 0) process.exit(r.code);

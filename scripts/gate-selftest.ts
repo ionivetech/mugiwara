@@ -1156,19 +1156,19 @@ console.log('\nE7 — todos mirror');
   }
 }
 
-// --- N1 mutation: remove `case 'initiative'` → --check-doc-integrity red ---
+// --- N1 mutation: remove `case 'plan'` → --check-doc-integrity red ---
 console.log('\nN1 — initiative case mutation');
 {
   const f = join(root, 'src', 'cli.ts');
   const original = readFileSync(f, 'utf8');
   try {
-    const broken = original.replace("    case 'initiative': return initiativeCmd(flags, _);\n", '');
+    const broken = original.replace("    case 'plan': return planCmd(flags, _);\n", '');
     if (broken === original) {
       console.error('✗ N1: mutation target not found');
       failed++;
     } else {
       writeFileSync(f, broken);
-      assert('missing initiative case → doc-integrity fails', false, () => run('N1', 'bun scripts/validate-content.ts --check-doc-integrity'));
+      assert('missing plan case → doc-integrity fails', false, () => run('N1', 'bun scripts/validate-content.ts --check-doc-integrity'));
     }
   } finally {
     writeFileSync(f, original);

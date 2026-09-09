@@ -18,7 +18,7 @@ Three people editing one plan collide without named slices. The lead cuts the wo
    Example split: `jane-doe` owns api, `john-smith` owns web, `eleanor-vance` owns docs.
 3. Lead: write one sub-mission row per handle in `plan.md`, then check overlap.
    ```bash
-   mugiwara initiative conflict-check .mugiwara/missions/crew1/plan.md
+   mugiwara plan conflict-check .mugiwara/missions/crew1/plan.md
    ```
    ```
    no conflicts: no file is touched by two sub-missions

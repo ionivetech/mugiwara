@@ -153,7 +153,7 @@ describe('initiative sub-mission parsing (N1)', () => {
       ]),
     );
     try {
-      const r = await cli(['initiative', 'conflict-check', f]);
+      const r = await cli(['plan', 'conflict-check', f]);
       expect(r.code).toBe(1);
       expect(r.out).toContain('src/api/shared.ts');
     } finally {
@@ -164,7 +164,7 @@ describe('initiative sub-mission parsing (N1)', () => {
   it('CLI status exits 0 with the dashboard', async () => {
     const f = planFile(plan(SUB_MISSIONS_HEADER, ROWS));
     try {
-      const r = await cli(['initiative', 'status', f]);
+      const r = await cli(['plan', 'status', f]);
       expect(r.code).toBe(0);
       expect(r.out).toContain('S1');
     } finally {
