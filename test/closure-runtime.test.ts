@@ -257,7 +257,7 @@ describe('CLI commands end-to-end', () => {
 
   it('handoff --path degrades honestly outside a repo; sign --verify fails closed on unsigned', () => {
     const r1 = runCli('handoff demo --path some/path.ts', dir);
-    expect(r1.stdout + r1.stderr).toContain('no in-flight mission');
+    expect(String(r1.stdout) + String(r1.stderr)).toContain('no in-flight mission');
 
     const proj = mkdtempSync(join(tmpdir(), 'mugi-cli2-'));
     const mdir = join(proj, '.mugiwara', 'missions', 'demo');
