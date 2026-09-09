@@ -1,99 +1,17 @@
-# Developer Onboarding
+# How do I onboard a developer?
 
-Set up, validate, and contribute to the mugiwara repo.
+A contributor's first hour decides their second month. This page takes a developer from fresh clone to validated change with one source of truth and one command chain.
 
-## Requirements
+Example: a new contributor edits `content/skills/mugiwara-gates/SKILL.md`, then runs validation, typecheck, and tests from the repo root (`bun run validate`, `bun run typecheck`, `bun run test`). Green across all three means the change is shaped correctly; anything red names the file and rule before review time.
 
-| Dependency | Required for | Version |
-|------------|--------------|---------|
-| Node.js | running the CLI and the built artifact | >= 20.11 |
-| Bun | building from source, running tests | optional (preferred) |
+## Requirements and layout
 
-```bash
-bun install
-```
+Node.js 20.11 or newer runs the CLI and the built artifact; Bun is preferred for building from source and running tests. `content/` holds skills plus agents as the only physical source; repo-root `agents/` and `skills/` are symlinks into it, so harnesses reading the plugin root see identical files with no copy to drift. Recreate missing symlinks with the sync script under `.claude-plugin/`.
 
-## Repo layout
+## Source rules
 
-```
-mugiwara/
-├── content/            # single source of truth: skills/ + agents/ markdown
-├── agents/             # symlink → content/agents (Claude Code plugin reads plugin root)
-├── skills/             # symlink → content/skills
-├── src/                # CLI, installer, targets, frontmatter parser
-│   └── closure modules: policy.ts (policy.yml), integrity.ts (archive
-│     gate), rollback.ts, provenance.ts (+ blame), routing.ts, budget.ts,
-│     sign.ts — wired together in mission.ts archiveMission, commands in cli.ts
-├── scripts/            # validate-content, sync-version, run-evals, install scripts,
-│                       # lane.sh + savepoint.sh (runtime), gate-selftest.ts (G2)
-├── test/               # vitest suite — closure*.test.ts covers the modules above
-├── evals/cases/        # behavioral + retrieval cases (run-evals, retrieval-eval)
-├── examples/trail/     # a real archived mission, shipped as documentation
-├── .opencode/plugins/  # opencode plugin (registers crew at config load)
-├── .claude-plugin/     # Claude Code marketplace + sync.sh (symlink guard)
-└── docs/               # these docs
-```
+Always edit `content/`, never the symlink faces. Skill plus agent descriptions share a 5,500-char index budget enforced by the validator: a new description replaces an old one, since the catalog never grows past the ceiling. New skills match folder name to frontmatter name, carry a 20-char-plus description, keep bodies within 120 lines, and declare a numeric `Skip when` block. New agents list held skills in frontmatter with a summon-ready description, then update the crew tables in README and docs.
 
-## The source of truth
+## Validate, build, contribute
 
-`content/` is the only physical source. The repo-root `agents/` and `skills/`
-are **symlinks** into it, so harnesses that read the plugin root (Claude Code
-marketplace) see the same files — there is no copy to drift. On a fresh clone
-where the symlinks are missing, recreate them:
-
-```bash
-sh .claude-plugin/sync.sh
-```
-
-> **Index budget:** skill+agent descriptions must stay ≤5,500 chars combined
-> (`bun scripts/validate-content.ts` enforces). A new description replaces an
-> old one — the catalog does not grow past the ceiling.
-
-Always edit `content/`. `bun run validate --check-sync` verifies the symlinks
-resolve to `content/` and never diverge.
-
-## Validation
-
-```bash
-bun run validate                # 21 skills + 11 agents (+3 internal): names, descriptions, skip gates, line limits
-bun run validate --check-sync   # symlinks resolve to content/, never diverge
-bun run typecheck               # tsc --noEmit
-bun run test                    # vitest
-bun run evals                   # eval suite valid (structure + coverage gates)
-bun run evals --run             # optional: execute cases against a model CLI (MUGIWARA_EVAL_CMD)
-```
-
-## Editing a skill or agent
-
-1. Edit `content/skills/<name>/SKILL.md` or `content/agents/<name>.md`.
-2. Respect the house style (see [skill-anatomy.md](skill-anatomy.md) and
-   [agent-anatomy.md](agent-anatomy.md)): evidence over claims, exact commands,
-   red flags, ≤120-line skill bodies.
-3. `bun run validate && bun run typecheck && bun run test`
-
-## Adding a new skill or agent
-
-1. Create the content file following the anatomy docs.
-2. If it's an agent, list its held skills in frontmatter; give it a
-   `description` ≥20 chars.
-3. If it's a skill, pick a folder name that matches `name`; description 20–500
-   chars; body ≤120 lines; include a `## Skip when` block (1–4 bullets, numeric
-   thresholds) so the skill knows when it does not apply.
-4. Update the crew/technique tables in `README.md` and the docs (`agents.md`,
-   `skills.md`).
-5. Sync + validate + test.
-
-## Building and publishing
-
-```bash
-bun run build          # dist/mugiwara.js
-bun run sync-version   # sync version from package.json into manifests
-bun prepack            # build + sync-version
-```
-
-Version numbers in the manifests sync from `package.json` via `sync-version`
-(runs automatically on publish).
-
-## Contributing
-
-Open an issue or pull request on GitHub: <https://github.com/ionivetech/mugiwara>.
+Run `bun run validate`, `bun run typecheck`, and `bun run test` from the repo root, then `bun run build` for the distributable. Version numbers sync from `package.json` at publish time. Open an issue or pull request on GitHub to contribute.

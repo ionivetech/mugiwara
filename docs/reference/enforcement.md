@@ -1,83 +1,25 @@
-# Enforcement
+# What is enforced?
 
-A markdown harness cannot force a model to comply with prose — that is the
-ceiling of every skills pack, mugiwara included. This page splits what is
-actually **ENFORCED** from what is **ASPIRATIONAL**, so nothing on it is a
-promise the repo cannot keep. `harness-matrix.md` uses the same convention.
+Every skills pack faces one ceiling: prose cannot force a model to comply. This page splits what a validator or hook actually checks from what the crew is merely asked to do, so no line here promises what the repo cannot keep. It absorbs the former concepts page on the same question; nothing from that page lives anywhere else now.
 
-Measured, in this repo: **0 of 21** prose instructions were complied with
-without a mechanism behind them. That number is the reason this page exists.
+Example: a skill ships without its `Skip when` block. The validator fails the build naming the file, before any model ever reads it. Contrast a model skipping lane re-runs at a boundary: nothing fails, and the audit trail is the only witness. Same repo, two realities, and this page never mixes them.
 
-## ENFORCED — a validator or a hook fails the build
+## Enforced: a validator or hook fails the build
 
-Something other than a model checks these. Drift breaks CI.
+Something other than a model checks each row below, and drift breaks CI. Presence of skip gates with numeric thresholds, skill body line ceilings, description bounds with no duplicate names, the 5,500-char index budget, manifest parity with `content/`, lane thresholds equal to source constants, write-scope limited to the executor and healer skills, generated target files matching `content/`, retrieval quality never regressing below its floor (95.9% rank-1 over 216 probes, 318 pointers resolving with 0 broken), and the turn-end savepoint hook refreshing mission state on Claude Code. That hook is the only mechanism producing an artifact without model involvement, and it never advances a flow stage.
 
-| Rule | Mechanism | Where |
-|------|-----------|-------|
-| Skip gates present | every skill declares `## Skip when` with 1–4 bullets | `scripts/validate-content.ts` |
-| Body length | skill body ≤120 lines; section content-line ceiling | `scripts/validate-content.ts` |
-| Description bounds | name + description length; no duplicate names | `scripts/validate-content.ts` |
-| Index budget | skill + agent descriptions combined stay under the char ceiling | `scripts/validate-content.ts` |
-| Manifest sync | manifest set-equals `content/`; docs list every skill + agent | `scripts/validate-content.ts --check-manifest --check-docs` |
-| Doc integrity | documented lane thresholds must equal the source constants | `scripts/validate-content.ts --check-doc-integrity` |
-| `write-scope: source` | only `zoro-execution` and `brook-healing` may declare it | `scripts/validate-content.ts` |
-| Conformance | generated target files match `content/` | `scripts/conformance.ts` |
-| Retrieval ratchet | retrieval quality may not regress below the recorded floor | `scripts/retrieval-eval.ts` |
-| **Savepoint written at turn end** | `hooks/auto-savepoint.ts` (Stop + SubagentStop) refreshes the active mission's state with no model involvement | `hooks/hooks.json` — **Claude Code only** |
+Full mechanism mapping lives in the validator source and the hooks manifest; this page states the split, not the wiring.
 
-`hooks/auto-savepoint.ts` is the only mechanism in mugiwara that produces a
-mission artifact without a model choosing to. It refreshes the *current* flow stage;
-it never advances one. On every other harness, state is written only when the
-crew remembers to run `mugiwara savepoint`.
+## Aspirational: prose only, model compliance
 
-## ASPIRATIONAL — prose only, model compliance
+Real rules, worth following, unchecked at runtime. Lane re-runs at each boundary compute honestly when run, and nothing runs them. Evidence over claims proves a check ran while a spoken pass stays unchecked. The heal cap records its halt flag in state without stopping a model that ignores it. Blocker-zero readiness is verified by a model reading a ledger a model wrote. Lane monotonicity persists in state against a model resizing downward. Config keys split: budgets, coverage thresholds, heal caps, and context ceilings are computed into state or checked by gates, while mode, branch, commit style, and depth knobs are read by models only.
 
-These are real rules and worth following. Nothing checks them at runtime, and
-nothing fails if a model skips one. Treat every row as "the crew is asked to",
-never "the harness guarantees".
-
-| Rule | Stated in | Reality |
-|------|-----------|---------|
-| Lane re-run at each flow stage boundary | orchestration skill, check-ins | `lane.sh` computes honestly *when run*; nothing runs it |
-| Evidence capture over claims | every skill's iron law | captured logs prove a check *ran*; a spoken "tests pass" is unchecked |
-| Heal cap (≤`heal_max_cycles`) | orchestration, healing | `savepoint.sh` computes `heal_halt` (`heal_cycle ≥ heal_max_cycles`, config default 3) into state; no mechanism stops a model that ignores it |
-| Blocker-zero DoD | definition-of-done | verified by a model reading a ledger a model wrote |
-| Lane monotonicity (rise, never drop) | triage-escalation | recorded in state; not enforced against a model that re-sizes downward |
-| Config keys | `.mugiwara/config` | `verbosity`, `delegate_threshold`, `heal_max_cycles` are read by `savepoint.sh` (recorded/computed into `state.json`), `coverage_new`/`coverage_modified` by the coverage gate, and `context_budget_chars` by the closure pipeline (`src/budget.ts`). The rest (`mode`, `branch`, `commit`, `auto_commit`, `review_depth`, `quality_depth`, `verify_merged`) are read by models only. |
-
-## Per-target enforcement capability
-
-Hooks are the only no-model mechanism, and hooks are not portable.
+## Per-target capability
 
 | Target | Turn-end enforcement | Basis |
-|--------|----------------------|-------|
-| `claude` | **enforced** | `Stop` + `SubagentStop` hooks run `auto-savepoint` |
-| `opencode` | advisory only | no verified turn-end event to bind to |
-| `copilot`, `gemini`, `codex`, `windsurf`, `cline`, `kilo`, `antigravity`, `cursor`, `kimi`, `pi` | advisory only | no hook mechanism at all |
+|------|-----------|-------|
+| claude | enforced | Stop hooks run the savepoint |
+| opencode | advisory only | no verified turn-end event |
+| every other target | advisory only | no hook mechanism at all |
 
-A documented gap beats a fake guarantee. If a rule matters on a target in the
-bottom two rows, it has to be checked by a human or by CI — not assumed.
-
-## Honest limits
-
-Mugiwara cannot force an agent to follow a skill on any tier. Models can skip
-a skill, rush a flow stage, or pass on a claim. The validator is the floor
-everywhere and CI blocks drift; the Claude Code hook is the only runtime floor.
-Everything else in this repo is discipline, and discipline is a hope, not a
-mechanism.
-
-Mugiwara is a skills pack, not a supervisor.
-
-## Deliberate omissions (do not "fix" these)
-
-- **`run-evals --run` is unwired by decision.** The behavioural rubric scoring
-  stays in the code but no npm script or CI workflow runs it — 59 cases × one
-  model call per run is a token cost the user declined. Do not add it to a gate.
-- **OpenCode has no turn-end enforcement.** Only `tool.execute.before|after`,
-  `chat.message`, and `experimental.chat.system.transform` exist; there is no
-  verified turn-end event to bind a Stop hook to. It stays a documented gap —
-  do not fake a guarantee.
-- **Windows / Linux support is reasoned from source, not executed.** The
-  cross-platform fixes are verified by reasoning and tests, but no Windows or
-  musl-Linux machine has run the harness end to end. A manual test on those
-  platforms is outstanding.
+Hooks are the only no-model mechanism and hooks are not portable. A documented gap beats a fake guarantee: where a rule matters on an advisory target, a human or CI checks it. Deliberate omissions stay omitted: behavioral rubric scoring stays unwired by decision (token cost declined, never add it to a gate), OpenCode keeps no faked turn-end guarantee, and untested platforms stay marked untested until a machine runs them. Mugiwara is a skills pack, not a supervisor.
