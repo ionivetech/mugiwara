@@ -5,7 +5,7 @@ Measured 2026-09-09. Drift vs roadmap: 52 files / 35,464 words under `docs/`
 
 | File | Words | Reader question it answers | Verdict |
 |---|---|---|---|
-| `concepts/features.md` | 4367 | "what can it do?" | **sell at 1,400** — each capability as problem, what, proof |
+| `concepts/features.md` | 4367 | "what can it do?" | **catalog at 1,800-2,400** — every feature grouped by job, each problem, what, proof |
 | `concepts/cost.md` | 4085 | "what does it cost?" | **cut to 800** |
 | `concepts/config.md` | 1738 | "what can I set?" | **cut to 600**, reference table only |
 | `getting-started.md` | 1379 | "how do I start?" | **cut to 800** |
@@ -47,7 +47,7 @@ Measured 2026-09-09. Drift vs roadmap: 52 files / 35,464 words under `docs/`
 | `install/claude.md` | 280 | "how do I use it with claude?" | **cut to 200** |
 | `runbooks/monorepo.md` | 263 | "how does it work in a monorepo?" | **reshape to 300**, skeleton fix |
 | `install/index.md` | 177 | "how do I install it?" | **hub at 500**, full matrix linking every harness page |
-| `README.md` (repo root) | 547 | "why should I care?" | **sell at 1,000-1,400**, banner + install matrix required |
+| `README.md` (repo root) | 547 | "why should I care?" | **sell at 1,200-1,800**, banner + install matrix + feature tour required |
 | `concepts/lessons.md` | 174 | "what did past missions learn?" | **keep** |
 | `index.md` | 117 | "where am I?" | **keep** |
 | `install/codex.md` | 96 | "how do I install on codex?" | **restore real page 200-300**, verified steps |
@@ -59,9 +59,10 @@ Measured 2026-09-09. Drift vs roadmap: 52 files / 35,464 words under `docs/`
 | `install/kimi.md` | 77 | "how do I install on kimi?" | **restore real page 200-300**, verified steps |
 | `CONTRIBUTING-DOCS.md` | 150 | "what rules govern docs?" | **keep** (new, Phase 1) |
 
-Projected total: about 19,800 words (docs/ incl. restored installs) plus
-README 1,000-1,400 — under 21,000. Revision 2026-09-09: persuasion budget
-replaces the 18,000 shrink budget per owner verdict.
+Projected total: about 20,800 words (docs/ incl. restored installs and full
+catalog) plus README 1,200-1,800 — under 26,000. Revision 2026-09-09:
+function-fit budgets replace fixed ceilings per owner verdict. Remaining rows
+keep their targets as ceilings; short pages stay short when they answer fully.
 Merges kept: execution-model into workflow; concepts/enforcement into
 reference/enforcement; root troubleshooting into runbooks/troubleshooting;
 comparison into features. Install stubs restored as real pages.
