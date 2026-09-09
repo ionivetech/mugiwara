@@ -1,53 +1,17 @@
-# Install Mugiwara
+# How do I install it?
 
-Mugiwara installs as a native plugin on every supported platform. Pick your
-platform below for detailed instructions.
+Every platform gets the whole crew: 11 agents plus 3 internal, 21 skills. The only difference is delivery: native plugin, extension, or CLI copy. Pick your platform below and follow its page; every page ends with the same roster question as proof.
 
-Requires **Node.js >= 20.11** on the host machine.
+Example: an OpenCode user adds the plugin line to `opencode.json` and restarts, while a Cursor user runs one slash command. Both then ask "what mugiwara crew members are available" and receive the same roster. Same crew, different doors.
 
-## Platforms
+## Native plugins
 
-| Platform | Install doc | Native plugin? |
-|----------|-------------|:---:|
-| Claude Code | [claude](claude.md) | ✅ |
-| OpenCode | [opencode](opencode.md) | ✅ |
-| Gemini CLI | [gemini](gemini.md) | ✅ |
-| Codex | [codex](codex.md) | ✅ |
-| GitHub Copilot | [copilot](copilot.md) | ✅ |
-| Cursor | [cursor](cursor.md) | ✅ |
-| Antigravity | [antigravity](antigravity.md) | ✅ |
-| Kimi Code | [kimi](kimi.md) | ✅ |
-| Pi | [pi](pi.md) | ✅ |
-| Windsurf / Cline / Kilo | [cli](cli.md) | CLI-based |
+Claude Code: marketplace add plus plugin install, with session hook. Full steps: [claude](claude.md). OpenCode: plugin line in `opencode.json`, restart. Full steps: [opencode](opencode.md). GitHub Copilot: plugin install from the repo URL. Full steps: [copilot](copilot.md). Codex: marketplace add plus plugin add. Full steps: [codex](codex.md). Cursor: add-plugin command. Full steps: [cursor](cursor.md). Kimi Code: plugins install from the repo URL. Full steps: [kimi](kimi.md). Antigravity: plugin install from the repo URL. Full steps: [antigravity](antigravity.md). Gemini CLI: extension install from the repo URL. Full steps: [gemini](gemini.md). Pi: package install from git URL. Full steps: [pi](pi.md).
 
-## One-liner
+## CLI copy
 
-```bash
-# macOS / Linux
-curl -fsSL https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.sh | bash
-# Windows
-irm https://raw.githubusercontent.com/ionivetech/mugiwara/main/scripts/install.ps1 | iex
-```
+Windsurf, Cline, and Kilo have no native plugin system, so the CLI copies stubs plus references into each platform dir. Full steps: [cli](cli.md).
 
-## Global CLI
+## After install
 
-```bash
-npm i -g @ionivetech/mugiwara
-mugiwara install --target all --yes
-```
-
-## Verify
-
-On any platform, ask:
-
-```
-what mugiwara crew members are available?
-```
-
-## Configuration
-
-See [config.md](../concepts/config.md) for all `.mugiwara/config` options.
-
-## Report issues
-
-https://github.com/ionivetech/mugiwara/issues
+Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster. Configure mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Issues go to the repository tracker.

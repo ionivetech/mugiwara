@@ -1,44 +1,5 @@
 # Codex Install
 
-Mugiwara installs as a native Codex plugin.
+Mugiwara on Codex, condensed. Full per-harness steps live in the [install index](index.md).
 
-## Prerequisites
-
-- [Codex](https://github.com/openai/codex) CLI or app installed
-
-## Install
-
-```bash
-codex plugin marketplace add ionivetech/mugiwara && codex plugin add mugiwara@mugiwara
-```
-
-## How it works
-
-Codex reads `.codex-plugin/plugin.json` which references `content/skills/`.
-All 21 skills are auto-discovered. Agents come from `content/agents/` via the
-`agents/` symlink.
-
-## Verify
-
-Ask:
-
-```
-what mugiwara crew members are available?
-```
-
-## Update
-
-```bash
-codex plugin update mugiwara
-```
-
-## Uninstall
-
-```bash
-codex plugin remove mugiwara
-```
-
-## Configuration
-
-After install, configure mugiwara in `.mugiwara/config` (project) or
-`~/.mugiwara/config` (global). See [config.md](../concepts/config.md).
+Quick start: `codex plugin add mugiwara@mugiwara`, then ask what crew members are available.
