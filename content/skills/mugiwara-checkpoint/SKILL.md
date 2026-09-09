@@ -31,6 +31,15 @@ For every task in the completed flow stage, in order:
 6. **Parallel-conflict check.** Run `git diff --name-only` across parallel task commits: no file may be touched by 2 tasks. A shared file means the parallel claim was false.
 7. **Honest classification.** Classify every failure truthfully as code or env. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code.
 
+## Read-only tree
+
+The audit never mutates the working tree. Forbidden: `git stash` (push and
+pop — including `stash list` reads, which normalize the habit), `git checkout
+-- <path>`, `git reset --hard`, `git clean -fd`. The tool guard blocks these;
+a blocked command is a finding about the audit setup, never a cue to work
+around it. Proving a regression on a clean tree uses `git worktree add`
+(per `mugiwara-git`) or `git show <base>:<path>` — never stash.
+
 ## Failure ledger
 
 Row schema + worked rows: `references/ledger-format.md`.
@@ -79,6 +88,7 @@ TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must
 - Parallel tasks' shared-file conflict assumed safe without `git diff --name-only`.
 - A code failure filed as `env` to soften the report.
 - Commits containing undeclared files, or missing declared files.
+- The working tree mutated during the audit (stash, checkout, reset, clean).
 - A DoD axis passed with no evidence.
 - `heal_halt` reading `true` with healing still continuing.
 - Any urge to edit code instead of reporting the finding.
