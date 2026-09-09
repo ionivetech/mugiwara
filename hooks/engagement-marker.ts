@@ -12,6 +12,7 @@
 // that can wedge a session gets turned off, and then it enforces nothing.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { ensureConfig } from '../src/config.ts';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 
@@ -58,6 +59,11 @@ async function main(): Promise<void> {
 
   try {
     mkdirSync(dir, { recursive: true });
+    // A fresh engagement must leave a usable project behind: default config
+    // when missing, never overwriting an existing file or following a symlink
+    // (guaranteed inside ensureConfig). Without this the first session ends up
+    // with .engaged but no config, and every key silently falls back.
+    ensureConfig(cwd);
     // preserve the first engagement time; only refresh the touch timestamp.
     // BUT: first_seen is the "this session" anchor for the plan guard's
     // planTouched() (a plan is "written this session" if its mtime >=
