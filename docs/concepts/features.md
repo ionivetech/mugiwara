@@ -50,6 +50,13 @@ What: the execution skill commits per logical task and records the evidence path
 Proof: the closing report lists counts, for example 11 files, +340 / -82, naming sensitive paths such as `src/auth/invitation.ts` outright.
 For reviewers who verify instead of trusting. Not for explorations with no branch. Trade-off: commit-per-task slows the middle of the work to speed its review.
 
+### Git discipline that stays reversible
+
+Problem: one snowball commit nobody can revert without reverting everything.
+What: the git skill stages exact files per task, one logical change per commit in the repo's own message style, with a save-point before risky operations and bisect plus pickaxe when hunting regressions.
+Proof: the audit replays `git log --stat` per task commit and fails undeclared files on the spot.
+For missions with more than one task. Not for lane-zero single shots. Trade-off: commit-per-task interrupts flow to buy reversibility.
+
 ### Migrations that prove the way back
 
 Problem: a schema change ships and the rows it lost cannot be reverted, only mourned.
@@ -70,6 +77,13 @@ Problem: a failed stage loops forever or dies silently with the context.
 What: the healing skill takes ledger failures through root-cause fixes, reproduce, localize, reduce, then guard, for at most three cycles. Then it hands the failure to a human with the trail intact. Brook owns the loop.
 Proof: `mugiwara status` shows the counter, for example `heal cycle 1/3`, so the cap is visible state, not folklore.
 For flaky middle stages worth another attempt. Not for design misses, which return to planning. Trade-off: the cap can abandon recoverable work at cycle four to protect the budget.
+
+### Root causes, not symptoms
+
+Problem: the same failure returns because the fix aimed at the caller that surfaced it.
+What: the root-cause discipline walks reproduce, localize, reduce, then fix plus guard — grep every caller before patching, one theory at a time, each fix proven by a test that failed first.
+Proof: the healing log shows the minimal failing case and the red-to-green run beside the one-line diff.
+For bugs with unknown causes and recurring failures. Not for obvious one-line fixes. Trade-off: four phases feel slow until the second occurrence never comes.
 
 ### Resume from the exact stage
 

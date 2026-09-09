@@ -35,6 +35,6 @@ scripts/validate-content.ts --check-writing` enforces the testable ones in CI.
 16. Long matrices fold, never cut. A matrix over 8 rows lives in a
     `<details>` block behind one summary line; the quickstart stays above
     the fold. Folding is presentation, cutting is loss.
-17. Every shipped skill owns a features section. A roster line naming a
-    skill without a Problem/What/Proof section is an undocumented feature;
-    add the section in the same change that ships the skill.
+17. Every shipped skill owns a features section, or is named with its job
+    inside one. A roster line that neither explains nor points is an
+    undocumented feature; fix it in the same change that ships the skill.
