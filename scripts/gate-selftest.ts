@@ -1328,7 +1328,7 @@ console.log('\nN9 — platform-count mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      ' — 9 via install, 3 via marketplace manifest.',
+      ': 9 install directly, 3 load via marketplace manifest.',
       '.',
     );
     if (broken === original) {
