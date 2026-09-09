@@ -465,12 +465,15 @@ describe('run() — cost live slop', () => {
   });
 });
 
-describe('run() — blame', () => {
-  test('blame prints a provenance note for a path', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-blame-'));
+describe('run() — handoff --path', () => {
+  test('handoff --path appends a provenance note for the path', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'm', file: 'state', body: state('m') },
+    ]);
     try {
-      const { out } = await capture(['blame', 'src/cli.ts'], dir);
-      expect(out.length).toBeGreaterThan(0);
+      const { out } = await capture(['handoff', 'm', '--path', 'src/cli.ts'], dir);
+      expect(out).toContain('## Provenance');
+      expect(readFileSync(join(dir, '.mugiwara', 'missions', 'm', 'handoff.md'), 'utf8')).toContain('## Provenance');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
@@ -619,12 +622,8 @@ describe('run() — usage errors + stalenessLine', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('blame with no path prints usage and exits 1', async () => {
-    const dir = fixture([]);
-    try {
-      const { err } = await capture(['blame'], dir);
-      expect(err).toContain('usage: mugiwara blame <file-path>');
-    } finally { rmSync(dir, { recursive: true, force: true }); }
+  test('removed blame command is rejected', async () => {
+    await expect(capture(['blame'])).rejects.toThrow(/Unknown command: blame/);
   });
 
   test('continue with an unknown mission prints known missions and exits 2', async () => {

@@ -70,7 +70,7 @@ export function renderProvenanceMd(note: string, sha: string | null): string {
     sha ? `Commit: ${sha}` : 'Commit: not recorded (no git head resolved at closure)',
     '',
     'Query locally after pushing notes:',
-    '`git fetch origin refs/notes/mugiwara:refs/notes/mugiwara` then `mugiwara blame <path>`.',
+    '`git fetch origin refs/notes/mugiwara:refs/notes/mugiwara` then `mugiwara handoff <mission> --path <path>`.',
   ];
   return lines.join('\n') + '\n';
 }
@@ -109,7 +109,7 @@ export function attachGitNote(projectDir: string, branch: string, note: string, 
   }
 }
 
-/** `mugiwara blame <path>` — last commit that touched the path + its note. */
+/** Provenance note — last commit that touched the path + its note (surfaced via `mugiwara handoff --path`). */
 export function blamePath(projectDir: string, path: string): string {
   let sha: string;
   try {

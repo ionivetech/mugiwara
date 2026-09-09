@@ -200,7 +200,7 @@ describe('CLI in-process coverage', () => {
     console.log = (m?: unknown): void => { logged.push(String(m)); };
     try { await runCliInProcess(['--help']); } finally { console.log = orig; }
     const all = logged.join('\n');
-    expect(all).toContain('mugiwara blame <path>');
+    expect(all).toContain('[--path <file>');
     expect(all).toContain('mugiwara handoff <m>');
     expect(all).toContain('mugiwara sign <m>');
   });
@@ -255,9 +255,9 @@ describe('CLI commands end-to-end', () => {
     rmSync(proj, { recursive: true, force: true });
   });
 
-  it('blame degrades honestly outside a repo; sign --verify fails closed on unsigned', () => {
-    const r1 = runCli('blame some/path.ts', dir);
-    expect(r1.stdout).toContain('not a git repository');
+  it('handoff --path degrades honestly outside a repo; sign --verify fails closed on unsigned', () => {
+    const r1 = runCli('handoff demo --path some/path.ts', dir);
+    expect(r1.stdout + r1.stderr).toContain('no in-flight mission');
 
     const proj = mkdtempSync(join(tmpdir(), 'mugi-cli2-'));
     const mdir = join(proj, '.mugiwara', 'missions', 'demo');

@@ -148,7 +148,7 @@ For teams running repeated missions in one repo. Not for one-off visits elsewher
 ### Provenance and signed reports
 
 Problem: months later nobody proves who ran what or whether the report changed since.
-What: `mugiwara blame <path>` notes the last commit touching a path, `mugiwara handoff <mission>` writes the report the next engineer acts on, `mugiwara sign <mission>` attests the report.
+What: `mugiwara handoff <mission>` writes the report the next engineer acts on (with `--path`, plus the provenance note for that path), `mugiwara sign <mission>` attests the report.
 Proof: `mugiwara sign <mission> --verify` checks the attestation; blame documents the notes ref it reads.
 For regulated paths and owner handoffs. Not for internal spikes. Trade-off: signing adds key management, ed25519 by default, that small teams skip until they need it.
 

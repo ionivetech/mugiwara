@@ -80,7 +80,6 @@ export async function run(argv: string[]): Promise<void> {
     case 'run': return runCmd(flags, _);
     case 'savepoint': return savepointCmd(flags, _);
     case 'join': return joinCmd(flags, _);
-    case 'blame': return blameCmd(flags, _);
     case 'handoff': return handoffCmd(flags, _);
     case 'sign': return signCmd(flags, _);
     case 'migrate': return migrateCmd(flags, _);
@@ -842,14 +841,6 @@ function runCmd(flags: Args['flags'], positionals: string[]): void {
   if (code !== 0) process.exit(code);
 }
 
-/** `mugiwara blame <path>` — provenance note on the last commit touching path. */
-function blameCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolveProjectDir(str(flags.project));
-  const path = positionals[1];
-  if (!path) { console.error('usage: mugiwara blame <file-path>'); process.exit(1); }
-  console.log(blamePath(projectDir, path));
-}
-
 /**
  * Staleness: has main moved since the mission's recorded base?
  * N commits behind = the ground this mission started from has shifted.
@@ -875,11 +866,11 @@ export function stalenessLine(projectDir: string, baseSha: string): string | nul
   } catch { return null; }
 }
 
-/** `mugiwara handoff <mission>` — a report the next engineer can act on. */
+/** `mugiwara handoff <mission> [--path <file>]` — a report the next engineer can act on. */
 function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
-  if (!mission) { console.error('usage: mugiwara handoff <mission> [--project <dir>]'); process.exit(1); }
+  if (!mission) { console.error('usage: mugiwara handoff <mission> [--path <file>] [--project <dir>]'); process.exit(1); }
   const states = readState(projectDir).filter((s) => s.mission === mission);
   const bad = unreadableStateFiles().filter((p) => p.startsWith(`${mission}/`));
   if (bad.length) {
@@ -909,6 +900,10 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   }
   lines.push('', '## Resuming', '', `\`mugiwara continue ${mission}\` prints the exact resume point.`);
   lines.push('Verify `next_action` against plan.md before executing — the table above is computed state, not judgement.');
+  const blameTarget = str(flags.path);
+  if (blameTarget) {
+    lines.push('', '## Provenance', '', blamePath(projectDir, blameTarget));
+  }
   const out = join('.mugiwara', 'missions', mission, 'handoff.md');
   writeFileSync(resolve(projectDir, out), lines.join('\n') + '\n');
   console.log(lines.join('\n'));
@@ -1188,10 +1183,9 @@ Usage:
   mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
   mugiwara cost [--mission <id>] [--json] [--ledger]
                          show cost ledger, avoided work, efficiency, trail (human + JSON)
-  mugiwara blame <path>  provenance note on the last commit touching <path>
-                         (fetch notes first: git fetch origin 'refs/notes/mugiwara:refs/notes/mugiwara')
   mugiwara handoff <m>   write .mugiwara/missions/<m>/handoff.md — a report the next
                          engineer can act on (computed state + staleness check)
+                         [--path <file>: append the provenance note for <file>]
   mugiwara sign <m>      attestation: sign report.md (auto/minisign/pure/off; --verify to check)
   mugiwara sign --gen-key [--backend pure|minisign]
                          create signing keys (pure ed25519 default)

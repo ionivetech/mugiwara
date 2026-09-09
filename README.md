@@ -131,7 +131,7 @@ Resume rebuilds from `.mugiwara/missions/<mission>/` on disk and continues at th
 Proof: `mugiwara continue <mission>` prints the resume point instead of restarting, and exits nonzero when you must pick from listed options.
 
 Provenance and signed reports.
-`mugiwara blame <path>` notes the last commit touching a path, `mugiwara handoff` writes the report the next engineer acts on, `mugiwara sign` attests it with ed25519.
+`mugiwara handoff` writes the report the next engineer acts on (`--path` adds the provenance note), `mugiwara sign` attests it with ed25519.
 Proof: `mugiwara sign <mission> --verify` checks the attestation. Detail: [provenance](docs/concepts/provenance.md).
 
 An outcome loop, stated honestly.
