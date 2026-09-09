@@ -27,7 +27,7 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 
 **Control commands (pre-flow):** `mugiwara continue`/`status` are read-only,
 pre-flow — never create config, never start a flow stage; exit 2 = user selects.
-Full: `references/control-commands.md`.
+Full: `references/control-commands.md`. State-command router (every harness): `archive`, `clean`, `handoff`, `sign`, `cost`, `lesson`, `migrate` + `continue`/`status` run via the CLI anywhere — bare `archive`/`handoff`/`sign` list missions, exit 2, never guess. Full table + exit codes: `references/state-router.md`. Surfaced as `/mugiwara` on Claude Code and opencode.
 
 ## Coordination files
 Team repos — per-(mission, member) isolation, no collisions: `_shared/references/multi-actor.md`.

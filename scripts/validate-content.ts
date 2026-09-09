@@ -850,6 +850,7 @@ if (process.argv.includes('--check-invariants')) {
     { id: 'INV-code-facts', re: /operator|operand|almost always a bug|≠/i, anchor: 'INV-code-facts' },
     { id: 'INV-contract', re: /contract|additive|versions|bump|deprecated/i, anchor: 'INV-contract' },
     { id: 'INV-backend', re: /migration|ad-hoc|atomic|pagination|unbounded|N\+1|eager-load|invalidation|buffer whole|timeouts|cancellation|hang|one transaction|giant transaction|whole table|single transaction/i, anchor: 'INV-backend' },
+    { id: 'INV-cli-router', re: /reasoning turn|run them via shell|act on the exit code|never guess|blind-retry|deterministic|exit-code protocol|error printed verbatim/i, anchor: 'INV-cli-router' },
   ];
   for (const c of CONCEPTS) {
     if (enf && !enf.includes(c.anchor)) errors.push(`invariant gate: concept ${c.id} has no mechanism row in enforcement.md (anchor "${c.anchor}")`);

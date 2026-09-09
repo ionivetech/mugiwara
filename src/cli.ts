@@ -241,10 +241,47 @@ function resetCmd(flags: Args['flags']): void {
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
 }
 
+/**
+ * No-arg pickers (exit 2 = pick one, nothing done) — the same contract as
+ * `mugiwara continue` with no mission. Lets the `/mugiwara` router and humans
+ * call `archive`/`handoff`/`sign` bare and choose from the printed list
+ * instead of guessing a mission name.
+ */
+function missionDirNames(projectDir: string): string[] {
+  const root = join(projectDir, '.mugiwara', 'missions');
+  if (!existsSync(root)) return [];
+  return readdirSync(root, { withFileTypes: true })
+    .filter((e) => e.isDirectory() && /^[A-Za-z0-9._-]+$/.test(e.name) && !/^\.+$/.test(e.name))
+    .map((e) => e.name)
+    .sort();
+}
+
+function missionHasLiveState(projectDir: string, m: string): boolean {
+  let files: string[] = [];
+  try { files = readdirSync(join(projectDir, '.mugiwara', 'missions', m)); } catch { return false; }
+  return files.some((f) => {
+    const stem = f.replace(/\.json$/, '');
+    return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
+  });
+}
+
 function archive(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
-  if (!mission) { console.error('usage: mugiwara archive <mission> [--project <dir>] [--dry-run]'); process.exit(1); }
+  if (!mission) {
+    const all = missionDirNames(projectDir);
+    if (!all.length) { console.log('nothing to archive.'); process.exit(2); }
+    console.log(`${all.length} mission(s):\n`);
+    for (const m of all) {
+      const tags = [
+        existsSync(join(projectDir, '.mugiwara', 'missions', m, 'report.md')) ? 'report' : 'no report',
+        missionHasLiveState(projectDir, m) ? 'live' : 'closed',
+      ].join(', ');
+      console.log(`  ${m} — ${tags}`);
+    }
+    console.log('\nPick one: mugiwara archive <mission>');
+    process.exit(2);
+  }
   const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force) });
   if (result.report) console.log(`archive target: ${result.report}`);
   else console.error(`no mission dir for "${mission}" under .mugiwara/missions/`);
@@ -894,7 +931,15 @@ export function stalenessLine(projectDir: string, baseSha: string): string | nul
 function handoffCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
-  if (!mission) { console.error('usage: mugiwara handoff <mission> [--path <file>] [--project <dir>]'); process.exit(1); }
+  if (!mission) {
+    const inFlight = [...new Set(readState(projectDir).map((s) => s.mission))].filter((m) =>
+      existsSync(join(projectDir, '.mugiwara', 'missions', m)));
+    if (!inFlight.length) { console.log('no in-flight mission to hand off.'); process.exit(2); }
+    console.log(`${inFlight.length} in-flight mission(s):\n`);
+    for (const m of inFlight) console.log(`  ${m}`);
+    console.log('\nPick one: mugiwara handoff <mission>');
+    process.exit(2);
+  }
   const states = readState(projectDir).filter((s) => s.mission === mission);
   const bad = unreadableStateFiles().filter((p) => p.startsWith(`${mission}/`));
   if (bad.length) {
@@ -1180,7 +1225,15 @@ function signCmd(flags: Args['flags'], _: string[]): void {
     return;
   }
   const mission = _[1];
-  if (!mission) { console.error('usage: mugiwara sign <mission> [--verify] [--gen-key [--backend pure|minisign]] [--project <dir>]'); process.exit(1); }
+  if (!mission) {
+    const signable = missionDirNames(projectDir).filter((m) =>
+      existsSync(join(projectDir, '.mugiwara', 'missions', m, 'report.md')));
+    if (!signable.length) { console.log('nothing to sign (no mission with report.md).'); process.exit(2); }
+    console.log(`${signable.length} signable mission(s):\n`);
+    for (const m of signable) console.log(`  ${m}`);
+    console.log('\nPick one: mugiwara sign <mission> [--verify]');
+    process.exit(2);
+  }
   const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
   if (!existsSync(missionDir)) { console.error(`no mission dir: ${missionDir}`); process.exit(1); }
   const r = flag(flags.verify) ? verifyReport(projectDir, missionDir) : signReport(projectDir, missionDir);
@@ -1198,7 +1251,8 @@ Usage:
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (missions/ + legacy dirs)
-  mugiwara archive <m>   fold a closed mission's waves into its report, then remove loose files
+  mugiwara archive [<m>]  fold a closed mission's waves into its report, then remove loose files
+                         (no <m>: list missions, exit 2 = pick one)
   mugiwara clean [--include-live] [--stale <date>]
                          batch-archive every closed mission (report.md present, no live state)
   mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
@@ -1207,10 +1261,12 @@ Usage:
   mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
   mugiwara cost [--mission <id>] [--json] [--ledger]
                          show cost ledger, avoided work, efficiency, trail (human + JSON)
-  mugiwara handoff <m>   write .mugiwara/missions/<m>/handoff.md — a report the next
+  mugiwara handoff [<m>] write .mugiwara/missions/<m>/handoff.md — a report the next
                          engineer can act on (computed state + staleness check)
                          [--path <file>: append the provenance note for <file>]
-  mugiwara sign <m>      attestation: sign report.md (auto/minisign/pure/off; --verify to check)
+                         (no <m>: list in-flight, exit 2 = pick one)
+  mugiwara sign [<m>]    attestation: sign report.md (auto/minisign/pure/off; --verify to check)
+                         (no <m>: list signable, exit 2 = pick one)
   mugiwara sign --gen-key [--backend pure|minisign]
                          create signing keys (pure ed25519 default)
   mugiwara migrate [--dry-run] [--project <dir>]

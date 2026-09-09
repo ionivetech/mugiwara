@@ -269,12 +269,12 @@ describe('run() — no-install command paths', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('archive with no mission prints usage and exits 1', async () => {
+  test('archive with no mission and no missions on disk says nothing to archive, exits 2', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-arch-'));
     try {
-      const { err } = await capture(['archive'], dir);
-      expect(err).toContain('usage: mugiwara archive <mission>');
-      expect(exitSpy).toHaveBeenCalledWith(1);
+      const { out } = await capture(['archive'], dir);
+      expect(out).toContain('nothing to archive.');
+      expect(exitSpy).toHaveBeenCalledWith(2);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
@@ -629,11 +629,82 @@ describe('run() — install targets / uninstall --global', () => {
 });
 
 describe('run() — usage errors + stalenessLine', () => {
-  test('archive with no mission prints usage and exits 1', async () => {
+  test('archive with no mission and no missions on disk says nothing to archive, exits 2', async () => {
     const dir = fixture([]);
     try {
-      const { err } = await capture(['archive'], dir);
-      expect(err).toContain('usage: mugiwara archive <mission>');
+      const { out } = await capture(['archive'], dir);
+      expect(out).toContain('nothing to archive.');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('archive with no mission lists missions with report/live tags, exits 2', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-archpick-'));
+    try {
+      const a = join(dir, '.mugiwara', 'missions', 'done-m');
+      const b = join(dir, '.mugiwara', 'missions', 'live-m');
+      mkdirSync(a, { recursive: true });
+      mkdirSync(b, { recursive: true });
+      writeFileSync(join(a, 'plan.md'), '# plan');
+      writeFileSync(join(a, 'report.md'), '# report');
+      writeFileSync(join(b, 'plan.md'), '# plan');
+      writeFileSync(join(b, 'state.json'), '{"mission":"live-m","flow":3}');
+      const { out } = await capture(['archive'], dir);
+      expect(out).toContain('2 mission(s)');
+      expect(out).toContain('done-m — report, closed');
+      expect(out).toContain('live-m — no report, live');
+      expect(out).toContain('Pick one: mugiwara archive <mission>');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('handoff with no mission lists in-flight missions, exits 2', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'm1', file: 'state', body: state('m1') },
+      { root: 'state', mission: 'm2', file: 'state', body: state('m2') },
+    ]);
+    try {
+      const { out } = await capture(['handoff'], dir);
+      expect(out).toContain('2 in-flight mission(s)');
+      expect(out).toContain('m1');
+      expect(out).toContain('m2');
+      expect(out).toContain('Pick one: mugiwara handoff <mission>');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('handoff with no mission and none in flight says so, exits 2', async () => {
+    const dir = fixture([]);
+    try {
+      const { out } = await capture(['handoff'], dir);
+      expect(out).toContain('no in-flight mission to hand off.');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('sign with no mission lists signable missions, exits 2', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-signpick-'));
+    try {
+      const s = join(dir, '.mugiwara', 'missions', 'done-m');
+      const t = join(dir, '.mugiwara', 'missions', 'thin-m');
+      mkdirSync(s, { recursive: true });
+      mkdirSync(t, { recursive: true });
+      writeFileSync(join(s, 'report.md'), '# report');
+      writeFileSync(join(t, 'plan.md'), '# plan');
+      const { out } = await capture(['sign'], dir);
+      expect(out).toContain('1 signable mission(s)');
+      expect(out).toContain('done-m');
+      expect(out).toContain('Pick one: mugiwara sign <mission> [--verify]');
+      expect(exitSpy).toHaveBeenCalledWith(2);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('sign with no mission and no reports says nothing to sign, exits 2', async () => {
+    const dir = fixture([]);
+    try {
+      const { out } = await capture(['sign'], dir);
+      expect(out).toContain('nothing to sign (no mission with report.md).');
+      expect(exitSpy).toHaveBeenCalledWith(2);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
@@ -800,11 +871,12 @@ describe('run() — usage errors + stalenessLine', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('handoff with no mission arg prints usage and exits 1', async () => {
+  test('handoff with no mission arg and none in flight says so, exits 2', async () => {
     const dir = fixture([]);
     try {
-      const { err } = await capture(['handoff'], dir);
-      expect(err).toContain('usage: mugiwara handoff <mission>');
+      const { out } = await capture(['handoff'], dir);
+      expect(out).toContain('no in-flight mission to hand off.');
+      expect(exitSpy).toHaveBeenCalledWith(2);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 

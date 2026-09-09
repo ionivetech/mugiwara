@@ -135,12 +135,12 @@ describe('command usage + state errors', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('archive with no mission prints usage', async () => {
+  test('archive with no mission lists nothing and exits 2', async () => {
     const dir = tmp();
     try {
       const r = await cap(['archive', '--project', dir]);
-      expect(r.code).toBe(1);
-      expect(r.err).toContain('usage: mugiwara archive');
+      expect(r.code).toBe(2);
+      expect(r.out).toContain('nothing to archive.');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
@@ -214,12 +214,12 @@ describe('command usage + state errors', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('handoff with no mission prints usage', async () => {
+  test('handoff with no mission lists nothing and exits 2', async () => {
     const dir = tmp();
     try {
       const r = await cap(['handoff', '--project', dir]);
-      expect(r.code).toBe(1);
-      expect(r.err).toContain('usage: mugiwara handoff');
+      expect(r.code).toBe(2);
+      expect(r.out).toContain('no in-flight mission to hand off.');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 

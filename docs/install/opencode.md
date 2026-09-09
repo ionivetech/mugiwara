@@ -14,7 +14,7 @@ Global config lives under the user config dir, project config under `.opencode/`
 
 ## How it works
 
-The config hook registers skills and agents paths so OpenCode discovers the full crew without copying files. The chat hook intercepts `/mugiwara` commands and mode switches into `.mugiwara/config`. The file installer copies slash commands for crew routing, resume, review, and security into the commands dir. Runtime permissions generate only for internal subagent-only agents; user-facing crew stays rules-based, since write scope is convention rather than mechanism here.
+The config hook registers skills and agents paths so OpenCode discovers the full crew without copying files. The chat hook intercepts `/mugiwara` commands and mode switches into `.mugiwara/config`. The file installer copies slash commands for crew routing, resume, review, and security into the commands dir. The `/mugiwara` state router is the crew-wide orchestration capability — its canonical table lives in the orchestration skill (`mugiwara-orchestration/references/state-router.md`), the same one every other harness loads; this host only adds the slash wrapper. Runtime permissions generate only for internal subagent-only agents; user-facing crew stays rules-based, since write scope is convention rather than mechanism here.
 
 ## Modes and upkeep
 

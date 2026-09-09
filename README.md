@@ -98,6 +98,8 @@ You choose none of the routing.
 The first request lands in triage, the lane is computed from the diff, and the crew announces the plan before it touches code.
 Sixty seconds in, your skepticism has something concrete to bite: a manifest on disk, a version string, a plan with named owners.
 
+State commands are platform-agnostic: `status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, and `migrate` run through `mugiwara` / `npx -y @ionivetech/mugiwara@latest` in any harness, and a bare `archive` / `handoff` / `sign` lists the missions to pick instead of guessing. On Claude Code and opencode the same router is surfaced as `/mugiwara`; everywhere else it is the orchestration capability the crew already loads. Say `archive <mission>` in any of them — or bare `archive` to see the list.
+
 <details>
 <summary><strong>Claude Code</strong>: native plugin plus session hook</summary>
 
