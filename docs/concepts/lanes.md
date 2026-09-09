@@ -20,7 +20,45 @@ Token budgets ride with the lane: warn at 1.5x, stop at 3x the lane base. `mugiw
 
 Lane comes from `git diff` against the base ref through deterministic rules: 0 files means direct, 1 file under 20 added lines means direct, 1 larger file or 2 files means lean, 3-8 files means standard, 9 or more means full.
 
-Sensitive paths always escalate to full, whatever the file count. The patterns live in `scripts/lib/patterns.sh`, shared by lane sizing and savepoints, so one edit covers both. `package.json` churn and near-miss names such as `authors/` or `tokenizer` stay out by design.
+Sensitive paths always escalate to full, whatever the file count. The patterns live in one place: `scripts/lib/patterns.sh`, shared by lane sizing and savepoints, so one edit covers both. Display form below, regex escapes stripped; the test in `test/lane-integrity.test.ts` fails when this block drifts from source. `package.json` churn and near-miss names such as `authors/` or `tokenizer` stay out by design.
+
+```
+auth/
+oauth2?/
+payment/
+payments/
+billing/
+crypto/
+secrets/
+credential
+sessions?/
+tokens?/
+rbac
+permissions?/
+acls?/
+iam/
+.env
+.env.
+config/.*key
+.p12
+.key
+.pem
+migration/
+migrations/
+migrate/
+.sql
+schema.
+.prisma
+.terraform
+.tf
+Dockerfile
+docker-compose
+.github/workflows/
+webhooks?/
+secret/
+secrets?.ya?ml
+.tfvars
+```
 
 ## Escalation never drops
 
