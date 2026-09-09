@@ -1,17 +1,28 @@
 # How do I install it?
 
-Every platform gets the whole crew: 11 agents plus 3 internal, 21 skills. The only difference is delivery: native plugin, extension, or CLI copy. Pick your platform below and follow its page; every page ends with the same roster question as proof.
+Your editor is open and the crew is not in it. You want the smallest install that puts all 21 skills and 14 agents behind your prompts, with a manifest so update and uninstall touch exactly what install wrote. Pick your harness below and follow its page.
 
-Example: an OpenCode user adds the plugin line to `opencode.json` and restarts, while a Cursor user runs one slash command. Both then ask "what mugiwara crew members are available" and receive the same roster. Same crew, different doors.
+Example: an OpenCode user adds one plugin line to `opencode.json` and restarts, while a Codex user runs one CLI command that writes 91 files under `.codex/mugiwara/`. Both then ask "what mugiwara crew members are available" and receive the same roster. Same crew, different doors.
 
-## Native plugins
+| Harness | How the crew loads | Install page |
+|---|---|---|
+| Claude Code | native plugin plus session hook | [claude](claude.md) |
+| opencode | plugin line in `opencode.json`, restart | [opencode](opencode.md) |
+| Windsurf, Cline, Kilo | CLI copies rules plus references | [cli](cli.md) |
+| Codex | CLI writes 91 full-body files to `.codex/mugiwara/` | [codex](codex.md) |
+| Gemini CLI | CLI writes full-body files to `.gemini/mugiwara/` | [gemini](gemini.md) |
+| Copilot | CLI writes 111 full-body files to `.github/` | [copilot](copilot.md) |
+| Antigravity | CLI writes 125 stub files to `.agents/` | [antigravity](antigravity.md) |
+| Pi | host marketplace manifest plus content pointers | [pi](pi.md) |
+| Cursor | host marketplace manifest plus content pointers | [cursor](cursor.md) |
+| Kimi Code | host marketplace manifest plus content pointers | [kimi](kimi.md) |
 
-Claude Code: marketplace add plus plugin install, with session hook. Full steps: [claude](claude.md). OpenCode: plugin line in `opencode.json`, restart. Full steps: [opencode](opencode.md). GitHub Copilot: plugin install from the repo URL. Full steps: [copilot](copilot.md). Codex: marketplace add plus plugin add. Full steps: [codex](codex.md). Cursor: add-plugin command. Full steps: [cursor](cursor.md). Kimi Code: plugins install from the repo URL. Full steps: [kimi](kimi.md). Antigravity: plugin install from the repo URL. Full steps: [antigravity](antigravity.md). Gemini CLI: extension install from the repo URL. Full steps: [gemini](gemini.md). Pi: package install from git URL. Full steps: [pi](pi.md).
+Three loading paths cover all ten rows. Native plugins (Claude Code, opencode) register paths and discover the crew with no copying. CLI targets (Codex, Gemini, Copilot, Antigravity, plus Windsurf, Cline, Kilo on the cli page) receive full bodies or stub pointers with references under `.mugiwara/refs/`. Marketplace hosts (Pi, Cursor, Kimi) resolve through the host manifest, and the CLI still provides state commands through npx. Tier behavior behind these paths lives on the [harness matrix](../reference/harness-matrix.md).
 
-## CLI copy
-
-Windsurf, Cline, and Kilo have no native plugin system, so the CLI copies stubs plus references into each platform dir. Full steps: [cli](cli.md).
+Scope is project by default and user-wide with `--global`. Every CLI install writes a default `.mugiwara/config` for mode, branch, and commit style, plus a manifest recording each path. Pass `--target all` for every supported host at once, or name targets with commas. Drop `--yes` for the interactive wizard covering scope, targets, and confirmation. Prefer a global binary via `npm i -g @ionivetech/mugiwara` so the crew can call `mugiwara savepoint`, `archive`, and `continue`; without it the crew warns at Flow 0 and degrades to inline-only with no resume and no closure gate.
 
 ## After install
 
-Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster. Configure mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Issues go to the repository tracker.
+Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster: a correct install answers with the crew list. `mugiwara list` shows recorded installations with version and file counts, and `mugiwara list --check` reports missing files as a health pass. Update replaces installed files with backups of differences, and uninstall removes exactly what the manifest recorded. Set mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
+
+Open your harness page above and run its verify step.
