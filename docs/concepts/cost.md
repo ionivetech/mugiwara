@@ -22,4 +22,6 @@ Provider path: set `MUGIWARA_TOKENS` to a total, or write `input_tokens` plus `o
 
 Governor phases (reserve, project, avoid, stop, plus scope, cognition, slop, budget, reporting, benchmark) produce verdicts the crew acts on. They record decisions to the trail. They never force the model. Read `src/cost.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`, `src/slop.ts`, `src/reporting.ts` for the verdict shapes.
 
+Slop verdicts surface where spend is reviewed: the `mugiwara cost` ledger carries detected, stopped, and compressed counts, and the closing report lists avoided work including `slop_interventions`. The governor records verdicts to the trail; the crew acts on them, never the reverse.
+
 Trail scope: `mugiwara cost` counts governor-verdict rows (`## Cost governor decisions` / `## Budget` sections of `decisions.md`) only. Hand-written decision-table rows are the audit trail and stay folded into the report — they are not ledger rows.

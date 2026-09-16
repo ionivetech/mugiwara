@@ -12,10 +12,13 @@ Rule: evidence over claims, and the plan is the source of truth. No flow stage p
 | 1 Brainstorm, 2 Planning | Usopp, Nami | Options, then plan with criteria |
 | 3 Execution | Zoro | Tasks done with evidence |
 | 4 Checkpoint, 4.5 Adversarial | Chopper, Skeptic | Audit plus ledger, findings when called |
-| 5 Quality, 6 Gates | Sanji, Franky | Lint and test results, coverage and DoD |
-| 7 Review | Robin plus Jinbe | Severity-tagged findings |
+| 5 Quality | Sanji | Format, lint, test results |
+| 6 Gates | Franky | Coverage, build, Definition of Done |
+| 7 Review + Security | Robin + Jinbe | Severity-tagged findings, STRIDE verdict |
 | 8 Healing | Brook | Fixes, back to Flow 4, at most 3 cycles |
 | 9 Closure | Luffy | Report, push, PR verdict for you to open |
+
+Plans record a preflight baseline in plan.md: the current `bun test` and `tsc --noEmit` output, captured before Zoro executes. Flow 4 through Flow 6 re-run checks against that starting point, so a red baseline never ships as a green gate.
 
 Execution posture is absorbed here from the old execution-model page, which now redirects. Control mode, execution posture, and Cost Governor are three independent decisions. Mode decides approvals. Posture decides how work runs: inline-sequential by default, parallel-workers for proven-independent batches, context-relief under pressure, phase-isolated for large campaigns, team-scoped for shared missions. The governor decides what spend is safe. Luffy records posture at Flow 0, Nami resolves it at Flow 2, and it re-evaluates only at stage or batch boundaries.
 

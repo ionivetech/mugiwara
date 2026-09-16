@@ -33,6 +33,7 @@ Rule: mode owns autonomy, config owns writing standards. Code reads every key be
 | `investigation_max_passes` | 2 | Investigator pass cap per stage |
 | `investigation_max_unrelated_files` | 5 | Unrelated-file tolerance per investigation |
 | `investigation_repeated_read_threshold` | 2 | Repeat-read flag threshold |
+| `team` | off / on | Solo by default; first shared mission flips on at Flow 0 |
 | `sign` | off / minisign / pure / auto | Report attestation backend |
 | `enforce` | off / warn / block | Pipeline-guard policy |
 | `features` | all (when absent) | Situational extension loading: `all` \| `core+auto[,token...][,-token...]`; unknown token aborts, safety set (`security`, `contract-first`) cannot be removed while firing |

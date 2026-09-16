@@ -169,11 +169,17 @@ For teams running repeated missions in one repo. Not for one-off visits elsewher
 ### Provenance and signed reports
 
 Problem: months later nobody proves who ran what or whether the report changed since.
-What: `mugiwara handoff <mission>` writes the report the next engineer acts on (with `--path`, plus the provenance note for that path), `mugiwara sign <mission>` attests the report.
+What: `mugiwara handoff <mission>` writes the report the next engineer acts on (with `--path`, plus the provenance note for that path), `mugiwara sign <mission>` attests the report. Signing stays regulated-only and default off: without a regulated mission, an attestation policy, or present keys, the sign feature never fires.
 Proof: `mugiwara sign <mission> --verify` checks the attestation; blame documents the notes ref it reads.
 For regulated paths and owner handoffs. Not for internal spikes. Trade-off: signing adds key management, ed25519 by default, that small teams skip until they need it.
 
 ## Extend the crew
+
+### Feature flags that load per mission
+
+Problem: every mission loads the full catalog, so small work pays full context.
+What: `features=` selects the skill set: `all`, or `core+auto` with `+token` additions and `-token` removals. Unknown tokens abort, and safety tokens stay loaded while firing. `mugiwara features explain` prints each token with trigger, default, and firing state; `list` prints names.
+For context-capped missions. Not for default runs, where absent means all. Trade-off: a dropped token drops its skill, and explain shows the gap. Detail: [config](config.md).
 
 ### Every skill, no gaps
 
