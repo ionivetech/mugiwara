@@ -30,7 +30,7 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 | 4 | Audit | Chopper | `checkpoint` | re-verified + ledger |
 | 4.5 | Verify | Skeptic | `checkpoint` adversarial depth | doubt pass on in-flight calls (optional) |
 | 5 | Quality | Sanji | `quality` | lint + format + test |
-| 6 | Gates | Franky | `gates` | coverage + build + DoD |
+| 6 | Gates | Franky | `gates` | coverage + build + DoD (sonar verdict after Flow 7) |
 | 7 | Review | Robin∥Jinbe | `review`+`security` | findings (parallel) |
 | 8 | Heal | Brook | `healing` | fixes → back to Flow 4 |
 | 9 | Close | Luffy | `orchestration` | push + PR verdict |
