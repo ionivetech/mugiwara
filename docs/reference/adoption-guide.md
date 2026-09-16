@@ -16,6 +16,10 @@ Guided asks everything: plan, branch, commits, ambiguities, check-ins. Semi asks
 
 Trivial one-liners route to Lane 0 and run with zero flow stages. Medium features run triage, plan, execute, checkpoint, quality, gates, review, closure. High-stakes work involving money, security, data, or public API always runs the full pipeline with the adversarial pass and the heal loop. Repos with history read the lessons ledger at triage, so each mission stands on previous ones.
 
+## Solo or shared
+
+Teams pick solo-or-shared at Flow 0: a lone builder keeps `team=off` and the full pipeline still runs. The first shared handoff flips the flag on, and every later mission reads the ledger instead of asking twice. Set it in `.mugiwara/config` before the first mission.
+
 ## What the crew never does
 
 It never merges, deploys, or reacts to review comments or CI on its own. It pushes the branch and hands over the verdict file, since PR review is the terminal gate. No flow stage passes on a spoken claim, and no blocker is worked around silently; everything lands in the ledger. Contributors continue at [developer onboarding](developer-onboarding.md).
