@@ -29,7 +29,7 @@ test('native adapters resolve project and global scopes', () => {
   }
 });
 
-test('tier-2 adapters reject global scope', () => {
+test('generic adapters reject global scope', () => {
   for (const id of ['gemini', 'codex', 'windsurf', 'cline', 'kilo', 'antigravity']) {
     expect(() => targets[id].paths({ scope: 'global', projectDir: '/p', home: '/h' })).toThrow(/project scope only/i);
   }
@@ -144,7 +144,7 @@ test('0-8 conformance: native targets expose parseable frontmatter on installed 
 });
 
 test('2-16 tier-3 targets emit stubs to the rules glob and full bodies to refs', () => {
-  for (const id of ['kilo', 'windsurf', 'cline', 'antigravity']) {
+  for (const id of ['kilo', 'windsurf', 'cline', 'antigravity', 'gemini', 'codex']) {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-tier3-' + id + '-'));
     const home = mkdtempSync(join(tmpdir(), 'mugi-tier3home-' + id + '-'));
     const t = targets[id];
@@ -162,19 +162,6 @@ test('2-16 tier-3 targets emit stubs to the rules glob and full bodies to refs',
 
     const agentStub = readFileSync(join(skillsDir, 'agent-luffy-orchestrator.md'), 'utf8');
     expect(agentStub).toContain('.mugiwara/refs/luffy-orchestrator/luffy-orchestrator.md');
-  }
-});
-
-test('2-16 tier-2 targets keep full bodies in the rules dir (bootstrap pointer)', () => {
-  for (const id of ['gemini', 'codex']) {
-    const dir = mkdtempSync(join(tmpdir(), 'mugi-tier2-' + id + '-'));
-    const home = mkdtempSync(join(tmpdir(), 'mugi-tier2home-' + id + '-'));
-    const t = targets[id];
-    expect(t.tier, `${id} is tier 2`).toBe(2);
-    installTo(t, { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-    const { skillsDir } = t.paths({ scope: 'project', projectDir: dir, home });
-    const body = readFileSync(join(skillsDir, 'mugiwara-workflow.md'), 'utf8');
-    expect(body.length, `${id} full body in rules dir`).toBeGreaterThan(2000);
   }
 });
 
@@ -317,11 +304,9 @@ test('claude postUninstall dryRun returns empty without touching settings', () =
 });
 
 test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {
-  // tier-3 targets (windsurf/cline/kilo/antigravity) emit agent stubs; the
-  // generic transform hardcodes the source-write refusal in the stub.
-  // tier-2 targets (gemini/codex) emit full agent bodies (not stubs), so the
-  // refusal line lives only in the tier-3 stub branch.
-  for (const id of ['windsurf', 'cline', 'kilo', 'antigravity']) {
+  // tier-3 targets (windsurf/cline/kilo/antigravity/gemini/codex) emit agent
+  // stubs; the generic transform hardcodes the source-write refusal in the stub.
+  for (const id of ['windsurf', 'cline', 'kilo', 'antigravity', 'gemini', 'codex']) {
     const t = targets[id];
     const out = t.transformAgent({ name: 'usopp-brainstorm', description: 'x', skills: 'mugiwara-brainstorm' } as never, 'BODY\n')!;
     expect(out.text, `${id} refusal line`).toContain('Only zoro-execution and brook-healing may modify source code');
