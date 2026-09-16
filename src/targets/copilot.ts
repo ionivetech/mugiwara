@@ -38,6 +38,20 @@ Full skill: read \`.mugiwara/refs/${data.name}/${data.name}.md\` when the crew i
     };
   },
   transformAgent(data: FrontmatterData, body: string) {
+    void body;
+    return {
+      relPath: `${data.name}.md`,
+      text: stringifyFrontmatter(
+        { description: data.description },
+        `# ${data.name}
+
+> ${data.description}
+
+Full agent: read \`.mugiwara/refs/${data.name}/${data.name}.md\` when embodying this role.`,
+      ),
+    };
+  },
+  transformAgentFull(data: FrontmatterData, body: string) {
     return {
       relPath: `${data.name}.md`,
       text: stringifyFrontmatter({ name: data.name, description: data.description }, body),

@@ -303,6 +303,21 @@ test('claude postUninstall dryRun returns empty without touching settings', () =
   expect(JSON.parse(readFileSync(join(claudeDir, 'settings.json'), 'utf8')).hooks.SessionStart).toBeTruthy();
 });
 
+test('T3: copilot transformAgent emits stub, transformAgentFull carries body', () => {
+  const stub = targets.copilot.transformAgent(
+    { name: 'luffy-orchestrator', description: 'Run the pipeline.' } as never,
+    'BODY\n',
+  )!;
+  expect(stub.text).not.toContain('BODY');
+  expect(stub.text).toContain('.mugiwara/refs/luffy-orchestrator/luffy-orchestrator.md');
+  expect(stub.text).toContain('Run the pipeline.');
+  const full = targets.copilot.transformAgentFull!(
+    { name: 'luffy-orchestrator', description: 'Run the pipeline.' } as never,
+    'BODY\n',
+  )!;
+  expect(full.text).toContain('BODY');
+});
+
 test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {
   // tier-3 targets (windsurf/cline/kilo/antigravity/gemini/codex) emit agent
   // stubs; the generic transform hardcodes the source-write refusal in the stub.
