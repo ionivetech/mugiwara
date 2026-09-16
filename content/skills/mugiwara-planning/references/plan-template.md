@@ -157,6 +157,17 @@ never a bare file:
 A consumer task whose producer changed signature fails review, not
 execution — the contract is checked at the wave gate (`grep` the symbol).
 
+## Baseline (mandatory, before Flow 3)
+
+Every plan records the pre-change baseline at Flow 0/2 — each wave gate compares against it, and a red baseline's defects are inherited, never blamed on the mission:
+
+```markdown
+## Baseline (recorded <YYYY-MM-DD>, Flow 0/2)
+- `bun test` → green, <pass> pass / <fail> fail (or red + failing list)
+- `tsc --noEmit` → green (or red + error list)
+- Inherited defects: <pre-existing failures, or "none">
+```
+
 ## Green per wave gate (Standard+)
 
 Each wave gate row carries the command AND one example of correct output:
