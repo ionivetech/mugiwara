@@ -9,9 +9,9 @@ Example: an OpenCode user adds one plugin line to `opencode.json` and restarts, 
 | Claude Code | native plugin plus session hook | [claude](claude.md) |
 | opencode | plugin line in `opencode.json`, restart | [opencode](opencode.md) |
 | Windsurf, Cline, Kilo | CLI copies rules plus references | [cli](cli.md) |
-| Codex | CLI writes 91 full-body files to `.codex/mugiwara/` | [codex](codex.md) |
-| Gemini CLI | CLI writes full-body files to `.gemini/mugiwara/` | [gemini](gemini.md) |
-| Copilot | CLI writes 111 full-body files to `.github/` | [copilot](copilot.md) |
+| Codex | CLI writes 91 stub files to `.codex/mugiwara/` | [codex](codex.md) |
+| Gemini CLI | CLI writes stub files to `.gemini/mugiwara/` | [gemini](gemini.md) |
+| Copilot | CLI writes 111 stub files to `.github/` | [copilot](copilot.md) |
 | Antigravity | CLI writes 125 stub files to `.agents/` | [antigravity](antigravity.md) |
 | Pi | host marketplace manifest plus content pointers | [pi](pi.md) |
 | Cursor | host marketplace manifest plus content pointers | [cursor](cursor.md) |

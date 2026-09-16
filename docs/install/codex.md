@@ -1,6 +1,6 @@
 # Codex Install
 
-You run Codex and want the crew as rules it reads per task, not a plugin to babysit. Install copies full skill bodies plus agent markdown into your project, and Codex picks them up from there.
+You run Codex and want the crew as rules it reads per task, not a plugin to babysit. Install writes stub pointers into your project and keeps full bodies under `.mugiwara/refs/` for on-demand loading.
 
 Example: one CLI command writes 91 files under `.codex/mugiwara/`. Ask what crew members are available and the roster answers back with the same crew every other harness serves.
 
@@ -23,7 +23,7 @@ OK mugiwara 0.9.2 installed [...]
 
 ## Verify, update, remove
 
-Ask what crew members are available; a correct install answers with the roster. `mugiwara list --check` reports missing files as a health pass. Update with the update command naming project, target, and confirmation; uninstall removes exactly what the manifest recorded. Codex is tier 2, so skills load as rules files the model selects per task, with references under `.mugiwara/refs/`. A host-native `codex plugin add` path is untested on this host; the CLI path above is the verified one.
+Ask what crew members are available; a correct install answers with the roster. `mugiwara list --check` reports missing files as a health pass. Update with the update command naming project, target, and confirmation; uninstall removes exactly what the manifest recorded. Codex is tier 3, so the main thread embodies each persona from markdown and reads the full body on demand. A host-native `codex plugin add` path is untested on this host; the CLI path above is the verified one.
 
 State commands are crew-wide: the orchestration router (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) runs through `mugiwara ...` or `npx -y @ionivetech/mugiwara@latest ...`, and bare `archive`/`handoff`/`sign` list missions to pick (exit 2) instead of guessing. Only Claude Code and opencode add a `/mugiwara` slash-command wrapper; the router itself is orchestration, loaded everywhere.
 
