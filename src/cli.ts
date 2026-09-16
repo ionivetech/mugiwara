@@ -20,6 +20,7 @@ import { ensureConfig } from './config.ts';
 import { costEnvelope } from './cost.ts';
 import { readConfig } from './config.ts';
 import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
+import { deriveStructuralIntents } from './intents.ts';
 import { computeLiveSlop } from './slop.ts';
 import { loadRegistry } from './evidence.ts';
 import { runInitiative } from './initiative.ts';
@@ -962,18 +963,7 @@ function featuresCmd(flags: Args['flags'], positionals: string[]): void {
   // Live-first intents, O(1) state only (Q3): model-judged intents stay false
   // (absent), exactly the resolver default — never inferred by scan.
   const continues = readContinue(projectDir);
-  const intents: ResolveIntent = {
-    close: states.some((s) => s.flow === 8),
-    tests: false,
-    vague: false,
-    bug: false,
-    gitOp: false,
-    failure: states.some((s) => s.heal_cycle > 0 || s.blockers_open > 0),
-    gatesPass: false,
-    interrupted: continues.some((c) => c.mission === mission && !states.some((s) => s.member === c.member)),
-    meta: false,
-    rosterSize: rosterSize(missionDir),
-  };
+  const intents: ResolveIntent = deriveStructuralIntents({ mission, states, continues, rosterSize: rosterSize(missionDir) });
   const raw = readConfig(projectDir).features;
   let resolved: string[];
   try {
