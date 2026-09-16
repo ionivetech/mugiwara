@@ -627,3 +627,58 @@ test('resetMission preserve keeps lessons.md when keepLogs is true', () => {
   expect(result.kept).toContain('lessons.md');
   expect(result.removed).not.toContain('lessons.md');
 });
+
+function snapshotTree(dir: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const walk = (d: string) => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      const abs = join(d, e.name);
+      if (e.isDirectory()) walk(abs);
+      else out.set(abs.slice(dir.length + 1), readFileSync(abs, 'utf8'));
+    }
+  };
+  walk(dir);
+  return out;
+}
+
+const CORE_SKILLS = ['mugiwara-orchestration', 'mugiwara-planning', 'mugiwara-execution', 'mugiwara-checkpoint', 'mugiwara-gates', 'mugiwara-quality', 'mugiwara-lessons'];
+
+test('absent features= key installs all 21 skills (zero-migration compat)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-featabsent-'));
+  const r = installTo(fakeTarget, { ...opts, projectDir: dir });
+  expect(r.written.length).toBeGreaterThanOrEqual(35);
+  for (const name of CORE_SKILLS) expect(existsSync(join(dir, 'sk', name, 'SKILL.md')), name).toBe(true);
+  expect(existsSync(join(dir, 'sk', 'mugiwara-ship', 'SKILL.md'))).toBe(true);
+  expect(existsSync(join(dir, 'sk', 'mugiwara-security', 'SKILL.md'))).toBe(true);
+});
+
+test('features=all installs byte-identical to absent key', () => {
+  const absentDir = mkdtempSync(join(tmpdir(), 'mugi-featabs-'));
+  installTo(fakeTarget, { ...opts, projectDir: absentDir });
+  const allDir = mkdtempSync(join(tmpdir(), 'mugi-featall-'));
+  mkdirSync(join(allDir, '.mugiwara'), { recursive: true });
+  writeFileSync(join(allDir, '.mugiwara', 'config'), 'features=all\n');
+  const r = installTo(fakeTarget, { ...opts, projectDir: allDir, changedFiles: [] });
+  expect(r.written.length).toBeGreaterThanOrEqual(35);
+  const absent = snapshotTree(absentDir);
+  const all = snapshotTree(allDir);
+  // .mugiwara/config is the test input (hand-written vs installer default) —
+  // everything the installer produces from content must match byte-for-byte.
+  absent.delete('.mugiwara/config');
+  all.delete('.mugiwara/config');
+  expect([...all.keys()].sort()).toEqual([...absent.keys()].sort());
+  for (const [rel, text] of absent) expect(all.get(rel), rel).toBe(text);
+});
+
+test('features=core+auto installs the core subset, auto members skipped', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-featcore-'));
+  mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+  writeFileSync(join(dir, '.mugiwara', 'config'), 'features=core+auto\n');
+  installTo(fakeTarget, { ...opts, projectDir: dir, changedFiles: [] });
+  for (const name of CORE_SKILLS) expect(existsSync(join(dir, 'sk', name, 'SKILL.md')), name).toBe(true);
+  for (const name of ['mugiwara-ship', 'mugiwara-security', 'mugiwara-frontend', 'mugiwara-review']) {
+    expect(existsSync(join(dir, 'sk', name, 'SKILL.md')), name).toBe(false);
+  }
+  // agents are not feature-filtered
+  expect(existsSync(join(dir, 'ag', 'luffy-orchestrator.md'))).toBe(true);
+});
