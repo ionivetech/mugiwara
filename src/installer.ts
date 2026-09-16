@@ -161,7 +161,13 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   }
 
   if (sharedRefs.length) {
-    const sharedRoot = join(dirs.skillsDir, '_shared', 'references');
+    // T2: stub-side targets (tier 3 + copilot, which glob-injects every
+    // instruction file) keep shared refs out of the rules glob; tier-1 path
+    // below is byte-identical.
+    const stubSide = target.tier === 3 || typeof target.transformSkillFull === 'function';
+    const sharedRoot = stubSide
+      ? join(projectDir, '.mugiwara', 'refs', '_shared')
+      : join(dirs.skillsDir, '_shared', 'references');
     for (const r of sharedRefs) writeOne(join(sharedRoot, r.relPath), r.text);
   }
 
