@@ -208,6 +208,30 @@ describe('resolveFeatures + SAFETY', () => {
     expect(resolved).toContain('team');
   });
 
+  it('team reads the team key only: team=on includes team-scoped behavior', () => {
+    const resolved = resolveFeatures({ config: { features: 'core+auto', team: 'on' }, changedFiles: [], intents: {} });
+    expect(resolved).toContain('team');
+  });
+
+  it('team fires on roster > 1 without the team key, stays off while solo', () => {
+    const teamed = resolveFeatures({ config: { features: 'core+auto' }, changedFiles: [], intents: { rosterSize: 2 } });
+    expect(teamed).toContain('team');
+    const solo = resolveFeatures({ config: { features: 'core+auto' }, changedFiles: [], intents: { rosterSize: 1 } });
+    expect(solo).not.toContain('team');
+  });
+
+  it('resolver has no write path (reads team key/roster only)', () => {
+    const src = readFileSync(join(import.meta.dirname, '..', 'src', 'features.ts'), 'utf8');
+    expect(src).not.toContain('writeFileSync');
+    expect(src).not.toContain('writeFile(');
+  });
+
+  it('lessons-write stays OFF even with closure intent present (D5)', () => {
+    const resolved = resolveFeatures({ config: { features: 'core+auto' }, changedFiles: [], intents: { close: true } });
+    expect(resolved).not.toContain('lessons-write');
+    expect(resolved).toContain('ship');
+  });
+
   it('sensitive patterns mirror scripts/lib/patterns.sh SENSITIVE_PATS verbatim', () => {
     const sh = readFileSync(join(import.meta.dirname, '..', 'scripts', 'lib', 'patterns.sh'), 'utf8');
     const m = sh.match(/^SENSITIVE_PATS="([^"]*)"/m);

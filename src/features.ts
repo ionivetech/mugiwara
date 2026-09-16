@@ -135,6 +135,8 @@ export type ResolveIntent = {
   gatesPass?: boolean;
   interrupted?: boolean;
   meta?: boolean;
+  /** Crew roster size when known (O(1) caller-supplied count, never scanned). */
+  rosterSize?: number;
 };
 
 function anyMatch(files: string[], globs: string[]): boolean {
@@ -150,7 +152,7 @@ function fires(token: string, changedFiles: string[], config: Record<string, str
     case 'testcases': return intents.tests === true; // O(1) intent
     case 'frontend': return anyMatch(changedFiles, FRONTEND_GLOBS); // O(diff) globs
     case 'backend': return anyMatch(changedFiles, BACKEND_GLOBS); // O(diff) globs
-    case 'team': return config.team === 'on'; // O(1) config, read-only
+    case 'team': return config.team === 'on' || (intents.rosterSize ?? 0) > 1; // O(1) config/roster, read-only
     case 'lessons-write': return false; // hard-OFF (D5) — enablement OUT
     case 'sign': return false; // default OFF, regulated-only (unchanged)
     case 'security': return changedFiles.some((f) => SENSITIVE_RE.test(f)); // O(diff) globs
