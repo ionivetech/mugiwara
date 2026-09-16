@@ -21,9 +21,9 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG).toContain('verbosity=normal');
   });
 
-  it('documents the features= grammar as a commented block (absent means all)', () => {
+  it('documents the features= grammar as a bare commented option', () => {
     expect(DEFAULT_CONFIG).toContain('# features=core+auto');
-    expect(DEFAULT_CONFIG).toContain('absent means all');
+    expect(DEFAULT_CONFIG.split('\n')).toContain('# features=core+auto');
   });
 });
 
