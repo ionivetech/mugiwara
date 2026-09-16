@@ -90,7 +90,7 @@ Group tasks into waves; each wave ends in a verified, reviewable state. `[PARALL
 Draw layers, not edge lists: L0 (no deps) → L1 → L2, one node per task carrying its files, each arrow carrying its wait reason; name the critical path. A graph the executor must re-sort in its head is a planning defect. Keep the per-edge file rule (`consumes <file> from M → produces <file> for N`); flag cross-file risk edges (two tasks reading the same file — never parallel). Full shape + example: `references/plan-template.md`.
 
 ## Acceptance vs Definition of Done
-- **Acceptance** = "did we build the right thing?" — per task, command-verifiable. **Definition of Done** = "finished to standard?" — correctness, quality, integration, docs, ship-readiness; checked at the final wave.
+- **Acceptance** = "did we build the right thing?" — per task, command-verifiable. **Definition of Done** = "finished to standard?" — full definitions: `_shared/references/definition-of-done.md`; checked at the final wave, never the release verdict (mission-end GO/NO-GO belongs to `mugiwara-ship`).
 
 ## Anti-patterns
 Each with its failure mode and the fix: `references/anti-patterns.md`.

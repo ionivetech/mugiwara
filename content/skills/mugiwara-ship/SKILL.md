@@ -12,7 +12,7 @@ description: Use at mission end — pre-launch checklist, feature flags, staged 
 - Not releasing: no deploy, rollout, feature-flag flip, or user-facing change.
 - Internal-only change with zero production exposure.
 
-The last gate before anything reaches a user. Binary GO or NO-GO, each backed by evidence. Default is NO-GO until every item is proven.
+The last gate before anything reaches a user. Binary GO or NO-GO, each backed by evidence. Default is NO-GO until every item is proven. Trigger: close/archive intent at Flow 8 — mission-end release decision only, never the per-flow-stage bar (`mugiwara-gates` verdicts in `flows/04-gates.md`; this verdict goes to `flows/06-closure.md`).
 
 ## Pre-launch checklist
 

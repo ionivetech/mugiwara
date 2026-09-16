@@ -41,12 +41,9 @@ Runs only when quality flow stage triggered it (repo e2e setup + changed-file e2
 
 ## Definition of Done standing gate
 
-A fixed cross-project bar. Full definitions: `_shared/references/definition-of-done.md`. PASS only when all five axes hold:
-- Correctness — work does what plan specifies.
-- Quality — lint/format/unit clean, configs unweakened.
-- Integration — fits existing system (build/typecheck green).
-- Docs — user-facing and internal docs updated where change requires.
-- Ship-readiness — no blocker rows in issues ledger.
+A fixed cross-project bar. Full definitions: `_shared/references/definition-of-done.md`. PASS only when all five axes hold with evidence.
+
+Gates judges the per-flow-stage bar only — the mission-end release decision belongs to `mugiwara-ship` (Flow 8, close/archive intent). Distinct triggers, distinct files (`flows/04-gates.md` vs `flows/06-closure.md`).
 
 ## Post-review sonar verdict (after Flow 7)
 
@@ -77,7 +74,7 @@ without an explicit user decision is a fail wearing a costume.
 
 ## Lane-aware gates
 
-Direct (1 file <20 LOC) → 3 steps: `build-hooks:check`, `typecheck`, `build`. Lean → +`validate-content`, `lane-base`, `check-doc-links` (6). Standard → +`test:coverage`, `coverage-gate`, `verify-install` (9). Full → +`run-evals`, `retrieval-eval`, `conformance` (+`benchmark-governor` via `conformance` lane) (12). Policy `src/policy.ts:gatesForLane` is source of truth — `gate` counts steps by lane. Conformance 12-platform goldens unchanged — full still passes; direct skips heavy gates.
+Lane step chains live in code, not here. Source of truth: `src/policy.ts:gatesForLane` — `gate` counts steps by lane. Conformance 12-platform goldens unchanged — full still passes; direct skips heavy gates.
 
 ## Verdict
 

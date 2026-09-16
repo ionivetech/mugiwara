@@ -61,15 +61,13 @@ A failed audit feeds the healer, not the auditor. Flow:
 
 ## Definition of Done check
 
-Per axis — `correctness`, `quality`, `integration`, `docs`, `ship-readiness` — each with evidence, then one flow-stage verdict. Full definitions: `_shared/references/definition-of-done.md`. Any FAIL axis → flow-stage verdict FAIL.
+Per-axis check with evidence, then one flow-stage verdict. Full definitions: `_shared/references/definition-of-done.md`. Any FAIL axis → flow-stage verdict FAIL.
 
 ## Adversarial depth (high-stakes calls)
 
-The checklist above audits finished work. For in-flight decisions touching
-money, security, data, or public contracts — or confident outputs produced
-fast — run the doubt pass: CLAIM → EXTRACT → DOUBT → RECONCILE → STOP, max 3
-rounds, fresh context, never validate. Full method: `references/adversarial.md`.
-Output is the doubt trail. Skeptic runs this at Flow 4.5.
+The checklist above audits finished work. For in-flight high-stakes calls,
+run the doubt pass — skeptic runs this at Flow 4.5.
+Full method: `references/adversarial.md`. Output is the doubt trail.
 
 ## Auditor only
 
