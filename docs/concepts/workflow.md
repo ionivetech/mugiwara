@@ -1,10 +1,12 @@
 # Workflow
 
-You asked for a change and now ten strangers seem to own pieces of it. You cannot tell who runs first, what each hands over, or where parallel work is safe. This page answers "how does a mission run" with one example, then the stage table. Each flow stage is owned by one crew member and runs inline in the main conversation.
+You asked for a change and now ten strangers seem to own pieces of it. You cannot tell who runs first, what each hands over, or where parallel work is safe. This page answers "how does a mission run" with one example, then the stage table. Each [flow stage](../reference/glossary.md) is owned by one crew member and runs inline in the main conversation.
 
 Example: you ask for role-based access control. Luffy triages to a full lane and logs the route. Nami writes a plan with waves, tasks, and acceptance checks. Zoro executes test-first with evidence per task. Chopper re-runs each check. Sanji and Franky gate. Robin and Jinbe review in parallel. Brook heals failures. Luffy closes with a report, a push, and a ready PR summary.
 
 Rule: evidence over claims, and the plan is the source of truth. No flow stage passes on assertion. The owning agent runs the checks and shows output. A skipped flow stage is logged, never silent.
+
+In short: triage routes, planning writes the plan, execution does it, audit checks it, quality and gates measure it, review judges it, healing fixes it, closure ships it.
 
 | Flow stages | Owner | Output |
 |---|---|---|
@@ -18,8 +20,8 @@ Rule: evidence over claims, and the plan is the source of truth. No flow stage p
 | 8 Healing | Brook | Fixes, back to Flow 4, at most 3 cycles |
 | 9 Closure | Luffy | Report, push, PR verdict for you to open |
 
-Plans record a preflight baseline in plan.md: the current `bun test` and `tsc --noEmit` output, captured before Zoro executes. Flow 4 through Flow 6 re-run checks against that starting point, so a red baseline never ships as a green gate.
+Gates compare against the starting point, so plans record a preflight baseline in plan.md: the current `bun test` and `tsc --noEmit` output, captured before Zoro executes. Flow 4 through Flow 6 re-run checks against that starting point, so a red baseline never ships as a green gate.
 
-Execution posture is absorbed here from the old execution-model page, which now redirects. Control mode, execution posture, and Cost Governor are three independent decisions. Mode decides approvals. Posture decides how work runs: inline-sequential by default, parallel-workers for proven-independent batches, context-relief under pressure, phase-isolated for large campaigns, team-scoped for shared missions. The governor decides what spend is safe. Luffy records posture at Flow 0, Nami resolves it at Flow 2, and it re-evaluates only at stage or batch boundaries.
+Execution posture is absorbed here from the old execution-model page, which now redirects. Three independent choices share this page: [control mode](../reference/glossary.md) decides approvals, [execution posture](../reference/glossary.md) decides how work runs, and the [Cost Governor](../reference/glossary.md) decides what spend is safe. Posture runs inline-sequential by default, parallel-workers for proven-independent batches, context-relief under pressure, phase-isolated for large campaigns, team-scoped for shared missions. Luffy records posture at Flow 0, Nami resolves it at Flow 2, and it re-evaluates only at stage or batch boundaries.
 
-Subagents parallelize, never hide. Independent batches run one worker per task, Brook fans out independent fixes, checkers re-run diff passes in workers, and context pressure dispatches remaining tasks one at a time in plan order. Every worker returns a banner, a one-line verdict, and an evidence path. Sequential work stays inline. Each flow stage opens with one heading banner and mirrors progress into the host todo tool in the same response the evidence lands.
+Subagents parallelize, never hide. Independent batches run one worker per task, Brook fans out independent fixes, checkers re-run diff passes in workers, and context pressure dispatches remaining tasks one at a time in plan order. Every worker returns a [banner](../reference/glossary.md), a one-line verdict, and an evidence path. Sequential work stays inline. Each flow stage opens with one heading banner and mirrors progress into the host todo tool in the same response the evidence lands.
