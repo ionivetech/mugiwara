@@ -22,7 +22,7 @@ import { readConfig } from './config.ts';
 import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
 import { deriveStructuralIntents } from './intents.ts';
 import { computeLiveSlop } from './slop.ts';
-import { loadRegistry } from './evidence.ts';
+import { fingerprint, loadRegistry } from './evidence.ts';
 import { runInitiative } from './initiative.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
 import { enforceHarnessPolicy } from './policy.ts';
@@ -436,12 +436,23 @@ async function install(flags: Args['flags']): Promise<void> {
   if (flag(flags.dryRun)) { console.log('\nDry run — nothing written.'); return; }
   const file = manifestPath({ scope, projectDir, home });
   const prev = readManifest(file);
+  const files = [...new Set([...(prev?.files ?? []), ...allFiles])];
+  const hashes: Record<string, string> = {};
+  for (const f of files) {
+    try {
+      hashes[f] = fingerprint(readFileSync(f, 'utf8'));
+    } catch {
+      const h = prev?.hashes?.[f];
+      if (h) hashes[f] = h; // absent on disk: keep prior hash, never crash
+    }
+  }
   writeManifest(file, {
     version: VERSION,
     scope,
     installedAt: new Date().toISOString(),
     targets: [...new Set([...(prev?.targets ?? []), ...installed])],
-    files: [...new Set([...(prev?.files ?? []), ...allFiles])],
+    files,
+    hashes,
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
