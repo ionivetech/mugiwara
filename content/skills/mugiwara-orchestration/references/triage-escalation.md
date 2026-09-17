@@ -95,6 +95,18 @@ Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` 
 flag: red flags are prose, a counter is state. Nothing re-runs Flow 8 past
 `heal_max_cycles`.
 
+## Install sync rules (Flow 0)
+
+Sync ONLY pre-mission: on a clean tree, run one `list --check` and log one
+decision-log row (`install=<version> @ <installedAt>, check → <fresh|stale N>`).
+Mid-mission the install is frozen — hand-edits create drift the next gate
+surfaces as `stale=N`; never resync mid-flow-stage. Mode flips and heal
+handling take effect at the next flow stage, never mid-stage.
+
+Flow-0 done checklist: the resolved-set row is logged AND `explain --json`
+replays it (`features=<csv> | intents=<k=v csv> | files=<N>`, computed by
+`deriveStructuralIntents` reused as-is) — both present, or Flow 0 is not done.
+
 ## Tool-surface inventory protocol (Flow 0)
 
 Govern what the agent can REACH, not only what it writes.
