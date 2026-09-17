@@ -1,8 +1,8 @@
 # Getting Started
 
-You want the crew running without learning nine flow stages on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
+You want the crew running without learning nine [flow stages](reference/glossary.md) on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
 
-Example: you report a date formatting bug in one file. Luffy routes it to a lean lane. Zoro reproduces and fixes, Sanji runs format plus lint plus tests. Two flow stages, compact checkpoint reports, no planning ceremony. A typo runs zero flow stages.
+Example: you report a date formatting bug in one file. Luffy routes it to a lean [lane](concepts/lanes.md). Zoro reproduces and fixes, Sanji runs format plus lint plus tests. Two flow stages, compact checkpoint reports, no planning ceremony. A typo runs zero flow stages.
 
 Rule: the process scales to the work. Small changes stay small by lane sizing. Large or sensitive changes get plans, audits, gates, and a reviewable trail.
 
@@ -21,7 +21,7 @@ Requirements: git, plus Node.js 20.11 or newer. Bash runs `lane.sh` and `savepoi
 { "plugin": ["@ionivetech/mugiwara"] }
 ```
 
-Install writes `.mugiwara/config` with defaults. Edit it directly to set mode, branch pattern, review depth, quality depth, coverage, and commit style.
+Install writes `.mugiwara/config` with defaults. Edit it directly to set [mode](concepts/modes.md), branch pattern, review depth, quality depth, coverage, and commit style.
 
 ## Start a mission
 
