@@ -178,7 +178,7 @@ For regulated paths and owner handoffs. Not for internal spikes. Trade-off: sign
 ### Feature flags that load per mission
 
 Problem: every mission loads the full catalog, so small work pays full context.
-What: `features=` selects the skill set: `all`, or `core+auto` with `+token` additions and `-token` removals. Unknown tokens abort, and safety tokens stay loaded while firing. `mugiwara features explain` prints each token with trigger, default, and firing state; `list` prints names. Structural intents (`close`, `failure`, `interrupted`, `rosterSize`) derive from mission state via `deriveStructuralIntents`; judged intents (`tests`, `vague`, `bug`, `gitOp`, `gatesPass`, `meta`) stay model-supplied and default false. Log the resolved set; re-run `features explain` after any savepoint (reads are point-in-time).
+What: `features=` selects the skill set. `mugiwara features explain` prints each token with trigger, default, and firing state; `list` prints names. Structural intents (`close`, `failure`, `interrupted`, `rosterSize`) derive from mission state via `deriveStructuralIntents`; judged intents (`tests`, `vague`, `bug`, `gitOp`, `gatesPass`, `meta`) stay model-supplied and default false. Log the resolved set; re-run `features explain` after any savepoint (reads are point-in-time).
 For context-capped missions. Not for default runs, where absent means all. Trade-off: a dropped token drops its skill, and explain shows the gap. Detail: [config](config.md).
 
 ### Every skill, no gaps

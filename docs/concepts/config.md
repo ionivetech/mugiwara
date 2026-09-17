@@ -36,6 +36,6 @@ Rule: mode owns autonomy, config owns writing standards. Code reads every key be
 | `team` | off / on | Solo by default; first shared mission flips on at Flow 0 |
 | `sign` | off / minisign / pure / auto | Report attestation backend |
 | `enforce` | off / warn / block | Pipeline-guard policy |
-| `features` | all (when absent) | Situational extension loading: `all` \| `core+auto[,token...][,-token...]`; unknown token aborts, safety set (`security`, `contract-first`) cannot be removed while firing |
+| `features` | all (when absent) | Situational extension loading; run mugiwara features explain (single source: code + CLI) |
 
 Missing config on read means guided. Flip mid-mission by saying `mugiwara mode auto` in session. It applies from the next flow stage. Policy file `mugiwara.policy.yml` can raise coverage, never lower it. Full consumer map lives in code: `scripts/savepoint.sh`, `scripts/lane.sh`, coverage gate, `src/sign.ts`, guard hooks.
