@@ -549,7 +549,22 @@ function list(flags: Args['flags']): void {
     found = true;
     if (flag(flags.check)) {
       const missing = m.files.filter(f => !existsSync(f));
-      console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} missing=${missing.length} installed=${m.installedAt}`);
+      if (!m.hashes) {
+        console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} missing=${missing.length} installed=${m.installedAt}`);
+      } else {
+        // Read-only drift detector: absent → missing; hash mismatch → stale;
+        // no hash entry → staleness-unknown, uncounted. Never repairs.
+        let stale = 0;
+        for (const f of m.files) {
+          if (!existsSync(f)) continue;
+          const h = m.hashes[f];
+          if (h === undefined) continue;
+          try {
+            if (fingerprint(readFileSync(f, 'utf8')) !== h) stale++;
+          } catch { /* unreadable: not stale, not counted */ }
+        }
+        console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} missing=${missing.length} stale=${stale} installed=${m.installedAt}`);
+      }
     } else {
       console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} installed=${m.installedAt}`);
     }
@@ -1400,7 +1415,7 @@ Flags:
   --yes, -y              non-interactive (defaults: project, all targets)
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
-  --check                with list: report missing files (health check)
+  --check                with list: report missing + stale files (health check)
    --all                  with continue/status: every actor
    --include-live         with clean: include in-flight missions
    --force                with clean --include-live: archive in-flight missions anyway
