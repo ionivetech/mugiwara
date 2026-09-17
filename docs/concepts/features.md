@@ -5,7 +5,7 @@ This index maps each need to the page that owns it.
 Detail lives on the linked pages, never here.
 
 Example: you ask for role-based access control across an API.
-Luffy sizes the diff to a full lane, Usopp sharpens the vague edges, Nami plans waves with acceptance checks, Zoro implements with evidence per task, Chopper re-runs each check, Sanji and Franky gate, Robin and Jinbe review, Brook heals failures, Luffy closes with a report plus a ready PR summary.
+Luffy sizes the diff to a full lane, Usopp sharpens the vague edges, Nami plans [waves](../reference/glossary.md) with acceptance checks, Zoro implements with evidence per task, Chopper re-runs each check, Sanji and Franky gate, Robin and Jinbe review, Brook heals failures, Luffy closes with a report plus a ready PR summary.
 The product is the branch plus `.mugiwara/missions/<mission>/report.md`.
 
 Rule: this page answers "what can it do" at index depth.
@@ -67,7 +67,7 @@ For any change with stored rows or a live contract behind it. Not for code-only 
 ### Modes for how closely you watch
 
 Problem: an agent that asks at every step wastes your day, and one that never asks ships surprises.
-What: guided asks before each flow stage, semi runs from an approved plan, auto runs triage to closure and pauses only on a genuine blocker. A flip applies from the next stage, never mid-stage.
+What: guided asks before each [flow stage](../reference/glossary.md), semi runs from an approved plan, auto runs triage to closure and pauses only on a genuine blocker. A flip applies from the next stage, never mid-stage.
 Proof: the report header records the mode, for example `lane full, mode guided`, and the terminal step never moves: push plus a ready PR summary that you open.
 For owners who want the autonomy dialed per mission. Not a cost tier and never an execution posture. Trade-off: auto buys speed with attention debt, and the debt lands in review. Detail: [modes](modes.md).
 
@@ -191,7 +191,7 @@ For anyone checking cover before adopting. Trade-off: the roster looks large on 
 ### Every agent, no gaps
 
 Problem: a role with no name never gets called.
-What: all 14 agents. Captain Luffy triages, runs check-ins, records decisions, closes. Usopp interrogates vague ideas. Nami plans. Zoro executes. Chopper audits. Skeptic re-verifies. Sanji runs quality tooling. Franky calls gate verdicts. Robin reviews diffs. Jinbe runs security. Brook heals. Resume rebuilds dead sessions. Memory Keeper carries lessons. Eval Runner scores behavior.
+What: all 14 agents. Captain Luffy triages, runs [check-ins](../reference/glossary.md), records decisions, closes. Usopp interrogates vague ideas. Nami plans. Zoro executes. Chopper audits. Skeptic re-verifies. Sanji runs quality tooling. Franky calls gate verdicts. Robin reviews diffs. Jinbe runs security. Brook heals. Resume rebuilds dead sessions. Memory Keeper carries lessons. Eval Runner scores behavior.
 Proof: every install ships the whole crew, 11 specialists plus 3 internal helpers, with the call moment per member in [agents](agents.md).
 For leads assigning ownership per stage. Trade-off: fourteen names take one reading to learn, and after that the call is one sentence.
 
