@@ -1,6 +1,6 @@
 ---
 name: mugiwara-execution
-description: Use when executing an approved plan — todo list first, sequential inline + parallel worker batches, commit per logical task, evidence per task.
+description: Use when executing an approved plan — todo list first, sequential inline + parallel worker batches, commit per logical task, evidence per task. Reuse ladder, stdlib, one-line fix, reject unrequested abstraction.
 gate_artifact: flows/01-execution.md task table — execution evidence
 ---
 
