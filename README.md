@@ -92,7 +92,7 @@ Three things it does for you:
 |---|---|
 | **Evidence, not claims** | Every flow stage re-runs checks and shows output. "Done" = proof. |
 | **Process that sizes itself** | A typo costs nothing. An auth migration gets the full pipeline. |
-| **Visible cost** | Per-lane budgets, a live slop governor, and a `mugiwara cost` ledger. |
+| **Visible cost** | Per-lane budgets, a live [slop](docs/reference/glossary.md) governor, and a `mugiwara cost` ledger. |
 
 It runs **inline in your chat**.
 
@@ -175,7 +175,7 @@ attributes it to the crew member that caused it, and a `mugiwara cost` ledger.
 → [Cost model](docs/concepts/cost.md)
 
 ### Adaptive execution
-Control mode, execution posture, and Cost Governor stay **independent**. The
+[Control mode](docs/reference/glossary.md), [execution posture](docs/reference/glossary.md), and [Cost Governor](docs/reference/glossary.md) stay **independent**. The
 crew picks the posture from evidence at each flow boundary. Inline is the default.
 
 → [Adaptive execution](docs/concepts/execution-model.md)
