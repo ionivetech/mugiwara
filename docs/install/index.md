@@ -23,6 +23,6 @@ Scope is project by default and user-wide with `--global`. Every CLI install wri
 
 ## After install
 
-Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster: a correct install answers with the crew list. `mugiwara list` shows recorded installations with version and file counts, and `mugiwara list --check` reports missing files as a health pass. Update replaces installed files with backups of differences, and uninstall removes exactly what the manifest recorded. Set mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
+Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster: a correct install answers with the crew list. `mugiwara list` shows recorded installations with version and file counts, and `mugiwara list --check` reports missing and stale files as a health pass. Update replaces installed files with backups of differences, and uninstall removes exactly what the manifest recorded. Set mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
 
 Open your harness page above and run its verify step.
