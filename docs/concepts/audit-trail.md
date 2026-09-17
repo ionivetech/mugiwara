@@ -1,10 +1,10 @@
 # Audit Trail
 
-A mission that ends with "trust me" leaves nothing to review. Claims without artifacts cannot be checked. This page answers "what is recorded" with one example, then the artifact table. Every verdict points at files a reviewer can open.
+A mission that ends with "trust me" leaves nothing to review. Claims without [evidence](../reference/glossary.md) cannot be checked. This page answers "what is recorded" with one example, then the artifact table. Every verdict points at files a reviewer can open.
 
 Example: a reviewer opens `report.md` and finds the closure summary with gate verdicts, token cost, and a ranked reading order. The second file is the gate verdict, which shows coverage from config plus build plus DoD. The third is the audit report, where each criterion carries a re-run command and an evidence row. Three files answer whether the mission earned its PASS.
 
-Rule: one directory per mission under `.mugiwara/missions/<mission>/`, bare names, no date prefixes. Dates live in state JSON and git history. Savepoint writes state at every flow-stage boundary. Archive folds the trail into `report.md`.
+Rule: one directory per [mission](../reference/glossary.md) under `.mugiwara/missions/<mission>/`, bare names, no date prefixes. Dates live in state JSON and git history. [Savepoint](../reference/glossary.md) writes state at every [flow-stage](../reference/glossary.md) boundary. [Archive](../reference/glossary.md) folds the [trail](../reference/glossary.md) into `report.md`.
 
 | Group | Files | Written by | When |
 |---|---|---|---|
@@ -19,4 +19,4 @@ Rule: one directory per mission under `.mugiwara/missions/<mission>/`, bare name
 
 Small work writes a small trail: state, one execution file, and the closure report. Plan, spec, and per-flow-stage files appear on lean lanes only when a blocker occurs. After archive the mission dir keeps plan plus report with provenance and rollback beside them when derivable.
 
-Reviewer order: report first, gate verdict second, audit spot-check third, findings count fourth, provenance fifth, raw state numbers last. Commit the trail: plan, spec, decisions, blockers, review, security, flows, and report stay versioned. State JSON stays ignored and recomputed. A trail that vanishes at merge is no trail.
+Reviewer order: report first, the [gate](../reference/glossary.md) verdict second, audit spot-check third, findings count fourth, [provenance](../reference/glossary.md) fifth, raw state numbers last. Commit the trail: plan, spec, decisions, blockers, review, security, flows, and report stay versioned. State JSON stays ignored and recomputed. A trail that vanishes at merge is no trail.
