@@ -61,7 +61,7 @@ Luffy classifies every request 8 ways:
 | Hotfix | production broken | Lane 1, gates deferred with owner |
 
 Precedence: class decides work; lane decides process — class first, lane second. Lane: 0=Direct (<20 LOC), 1=Lean (1-2), 2=Standard (3-8), 3=Full (9+), 4=Spike. Record route in `decisions.md`.
-Baseline preflight: record `bun test` + `tsc --noEmit` green/red in the plan Baseline block at Flow 0/2 — Flow 3 never starts without it (template: planning `references/plan-template.md`).
+Baseline preflight: record `bun test` + `tsc --noEmit` green/red in the plan Baseline block at Flow 0/2 — Flow 3 never starts without it (template: the planning skill's `plan-template.md` reference).
 ## Session handoff
 At session end (step limit, crash, or manual stop) the crew writes `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` before the final text response: mission, member, flow stage, tasks, next_action (exact files + commands), next_session_prompt. Owner: orchestrator (captain); writer: the agent ending the flow stage. Each handoff runs `mugiwara savepoint <mission> --flow N` — flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync, no `0/0`. Next session starts with `/mugiwara continue <mission> [member]` — no re-explanation. `auto` mode continues across sessions via the continue file: one command per session, no re-explanation. State proves what is done; continue says what is next — verify next_action against state, escalate contradictions.
 ## Blocker protocol
