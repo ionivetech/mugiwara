@@ -18,6 +18,6 @@
 
 ## Reference
 [Config](concepts/config.md) · [CLI](install/cli.md) · [Skills](concepts/skills.md) ·
-[Agents](concepts/agents.md) · [Glossary](reference/glossary.md)
+[Agents](concepts/agents.md) · [Glossary](reference/glossary.md) · [Host skills](concepts/host-skills.md)
 
 The crew: 11 agents (+3 internal) and 21 skills.
