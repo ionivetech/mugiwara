@@ -1290,7 +1290,7 @@ console.log('\nN6 — banner-recording mutation');
 // --- N7 mutation: `mugiwara lessons import` with no CLI case → doc-integrity red ---
 console.log('\nN7 — lessons-import mutation');
 {
-  const f = join(root, 'docs', 'adoption.md');
+  const f = join(root, 'docs', 'reference', 'adoption-guide.md');
   const original = readFileSync(f, 'utf8');
   try {
     writeFileSync(f, `${original}\nImport with \`mugiwara lessons import <file>\`.\n`);
