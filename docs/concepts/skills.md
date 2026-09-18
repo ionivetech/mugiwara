@@ -10,7 +10,7 @@ Start and run the mission: enter through gateway triage (`mugiwara-workflow`), c
 
 ## Mission control and practice
 
-Control the mission: commit atomically with [save-points](../reference/glossary.md) (`mugiwara-git`), take in user tests (`mugiwara-testcases`), call the ship verdict (`mugiwara-ship`), resume dead sessions (`mugiwara-resume`), and remember across missions (`mugiwara-lessons`). Practice the engineering: hunt root causes (`mugiwara-root-cause`) and design contract-first (`mugiwara-contract-first`).
+Control the mission: commit atomically with [save-points](../../content/skills/mugiwara-git/SKILL.md#save-point-pattern) (`mugiwara-git`), take in user tests (`mugiwara-testcases`), call the ship verdict (`mugiwara-ship`), resume dead sessions (`mugiwara-resume`), and remember across missions (`mugiwara-lessons`). Practice the engineering: hunt root causes (`mugiwara-root-cause`) and design contract-first (`mugiwara-contract-first`).
 
 ## Domain
 

@@ -91,7 +91,7 @@ Three things it does for you:
 |---|---|
 | **Evidence, not claims** | Every flow stage re-runs checks and shows output. "Done" = proof. |
 | **Process that sizes itself** | A typo costs nothing. An auth migration gets the full pipeline. |
-| **Visible cost** | Per-lane budgets, a live [slop](docs/reference/glossary.md) governor, and a `mugiwara cost` ledger. |
+| **Visible cost** | Per-lane budgets, a live [slop](docs/concepts/cost.md) governor, and a `mugiwara cost` ledger. |
 
 It runs **inline in your chat**.
 
@@ -175,7 +175,7 @@ Native names: anti-fluff (terse writing); just-enough (minimal-code ladder, YAGN
 → [Cost model](docs/concepts/cost.md)
 
 ### Adaptive execution
-[Control mode](docs/reference/glossary.md), [execution posture](docs/reference/glossary.md), and [Cost Governor](docs/reference/glossary.md) stay **independent**. The
+[Control mode](docs/concepts/modes.md), [execution posture](docs/concepts/workflow.md), and [Cost Governor](docs/concepts/cost.md) stay **independent**. The
 crew picks the posture from evidence at each flow boundary. Inline is the default.
 
 → [Adaptive execution](docs/concepts/execution-model.md)
@@ -361,8 +361,8 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 | Claim | Status |
 |---|---|
-| Retrieval routing rank-1 | **95.4%**, 221 probes (174 positive, 83 negative), in CI |
-| Reference pointers resolve | **342/342**, 9 targets, in CI |
+| Retrieval routing rank-1 | **95.5%**, 227 probes (174 positive, 83 negative), in CI |
+| Reference pointers resolve | **160/160**, 9 targets, in CI |
 | Index size published vs measured | **doc-gated**: validator fails on drift, in CI |
 | Lane constants match content load | **verified**, in CI |
 | Slop verdicts | in `mugiwara cost` and the closing report: [Cost](docs/concepts/cost.md) |
@@ -370,7 +370,7 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 | Cross-harness mission behavior | **12/12 platforms**, in CI |
 | Outcome vs other approaches | **not measured** |
 
-Numbers here are produced by `bun run gate`, never estimated.
+Numbers here are produced by `bun run gate`. Nothing in this table is an estimate.
 
 ---
 

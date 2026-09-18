@@ -1,6 +1,6 @@
 # Which lane for my change?
 
-A typo once waited behind the full review pipeline while a payment migration slipped through with a glance. Both failures came from one process applied to every change. [Lanes](../reference/glossary.md) fix that by sizing the process to the diff before the mission runs.
+A typo once waited behind the full review pipeline while a payment migration slipped through with a glance. Both failures came from one process applied to every change. [Lanes](features.md#lane-sizing-that-fits-the-diff) fix that by sizing the process to the diff before the mission runs.
 
 Example: you rename one variable in one file. `mugiwara run lane.sh` reports `direct`, and the change ships with no pipeline. You touch `src/auth/login.ts` in a five-file diff. The same command reports `full`, and all nine flow stages run.
 
@@ -64,7 +64,7 @@ What this means for you: if your diff touches one of these paths, expect the ful
 
 ## Escalation never drops
 
-At each boundary, the [savepoint](../reference/glossary.md) re-checks the diff. A lane rises when the work grows or a sensitive path appears, and never falls back within the mission: the peak persists in state, flagged for the record. Over-processing a small change costs less than under-processing a large one. Say the word and Luffy escalates manually, recorded in the decision log.
+At each boundary, the [savepoint](audit-trail.md) re-checks the diff. A lane rises when the work grows or a sensitive path appears, and never falls back within the mission: the peak persists in state, flagged for the record. Over-processing a small change costs less than under-processing a large one. Say the word and Luffy escalates manually, recorded in the decision log.
 
 ## Path-weighted sizing (docs-only downgrade)
 
