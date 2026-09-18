@@ -95,7 +95,7 @@ Three things it does for you:
 
 It runs **inline in your chat**.
 
-→ [Why mugiwara vs asking unaided](docs/concepts/comparison.md)
+→ [Why mugiwara vs asking unaided](docs/concepts/features.md#outcome-honesty-including-what-is-missing)
 
 ---
 
@@ -178,7 +178,7 @@ Native names: anti-fluff (terse writing); just-enough (minimal-code ladder, YAGN
 [Control mode](docs/concepts/modes.md), [execution posture](docs/concepts/workflow.md), and [Cost Governor](docs/concepts/cost.md) stay **independent**. The
 crew picks the posture from evidence at each flow boundary. Inline is the default.
 
-→ [Adaptive execution](docs/concepts/execution-model.md)
+→ [Adaptive execution](docs/concepts/workflow.md)
 
 ---
 
@@ -341,19 +341,17 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 ## Docs
 
-**Start here:** [Getting started](docs/getting-started.md) · [What mugiwara replaces](docs/concepts/comparison.md)
+**Start here:** [Getting started](docs/getting-started.md) · [What mugiwara replaces](docs/concepts/features.md#outcome-honesty-including-what-is-missing)
 
-**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Execution model](docs/concepts/execution-model.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md) · [Security](docs/concepts/security.md) · [Provenance](docs/concepts/provenance.md) · [Policy as code](docs/concepts/policy-as-code.md) · [Closure tools](docs/concepts/closure-tools.md) · [Permissions](docs/concepts/permissions.md)
+**Concepts:** [Workflow](docs/concepts/workflow.md) · [Lanes](docs/concepts/lanes.md) · [Modes](docs/concepts/modes.md) · [Git strategy](docs/concepts/git-strategy.md) · [Config](docs/concepts/config.md) · [Cost](docs/concepts/cost.md) · [Audit trail](docs/concepts/audit-trail.md) · [Security](docs/concepts/security.md) · [Provenance](docs/concepts/provenance.md) · [Policy as code](docs/concepts/policy-as-code.md) · [Closure tools](docs/concepts/closure-tools.md) · [Permissions](docs/concepts/permissions.md)
 
-**Crew:** [Agents](docs/concepts/agents.md) · [Skills](docs/concepts/skills.md) · [Adaptive execution](docs/concepts/execution-model.md)
+**Crew:** [Agents](docs/concepts/agents.md) · [Skills](docs/concepts/skills.md) · [Adaptive execution](docs/concepts/workflow.md)
 
 **Reference:** [Adoption guide](docs/reference/adoption-guide.md) · [Glossary](docs/reference/glossary.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance matrix](docs/reference/compliance-matrix.md)
 
 **Install:** [Overview](docs/install/index.md) · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
 
 **Runbooks:** [Solo mission](docs/runbooks/solo-mission.md) · [Team mission](docs/runbooks/team-mission.md) · [Joining mid-mission](docs/runbooks/joining-a-mission.md) · [Resume after crash](docs/runbooks/resume-after-crash.md) · [Monorepo](docs/runbooks/monorepo.md) · [Signing](docs/runbooks/signing-and-attestation.md) · [Policy](docs/runbooks/policy-for-a-team.md) · [Troubleshooting](docs/runbooks/troubleshooting.md)
-
-**Troubleshooting:** [Common problems](docs/troubleshooting.md)
 
 ---
 

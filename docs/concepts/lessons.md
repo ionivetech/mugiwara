@@ -26,4 +26,4 @@ Date · category · the rule · origin mission. One line, no prose essays.
 ## Sharing between teams
 
 Opt-in, anonymized exchange format and rules:
-[adoption kit](../adoption.md#lessons-ledger-exchange).
+[adoption kit](../reference/adoption-guide.md).
