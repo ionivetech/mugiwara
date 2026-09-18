@@ -1,8 +1,8 @@
 # Getting Started
 
-You want the crew running without learning nine flow stages on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
+You want the crew running without learning nine [flow stages](reference/glossary.md) on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
 
-Example: you report a date formatting bug in one file. Luffy routes it to a lean lane. Zoro reproduces and fixes, Sanji runs format plus lint plus tests. Two flow stages, compact checkpoint reports, no planning ceremony. A typo runs zero flow stages.
+Example: you report a date formatting bug in one file. Luffy routes it to a lean [lane](concepts/lanes.md). Zoro reproduces and fixes, Sanji runs format plus lint plus tests. Two flow stages, compact checkpoint reports, no planning ceremony. A typo runs zero flow stages.
 
 Rule: the process scales to the work. Small changes stay small by lane sizing. Large or sensitive changes get plans, audits, gates, and a reviewable trail.
 
@@ -21,13 +21,13 @@ Requirements: git, plus Node.js 20.11 or newer. Bash runs `lane.sh` and `savepoi
 { "plugin": ["@ionivetech/mugiwara"] }
 ```
 
-Install writes `.mugiwara/config` with defaults. Edit it directly to set mode, branch pattern, review depth, quality depth, coverage, and commit style.
+Install writes `.mugiwara/config` with defaults. Edit it directly to set [mode](concepts/modes.md), branch pattern, review depth, quality depth, coverage, and commit style.
 
 ## Start a mission
 
 The workflow auto-activates at session start. The crew announces itself. Give any non-trivial request in plain language.
 
-A medium change such as a search bar across frontend plus API routes to a standard lane. Nami plans tasks, Zoro executes test-first, Chopper audits each criterion, Sanji and Franky gate, Robin and Jinbe review. A large change touching auth routes to a full lane with all nine flow stages, STRIDE plus OWASP review, and at most 3 heal cycles before escalation.
+A medium change such as a search bar across frontend plus API routes to a standard lane. Nami plans tasks, Zoro executes test-first, Chopper audits each criterion, Sanji gates quality, Franky gates coverage, Robin and Jinbe review plus security. A large change touching auth routes to a full lane with all nine flow stages, STRIDE plus OWASP review, and at most 3 heal cycles before escalation.
 
 The crew runs inline in your main conversation. Subagents cover parallel task batches only. Slash commands exist for mode switch, continue, review, and security. The rest routes itself.
 

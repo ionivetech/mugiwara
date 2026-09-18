@@ -291,3 +291,23 @@ test('guard banner: banner in mission files suppresses warning without transcrip
     expect(r.err).not.toContain('no flow banner');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+// ---------- T4: opencode lazy prompt — description + pointer, never the body ----------
+
+test('opencode lazy prompt: every registered prompt excludes its body and names an existing file', async () => {
+  const plugin = (await import('../.opencode/plugins/mugiwara.mjs')).default;
+  const { config } = await plugin();
+  const cfg = { agent: {} };
+  await config(cfg);
+  const names = Object.keys(cfg.agent);
+  expect(names.length).toBeGreaterThan(0);
+  for (const [name, a] of Object.entries(cfg.agent)) {
+    const agent = a as { prompt?: string; description?: string };
+    const src = readFileSync(join(ROOT, 'content', 'agents', `${name}.md`), 'utf8');
+    const full = src.slice(src.indexOf('---', 3) + 3).replace(/^---\r?\n/, '').trim();
+    expect(agent.prompt!.includes(full), `${name}: prompt must not embed the body`).toBe(false);
+    const m = agent.prompt!.match(/read (.+\.md) when embodying/);
+    expect(m, `${name}: prompt names its file`).not.toBeNull();
+    expect(existsSync(m![1]), `${name}: pointer path exists`).toBe(true);
+  }
+});

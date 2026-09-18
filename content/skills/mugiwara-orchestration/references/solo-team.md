@@ -3,8 +3,9 @@
 Decide before the first savepoint. That write fixes the state layout for the
 whole mission and cannot be changed afterwards without a migration.
 
-**In `guided` and `semi`: always ask. This question is never skipped, at any
-lane.** It costs one line and it determines the shape of everything after it.
+**In `guided` and `semi`, Lane 2+:** skip the ask when the `team` key is absent from `.mugiwara/config` or reads `off` — no team history means solo. The first shared mission writes `team=on` to the project config, and the ask returns from then on. An explicit `team=on` always asks.
+
+When the ask happens, it costs one line and it determines the shape of everything after it.
 
     Is this mission solo or shared?
     If shared: who is on it, and which area does each person own?

@@ -23,7 +23,29 @@ Gates are binary: pass or fail, with evidence. No negotiation, no "almost passes
 4. In this repo the gate is executable: `bun run coverage-gate` (`scripts/coverage-gate.ts`) does all three against the mission's `base_sha`, and runs as the last step of `bun run gate`. Never lower a threshold or exclude a file to make it green — add the missing tests.
 5. User-AC declared (per `mugiwara-testcases`): config thresholds apply to unit-level code only; user-AC verdict governs ship-readiness.
 
-## Sonar-style quality gate
+## Sonar-style quality gate (verdict after Flow 7)
+
+Flow 6 does not judge sonar here — no Flow-6 section names `review.md` or `security.md` as prior. Franky reads Flow-5 evidence only (Sanji, `.mugiwara/missions/<mission>/flows/03-quality.md`) for coverage/build context. The sonar verdict — vulnerabilities, bugs, smells, hotspots, duplication — runs after Flow 7 per `## Post-review sonar verdict (after Flow 7)` below, which names the Flow 7 artifacts as prior.
+
+## Build gate
+
+Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capture the tail of output. Skip when `flows/03-quality.md` already recorded an exit-0 build on an unchanged diff.
+
+## Diff size gate (reviewability)
+
+The change diff against `base_sha` must be ≤ 400 LOC (via `git diff --numstat`). Larger → FAIL with the count; split into smaller changes before re-checking. An oversized diff is not reviewable regardless of other green gates.
+
+## Optional e2e gate (per `mugiwara-quality`)
+
+Runs only when quality flow stage triggered it (repo e2e setup + changed-file e2e patterns, user consent). Skipped/unrun is logged, never blocks PASS. Flow-6 verdict: coverage + build + DoD (sonar verdict lands after Flow 7).
+
+## Definition of Done standing gate
+
+A fixed cross-project bar. Full definitions: `_shared/references/definition-of-done.md`. PASS only when all five axes hold with evidence.
+
+Gates judges the per-flow-stage bar only — the mission-end release decision belongs to `mugiwara-ship` (Flow 8, close/archive intent). Distinct triggers, distinct files (`flows/04-gates.md` vs `flows/06-closure.md`).
+
+## Post-review sonar verdict (after Flow 7)
 
 Franky reads evidence from prior flow-stage reports (never re-runs checks): Jinbe (`.mugiwara/missions/<mission>/security.md`), Robin (`.mugiwara/missions/<mission>/review.md`), Sanji (`.mugiwara/missions/<mission>/flows/03-quality.md`).
 
@@ -37,28 +59,7 @@ Evaluated against these fixed numbers (policy may raise, never lower):
 - Duplications (new code) < 3%
 - Security hotspots reviewed ≥ 80%
 
-PASS only when ALL pass — list each with actual + threshold. Missing data → CANNOT pass: report the gap, do not fake.
-
-## Build gate
-
-Run the project's build (or typecheck for interpreted stacks). Must exit 0. Capture the tail of output. Skip when `flows/03-quality.md` already recorded an exit-0 build on an unchanged diff.
-
-## Diff size gate (reviewability)
-
-The change diff against `base_sha` must be ≤ 400 LOC (via `git diff --numstat`). Larger → FAIL with the count; split into smaller changes before re-checking. An oversized diff is not reviewable regardless of other green gates.
-
-## Optional e2e gate (per `mugiwara-quality`)
-
-Runs only when quality flow stage triggered it (repo e2e setup + changed-file e2e patterns, user consent). Skipped/unrun is logged, never blocks PASS. Final verdict: coverage + sonar + build + DoD.
-
-## Definition of Done standing gate
-
-A fixed cross-project bar. Full definitions: `_shared/references/definition-of-done.md`. PASS only when all five axes hold:
-- Correctness — work does what plan specifies.
-- Quality — lint/format/unit clean, configs unweakened.
-- Integration — fits existing system (build/typecheck green).
-- Docs — user-facing and internal docs updated where change requires.
-- Ship-readiness — no blocker rows in issues ledger.
+PASS only when ALL pass — list each with actual + threshold. Missing data → CANNOT pass: report the gap, do not fake. Append the verdict to `.mugiwara/missions/<mission>/flows/04-gates.md` under a post-review heading; it never rewrites the Flow-6 verdict.
 
 ## Waiver record
 
@@ -73,11 +74,11 @@ without an explicit user decision is a fail wearing a costume.
 
 ## Lane-aware gates
 
-Direct (1 file <20 LOC) → 3 steps: `build-hooks:check`, `typecheck`, `build`. Lean → +`validate-content`, `lane-base`, `check-doc-links` (6). Standard → +`test:coverage`, `coverage-gate`, `verify-install` (9). Full → +`run-evals`, `retrieval-eval`, `conformance` (+`benchmark-governor` via `conformance` lane) (12). Policy `src/policy.ts:gatesForLane` is source of truth — `gate` counts steps by lane. Conformance 12-platform goldens unchanged — full still passes; direct skips heavy gates.
+Lane step chains live in code, not here. Source of truth: `src/policy.ts:gatesForLane` — `gate` counts steps by lane. Conformance 12-platform goldens unchanged — full still passes; direct skips heavy gates.
 
 ## Verdict
 
-PASS only when coverage AND sonar AND build AND diff-size AND DoD all pass with evidence. Write verdict to `.mugiwara/missions/<mission>/flows/04-gates.md` — each criterion with actual + threshold (see `gate_artifact`). PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under threshold + by how much → return to Luffy (routes to Brook). Never dispatch the next flow stage yourself.
+Flow-6 PASS only when coverage AND build AND diff-size AND DoD all pass with evidence. Write verdict to `.mugiwara/missions/<mission>/flows/04-gates.md` — each criterion with actual + threshold (see `gate_artifact`). The sonar verdict follows after Flow 7 per the post-review section above and never blocks the Flow-6 verdict. PASS → return to Luffy (routes to Robin/Jinbe). FAIL → list files under threshold + by how much → return to Luffy (routes to Brook). Never dispatch the next flow stage yourself.
 
 ## Red flags
 

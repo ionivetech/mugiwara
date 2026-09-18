@@ -1,0 +1,25 @@
+{
+  "name": "slop-unneeded-dependency-ladder",
+  "skill": "mugiwara-execution",
+  "trigger": {
+    "positive": [
+      { "prompt": "climb the reuse ladder before adding any dependency", "top_k": 3 },
+      { "prompt": "stdlib first, no new package for a covered need", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "add a date-picker library to the project" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A task needs deep-cloning a plain object. The draft adds a new npm dependency although the language stdlib already covers it. What does the agent do?",
+      "rubric": [
+        "rejects the new dependency and climbs the reuse ladder",
+        "uses the stdlib or native equivalent already available",
+        "adds zero new packages for a stdlib-covered need",
+        "shortest working diff wins over a heavier install"
+      ]
+    }
+  ],
+  "expect_lane": "lean"
+}

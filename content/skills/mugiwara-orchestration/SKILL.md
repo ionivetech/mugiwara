@@ -47,7 +47,7 @@ Read the runtime mode via mode config at Flow 0: `.mugiwara/config` (project) th
 
 Decide before first savepoint — fixes state layout. Full rule: `references/solo-team.md` — 40 lines.
 - **Lane 0/1** — always solo.
-- **Lane 2+ guided/semi** — always ask *Is this solo or shared? Who + area?* Write roster to `decisions.md`.
+- **Lane 2+ guided/semi** — ask *Is this solo or shared? Who + area?* unless `team` key is absent or `off` (solo); first shared mission writes `team=on`. Full rule: `references/solo-team.md`.
 - **`auto`** — derive from `.mugiwara/missions/<mission>/` files. Log why.
 Roster: `jane-doe — api`; area ⇒ Touched Files. Never switch layout — use `migrate`. Roster only in Nami table.
 

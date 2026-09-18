@@ -10,7 +10,7 @@ import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
 import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
-import { resetMission, archiveMission, closureBlockers, rosterAssignees } from './mission.ts';
+import { resetMission, archiveMission, closureBlockers, rosterAssignees, rosterSize } from './mission.ts';
 import { knownMembers } from './continue.ts';
 import { runScript, RUNNABLE } from './run.ts';
 import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles, type ContinueEntry } from './continue.ts';
@@ -18,8 +18,11 @@ import { blamePath } from './provenance.ts';
 import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
 import { ensureConfig } from './config.ts';
 import { costEnvelope } from './cost.ts';
+import { readConfig } from './config.ts';
+import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
+import { deriveStructuralIntents } from './intents.ts';
 import { computeLiveSlop } from './slop.ts';
-import { loadRegistry } from './evidence.ts';
+import { fingerprint, loadRegistry } from './evidence.ts';
 import { runInitiative } from './initiative.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
 import { enforceHarnessPolicy } from './policy.ts';
@@ -46,7 +49,7 @@ export async function run(argv: string[]): Promise<void> {
   // (only opencode is runtime-enforced). Covers run/savepoint/archive/status
   // + other workflow commands; install/update/uninstall/list are setup and bypass.
   {
-    const bypass = new Set(['install', 'update', 'uninstall', 'list']);
+    const bypass = new Set(['install', 'update', 'uninstall', 'list', 'features']);
     if (!bypass.has(command)) {
       const projectDirForHarness = resolveProjectDir(str(flags.project));
       enforceHarnessPolicy(projectDirForHarness);
@@ -77,6 +80,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'continue': return continueCmd(flags, _);
     case 'status': return statusCmd(flags);
     case 'cost': return costCmd(flags, _);
+    case 'features': return featuresCmd(flags, _);
     case 'run': return runCmd(flags, _);
     case 'savepoint': return savepointCmd(flags, _);
     case 'join': return joinCmd(flags, _);
@@ -432,12 +436,23 @@ async function install(flags: Args['flags']): Promise<void> {
   if (flag(flags.dryRun)) { console.log('\nDry run — nothing written.'); return; }
   const file = manifestPath({ scope, projectDir, home });
   const prev = readManifest(file);
+  const files = [...new Set([...(prev?.files ?? []), ...allFiles])];
+  const hashes: Record<string, string> = {};
+  for (const f of files) {
+    try {
+      hashes[f] = fingerprint(readFileSync(f, 'utf8'));
+    } catch {
+      const h = prev?.hashes?.[f];
+      if (h) hashes[f] = h; // absent on disk: keep prior hash, never crash
+    }
+  }
   writeManifest(file, {
     version: VERSION,
     scope,
     installedAt: new Date().toISOString(),
     targets: [...new Set([...(prev?.targets ?? []), ...installed])],
-    files: [...new Set([...(prev?.files ?? []), ...allFiles])],
+    files,
+    hashes,
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
@@ -534,7 +549,22 @@ function list(flags: Args['flags']): void {
     found = true;
     if (flag(flags.check)) {
       const missing = m.files.filter(f => !existsSync(f));
-      console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} missing=${missing.length} installed=${m.installedAt}`);
+      if (!m.hashes) {
+        console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} missing=${missing.length} installed=${m.installedAt}`);
+      } else {
+        // Read-only drift detector: absent → missing; hash mismatch → stale;
+        // no hash entry → staleness-unknown, uncounted. Never repairs.
+        let stale = 0;
+        for (const f of m.files) {
+          if (!existsSync(f)) continue;
+          const h = m.hashes[f];
+          if (h === undefined) continue;
+          try {
+            if (fingerprint(readFileSync(f, 'utf8')) !== h) stale++;
+          } catch { /* unreadable: not stale, not counted */ }
+        }
+        console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} missing=${missing.length} stale=${stale} installed=${m.installedAt}`);
+      }
     } else {
       console.log(`${label}: v${m.version} targets=${m.targets.join(',')} files=${m.files.length} installed=${m.installedAt}`);
     }
@@ -887,6 +917,98 @@ function costOne(projectDir: string, mission: string, flags: Args['flags']): voi
   if (flag(flags.ledger) && ledger.trail.length) {
     for (const t of ledger.trail.slice(0, 20)) console.log(`- ${t.ts} — ${t.actor}: ${t.decision} — reason: ${t.reason}${t.evidence ? ` — evidence: ${t.evidence}` : ''}`);
     if (ledger.trail.length > 20) console.log(`… ${ledger.trail.length - 20} more`);
+  }
+}
+
+/** Files the mission changed, base..branch. Null on any failure — the caller
+ * prints `— unknown` rows and exits non-zero, never an empty silent skip
+ * (Q1 kill). Mirrors `mission.ts` changedFiles, which stays routing
+ * best-effort there. */
+function missionDiff(projectDir: string, base: string, branch: string): string[] | null {
+  if (!base || base === 'unknown' || !branch) return null;
+  try {
+    return execFileSync('git', ['diff', '--name-only', base, branch], {
+      cwd: projectDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'],
+    }).split(/\r?\n/).filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
+/** `mugiwara features explain|list [--mission <id>] [--json]` — resolve the
+ * frozen `features=` config against the live base..branch diff + state.
+ * `explain` prints `token — trigger — default — firing` rows in
+ * EXTENSION_TABLE order; `list` prints resolved token names. `--json` prints
+ * the `{resolved, intents, changedFiles}` replay schema. Unknown token,
+ * SAFETY removal, or unreadable diff/state → `console.error` + `exit(1)`
+ * (fail-closed, mirrors the resolver); unreadable signal also prints
+ * `— unknown` rows in human mode, never a guess. */
+function featuresCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const sub = positionals[1];
+  if (sub !== 'explain' && sub !== 'list') {
+    console.error('usage: mugiwara features explain|list [--mission <id>] [--json] [--project <dir>]');
+    process.exit(1);
+  }
+  const explicit = str(flags.mission) ?? positionals[2] ?? null;
+  let mission: string;
+  if (explicit) {
+    mission = explicit;
+  } else {
+    const missions = [...new Set(readState(projectDir).map((s) => s.mission))].filter((m) =>
+      existsSync(join(projectDir, '.mugiwara', 'missions', m)));
+    if (missions.length === 0) {
+      console.error('usage: mugiwara features explain|list [--mission <id>] [--json] [--project <dir>]');
+      process.exit(1);
+    }
+    if (missions.length > 1) {
+      console.error(`multiple missions: ${missions.join(', ')} — specify --mission <id>`);
+      process.exit(2);
+    }
+    mission = missions[0] as string;
+  }
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(missionDir)) {
+    console.error(`No mission dir found for "${mission}"`);
+    process.exit(1);
+  }
+  const asJson = flag(flags.json);
+  const states = readState(projectDir).filter((s) => s.mission === mission);
+  const diff = states.length ? missionDiff(projectDir, states[0].base_sha, states[0].branch) : null;
+  if (!states.length || diff === null) {
+    if (!asJson) {
+      for (const [token, row] of Object.entries(EXTENSION_TABLE)) {
+        console.log(`${token} — ${row.trigger} — ${row.default} — — unknown`);
+      }
+    }
+    console.error(!states.length
+      ? `No readable state for mission "${mission}" — trigger source unreadable, never silent skip`
+      : `trigger source unreadable for mission "${mission}" (base..branch diff failed) — aborting lane, never silent skip`);
+    process.exit(1);
+  }
+  // Live-first intents, O(1) state only (Q3): model-judged intents stay false
+  // (absent), exactly the resolver default — never inferred by scan.
+  const continues = readContinue(projectDir);
+  const intents: ResolveIntent = deriveStructuralIntents({ mission, states, continues, rosterSize: rosterSize(missionDir) });
+  const raw = readConfig(projectDir).features;
+  let resolved: string[];
+  try {
+    resolved = resolveFeatures({ config: raw === undefined ? {} : { features: raw }, changedFiles: diff, intents });
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : String(e));
+    process.exit(1);
+  }
+  if (asJson) {
+    console.log(JSON.stringify({ resolved, intents, changedFiles: diff }, null, 2));
+    return;
+  }
+  if (sub === 'list') {
+    for (const token of resolved) console.log(token);
+    return;
+  }
+  const on = new Set(resolved);
+  for (const [token, row] of Object.entries(EXTENSION_TABLE)) {
+    console.log(`${token} — ${row.trigger} — ${row.default} — ${on.has(token) ? 'yes' : 'no'}`);
   }
 }
 
@@ -1260,7 +1382,9 @@ Usage:
                          print the exact resume point for that mission/member
   mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
   mugiwara cost [--mission <id>] [--json] [--ledger]
-                         show cost ledger, avoided work, efficiency, trail (human + JSON)
+                          show cost ledger, avoided work, efficiency, trail (human + JSON)
+  mugiwara features explain|list [--mission <id>] [--json]
+                          show resolved features= extensions: rows (human) + replay JSON
   mugiwara handoff [<m>] write .mugiwara/missions/<m>/handoff.md — a report the next
                          engineer can act on (computed state + staleness check)
                          [--path <file>: append the provenance note for <file>]
@@ -1291,7 +1415,7 @@ Flags:
   --yes, -y              non-interactive (defaults: project, all targets)
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
-  --check                with list: report missing files (health check)
+  --check                with list: report missing + stale files (health check)
    --all                  with continue/status: every actor
    --include-live         with clean: include in-flight missions
    --force                with clean --include-live: archive in-flight missions anyway

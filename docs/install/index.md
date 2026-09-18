@@ -9,9 +9,9 @@ Example: an OpenCode user adds one plugin line to `opencode.json` and restarts, 
 | Claude Code | native plugin plus session hook | [claude](claude.md) |
 | opencode | plugin line in `opencode.json`, restart | [opencode](opencode.md) |
 | Windsurf, Cline, Kilo | CLI copies rules plus references | [cli](cli.md) |
-| Codex | CLI writes 91 full-body files to `.codex/mugiwara/` | [codex](codex.md) |
-| Gemini CLI | CLI writes full-body files to `.gemini/mugiwara/` | [gemini](gemini.md) |
-| Copilot | CLI writes 111 full-body files to `.github/` | [copilot](copilot.md) |
+| Codex | CLI writes 91 stub files to `.codex/mugiwara/` | [codex](codex.md) |
+| Gemini CLI | CLI writes stub files to `.gemini/mugiwara/` | [gemini](gemini.md) |
+| Copilot | CLI writes 111 stub files to `.github/` | [copilot](copilot.md) |
 | Antigravity | CLI writes 125 stub files to `.agents/` | [antigravity](antigravity.md) |
 | Pi | host marketplace manifest plus content pointers | [pi](pi.md) |
 | Cursor | host marketplace manifest plus content pointers | [cursor](cursor.md) |
@@ -23,6 +23,6 @@ Scope is project by default and user-wide with `--global`. Every CLI install wri
 
 ## After install
 
-Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster: a correct install answers with the crew list. `mugiwara list` shows recorded installations with version and file counts, and `mugiwara list --check` reports missing files as a health pass. Update replaces installed files with backups of differences, and uninstall removes exactly what the manifest recorded. Set mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
+Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster: a correct install answers with the crew list. `mugiwara list` shows recorded installations with version and file counts, and `mugiwara list --check` reports missing and stale files as a health pass. Update replaces installed files with backups of differences, and uninstall removes exactly what the manifest recorded. Set mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
 
 Open your harness page above and run its verify step.

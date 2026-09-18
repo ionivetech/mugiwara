@@ -1,6 +1,6 @@
 {
   "target": "copilot",
-  "tier": 2,
+  "tier": 3,
   "state": {
     "mission": "conform",
     "member": null,
@@ -37,7 +37,7 @@
     "# <<< mugiwara <<<"
   ],
   "file_count": {
-    "skills": 31,
+    "skills": 21,
     "agents": 14,
     "state": 0,
     "evidence": 0

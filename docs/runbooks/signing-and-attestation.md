@@ -6,6 +6,8 @@ A report anyone can edit proves nothing. Sign it so a reviewer can check it stay
 **Time:** ~5 min first setup, seconds after.
 **You need:** a mission with `report.md` (archive first), backend `pure` (default, no binary).
 
+Signing stays regulated-only: everyday missions skip it, regulated ones sign at closure.
+
 ## Steps
 1. Create keys once. Key generation is idempotent and never overwrites.
    ```bash

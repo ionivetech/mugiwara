@@ -1,0 +1,25 @@
+{
+  "name": "slop-gold-plating-reject",
+  "skill": "mugiwara-execution",
+  "trigger": {
+    "positive": [
+      { "prompt": "execute the task with the smallest working diff, reject gold-plating", "top_k": 3 },
+      { "prompt": "ship the one-line fix, no unrequested abstraction", "top_k": 3 }
+    ],
+    "negative": [
+      { "prompt": "scaffold an extensible framework for future requirements" }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "A task asks for a one-line validation fix. The draft adds an unrequested abstraction (a new interface plus a factory) for possible future reuse. What does the agent do?",
+      "rubric": [
+        "rejects the unrequested abstraction and names YAGNI or code slop",
+        "ships the minimal one-line fix instead of the framework",
+        "adds no scaffolding for speculative future use",
+        "deletion over addition, boring over clever"
+      ]
+    }
+  ],
+  "expect_lane": "lean"
+}

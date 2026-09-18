@@ -10,6 +10,8 @@ export type Manifest = {
   installedAt: string;
   targets: string[];
   files: string[];
+  /** sha256 hex per installed path (fingerprint of file content at install time). Absent = staleness-unknown. */
+  hashes?: Record<string, string>;
 };
 
 export function manifestPath({ scope, projectDir, home }: { scope: Scope; projectDir: string; home: string }): string {

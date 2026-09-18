@@ -33,6 +33,21 @@ skip the duplicate (or cite the old row). Lessons naming a version carry
 pointing at the old one — append-only still holds, history shows the
 correction instead of silent rot.
 
+## Prune vehicle (bounded growth without losing history)
+
+The ledger is append-only, but not unbounded. Pruning reuses the
+supersede-row mechanism above — never delete, never rewrite:
+
+- Soft cap: past ~200 rows, the oldest unreferenced rows become archive
+  candidates. The cap is advisory; breaching it changes nothing by itself.
+- Archive step: a human approves moving candidates to
+  `.mugiwara/lessons-archive.md`, leaving one supersede row per moved
+  lesson pointing at the archive. Sole writer stays `mugiwara lesson`
+  (humans edit the archive file directly when approving).
+- Auto-write stays hard-OFF: no agent appends or archives without a
+  human-approved step. Enabling automatic writes is a separate decision,
+  out of scope until this vehicle exists.
+
 ## When to READ
 
 Read before starting meaningful work in a repo the crew has worked in before.

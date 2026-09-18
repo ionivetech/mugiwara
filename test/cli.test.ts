@@ -12,6 +12,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { run } from '../src/cli.ts';
 import { stalenessLine } from '../src/cli.ts';
+import { EXTENSION_TABLE } from '../src/features.ts';
 import { runScript } from '../src/run.ts';
 
 // bun:test's vi shim passes no `importOriginal` to the factory, so the mock
@@ -1199,6 +1200,120 @@ describe('run() — usage errors + stalenessLine', () => {
       try { g(['branch', '-m', 'main']); } catch { /* already main */ }
       const line = stalenessLine(dir, base);
       expect(line).toContain('stale base');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — features explain|list', () => {
+  const N_TOKENS = Object.keys(EXTENSION_TABLE).length;
+
+  /** Real git repo + mission state, so base..branch diff resolves for real. */
+  function gitMission(featuresLine?: string): { dir: string; mission: string } {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-feat-'));
+    const g = (a: string[]) => execFileSync('git', a, { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    g(['init', '-q']);
+    g(['config', 'user.email', 't@t.co']);
+    g(['config', 'user.name', 't']);
+    writeFileSync(join(dir, 'seed.txt'), 'seed\n');
+    g(['add', '.']);
+    g(['commit', '-q', '-m', 'seed']);
+    const mission = 'feat-m';
+    const md = join(dir, '.mugiwara', 'missions', mission);
+    mkdirSync(md, { recursive: true });
+    writeFileSync(join(md, 'state.json'), JSON.stringify(state(mission, {
+      base_sha: g(['rev-parse', 'HEAD']),
+      branch: g(['branch', '--show-current']),
+    })));
+    // pre-written config: no bootstrap chatter pollutes the rows/JSON output
+    writeFileSync(join(dir, '.mugiwara', 'config'), featuresLine ? `mode=guided\n${featuresLine}\n` : 'mode=guided\n');
+    return { dir, mission };
+  }
+
+  test('explain prints token — trigger — default — firing rows in table order', async () => {
+    const { dir, mission } = gitMission('features=core+auto');
+    try {
+      const { out } = await capture(['features', 'explain', '--mission', mission], dir);
+      const rows = out.split('\n').filter((l) => l.includes(' — '));
+      expect(rows.length).toBe(N_TOKENS);
+      expect(rows[0]).toBe('orchestration — always on — core — yes');
+      expect(out).toContain('ship — close/archive intent, Flow 8 — auto — no');
+      expect(out.indexOf('orchestration —')).toBeLessThan(out.indexOf('planning —'));
+      expect(out.indexOf('planning —')).toBeLessThan(out.indexOf('execution —'));
+      expect(exitSpy).not.toHaveBeenCalled();
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('list prints resolved token names only', async () => {
+    const { dir, mission } = gitMission('features=core+auto');
+    try {
+      const { out } = await capture(['features', 'list', '--mission', mission], dir);
+      expect(out).toContain('orchestration');
+      expect(out).not.toContain('ship');
+      expect(out).not.toContain(' — ');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--json prints the {resolved, intents, changedFiles} replay schema', async () => {
+    const { dir, mission } = gitMission();
+    try {
+      const { out } = await capture(['features', 'explain', '--mission', mission, '--json'], dir);
+      const parsed = JSON.parse(out);
+      expect(Object.keys(parsed).sort()).toEqual(['changedFiles', 'intents', 'resolved']);
+      expect(parsed.resolved).toContain('orchestration');
+      expect(parsed.resolved.length).toBe(N_TOKENS);
+      expect(parsed.intents.rosterSize).toBe(1);
+      expect(parsed.intents.failure).toBe(false);
+      expect(Array.isArray(parsed.changedFiles)).toBe(true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('unknown feature token errors verbatim and exits 1', async () => {
+    const { dir, mission } = gitMission('features=core+auto,bogus');
+    try {
+      const { err } = await capture(['features', 'explain', '--mission', mission], dir);
+      expect(err).toContain('unknown feature token "bogus"');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('SAFETY removal while firing errors and exits 1', async () => {
+    const { dir, mission } = gitMission('features=core+auto,-security');
+    mkdirSync(join(dir, 'auth'), { recursive: true });
+    writeFileSync(join(dir, 'auth', 'login.ts'), 'x\n');
+    execFileSync('git', ['add', '.'], { cwd: dir });
+    execFileSync('git', ['commit', '-q', '-m', 'sensitive'], { cwd: dir });
+    try {
+      const { err } = await capture(['features', 'explain', '--mission', mission], dir);
+      expect(err).toContain('safety set "security" fires and cannot be disabled');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('unreadable diff prints — unknown rows and exits 1, never guesses', async () => {
+    // state() helper carries no base_sha → diff source unreadable
+    const dir = fixture([{ root: 'state', mission: 'diff-m', file: 'state', body: state('diff-m') }]);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\nfeatures=core+auto\n');
+    try {
+      const { out, err } = await capture(['features', 'explain', '--mission', 'diff-m'], dir);
+      expect(out).toContain('orchestration — always on — core — — unknown');
+      expect(err).toContain('trigger source unreadable');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('missing subcommand prints usage and exits 1; several missions exit 2', async () => {
+    const { dir, mission } = gitMission('features=core+auto');
+    try {
+      const noSub = await capture(['features', '--mission', mission], dir);
+      expect(noSub.err).toContain('usage: mugiwara features explain|list');
+      expect(exitSpy).toHaveBeenCalledWith(1);
+      exitSpy.mockClear();
+      const md = join(dir, '.mugiwara', 'missions', 'second-m');
+      mkdirSync(md, { recursive: true });
+      writeFileSync(join(md, 'state.json'), JSON.stringify(state('second-m')));
+      const multi = await capture(['features', 'explain'], dir);
+      expect(multi.err).toContain('multiple missions:');
+      expect(exitSpy).toHaveBeenCalledWith(2);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });

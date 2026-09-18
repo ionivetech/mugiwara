@@ -1,6 +1,6 @@
 # Which lane for my change?
 
-A typo once waited behind the full review pipeline while a payment migration slipped through with a glance. Both failures came from one process applied to every change. Lanes fix that by sizing the process to the diff before the mission runs.
+A typo once waited behind the full review pipeline while a payment migration slipped through with a glance. Both failures came from one process applied to every change. [Lanes](../reference/glossary.md) fix that by sizing the process to the diff before the mission runs.
 
 Example: you rename one variable in one file. `mugiwara run lane.sh` reports `direct`, and the change ships with no pipeline. You touch `src/auth/login.ts` in a five-file diff. The same command reports `full`, and all nine flow stages run.
 
@@ -20,7 +20,7 @@ Token budgets ride with the lane: warn at 1.5x, stop at 3x the lane base. Lane b
 
 Lane comes from `git diff` against the base ref through deterministic rules: 0 files means direct, 1 file under 20 added lines means direct, 1 larger file or 2 files means lean, 3-8 files means standard, 9 or more means full.
 
-Sensitive paths always escalate to full, whatever the file count. The patterns live in one place: `scripts/lib/patterns.sh`, shared by lane sizing and savepoints, so one edit covers both. Display form below, regex escapes stripped; the test in `test/lane-integrity.test.ts` fails when this block drifts from source. `package.json` churn and near-miss names such as `authors/` or `tokenizer` stay out by design.
+In plain terms, a lane is the process size for a change: a one-word fix skips the pipeline while a payment change runs all of it. Sensitive paths always escalate to full, whatever the file count. The patterns live in one place: `scripts/lib/patterns.sh`, shared by lane sizing and savepoints, so one edit covers both. Display form below, regex escapes stripped; the test in `test/lane-integrity.test.ts` fails when this block drifts from source. `package.json` churn and near-miss names such as `authors/` or `tokenizer` stay out by design.
 
 ```
 auth/
@@ -60,9 +60,11 @@ secrets?.ya?ml
 .tfvars
 ```
 
+What this means for you: if your diff touches one of these paths, expect the full pipeline no matter how small the change.
+
 ## Escalation never drops
 
-At each boundary, savepoint re-checks the diff. A lane rises when the work grows or a sensitive path appears, and never falls back within the mission: the peak persists in state, flagged for the record. Over-processing a small change costs less than under-processing a large one. Say the word and Luffy escalates manually, recorded in the decision log.
+At each boundary, the [savepoint](../reference/glossary.md) re-checks the diff. A lane rises when the work grows or a sensitive path appears, and never falls back within the mission: the peak persists in state, flagged for the record. Over-processing a small change costs less than under-processing a large one. Say the word and Luffy escalates manually, recorded in the decision log.
 
 ## Path-weighted sizing (docs-only downgrade)
 

@@ -51,7 +51,7 @@ guarantees: [enforcement.md](enforcement.md).
 | R9 | ✅ | Ledger entries reliable |
 | R10 | ✅ | Closure report written |
 
-### Gemini, Gemini CLI (Tier 2)
+### Gemini, Gemini CLI (Tier 3)
 
 | Rule | Verdict | Notes |
 |------|---------|-------|

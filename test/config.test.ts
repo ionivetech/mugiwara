@@ -20,6 +20,11 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG).toContain('heal_max_cycles=3');
     expect(DEFAULT_CONFIG).toContain('verbosity=normal');
   });
+
+  it('documents the features= grammar as a bare commented option', () => {
+    expect(DEFAULT_CONFIG).toContain('# features=core+auto');
+    expect(DEFAULT_CONFIG.split('\n')).toContain('# features=core+auto');
+  });
 });
 
 describe('readConfig', () => {
@@ -65,6 +70,18 @@ describe('readConfig', () => {
     const cfg = readConfig(dir);
     expect(cfg.mode).toBe('auto');
     expect(cfg.commit).toBe('conventional');
+  });
+
+  it('returns features when set (generic flat map, no per-key parser)', () => {
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\nfeatures=core+auto,ship\n');
+    const cfg = readConfig(dir);
+    expect(cfg.features).toBe('core+auto,ship');
+  });
+
+  it('yields no features key when absent (≡ all, zero migration)', () => {
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
+    const cfg = readConfig(dir);
+    expect('features' in cfg).toBe(false);
   });
 });
 

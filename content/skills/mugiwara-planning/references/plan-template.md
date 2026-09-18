@@ -157,6 +157,18 @@ never a bare file:
 A consumer task whose producer changed signature fails review, not
 execution — the contract is checked at the wave gate (`grep` the symbol).
 
+## Baseline (mandatory, before Flow 3)
+
+Every plan records the pre-change baseline at Flow 0/2 — each wave gate compares against it, and a red baseline's defects are inherited, never blamed on the mission. The Install row records install freshness from `list --check` (`fresh` means `stale=0`, `stale N` names the drift count):
+
+```markdown
+## Baseline (recorded <YYYY-MM-DD>, Flow 0/2)
+- `bun test` → green, <pass> pass / <fail> fail (or red + failing list)
+- `tsc --noEmit` → green (or red + error list)
+- Inherited defects: <pre-existing failures, or "none">
+- Install: v0.9.3 @ 2026-09-17T12:00:00Z, check → stale 2 (2026-09-18, Flow 0/2)
+```
+
 ## Green per wave gate (Standard+)
 
 Each wave gate row carries the command AND one example of correct output:

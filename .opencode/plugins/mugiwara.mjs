@@ -113,7 +113,7 @@ function readAgents(stepsEnabled = true) {
     agents[name] = {
       description: internal ? `[INTERNAL] ${parsed.data.description}` : parsed.data.description,
       mode: internal ? 'subagent' : 'all',
-      prompt: parsed.body,
+      prompt: `${parsed.data.description}\n\nFull instructions: read ${join(agentsDir, f)} when embodying this role.`,
     };
     if (CREW[name]) {
       // steps caps per-agent agentic iterations. In auto mode the crew runs

@@ -20,6 +20,8 @@ of the decision log. Any route without a recorded reason is a red flag.
 | **Refuse** | deploy, prod migration, key rotation, merge | **Decline at Flow 0, state why, offer the branch-handoff path.** |
 | **Hotfix** | production broken | Lane 1, gates deferred with an owner, never skipped |
 
+After class+lane, read `features=` from the project config and log the resolved extension set as one decision-log row — `features=<csv> | intents=<k=v csv> | files=<N>` — then run `mugiwara features explain [--mission <id>]` as the reproducibility check: the logged row must replay via `explain --json`. An unreadable diff or state is a blocker (log it, escalate), never a guess.
+
 Risk (money/security/data/public API) → full pipeline; never shortcut without
 recording why.
 
@@ -92,6 +94,18 @@ Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` 
 `true`, STOP and escalate to the user with full history. This is a halt, not a red
 flag: red flags are prose, a counter is state. Nothing re-runs Flow 8 past
 `heal_max_cycles`.
+
+## Install sync rules (Flow 0)
+
+Sync ONLY pre-mission: on a clean tree, run one `list --check` and log one
+decision-log row (`install=<version> @ <installedAt>, check → <fresh|stale N>`).
+Mid-mission the install is frozen — hand-edits create drift the next gate
+surfaces as `stale=N`; never resync mid-flow-stage. Mode flips and heal
+handling take effect at the next flow stage, never mid-stage.
+
+Flow-0 done checklist: the resolved-set row is logged AND `explain --json`
+replays it (`features=<csv> | intents=<k=v csv> | files=<N>`, computed by
+`deriveStructuralIntents` reused as-is) — both present, or Flow 0 is not done.
 
 ## Tool-surface inventory protocol (Flow 0)
 

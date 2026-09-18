@@ -5,6 +5,7 @@ import { homeDir } from './home.ts';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
 import { DEFAULT_CONFIG } from './config.ts';
+import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
 import type { Scope } from './manifest.ts';
 
 export type ContentItem = {
@@ -21,6 +22,10 @@ export type InstallOptions = {
   dryRun?: boolean;
   force?: boolean;
   home?: string;
+  /** Caller-supplied `git diff --name-only` output for feature triggers. Undefined = no signal context = unfiltered. */
+  changedFiles?: string[] | null;
+  /** Declared intents for feature triggers (all O(1) flags). */
+  intents?: ResolveIntent;
 };
 
 export type InstallResult = {
@@ -92,10 +97,44 @@ function collectRefs(skillDir: string): { relPath: string; text: string }[] {
     .map(rel => ({ relPath: rel, text: readFileSync(join(refsDir, rel), 'utf8') }));
 }
 
+/**
+ * Read the raw `features=` value from the project config only. Side-effect
+ * free: never creates the file (unlike readConfig) and never merges the
+ * global config — install filtering must not bootstrap or leak.
+ */
+function readFeaturesKey(projectDir: string): string | undefined {
+  const file = join(projectDir, '.mugiwara', 'config');
+  if (!existsSync(file)) return undefined;
+  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const eq = t.indexOf('=');
+    if (eq === -1) continue;
+    if (t.slice(0, eq).trim() !== 'features') continue;
+    let v = t.slice(eq + 1).trim();
+    const hash = v.indexOf('#');
+    if (hash !== -1) v = v.slice(0, hash).trim();
+    return v;
+  }
+  return undefined;
+}
+
 export function installTo(target: Target, opts: InstallOptions): InstallResult {
   const { scope, projectDir, dryRun = false, force = false } = opts;
   const home = opts.home ?? homeDir();
   const { skills, agents, sharedRefs } = collectContent();
+  // features= filter (p16): absent key or no signal context = the identical
+  // unfiltered array (status quo, byte-identical). Present key resolves via
+  // resolveFeatures and filters before the write loop below (loop untouched).
+  let filteredSkills = skills;
+  const featuresRaw = readFeaturesKey(projectDir);
+  if (featuresRaw !== undefined && opts.changedFiles !== undefined) {
+    const allowed = new Set(
+      resolveFeatures({ config: { features: featuresRaw }, changedFiles: opts.changedFiles, intents: opts.intents })
+        .flatMap((t) => EXTENSION_TABLE[t]?.skills ?? []),
+    );
+    filteredSkills = skills.filter((s) => allowed.has(s.name));
+  }
   const dirs = target.paths({ scope, projectDir, home });
   const backupRoot = join(scope === 'global' ? home : projectDir, '.mugiwara');
   const result: InstallResult = { written: [], skipped: [], backedUp: [], notes: [] };
@@ -127,7 +166,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
     result.written.push(absPath);
   };
 
-  for (const s of skills) {
+  for (const s of filteredSkills) {
     const out = target.transformSkill(s.data, s.body);
     if (out) {
       let text = out.text;
@@ -161,7 +200,13 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
   }
 
   if (sharedRefs.length) {
-    const sharedRoot = join(dirs.skillsDir, '_shared', 'references');
+    // T2: stub-side targets (tier 3 + copilot, which glob-injects every
+    // instruction file) keep shared refs out of the rules glob; tier-1 path
+    // below is byte-identical.
+    const stubSide = target.tier === 3 || typeof target.transformSkillFull === 'function';
+    const sharedRoot = stubSide
+      ? join(projectDir, '.mugiwara', 'refs', '_shared')
+      : join(dirs.skillsDir, '_shared', 'references');
     for (const r of sharedRefs) writeOne(join(sharedRoot, r.relPath), r.text);
   }
 

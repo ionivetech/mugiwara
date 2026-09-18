@@ -5,7 +5,7 @@ This index maps each need to the page that owns it.
 Detail lives on the linked pages, never here.
 
 Example: you ask for role-based access control across an API.
-Luffy sizes the diff to a full lane, Usopp sharpens the vague edges, Nami plans waves with acceptance checks, Zoro implements with evidence per task, Chopper re-runs each check, Sanji and Franky gate, Robin and Jinbe review, Brook heals failures, Luffy closes with a report plus a ready PR summary.
+Luffy sizes the diff to a full lane, Usopp sharpens the vague edges, Nami plans [waves](../reference/glossary.md) with acceptance checks, Zoro implements with evidence per task, Chopper re-runs each check, Sanji and Franky gate, Robin and Jinbe review, Brook heals failures, Luffy closes with a report plus a ready PR summary.
 The product is the branch plus `.mugiwara/missions/<mission>/report.md`.
 
 Rule: this page answers "what can it do" at index depth.
@@ -46,7 +46,7 @@ For APIs and interfaces other code will depend on. Not for internal refactors wi
 ### Execution with evidence per task
 
 Problem: "tests pass" in chat, with no output attached and no commit per change.
-What: the execution skill commits per logical task and records the evidence path for each, so every report claim points at a file. Backend and frontend skills carry repo standards into the change, and the git skill keeps commits atomic with save-points along the way. Zoro runs all of it.
+What: the execution skill commits per logical task and records the evidence path for each, so every report claim points at a file. Backend and frontend skills carry repo standards into the change. Zoro runs all of it.
 Proof: the closing report lists counts, for example 11 files, +340 / -82, naming sensitive paths such as `src/auth/invitation.ts` outright.
 For reviewers who verify instead of trusting. Not for explorations with no branch. Trade-off: commit-per-task slows the middle of the work to speed its review.
 
@@ -62,12 +62,12 @@ For missions with more than one task. Not for lane-zero single shots. Trade-off:
 Problem: a schema change ships and the rows it lost cannot be reverted, only mourned.
 What: the migration skill runs expand-contract only — new shape alongside the old, dual-write, batched backfill, counts verified, cutover, then drop. Destructive operations need a restore-tested backup plus named consent, and the rollback ships before the migration, proven on scratch.
 Proof: the evidence log carries row counts before and after per table, and the rollback commands with their drill output.
-For any change with stored rows or a live contract behind it. Not for code-only refactors with zero rows. Trade-off: six steps where one ALTER would do, because the one time it matters pays for all of them.
+For any change with stored rows or a live contract behind it. Not for code-only refactors with zero rows. Trade-off: six steps where one ALTER would do.
 
 ### Modes for how closely you watch
 
 Problem: an agent that asks at every step wastes your day, and one that never asks ships surprises.
-What: guided asks before each flow stage, semi runs from an approved plan, auto runs triage to closure and pauses only on a genuine blocker. A flip applies from the next stage, never mid-stage.
+What: guided asks before each [flow stage](../reference/glossary.md), semi runs from an approved plan, auto runs triage to closure and pauses only on a genuine blocker. A flip applies from the next stage, never mid-stage.
 Proof: the report header records the mode, for example `lane full, mode guided`, and the terminal step never moves: push plus a ready PR summary that you open.
 For owners who want the autonomy dialed per mission. Not a cost tier and never an execution posture. Trade-off: auto buys speed with attention debt, and the debt lands in review. Detail: [modes](modes.md).
 
@@ -75,7 +75,7 @@ For owners who want the autonomy dialed per mission. Not a cost tier and never a
 
 Problem: a failed stage loops forever or dies silently with the context.
 What: the healing skill takes ledger failures through root-cause fixes, reproduce, localize, reduce, then guard, for at most three cycles. Then it hands the failure to a human with the trail intact. Brook owns the loop.
-Proof: `mugiwara status` shows the counter, for example `heal cycle 1/3`, so the cap is visible state, not folklore.
+Proof: `mugiwara status` shows the counter, for example `heal cycle 1/3`.
 For flaky middle stages worth another attempt. Not for design misses, which return to planning. Trade-off: the cap can abandon recoverable work at cycle four to protect the budget.
 
 ### Root causes, not symptoms
@@ -97,7 +97,7 @@ For long missions on flaky connections. Not for direct-lane work, which finishes
 Problem: launch day brings a thread of maybe, and maybe ships.
 What: the ship skill runs the pre-launch checklist, staged rollout, and the mandatory rollback plan, then returns GO or NO-GO with no third option. Luffy records the verdict in the closing report.
 Proof: a NO-GO names the blocking finding, its owner, and the re-entry stage, so the next session starts at the gate, not at zero.
-For anything with users on the other side. Not for spikes nobody will run twice. Trade-off: the checklist blocks hopeful ships, and hope was doing real work for morale.
+For anything with users on the other side. Not for spikes nobody will run twice. Trade-off: the checklist blocks hopeful ships.
 
 ## Review proof
 
@@ -118,7 +118,7 @@ For repos with tooling configured. Not for prototypes with no test runner. Trade
 ### Review plus security before merge
 
 Problem: breaking changes hide in large diffs and auth paths ship without a threat pass.
-What: the review skill maps every breaking change with caller lists across five axes. The security skill runs STRIDE plus OWASP Top 10 plus secrets plus license checks. Robin and Jinbe run them, and neither implements, so findings go to Brook.
+What: the review skill maps every breaking change with caller lists across five axes. The security skill runs STRIDE plus OWASP Top 10 plus secrets plus license checks. Robin and Jinbe run them, and neither implements.
 Proof: the security line reads 0 high or the mission does not close GO; deferred findings carry an owner in the loose ends.
 For auth, payments, and migrations. Not for docs-only lanes, which skip security by rule. Trade-off: review adds latency exactly where rushing hurts most.
 
@@ -169,11 +169,17 @@ For teams running repeated missions in one repo. Not for one-off visits elsewher
 ### Provenance and signed reports
 
 Problem: months later nobody proves who ran what or whether the report changed since.
-What: `mugiwara handoff <mission>` writes the report the next engineer acts on (with `--path`, plus the provenance note for that path), `mugiwara sign <mission>` attests the report.
+What: `mugiwara handoff <mission>` writes the report the next engineer acts on (with `--path`, plus the provenance note for that path), `mugiwara sign <mission>` attests the report. Signing stays regulated-only and default off: without a regulated mission, an attestation policy, or present keys, the sign feature never fires.
 Proof: `mugiwara sign <mission> --verify` checks the attestation; blame documents the notes ref it reads.
 For regulated paths and owner handoffs. Not for internal spikes. Trade-off: signing adds key management, ed25519 by default, that small teams skip until they need it.
 
 ## Extend the crew
+
+### Feature flags that load per mission
+
+Problem: every mission loads the full catalog, so small work pays full context.
+What: `features=` selects the skill set. `mugiwara features explain` prints each token with trigger, default, and firing state; `list` prints names. Structural intents (`close`, `failure`, `interrupted`, `rosterSize`) derive from mission state via `deriveStructuralIntents`; judged intents (`tests`, `vague`, `bug`, `gitOp`, `gatesPass`, `meta`) stay model-supplied and default false. Log the resolved set; re-run `features explain` after any savepoint (reads are point-in-time).
+For context-capped missions. Not for default runs, where absent means all. Trade-off: a dropped token drops its skill, and explain shows the gap. Detail: [config](config.md).
 
 ### Every skill, no gaps
 
@@ -185,7 +191,7 @@ For anyone checking cover before adopting. Trade-off: the roster looks large on 
 ### Every agent, no gaps
 
 Problem: a role with no name never gets called.
-What: all 14 agents. Captain Luffy triages, runs check-ins, records decisions, closes. Usopp interrogates vague ideas. Nami plans. Zoro executes. Chopper audits. Skeptic re-verifies. Sanji runs quality tooling. Franky calls gate verdicts. Robin reviews diffs. Jinbe runs security. Brook heals. Resume rebuilds dead sessions. Memory Keeper carries lessons. Eval Runner scores behavior.
+What: all 14 agents. Captain Luffy triages, runs [check-ins](../reference/glossary.md), records decisions, closes. Usopp interrogates vague ideas. Nami plans. Zoro executes. Chopper audits. Skeptic re-verifies. Sanji runs quality tooling. Franky calls gate verdicts. Robin reviews diffs. Jinbe runs security. Brook heals. Resume rebuilds dead sessions. Memory Keeper carries lessons. Eval Runner scores behavior.
 Proof: every install ships the whole crew, 11 specialists plus 3 internal helpers, with the call moment per member in [agents](agents.md).
 For leads assigning ownership per stage. Trade-off: fourteen names take one reading to learn, and after that the call is one sentence.
 

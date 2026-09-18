@@ -23,7 +23,7 @@ const UPDATE = process.argv.includes('--update-golden');
 // on some; the matrix is the source of truth for the rest)
 const TIER_OF: Record<string, number> = {
   claude: 1, opencode: 1,
-  gemini: 2, codex: 2, copilot: 2,
+  gemini: 3, codex: 3, copilot: 3,
   windsurf: 3, cline: 3, kilo: 3, antigravity: 3,
 };
 

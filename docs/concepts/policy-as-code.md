@@ -31,7 +31,7 @@ flag, no daemon.
 
 ## The one rule
 
-Policy pushes **up**, never down. A forced lane can raise `standard → full`;
+Policy pushes **up**, never down. A forced [lane](../reference/glossary.md) can raise `standard → full`;
 it can never shrink a sensitive-path escalation. Coverage thresholds take the
 max of `.mugiwara/config` and policy. An unknown root key fails loudly. A
 typo'd policy must not silently disable the rule it carried.
@@ -42,7 +42,7 @@ typo'd policy must not silently disable the rule it carried.
 |----------|-----|--------|
 | `scripts/lane.sh`, `savepoint.sh` | `lanes.force_full` | changed files matching any glob → lane `full`, reason records the glob |
 | `scripts/coverage-gate.ts` | `gates.coverage.*` | thresholds raised to the policy value; printed when they bind |
-| gates flow stage (crew) | `gates.require_human_approval` | listed in gate output; human sign-off required before ship |
+| gates [flow stage](../reference/glossary.md) (crew) | `gates.require_human_approval` | listed in gate output; human sign-off required before ship |
 | planning + execution | `evidence.required` | minimum evidence kinds the plan must produce |
 | `src/sign.ts` `verifyReport` | `attestation.trusted_keys` / `revoked` | `mugiwara sign --verify` checks signature **and** that signer `ed25519:BASE64` is in `trusted_keys` and not in `revoked` (by `id` or `pubkey`) |
 | `src/mission.ts` `archiveMission` | `attestation.required` | when `true`, archive fails `closure integrity gate failed: attestation required but report not signed/trusted` if `report.md` is unsigned or signer is untrusted/revoked |
