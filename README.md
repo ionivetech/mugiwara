@@ -25,7 +25,7 @@ formality, and a formality launders the change through a human name.
 
 ## What you get back
 
-Every mission closes with one file. This is what your reviewer reads:
+Every mission closes with one file your reviewer reads:
 
 ```markdown
 # Mission: invitation-accepted-flow
@@ -62,8 +62,7 @@ Used **8,781** of 12,000 tokens (73%). Lane `lean`. 1 heal cycle.
 
 ### With Mugiwara
 
-One file, attached to the PR: which files changed, which gates passed and where
-their evidence lives, who decided what and why, plus **what was not verified**.
+One file per PR: files changed, gates passed with evidence locations, decisions made, plus **what was not verified**.
 
 ## The process fits the work
 
@@ -171,7 +170,7 @@ nine stages.
 ### 4. Cost Governor: what is safe to spend
 Per-lane budgets, a **live slop governor** that flags wasted cost and
 attributes it to the crew member that caused it, and a `mugiwara cost` ledger.
-Native names: anti-fluff is terse dense writing; just-enough is minimal-code ladder YAGNI-first; anti-slop is waste detection and intervention; have-adhd is scannable attention-friendly rendering.
+Native names: anti-fluff (terse writing); just-enough (minimal-code ladder, YAGNI-first); anti-slop (waste detection); have-adhd (scannable rendering).
 
 → [Cost model](docs/concepts/cost.md)
 
@@ -211,7 +210,7 @@ Solo by default (`team=off`); the first shared mission flips it on at Flow 0.
 mugiwara status                         # computed per-mission position
 ```
 
-Auto mode runs your **member scope only**: your sub-mission ships, never the other members'.
+Auto mode runs your **member scope only**: your sub-mission ships alone.
 
 → [Multi-actor reference](references/multi-actor.md) · [Adoption guide](docs/reference/adoption-guide.md)
 
@@ -371,7 +370,7 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 | Cross-harness mission behavior | **12/12 platforms**, in CI |
 | Outcome vs other approaches | **not measured** |
 
-Numbers here are produced by `bun run gate`. Nothing in this table is an estimate.
+Numbers here are produced by `bun run gate`, never estimated.
 
 ---
 

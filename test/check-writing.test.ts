@@ -68,6 +68,12 @@ describe('checkWritingFile', () => {
     expect(stripFences('a\n```\nb\n```\nc')).toBe('a\nc');
   });
 
+  it('hyphenated "just-enough" native name passes, standalone "just" stays banned', () => {
+    expect(checkWritingFile('docs/x.md', `${CLEAN}\n\nNative name just-enough means minimal code.\n`)).toEqual([]);
+    const bad = checkWritingFile('docs/x.md', `${CLEAN}\n\nJust run it.\n`);
+    expect(bad.some((e) => e.includes('banned word "just"'))).toBe(true);
+  });
+
   it('--check-writing passes on the current tree', () => {
     const out = execFileSync('bun', ['scripts/validate-content.ts', '--check-writing'], {
       cwd: join(import.meta.dirname, '..'),

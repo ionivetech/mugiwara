@@ -97,9 +97,11 @@ export function checkWritingFile(rel: string, text: string): string[] {
   flush();
   if (bigTables > 1) errs.push(`${rel}: ${bigTables} tables over 12 rows (max 1)`);
   const prose = stripFences(text);
+  // `just-enough` is a mission-accepted native name, not filler `just`.
+  const banProse = prose.replace(/\bjust-enough\b/gi, 'native-name');
   if (!BANNED_EXEMPT.has(rel)) {
     for (const w of BANNED_WORDS) {
-      if (new RegExp(`\\b${w}\\b`, 'i').test(prose)) errs.push(`${rel}: banned word "${w}"`);
+      if (new RegExp(`\\b${w}\\b`, 'i').test(banProse)) errs.push(`${rel}: banned word "${w}"`);
     }
   }
   const dashes = (prose.match(/—/g) ?? []).length;
