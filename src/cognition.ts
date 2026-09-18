@@ -122,12 +122,26 @@ export function limitAlternatives(input: AlternativeInput): {
   return { alternatives: kept, limited, reason, dropped };
 }
 
-// ── Output compression (§18) ──
+// ── Output compression (§18, anti-fluff) ──
+// Semantic keep, not proximity: a line survives only when it carries signal —
+// an essential-section heading, a Decision/Action/Result/Evidence/Blocker
+// lead, or a markdown evidence link. Duplicates keep their first occurrence
+// (via fingerprint). Filler dies wherever it sits.
 
 export type CompressionInput = {
   output: string;
   essential_sections: string[];
 };
+
+const KEEP_LEAD = /^(decision|action|result|evidence|blocker)\b/i;
+const MD_LINK = /\[[^\]]+\]\([^)]+\)/;
+
+function carriesSignal(line: string, essential_sections: string[]): boolean {
+  if (essential_sections.some((h) => line.includes(h))) return true;
+  const trimmed = line.trim();
+  if (KEEP_LEAD.test(trimmed)) return true;
+  return MD_LINK.test(line);
+}
 
 export function compressOutput(input: CompressionInput): {
   compressed: string;
@@ -145,10 +159,14 @@ export function compressOutput(input: CompressionInput): {
   if (headingIndices.length === 0) {
     compressed = '';
   } else {
+    const seen = new Set<string>();
     const kept: string[] = [];
-    for (let i = 0; i < lines.length; i++) {
-      const near = headingIndices.some((hi) => Math.abs(i - hi) <= 2);
-      if (near) kept.push(lines[i]);
+    for (const line of lines) {
+      if (!carriesSignal(line, input.essential_sections)) continue;
+      const fp = fingerprint(line);
+      if (seen.has(fp)) continue;
+      seen.add(fp);
+      kept.push(line);
     }
     compressed = kept.join('\n');
   }
