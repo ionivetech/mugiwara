@@ -29,7 +29,7 @@ Every mission closes with one file your reviewer reads:
 
 ```markdown
 # Mission: invitation-accepted-flow
-2026-09-03 · farid · branch `feature/MKR-412` · lane **full** · mode guided
+2026-09-03 · you · branch `feature/invitation-flow` · lane **full** · mode guided
 
 ## Verdict
 **GO** — all gates passed. 1 finding deferred with an owner.
