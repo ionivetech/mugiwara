@@ -25,3 +25,5 @@ Spend-safety verdicts come from [governor](../reference/glossary.md) phases (res
 [Slop](../reference/glossary.md) verdicts surface where spend is reviewed: the `mugiwara cost` ledger carries detected, stopped, and compressed counts, and the closing report lists avoided work including `slop_interventions`. The governor records verdicts to the trail; the crew acts on them, never the reverse.
 
 Trail scope: `mugiwara cost` counts governor-verdict rows (`## Cost governor decisions` / `## Budget` sections of `decisions.md`) only. Hand-written decision-table rows are the audit trail and stay folded into the report — they are not ledger rows.
+
+Native names: anti-fluff is terse dense writing; just-enough is minimal-code ladder YAGNI-first; anti-slop is waste detection and intervention; have-adhd is scannable attention-friendly rendering.

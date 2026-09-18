@@ -171,6 +171,7 @@ nine stages.
 ### 4. Cost Governor: what is safe to spend
 Per-lane budgets, a **live slop governor** that flags wasted cost and
 attributes it to the crew member that caused it, and a `mugiwara cost` ledger.
+Native names: anti-fluff is terse dense writing; just-enough is minimal-code ladder YAGNI-first; anti-slop is waste detection and intervention; have-adhd is scannable attention-friendly rendering.
 
 → [Cost model](docs/concepts/cost.md)
 
