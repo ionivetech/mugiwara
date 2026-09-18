@@ -320,7 +320,7 @@ export type WasteCheckResult = {
  * with recordWasteChecks for the trail rows. Never blocks: `advisory` is
  * always true; blocking is a separate shouldBlockWaste decision.
  */
-export function runWasteChecks(input: WasteDiffInput): WasteCheckResult {
+function retryWasteFinding(input: WasteDiffInput): WasteFinding {
   const retry = input.retry
     ? detectRetrySlop({
         action: input.retry.action,
@@ -329,6 +329,10 @@ export function runWasteChecks(input: WasteDiffInput): WasteCheckResult {
         history: input.retry.history,
       })
     : { slop: false, reason: 'no slop — no retry signal' };
+  return { kind: 'retry', slop: retry.slop, reason: retry.reason };
+}
+
+function codeWasteFinding(input: WasteDiffInput): WasteFinding {
   const code = detectCodeSlop({
     new_abstractions: input.new_abstractions ?? 0,
     new_dependencies: input.new_dependencies ?? 0,
@@ -337,12 +341,20 @@ export function runWasteChecks(input: WasteDiffInput): WasteCheckResult {
     justification_provided: input.justification_provided ?? false,
     boilerplate_chars: input.boilerplate_chars ?? 0,
   });
+  return { kind: 'code', slop: code.slop, reason: code.reason };
+}
+
+function outputWasteFinding(input: WasteDiffInput): WasteFinding {
   const dup = (input.explanations?.length ?? 0) > 0
     ? detectDuplicateExplanation({ explanations: input.explanations ?? [] })
     : { duplicate: false, reason: 'no slop — no output signal' };
   const output = dup.duplicate
     ? { slop: true, reason: `slop: output — ${dup.reason}` }
     : { slop: false, reason: dup.reason };
+  return { kind: 'output', slop: output.slop, reason: output.reason };
+}
+
+function scopeWasteFinding(input: WasteDiffInput): WasteFinding {
   const drift = detectScopeDrift({
     change: input.change,
     declared_scope: input.declared_scope,
@@ -359,12 +371,25 @@ export function runWasteChecks(input: WasteDiffInput): WasteCheckResult {
     : drift.drift
       ? { slop: true, reason: `slop: scope — ${drift.reason}` }
       : { slop: scopeSlop.slop, reason: scopeSlop.reason };
-  const findings: WasteFinding[] = [
-    { kind: 'retry', slop: retry.slop, reason: retry.reason },
-    { kind: 'code', slop: code.slop, reason: code.reason },
-    { kind: 'output', slop: output.slop, reason: output.reason },
-    { kind: 'scope', slop: scope.slop, reason: scope.reason },
+  return { kind: 'scope', slop: scope.slop, reason: scope.reason };
+}
+
+function assembleWasteFindings(input: WasteDiffInput): WasteFinding[] {
+  return [
+    retryWasteFinding(input),
+    codeWasteFinding(input),
+    outputWasteFinding(input),
+    scopeWasteFinding(input),
   ];
+}
+
+/**
+ * Run the four waste detectors over one diff. Pure — records nothing; pair
+ * with recordWasteChecks for the trail rows. Never blocks: `advisory` is
+ * always true; blocking is a separate shouldBlockWaste decision.
+ */
+export function runWasteChecks(input: WasteDiffInput): WasteCheckResult {
+  const findings = assembleWasteFindings(input);
   return { change: input.change, findings, slop: findings.some((f) => f.slop), advisory: true };
 }
 

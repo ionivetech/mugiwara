@@ -1014,34 +1014,16 @@ function featuresCmd(flags: Args['flags'], positionals: string[]): void {
   }
 }
 
-/** `mugiwara waste [--mission <id>] [--files <scope>]` — T6 anti-slop advisory
- * pre-commit check. Runs the retry/code/output/scope waste detectors over the
- * mission's base..branch diff, prints warnings, records `slop-governor` trail
- * rows. Advisory-first: always exits 0 — blocking needs 2+ recorded
- * rejections (shouldBlockWaste); this command never blocks. */
-function wasteCmd(flags: Args['flags'], positionals: string[]): void {
-  const projectDir = resolveProjectDir(str(flags.project));
-  const explicit = str(flags.mission) ?? positionals[1] ?? null;
-  const states = readState(projectDir);
-  let mission: string;
-  if (explicit) {
-    mission = explicit;
-  } else {
-    const missions = [...new Set(states.map((s) => s.mission))].filter((m) =>
-      existsSync(join(projectDir, '.mugiwara', 'missions', m)));
-    if (missions.length === 1) {
-      mission = missions[0] as string;
-    } else {
-      console.error('usage: mugiwara waste [--mission <id>] [--files <scope>] [--project <dir>]');
-      process.exit(1);
-    }
-  }
-  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
-  if (!existsSync(missionDir)) {
-    console.error(`No mission dir found for "${mission}"`);
-    process.exit(1);
-  }
-  const st = states.find((s) => s.mission === mission);
+function resolveWasteMission(projectDir: string, states: ReturnType<typeof readState>, explicit: string | null): string {
+  if (explicit) return explicit;
+  const missions = [...new Set(states.map((s) => s.mission))].filter((m) =>
+    existsSync(join(projectDir, '.mugiwara', 'missions', m)));
+  if (missions.length === 1) return missions[0] as string;
+  console.error('usage: mugiwara waste [--mission <id>] [--files <scope>] [--project <dir>]');
+  process.exit(1);
+}
+
+function runWasteCheckReport(projectDir: string, missionDir: string, mission: string, st: ReturnType<typeof readState>[number] | undefined, scopeToks: string[] | undefined): void {
   const diff = st ? missionDiff(projectDir, st.base_sha, st.branch) : null;
   if (diff === null) {
     console.error(`trigger source unreadable for mission "${mission}" (base..branch diff failed) — aborting check, never silent skip`);
@@ -1049,7 +1031,6 @@ function wasteCmd(flags: Args['flags'], positionals: string[]): void {
   }
   // No scope given → self-scoped (scope detector cannot false-fire); pass
   // --files to judge the diff against a declared scope.
-  const scopeToks = str(flags.files)?.split(',').map((s) => s.trim()).filter(Boolean);
   const check = runWasteChecks({
     change: `waste:${mission}`,
     files_changed: diff,
@@ -1060,6 +1041,26 @@ function wasteCmd(flags: Args['flags'], positionals: string[]): void {
   const hits = check.findings.filter((f) => f.slop);
   if (!hits.length) console.log(`waste check: clean — ${diff.length} file(s), advisory only`);
   for (const h of hits) console.log(`advisory [${h.kind}]: ${h.reason}`);
+}
+
+/** `mugiwara waste [--mission <id>] [--files <scope>]` — T6 anti-slop advisory
+ * pre-commit check. Runs the retry/code/output/scope waste detectors over the
+ * mission's base..branch diff, prints warnings, records `slop-governor` trail
+ * rows. Advisory-first: always exits 0 — blocking needs 2+ recorded
+ * rejections (shouldBlockWaste); this command never blocks. */
+function wasteCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const explicit = str(flags.mission) ?? positionals[1] ?? null;
+  const states = readState(projectDir);
+  const mission = resolveWasteMission(projectDir, states, explicit);
+  const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
+  if (!existsSync(missionDir)) {
+    console.error(`No mission dir found for "${mission}"`);
+    process.exit(1);
+  }
+  const st = states.find((s) => s.mission === mission);
+  const scopeToks = str(flags.files)?.split(',').map((s) => s.trim()).filter(Boolean);
+  runWasteCheckReport(projectDir, missionDir, mission, st, scopeToks);
 }
 
 /** `mugiwara run <script.sh> [args]` — run a bundled harness script here. */
