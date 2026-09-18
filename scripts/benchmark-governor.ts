@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { budgetForLane } from '../src/cost.ts';
 import { checkCircuitBreaker, projectBudget } from '../src/adaptive-budget.ts';
+import { isFocusedReasoning } from '../src/cognition.ts';
 import {
   detectSlopSignal,
   decideIntervention,
@@ -141,7 +142,21 @@ export function evaluateStopSlopScenario(scenario: StopSlopScenario): {
   const id = scenario.id;
 
   // category detectors (pure, no FS)
-  if (id === 'repeated-reads' || id === 'excessive-context' || id.includes('repeated')) {
+  if (id === 'repeated-reasoning') {
+    const r = isFocusedReasoning({
+      question: scenario.id,
+      evidence_available: (scenario.evidence_delta ?? 0) !== 0,
+      speculative_paths: 0,
+      reconsiderations: scenario.count ?? scenario.repeated_reads ?? 0,
+      hypothetical_requirements: false,
+      unrelated_implementations: 0,
+    });
+    if (!r.focused) {
+      const iv = decideIntervention({ kind: 'reasoning', slop: true, severity: scenario.severity ?? 'wasteful', progress_stalled: scenario.progress_stalled ?? true });
+      return { slop: true, intervention: iv.intervention, reason: `slop: reasoning — ${r.reason}` };
+    }
+  }
+  if (id === 'repeated-reads' || id === 'excessive-context') {
     const r = detectContextSlop({
       repeated_reads: scenario.repeated_reads ?? scenario.count ?? 0,
       repeated_read_threshold: scenario.repeated_read_threshold ?? scenario.threshold ?? 3,

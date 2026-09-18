@@ -77,6 +77,12 @@ describe('evaluateStopSlopScenario', () => {
     expect(r.slop).toBe(false);
     expect(r.intervention).toBe('tolerate');
   });
+  it('repeated-reasoning classifies as reasoning slop → stop', () => {
+    const r = evaluateStopSlopScenario({ id: 'repeated-reasoning', kind: 'reasoning', count: 3, threshold: 3, evidence_delta: 0, severity: 'wasteful', progress_stalled: true } as never);
+    expect(r.slop).toBe(true);
+    expect(r.intervention).toBe('stop');
+    expect(r.reason).toMatch(/reasoning|reconsideration|unfocused/);
+  });
   it('covers 12 scenarios all detected', () => {
     const ids = [
       'endless-exploration',
