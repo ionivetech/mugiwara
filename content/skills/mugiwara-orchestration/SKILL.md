@@ -45,7 +45,7 @@ Read the runtime mode via mode config at Flow 0: `.mugiwara/config` (project) th
 
 ## Solo or team (Flow 0)
 
-Decide before first savepoint — fixes state layout. Full rule: `references/solo-team.md` — 40 lines.
+Solo is the default — ask the solo/shared question only when team signals exist, else record solo in one line (non-blocking). Decide before first savepoint — fixes state layout. Full rule: `references/solo-team.md` — 40 lines.
 - **Lane 0/1** — always solo.
 - **Lane 2+ guided/semi** — ask *Is this solo or shared? Who + area?* unless `team` key is absent or `off` (solo); first shared mission writes `team=on`. Full rule: `references/solo-team.md`.
 - **`auto`** — derive from `.mugiwara/missions/<mission>/` files. Log why.
