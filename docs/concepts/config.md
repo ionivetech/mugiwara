@@ -14,6 +14,8 @@ heal_max_cycles=3
 
 Optional keys ship commented; uncomment to set.
 
+## Keys
+
 | Key | Default | Meaning |
 |---|---|---|
 | `mode` | guided / semi / auto | Stage autonomy |
@@ -34,7 +36,7 @@ Gate and escalation keys:
 | `delegate_threshold` | 60 | Delegation budget percent |
 | `heal_max_cycles` | 3 | Heal cap |
 
-## Commented keys
+**Commented keys**
 
 Commented keys: what, when, example.
 
@@ -46,9 +48,9 @@ Commented keys: what, when, example.
 | `investigation_max_unrelated_files` | Unrelated-file tolerance | Keeping investigation focused | `investigation_max_unrelated_files=3` |
 | `investigation_repeated_read_threshold` | Repeat-read threshold | Catching read loops early | `investigation_repeated_read_threshold=1` |
 | `team` | Shared roster switch | First shared mission, Flow 0 | `team=on` |
-| `sign` | Attestation backend | Regulated missions only | `sign=auto` |
+| `sign` | off / minisign / pure / auto | Regulated missions only | `sign=auto` |
 | `features` | Extension roster control | Trimming skills per mission | `features=core+auto,ship,-testcases` |
-| `enforce` | Pipeline guard policy | Stopping on violation | `enforce=block` |
+| `enforce` | off / warn / block | Stopping on violation | `enforce=block` |
 
 ## Features
 

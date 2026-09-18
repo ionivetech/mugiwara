@@ -1328,8 +1328,8 @@ console.log('\nN9 — platform-count mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      ': 9 install directly, 3 load via marketplace manifest.',
-      '.',
+      '9 install full bodies, 3 via marketplace manifest.',
+      '9 install full bodies.',
     );
     if (broken === original) {
       console.error('✗ N9: mutation target not found');
@@ -1351,8 +1351,8 @@ console.log('\nT1 — removed-key resurrection mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      "  '# -- Git --------------------------------------------------',",
-      "  '# team_member=jane-doe            # resurrected key (must fail)',\n  '# -- Git --------------------------------------------------',",
+      "  '# enforce=block',",
+      "  '# team_member=jane-doe  # resurrected key (must fail)',\n  '# enforce=block',",
     );
     if (broken === original) {
       console.error('✗ T1: mutation target not found');
