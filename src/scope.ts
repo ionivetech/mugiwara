@@ -96,6 +96,8 @@ export type AbstractionInput = {
   reduces_duplication: boolean;
   required_by_contract: boolean;
   speculative: boolean;
+  /** Named caller sites backing the use count (just-enough: a count without callers is a claim, not evidence). */
+  callers?: string[];
 };
 
 export type AbstractionVerdict = {
@@ -107,9 +109,10 @@ export type AbstractionVerdict = {
 
 /**
  * An abstraction is justified only when it is not speculative AND it is either
- * required by contract or used in ≥2 places with a duplication benefit. Rejects
- * speculative abstractions for hypothetical requirements; single-use
- * abstractions with no contract and no duplication benefit are refused.
+ * required by contract or used in ≥2 places with a duplication benefit AND
+ * named caller evidence backing the count. Rejects speculative abstractions
+ * for hypothetical requirements; single-use abstractions with no contract and
+ * no duplication benefit are refused; a bare count without callers is refused.
  */
 export function evaluateAbstraction(input: AbstractionInput): AbstractionVerdict {
   if (input.speculative) {
@@ -119,6 +122,10 @@ export function evaluateAbstraction(input: AbstractionInput): AbstractionVerdict
     return { abstraction: input.abstraction, justified: true, reason: 'required by contract', use_count: input.used_in_places };
   }
   if (input.used_in_places >= 2 && input.reduces_duplication) {
+    const named = input.callers ?? [];
+    if (named.length < 2) {
+      return { abstraction: input.abstraction, justified: false, reason: `claims ${input.used_in_places} places but names ${named.length} caller(s) — no caller evidence`, use_count: input.used_in_places };
+    }
     return { abstraction: input.abstraction, justified: true, reason: 'used in >= 2 places and reduces duplication', use_count: input.used_in_places };
   }
   return { abstraction: input.abstraction, justified: false, reason: 'single use, no contract, no duplication benefit', use_count: input.used_in_places };
