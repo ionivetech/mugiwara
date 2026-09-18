@@ -12,6 +12,9 @@
 // locked by fixtures) and every skip/avoid/delegate/complete decision lands in
 // the trail via recordWorkDecision → recordOptDecision (§41, S2 sanitizer).
 import { delegateAt, laneBaseForLane, recordOptDecision } from './cost.ts';
+import { detectScopeDrift } from './scope.ts';
+import { detectCodeSlop, detectRetrySlop, detectScopeSlop, recordSlopDecision } from './slop.ts';
+import { detectDuplicateExplanation } from './cognition.ts';
 
 // ── Stage classification (§7/§34) ───────────────────────────────────────────
 
@@ -270,4 +273,123 @@ export function recordWorkDecision(
     reason: d.reason,
     ...(d.evidence ? { evidence: d.evidence } : {}),
   });
+}
+
+// ── Live waste detectors as advisory pre-commit checks (T6 anti-slop) ──────
+// Consumes T2 scope verdicts (detectScopeDrift) + T3 slop detectors
+// (detectRetrySlop, detectCodeSlop, detectScopeSlop) + T1 output verdicts
+// (detectDuplicateExplanation) over a fixture diff. Every slop finding lands
+// in the trail with the `slop-governor` actor so T8's gate can consume it.
+// Advisory-first: runWasteChecks only WARNS (advisory: true, always) — any
+// blocking path must go through shouldBlockWaste, which needs 2+ recorded
+// rejections. Default posture: warn + trail row, never a failure exit.
+
+export type WasteKind = 'retry' | 'code' | 'output' | 'scope';
+
+export type WasteDiffInput = {
+  change: string;
+  files_changed: string[];
+  declared_scope: string[];
+  acceptance_expanded: boolean;
+  unrelated_refactors?: string[];
+  new_abstractions?: number;
+  new_dependencies?: number;
+  loc_added?: number;
+  boilerplate_chars?: number;
+  justification_provided?: boolean;
+  retry?: {
+    action: string;
+    evidence_fingerprint: string;
+    outcome: 'fail' | 'pass';
+    history: { action: string; evidence_fingerprint: string; outcome: string }[];
+  };
+  explanations?: string[];
+};
+
+export type WasteFinding = { kind: WasteKind; slop: boolean; reason: string };
+
+export type WasteCheckResult = {
+  change: string;
+  findings: WasteFinding[];
+  slop: boolean;
+  advisory: true;
+};
+
+/**
+ * Run the four waste detectors over one diff. Pure — records nothing; pair
+ * with recordWasteChecks for the trail rows. Never blocks: `advisory` is
+ * always true; blocking is a separate shouldBlockWaste decision.
+ */
+export function runWasteChecks(input: WasteDiffInput): WasteCheckResult {
+  const retry = input.retry
+    ? detectRetrySlop({
+        action: input.retry.action,
+        evidence_fingerprint: input.retry.evidence_fingerprint,
+        outcome: input.retry.outcome,
+        history: input.retry.history,
+      })
+    : { slop: false, reason: 'no slop — no retry signal' };
+  const code = detectCodeSlop({
+    new_abstractions: input.new_abstractions ?? 0,
+    new_dependencies: input.new_dependencies ?? 0,
+    loc_added: input.loc_added ?? 0,
+    acceptance_expanded: input.acceptance_expanded,
+    justification_provided: input.justification_provided ?? false,
+    boilerplate_chars: input.boilerplate_chars ?? 0,
+  });
+  const dup = (input.explanations?.length ?? 0) > 0
+    ? detectDuplicateExplanation({ explanations: input.explanations ?? [] })
+    : { duplicate: false, reason: 'no slop — no output signal' };
+  const output = dup.duplicate
+    ? { slop: true, reason: `slop: output — ${dup.reason}` }
+    : { slop: false, reason: dup.reason };
+  const drift = detectScopeDrift({
+    change: input.change,
+    declared_scope: input.declared_scope,
+    touched_files: input.files_changed,
+  });
+  const scopeSlop = detectScopeSlop({
+    files_changed: input.files_changed,
+    declared_scope: input.declared_scope,
+    acceptance_expanded: input.acceptance_expanded,
+    unrelated_refactors: input.unrelated_refactors ?? [],
+  });
+  const scope = input.acceptance_expanded
+    ? { slop: false, reason: 'no scope slop — acceptance expanded' }
+    : drift.drift
+      ? { slop: true, reason: `slop: scope — ${drift.reason}` }
+      : { slop: scopeSlop.slop, reason: scopeSlop.reason };
+  const findings: WasteFinding[] = [
+    { kind: 'retry', slop: retry.slop, reason: retry.reason },
+    { kind: 'code', slop: code.slop, reason: code.reason },
+    { kind: 'output', slop: output.slop, reason: output.reason },
+    { kind: 'scope', slop: scope.slop, reason: scope.reason },
+  ];
+  return { change: input.change, findings, slop: findings.some((f) => f.slop), advisory: true };
+}
+
+/**
+ * Persist one `slop-governor` trail row per slop finding. Clean runs record
+ * nothing — no rows, no file. Advisory-only: never throws for a slop
+ * finding; blocking is decided by shouldBlockWaste elsewhere.
+ */
+export function recordWasteChecks(missionDir: string, result: WasteCheckResult): void {
+  for (const f of result.findings) {
+    if (!f.slop) continue;
+    recordSlopDecision(missionDir, {
+      decision: `waste check: ${result.change}`,
+      reason: f.reason,
+      evidence: result.change,
+      kind: f.kind,
+    });
+  }
+}
+
+/**
+ * Advisory-first gate: a waste finding may block only after 2+ recorded
+ * rejections. First sight always warns (false). Counts are caller-supplied —
+ * this function does not read the trail, it enforces the threshold.
+ */
+export function shouldBlockWaste(recordedRejections: number): boolean {
+  return recordedRejections >= 2;
 }

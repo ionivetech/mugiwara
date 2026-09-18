@@ -17,6 +17,9 @@ import {
   evaluateDelegation,
   completionCheck,
   recordWorkDecision,
+  runWasteChecks,
+  recordWasteChecks,
+  shouldBlockWaste,
 } from '../src/work.ts';
 
 describe('classifyStage — required/conditional/optional (§7)', () => {
@@ -269,5 +272,121 @@ describe('recordWorkDecision — decision trail (§41)', () => {
     const nested = join(dir, 'missions', 'demo');
     recordWorkDecision(nested, { decision: 'complete', reason: 'ready for closure' });
     expect(existsSync(join(nested, 'decisions.md'))).toBe(true);
+  });
+});
+
+describe('runWasteChecks — live detectors as advisory pre-commit checks (T6 anti-slop)', () => {
+  const cleanBase = {
+    change: 'fixture-clean',
+    files_changed: ['src/work.ts'],
+    declared_scope: ['src/work.ts'],
+    acceptance_expanded: false,
+  };
+
+  it('retry fixture (same action + evidence failing twice) → retry slop', () => {
+    const r = runWasteChecks({
+      ...cleanBase,
+      change: 'fixture-retry',
+      retry: {
+        action: 'bun test',
+        evidence_fingerprint: 'fp-1',
+        outcome: 'fail',
+        history: [{ action: 'bun test', evidence_fingerprint: 'fp-1', outcome: 'fail' }],
+      },
+    });
+    const retry = r.findings.find((f) => f.kind === 'retry');
+    expect(retry?.slop).toBe(true);
+    expect(r.slop).toBe(true);
+  });
+
+  it('code fixture (unjustified abstraction) → code slop', () => {
+    const r = runWasteChecks({ ...cleanBase, change: 'fixture-code', new_abstractions: 1 });
+    const code = r.findings.find((f) => f.kind === 'code');
+    expect(code?.slop).toBe(true);
+    expect(code?.reason).toContain('abstractions 1');
+  });
+
+  it('output fixture (duplicate explanations) → output slop', () => {
+    const r = runWasteChecks({
+      ...cleanBase,
+      change: 'fixture-output',
+      explanations: ['same explanation twice', 'same explanation twice'],
+    });
+    const output = r.findings.find((f) => f.kind === 'output');
+    expect(output?.slop).toBe(true);
+  });
+
+  it('scope fixture (file outside declared scope, no acceptance expansion) → scope slop', () => {
+    const r = runWasteChecks({
+      ...cleanBase,
+      change: 'fixture-scope',
+      files_changed: ['src/work.ts', 'src/unrelated.ts'],
+      declared_scope: ['src/work.ts'],
+    });
+    const scope = r.findings.find((f) => f.kind === 'scope');
+    expect(scope?.slop).toBe(true);
+    expect(scope?.reason).toContain('src/unrelated.ts');
+  });
+
+  it('clean fixture → no slop on any of the four detectors', () => {
+    const r = runWasteChecks(cleanBase);
+    expect(r.slop).toBe(false);
+    expect(r.findings.filter((f) => f.slop)).toHaveLength(0);
+  });
+
+  it('check run is advisory-first — never a block verdict by itself', () => {
+    const r = runWasteChecks({
+      ...cleanBase,
+      change: 'fixture-retry',
+      retry: {
+        action: 'bun test',
+        evidence_fingerprint: 'fp-1',
+        outcome: 'fail',
+        history: [{ action: 'bun test', evidence_fingerprint: 'fp-1', outcome: 'fail' }],
+      },
+    });
+    expect(r.advisory).toBe(true);
+  });
+});
+
+describe('recordWasteChecks — slop-governor trail rows (T6 anti-slop)', () => {
+  it('fixture run with waste writes slop-governor rows naming each slop kind', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-waste-'));
+    const r = runWasteChecks({
+      change: 'fixture-scope',
+      files_changed: ['src/work.ts', 'src/unrelated.ts'],
+      declared_scope: ['src/work.ts'],
+      acceptance_expanded: false,
+    });
+    recordWasteChecks(dir, r);
+    const body = readFileSync(join(dir, 'decisions.md'), 'utf8');
+    const bullets = body.split(/\r?\n/).filter((l) => l.startsWith('- '));
+    expect(bullets.length).toBeGreaterThan(0);
+    expect(bullets.every((b) => b.includes('slop-governor'))).toBe(true);
+    expect(bullets.some((b) => b.includes('[scope]'))).toBe(true);
+  });
+
+  it('clean fixture run writes no rows', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugiwara-waste-'));
+    const r = runWasteChecks({
+      change: 'fixture-clean',
+      files_changed: ['src/work.ts'],
+      declared_scope: ['src/work.ts'],
+      acceptance_expanded: false,
+    });
+    recordWasteChecks(dir, r);
+    expect(existsSync(join(dir, 'decisions.md'))).toBe(false);
+  });
+});
+
+describe('shouldBlockWaste — advisory-first gate (T6 anti-slop)', () => {
+  it('0 or 1 recorded rejections → never block', () => {
+    expect(shouldBlockWaste(0)).toBe(false);
+    expect(shouldBlockWaste(1)).toBe(false);
+  });
+
+  it('2+ recorded rejections → block allowed', () => {
+    expect(shouldBlockWaste(2)).toBe(true);
+    expect(shouldBlockWaste(5)).toBe(true);
   });
 });
