@@ -28,6 +28,7 @@ export const WRITING_CAPS: Record<string, number> = {
   'docs/adoption.md': 300,
   'docs/runbooks/team-mission.md': 450,
   'docs/concepts/skills.md': 350,
+  'docs/concepts/memory.md': 300,
   'docs/reference/agent-anatomy.md': 300,
   'docs/runbooks/troubleshooting.md': 600,
   'docs/runbooks/resume-after-crash.md': 400,

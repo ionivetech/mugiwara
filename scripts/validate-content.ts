@@ -7,6 +7,33 @@ import { parseFrontmatter } from '../src/frontmatter.ts';
 const root = join(import.meta.dirname, '..', 'content');
 const errors: string[] = [];
 
+// --- memory-template gate (repo-memory T3): versioned canonical for `.mugiwara/MEMORY.md` ---
+export const MEMORY_TEMPLATE_SECTIONS = ['Facts', 'Conventions', 'Preferences', 'Never'];
+export const MEMORY_TEMPLATE_MAX_LINES = 40;
+const MEMORY_SECRET_PATTERNS: RegExp[] = [
+  /sk-/,
+  /AKIA/,
+  /ghp_/,
+  /xox[bpas]-/,
+  /-----BEGIN .*PRIVATE KEY-----/,
+  /password\s*[:=]/i,
+];
+
+export function memoryTemplateErrors(text: string, label = 'references/memory-template.md'): string[] {
+  const errs: string[] = [];
+  for (const s of MEMORY_TEMPLATE_SECTIONS) {
+    if (!text.includes(`## ${s}`)) errs.push(`${label}: missing "## ${s}" section`);
+  }
+  const nonEmpty = text.split(/\r?\n/).filter((l) => l.trim() !== '').length;
+  if (nonEmpty > MEMORY_TEMPLATE_MAX_LINES) {
+    errs.push(`${label}: memory-template exceeds ${MEMORY_TEMPLATE_MAX_LINES} lines (${nonEmpty} non-empty)`);
+  }
+  for (const re of MEMORY_SECRET_PATTERNS) {
+    if (re.test(text)) errs.push(`${label}: possible secret pattern ${re} — never store secrets in MEMORY.md`);
+  }
+  return errs;
+}
+
 function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Record<string, string> | null {
   let parsed;
   try { parsed = parseFrontmatter(readFileSync(file, 'utf8')); }
@@ -882,6 +909,22 @@ if (process.argv.includes('--check-invariants')) {
   for (const d of scanRoots) walkInv(d);
   for (const u of unreg) errors.push(`invariant without mechanism: ${u} — add a concept row in enforcement.md + a bucket above`);
   if (!unreg.length && enf) console.log(`✓ invariants: every never/always/MUST maps to a mechanism row`);
+}
+
+// --- memory-template check (repo-memory T3): validator checks the versioned ---
+// --- template, never the gitignored runtime file. Follows existing error-push style. ---
+const memoryTemplatePath = join(import.meta.dirname, '..', 'references', 'memory-template.md');
+if (!existsSync(memoryTemplatePath)) {
+  errors.push('references/memory-template.md: file not found');
+} else {
+  for (const e of memoryTemplateErrors(readFileSync(memoryTemplatePath, 'utf8'))) errors.push(e);
+}
+// Explicit skill body guard alongside the memory checks (generic checkFile also enforces 120).
+const lessonsSkillFile = join(root, 'skills', 'mugiwara-lessons', 'SKILL.md');
+if (existsSync(lessonsSkillFile)) {
+  const parsed = parseFrontmatter(readFileSync(lessonsSkillFile, 'utf8'));
+  const bodyLines = parsed.body.replace(/\r?\n$/, '').split(/\r?\n/).length;
+  if (bodyLines > 120) errors.push(`skill ${lessonsSkillFile}: body exceeds 120 lines (${bodyLines})`);
 }
 
 // Conditional-assertion guard: an expect() reachable only inside a truthiness

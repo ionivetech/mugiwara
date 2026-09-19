@@ -1,9 +1,10 @@
 // test/validate-content.test.ts
 import { test, expect } from 'bun:test';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { memoryTemplateErrors } from '../scripts/validate-content.ts';
 
 const run = (args: string[]) => execFileSync('bun', ['scripts/validate-content.ts', ...args], { stdio: 'pipe' });
 
@@ -72,5 +73,69 @@ test('gate_artifact with a non-path value fails', () => {
     let failed = false;
     try { run(['--check', join(dir, 'skills', 'gate-test', 'SKILL.md')]); } catch { failed = true; }
     expect(failed).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+// --- memory-template (repo-memory T3) ---
+const VALID_MEMORY = [
+  '# Repo memory',
+  '',
+  '## Facts',
+  '',
+  '- `bun run gate` is the full CI gate.',
+  '',
+  '## Conventions',
+  '',
+  '- Conventional Commits.',
+  '',
+  '## Preferences',
+  '',
+  '- Boring diffs over clever abstractions.',
+  '',
+  '## Never',
+  '',
+  '- Never store secrets in MEMORY.md.',
+  '',
+].join('\n');
+
+const readFixture = (dir: string, name: string, text: string): string => {
+  const p = join(dir, name);
+  writeFileSync(p, text);
+  return readFileSync(p, 'utf8');
+};
+
+test('memory-template valid fixture passes', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-mem-'));
+  try {
+    const text = readFixture(dir, 'memory.md', VALID_MEMORY);
+    expect(memoryTemplateErrors(text, join(dir, 'memory.md'))).toEqual([]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('memory-template oversized fixture fails', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-mem-'));
+  try {
+    const rows = Array.from({ length: 41 }, (_, i) => `- fact row ${i}`).join('\n');
+    const text = readFixture(dir, 'memory.md', `${VALID_MEMORY}\n${rows}\n`);
+    const errs = memoryTemplateErrors(text, join(dir, 'memory.md'));
+    expect(errs.some((e) => e.includes('exceeds 40 lines'))).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('memory-template secret-bearing fixture fails', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-mem-'));
+  try {
+    const text = readFixture(dir, 'memory.md', `${VALID_MEMORY}\n- token sk-abc123\n`);
+    const errs = memoryTemplateErrors(text, join(dir, 'memory.md'));
+    expect(errs.some((e) => e.includes('secret'))).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('memory-template missing-section fixture fails', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-mem-'));
+  try {
+    const text = readFixture(dir, 'memory.md', VALID_MEMORY.replace('## Never\n', ''));
+    const errs = memoryTemplateErrors(text, join(dir, 'memory.md'));
+    expect(errs.some((e) => e.includes('## Never'))).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
