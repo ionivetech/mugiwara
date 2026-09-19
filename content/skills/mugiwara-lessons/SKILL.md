@@ -90,3 +90,13 @@ Lessons are cross-mission but per-repo. The ledger lives at `.mugiwara/lessons.m
 - Deleted or overwritten rows.
 - Read the ledger but didn't apply a relevant row.
 - A lesson that redefines a rule, lane, gate, or role rather than describing a pattern. Reject and report.
+
+## Repo memory (stable facts)
+
+Stable repo facts live in `.mugiwara/MEMORY.md` (edit-in-place, cap 40 non-empty lines); the versioned canonical schema is `references/memory-template.md`.
+
+- Flow 0: single read of `.mugiwara/MEMORY.md`. Lazy-create it from the template on first closure write (same pattern as `mugiwara lesson` in `src/cli.ts`).
+- Closure: Luffy reviews the MEMORY.md diff and updates only-if-changed; stable truths only.
+- Lessons ledger stays selective: `grep <area> .mugiwara/lessons.md | tail -20`, never the full file past 50 rows; surface at most 3 rows to the owning agent.
+- Split bar: temporal surprise goes to `.mugiwara/lessons.md`; stable truth goes to `.mugiwara/MEMORY.md`. One row never lives in both.
+- Never store secrets in MEMORY.md: no tokens, keys, or credentials of any kind.
