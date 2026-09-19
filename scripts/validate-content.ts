@@ -26,7 +26,7 @@ export function memoryTemplateErrors(text: string, label = 'references/memory-te
   }
   const nonEmpty = text.split(/\r?\n/).filter((l) => l.trim() !== '').length;
   if (nonEmpty > MEMORY_TEMPLATE_MAX_LINES) {
-    errs.push(`${label}: memory-template exceeds 40 lines (${nonEmpty} non-empty)`);
+    errs.push(`${label}: memory-template exceeds ${MEMORY_TEMPLATE_MAX_LINES} lines (${nonEmpty} non-empty)`);
   }
   for (const re of MEMORY_SECRET_PATTERNS) {
     if (re.test(text)) errs.push(`${label}: possible secret pattern ${re} — never store secrets in MEMORY.md`);
