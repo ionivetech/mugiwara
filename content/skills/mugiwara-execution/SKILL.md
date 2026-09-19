@@ -102,7 +102,7 @@ Any task touching UI markup, styling, or components applies `mugiwara-frontend` 
 After each flow stage: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Flow 4). Write detailed execution log to `.mugiwara/missions/<mission>/flows/01-execution.md`. Never dispatch another crew member.
 - **Decision/Action/Result/Evidence/Blocker** lead every bullet — filler dies anywhere ([src/cognition.ts](src/cognition.ts)).
 - **Short** bullets, one idea per line; **tables** over prose; **evidence** links clickable repo-root-relative.
-- **Dedupe** repeats, keep first; full logs stay in the artifact, never the chat.
+- **Dedupe** repeats, keep first; full logs stay in the artifact, chat stays out.
 
 ## Step budget
 Tool calls finite — cap per session (Lane1 ≤15, Lane2 ≤35, Lane3 ≤60). Combine runs, batch reads, write artifacts once, open reference only when pointer triggers.

@@ -121,8 +121,8 @@ Applies to `report.md`, `pr-verdict.md`, and `flows/*.md`:
    accounting (planned vs done counts). Keep their byte-meaning: checkboxes
    stay one item per line, tables keep their columns.
 4. Prose around findings follows `references/prose-style.md` (verdict first,
-   numbers over adjectives); the machine-checkable shapes in this file never
-   bend for style.
+    numbers over adjectives); the machine-checkable shapes in this file stay
+    fixed regardless of style.
 5. Template sections above stay byte-stable: add guidance as new subsections
-   only, never reword the verdict template, checkbox rules, or
-   evidence-table shape.
+    only, leaving the verdict template, checkbox rules, and
+    evidence-table shape with identical wording.
