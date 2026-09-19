@@ -374,7 +374,7 @@ function buildWorkloads(thresholds: Thresholds): Workload[] {
   }));
 }
 
-// ── Stop-Slop 12 scenarios (§45) ──
+// ── anti-slop 12 scenarios (§45) ──
 export function buildStopSlopScenarios(): StopSlopScenario[] {
   return [
     { id: 'endless-exploration', kind: 'investigation', unrelated_files_opened: 6, max_unrelated_files: 5, repeated_reads: 3, repeated_read_threshold: 2, exploration_passes: 3, max_passes: 2, acceptance_mapped: false, has_concrete_reason: false, severity: 'wasteful', progress_stalled: true },
@@ -394,13 +394,13 @@ export function buildStopSlopScenarios(): StopSlopScenario[] {
 
 // ── main ──
 function printHelp(): void {
-  console.log(`benchmark-governor — cost + Stop-Slop benchmark harness (Phase 9)
+  console.log(`benchmark-governor — cost + anti-slop benchmark harness (Phase 9)
 
 Usage: bun scripts/benchmark-governor.ts [--help]
 
 Runs:
   - cost suite (§48): ${THRESHOLDS.workloads.length} workloads, tokens ≤ projected+overhead, context ≤ max, evidence ≥ min
-  - Stop-Slop suite (§45): 12 scenarios, detect→classify→intervene
+  - anti-slop suite (§45): 12 scenarios, detect→classify→intervene
   - stress: large-repo / long-mission / runaway (bench-only, no runtime)
 Thresholds: scripts/benchmark-thresholds.json (ratchet — only moves on explicit update)
 Exit: 0 all pass, 1 any threshold/regression fail`);
@@ -509,7 +509,7 @@ function main(): void {
     const limit = t ? t.projected + t.overhead : 0;
     console.log(`  ${w.pass ? '✓' : '✗'} ${w.id}: ${w.reason}${t ? ` (limit ${limit})` : ''}`);
   }
-  console.log(`\nStop-Slop (${result.slop.length} scenarios):`);
+  console.log(`\nanti-slop (${result.slop.length} scenarios):`);
   for (const s of result.slop) {
     console.log(`  ${s.slop ? '✓' : '✗'} ${s.id}: ${s.intervention} — ${s.reason}`);
   }
