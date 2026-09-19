@@ -23,6 +23,10 @@ caused a failure this mission). "Should test more" is not a lesson.
 
 Date · category · the rule · origin mission. One line, no prose essays.
 
+## Stable facts live elsewhere
+
+Temporal surprise belongs here; stable truth belongs in `.mugiwara/MEMORY.md` (reader guide: [memory](memory.md)). One row never lives in both files.
+
 ## Sharing between teams
 
 Opt-in, anonymized exchange format and rules:
