@@ -23,9 +23,7 @@ Record mode + branch + commit style + `auto_commit` in the decision log (`.mugiw
 Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`. The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode.
 
 ## Todo list first
-
 Before touching code:
-
 1. Create `.mugiwara/missions/<mission>/flows/todos.md` — one checkbox per task, derived from the plan.
 2. Check each box off only when the task completes, WITH its evidence link (`[path](relative/path)`, clickable).
 3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
@@ -33,7 +31,6 @@ Before touching code:
 5. **Ownership:** Luffy seeds `pending` at Flow 0; Zoro flips `pending→in_progress→completed` each wave — `flows/todos.md` stays as archive, host UI sync via `todowrite` in same response. Full checklist: `_shared/references/cost-governor.md`.
 
 ## Flow-stage execution
-
 Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
 
 1. Read the plan doc fully before touching code.
@@ -100,9 +97,12 @@ Full checklist: `references/execution-phase-flows.md` — 4 items; `flows/phase-
 
 Any task touching UI markup, styling, or components applies `mugiwara-frontend` in the same pass. Every interactive element — button, link, input, form — carries a `data-testid`, asserted by the task's test, not merely present in markup.
 
-## Report
+## Report (have-adhd scan-format)
 
 After each flow stage: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Flow 4). Write detailed execution log to `.mugiwara/missions/<mission>/flows/01-execution.md`. Never dispatch another crew member.
+- **Decision/Action/Result/Evidence/Blocker** lead every bullet — filler dies anywhere ([src/cognition.ts](src/cognition.ts)).
+- **Short** bullets, one idea per line; **tables** over prose; **evidence** links clickable repo-root-relative.
+- **Dedupe** repeats, keep first; full logs stay in the artifact, chat stays out.
 
 ## Step budget
 Tool calls finite — cap per session (Lane1 ≤15, Lane2 ≤35, Lane3 ≤60). Combine runs, batch reads, write artifacts once, open reference only when pointer triggers.

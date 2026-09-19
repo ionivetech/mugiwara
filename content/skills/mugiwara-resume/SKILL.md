@@ -35,7 +35,7 @@ All position data is computed at every flow-stage boundary by `mugiwara savepoin
   "mission": "2026-08-11-invitation-accepted",
   "member": null,
   "actor": "john",
-  "branch": "feature/feat-MKR-412",
+  "branch": "feature/feat-412",
   "lane": "full",
   "lane_reason": "auth/ path touched",
   "flow stage": 5,

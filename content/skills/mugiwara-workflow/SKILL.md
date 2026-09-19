@@ -42,13 +42,14 @@ description: Use at start of any non-trivial mission — Luffy triage gateway, f
 **Banners.** Every flow stage opens with a heading banner and closes with a handoff line — `## ⚔️ Flow 3 — Zoro (Execution)`. Never emit ANSI escapes: the model cannot tell a terminal from a markdown UI, so it must not try; colour is applied by the harness plugin. Keep literal `Flow N —` (the check-in protocol reads it; heal cycles are counted from the decision log's `## Flow 8` sections, not from banners). Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line of the flow stage's final response. **All crews:** Flow 0 Luffy, 1 Usopp, 2 Nami, 3 Zoro, 4 Chopper, 5 Sanji, 6 Franky, 7 Robin/Jinbe, 8 Brook, 9 Luffy — main thread emits banner + handoff even when subagent does work. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0` — slop §§21-24. A flow stage without both is skipped — record why.
 
 **Subagents only for parallelism.** `[PARALLEL]` task batches, parallel review, parallel heal workers. Crew members never dispatch crew members. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `state.json` `heal_cycle`/`heal_halt` + `context-registry.jsonl` `repeated_reads` — `repeated_reads>threshold` skip/compress, `heal_cycle≥3` halt/escalate — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
-
-**Compact output.** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/flows/01-execution.md`.
+**Compact output (have-adhd scan-format).** Do not stream tool calls. Progress stays visible: per-task `[task N/M]` lines and one status table per batch. Full logs → `.mugiwara/missions/<mission>/flows/01-execution.md`.
+- **Decision/Action/Result/Evidence/Blocker** lead every bullet — filler dies anywhere ([src/cognition.ts](src/cognition.ts)).
+- **Short** bullets, one idea per line; **tables** over prose; **evidence** links clickable repo-root-relative.
+- **Dedupe** repeats, keep first; chat carries verdicts, artifacts carry logs.
 
 **Mode flips.** Say `mugiwara mode <guided|semi|auto>` in session — no CLI flag, no slash command. It applies from the next flow stage, never mid-stage. If a flip arrives mid-stage, say so — "recorded, applies from Flow N+1" — never apply silently, never ignore.
 ## Flow 0 — Triage (always first)
 Luffy classifies every request 8 ways:
-
 | Class | Signal | Route |
 |-------|--------|-------|
 | Trivial | obvious, single file | → Flow 2 |

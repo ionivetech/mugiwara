@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { budgetForLane } from '../src/cost.ts';
 import { checkCircuitBreaker, projectBudget } from '../src/adaptive-budget.ts';
+import { isFocusedReasoning } from '../src/cognition.ts';
 import {
   detectSlopSignal,
   decideIntervention,
@@ -141,7 +142,21 @@ export function evaluateStopSlopScenario(scenario: StopSlopScenario): {
   const id = scenario.id;
 
   // category detectors (pure, no FS)
-  if (id === 'repeated-reads' || id === 'excessive-context' || id.includes('repeated')) {
+  if (id === 'repeated-reasoning') {
+    const r = isFocusedReasoning({
+      question: scenario.id,
+      evidence_available: (scenario.evidence_delta ?? 0) !== 0,
+      speculative_paths: 0,
+      reconsiderations: scenario.count ?? scenario.repeated_reads ?? 0,
+      hypothetical_requirements: false,
+      unrelated_implementations: 0,
+    });
+    if (!r.focused) {
+      const iv = decideIntervention({ kind: 'reasoning', slop: true, severity: scenario.severity ?? 'wasteful', progress_stalled: scenario.progress_stalled ?? true });
+      return { slop: true, intervention: iv.intervention, reason: `slop: reasoning — ${r.reason}` };
+    }
+  }
+  if (id === 'repeated-reads' || id === 'excessive-context') {
     const r = detectContextSlop({
       repeated_reads: scenario.repeated_reads ?? scenario.count ?? 0,
       repeated_read_threshold: scenario.repeated_read_threshold ?? scenario.threshold ?? 3,
@@ -359,7 +374,7 @@ function buildWorkloads(thresholds: Thresholds): Workload[] {
   }));
 }
 
-// ── Stop-Slop 12 scenarios (§45) ──
+// ── anti-slop 12 scenarios (§45) ──
 export function buildStopSlopScenarios(): StopSlopScenario[] {
   return [
     { id: 'endless-exploration', kind: 'investigation', unrelated_files_opened: 6, max_unrelated_files: 5, repeated_reads: 3, repeated_read_threshold: 2, exploration_passes: 3, max_passes: 2, acceptance_mapped: false, has_concrete_reason: false, severity: 'wasteful', progress_stalled: true },
@@ -379,13 +394,13 @@ export function buildStopSlopScenarios(): StopSlopScenario[] {
 
 // ── main ──
 function printHelp(): void {
-  console.log(`benchmark-governor — cost + Stop-Slop benchmark harness (Phase 9)
+  console.log(`benchmark-governor — cost + anti-slop benchmark harness (Phase 9)
 
 Usage: bun scripts/benchmark-governor.ts [--help]
 
 Runs:
   - cost suite (§48): ${THRESHOLDS.workloads.length} workloads, tokens ≤ projected+overhead, context ≤ max, evidence ≥ min
-  - Stop-Slop suite (§45): 12 scenarios, detect→classify→intervene
+  - anti-slop suite (§45): 12 scenarios, detect→classify→intervene
   - stress: large-repo / long-mission / runaway (bench-only, no runtime)
 Thresholds: scripts/benchmark-thresholds.json (ratchet — only moves on explicit update)
 Exit: 0 all pass, 1 any threshold/regression fail`);
@@ -494,7 +509,7 @@ function main(): void {
     const limit = t ? t.projected + t.overhead : 0;
     console.log(`  ${w.pass ? '✓' : '✗'} ${w.id}: ${w.reason}${t ? ` (limit ${limit})` : ''}`);
   }
-  console.log(`\nStop-Slop (${result.slop.length} scenarios):`);
+  console.log(`\nanti-slop (${result.slop.length} scenarios):`);
   for (const s of result.slop) {
     console.log(`  ${s.slop ? '✓' : '✗'} ${s.id}: ${s.intervention} — ${s.reason}`);
   }

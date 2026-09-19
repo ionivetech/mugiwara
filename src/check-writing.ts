@@ -78,6 +78,26 @@ export function stripFences(text: string): string {
   return out.join('\n');
 }
 
+// PII scan: sample output must not carry personal identifiers. Homedir
+// paths (/Users/<name>, /home/<name>) flag unless the segment is a neutral
+// placeholder; emails flag unless RFC-2606 example domains or the published
+// project identity (ionivetech install/tracker coordinates, not personal
+// data). Scans full text: samples live in fenced output blocks.
+const PII_PLACEHOLDER_SEG = new Set(['you', 'user', 'your-username', 'example', '<username>', '<user>']);
+const PII_EMAIL_EXEMPT = /(^|\.)example\.(com|org|net)$|ionivetech/i;
+
+export function checkPii(text: string): string[] {
+  const hits: string[] = [];
+  const home = text.match(/(?:\/Users\/|\/home\/)([A-Za-z0-9._-]+)/);
+  if (home && !PII_PLACEHOLDER_SEG.has(home[1].toLowerCase())) hits.push(home[0]);
+  const emailRe = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
+  let m: RegExpExecArray | null;
+  while ((m = emailRe.exec(text)) !== null) {
+    if (!PII_EMAIL_EXEMPT.test(m[1])) { hits.push(m[0]); break; }
+  }
+  return hits;
+}
+
 export function checkWritingFile(rel: string, text: string): string[] {
   const errs: string[] = [];
   const words = text.split(/\s+/).filter(Boolean).length;
@@ -97,13 +117,16 @@ export function checkWritingFile(rel: string, text: string): string[] {
   flush();
   if (bigTables > 1) errs.push(`${rel}: ${bigTables} tables over 12 rows (max 1)`);
   const prose = stripFences(text);
+  // `just-enough` is a mission-accepted native name, not filler `just`.
+  const banProse = prose.replace(/\bjust-enough\b/gi, 'native-name');
   if (!BANNED_EXEMPT.has(rel)) {
     for (const w of BANNED_WORDS) {
-      if (new RegExp(`\\b${w}\\b`, 'i').test(prose)) errs.push(`${rel}: banned word "${w}"`);
+      if (new RegExp(`\\b${w}\\b`, 'i').test(banProse)) errs.push(`${rel}: banned word "${w}"`);
     }
   }
   const dashes = (prose.match(/—/g) ?? []).length;
   if (dashes > 2) errs.push(`${rel}: ${dashes} em-dashes (max 2)`);
+  for (const hit of checkPii(text)) errs.push(`${rel}: personal identifier "${hit}"`);
   // First prose line must not open with a definition ("X is a/the ...").
   const first = lines
     .map((l) => l.trim())

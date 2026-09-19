@@ -2,7 +2,7 @@
 
 Eleven specialists plus three internal helpers look like an answer. They form a roster: 11 agents (+3 internal). The question at mission start is which member to call for the work in front of you. Each agent below names its role and the moment to summon it.
 
-Example: the last [flow stage](../reference/glossary.md) finished and you want it checked. Say "Chopper, audit the last flow stage against the plan". Luffy records the route, Chopper audits, findings land in the ledger. Direct calls never skip [check-ins](../reference/glossary.md).
+Example: the last [flow stage](workflow.md) finished and you want it checked. Say "Chopper, audit the last flow stage against the plan". Luffy records the route, Chopper audits, findings land in the ledger. Direct calls never skip check-ins.
 
 ## The crew
 

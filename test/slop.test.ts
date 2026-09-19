@@ -1,5 +1,5 @@
 // test/slop.test.ts
-// Phase 6 Stop-Slop — src/slop.ts unit tests (11 capabilities).
+// Phase 6 anti-slop — src/slop.ts unit tests (11 capabilities).
 import { describe, it, expect } from 'bun:test';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';

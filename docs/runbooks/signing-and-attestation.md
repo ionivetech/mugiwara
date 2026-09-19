@@ -14,14 +14,14 @@ Signing stays regulated-only: everyday missions skip it, regulated ones sign at 
    mugiwara sign --gen-key
    ```
    ```
-   ✓ pure ed25519 key pair ready: /Users/mekari/.mugiwara/mugiwara.key / /Users/mekari/.mugiwara/mugiwara.pub
+   ✓ pure ed25519 key pair ready: ~/.mugiwara/mugiwara.key / ~/.mugiwara/mugiwara.pub
    ```
 2. Sign the closed report.
    ```bash
    mugiwara sign sig1
    ```
    ```
-   ✓ signed /private/tmp/t5scratch/.mugiwara/missions/sig1/report.md.mugisig (pure ed25519, key: /Users/mekari/.mugiwara/mugiwara.key)
+   ✓ signed /private/tmp/t5scratch/.mugiwara/missions/sig1/report.md.mugisig (pure ed25519, key: ~/.mugiwara/mugiwara.key)
    ```
 3. Verify any time.
    ```bash

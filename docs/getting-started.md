@@ -1,6 +1,6 @@
 # Getting Started
 
-You want the crew running without learning nine [flow stages](reference/glossary.md) on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
+You want the crew running without learning nine [flow stages](concepts/workflow.md) on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
 
 Example: you report a date formatting bug in one file. Luffy routes it to a lean [lane](concepts/lanes.md). Zoro reproduces and fixes, Sanji runs format plus lint plus tests. Two flow stages, compact checkpoint reports, no planning ceremony. A typo runs zero flow stages.
 

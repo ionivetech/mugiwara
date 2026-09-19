@@ -124,10 +124,16 @@ describe('evaluateAbstraction — abstraction justification (§15/§51-3)', () =
     speculative: false,
   };
 
-  it('used_in_places:2 + reduces_duplication → justified:true', () => {
-    const r = evaluateAbstraction({ ...base, used_in_places: 2, reduces_duplication: true });
+  it('used_in_places:2 + reduces_duplication + named callers → justified:true', () => {
+    const r = evaluateAbstraction({ ...base, used_in_places: 2, reduces_duplication: true, callers: ['a.ts', 'b.ts'] });
     expect(r.justified).toBe(true);
     expect(r.reason).toContain('2');
+  });
+
+  it('claims 2 places but names no callers → justified:false, reason names caller evidence', () => {
+    const r = evaluateAbstraction({ ...base, used_in_places: 2, reduces_duplication: true });
+    expect(r.justified).toBe(false);
+    expect(r.reason).toMatch(/caller/);
   });
 
   it('required_by_contract → justified:true regardless of use count', () => {

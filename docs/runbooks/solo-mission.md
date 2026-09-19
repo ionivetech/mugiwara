@@ -53,7 +53,7 @@ A solo fix still needs a trail. Same pipeline, crew roles folded into one actor.
    mugiwara sign m
    ```
    ```
-   ✓ signed /private/tmp/t5scratch/.mugiwara/missions/m/report.md.mugisig (pure ed25519, key: /Users/mekari/.mugiwara/mugiwara.key)
+   ✓ signed /private/tmp/t5scratch/.mugiwara/missions/m/report.md.mugisig (pure ed25519, key: ~/.mugiwara/mugiwara.key)
    ```
 
 ## If something goes wrong

@@ -12,12 +12,12 @@
 3. [Multi-actor workspace](../references/multi-actor.md)
 
 ## Evaluating for a team
-1. [Comparison](concepts/comparison.md): where mugiwara fits, and where it does not
+1. [Comparison](concepts/features.md#outcome-honesty-including-what-is-missing): where mugiwara fits, and where it does not
 2. [Harness matrix](reference/harness-matrix.md): what is enforced where
 3. [Cost](concepts/cost.md): what the process costs, per lane
 
 ## Reference
 [Config](concepts/config.md) · [CLI](install/cli.md) · [Skills](concepts/skills.md) ·
-[Agents](concepts/agents.md) · [Glossary](reference/glossary.md)
+[Agents](concepts/agents.md) · [Glossary](reference/glossary.md) · [Host skills](concepts/host-skills.md)
 
 The crew: 11 agents (+3 internal) and 21 skills.

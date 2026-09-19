@@ -1,5 +1,5 @@
 // src/slop.ts
-// Phase 6 Stop-Slop Governor — slop taxonomy, detection signals, progress
+// Phase 6 anti-slop Governor — slop taxonomy, detection signals, progress
 // measurement, work-to-cost anomaly, intervention rules + 6 category detectors
 // (Native Cost Governor, plan §51 Phase 6, §20–§24, §21).
 //

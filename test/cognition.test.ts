@@ -269,6 +269,38 @@ describe('compressOutput — output compression (§18)', () => {
     const r = compressOutput({ output, essential_sections: ['Decision', 'Evidence'] });
     expect(r.reason.toLowerCase()).toMatch(/compress/);
   });
+
+  it('evidence markdown link far from headings is kept (semantic keep, not proximity)', () => {
+    const output = [
+      'Decision: use TS module',
+      'filler far 1',
+      'filler far 2',
+      'filler far 3',
+      'filler far 4',
+      'filler far 5',
+      'See [budget](src/budget.ts) for reuse proof',
+      'filler far 6',
+      'filler far 7',
+      'Evidence: reuse verified',
+    ].join('\n');
+    const r = compressOutput({ output, essential_sections: ['Decision', 'Evidence'] });
+    expect(r.compressed).toContain('[budget](src/budget.ts)');
+    expect(r.saved_chars).toBeGreaterThan(0);
+  });
+
+  it('adjacent fluff without signal is dropped even when near a heading', () => {
+    const output = ['Decision: use TS module', 'just some filler words here', 'Evidence: done'].join('\n');
+    const r = compressOutput({ output, essential_sections: ['Decision', 'Evidence'] });
+    expect(r.compressed).not.toContain('just some filler words here');
+    expect(r.compressed).toContain('Decision: use TS module');
+    expect(r.compressed).toContain('Evidence: done');
+  });
+
+  it('duplicate lines keep first occurrence only', () => {
+    const output = ['Decision: use TS module', 'Evidence: done', 'Evidence: done'].join('\n');
+    const r = compressOutput({ output, essential_sections: ['Decision', 'Evidence'] });
+    expect(r.compressed.match(/Evidence: done/g)?.length).toBe(1);
+  });
 });
 
 describe('detectDuplicateExplanation — duplicate explanation detection (§17/§18)', () => {

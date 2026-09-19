@@ -23,7 +23,7 @@ import { isFocusedReasoning, detectDuplicateExplanation } from './cognition.ts';
 import { detectScopeDrift } from './scope.ts';
 import { classifySlop, measureProgress, detectAnomaly } from './slop.ts';
 import { registerRead } from './evidence.ts';
-import { classifyStage } from './work.ts';
+import { classifyStage, recordWasteChecks, runWasteChecks } from './work.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -389,6 +389,23 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       } catch {}
       // work wiring (ensure work.ts not dangling)
       classifyStage({ stage: 'wired', requirement_kind: 'explicit', uncertainty_high: false, provides_required_evidence: false, protects_quality_security: false });
+      // T6 anti-slop: advisory waste-detector pass over the mission diff.
+      // Warn-only — findings land as slop-governor trail rows; archive never
+      // blocks here (blocking needs 2+ recorded rejections — shouldBlockWaste).
+      // Declared scope is unknown at fold time, so the diff self-scopes: the
+      // scope detector cannot false-fire here; supply scope via `mugiwara waste`.
+      try {
+        const wFiles = changedFiles(projectDir, state);
+        if (wFiles.length) {
+          const wCheck = runWasteChecks({
+            change: `archive:${mission}`,
+            files_changed: wFiles,
+            declared_scope: wFiles,
+            acceptance_expanded: true,
+          });
+          recordWasteChecks(dir, wCheck);
+        }
+      } catch { /* advisory — never blocks archive */ }
     }
   } catch {}
   // unique models across every stage's state file (A4) — collected HERE,

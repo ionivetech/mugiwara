@@ -68,6 +68,39 @@ describe('checkWritingFile', () => {
     expect(stripFences('a\n```\nb\n```\nc')).toBe('a\nc');
   });
 
+  it('hyphenated "just-enough" native name passes, standalone "just" stays banned', () => {
+    expect(checkWritingFile('docs/x.md', `${CLEAN}\n\nNative name just-enough means minimal code.\n`)).toEqual([]);
+    const bad = checkWritingFile('docs/x.md', `${CLEAN}\n\nJust run it.\n`);
+    expect(bad.some((e) => e.includes('banned word "just"'))).toBe(true);
+  });
+
+  it('planted /Users/ homedir path fails as personal identifier', () => {
+    const bad = checkWritingFile('docs/x.md', `${CLEAN}\n\nKey at /Users/mekari/.mugiwara/mugiwara.key\n`);
+    expect(bad.some((e) => e.includes('personal identifier'))).toBe(true);
+  });
+
+  it('planted /home/ path fails as personal identifier', () => {
+    const bad = checkWritingFile('docs/x.md', `${CLEAN}\n\nKey at /home/farid/.config/key\n`);
+    expect(bad.some((e) => e.includes('personal identifier'))).toBe(true);
+  });
+
+  it('planted personal email fails as personal identifier', () => {
+    const bad = checkWritingFile('docs/x.md', `${CLEAN}\n\nContact farid.personal42@gmail.com for access.\n`);
+    expect(bad.some((e) => e.includes('personal identifier'))).toBe(true);
+  });
+
+  it('neutral placeholders and public coordinates pass the PII scan', () => {
+    const ok = [
+      CLEAN,
+      '',
+      'Key at ~/.mugiwara/mugiwara.key, scratch at /private/tmp/t5scratch/x.',
+      'Run `npx -y @ionivetech/mugiwara@latest install --yes`.',
+      'Report failures at https://github.com/ionivetech/mugiwara/issues.',
+      'Contact you@example.com for access.',
+    ].join('\n');
+    expect(checkWritingFile('docs/x.md', ok)).toEqual([]);
+  });
+
   it('--check-writing passes on the current tree', () => {
     const out = execFileSync('bun', ['scripts/validate-content.ts', '--check-writing'], {
       cwd: join(import.meta.dirname, '..'),

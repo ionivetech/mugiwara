@@ -20,8 +20,10 @@ Measured: the catalog index holds 21 skills (**Current:** 4,856 chars). Pointer 
 
 Real usage, when the harness exposes it (provider path): set `MUGIWARA_TOKENS` to a total, or write `input_tokens` plus `output_tokens` JSON and pass it with `--tokens-file` at savepoint. State flips to reported source and the report prints the provider-backed total. Tiers without a usage API keep the estimator. The rollup line stays absent there. No numbers are invented to fill the gap.
 
-Spend-safety verdicts come from [governor](../reference/glossary.md) phases (reserve, project, avoid, stop, plus scope, cognition, slop, budget, reporting, benchmark). The crew acts on them and records decisions to the [trail](../reference/glossary.md). They never force the model. Read `src/cost.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`, `src/slop.ts`, `src/reporting.ts` for the verdict shapes.
+Spend-safety verdicts come from governor phases (reserve, project, avoid, stop, plus scope, cognition, slop, budget, reporting, benchmark). The crew acts on them and records decisions to the [trail](../concepts/audit-trail.md). They never force the model. Read `src/cost.ts`, `src/work.ts`, `src/scope.ts`, `src/cognition.ts`, `src/slop.ts`, `src/reporting.ts` for the verdict shapes.
 
-[Slop](../reference/glossary.md) verdicts surface where spend is reviewed: the `mugiwara cost` ledger carries detected, stopped, and compressed counts, and the closing report lists avoided work including `slop_interventions`. The governor records verdicts to the trail; the crew acts on them, never the reverse.
+Slop verdicts surface where spend is reviewed: the `mugiwara cost` ledger carries detected, stopped, and compressed counts, and the closing report lists avoided work including `slop_interventions`. The governor records verdicts to the trail; the crew acts on them, never the reverse.
 
 Trail scope: `mugiwara cost` counts governor-verdict rows (`## Cost governor decisions` / `## Budget` sections of `decisions.md`) only. Hand-written decision-table rows are the audit trail and stay folded into the report — they are not ledger rows.
+
+Native names: anti-fluff is terse dense writing; just-enough is minimal-code ladder YAGNI-first; anti-slop is waste detection and intervention; have-adhd is scannable attention-friendly rendering.

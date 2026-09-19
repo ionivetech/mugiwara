@@ -103,3 +103,26 @@ At Flow 0 triage read `.mugiwara/lessons.md` and surface relevant rows to
 the owning agent. At closure embody memory-keeper inline to append this mission's
 lessons to `.mugiwara/lessons.md` — one row per real lesson, append-only,
 never overwrite.
+
+## Human-readable report layering checklist
+
+Rule: plain-language executive summary FIRST, machine-checkable detail
+BEHIND. A reader who stops after the first screen still knows who did what
+and the outcome; a reviewer who keeps reading can verify every claim.
+
+Applies to `report.md`, `pr-verdict.md`, and `flows/*.md`:
+
+1. Open with one plain paragraph: who, what changed, outcome in human words.
+   No identifiers, paths, or hashes in the first paragraph.
+2. Verdict words stay literal: GO / NO-GO, PASS / FAIL. Never paraphrase a
+   verdict into prose.
+3. Detail behind: evidence as clickable `[label](relative/path)` links,
+   parseable `- [ ]` / `- [x]` boxes, `## Flow <n>` sections, baseline
+   accounting (planned vs done counts). Keep their byte-meaning: checkboxes
+   stay one item per line, tables keep their columns.
+4. Prose around findings follows `references/prose-style.md` (verdict first,
+    numbers over adjectives); the machine-checkable shapes in this file stay
+    fixed regardless of style.
+5. Template sections above stay byte-stable: add guidance as new subsections
+    only, leaving the verdict template, checkbox rules, and
+    evidence-table shape with identical wording.
