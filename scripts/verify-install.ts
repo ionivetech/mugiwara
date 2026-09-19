@@ -90,6 +90,7 @@ const RUNTIME_SHAPES: RegExp[] = [
   /^~?\/?\.mugiwara\/config$/,                                    // project + global config
   /^\.mugiwara\/lessons\.md$/,
   /^\.mugiwara\/lessons-archive\.md$/,  // human-written prune-vehicle archive (lessons skill)
+  /^\.mugiwara\/MEMORY\.md$/,  // stable repo facts written at runtime (lessons skill)
   /^\.mugiwara\/index\.md$/,
   /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/(plan|spec|decisions|blockers|review|security|report)\.md$/,
   /^\.mugiwara\/missions\/(<mission>|[a-z0-9._-]+)\/flows\/([0-9]{2}-[a-z-]+|eval|resume|todos)\.md$/,

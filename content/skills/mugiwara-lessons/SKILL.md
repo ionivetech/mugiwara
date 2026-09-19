@@ -93,7 +93,7 @@ Lessons are cross-mission but per-repo. The ledger lives at `.mugiwara/lessons.m
 
 ## Repo memory (stable facts)
 
-Stable repo facts live in `.mugiwara/MEMORY.md` (edit-in-place, cap 40 non-empty lines); the versioned canonical schema is `references/memory-template.md`.
+Stable repo facts live in `.mugiwara/MEMORY.md` (edit-in-place, cap 40 non-empty lines); the versioned canonical schema is `_shared/references/memory-template.md`.
 
 - Flow 0: single read of `.mugiwara/MEMORY.md`. Lazy-create it from the template on first closure write (same pattern as `mugiwara lesson` in `src/cli.ts`).
 - Closure: Luffy reviews the MEMORY.md diff and updates only-if-changed; stable truths only.
