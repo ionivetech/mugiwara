@@ -250,7 +250,6 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
     const file = join(dir, '.mugiwara', 'config');
     const body = readFileSync(file, 'utf8');
     for (const key of [
-      '# Mugiwara config. Project overrides ~/.mugiwara/config. Keys: docs/concepts/config.md.',
       'mode=guided',
       'verbosity=normal',
       'branch=feature/{type}-{issue}-{slug}',
@@ -277,7 +276,7 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
     }
     // completeness: every documented key ships with a default — a fresh
     // user's config must not silently miss a key (absent != default).
-    expect(body.trim().split('\n')).toHaveLength(22);
+    expect(body.trim().split('\n')).toHaveLength(21);
     // idempotent: second call returns false, leaves file unchanged
     expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
     expect(readFileSync(file, 'utf8')).toBe(body);

@@ -90,7 +90,6 @@ export function applyModeChange(mode, { projectDir = process.cwd(), home = homed
 }
 
 export const DEFAULT_CONFIG_LINES = [
-  '# Mugiwara config. Project overrides ~/.mugiwara/config. Keys: docs/concepts/config.md.',
   'mode=guided',
   'verbosity=normal',
   'branch=feature/{type}-{issue}-{slug}',
