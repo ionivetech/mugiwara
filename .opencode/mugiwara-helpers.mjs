@@ -91,6 +91,7 @@ export function applyModeChange(mode, { projectDir = process.cwd(), home = homed
 
 export const DEFAULT_CONFIG_LINES = [
   'mode=guided',
+  'verbosity=normal',
   'branch=feature/{type}-{issue}-{slug}',
   'commit=conventional',
   'auto_commit=off',
@@ -98,9 +99,18 @@ export const DEFAULT_CONFIG_LINES = [
   'coverage_modified=90',
   'review_depth=full',
   'quality_depth=full',
+  'verify_merged=off',
   'delegate_threshold=60',
   'heal_max_cycles=3',
-  'verbosity=normal',
+  '# lane_scope_glob=packages/api/**',
+  '# context_budget_chars=150000',
+  '# investigation_max_passes=2',
+  '# investigation_max_unrelated_files=5',
+  '# investigation_repeated_read_threshold=2',
+  '# team=off',
+  '# sign=auto',
+  '# features=core+auto',
+  '# enforce=block',
 ];
 
 // Idempotent: writes the full default config only when .mugiwara/config is

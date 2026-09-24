@@ -9,7 +9,6 @@ import { join } from 'node:path';
 
 /** The default config body, identical to what the installer has always written. */
 export const DEFAULT_CONFIG = [
-  '# Mugiwara config. Project overrides ~/.mugiwara/config. Keys: docs/concepts/config.md.',
   'mode=guided',
   'verbosity=normal',
   'branch=feature/{type}-{issue}-{slug}',

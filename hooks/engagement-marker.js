@@ -9,7 +9,6 @@ import { join as join2 } from "path";
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 var DEFAULT_CONFIG = [
-  "# Mugiwara config. Project overrides ~/.mugiwara/config. Keys: docs/concepts/config.md.",
   "mode=guided",
   "verbosity=normal",
   "branch=feature/{type}-{issue}-{slug}",

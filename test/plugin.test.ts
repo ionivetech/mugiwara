@@ -251,6 +251,7 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
     const body = readFileSync(file, 'utf8');
     for (const key of [
       'mode=guided',
+      'verbosity=normal',
       'branch=feature/{type}-{issue}-{slug}',
       'commit=conventional',
       'auto_commit=off',
@@ -258,15 +259,24 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
       'coverage_modified=90',
       'review_depth=full',
       'quality_depth=full',
+      'verify_merged=off',
       'delegate_threshold=60',
       'heal_max_cycles=3',
-      'verbosity=normal',
+      '# lane_scope_glob=packages/api/**',
+      '# context_budget_chars=150000',
+      '# investigation_max_passes=2',
+      '# investigation_max_unrelated_files=5',
+      '# investigation_repeated_read_threshold=2',
+      '# team=off',
+      '# sign=auto',
+      '# features=core+auto',
+      '# enforce=block',
     ]) {
       expect(body).toContain(key);
     }
     // completeness: every documented key ships with a default — a fresh
     // user's config must not silently miss a key (absent != default).
-    expect(body.trim().split('\n')).toHaveLength(11);
+    expect(body.trim().split('\n')).toHaveLength(21);
     // idempotent: second call returns false, leaves file unchanged
     expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
     expect(readFileSync(file, 'utf8')).toBe(body);
