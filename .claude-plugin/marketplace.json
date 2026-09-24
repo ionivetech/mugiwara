@@ -5,13 +5,13 @@
   },
   "metadata": {
     "description": "The Straw Hat crew for AI agents",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "plugins": [
     {
       "name": "mugiwara",
       "description": "The Straw Hat crew of AI agents and skills: brainstorm, plan, execute, checkpoint, quality, gates, review, security, healing.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./"
     }
   ]
