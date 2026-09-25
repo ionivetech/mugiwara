@@ -292,9 +292,13 @@ test('guard banner: banner in mission files suppresses warning without transcrip
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-// ---------- T4: opencode lazy prompt — description + pointer, never the body ----------
+// ---------- T4 (superseded 2026-09-25): prompts embed the body ----------
+// Lazy pointers named an npm-cache absolute path, which triggers a file
+// permission prompt on every embody on plugin-only installs (mission
+// 2026-09-25-plugin-cache-noncli-parity). Prompts are self-contained now:
+// description + body, never a pointer outside the project.
 
-test('opencode lazy prompt: every registered prompt excludes its body and names an existing file', async () => {
+test('opencode embedded prompt: every registered prompt contains its body and no absolute path', async () => {
   const plugin = (await import('../.opencode/plugins/mugiwara.mjs')).default;
   const { config } = await plugin();
   const cfg = { agent: {} };
@@ -304,10 +308,9 @@ test('opencode lazy prompt: every registered prompt excludes its body and names 
   for (const [name, a] of Object.entries(cfg.agent)) {
     const agent = a as { prompt?: string; description?: string };
     const src = readFileSync(join(ROOT, 'content', 'agents', `${name}.md`), 'utf8');
-    const full = src.slice(src.indexOf('---', 3) + 3).replace(/^---\r?\n/, '').trim();
-    expect(agent.prompt!.includes(full), `${name}: prompt must not embed the body`).toBe(false);
-    const m = agent.prompt!.match(/read (.+\.md) when embodying/);
-    expect(m, `${name}: prompt names its file`).not.toBeNull();
-    expect(existsSync(m![1]), `${name}: pointer path exists`).toBe(true);
+    const full = src.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+    expect(agent.prompt!.includes(full), `${name}: prompt embeds the body`).toBe(true);
+    expect(agent.prompt!.includes('/node_modules/'), `${name}: prompt has no cache path`).toBe(false);
+    expect(agent.prompt!.match(/read \/.+\.md/), `${name}: prompt names no outside file`).toBeNull();
   }
 });
