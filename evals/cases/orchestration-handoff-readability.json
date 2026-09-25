@@ -4,11 +4,11 @@
   "trigger": {
     "positive": [
       {
-        "prompt": "semi Flow 2 handoff after planning: make the GO gate actionable",
+        "prompt": "captain gatekeeper route classify check-in semi planning GO handoff",
         "top_k": 3
       },
       {
-        "prompt": "guided flow boundary needs result next choices and resume command",
+        "prompt": "captain guided flow boundary: result next choices resume command route",
         "top_k": 3
       }
     ],
