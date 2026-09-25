@@ -19,7 +19,9 @@ Example: an OpenCode user adds one plugin line and restarts; a Codex user runs o
 
 Three loading paths cover all ten rows. Native plugins (Claude Code, opencode) register paths with no copying. CLI targets receive full bodies or stubs with references under `.mugiwara/refs/`. Marketplace hosts (Pi, Cursor, Kimi) resolve via manifest; the CLI still serves state commands through npx. State commands (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) route identically everywhere; bare `archive`/`handoff`/`sign` list missions (exit 2). Only Claude Code and opencode surface the `/mugiwara` slash command. Tier behavior: [harness matrix](../reference/harness-matrix.md).
 
-Scope is project by default and user-wide with `--global`. Every CLI install writes a default `.mugiwara/config` for mode, branch, and commit style, plus a manifest recording each path. Pass `--target all` for every supported host at once, or name targets with commas. Drop `--yes` for the interactive wizard covering scope, targets, and confirmation. Prefer a global binary via `npm i -g @ionivetech/mugiwara` for direct `savepoint`/`archive`/`continue` calls; without it the crew falls back to `npx`, `.mugiwara/bin/`, then direct file ops — state and resume keep working. Full degradation to inline-only happens only when every rung fails.
+Scope is project by default and user-wide with `--global`; every CLI install writes `.mugiwara/config` and a manifest of written paths. Prefer `npm i -g @ionivetech/mugiwara` for direct `savepoint`/`archive`/`continue`; without it the crew falls back to `npx`, `.mugiwara/bin/`, then direct file ops — state and resume keep working.
+
+Every harness page ends with a clean-uninstall section: exact removal commands, cache paths, restart, and a verify step. `mugiwara list --check` shows the manifest-owned files; the pages name the leftovers the manifest never owned.
 
 ## After install
 
