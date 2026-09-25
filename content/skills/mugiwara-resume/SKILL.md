@@ -62,7 +62,7 @@ Full protocol: `references/resume-protocol.md` — 9 steps; verify next_action a
 4. If state is absent and no legacy files exist → fresh mission, escalate to Luffy.
 5. Continue refines state for next_action — state proves what is done, continue says what is next; a contradiction escalates to Luffy, never a silent override.
 6. Output the handoff line: if continue exists, its verified next_session_prompt is the resume output line.
-7. Multiple missions in-flight for the actor → the CLI exits 2 with the list; stop there and let the user pick (never guess which mission or member).
+7. Multiple missions in-flight for the actor → the CLI exits 2 with the list; stop there and let the user pick (never guess which mission or member). Without CLI or npx, the same list comes from reading `.mugiwara/missions/` directly — same STOP, same never-guess.
 
 ## Rationalizations
 

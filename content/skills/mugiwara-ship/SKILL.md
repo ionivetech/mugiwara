@@ -65,7 +65,7 @@ branch and verdict.
 
 ## Cleanup (after the terminal step)
 
-Full procedure: `references/cleanup.md` — KEEP the audit trail + PR material, ARCHIVE-then-remove flow-stage artifacts via `mugiwara archive <mission>` (dry-run first). Never touch anything outside `.mugiwara/`; the trail must survive the merge.
+Full procedure: `references/cleanup.md` — KEEP the audit trail + PR material, ARCHIVE-then-remove flow-stage artifacts via `mugiwara archive <mission>` (dry-run first; without CLI or npx, fold the same files by hand per `cleanup.md` and say so). Never touch anything outside `.mugiwara/`; the trail must survive the merge.
 
 ## Iron Law
 
