@@ -458,8 +458,8 @@ async function install(flags: Args['flags']): Promise<void> {
   });
   console.log(`\nOK mugiwara ${VERSION} installed (manifest: ${file})`);
   if (allNotes.length) console.log(`${allNotes.length} note(s) above may need attention.`);
-  console.log('CLI: run `npm i -g @ionivetech/mugiwara` so the crew can call `mugiwara savepoint/archive/continue`.');
-  console.log('     Without it the crew degrades to inline-only — no state, no resume, no closure gate.');
+  console.log('CLI: run `npm i -g @ionivetech/mugiwara` so the crew can call `mugiwara savepoint/archive/continue` directly.');
+  console.log('     Without it the crew falls back to npx, then `.mugiwara/bin/*.sh`, then direct file ops — state and resume keep working.');
   // A fresh install writes a default .mugiwara/config — point at it directly.
   console.log('\nNext: edit .mugiwara/config to customise (mode, branch, coverage, depths).');
 }
