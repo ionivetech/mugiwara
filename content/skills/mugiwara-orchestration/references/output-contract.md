@@ -81,7 +81,7 @@ what is echoed, it never narrows what the review needs.
 ## Handoff block (guided/semi)
 
 In `guided`/`semi` the handoff line is never alone — it closes a three-part
-block so the user always knows what happened, who is next, and what to write:
+block so the user knows what happened, who is next, and what to write:
 
 1. **Result** — what this flow stage produced, one line + evidence path.
 2. **Next** — who owns the next flow stage and what they will do.
@@ -98,4 +98,4 @@ block so the user always knows what happened, who is next, and what to write:
 ```
 
 The summary line and the `→ Flow N` text keep their exact shapes — the block
-wraps them, never replaces them.
+wraps them without replacing them.

@@ -24,6 +24,5 @@
 
 Then continue degraded: keep flow banners and the inline report, admit at
 closure that no machine state was recorded. Governance that fails silently is
-worse than governance that admits it is off. Degraded is the last rung, never
-the second — a plugin-only install with `.mugiwara/bin/` on disk is NOT
-degraded.
+worse than governance that admits it is off. Degraded is the last rung, not the
+second — a plugin-only install with `.mugiwara/bin/` on disk is not degraded.
