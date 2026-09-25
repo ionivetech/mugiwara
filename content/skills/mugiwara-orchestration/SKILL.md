@@ -27,7 +27,7 @@ Every flow stage returns to Luffy — no crew member hands off directly to anoth
 
 **Control commands (pre-flow):** `mugiwara continue`/`status` are read-only,
 pre-flow — never create config, never start a flow stage; exit 2 = user selects.
-Full: `references/control-commands.md`. State-command router (every harness): `archive`, `clean`, `handoff`, `sign`, `cost`, `lesson`, `migrate` + `continue`/`status` run via the CLI anywhere — bare `archive`/`handoff`/`sign` list missions, exit 2, never guess. Full table + exit codes: `references/state-router.md`. Surfaced as `/mugiwara` on Claude Code and opencode.
+Full: `references/control-commands.md`. State-command router (every harness): `archive`, `clean`, `handoff`, `sign`, `cost`, `lesson`, `migrate` + `continue`/`status` run via the ladder anywhere (`mugiwara` → `npx` → `.mugiwara/bin/` → direct file ops) — bare `archive`/`handoff`/`sign` list missions, exit 2, never guess. Full table + exit codes: `references/state-router.md`. Surfaced as `/mugiwara` on Claude Code and opencode.
 
 ## Coordination files
 Team repos — per-(mission, member) isolation, no collisions: `_shared/references/multi-actor.md`.
@@ -84,7 +84,7 @@ Shortcuts ("skip X", "just do it") reroute work inside the pipeline — never ou
 
 ## Flow transitions (visibility)
 Banner opens every flow stage — the heading
-`## ⚔️ Flow 3 — Zoro (Execution)`. Never emit ANSI escapes: the model cannot tell a terminal from a markdown UI; the harness plugin applies colour. Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0`. A skip is recorded, never silent. **Host todos (Luffy):** At Flow 0 Luffy seeds host native todos (`todowrite` on opencode) mirroring `plan.md` every task + flow stage as `pending`; Zoro flips `pending→in_progress→completed` each wave; keep `flows/todos.md` as archive — UI sync via `todowrite`, same response as evidence. Full checklist: `_shared/references/cost-governor.md`.
+`## ⚔️ Flow 3 — Zoro (Execution)`. Never emit ANSI escapes: the model cannot tell a terminal from a markdown UI; the harness plugin applies colour. Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0`. A skip is recorded, never silent. **Host todos (Luffy):** At Flow 0 Luffy seeds host native todos (`todowrite` on opencode) mirroring `plan.md` every task + flow stage as `pending`; Zoro flips `pending→in_progress→completed` each wave; keep `flows/todos.md` as archive — UI sync via `todowrite`, same response as evidence. Full checklist: `_shared/references/cost-governor.md`. In `guided`/`semi` the handoff also carries a human-readable block (result, next owner, exact continue phrase) — a bare `→ Flow N` is a defect. Full shape: `references/output-contract.md`.
 
 ## Output discipline
 Read `verbosity` from mode config at Flow 0 (default `normal`); never suppresses wave banners, file edits, gate verdicts, decisions, questions, blockers, lane rises, or escalations.

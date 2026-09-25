@@ -25,6 +25,10 @@ OK mugiwara 0.9.2 installed [...]
 
 Ask what crew members are available; a correct install answers with the roster. `mugiwara list --check` reports missing and stale files as a health pass. Update with the update command naming project, target, and confirmation; uninstall removes exactly what the manifest recorded. Antigravity is tier 3, so the main thread embodies each persona from markdown and reads the full body on demand. A host-native plugin-install path is untested on this host; the CLI path above is the verified one.
 
-State commands are crew-wide: the orchestration router (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) runs through `mugiwara ...` or `npx -y @ionivetech/mugiwara@latest ...`, and bare `archive`/`handoff`/`sign` list missions to pick (exit 2) instead of guessing. Only Claude Code and opencode add a `/mugiwara` slash-command wrapper; the router itself is orchestration, loaded everywhere.
+State commands are crew-wide: the crew-wide state router (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) runs through `mugiwara ...` or `npx -y @ionivetech/mugiwara@latest ...`, and bare `archive`/`handoff`/`sign` list missions to pick (exit 2). Only Claude Code and opencode add the `/mugiwara` wrapper.
 
 Set mode and branch in `.mugiwara/config` per the [config page](../concepts/config.md), then open [Getting started](../getting-started.md) and hand the crew one real task.
+
+## Clean uninstall
+
+`mugiwara uninstall [--global]` removes exactly what the manifest recorded (check first with `mugiwara list --check`). Leftovers the manifest never owned, remove by hand: `.agents/rules` rule files and `.mugiwara/refs/` rule bodies. `.mugiwara/config` and the `.gitignore` block are yours and stay unless you remove them. Verify: the roster question no longer lists the crew.

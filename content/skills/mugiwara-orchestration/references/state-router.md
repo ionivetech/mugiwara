@@ -1,8 +1,12 @@
 # State-command router (every harness)
 
 `mugiwara <cmd>` means the global binary if present, else
-`npx -y @ionivetech/mugiwara@latest <cmd>`. State commands are deterministic
-(directory scan + allowlist) — never a reasoning turn. Run them via shell,
+`npx -y @ionivetech/mugiwara@latest <cmd>`, else the `.mugiwara/bin/` shell
+fallbacks, else direct `.mugiwara/missions/` file ops (read-only commands read
+`state.json`+`continue.json` per the layout in `mugiwara-resume` → State
+contract). Degraded (no machine state) only when all four rungs fail. State commands are deterministic
+(directory scan + allowlist) — never a reasoning turn. Run them via the highest
+rung that works,
 print stdout/stderr verbatim, then act on the exit code. This router is a
 crew-wide capability: orchestration loads it in every harness (Claude Code,
 opencode, Codex, Gemini, Copilot, Windsurf, Cline, Kilo, Antigravity, Pi,

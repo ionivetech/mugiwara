@@ -52,6 +52,18 @@ test('config hook registers all 14 agents: internal -> subagent mode, user-facin
   }
 });
 
+test('agent prompt embeds the body, never an absolute cache path', async () => {
+  const { config } = await plugin();
+  const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
+  await config(cfg);
+  const luffy = cfg.agent['luffy-orchestrator'];
+  expect(luffy.prompt as string).toContain('## Role');
+  for (const a of Object.values(cfg.agent)) {
+    expect(a.prompt as string).not.toContain('/node_modules/');
+    expect(a.prompt as string).not.toMatch(/read \/.+\.md/);
+  }
+});
+
 test('internal flag: eval-runner is subagent + [INTERNAL] prefix, zoro-execution is all + no prefix', async () => {
   const { config } = await plugin();
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };

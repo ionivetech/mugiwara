@@ -99,6 +99,9 @@ const RUNTIME_SHAPES: RegExp[] = [
   /^\.mugiwara\/missions\/<mission>\/waves\/?$/, // legacy layout, still read
   /^\.mugiwara\/missions\/<mission>\/(state\.json|<member>\.json)$/,
   /^\.mugiwara\/missions\/<mission>\/(continue\.json|continue-<member>\.json)$/,
+  /^\.mugiwara\/bin\/[A-Za-z0-9._\/-]+\.sh$/,                  // shell fallbacks installed by `mugiwara install` (savepoint.sh, lane.sh, lib/)
+  /^\.mugiwara\/missions\/$/,                                   // missions root scanned by continue/status
+  /^\.mugiwara\/bin\/$/,                                        // shell-fallback dir installed by `mugiwara install`
   /^\.mugiwara\/missions\/<mission>\/?$/,                       // mission dir itself (roster derivation scans it)
   /^\.mugiwara\/active-member$/,                                 // roster-pick cache written by continue/join
 ];

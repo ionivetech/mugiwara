@@ -21,6 +21,10 @@ mugiwara: kimi installs through its marketplace manifest, not --target.
 
 ## Verify, update, remove
 
-Ask what crew members are available; a correct install answers with the roster. Kimi resolves through the host plugin manifest with content pointers, per the [harness matrix](../reference/harness-matrix.md). State commands are crew-wide: the orchestration router (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) runs through `mugiwara ...` or `npx -y @ionivetech/mugiwara@latest ...` in every harness, and bare `archive`/`handoff`/`sign` list missions to pick (exit 2) instead of guessing. Only Claude Code and opencode add a `/mugiwara` slash-command wrapper; the router itself is orchestration, loaded everywhere. Without the CLI the crew still runs the pipeline but resume, budget tracking, and the closure gate stay off. Removal happens on the host side through Kimi's own uninstall flow.
+Ask what crew members are available; a correct install answers with the roster. Kimi resolves through the host plugin manifest with content pointers, per the [harness matrix](../reference/harness-matrix.md). The crew-wide state router (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) runs through `mugiwara ...` or `npx -y @ionivetech/mugiwara@latest ...`; bare `archive`/`handoff`/`sign` list missions to pick (exit 2). Only Claude Code and opencode add the `/mugiwara` wrapper. Without the CLI a project install keeps state and resume through the ladder (binary → npx → `.mugiwara/bin/` → file ops).
+
+## Clean uninstall
+
+Marketplace install: remove the mugiwara extension through Kimi's own extension-removal flow, then restart Kimi and verify the roster question no longer lists the crew. If a stale pinned copy survives the restart, clear Kimi's plugin cache directory and repeat. If you also ran a CLI install for state commands, run `mugiwara uninstall` (or remove `.mugiwara/refs/` and the per-target rules files listed by `mugiwara list --check`). `.mugiwara/config` and the `.gitignore` block are yours and stay unless you remove them.
 
 Set mode and branch in `.mugiwara/config` per the [config page](../concepts/config.md), then open [Getting started](../getting-started.md) and hand the crew one real task.

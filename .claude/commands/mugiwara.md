@@ -27,9 +27,11 @@ table and exit-code protocol live in the orchestration skill at
 loads orchestration and follows that table; this slash command is that same
 router surfaced for the hosts that have slash commands.
 
-Run it through the CLI — `mugiwara <cmd>` = global binary if present, else
-`npx -y @ionivetech/mugiwara@latest <cmd>` — print stdout/stderr verbatim, then
-follow the exit code from the reference:
+Run it down the ladder — global `mugiwara <cmd>` if present, else
+`npx -y @ionivetech/mugiwara@latest <cmd>`, else `.mugiwara/bin/` shell
+fallbacks, else direct `.mugiwara/missions/` file ops — print stdout/stderr
+verbatim, then follow the exit code from the reference. Full ladder:
+workflow skill → CLI availability (`references/cli-ladder.md`).
 
 | `/mugiwara ...` | Runs |
 |---|---|

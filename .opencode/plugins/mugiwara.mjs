@@ -113,7 +113,10 @@ function readAgents(stepsEnabled = true) {
     agents[name] = {
       description: internal ? `[INTERNAL] ${parsed.data.description}` : parsed.data.description,
       mode: internal ? 'subagent' : 'all',
-      prompt: `${parsed.data.description}\n\nFull instructions: read ${join(agentsDir, f)} when embodying this role.`,
+      // Self-contained: the body ships inside the prompt so embodying a role
+      // never reads outside the project (no ~/.cache permission prompt on a
+      // plugin-only install, where agentsDir points into the npm cache).
+      prompt: `${parsed.data.description}\n\n${parsed.body}`,
     };
     if (CREW[name]) {
       // steps caps per-agent agentic iterations. In auto mode the crew runs

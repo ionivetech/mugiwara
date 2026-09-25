@@ -1,8 +1,8 @@
 # How do I install it?
 
-Your editor is open and the crew is not in it. You want the smallest install that puts all 21 skills and 14 agents behind your prompts, with a manifest so update and uninstall touch exactly what install wrote. Pick your harness below and follow its page.
+Pick your harness below for the smallest install: all 21 skills and 14 agents behind your prompts, with a manifest scoping update and uninstall to exactly what install wrote.
 
-Example: an OpenCode user adds one plugin line to `opencode.json` and restarts, while a Codex user runs one CLI command that writes 91 files under `.codex/mugiwara/`. Both then ask "what mugiwara crew members are available" and receive the same roster. Same crew, different doors.
+Example: an OpenCode user adds one plugin line and restarts; a Codex user runs one CLI command. Both ask for the roster and receive the same crew.
 
 | Harness | How the crew loads | Install page |
 |---|---|---|
@@ -17,12 +17,14 @@ Example: an OpenCode user adds one plugin line to `opencode.json` and restarts, 
 | Cursor | host marketplace manifest plus content pointers | [cursor](cursor.md) |
 | Kimi Code | host marketplace manifest plus content pointers | [kimi](kimi.md) |
 
-Three loading paths cover all ten rows. Native plugins (Claude Code, opencode) register paths and discover the crew with no copying. CLI targets (Codex, Gemini, Copilot, Antigravity, plus Windsurf, Cline, Kilo on the cli page) receive full bodies or stub pointers with references under `.mugiwara/refs/`. Marketplace hosts (Pi, Cursor, Kimi) resolve through the host manifest, and the CLI still provides state commands through npx. State commands route the same way on every harness: the orchestration router (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) runs via the CLI, and bare `archive`/`handoff`/`sign` list missions to pick (exit 2) instead of guessing. Only Claude Code and opencode surface that router as the `/mugiwara` slash command; the router itself is orchestration, loaded everywhere. Tier behavior behind these paths lives on the [harness matrix](../reference/harness-matrix.md).
+Three loading paths cover all ten rows. Native plugins (Claude Code, opencode) register paths with no copying. CLI targets receive full bodies or stubs with references under `.mugiwara/refs/`. Marketplace hosts (Pi, Cursor, Kimi) resolve via manifest; the CLI still serves state commands through npx. State commands (`status`, `continue`, `cost`, `archive`, `clean`, `handoff`, `sign`, `lesson`, `migrate`) route identically everywhere; bare `archive`/`handoff`/`sign` list missions (exit 2). Only Claude Code and opencode surface the `/mugiwara` slash command. Tier behavior: [harness matrix](../reference/harness-matrix.md).
 
-Scope is project by default and user-wide with `--global`. Every CLI install writes a default `.mugiwara/config` for mode, branch, and commit style, plus a manifest recording each path. Pass `--target all` for every supported host at once, or name targets with commas. Drop `--yes` for the interactive wizard covering scope, targets, and confirmation. Prefer a global binary via `npm i -g @ionivetech/mugiwara` so the crew can call `mugiwara savepoint`, `archive`, and `continue`; without it the crew warns at Flow 0 and degrades to inline-only with no resume and no closure gate.
+Scope is project by default and user-wide with `--global`; every CLI install writes `.mugiwara/config` and a manifest of written paths. Prefer `npm i -g @ionivetech/mugiwara` for direct `savepoint`/`archive`/`continue`; without it the crew falls back to `npx`, `.mugiwara/bin/`, then direct file ops — state and resume keep working.
+
+Every harness page ends with a clean-uninstall section: exact removal commands, cache paths, restart, and a verify step. `mugiwara list --check` shows the manifest-owned files; the pages name the leftovers the manifest never owned.
 
 ## After install
 
-Host requirement is Node.js 20.11 or newer. Verify on any platform by asking for the roster: a correct install answers with the crew list. `mugiwara list` shows recorded installations with version and file counts, and `mugiwara list --check` reports missing and stale files as a health pass. Update replaces installed files with backups of differences, and uninstall removes exactly what the manifest recorded. Set mode, branch, and commit style in `.mugiwara/config` per the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
+Host requirement: Node.js 20.11+. Verify by asking for the roster. `mugiwara list` shows installations; `list --check` reports missing/stale files. Update backs up differences; uninstall removes exactly what install wrote. Configure via the [config page](../concepts/config.md). Report failures at the [tracker](https://github.com/ionivetech/mugiwara/issues).
 
 Open your harness page above and run its verify step.
