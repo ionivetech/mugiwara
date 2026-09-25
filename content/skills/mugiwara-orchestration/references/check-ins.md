@@ -46,7 +46,9 @@ from the decision log's `## Flow 8` sections, not from banners). Colors
 and the full spec: `_shared/references/wave-banners.md`. No wave starts without its banner. A wave intentionally
 omitted is never silent — record flow stage, owner, and reason in the decision log
 before moving on. The user must always see which crew runs now and who takes
-over next.
+over next. In `guided`/`semi` the handoff closes a human-readable block
+(result + next owner + exact continue phrase per `output-contract.md`); a bare
+`→ Flow N` line with no block is a red flag.
 
 ## On drift
 

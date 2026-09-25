@@ -75,3 +75,27 @@ when debugging the crew itself or auditing exactly how a result was reached.
 Test output may collapse — the evidence file holds it. A decision may not — it
 has no other home. The safety rule applies at `full` too: verbosity widens
 what is echoed, it never narrows what the review needs.
+
+---
+
+## Handoff block (guided/semi)
+
+In `guided`/`semi` the handoff line is never alone — it closes a three-part
+block so the user always knows what happened, who is next, and what to write:
+
+1. **Result** — what this flow stage produced, one line + evidence path.
+2. **Next** — who owns the next flow stage and what they will do.
+3. **Continue phrase** — the exact words (or "nothing — continuing") that start
+   the next stage. A bare handoff with no phrase is a defect, like a bare
+   question with no options.
+
+```
+## Hasil Flow 2 — plan jadi
+**Selanjutnya:** Luffy minta GO; tanpa GO Zoro tidak jalan.
+**Tulis satu:** `GO execution` / `ubah <bagian>` / `stop`
+✓ Flow 2 — Nami · plan 6 tasks/3 waves → .mugiwara/missions/<mission>/plan.md
+→ Flow 0 — Luffy (GO decision)
+```
+
+The summary line and the `→ Flow N` text keep their exact shapes — the block
+wraps them, never replaces them.
