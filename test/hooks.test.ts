@@ -221,6 +221,63 @@ test('savepoint hook: config mode=auto + plan, no state → state records auto',
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('savepoint hook: decisions-only mission bootstraps Flow 0', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'decisions.md'), '# Decisions\n');
+    const r = hook(SAVEHOOK, dir, {});
+    expect(r.status).toBe(0);
+    const state = JSON.parse(readFileSync(join(d, 'state.json'), 'utf8'));
+    expect(state.flow).toBe(0);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: spec-only mission bootstraps Flow 1', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'spec.md'), '# Spec\n');
+    const r = hook(SAVEHOOK, dir, {});
+    expect(r.status).toBe(0);
+    const state = JSON.parse(readFileSync(join(d, 'state.json'), 'utf8'));
+    expect(state.flow).toBe(1);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: plan-only mission bootstraps Flow 2 in state and continue', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    const r = hook(SAVEHOOK, dir, {});
+    expect(r.status).toBe(0);
+    const state = JSON.parse(readFileSync(join(d, 'state.json'), 'utf8'));
+    const continueState = JSON.parse(readFileSync(join(d, 'continue.json'), 'utf8'));
+    expect(state.flow).toBe(2);
+    expect(continueState.flow).toBe(2);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: existing Flow 1 state stays authoritative when plan appears', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    execFileSync('bash', [SAVEPOINT, 'm', '', '1', 'semi'], { cwd: dir, stdio: 'ignore' });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    const r = hook(SAVEHOOK, dir, {});
+    expect(r.status).toBe(0);
+    const state = JSON.parse(readFileSync(join(d, 'state.json'), 'utf8'));
+    const continueState = JSON.parse(readFileSync(join(d, 'continue.json'), 'utf8'));
+    expect(state.flow).toBe(1);
+    expect(continueState.flow).toBe(1);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('tracker: "mugiwara mode semi" in a turn → config updated', { timeout: 20000 }, () => {
   const dir = repo();
   try {
