@@ -25,7 +25,7 @@ export function verifyArgs(reportPath: string, pubKey: string | null): string[] 
 
 export function hasMinisign(): boolean {
   try {
-    execFileSync('minisign', ['-v'], { stdio: ['ignore', 'pipe', 'ignore'] });
+    execFileSync('minisign', ['-v'], { env: process.env, stdio: ['ignore', 'pipe', 'ignore'] });
     return true;
   } catch {
     return false;
@@ -173,7 +173,7 @@ export function signReport(projectDir: string, missionDir: string): { ok: boolea
   if (backend === 'minisign') {
     const secretKey = process.env.MUGIWARA_SIGN_KEY?.trim() || defaultKey('secret');
     try {
-      execFileSync('minisign', signArgs(report, secretKey), { cwd: projectDir, stdio: 'pipe', input: process.env.MUGIWARA_SIGN_PASSWORD ?? '' });
+      execFileSync('minisign', signArgs(report, secretKey), { cwd: projectDir, env: process.env, stdio: 'pipe', input: process.env.MUGIWARA_SIGN_PASSWORD ?? '' });
       return { ok: true, message: `signed ${report}.minisig (minisign, key: ${secretKey})` };
     } catch (e) {
       return { ok: false, message: `signing failed: ${(e as Error).message}` };
@@ -244,7 +244,7 @@ export function verifyReport(projectDir: string, missionDir: string): { ok: bool
     if (!hasMinisign()) return { ok: false, message: 'minisig present but minisign not installed — cannot verify that signature' };
     const pubKey = existsSync(defaultKey('public')) ? defaultKey('public') : null;
     try {
-      execFileSync('minisign', verifyArgs(report, pubKey), { cwd: projectDir, stdio: 'pipe' });
+      execFileSync('minisign', verifyArgs(report, pubKey), { cwd: projectDir, env: process.env, stdio: 'pipe' });
       // trust check for pure is not applied to minisig (MVP: pure-only trust).
       // If a .mugisig also exists alongside minisig, still trust-check the pure pub for completeness,
       // but minisig verification already succeeded — treat as ok.
