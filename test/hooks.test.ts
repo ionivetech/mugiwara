@@ -48,6 +48,10 @@ const bash = (dir: string, command: string): { out: string; err: string } => {
   return { out: r.out, err: r.err };
 };
 const blocked = (out: string): boolean => out.includes('"decision":"block"');
+// Artifact tests must engage BEFORE writing the artifact: the guard's session
+// anchor is the marker's first_seen, so an artifact written before the marker is
+// correctly outside the session window. Hook spawn is ~1.5s — wider than the 1s
+// mtime tolerance — so a reversed fixture order is flaky, not deterministic.
 const touchArtifact = (dir: string): void => {
   mkdirSync(join(dir, '.mugiwara', 'spec'), { recursive: true });
   writeFileSync(join(dir, '.mugiwara', 'spec', 'idea.md'), '# brainstorm output\n');
@@ -58,9 +62,9 @@ const touchArtifact = (dir: string): void => {
 test('guard: source + artifacts, no triage → blocks naming artifacts', { timeout: 20000 }, () => {
   const dir = repo();
   try {
+    engage(dir);
     writeFileSync(join(dir, 'app.js'), 'code\n');
     touchArtifact(dir);
-    engage(dir);
     const { out } = hook(GUARD, dir, { session_id: 's1' });
     expect(blocked(out)).toBe(true);
     expect(out).toContain('artifacts');
@@ -70,8 +74,8 @@ test('guard: source + artifacts, no triage → blocks naming artifacts', { timeo
 test('guard: artifacts written, no source, no triage → blocks (E3 core)', { timeout: 20000 }, () => {
   const dir = repo();
   try {
-    touchArtifact(dir);
     engage(dir);
+    touchArtifact(dir);
     const { out } = hook(GUARD, dir, { session_id: 's1' });
     expect(blocked(out)).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
@@ -113,8 +117,8 @@ test('guard: corrupt .engaged marker → silent, exit 0 (fail open)', { timeout:
 test('guard: artifact violation under enforce=warn → warns, exit 0', { timeout: 20000 }, () => {
   const dir = repo();
   try {
-    touchArtifact(dir);
     engage(dir);
+    touchArtifact(dir);
     writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\n');
     const r = hook(GUARD, dir, { session_id: 's1' });
     expect(r.out).toBe('');
