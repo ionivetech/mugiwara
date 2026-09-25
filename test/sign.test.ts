@@ -191,3 +191,102 @@ describe('signReport end-to-end (pure backend)', () => {
     expect(v.message).toContain('not signed');
   });
 });
+
+describe('signing error branches', () => {
+  it('rejects malformed pure signature data and invalid key material', () => {
+    const badSig = { algo: 'ed25519-pure' as const, sig: 'not-base64', pub: 'not-base64', mission: 'm', commit: 'c', ts: 't' };
+    expect(pureVerify('content', badSig)).toBe(false);
+    const { key, pub } = generatePureKey();
+    expect(pureSign('content', 'not-a-seed', { mission: 'm', commit: 'c', ts: 't', pub }).ok).toBe(false);
+    expect(pureSign('content', key, { mission: 'm', commit: 'c', ts: 't', pub: 'not-a-pub' }).ok).toBe(false);
+  });
+
+  it('reports a minisign process failure without pretending it signed', () => {
+    const project = mkdtempSync(join(tmpdir(), 'mugi-minisign-fail-'));
+    const previousPath = process.env.PATH;
+    const previousKey = process.env.MUGIWARA_SIGN_KEY;
+    try {
+      const bin = join(project, 'bin');
+      mkdirSync(bin, { recursive: true });
+      const stub = join(bin, 'minisign');
+      writeFileSync(stub, '#!/bin/sh\n[ "$1" = "-v" ] && exit 0\nexit 1\n');
+      chmodSync(stub, 0o755);
+      process.env.PATH = `${bin}:${previousPath ?? ''}`;
+      process.env.MUGIWARA_SIGN_KEY = '/keys/secret.key';
+      mkdirSync(join(project, '.mugiwara'), { recursive: true });
+      writeFileSync(join(project, '.mugiwara', 'config'), 'sign=minisign\n');
+      const mdir = join(project, '.mugiwara', 'missions', 'demo');
+      mkdirSync(mdir, { recursive: true });
+      writeFileSync(join(mdir, 'report.md'), '# demo\n');
+      const result = signReport(project, mdir);
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('signing failed');
+    } finally {
+      if (previousPath === undefined) delete process.env.PATH;
+      else process.env.PATH = previousPath;
+      if (previousKey === undefined) delete process.env.MUGIWARA_SIGN_KEY;
+      else process.env.MUGIWARA_SIGN_KEY = previousKey;
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('verifies a minisign signature and reports a missing binary', () => {
+    const project = mkdtempSync(join(tmpdir(), 'mugi-minisign-verify-'));
+    const previousPath = process.env.PATH;
+    const previousKey = process.env.MUGIWARA_SIGN_KEY;
+    try {
+      const bin = join(project, 'bin');
+      mkdirSync(bin, { recursive: true });
+      const stub = join(bin, 'minisign');
+      writeFileSync(stub, '#!/bin/sh\n[ "$1" = "-v" ] && exit 0\n[ "$1" = "-Sm" ] && touch "$2.minisig" && exit 0\n[ "$1" = "-Vm" ] && exit 0\nexit 1\n');
+      chmodSync(stub, 0o755);
+      process.env.PATH = `${bin}:${previousPath ?? ''}`;
+      process.env.MUGIWARA_SIGN_KEY = '/keys/secret.key';
+      mkdirSync(join(project, '.mugiwara'), { recursive: true });
+      writeFileSync(join(project, '.mugiwara', 'config'), 'sign=minisign\n');
+      const mdir = join(project, '.mugiwara', 'missions', 'demo');
+      mkdirSync(mdir, { recursive: true });
+      writeFileSync(join(mdir, 'report.md'), '# demo\n');
+      expect(signReport(project, mdir).ok).toBe(true);
+      expect(verifyReport(project, mdir).ok).toBe(true);
+      process.env.PATH = '';
+      const missing = verifyReport(project, mdir);
+      expect(missing.ok).toBe(false);
+      expect(missing.message).toContain('minisign not installed');
+    } finally {
+      if (previousPath === undefined) delete process.env.PATH;
+      else process.env.PATH = previousPath;
+      if (previousKey === undefined) delete process.env.MUGIWARA_SIGN_KEY;
+      else process.env.MUGIWARA_SIGN_KEY = previousKey;
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses to sign a mission without a report', () => {
+    const project = mkdtempSync(join(tmpdir(), 'mugi-no-report-'));
+    try {
+      const mdir = join(project, '.mugiwara', 'missions', 'demo');
+      mkdirSync(mdir, { recursive: true });
+      const result = signReport(project, mdir);
+      expect(result.ok).toBe(false);
+      expect(result.message).toContain('no report.md');
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects malformed .mugisig JSON', () => {
+    const project = mkdtempSync(join(tmpdir(), 'mugi-mugisig-invalid-'));
+    try {
+      const mdir = join(project, '.mugiwara', 'missions', 'demo');
+      mkdirSync(mdir, { recursive: true });
+      writeFileSync(join(mdir, 'report.md'), '# demo\n');
+      writeFileSync(join(mdir, 'report.md.mugisig'), '{invalid');
+      const result = verifyReport(project, mdir);
+      expect(result.ok).toBe(false);
+      expect(result.message).toBe('invalid .mugisig file');
+    } finally {
+      rmSync(project, { recursive: true, force: true });
+    }
+  });
+});
