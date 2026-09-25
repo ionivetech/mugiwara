@@ -6,16 +6,18 @@ description: Resume an in-flight mission — reads continue/<mission>/[member].j
 Resume mid-mission, never restart. Loads `mugiwara-resume` (the continuation skill).
 Identity is (mission, member), never branch. Solo missions use member-less files.
 
-## Step 1 — run the CLI, print its output verbatim
+## Step 1 — resolve the resume point (ladder, highest working rung wins)
 
 ```bash
 mugiwara continue $ARGUMENTS
 ```
 
-Selecting which mission and member to resume is a directory scan plus a
-solo-vs-team lookup. That is deterministic work: the CLI does it, you do not.
-Do not scan `.mugiwara/continue/` yourself, do not re-derive the solo/team split
-from the plan, and do not paraphrase the output — print it as printed.
+1. Global `mugiwara` binary if present, else `npx -y @ionivetech/mugiwara@latest continue $ARGUMENTS` — print stdout/stderr verbatim, never paraphrase.
+2. Else (no binary, no npx): read `.mugiwara/missions/<mission>/continue.json` (solo) or `continue-<member>.json` (team, same dir) plus the matching `state.json` directly — same solo-vs-team lookup, same exit-code protocol below. Selecting the mission/member stays a directory scan, never a guess.
+3. Only when all rungs fail: say degraded (no machine state) and stop.
+
+Do not re-derive the solo/team split from the plan, and do not paraphrase CLI
+output — print it as printed.
 
 Add `--all` to cross git actors on a shared checkout; the default shows only the
 current actor's work.
