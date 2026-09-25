@@ -118,7 +118,10 @@ const needsRun =
 
 if (needsRun) {
   console.log('coverage-gate: measuring (bun test --coverage)...');
-  const r = spawnSync('bun', ['test', '--coverage', '--coverage-reporter=lcov', '--parallel'], {
+  // Bun 1.3.14's 8-worker LCOV merge drops cross-worker hits for a shared
+  // source file. Two isolated workers keep process env isolation and merge
+  // coverage accurately; serial mode leaks mutated process.env between files.
+  const r = spawnSync('bun', ['test', '--coverage', '--coverage-reporter=lcov', '--parallel=2'], {
     cwd: root, stdio: 'inherit', shell: process.platform === 'win32',
   });
   if (r.status !== 0) {
