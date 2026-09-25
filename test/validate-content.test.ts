@@ -139,3 +139,12 @@ test('memory-template missing-section fixture fails', () => {
     expect(errs.some((e) => e.includes('## Never'))).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('orchestration handoff requires four semantic blocks and exact resume command', () => {
+  const skill = readFileSync(join(import.meta.dirname, '..', 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md'), 'utf8');
+  expect(skill).toMatch(/\*\*Result\*\*/);
+  expect(skill).toMatch(/\*\*Next\*\*/);
+  expect(skill).toMatch(/\*\*Choices\*\*/);
+  expect(skill).toMatch(/\*\*New session\*\*/);
+  expect(skill).toContain('/mugiwara continue <mission>');
+});

@@ -1,0 +1,38 @@
+{
+  "name": "orchestration-handoff-readability",
+  "skill": "mugiwara-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "semi Flow 2 handoff after planning: make the GO gate actionable",
+        "top_k": 3
+      },
+      {
+        "prompt": "guided flow boundary needs result next choices and resume command",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "show only a bare Flow 3 arrow"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "task": "The mode is semi at Flow 2 after Nami completed the plan. Render the user-facing handoff to the next execution stage: include the plan result and evidence, the next executor's first task, safe parallelism, GO/review/revise/pause choices with consequences, the Flow 2 checkpoint, and the exact new-session command. Do not use a bare arrow or an unexplained Flow 3 label; preserve the summary line and final arrow shapes.",
+      "rubric": [
+        "labels Result with the plan goal, task and wave count, evidence path, and the main gate or risk",
+        "labels Next with the owner and the exact first execution task or wave after GO",
+        "labels Choices with concrete commands for GO execution, review, revise, and pause or save, each with a consequence",
+        "names safe parallelism explicitly and only for independent tasks with no shared-file dependency",
+        "includes the Flow 2 checkpoint before the handoff",
+        "includes the exact command `/mugiwara continue <mission>` and the checkpoint it resumes",
+        "rejects a bare arrow and explains every next-flow label with its owner and action",
+        "treats Semi as the planning GO gate, while Auto continues automatically without a redundant GO",
+        "keeps the summary-line shape and the final `→ Flow N — Crew (Role)` arrow shape"
+      ]
+    }
+  ],
+  "expect_lane": "standard"
+}
