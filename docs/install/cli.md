@@ -16,6 +16,10 @@ Windsurf receives rule stubs under its rules dir, Cline under its rules dir, Kil
 
 Ask the agent what crew members are available; a correct install answers with the roster. Update with the update command naming project, target, and confirmation. Uninstall removes exactly what the manifest recorded. List shows installations, list with check runs a health pass over missing files, and reset wipes mission state while optionally keeping lessons.
 
+## Clean uninstall
+
+`mugiwara uninstall --target <id> [--global]` removes exactly what the manifest recorded (check first with `mugiwara list --check`). Leftovers the manifest never owned, remove by hand per target: Windsurf `.devin/rules`, Cline `.clinerules`, Kilo `.kilo/rules` (plus the pointer line in `kilo.jsonc` if your file pre-existed the install), and `.mugiwara/refs/` rule bodies shared by all three. `.mugiwara/config` and the `.gitignore` block are yours and stay unless you remove them. Verify: the roster question no longer lists the crew.
+
 ## Configure and run
 
 Point `.mugiwara/config` at desired mode, branch, and commit style; the concepts config page documents every key. Mission runtime commands work from any harness: status, archive, clean, continue, cost, run, savepoint, join, migrate, lesson. Status reads state files with no model turn involved; continue exits nonzero when the user must pick from listed options.
