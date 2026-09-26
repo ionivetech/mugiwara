@@ -118,7 +118,12 @@ const needsRun =
 
 if (needsRun) {
   console.log('coverage-gate: measuring (bun test --coverage)...');
-  const r = spawnSync('bun', ['test', '--coverage', '--coverage-reporter=lcov', '--parallel'], {
+  // Ceiling: more workers inflate LCOV lines-found (183 → 193 → 202 for 1/2/8)
+  // while lines-hit stays 181/169 in every mode — no hits are dropped. The
+  // inflated denominator deflates the %, and 8 workers falsely FAILed at
+  // 89.60% < 90. Serial is out: it leaks mutated process.env between files.
+  // Revisit on Bun upgrade — re-measure LH/LF at 1/2/8 workers.
+  const r = spawnSync('bun', ['test', '--coverage', '--coverage-reporter=lcov', '--parallel=2'], {
     cwd: root, stdio: 'inherit', shell: process.platform === 'win32',
   });
   if (r.status !== 0) {

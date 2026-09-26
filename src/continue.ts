@@ -98,7 +98,7 @@ export function gitActor(cwd: string): string {
   if (author) return author;
   const git = (args: string[]): string => {
     try {
-      return execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      return execFileSync('git', args, { cwd, env: process.env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
     } catch {
       return '';
     }

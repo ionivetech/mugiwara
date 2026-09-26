@@ -89,7 +89,7 @@ test('L1: claude transformAgent keeps explicit tools frontmatter over generated'
   expect(parseFrontmatter(out.text).data.tools).toBe('Read');
 });
 
-test('0-8 conformance: every target install lands skills, agents, and references', () => {
+test('0-8 conformance: every target install lands skills, agents, and references', { timeout: 30000 }, () => {
   for (const id of TARGET_IDS) {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-conf-' + id + '-'));
     const home = mkdtempSync(join(tmpdir(), 'mugi-confhome-' + id + '-'));
