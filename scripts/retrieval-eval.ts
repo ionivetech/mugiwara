@@ -192,7 +192,7 @@ const nsRate    = nsTotal ? (noSkillPass / nsTotal) * 100 : 100;
 
 const allPassed = Object.values(results).filter(r => r.passed).length;
 const allFailed = Object.values(results).filter(r => !r.passed).length;
-const totalProbes = Object.keys(results).length;
+const totalProbes = positives.length + negatives.length + nsTotal;
 
 // --- floor / ratchet ---
 const floorPath = join(root, 'evals', 'floor.json');

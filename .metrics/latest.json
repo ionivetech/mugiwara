@@ -1,7 +1,7 @@
 {
   "retrieval_rank1": 95.6,
   "retrieval_rank1_rate": "95.6%",
-  "retrieval_probes": 230,
+  "retrieval_probes": 272,
   "retrieval_rank1_count": 172,
   "retrieval_positives": 180,
   "retrieval_negatives": 86,
@@ -11,5 +11,5 @@
   "pointers_targets": 9,
   "pointers_broken": 0,
   "index_size": 21,
-  "updated": "2026-09-25"
+  "updated": "2026-09-26"
 }
