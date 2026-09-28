@@ -73,11 +73,33 @@ jobs:
           git commit -m "chore: release $RELEASE_VERSION"
           git push origin main
 
+      # Notes are generated BEFORE tagging so the tag can carry them. The
+      # version-bump commit is already in, and release-notes.ts reads from the
+      # previous tag to HEAD, so the content is identical either way.
+      - name: "Generate release notes"
+        run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
+
+      # An annotated tag, not a lightweight one. A lightweight tag is a bare
+      # pointer: `git tag -n` shows the commit subject it happens to land on,
+      # which for a release is always "chore: release vX.Y.Z" and tells a
+      # reader nothing. An annotated tag is its own object with a tagger,
+      # a date, and a message that survives in the clone.
       - name: "Create and push tag"
         run: |
-          git tag "$RELEASE_VERSION"
+          {
+            echo "mugiwara $RELEASE_VERSION"
+            echo
+            echo "Package:  @ionivetech/mugiwara@${RELEASE_VERSION#v}"
+            echo "Released: $(date -u +%Y-%m-%d)"
+            echo "Commit:   $(git rev-parse --short HEAD)"
+            echo
+            cat "$RUNNER_TEMP/release-notes.md"
+            echo
+            echo "Verified in CI before tagging: typecheck, unit tests, build, content validation."
+          } > "$RUNNER_TEMP/tag-message.txt"
+          git tag -a "$RELEASE_VERSION" -F "$RUNNER_TEMP/tag-message.txt"
           git push origin "$RELEASE_VERSION"
-          echo "Tagged $RELEASE_VERSION"
+          echo "Tagged $RELEASE_VERSION (annotated)"
 
       - name: "Authenticate with npm"
         run: npm config set "//registry.npmjs.org/:_authToken" "${{ secrets.NPM_TOKEN }}"
@@ -86,9 +108,6 @@ jobs:
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: "Generate release notes"
-        run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
 
       - name: "Pack tarball"
         run: npm pack --pack-destination "$RUNNER_TEMP"

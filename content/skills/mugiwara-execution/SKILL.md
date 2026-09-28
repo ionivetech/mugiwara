@@ -97,7 +97,7 @@ Full checklist: `references/execution-phase-flows.md` — 4 items; `flows/phase-
 
 Any task touching UI markup, styling, or components applies `mugiwara-frontend` in the same pass. Every interactive element — button, link, input, form — carries a `data-testid`, asserted by the task's test, not merely present in markup.
 
-## Report (have-adhd scan-format)
+## Report (scan-format)
 
 After each flow stage: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Flow 4). Write detailed execution log to `.mugiwara/missions/<mission>/flows/01-execution.md`. Never dispatch another crew member.
 - **Decision/Action/Result/Evidence/Blocker** lead every bullet — filler dies anywhere ([src/cognition.ts](src/cognition.ts)).

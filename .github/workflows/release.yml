@@ -69,8 +69,16 @@ jobs:
         run: gh release create "${{ github.ref_name }}" --notes-file "$RUNNER_TEMP/release-notes.md" --latest "$RUNNER_TEMP"/*.tgz
 
 # Release flow: create a tag with `npm version <patch|minor|major>` (bumps
-# package.json version and pushes the tag), or manually with `git tag vX.Y.Z
-# && git push origin vX.Y.Z`. The `v*` tag trigger publishes to npm and creates
+# package.json version and pushes the tag), or manually. A manual tag is
+# ANNOTATED, never lightweight — a lightweight tag shows only the commit
+# subject it lands on, which for a release is always "chore: release vX.Y.Z":
+#
+#   bun scripts/release-notes.ts > /tmp/notes.md
+#   printf 'mugiwara vX.Y.Z\n\nPackage:  @ionivetech/mugiwara@X.Y.Z\nReleased: %s\nCommit:   %s\n\n' \
+#     "$(date -u +%Y-%m-%d)" "$(git rev-parse --short HEAD)" > /tmp/tag.txt
+#   cat /tmp/notes.md >> /tmp/tag.txt
+#   git tag -a vX.Y.Z -F /tmp/tag.txt && git push origin vX.Y.Z
+# The `v*` tag trigger publishes to npm and creates
 # the GitHub Release with auto-generated notes. Note: a tag pushed by the
 # Manual Release workflow (GITHUB_TOKEN) does not fire this workflow — trigger
 # it via workflow_dispatch on that tag instead.

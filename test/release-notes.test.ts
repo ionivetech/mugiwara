@@ -43,6 +43,36 @@ test('breaking marker only honored in type/scope position (R4 regression proof)'
   expect(notBreaking.markdown).toContain('- Handle a! in parser `eeeeeee`');
 });
 
+// A commit body is hard-wrapped prose. Rendering one bullet per physical line
+// turned every paragraph into a column of fragments, which is exactly how the
+// release notes read until this was fixed.
+test('a hard-wrapped paragraph rejoins into one bullet, not one per line', () => {
+  const { markdown } = buildNotes([
+    {
+      sha: 'abcdef0',
+      subject: 'fix(cost): close the dispatch leak',
+      body: 'A dispatched worker costs ~132k tokens\nagainst ~5k for the same work inline.\nThree places spent it without a reason.\n\nThe posture matrix now gates on lane.',
+    },
+  ]);
+  expect(markdown).toContain(
+    '  - A dispatched worker costs ~132k tokens against ~5k for the same work inline. Three places spent it without a reason.',
+  );
+  expect(markdown).toContain('  - The posture matrix now gates on lane.');
+  expect(markdown).not.toContain('  - against ~5k for the same work inline.');
+});
+
+test('a list the author actually wrote keeps one bullet per item', () => {
+  const { markdown } = buildNotes([
+    {
+      sha: 'abcdef1',
+      subject: 'feat(cli): add flags',
+      body: '- adds --json\n- adds --ledger',
+    },
+  ]);
+  expect(markdown).toContain('  - adds --json');
+  expect(markdown).toContain('  - adds --ledger');
+});
+
 test('signature trailers are stripped from the output', () => {
   const { count, markdown } = buildNotes([
     {

@@ -68,16 +68,34 @@ export function buildNotes(commits: ReleaseCommit[]): { count: number; markdown:
     const title = text.charAt(0).toUpperCase() + text.slice(1);
     const breakingTag = breaking ? ' ⚠️ **BREAKING**' : '';
 
-    const bodyLines = commit.body
-      .split(/\r?\n/)
-      .map(l => l.trim())
-      .filter(l => l && !TRAILER.test(l) && l !== '---')
-      // the release-version marker commit repeats the subject as body — drop it
-      .filter(l => l !== text);
+    // A commit body is prose that was hard-wrapped at ~72 columns. Rendering
+    // one bullet per physical line shreds every paragraph into fragments —
+    // which is what shipped in the release notes until this was fixed. Split
+    // on blank lines to recover the author's paragraphs, then rejoin each
+    // one. Lines the author really did write as a list keep their shape.
+    const LIST_ITEM = /^\s*(?:[-*+]\s|\d+[.)]\s)/;
+    const bodyBlocks = commit.body
+      .split(/\r?\n\s*\r?\n/)
+      .map(block =>
+        block
+          .split(/\r?\n/)
+          .map(l => l.trim())
+          .filter(l => l && !TRAILER.test(l) && l !== '---')
+          // the release-version marker commit repeats the subject as body — drop it
+          .filter(l => l !== text),
+      )
+      .filter(lines => lines.length)
+      .map(lines =>
+        lines.some(l => LIST_ITEM.test(l))
+          ? lines.map(l => l.replace(LIST_ITEM, ''))       // author's own list
+          : [lines.join(' ')],                             // reflowed paragraph
+      );
 
     const typeLabel = TYPE_LABEL[type] ?? 'Housekeeping';
     const base = `${title}${breakingTag} \`${commit.sha}\``;
-    const bodyBlock = bodyLines.length ? '\n' + bodyLines.map(l => `  - ${l}`).join('\n') : '';
+    const bodyBlock = bodyBlocks.length
+      ? '\n' + bodyBlocks.flat().map(l => `  - ${l}`).join('\n')
+      : '';
 
     if (scope) {
       const key = scope.toLowerCase();
