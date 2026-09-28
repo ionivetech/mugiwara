@@ -29,7 +29,7 @@ export const EXTENSION_TABLE: Record<string, ExtensionRow> = {
   quality: { skills: ['mugiwara-quality'], trigger: 'always on', default: 'core' },
   lessons: { skills: ['mugiwara-lessons'], trigger: 'always on (read-half)', default: 'core' },
   // ── auto trigger-loaded (11) ────────────────────────────────────────
-  ship: { skills: ['mugiwara-ship'], trigger: 'close/archive intent, Flow 8', default: 'auto' },
+  ship: { skills: ['mugiwara-ship'], trigger: 'close/archive intent, Flow 9', default: 'auto' },
   migration: { skills: ['mugiwara-migration'], trigger: 'schema/data/framework diff', default: 'auto' },
   'contract-first': { skills: ['mugiwara-contract-first'], trigger: 'boundary diff', default: 'auto' },
   testcases: { skills: ['mugiwara-testcases'], trigger: 'user declares tests/e2e', default: 'auto' },

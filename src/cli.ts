@@ -1424,14 +1424,14 @@ Usage:
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
   mugiwara reset         wipe mission state (missions/ + legacy dirs)
-  mugiwara archive [<m>]  fold a closed mission's waves into its report, then remove loose files
+  mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
   mugiwara clean [--include-live] [--stale <date>]
                          batch-archive every closed mission (report.md present, no live state)
   mugiwara continue      list in-flight missions (exit 2 = pick one, nothing resumed)
   mugiwara continue <m> [member]
                          print the exact resume point for that mission/member
-  mugiwara status        computed mission state: wave, tasks, lane, blockers, budget
+  mugiwara status        computed mission state: flow stage, tasks, lane, blockers, budget
   mugiwara cost [--mission <id>] [--json] [--ledger]
                           show cost ledger, avoided work, efficiency, trail (human + JSON)
    mugiwara features explain|list [--mission <id>] [--json]

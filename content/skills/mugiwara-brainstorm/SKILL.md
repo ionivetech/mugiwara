@@ -29,7 +29,7 @@ Never collapse to a single pass. Run at least THREE interrogation rounds before 
 
 - **Round 1 — understand:** restate the problem, ask the sharpest questions (multiple choice), surface the assumptions hiding in the request.
 - **Round 2 — research + options:** web-research anything unknown (versions, libraries, patterns) plus codebase research via Grep/Glob file:line read-only (no fix) and lay out 2-3 options with trade-offs grounded in codebase facts. Simple locate does not need `explore` subagent.
-- **Round 3 — validate + converge:** test each option against the codebase reality (read the files, check the constraints), kill the options that don't survive, then converge on ONE recommendation with risks + open questions.
+- **Round 3 — validate + converge:** test each option against the codebase reality (read the files, check the constraints), kill the options that don't survive, then converge on ONE recommendation with risks + open questions. Name its **second-order cost** — what this choice makes harder for whoever inherits it: the migration nobody budgeted, the rule it forces on every future change, the thing that now needs two edits instead of one. A recommendation with no named cost was preferred, not tested.
 
 ## Falsification (binds Rounds 2-3)
 
@@ -82,6 +82,7 @@ Hand off ONLY when the validation checklist passes — all of:
 - [ ] Every option carries a pre-research kill criterion; dead options named with killing evidence.
 - [ ] At least one user decision captured from a sharp multiple-choice question.
 - [ ] Recommendation has explicit reasoning + fragility line + named risks, not vibes.
+- [ ] Its second-order cost is named concretely — who pays it, and when. "Some added complexity" is not a cost; "every new endpoint now needs a migration" is.
 - [ ] MVP separated from nice-to-haves, with what-to-cut stated.
 - [ ] Spec written with the open questions that Nami still needs answered.
 
@@ -101,6 +102,7 @@ For UI directions, name slop risks (generic card grids, unmotivated gradients, t
 | "Scope it all in, they asked for it." | Gold-plating is waste. Flag it and say what to cut. |
 | "Two rounds is enough, they're impatient." | Round 3 is where options die and the recommendation gets tested against real files. Skip it and Nami plans fiction. |
 | "The user said go, so it's validated." | "Go" is not validation. The checklist is. |
+| "The trade-offs are obvious from the options." | Trade-offs are what the option costs now. Second-order cost is what it costs the next person. Different question, say it separately. |
 
 ## One sharp question rule
 
@@ -112,3 +114,4 @@ If you cannot phrase the question as multiple choice with answerable options, yo
 - Rubber-stamping ("yes, done") instead of options + trade-offs + recommendation.
 - Guessing a version or library capability without web research.
 - Handing off with a failing validation checklist.
+- A recommendation whose only downside is stated as a generic "more complexity".
