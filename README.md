@@ -114,7 +114,7 @@ Add the plugin, then ask something non-trivial:
 npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-First run writes `.mugiwara/config`. Then ask:
+First run writes `.mugiwara/config`. Then ask, in chat or `/mugiwara <request>`, never `@agent`:
 
 ```
 > add role-based access control: admin, editor, viewer
@@ -268,16 +268,6 @@ investigation limits) stay off until set.
 
 ---
 
-## Try it in 60 seconds
-
-    npx @ionivetech/mugiwara@latest install --target claude --yes
-
-Then describe what you want:
-
-    "fix the typo in the header comment"        -> fixed immediately, no ceremony
-    "add pagination to the users endpoint"      -> plan, execute, audit, quality, review
-    "move auth to short-lived tokens"           -> all nine stages plus a security review
-
 ## Install
 
 <details>
@@ -287,6 +277,8 @@ Then describe what you want:
 /plugin marketplace add ionivetech/mugiwara && /plugin install mugiwara
 ```
 
+Full guide: [docs/install/claude.md](docs/install/claude.md).
+
 </details>
 
 <details>
@@ -294,12 +286,17 @@ Then describe what you want:
 
 Add `"plugin": ["@ionivetech/mugiwara"]` to `opencode.json` and restart.
 
+Full guide: [docs/install/opencode.md](docs/install/opencode.md).
+
 </details>
 
 <details>
 <summary><b>Gemini CLI / Codex / Copilot / Cursor / Antigravity / Kimi / Pi</b></summary>
 
-See [per-platform guides](docs/install/index.md).
+Each has its own guide: [Gemini](docs/install/gemini.md) ·
+[Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) ·
+[Cursor](docs/install/cursor.md) · [Antigravity](docs/install/antigravity.md) ·
+[Kimi](docs/install/kimi.md) · [Pi](docs/install/pi.md).
 
 </details>
 
@@ -309,6 +306,8 @@ See [per-platform guides](docs/install/index.md).
 ```bash
 npx @ionivetech/mugiwara@latest install --target <id> --yes   # windsurf, cline, kilo, codex
 ```
+
+Full guide: [docs/install/cli.md](docs/install/cli.md).
 
 </details>
 
@@ -349,7 +348,7 @@ mugiwara reset --keep-logs                    # wipe state, keep lessons
 
 **Reference:** [Adoption guide](docs/reference/adoption-guide.md) · [Glossary](docs/reference/glossary.md) · [Harness matrix](docs/reference/harness-matrix.md) · [Compliance matrix](docs/reference/compliance-matrix.md)
 
-**Install:** [Overview](docs/install/index.md) · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [CLI targets](docs/install/cli.md)
+**Install:** [Overview](docs/install/index.md) · [Claude](docs/install/claude.md) · [opencode](docs/install/opencode.md) · [Gemini](docs/install/gemini.md) · [Codex](docs/install/codex.md) · [Copilot](docs/install/copilot.md) · [Cursor](docs/install/cursor.md) · [Antigravity](docs/install/antigravity.md) · [Kimi](docs/install/kimi.md) · [Pi](docs/install/pi.md) · [CLI targets](docs/install/cli.md)
 
 **Runbooks:** [Solo mission](docs/runbooks/solo-mission.md) · [Team mission](docs/runbooks/team-mission.md) · [Joining mid-mission](docs/runbooks/joining-a-mission.md) · [Resume after crash](docs/runbooks/resume-after-crash.md) · [Monorepo](docs/runbooks/monorepo.md) · [Signing](docs/runbooks/signing-and-attestation.md) · [Policy](docs/runbooks/policy-for-a-team.md) · [Troubleshooting](docs/runbooks/troubleshooting.md)
 
