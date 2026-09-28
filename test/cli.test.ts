@@ -1236,7 +1236,7 @@ describe('run() — features explain|list', () => {
       const rows = out.split('\n').filter((l) => l.includes(' — '));
       expect(rows.length).toBe(N_TOKENS);
       expect(rows[0]).toBe('orchestration — always on — core — yes');
-      expect(out).toContain('ship — close/archive intent, Flow 8 — auto — no');
+      expect(out).toContain('ship — close/archive intent, Flow 9 — auto — no');
       expect(out.indexOf('orchestration —')).toBeLessThan(out.indexOf('planning —'));
       expect(out.indexOf('planning —')).toBeLessThan(out.indexOf('execution —'));
       expect(exitSpy).not.toHaveBeenCalled();
