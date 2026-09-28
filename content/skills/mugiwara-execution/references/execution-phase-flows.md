@@ -10,7 +10,7 @@ Rule: For large campaigns (>3 phases or >1500 lines), Zoro writes per-phase.
 
 ## Why
 
-Prevents flat `flows/02-execution.md` overwrite across 9 phases.
+Prevents flat `flows/01-execution.md` overwrite across 9 phases.
 
 ## Acceptance
 

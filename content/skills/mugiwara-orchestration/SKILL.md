@@ -13,7 +13,7 @@ description: Gatekeeper + captain for any task: triage, classify, coordinate, ro
 2. Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.
 
 ## Return-to-Luffy protocol
-Every flow stage returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. Non-execution crew members return results:
+Every flow stage returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. **Labelling the hop:** a return keeps the RETURNING stage's own number — `→ 🏴‍☠️ Flow N — Luffy (routing)` — and Luffy's verdict reopens with that same label before the next stage's banner. When the route is unconditional (auto, no branch to decide) the two collapse: the stage hands straight to `→ <emoji> Flow N+1 — Crew` and Luffy's route reason goes to `decisions.md`. Never point a handoff at `Flow 0` — triage runs once, and a backward arrow reads as a restart. Non-execution crew members return results:
 
 - Usopp → return brainstorm → Luffy routes to Nami or Zoro
 - Nami → return plan → guided/semi: Luffy asks the user for GO; auto: Luffy delegates to Zoro
@@ -94,7 +94,7 @@ Rendered examples: `references/output-contract.md` — match the shape.
 
 ## Flow summary line
 
-Every flow stage closes with exactly one summary line before the handoff (`✓ Flow 5 — Sanji · lint 0 · 84/84 tests → results/05-quality.md`). Shape: `<verdict> Flow N — Crew · <2-4 facts> → <evidence path>`. At `verbosity=normal` it replaces the stage's prose; at `full` it is emitted last. Never collapsed: decisions, questions, blockers, lane rises, escalations, file edits.
+Every flow stage closes with exactly one summary line before the handoff (`✓ Flow 5 — Sanji · lint 0 · 84/84 tests → flows/03-quality.md`). Shape: `<verdict> Flow N — Crew · <2-4 facts> → <evidence path>`. At `verbosity=normal` it replaces the stage's prose; at `full` it is emitted last. Never collapsed: decisions, questions, blockers, lane rises, escalations, file edits.
 
 ## Work splitting
 When a flow stage has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
@@ -108,7 +108,7 @@ Gate — every criteria verified, gates passed, findings resolved, blockers revi
 Write summary to `.mugiwara/missions/<mission>/report.md` (seeded `flows/06-closure.md`); then `mugiwara savepoint` + `archive` → report folds waves/review/security/blockers/decisions; plan stays; `flows/07-pr-verdict.md` survives as `pr-verdict.md`. Full: `references/closure.md`. With `auto_commit=off` guided/semi: no push — hand tree + verdict; auto always pushes.
 
 ## Spirit vs letter
-The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan (through Nami) — do not bend the mission to the plan. Log the amendment with a reason in `logs/`.
+The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan (through Nami) — do not bend the mission to the plan. Log the amendment with a reason in `decisions.md`.
 
 ## Write boundary
 Only Zoro (`mugiwara-execution`) and Brook (`mugiwara-healing`) write source. Every other role writes `.mugiwara/**` only. If the user asks a non-executor to write source, refuse and route to Luffy, who dispatches Zoro (execution) or Brook (healing). Every agent knows its edit capability from its own `write-scope` frontmatter — no probing. Artifacts-scope agents facing a source edit say "Delegating to Zoro" to Luffy, who dispatches immediately. All harnesses embody crew inline by default; the subagent form serves only `[PARALLEL]` workers, parallel review, and heal workers — never a per-flow-stage crew call. Brook heals only; general source edits go to Zoro via Luffy.

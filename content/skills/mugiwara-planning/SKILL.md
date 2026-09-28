@@ -105,7 +105,7 @@ Each with its failure mode and the fix: `references/anti-patterns.md`.
 Any anti-pattern fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole. "Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → fiction; "trust me, they're parallel" → race.
 
 ## Full-level skeleton
-Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## CODEOWNERS`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Risk & rollback`, `## Mission split`. Route reasons, check-ins, closure go to `logs/`/`results/`.
+Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## CODEOWNERS`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Baseline`, `## Execution posture`, `## Risk & rollback`, `## Pre-mortem`, `## Mission split`. Route reasons and check-ins go to `decisions.md`; closure goes to `flows/06-closure.md`.
 
 ## Mission split (very large) — Lane 3
 Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. The planner writes the split before any task detail.
@@ -113,7 +113,7 @@ Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant
 ## Large campaign — sub-plan
 Full checklist: `references/large-campaign-subplan.md` — 6 items; trigger `>3 phases` or `>1500 lines`, `sub-plan/NN-phaseNN-<slug>.md`, master index pattern.
 ## Handoff
-STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `logs/` and `results/`). **Return to the orchestrator.** Present a 2-3 line summary (waves, task count, key risks) and hand off for the GO decision. The orchestrator decides: approve → executor, revise → back to you, or escalate.
+STOP after writing. The plan is written to `.mugiwara/missions/<mission>/plan.md` and it is clean — no agent names, no coordination log, no closure (that lives in `decisions.md` and `flows/`). **Return to the orchestrator.** Present a 2-3 line summary (waves, task count, key risks) and hand off for the GO decision. The orchestrator decides: approve → executor, revise → back to you, or escalate.
 Before handoff, write one pre-mortem paragraph in the plan: assuming this mission failed, the most likely cause is X — and the plan already counters it at Task N (or add the counter before handing off).
 
 Never hand to the executor without a GO. In `guided` mode, the orchestrator asks the user before delegating. In `semi`/`auto`, the orchestrator may auto-go unless the task carries high risk (deploy, migration, DB, public API). You do not decide — you present, the orchestrator routes.
