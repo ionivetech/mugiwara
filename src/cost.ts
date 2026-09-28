@@ -31,7 +31,7 @@ export const LANE_BASE: Record<string, number> = {
 
 export const LANE_BUDGET: Record<string, number> = {
   lean: 12000,
-  standard: 25000,
+  standard: 30000,
   full: 50000,
   spike: 9000,
 };

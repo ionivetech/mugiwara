@@ -22,7 +22,7 @@ import {
 describe('budgetForLane', () => {
   it('returns the lane-base.sh BUDGET constants per lane', () => {
     expect(budgetForLane('lean')).toBe(12000);
-    expect(budgetForLane('standard')).toBe(25000);
+    expect(budgetForLane('standard')).toBe(30000);
     expect(budgetForLane('full')).toBe(50000);
     expect(budgetForLane('spike')).toBe(9000);
   });
@@ -48,13 +48,13 @@ describe('laneBaseForLane', () => {
 describe('thresholds — savepoint.sh math (BUDGET*3/2, BUDGET*3)', () => {
   it('warnAt is integer-division BUDGET*3/2 for every lane budget', () => {
     expect(warnAt(12000)).toBe(18000);
-    expect(warnAt(25000)).toBe(37500);
+    expect(warnAt(30000)).toBe(45000);
     expect(warnAt(50000)).toBe(75000);
     expect(warnAt(9000)).toBe(13500);
   });
   it('stopAt is BUDGET*3 for every lane budget', () => {
     expect(stopAt(12000)).toBe(36000);
-    expect(stopAt(25000)).toBe(75000);
+    expect(stopAt(30000)).toBe(90000);
     expect(stopAt(50000)).toBe(150000);
     expect(stopAt(9000)).toBe(27000);
   });
@@ -81,7 +81,7 @@ describe('budgetStatus — savepoint.sh gate', () => {
 describe('delegateAt — savepoint.sh DELEGATE_AT math', () => {
   it('is integer-division BUDGET*threshold/100', () => {
     expect(delegateAt(12000, 60)).toBe(7200);
-    expect(delegateAt(25000, 60)).toBe(15000);
+    expect(delegateAt(30000, 60)).toBe(18000);
     expect(delegateAt(50000, 80)).toBe(40000);
     expect(delegateAt(9000, 60)).toBe(5400);
   });
@@ -100,14 +100,14 @@ describe('delegateAt — savepoint.sh DELEGATE_AT math', () => {
 
 describe('costEnvelope', () => {
   it('computes the normalized envelope from stored primitives', () => {
-    const env = costEnvelope({ lane: 'standard', budget: 25000, tokens_est: 14200 });
+    const env = costEnvelope({ lane: 'standard', budget: 30000, tokens_est: 14200 });
     expect(env).toEqual({
-      planned: 25000,
+      planned: 30000,
       used: 14200,
-      remaining: 10800,
-      pct: 57,
-      warn_at: 37500,
-      stop_at: 75000,
+      remaining: 15800,
+      pct: 47,
+      warn_at: 45000,
+      stop_at: 90000,
       status: 'ok',
     });
   });

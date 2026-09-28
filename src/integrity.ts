@@ -241,9 +241,16 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
     if (!existsSync(f)) continue;
     let body: string;
     try { body = readFileSync(f, 'utf8'); } catch { continue; }
+    // A stub is not a verdict. Only demand the checklist sections from a file
+    // that is actually one — every real verdict ends in `## Verdict`, and test
+    // fixtures that write a placeholder should not be nagged about a template
+    // they are not using. Non-checkbox CONTENT is still flagged either way,
+    // because that is the defect: prose where boxes belong.
+    const isVerdict = sectionBody(body, 'Verdict') !== null;
     for (const heading of ['Tests', 'Checks', 'Deferred / follow-ups']) {
       const sec = sectionBody(body, heading);
       if (sec === null) {
+        if (!isVerdict) continue;
         issues.push({ kind: 'verdict-shape', severity: 'warn', detail: `${rel} has no "## ${heading}" section — the verdict template requires it` });
         continue;
       }

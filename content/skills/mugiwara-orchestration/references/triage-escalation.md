@@ -59,6 +59,19 @@ Escalation only: a lane may rise mid-mission (diff grew, sensitive path
 touched, failures repeated), never drop. Record the chosen lane and its signal
 in the decision log.
 
+**Pass the triaged lane to the first savepoint.** `lane.sh` measures the
+working diff, and at Flow 0 nothing has changed yet, so it answers `direct` for
+every mission including a 40-file one. Left alone, `state.json` contradicts the
+decision log from the first write. Seed it:
+
+```
+MUGIWARA_LANE=<lane> mugiwara savepoint <mission> "" 0 <mode>
+```
+
+It is a FLOOR, not an override: a larger measurement still wins, and the peak
+clamp means the lane can only rise afterwards. Skip it on Lane 0/1, where the
+measurement and the triage agree anyway.
+
 ## Rationalizations (pressure resistance)
 
 Moved to the SKILL.md body — pressure resistance must fire mid-argument, before

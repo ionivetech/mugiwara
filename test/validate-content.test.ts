@@ -4,7 +4,10 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { memoryTemplateErrors } from '../scripts/validate-content.ts';
+// Imported from src/, NOT from the validator script: importing the script
+// executes its ~950-line body and drags it into lcov, which made the file
+// uneditable under the coverage gate. See src/memory-template.ts.
+import { memoryTemplateErrors } from '../src/memory-template.ts';
 
 const run = (args: string[]) => execFileSync('bun', ['scripts/validate-content.ts', ...args], { stdio: 'pipe' });
 

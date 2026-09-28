@@ -47,3 +47,40 @@ export function checkWritingCapTargets(caps: Record<string, number>, repoRoot: s
     .filter((rel) => !existsSync(join(repoRoot, rel)))
     .map((rel) => `writing caps: "${rel}" has a cap but no file — delete the entry or restore the doc`);
 }
+
+/**
+ * Crew prose must name only artifact paths the workspace layout defines.
+ *
+ * Why this and not the docs writing rules: applying those to `content/`
+ * produced 100 findings that were ~95% false — most "banned word" hits are
+ * QUOTED user pressure ("just skip the pipeline") inside the rationalization
+ * tables, and prose-style.md trips every rule it documents. What actually
+ * rotted was different and unchecked: prose naming `results/`, `logs/`, or a
+ * `flows/NN-name.md` the layout never defined. Those are text, not links, so
+ * check-doc-links could never see them, and they survived every gate until a
+ * human read two files side by side.
+ *
+ * `canonical` is the set of flow filenames the layout defines.
+ */
+export function checkArtifactPaths(
+  files: Array<{ path: string; text: string }>,
+  canonical: readonly string[],
+): CheckError[] {
+  const errors: CheckError[] = [];
+  const known = new Set(canonical);
+  for (const { path, text } of files) {
+    // Directories the layout replaced. `results/` and `logs/` were the mission
+    // workspace before missions/<mission>/ existed.
+    for (const dead of ['results/', '`logs/`']) {
+      if (text.includes(dead)) {
+        errors.push(`artifact-path: ${path} names "${dead}" — the layout defines missions/<mission>/flows/ and decisions.md`);
+      }
+    }
+    for (const m of text.matchAll(/flows\/(\d{2}-[a-z-]+\.md)/g)) {
+      if (!known.has(m[1])) {
+        errors.push(`artifact-path: ${path} names "flows/${m[1]}" — not in the workspace layout (${canonical.join(', ')})`);
+      }
+    }
+  }
+  return errors;
+}

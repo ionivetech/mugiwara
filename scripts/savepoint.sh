@@ -350,6 +350,18 @@ if [ -n "$PREV_MISSION" ] && [ "$PREV_MISSION" != "$MISSION" ]; then
   LANE_PREV=""
   LANE_PEAK=""
 fi
+# Triage floor (MUGIWARA_LANE): lane.sh measures the working diff, so at Flow 0
+# — before a single file has changed — it reports "direct / no changed files"
+# for every mission, including a 40-file one. The measurement is not wrong, it
+# has no input yet; recording it as `direct` makes state.json contradict the
+# decision log from the first savepoint. Luffy passes the triaged lane here and
+# it acts as a FLOOR, never a ceiling: a larger measurement still wins, so this
+# can only raise, exactly like the peak clamp below.
+if [ -n "${MUGIWARA_LANE:-}" ] && [ "$(lane_rank "${MUGIWARA_LANE}")" -gt "$(lane_rank "$LANE")" ]; then
+  LANE_REASON="$LANE_REASON (raised to ${MUGIWARA_LANE} by triage — diff not yet measurable)"
+  LANE="${MUGIWARA_LANE}"
+fi
+
 # monotonic clamp: never drop below the previous peak; spike is a resize, not a rise.
 if [ -n "$LANE_PEAK" ] && [ "$LANE_PEAK" != "spike" ] && [ "$(lane_rank "$LANE")" -lt "$(lane_rank "$LANE_PEAK")" ]; then
   LANE="$LANE_PEAK"

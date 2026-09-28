@@ -271,14 +271,14 @@ test('case 18: MUGIWARA_TOKENS override honored (reported source)', { timeout: S
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('case 19: warn at 1.5x new standard budget (25000 -> 37500)', { timeout: SLOW }, () => {
+test('case 19: warn at 1.5x new standard budget (30000 -> 45000)', { timeout: SLOW }, () => {
   const dir = fixtureDir('standard-feature');
   try {
-    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '37499' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '44999' });
     expect(readState(dir).budget_status).toBe('ok');
-    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '37500' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '45000' });
     expect(readState(dir).budget_status).toBe('warn');
-    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '75000' });
+    runSavepoint(dir, 'm', '', 1, 'guided', { MUGIWARA_TOKENS: '90000' });
     expect(readState(dir).budget_status).toBe('stop');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
@@ -288,9 +288,9 @@ test('case 20: LANE_BASE matches lane-base.ts computed load (D5)', { timeout: SL
   try {
     runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
-    // standard LANE_BASE is 13000 from scripts/lib/lane-base.sh
-    expect(state.budget).toBe(25000);
-    expect(state.tokens_est).toBeGreaterThan(13000);
+    // standard LANE_BASE is 15995 from scripts/lib/lane-base.sh
+    expect(state.budget).toBe(30000);
+    expect(state.tokens_est).toBeGreaterThan(15000);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

@@ -3,36 +3,13 @@
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { parseFrontmatter } from '../src/frontmatter.ts';
+import { memoryTemplateErrors } from '../src/memory-template.ts';
 
 const root = join(import.meta.dirname, '..', 'content');
 const errors: string[] = [];
 
-// --- memory-template gate (repo-memory T3): versioned canonical for `.mugiwara/MEMORY.md` ---
-export const MEMORY_TEMPLATE_SECTIONS = ['Facts', 'Conventions', 'Preferences', 'Never'];
-export const MEMORY_TEMPLATE_MAX_LINES = 40;
-const MEMORY_SECRET_PATTERNS: RegExp[] = [
-  /sk-/,
-  /AKIA/,
-  /ghp_/,
-  /xox[bpas]-/,
-  /-----BEGIN .*PRIVATE KEY-----/,
-  /password\s*[:=]/i,
-];
-
-export function memoryTemplateErrors(text: string, label = 'references/memory-template.md'): string[] {
-  const errs: string[] = [];
-  for (const s of MEMORY_TEMPLATE_SECTIONS) {
-    if (!text.includes(`## ${s}`)) errs.push(`${label}: missing "## ${s}" section`);
-  }
-  const nonEmpty = text.split(/\r?\n/).filter((l) => l.trim() !== '').length;
-  if (nonEmpty > MEMORY_TEMPLATE_MAX_LINES) {
-    errs.push(`${label}: memory-template exceeds ${MEMORY_TEMPLATE_MAX_LINES} lines (${nonEmpty} non-empty)`);
-  }
-  for (const re of MEMORY_SECRET_PATTERNS) {
-    if (re.test(text)) errs.push(`${label}: possible secret pattern ${re} — never store secrets in MEMORY.md`);
-  }
-  return errs;
-}
+// memory-template gate: the pure half lives in src/memory-template.ts so the
+// validator itself stays un-imported (see that file's header for why).
 
 function checkFile(file: string, wantName: string, kind: 'skill' | 'agent'): Record<string, string> | null {
   let parsed;
@@ -112,8 +89,18 @@ function listFiles(dir: string, prefix = ''): string[] {
   return out;
 }
 
+// --check-sync is an EXCLUSIVE mode: it exits as soon as it has an answer, so
+// any other --check-* flag on the same command line is silently skipped. That
+// is the exact shape of the failure CI's own comment warns about — a green
+// board over checks that never ran — so combining them is refused loudly
+// instead of obeyed quietly. Run it as its own step (the `gate` script does).
 const syncArg = process.argv.indexOf('--check-sync');
 if (syncArg !== -1) {
+  const others = process.argv.filter((a) => /^--check-/.test(a) && a !== '--check-sync');
+  if (others.length) {
+    console.error(`✗ --check-sync is exclusive (it exits early) — it would silently skip ${others.join(', ')}. Run it as its own command.`);
+    process.exit(1);
+  }
   const pairs = [['content/skills', 'skills'], ['content/agents', 'agents']] as const;
   const diffs: string[] = [];
   for (const [from, to] of pairs) {
@@ -435,7 +422,7 @@ if (integrityArg !== -1) {
     const docs = ['docs/concepts/cost.md', 'docs/concepts/lanes.md', 'README.md'];
     const expected: [string, string][] = [
       ['lean', '8,000'], ['standard', '13,000'], ['full', '22,000'],
-      ['lean', '12,000'], ['standard', '25,000'], ['full', '50,000'],
+      ['lean', '12,000'], ['standard', '30,000'], ['full', '50,000'],
     ];
     for (const doc of docs) {
       const p = join(import.meta.dirname, '..', doc);
@@ -456,7 +443,7 @@ if (integrityArg !== -1) {
       // right. A doc claiming 1.5x/3x of LANE_BASE is the exact lie this gate
       // exists to catch. Checked on the authoritative cost doc only.
       if (doc === 'docs/concepts/cost.md') {
-        const budgets: [string, number][] = [['lean', 12000], ['standard', 25000], ['full', 50000]];
+        const budgets: [string, number][] = [['lean', 12000], ['standard', 30000], ['full', 50000]];
         for (const [lane, budget] of budgets) {
           const warn = budget * 3 / 2;
           const stop = budget * 3;

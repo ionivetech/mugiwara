@@ -14,6 +14,6 @@ LANE_BASE_spike=5411
 
 # BUDGET: warn at 1.5×, stop at 3×.
 BUDGET_lean=12000
-BUDGET_standard=25000
+BUDGET_standard=30000
 BUDGET_full=50000
 BUDGET_spike=9000

@@ -207,7 +207,7 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
   // C2: closure event `status` gates on the LANE token budget, never on the
   // context char budget. Old code used effBudget = budget || laneBudget, so a
   // configured char budget (150000) swallowed the token gate. New code gates
-  // status on laneBudget (25000 for standard) and reports context separately.
+  // status on laneBudget (30000 for standard) and reports context separately.
   it('status gates on lane token budget, not context char budget; context reported separately', () => {
     buildMission({
       state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tokens_est: 40000, tasks_done: 1, tasks_total: 1, evidence: [] },
