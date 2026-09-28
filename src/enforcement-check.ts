@@ -84,3 +84,42 @@ export function checkArtifactPaths(
   }
   return errors;
 }
+
+/**
+ * Any doc citing a measured retrieval/pointer figure must cite the measured one.
+ *
+ * Why: these numbers rot silently. `--check-readme-metrics` covers README.md
+ * and nothing else, so the same three figures went stale in
+ * docs/reference/enforcement.md (95.4 / 221 / 342) and twice in
+ * docs/concepts/features.md while every gate stayed green — on the very page
+ * whose stated job is that no line "promises what the repo cannot keep".
+ *
+ * Deliberately narrow: it only fires on the exact phrasings the docs use, so a
+ * sentence mentioning a percentage for some other reason is left alone.
+ */
+export function checkMetricCitations(
+  files: Array<{ path: string; text: string }>,
+  metrics: { retrieval_rank1: number; retrieval_probes: number; pointers_total: number },
+): CheckError[] {
+  const errors: CheckError[] = [];
+  const probes = [
+    // Forward phrasing only ("95.6% rank-1"). A backward form would also read
+    // "the v0.5.0 trim dropped rank-1 to 33%" — a story about the past, not a
+    // claim about now — and flagging it pushes writers to delete the lesson
+    // instead of keeping the number honest.
+    { re: /(\d+(?:\.\d+)?)\s*(?:%|percent)\s*rank[ -]?1/gi, want: metrics.retrieval_rank1, what: 'rank-1' },
+    { re: /(\d[\d,]*)\s+(?:retrieval\s+)?probes/gi, want: metrics.retrieval_probes, what: 'probes' },
+    { re: /(\d[\d,]*)\s+pointers/gi, want: metrics.pointers_total, what: 'pointers' },
+  ];
+  for (const { path, text } of files) {
+    for (const { re, want, what } of probes) {
+      for (const m of text.matchAll(re)) {
+        const got = Number(m[1].replace(/,/g, ''));
+        if (Number.isFinite(got) && got !== want) {
+          errors.push(`metrics: ${path} cites ${what} ${m[1]} — .metrics/latest.json measures ${want}`);
+        }
+      }
+    }
+  }
+  return errors;
+}

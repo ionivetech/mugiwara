@@ -156,7 +156,7 @@ For leads who budget AI spend. Not for flat-rate seats with no metering. Trade-o
 
 Problem: switching editors strands your process behind a half-ported workflow.
 What: the same 21 skills and 14 agents ship to Claude Code, opencode, Copilot, Gemini, Codex, Cursor, Kimi, Pi, Windsurf, Cline, Kilo, and Antigravity; only the loading path changes per tier.
-Proof: 342 pointers resolve with 0 broken across 9 targets; 221 retrieval probes rank 1 at 95.4 percent, all enforced in CI.
+Proof: 166 pointers resolve with 0 broken across 9 targets; 272 retrieval probes rank 1 at 95.6 percent, all enforced in CI.
 For developers in more than one editor. Not for single-harness shops. Trade-off: tier 3 targets run inline from stub pointers, so large crews run slower there. Detail: [harness matrix](../reference/harness-matrix.md).
 
 ### Lessons that survive the mission
@@ -195,6 +195,6 @@ What: all 14 agents. Captain Luffy triages, runs [check-ins](agents.md), records
 Proof: every install ships the whole crew, 11 specialists plus 3 internal helpers, with the call moment per member in [agents](agents.md).
 For leads assigning ownership per stage. Trade-off: fourteen names take one reading to learn, and after that the call is one sentence.
 
-Measured rollup: 21 skills indexed, 342 pointers with 0 broken, 221 probes at 95.4 percent rank 1 over 174 positives and 83 negatives across 294 terms. Every number comes from `.metrics/latest.json`.
+Measured rollup: 21 skills indexed, 166 pointers with 0 broken, 272 probes at 95.6 percent rank 1 over 180 positives and 86 negatives across 301 terms. Every number comes from `.metrics/latest.json`.
 
 Open [Getting started](../getting-started.md) and hand the crew one real task.

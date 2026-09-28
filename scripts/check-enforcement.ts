@@ -3,7 +3,7 @@
 // Thin on purpose: the logic is tested there, this only reads files and exits.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkArtifactPaths, checkMechanismCells, checkWritingCapTargets } from '../src/enforcement-check.ts';
+import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWritingCapTargets } from '../src/enforcement-check.ts';
 import { WRITING_CAPS } from '../src/check-writing.ts';
 
 const root = join(import.meta.dirname, '..');
@@ -26,8 +26,15 @@ const prose = [...walk(join(root, 'content')), ...walk(join(root, 'references'))
   text: readFileSync(p, 'utf8'),
 }));
 
+const metrics = JSON.parse(readFileSync(join(root, '.metrics/latest.json'), 'utf8'));
+const docs = [...walk(join(root, 'docs')), join(root, 'README.md')].map((p) => ({
+  path: p.slice(root.length + 1),
+  text: readFileSync(p, 'utf8'),
+}));
+
 const errors = [
-  ...checkArtifactPaths(prose, CANONICAL_FLOWS),
+  ...checkArtifactPaths([...prose, ...docs], CANONICAL_FLOWS),
+  ...checkMetricCitations(docs, metrics),
   ...checkMechanismCells(readFileSync(join(root, 'docs/concepts/enforcement.md'), 'utf8'), root),
   ...checkWritingCapTargets(WRITING_CAPS, root),
 ];

@@ -1,6 +1,6 @@
 // test/enforcement-check.test.ts — the two checks that outgrew validate-content.ts.
 import { describe, it, expect } from 'bun:test';
-import { checkArtifactPaths, checkMechanismCells, checkWritingCapTargets } from '../src/enforcement-check.ts';
+import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWritingCapTargets } from '../src/enforcement-check.ts';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -84,5 +84,37 @@ describe('checkArtifactPaths', () => {
       FLOWS,
     );
     expect(errs.length).toBe(2);
+  });
+});
+
+// These three numbers rot silently: --check-readme-metrics covers README.md
+// only, so the same figures went stale in reference/enforcement.md, twice in
+// features.md, and in concepts/skills.md, all behind a green gate.
+describe('checkMetricCitations', () => {
+  const M = { retrieval_rank1: 95.6, retrieval_probes: 272, pointers_total: 166 };
+
+  it('passes when the cited figures match the measurement', () => {
+    const text = 'measured at 95.6% rank-1 over 272 retrieval probes with 166 pointers resolving';
+    expect(checkMetricCitations([{ path: 'd.md', text }], M)).toEqual([]);
+  });
+
+  it('flags each stale figure separately', () => {
+    const text = 'measured at 95.4% rank-1 over 221 probes with 342 pointers';
+    const errs = checkMetricCitations([{ path: 'd.md', text }], M);
+    expect(errs.length).toBe(3);
+    expect(errs.join(' ')).toContain('95.4');
+    expect(errs.join(' ')).toContain('221');
+    expect(errs.join(' ')).toContain('342');
+  });
+
+  it('reads comma-grouped figures', () => {
+    expect(checkMetricCitations([{ path: 'd.md', text: '1,234 pointers' }], M).length).toBe(1);
+    expect(checkMetricCitations([{ path: 'd.md', text: '166 pointers' }], M)).toEqual([]);
+  });
+
+  // A story about a past regression is not a claim about the present.
+  it('leaves historical prose alone', () => {
+    const text = 'the v0.5.0 trim dropped rank-1 to 33% with nobody noticing.';
+    expect(checkMetricCitations([{ path: 'd.md', text }], M)).toEqual([]);
   });
 });

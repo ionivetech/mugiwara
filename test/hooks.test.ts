@@ -225,6 +225,35 @@ test('savepoint hook: config mode=auto + plan, no state → state records auto',
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+// `mugiwara archive` removes state on purpose and leaves report.md. Reading
+// "artifacts, no state" as "never started" reseeded flow 2 from plan.md, and a
+// mission whose PR merged days earlier reappeared as in-flight — which is how
+// 2026-09-25-clean-uninstall-per-harness sat at "flow 2 · 0/0 tasks".
+test('savepoint hook: a closed mission is not resurrected', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    writeFileSync(join(d, 'report.md'), '# Report\n');
+    const r = hook(SAVEHOOK, dir, {});
+    expect(r.status).toBe(0);
+    expect(existsSync(join(d, 'state.json'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: pr-verdict alone also marks a mission closed', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    writeFileSync(join(d, 'pr-verdict.md'), '# Verdict\n');
+    expect(hook(SAVEHOOK, dir, {}).status).toBe(0);
+    expect(existsSync(join(d, 'state.json'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('savepoint hook: decisions-only mission bootstraps Flow 0', { timeout: 30000 }, () => {
   const dir = repo();
   try {

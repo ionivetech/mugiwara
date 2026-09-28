@@ -9,10 +9,10 @@ Rule: budgets bound process cost, the part mugiwara adds. They never claim to me
 | Lane | Flow stages | Base | Budget | Warn | Stop |
 |---|---|---|---|---|---|
 | Direct | none | 0 | none | none | none |
-| Lean | execute, quality | 8000 | 12000 | 18000 | 36000 |
-| Standard | plan, execute, audit, review | 16000 | 30000 | 45000 | 90000 |
-| Full | all nine flow stages | 22000 | 50000 | 75000 | 150000 |
-| Spike | brainstorm, re-triage | 1000 | 9000 | 13500 | 27000 |
+| Lean | execute, quality | 8421 | 12000 | 18000 | 36000 |
+| Standard | plan, execute, audit, review | 15995 | 30000 | 45000 | 90000 |
+| Full | all nine flow stages | 22016 | 50000 | 75000 | 150000 |
+| Spike | brainstorm, re-triage | 5411 | 9000 | 13500 | 27000 |
 
 Bases come from `scripts/lane-base.ts`, which sums the skill and agent bodies each lane loads. The gate fails when a constant drifts more than a fifth from measured load, so content growth moves the budgets. Warn fires at 1.5 times budget, stop at 3 times, both inclusive. State lands in `.mugiwara/missions/<mission>/[member].json` before any stop.
 

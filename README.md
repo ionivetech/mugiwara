@@ -41,8 +41,8 @@ Sensitive paths touched: `src/auth/invitation.ts`, `migrations/004.sql`
 ## Gates
 | Gate | Verdict | Evidence |
 |---|---|---|
-| Checkpoint (Flow 4) | PASS | `flows/04-audit.md` |
-| Quality (Flow 5) | PASS | `flows/05-quality.md` |
+| Checkpoint (Flow 4) | PASS | `flows/02-audit.md` |
+| Quality (Flow 5) | PASS | `flows/03-quality.md` |
 | Coverage (Flow 6) | PASS | new 94% / modified 87% |
 | Security (Flow 7) | PASS | STRIDE, 0 high -> `review/security.md` |
 
@@ -170,7 +170,7 @@ nine stages.
 ### 4. Cost Governor: what is safe to spend
 Per-lane budgets, a **live slop governor** that flags wasted cost and
 attributes it to the crew member that caused it, and a `mugiwara cost` ledger.
-Native names: anti-fluff (terse writing); just-enough (minimal-code ladder, YAGNI-first); anti-slop (waste detection); have-adhd (scannable rendering).
+Four host capabilities ride alongside, named for the job with the native name in brackets: terse-output [anti-stuff], minimal-diff [just-enough], waste-guard [anti-slop], scan-format [have-adhd]. They ship with the host, not here.
 
 → [Cost model](docs/concepts/cost.md)
 

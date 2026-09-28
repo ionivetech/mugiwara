@@ -259,7 +259,10 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
         issues.push({ kind: 'verdict-shape', severity: 'warn', detail: `${rel} "## ${heading}" is empty — write \`None.\` explicitly or list the boxes` });
         continue;
       }
-      if (lines.length === 1 && /^none\.?$/i.test(lines[0])) continue; // explicit empty
+      // The template's own empty marker, in any shape the template shows it:
+      // `None.`, `- None.`, or backticked. Accepting only the bare word made
+      // the check reject a file that followed the template correctly.
+      if (lines.length === 1 && /^-?\s*`?none\.?`?$/i.test(lines[0])) continue;
       const bad = lines.filter((l) => !/^- \[[ xX]\] \S/.test(l));
       if (bad.length) {
         issues.push({

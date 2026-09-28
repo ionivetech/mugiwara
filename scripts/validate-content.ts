@@ -419,21 +419,39 @@ if (integrityArg !== -1) {
     errors.push('doc-integrity: scripts/lib/lane-base.sh not found — cannot verify thresholds');
   } else {
     const constants = readFileSync(src, 'utf8');
-    const docs = ['docs/concepts/cost.md', 'docs/concepts/lanes.md', 'README.md'];
-    const expected: [string, string][] = [
-      ['lean', '8,000'], ['standard', '13,000'], ['full', '22,000'],
-      ['lean', '12,000'], ['standard', '30,000'], ['full', '50,000'],
-    ];
+    // README cites one budget inside a sample transcript; it does not publish
+    // the threshold table and should not be made to. The two docs that do are
+    // the ones held to it.
+    const docs = ['docs/concepts/cost.md', 'docs/concepts/lanes.md'];
+    // Derived from lane-base.sh, never hardcoded. This gate exists to prove the
+    // docs match the source constants; a second hardcoded copy of those
+    // constants only proves the docs match the copy. It drifted exactly that
+    // way: the list still said standard base 13,000 after the source moved to
+    // 15,995, so the gate demanded a number no longer true anywhere.
+    const constFor = (k: string): string | null => {
+      const m = new RegExp(`^${k}=(\\d+)$`, 'm').exec(constants);
+      return m ? Number(m[1]).toLocaleString('en-US') : null;
+    };
+    const expected: [string, string][] = [];
+    for (const lane of ['lean', 'standard', 'full']) {
+      for (const prefix of ['LANE_BASE', 'BUDGET']) {
+        const v = constFor(`${prefix}_${lane}`);
+        if (v === null) errors.push(`doc-integrity: ${prefix}_${lane} missing from lane-base.sh`);
+        else expected.push([lane, v]);
+      }
+    }
     for (const doc of docs) {
       const p = join(import.meta.dirname, '..', doc);
       if (!existsSync(p)) { errors.push(`doc-integrity: ${doc} not found`); continue; }
       const text = readFileSync(p, 'utf8');
       for (const [lane, num] of expected) {
-        // each doc must cite the budget/LANE_BASE number for that lane; accept
-        // both the comma form (7,000) and the k-shorthand (7k / ~7k)
-        const compact = num.replace(',', '').replace(/0+$/, '');
-        const kForm = /^(\d+)000$/.exec(num);
-        const variants = [num, compact, ...(kForm ? [`${kForm[1]}k`, `~${kForm[1]}k`] : [])];
+        // Accept the comma form (12,000), the plain digits (12000), and the
+        // k-shorthand (12k / ~12k) — nothing shorter. Stripping trailing zeros
+        // to a "compact" form turned 8,000 into "8", and every doc contains
+        // the digit 8, so the check passed on files citing no threshold at all.
+        const plain = num.replace(/,/g, '');
+        const kForm = /^(\d+)000$/.exec(plain);
+        const variants = [num, plain, ...(kForm ? [`${kForm[1]}k`, `~${kForm[1]}k`] : [])];
         if (!variants.some(v => text.includes(v))) {
           errors.push(`doc-integrity: ${doc} missing ${lane} threshold ${num} (source: ${src})`);
         }

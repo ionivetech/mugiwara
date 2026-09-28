@@ -772,7 +772,7 @@ if [ -n "$MISSION" ]; then
     lane: process.argv[8],
     lane_prev: process.argv[9] || null,
     updated_at: process.argv[10],
-    next_action: 'verify this wave against the plan, then continue per plan (next wave or closure)'
+    next_action: 'verify this flow stage against the plan, then continue per plan (next stage or closure)'
   };
   try { data.next_session_prompt = JSON.parse(fs.readFileSync(process.argv[12],'utf8')).next_session_prompt || ''; } catch (e) { data.next_session_prompt = ''; }
   fs.writeFileSync(process.argv[11], JSON.stringify(data, null, 2) + '\n');

@@ -52,8 +52,9 @@ function bootstrapMission() {
       const stem = f.slice(0, -5);
       return stem !== "continue" && !stem.startsWith("continue-");
     });
+    const closed = files.includes("report.md") || files.includes("pr-verdict.md");
     const hasArtifacts = ["plan.md", "spec.md", "decisions.md"].some((f) => files.includes(f));
-    if (!hasState && hasArtifacts) {
+    if (!hasState && hasArtifacts && !closed) {
       const wave = files.includes("plan.md") ? "2" : files.includes("spec.md") ? "1" : "0";
       return { mission: e.name, member: "", wave, mode: readMode(), updated: 0 };
     }
