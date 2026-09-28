@@ -526,6 +526,18 @@ if (integrityArg !== -1) {
       errors.push(`doc-integrity: docs instruct "mugiwara ${cmd}" but src/cli.ts has no case '${cmd}'`);
     }
   }
+  // N18 dispatch-guard: luffy-orchestrator must keep the self-check that
+  // refuses to run as an isolated Task/Agent-tool subagent — the persona
+  // owns live cross-flow-stage routing and must stay embodied by the main
+  // thread. Losing this marker silently reopens the background-dispatch bug.
+  {
+    const luffyPath = join(import.meta.dirname, '..', 'content/agents/luffy-orchestrator.md');
+    if (!existsSync(luffyPath)) {
+      errors.push('doc-integrity: content/agents/luffy-orchestrator.md not found — cannot verify dispatch guard');
+    } else if (!readFileSync(luffyPath, 'utf8').includes('## Dispatch guard')) {
+      errors.push('doc-integrity: content/agents/luffy-orchestrator.md missing "## Dispatch guard" section — Luffy must refuse isolated-subagent dispatch');
+    }
+  }
   // N2 banner-format: no raw ANSI escapes in model-facing instructions. The
   // colour table in wave-banners.md is data for the plugin, not an
   // instruction — it holds hex, never escapes, so no exemption is needed.

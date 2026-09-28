@@ -140,6 +140,27 @@ test('memory-template missing-section fixture fails', () => {
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+// --- N18 dispatch-guard (luffy-orchestrator must refuse isolated-subagent dispatch) ---
+test('luffy-orchestrator keeps the dispatch-guard section (green)', () => {
+  expect(() => run(['--check-doc-integrity'])).not.toThrow();
+  const body = readFileSync(join(import.meta.dirname, '..', 'content/agents/luffy-orchestrator.md'), 'utf8');
+  expect(body).toContain('## Dispatch guard');
+});
+
+test('stripping the dispatch-guard section turns --check-doc-integrity red', () => {
+  const p = join(import.meta.dirname, '..', 'content/agents/luffy-orchestrator.md');
+  const original = readFileSync(p, 'utf8');
+  const guardRe = /## Dispatch guard[\s\S]*?(?=\n## Before you start)/;
+  expect(guardRe.test(original)).toBe(true); // mutation target must exist, or this proves nothing
+  const mutated = original.replace(guardRe, '');
+  try {
+    writeFileSync(p, mutated);
+    let failed = false;
+    try { run(['--check-doc-integrity']); } catch { failed = true; }
+    expect(failed).toBe(true);
+  } finally { writeFileSync(p, original); }
+});
+
 test('orchestration handoff requires four semantic blocks and exact resume command', () => {
   const skill = readFileSync(join(import.meta.dirname, '..', 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md'), 'utf8');
   expect(skill).toMatch(/\*\*Result\*\*/);
