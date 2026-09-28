@@ -289,14 +289,21 @@ function bannerRecorded(sessionId: string): boolean {
   } catch { return false; }
 }
 
-/** Highest banner in the Stop-hook transcript, or 0 when absent/unreadable. */
-function bannerFromTranscript(payload: Record<string, unknown>): number {
+/**
+ * Highest banner in the Stop-hook transcript.
+ *   `null` — there is no transcript to read (cannot tell).
+ *   `0`    — transcript read, and it contains no banner.
+ * These are different facts. Collapsing them into `0` is what let a fully
+ * silent session pass check 4: the mission-file fallback answered "is there a
+ * `## Flow N —` heading in an artifact I wrote?", which is not the question.
+ */
+function bannerFromTranscript(payload: Record<string, unknown>): number | null {
   const p = payload.transcript_path;
-  if (typeof p !== 'string' || !p) return 0;
+  if (typeof p !== 'string' || !p) return null;
   try {
-    if (!existsSync(p)) return 0;
+    if (!existsSync(p)) return null;
     return extractBannerFlow(readFileSync(p, 'utf8'));
-  } catch { return 0; }
+  } catch { return null; }
 }
 function bannerThisSession(): boolean {
   const markerFile = join(cwd, '.mugiwara', '.engaged');
@@ -389,8 +396,18 @@ async function main(): Promise<void> {
     // Signal order: fresh transcript scan (recorded to the marker) →
     // marker's same-session record → mission-file fallback.
     const transcriptFlow = bannerFromTranscript(payload);
-    if (transcriptFlow > 0) recordBannerFlow(transcriptFlow, sessionId);
-    if ((sourceChangedNow || planTouched()) && !bannerRecorded(sessionId) && !bannerThisSession()) {
+    if (transcriptFlow !== null && transcriptFlow > 0) recordBannerFlow(transcriptFlow, sessionId);
+    // The transcript IS what the user saw, so when it is readable it is the
+    // whole answer. A `## Flow N —` heading inside decisions.md or flows/*.md
+    // proves a file was written, never that anything reached the thread — an
+    // agent can run the entire pipeline inside tool calls, write perfect
+    // artifacts, and narrate nothing. Mission files stay as a fallback only
+    // where there is no transcript to read. Warning-only either way, so a
+    // false positive costs one line of stderr.
+    const bannerShown = transcriptFlow !== null
+      ? transcriptFlow > 0
+      : bannerRecorded(sessionId) || bannerThisSession();
+    if ((sourceChangedNow || planTouched()) && !bannerShown) {
       process.stderr.write(
         '⚠ Mugiwara: work recorded with no flow banner this session. The banner is the ' +
         'only signal the user has that the pipeline ran. Open each stage with ' +

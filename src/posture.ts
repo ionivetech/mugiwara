@@ -69,11 +69,27 @@ export function selectPosture(input: PostureInput): PostureResult {
       evidence_refs: ['state context metrics', 'remaining task order'],
     };
   }
+  // Dispatch has a floor price: ~132k tokens per worker against ~5k for the
+  // same task inline (measured, see mugiwara-orchestration). Two small
+  // independent tasks are ~10k inline and ~264k dispatched, so task COUNT
+  // alone never justifies a worker — the work has to be big enough that the
+  // floor disappears into it. Lane is the size proxy the pipeline already
+  // computes, so parallel-workers needs a full-lane mission or enough tasks
+  // that serial cost dominates. Everything below that batches inline.
   if (input.independent_tasks >= 2) {
+    const worthDispatch = input.lane === 'full' || input.independent_tasks >= 4;
+    if (!worthDispatch) {
+      return {
+        posture: 'inline-batched',
+        pause: false,
+        reason: `${input.independent_tasks} independent tasks on lane ${input.lane} — below the dispatch floor (~132k/worker vs ~5k inline); batch them inline`,
+        evidence_refs: ['Nami dependency map', 'cost-governor dispatch floor'],
+      };
+    }
     return {
       posture: 'parallel-workers',
       pause: false,
-      reason: `${input.independent_tasks} independent tasks, no shared files/interfaces`,
+      reason: `${input.independent_tasks} independent tasks, no shared files/interfaces, lane ${input.lane} — dispatch cost amortized`,
       evidence_refs: ['Nami dependency map', 'work-governor delegation verdict'],
     };
   }

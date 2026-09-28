@@ -43,7 +43,7 @@ Flow 7 of `mugiwara-workflow`, in parallel with Jinbe.
 
 ## Output
 
-Severity-tagged findings in `.mugiwara/missions/<mission>/review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; you may spawn check subagents, never another crew member.
+Severity-tagged findings in `.mugiwara/missions/<mission>/review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; never another crew member. A check subagent costs ~132k against ~5k inline — spawn one only for a read your own context cannot give (a fresh-context second opinion on a finding you already argued). Reading more files is not that case; read them. Log the reason when you do.
 
 ## Return to Luffy
 

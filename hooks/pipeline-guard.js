@@ -223,13 +223,13 @@ function bannerRecorded(sessionId) {
 function bannerFromTranscript(payload) {
   const p = payload.transcript_path;
   if (typeof p !== "string" || !p)
-    return 0;
+    return null;
   try {
     if (!existsSync(p))
-      return 0;
+      return null;
     return extractBannerFlow(readFileSync(p, "utf8"));
   } catch {
-    return 0;
+    return null;
   }
 }
 function bannerThisSession() {
@@ -298,9 +298,10 @@ async function main() {
 `);
     }
     const transcriptFlow = bannerFromTranscript(payload);
-    if (transcriptFlow > 0)
+    if (transcriptFlow !== null && transcriptFlow > 0)
       recordBannerFlow(transcriptFlow, sessionId);
-    if ((sourceChangedNow || planTouched()) && !bannerRecorded(sessionId) && !bannerThisSession()) {
+    const bannerShown = transcriptFlow !== null ? transcriptFlow > 0 : bannerRecorded(sessionId) || bannerThisSession();
+    if ((sourceChangedNow || planTouched()) && !bannerShown) {
       process.stderr.write("\u26A0 Mugiwara: work recorded with no flow banner this session. The banner is the " + "only signal the user has that the pipeline ran. Open each stage with " + "`## <emoji> Flow N \u2014 Crew (Role)`.\n");
     }
     return;

@@ -353,6 +353,26 @@ test('guard banner: banner in mission files suppresses warning without transcrip
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('guard banner: a readable transcript with no banner beats tidy mission files', { timeout: 20000 }, () => {
+  // The session this test was written from: the whole pipeline ran inside tool
+  // calls, decisions.md got perfect `## Flow N —` headings, and the user saw
+  // nothing. The mission-file fallback answered "is there a heading in a file
+  // I wrote?" and passed. The transcript is what the user actually saw, so
+  // when it is readable it is the only evidence that counts.
+  const dir = repo();
+  try {
+    engage(dir);
+    bannerState(dir);
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    writeFileSync(join(d, 'decisions.md'), '## Flow 0 — Luffy (Triage)\n## Flow 3 — Zoro (Execution)\n');
+    const transcript = join(dir, 'transcript.jsonl');
+    writeFileSync(transcript, '{"role":"assistant","content":"ran the whole mission in tool calls, said nothing"}\n');
+    const r = hook(GUARD, dir, { session_id: 's1', transcript_path: transcript });
+    expect(r.status).toBe(0);
+    expect(r.err).toContain('no flow banner');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 // ---------- T4 (superseded 2026-09-25): prompts embed the body ----------
 // Lazy pointers named an npm-cache absolute path, which triggers a file
 // permission prompt on every embody on plugin-only installs (mission
