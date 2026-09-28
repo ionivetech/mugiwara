@@ -1322,3 +1322,39 @@ describe('run() — features explain|list', () => {
 
 
 
+
+describe('run() — --help', () => {
+  // The help text was 55 uncovered lines, which is why src/cli.ts sat at
+  // 79.44% and every edit to it failed the 90% modified threshold — including
+  // the two-word fix this block now guards.
+  test('lists every documented command and flag', async () => {
+    const { out } = await capture(['--help']);
+    expect(out).toContain('mugiwara [install]');
+    for (const cmd of [
+      'update', 'uninstall', 'list', 'reset', 'archive', 'clean',
+      'continue', 'status', 'cost', 'features', 'waste', 'handoff', 'sign',
+      'migrate', 'lesson', 'run', 'savepoint',
+    ]) {
+      expect(out, `--help must document "${cmd}"`).toContain(`mugiwara ${cmd}`);
+    }
+    for (const flag of ['--global', '--project', '--target', '--yes', '--force', '--dry-run', '--check', '--all', '--include-live', '--stale', '--keep-logs']) {
+      expect(out, `--help must document "${flag}"`).toContain(flag);
+    }
+  });
+
+  // "wave" means a task group inside Flow 3; a pipeline step is a flow stage.
+  // The help text said "wave" for both.
+  test('says flow stage, never wave', async () => {
+    const { out } = await capture(['--help']);
+    expect(out).not.toMatch(/\bwaves?\b/i);
+    expect(out).toContain('computed mission state: flow stage, tasks, lane, blockers, budget');
+    expect(out).toContain("fold a closed mission's flow files into its report");
+  });
+
+  test('names the version and the runnable scripts', async () => {
+    const { out } = await capture(['--help']);
+    expect(out).toMatch(/^mugiwara \d+\.\d+\.\d+ —/m);
+    expect(out).toContain('savepoint.sh');
+    expect(out).toContain('lane.sh');
+  });
+});

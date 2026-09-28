@@ -134,6 +134,27 @@ if (needsRun) {
 if (!existsSync(summaryPath))
   skip('coverage run produced no lcov.info (coverage-reporter=lcov not configured)');
 
+/**
+ * Lines inside a multi-line template literal, which v8 can never report as
+ * hit. `console.log(\`...\`)` executes as ONE expression: the opening line
+ * gets the hit count and every line of the literal's text reports 0 forever.
+ * src/cli.ts's help block ran 2702 times and contributed 55 permanently-dead
+ * lines to its own denominator, deflating the file by 3.5 points and making a
+ * two-word fix unshippable. Excluding them does not hide uncovered code —
+ * there is no code there to cover.
+ */
+function templateBodyLines(src: string): Set<number> {
+  const out = new Set<number>();
+  const lines = src.split(/\r?\n/);
+  let open = false;
+  for (let i = 0; i < lines.length; i++) {
+    if (open) out.add(i + 1);
+    const ticks = (lines[i].match(/`/g) ?? []).length;
+    if (ticks % 2 === 1) open = !open;
+  }
+  return out;
+}
+
 const measured = parseLcov(readFileSync(summaryPath, 'utf8'));
 function parseLcov(text: string): Map<string, number> {
   // Minimal LCOV reader: per SF record, LF = lines found, LH = lines hit.
@@ -143,15 +164,25 @@ function parseLcov(text: string): Map<string, number> {
   let file = '';
   let found = 0;
   let hit = 0;
+  let dead: Set<number> = new Set();
   const flush = () => {
     if (file) out.set(file, found === 0 ? 100 : (hit / found) * 100);
-    file = ''; found = 0; hit = 0;
+    file = ''; found = 0; hit = 0; dead = new Set();
   };
+  // Counted from DA: records rather than LF/LH so unhittable template-literal
+  // lines can be dropped from the denominator (see templateBodyLines).
   for (const line of text.split(/\r?\n/)) {
-    if (line.startsWith('SF:')) { flush(); file = line.slice(3).replace(/^\.\//, ''); }
-    else if (line.startsWith('LF:')) found = Number(line.slice(3)) || 0;
-    else if (line.startsWith('LH:')) hit = Number(line.slice(3)) || 0;
-    else if (line === 'end_of_record') flush();
+    if (line.startsWith('SF:')) {
+      flush();
+      file = line.slice(3).replace(/^\.\//, '');
+      try { dead = templateBodyLines(readFileSync(join(root, file), 'utf8')); }
+      catch { dead = new Set(); }
+    } else if (line.startsWith('DA:')) {
+      const [n, c] = line.slice(3).split(',').map(Number);
+      if (!Number.isFinite(n)) continue;
+      if (c > 0) { found++; hit++; }
+      else if (!dead.has(n)) found++;
+    } else if (line === 'end_of_record') flush();
   }
   flush();
   return out;
