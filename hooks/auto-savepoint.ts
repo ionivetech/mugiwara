@@ -24,10 +24,9 @@ const SAFE = /^[A-Za-z0-9._-]+$/;
 type Active = { mission: string; member: string; wave: string; mode: string; updated: number };
 
 /**
- * Name the mission when no savepoint exists yet, so the first one can be
- * written. A missions/<name>/ dir holding plan/spec/decisions but no state
- * json means Flow 0 produced artifacts without a savepoint — exactly the
- * drift this hook exists to end.
+ * Name the mission when it has artifacts but no state, then seed the strongest
+ * artifact flow: plan.md = 2, spec.md = 1, otherwise 0. Existing state remains
+ * authoritative in activeMission().
  */
 function bootstrapMission(): Active | null {
   const base = join(cwd, '.mugiwara', 'missions');
@@ -42,7 +41,8 @@ function bootstrapMission(): Active | null {
     });
     const hasArtifacts = ['plan.md', 'spec.md', 'decisions.md'].some((f) => files.includes(f));
     if (!hasState && hasArtifacts) {
-      return { mission: e.name, member: '', wave: '0', mode: readMode(), updated: 0 };
+      const wave = files.includes('plan.md') ? '2' : files.includes('spec.md') ? '1' : '0';
+      return { mission: e.name, member: '', wave, mode: readMode(), updated: 0 };
     }
   }
   return null;

@@ -12,7 +12,7 @@ import { join, dirname } from 'node:path';
 // each case materializes a git repo + runs savepoint (spawnSync) — git init
 // and fixture setup are slow on CI. Raise the default per-test timeout via
 // the vitest config-less default (5000ms is too tight for 2-3 savepoints).
-const SLOW = 30000;
+const SLOW = 60000;
 
 const ROOT = join(import.meta.dirname, '..');
 const LANE = join(ROOT, 'scripts', 'lane.sh');

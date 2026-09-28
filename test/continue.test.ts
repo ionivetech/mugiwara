@@ -351,7 +351,7 @@ describe('formatTable — column alignment across rows', () => {
 });
 
 describe('gitActor — env precedence STATE_ACTOR > GIT_AUTHOR_NAME > git config > USER', () => {
-  const ENV_KEYS = ['STATE_ACTOR', 'GIT_AUTHOR_NAME', 'USER', 'USERNAME', 'HOME', 'XDG_CONFIG_HOME', 'GIT_CONFIG_NOSYSTEM'];
+  const ENV_KEYS = ['STATE_ACTOR', 'GIT_AUTHOR_NAME', 'USER', 'USERNAME', 'HOME', 'XDG_CONFIG_HOME', 'GIT_CONFIG_NOSYSTEM', 'GIT_CONFIG_GLOBAL'];
   const saved: Record<string, string | undefined> = {};
   const bareCwd = mkdtempSync(join(tmpdir(), 'mugi-gitactor-'));
 
@@ -369,6 +369,7 @@ describe('gitActor — env precedence STATE_ACTOR > GIT_AUTHOR_NAME > git config
     process.env.HOME = bareCwd;
     process.env.XDG_CONFIG_HOME = join(bareCwd, '.xdg');
     process.env.GIT_CONFIG_NOSYSTEM = '1';
+    process.env.GIT_CONFIG_GLOBAL = join(bareCwd, 'empty-gitconfig');
   });
   afterEach(() => {
     for (const k of ENV_KEYS) {

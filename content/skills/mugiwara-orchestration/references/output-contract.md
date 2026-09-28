@@ -80,22 +80,33 @@ what is echoed, it never narrows what the review needs.
 
 ## Handoff block (guided/semi)
 
-In `guided`/`semi` the handoff line is never alone — it closes a three-part
-block so the user knows what happened, who is next, and what to write:
-
-1. **Result** — what this flow stage produced, one line + evidence path.
-2. **Next** — who owns the next flow stage and what they will do.
-3. **Continue phrase** — the exact words (or "nothing — continuing") that start
-   the next stage. A bare handoff with no phrase is a defect, like a bare
-   question with no options.
+At a guided/semi flow boundary, render four labeled blocks before the summary
+line and final arrow. Conversation labels may be localized, but command
+literals stay exact. A bare `→ Flow N` or an unexplained next-flow label is a
+defect.
 
 ```
-## Hasil Flow 2 — plan jadi
-**Selanjutnya:** Luffy minta GO; tanpa GO Zoro tidak jalan.
-**Tulis satu:** `GO execution` / `ubah <bagian>` / `stop`
-✓ Flow 2 — Nami · plan 6 tasks/3 waves → .mugiwara/missions/<mission>/plan.md
+## ⚔️ Flow 2 — Nami (Planning)
+**Result** — Plan ready for `<mission>`: goal is actionable flow-boundary
+handoffs and truthful state recovery; 2 tasks/2 waves; evidence:
+`.mugiwara/missions/<mission>/plan.md`; gate/risk: the GO decision and Flow 2
+bootstrap recovery.
+**Next** — Luffy owns the GO gate; after GO, Zoro starts T1: strengthen the
+handoff contract and add its static/behavioral regressions. Safe parallelism:
+none — T2 depends on T1, so run it after T1 completes.
+**Choices**
+- `GO execution` — dispatch Wave 1, then continue to T2.
+- `review <path>` — inspect the named artifact; no dispatch until the review.
+- `revise <section>` — return to Nami, amend the plan, and repeat Flow 2.
+- `pause` — save the Flow 2 checkpoint; leave the tree clean and stop.
+**New session** — Run `/mugiwara continue <mission>`; it resumes the Flow 2
+checkpoint with the plan saved and the GO decision pending.
+✓ Flow 2 — Nami · plan 2 tasks/2 waves → .mugiwara/missions/<mission>/plan.md
 → Flow 0 — Luffy (GO decision)
 ```
 
-The summary line and the `→ Flow N` text keep their exact shapes — the block
-wraps them without replacing them.
+In Semi, the choices are the planning GO gate. In Auto, keep the same result,
+next action, and resume facts but state that routine continuation is automatic;
+do not ask for a redundant GO. The summary line and the
+`→ Flow N — Crew (Role)` text keep their exact shapes — the blocks wrap them
+without replacing them.
