@@ -114,7 +114,7 @@ Add the plugin, then ask something non-trivial:
 npx @ionivetech/mugiwara@latest install --target all --yes
 ```
 
-First run writes `.mugiwara/config`. Then ask (chat, not `@agent`):
+First run writes `.mugiwara/config`. Then ask, in chat or `/mugiwara <request>`, never `@agent`:
 
 ```
 > add role-based access control: admin, editor, viewer
