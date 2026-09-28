@@ -35,7 +35,7 @@ describe('budgetForLane', () => {
 describe('laneBaseForLane', () => {
   it('returns the lane-base.sh LANE_BASE constants per lane', () => {
     expect(laneBaseForLane('lean')).toBe(8421);
-    expect(laneBaseForLane('standard')).toBe(13325);
+    expect(laneBaseForLane('standard')).toBe(15995);
     expect(laneBaseForLane('full')).toBe(22016);
     expect(laneBaseForLane('spike')).toBe(5411);
   });

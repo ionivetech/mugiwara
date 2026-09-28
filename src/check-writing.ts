@@ -21,11 +21,9 @@ export const WRITING_CAPS: Record<string, number> = {
   'docs/concepts/security.md': 500,
   'docs/install/opencode.md': 400,
   'docs/reference/developer-onboarding.md': 400,
-  'docs/cost-governor.md': 400,
   'docs/reference/adoption-guide.md': 400,
   'docs/concepts/agents.md': 400,
   'docs/concepts/git-strategy.md': 400,
-  'docs/adoption.md': 300,
   'docs/runbooks/team-mission.md': 450,
   'docs/concepts/skills.md': 350,
   'docs/concepts/memory.md': 300,
@@ -48,10 +46,7 @@ export const WRITING_CAPS: Record<string, number> = {
   'docs/install/pi.md': 300,
   'docs/install/cursor.md': 300,
   'docs/install/kimi.md': 300,
-  'docs/concepts/execution-model.md': 50,
   'docs/concepts/enforcement.md': 950,
-  'docs/concepts/comparison.md': 50,
-  'docs/troubleshooting.md': 50,
 };
 
 export const BANNED_WORDS = [

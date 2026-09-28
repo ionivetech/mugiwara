@@ -73,9 +73,10 @@ jobs:
           git commit -m "chore: release $RELEASE_VERSION"
           git push origin main
 
-      # Notes are generated BEFORE tagging so the tag can carry them. The
-      # version-bump commit is already in, and release-notes.ts reads from the
-      # previous tag to HEAD, so the content is identical either way.
+      # Notes are generated BEFORE tagging so the tag can carry them. Because
+      # the release tag does not exist yet, the newest tag IS the previous
+      # release and is the correct boundary — no --tagged-head here. Passing it
+      # (or generating after tagging without it) skips a whole release.
       - name: "Generate release notes"
         run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
 

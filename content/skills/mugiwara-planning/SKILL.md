@@ -18,7 +18,7 @@ Classify the mission by size first — after the route decision — then write t
 | Level | When | Required sections |
 |-------|------|-------------------|
 | **Quick** | 1 task, ≤2 files, well-understood (typo, bugfix) | Goals, Wave table, Detail task, Acceptance |
-| **Standard** | 1 wave, 2-8 tasks, light dependency | Goals, Architecture overview, Context scan, Implementation graph, Wave table, Detail task, Anti-pattern, Acceptance |
+| **Standard** | 1 wave, 2-8 tasks, light dependency | Goals, Non-goals, Architecture overview, Context scan, Implementation graph, Wave table, Detail task, Anti-pattern, Acceptance |
 | **Full** | multi-wave, parallel, risk involved | All of Standard + Flow detail, Key decisions, Project structure, Risk & rollback, Definition of Done |
 | **Very large** | est. >2 days work, multi-PR scope | Lane 3 + MUST split (`## Mission split`) |
 
@@ -105,7 +105,7 @@ Each with its failure mode and the fix: `references/anti-patterns.md`.
 Any anti-pattern fails the quality bar — fix the plan before handoff. Never ship a plan with a known hole. "Vague plan, the executor will figure it out" → wave stalls or ships wrong; "skip the context scan" → fiction; "trust me, they're parallel" → race.
 
 ## Full-level skeleton
-Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Project structure`, `## Waves`, `## CODEOWNERS`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Baseline`, `## Execution posture`, `## Risk & rollback`, `## Pre-mortem`, `## Mission split`. Route reasons and check-ins go to `decisions.md`; closure goes to `flows/06-closure.md`.
+Full plan at `.mugiwara/missions/<mission>/plan.md`: `# <mission>`, `## Key decisions`, `## Architecture overview`, `## Non-goals`, `## Project structure`, `## Waves`, `## CODEOWNERS`, `## Implementation graph`, `## Task index`, `## Detail tasks`, `## Baseline`, `## Execution posture`, `## Risk & rollback`, `## Pre-mortem`, `## Mission split`. Route reasons and check-ins go to `decisions.md`; closure goes to `flows/06-closure.md`.
 
 ## Mission split (very large) — Lane 3
 Very-large missions (>2 days, multi-PR) split into sub-missions, never one giant plan. Each sub-mission: own PR, done-criteria, continuation pointer, and its own wave table; every sub-mission ends mergeable. Continuation flows through `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` — next sub-mission resumes from the pointer, never restarts. The planner writes the split before any task detail.

@@ -122,7 +122,7 @@ export function limitAlternatives(input: AlternativeInput): {
   return { alternatives: kept, limited, reason, dropped };
 }
 
-// ── Output compression (§18, anti-stuff) ──
+// ── Output compression (§18, anti-fluff) ──
 // Semantic keep, not proximity: a line survives only when it carries signal —
 // an essential-section heading, a Decision/Action/Result/Evidence/Blocker
 // lead, or a markdown evidence link. Duplicates keep their first occurrence

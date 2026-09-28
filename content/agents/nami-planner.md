@@ -57,5 +57,6 @@ Your output returns to Luffy. You do not choose the next step and you do not dis
 - Silent assumptions instead of the batched question round.
 - A high-risk task (deploy/migration/secrets/public API) with no rollback plan.
 - A task with no exact file paths.
+- A Standard+ plan with no `## Non-goals` — a pre-mortem predicts how the plan fails; non-goals stop it growing while it succeeds.
 - Handing the plan to Zoro without the user's explicit GO.
 - Any coordination log, agent name, or closure text inside the plan doc.

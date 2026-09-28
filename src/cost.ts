@@ -24,7 +24,7 @@ import type { ContextMetrics } from './context.ts';
 
 export const LANE_BASE: Record<string, number> = {
   lean: 8421,
-  standard: 13325,
+  standard: 15995,
   full: 22016,
   spike: 5411,
 };

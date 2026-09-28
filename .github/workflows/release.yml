@@ -58,7 +58,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: "Generate release notes"
-        run: bun scripts/release-notes.ts > "$RUNNER_TEMP/release-notes.md"
+        # This workflow fires ON a pushed tag, so HEAD is already tagged.
+        run: bun scripts/release-notes.ts --tagged-head > "$RUNNER_TEMP/release-notes.md"
 
       - name: "Pack tarball"
         run: npm pack --pack-destination "$RUNNER_TEMP"

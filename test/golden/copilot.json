@@ -20,7 +20,7 @@
     "heal_max_cycles": 3,
     "heal_halt": false,
     "delegate_threshold": 60,
-    "delegate_due": false,
+    "delegate_due": true,
     "tokens_source": "estimator",
     "budget_status": "ok",
     "sensitive_paths": []

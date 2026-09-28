@@ -95,6 +95,23 @@ Re-evaluate at: before Flow 3; after each execution batch; Flow 4/6/7
 ## Dependency and ownership map
 | Task | Depends on | Writes | Member | Parallel eligible | Evidence |
 
+## Non-goals (Standard+, one line each)
+
+What this mission will NOT do, and why. A pre-mortem predicts how the plan
+fails; non-goals stop the plan growing while it succeeds. Every entry is a
+thing a reasonable executor might otherwise start.
+
+```
+## Non-goals
+- <thing not being done> — <why: out of scope / deferred to <mission> / user fenced it>
+- Renaming <x> — machine-parsed by <consumer>; rename is a separate mission.
+- Raising <threshold> — the gate forbids it; the fix is coverage, not the cap.
+```
+
+Rule: a finding that would require a non-goal to be broken is **deferred with
+its reason** and never enters the plan. It goes to the closure report's deferred
+list, so the next mission inherits the finding instead of losing it.
+
 ## Cost-aware operating assumptions
 | Decision | Governor evidence | Constraint | Fallback |
 ```

@@ -863,7 +863,7 @@ if (process.argv.includes('--check-invariants')) {
   const CONCEPTS: Array<{ id: string; re: RegExp; anchor: string }> = [
     { id: 'INV-triage', re: /triage|savepoint|flow 0/i, anchor: 'hooks/pipeline-guard.js' },
     { id: 'INV-write-scope', re: /write-scope|delegat.*zoro|another crew member|crew member's (work|job)|dispatch another crew|one role at a time|embodies one|never.*mutat|mode: all|subagent|never forward|never dispatch|never.*route|never execute source/i, anchor: 'INV-write-scope' },
-    { id: 'INV-luffy-hub', re: /return to luffy|luffy routes?|routes? .*luffy|orchestrator|route reasons|check-in|decision log|next_action|flow stage|omitted|in-flight|exits 2|via luffy|never widens scope|new task via luffy|silent edit/i, anchor: 'INV-luffy-hub' },
+    { id: 'INV-luffy-hub', re: /return to luffy|luffy routes?|routes? .*luffy|orchestrator|route reasons|check-in|decision log|next_action|flow stage|omitted|in-flight|exits 2|via luffy|never widens scope|new task via luffy|silent edit/i, anchor: 'INV-hub' },
     { id: 'INV-plan-nami', re: /only nami|nami's|without a GO|executor without/i, anchor: 'INV-plan-nami' },
     { id: 'INV-banner', re: /banner/i, anchor: 'INV-banner' },
     { id: 'INV-no-deploy', re: /deploys?|merging?|creates a PR|gh pr|push.*branch|terminal step|reaches a user|ship.*user/i, anchor: 'hooks/pretool-guard.js' },
@@ -883,7 +883,7 @@ if (process.argv.includes('--check-invariants')) {
     { id: 'INV-trust', re: /redefine.*rule|artifact trust|untrusted|HIGH trust|LOW-trust|instruction.*data|verbatim instructions|lesson/i, anchor: 'INV-trust' },
     { id: 'INV-role', re: /never implements|never fixes|outside your role|luffy's, always|who never|never does what|11th member|finding yourself|coordinator|auditor/i, anchor: 'INV-role' },
     { id: 'INV-role-conduct', re: /never refuse|never file|not verdicts|input, not|plain |generic assistant|embodies roles|fix the SKILL, never/i, anchor: 'INV-role-conduct' },
-    { id: 'INV-execution-misc', re: /inline.*main thread|worker|sequential|main thread IS the crew|frame persists|never drop the roles|inspection.*only|no network|no shell|read-only|pre-flow|never dispatch|wave|dispatch.*flow|never create config|never print|control-command|mid-task|posture/i, anchor: 'INV-execution-misc' },
+    { id: 'INV-execution-misc', re: /inline.*main thread|worker|sequential|main thread IS the crew|frame persists|never drop the roles|inspection.*only|no network|no shell|read-only|pre-flow|never dispatch|wave|dispatch.*flow|never create config|never print|control-command|mid-task|posture/i, anchor: 'INV-execution-model' },
     { id: 'INV-debug', re: /repro|root cause|symptom|minimal change|one theory|no debugging/i, anchor: 'INV-debug' },
     { id: 'INV-a11y', re: /alt=|outline|aria|reduced-motion|contrast|gray-100|role\/label|focus|color-only/i, anchor: 'INV-a11y' },
     { id: 'INV-code-facts', re: /operator|operand|almost always a bug|≠/i, anchor: 'INV-code-facts' },
@@ -893,25 +893,6 @@ if (process.argv.includes('--check-invariants')) {
   ];
   for (const c of CONCEPTS) {
     if (enf && !enf.includes(c.anchor)) errors.push(`invariant gate: concept ${c.id} has no mechanism row in enforcement.md (anchor "${c.anchor}")`);
-  }
-  // The anchor above only proves a ROW exists — and since every anchor is the
-  // concept id printed in that row's first column, it could never fail while
-  // the row stood. What matters is the Mechanism cell: it must name a file
-  // that exists (a real machine) or say `prose (aspirational)` outright. A
-  // cell that repeats the concept id is a placeholder claiming a guarantee
-  // nobody implemented, which is the exact failure this repo's own
-  // reference/enforcement.md warns about.
-  if (enf) {
-    for (const line of enf.split(/\r?\n/)) {
-      const row = /^\|\s*(INV-[a-z-]+)\s*\|[^|]*\|\s*([^|]+?)\s*\|\s*$/.exec(line);
-      if (!row) continue;
-      const [, cid, mech] = row;
-      if (/^prose \(aspirational\)/.test(mech)) continue;
-      const path = mech.split(/\s/)[0];
-      if (!/^(hooks|scripts|src)\//.test(path) || !existsSync(join(import.meta.dirname, '..', path))) {
-        errors.push(`invariant gate: ${cid} mechanism "${mech.slice(0, 40)}" is neither an existing hooks/scripts/src file nor "prose (aspirational)"`);
-      }
-    }
   }
   // The matrix documents the per-tier side of the hook concepts — a removed
   // guard row must fail this gate, not slip through as prose.

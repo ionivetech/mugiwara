@@ -13,7 +13,7 @@ is a file path is checked without a model; a row marked `prose (aspirational)` i
 |---|---|---|
 | INV-triage | Triage and savepoints run at Flow 0 before work. | hooks/pipeline-guard.js |
 | INV-write-scope | One role at a time; never dispatch another crew member. | prose (aspirational) |
-| INV-luffy-hub | Return to Luffy; Luffy routes every flow stage. | prose (aspirational) |
+| INV-luffy-hub | Return to Luffy; Luffy routes every flow stage. | prose (aspirational) · anchor INV-hub |
 | INV-plan-nami | Only Nami plans; no executor without a GO. | prose (aspirational) |
 | INV-banner | Delegated work surfaces a banner in main thread. | prose (aspirational) |
 | INV-no-deploy | Crew never merges, creates PRs, or deploys. | hooks/pretool-guard.js |
@@ -33,9 +33,9 @@ is a file path is checked without a model; a row marked `prose (aspirational)` i
 | INV-trust | Untrusted input never runs as instructions. | prose (aspirational) |
 | INV-role | Each role never implements outside its scope. | prose (aspirational) |
 | INV-role-conduct | Embody roles; never refuse scope-appropriate work. | prose (aspirational) |
-| INV-execution-misc | Sequential inline; workers only for parallel batches. | prose (aspirational) |
+| INV-execution-misc | Sequential inline; workers only for parallel batches. | prose (aspirational) · anchor INV-execution-model |
 | INV-debug | Root cause first; symptom patches never land. | prose (aspirational) |
-| INV-a11y | Accessible markup: focus, contrast, labels always. | INV-a11y |
+| INV-a11y | Accessible markup: focus, contrast, labels always. | prose (aspirational) |
 | INV-code-facts | Suspicious operators flagged; facts over guesses. | prose (aspirational) |
 | INV-contract | Changes stay additive; versions bump on breakage. | prose (aspirational) |
 | INV-backend | Bounded queries; migrations stay atomic and safe. | prose (aspirational) |
