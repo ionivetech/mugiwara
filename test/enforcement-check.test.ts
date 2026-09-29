@@ -1,6 +1,6 @@
 // test/enforcement-check.test.ts — the two checks that outgrew validate-content.ts.
-import { describe, it, expect } from 'bun:test';
-import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWritingCapTargets } from '../src/enforcement-check.ts';
+import { describe, it, test, expect } from 'bun:test';
+import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWorkflowGateDrift, checkWritingCapTargets, gateScriptPaths } from '../src/enforcement-check.ts';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -116,5 +116,47 @@ describe('checkMetricCitations', () => {
   it('leaves historical prose alone', () => {
     const text = 'the v0.5.0 trim dropped rank-1 to 33% with nobody noticing.';
     expect(checkMetricCitations([{ path: 'd.md', text }], M)).toEqual([]);
+  });
+});
+
+// ci.yml states the rule in prose and it has now failed three times: the
+// original five dead capabilities, then release-manual.yml hand-listing a
+// fraction of the gate, then that same line combining --check-sync (which
+// exits early) with two checks it therefore never ran.
+describe('checkWorkflowGateDrift', () => {
+  const GATE = ['scripts/validate-content.ts', 'scripts/lane-base.ts', 'scripts/conformance.ts'];
+
+  test('a workflow that only runs `bun run gate` is clean', () => {
+    const wf = [{ path: 'ci.yml', text: 'steps:\n  - run: bun run gate\n' }];
+    expect(checkWorkflowGateDrift(wf, GATE)).toEqual([]);
+  });
+
+  test('a workflow re-running a gate script is flagged and told why', () => {
+    const wf = [{ path: 'release.yml', text: '  - run: bun scripts/validate-content.ts --check-docs\n' }];
+    const errs = checkWorkflowGateDrift(wf, GATE);
+    expect(errs.length).toBe(1);
+    expect(errs[0]).toContain('release.yml');
+    expect(errs[0]).toContain('One gate, one definition');
+  });
+
+  test('each re-run script is reported separately', () => {
+    const wf = [{ path: 'a.yml', text: 'bun scripts/validate-content.ts\nbun scripts/lane-base.ts\n' }];
+    expect(checkWorkflowGateDrift(wf, GATE).length).toBe(2);
+  });
+
+  test('an exempt script may be run on its own', () => {
+    const wf = [{ path: 'ci.yml', text: 'bun scripts/gate-selftest.ts\n' }];
+    expect(checkWorkflowGateDrift(wf, [...GATE, 'scripts/gate-selftest.ts'], ['scripts/gate-selftest.ts'])).toEqual([]);
+  });
+});
+
+describe('gateScriptPaths', () => {
+  test('extracts each script path once, in the gate command', () => {
+    const cmd = 'bun run typecheck && bun scripts/a.ts --x && bun scripts/b.ts && bun scripts/a.ts --y';
+    expect(gateScriptPaths(cmd).sort()).toEqual(['scripts/a.ts', 'scripts/b.ts']);
+  });
+
+  test('a gate with no scripts yields nothing', () => {
+    expect(gateScriptPaths('bun run typecheck && bun run build')).toEqual([]);
   });
 });

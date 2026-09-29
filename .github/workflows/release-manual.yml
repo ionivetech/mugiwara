@@ -47,14 +47,13 @@ jobs:
       - name: "Install dependencies"
         run: bun install --frozen-lockfile
 
-      - name: "Pre-flight checks"
-        run: |
-          bun run typecheck
-          bun run test
-          bun run build
-          bun scripts/validate-content.ts --check-manifest --check-docs --check-sync
-          bun scripts/run-evals.ts
-          bun scripts/retrieval-eval.ts
+      # One gate, one definition — the same rule ci.yml states. This step used
+      # to re-list the checks by hand, and it drifted twice over: it ran a
+      # fraction of the gate, and `--check-sync` exits early, so the
+      # --check-manifest and --check-docs on that same line never ran at all.
+      # A release was pre-flighting plugin-copy sync and nothing else.
+      - name: "Pre-flight (single source of truth: package.json `gate`)"
+        run: bun run gate
 
       - name: "Bump version"
         run: echo "RELEASE_VERSION=$(npm version "${{ inputs.version }}" --no-git-tag-version)" >> "$GITHUB_ENV"

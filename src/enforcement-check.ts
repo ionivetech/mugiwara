@@ -123,3 +123,41 @@ export function checkMetricCitations(
   }
   return errors;
 }
+
+/**
+ * No workflow may run a check that `gate` already runs.
+ *
+ * ci.yml carries the rule in prose: "One gate, one definition... CI used to
+ * re-list the steps by hand and the two drifted, omitting verify-install,
+ * gate-selftest, lane-base, verify-pack, build-hooks and --check-doc-integrity.
+ * Five capabilities shipped dead behind a green board." The prose did not hold:
+ * release-manual.yml still hand-listed a fraction of the gate, and its
+ * `--check-manifest --check-docs --check-sync` line ran none of the first two,
+ * because --check-sync exits early. A release was pre-flighting plugin-copy
+ * sync and nothing else.
+ *
+ * `gateScripts` are the script paths the gate invokes; `exempt` names the ones
+ * a workflow may legitimately run on its own (gate-selftest is not in gate).
+ */
+export function checkWorkflowGateDrift(
+  workflows: Array<{ path: string; text: string }>,
+  gateScripts: readonly string[],
+  exempt: readonly string[] = [],
+): CheckError[] {
+  const errors: CheckError[] = [];
+  const skip = new Set(exempt);
+  for (const { path, text } of workflows) {
+    for (const script of gateScripts) {
+      if (skip.has(script)) continue;
+      if (text.includes(script)) {
+        errors.push(`workflow-drift: ${path} runs "${script}" directly — it is already in \`bun run gate\`. One gate, one definition: add checks to the gate, never to a workflow.`);
+      }
+    }
+  }
+  return errors;
+}
+
+/** Script paths the `gate` npm script invokes. */
+export function gateScriptPaths(gateCommand: string): string[] {
+  return [...new Set(Array.from(gateCommand.matchAll(/scripts\/[A-Za-z0-9._-]+\.ts/g), (m) => m[0]))];
+}
