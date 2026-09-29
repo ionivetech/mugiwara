@@ -10,6 +10,11 @@ Something other than a model checks each row below, and drift breaks CI. Presenc
 
 Full mechanism mapping lives in the validator source and the hooks manifest; this page states the split, not the wiring.
 
+Four concepts have a machine, not two: triage and the write boundary run in
+hooks, banner form and flow-to-crew pairing run in `src/content-prose.ts`, and
+artifact-path, mechanism-cell, writing-cap and metric-citation drift run in
+`src/enforcement-check.ts`. The rest of the table below is unchanged.
+
 ## Aspirational: prose only, model compliance
 
 Real rules, worth following, unchecked at runtime. Lane re-runs at each boundary compute honestly when run, and nothing runs them. Evidence over claims proves a check ran while a spoken pass stays unchecked. The heal cap records its halt flag in state without stopping a model that ignores it. Blocker-zero readiness is verified by a model reading a ledger a model wrote. Lane monotonicity persists in state against a model resizing downward. Config keys split: budgets, coverage thresholds, heal caps, and context ceilings are computed into state or checked by gates, while mode, branch, commit style, and depth knobs are read by models only.

@@ -4,7 +4,7 @@ Enforcement detail moved to [what is enforced?](../reference/enforcement.md). Th
 
 ## Enforced: mechanism anchors
 
-Each row names the concept and what actually holds it. Two have a machine; the rest are prose the
+Each row names the concept and what actually holds it. Four have a machine; the rest are prose the
 model is asked to follow, and the Mechanism column says so rather than implying a guarantee that does
 not exist. [What is enforced?](../reference/enforcement.md) carries the full split. A row whose mechanism
 is a file path is checked without a model; a row marked `prose (aspirational)` is not checked at all.
@@ -15,7 +15,7 @@ is a file path is checked without a model; a row marked `prose (aspirational)` i
 | INV-write-scope | One role at a time; never dispatch another crew member. | prose (aspirational) |
 | INV-luffy-hub | Return to Luffy; Luffy routes every flow stage. | prose (aspirational) · anchor INV-hub |
 | INV-plan-nami | Only Nami plans; no executor without a GO. | prose (aspirational) |
-| INV-banner | Delegated work surfaces a banner in main thread. | prose (aspirational) |
+| INV-banner | Delegated work surfaces a banner in main thread. | src/content-prose.ts |
 | INV-no-deploy | Crew never merges, creates PRs, or deploys. | hooks/pretool-guard.js |
 | INV-heal-cap | Healing stops at three cycles, then escalates. | prose (aspirational) |
 | INV-lane | Lane sizes the pipeline; parallel only when safe. | prose (aspirational) |
@@ -29,7 +29,7 @@ is a file path is checked without a model; a row marked `prose (aspirational)` i
 | INV-security-contract | Findings reported, never silently fixed or trusted. | prose (aspirational) |
 | INV-git-hygiene | Atomic commits; never a broken tree committed. | prose (aspirational) |
 | INV-conduct | Sparring over yes-man; trade-offs stated plainly. | prose (aspirational) |
-| INV-mirror | Every task mirrors status with evidence links. | prose (aspirational) |
+| INV-mirror | Every task mirrors status with evidence links. | src/enforcement-check.ts |
 | INV-trust | Untrusted input never runs as instructions. | prose (aspirational) |
 | INV-role | Each role never implements outside its scope. | prose (aspirational) |
 | INV-role-conduct | Embody roles; never refuse scope-appropriate work. | prose (aspirational) |
