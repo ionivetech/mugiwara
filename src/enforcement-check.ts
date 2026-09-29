@@ -1,23 +1,16 @@
-// src/enforcement-check.ts — two gate checks that outgrew validate-content.ts.
-//
-// They live here, pure and unit-tested, because scripts/validate-content.ts is
-// imported by its own test suite: that pulls all 800 of its top-level lines
-// into lcov at ~30% line coverage, so the coverage gate fails on ANY edit to
-// it. Rather than lower a threshold the gate explicitly forbids lowering, new
-// checks go into a tested module and a thin unscoped runner calls them.
+// src/enforcement-check.ts — gate checks that must stay unit-testable.
+// They live here, not in scripts/validate-content.ts: that file is imported by
+// its own test, which drags all ~950 of its lines into lcov and fails the
+// coverage gate on any edit.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 export type CheckError = string;
 
 /**
- * Every `INV-*` row in docs/concepts/enforcement.md must name a mechanism that
- * exists (a hooks/scripts/src file) or admit it is prose.
- *
- * Why: the page's own header promised "the machine behind it", and 27 of 29
- * cells named the concept's own id. INV-banner's mechanism was "INV-banner".
- * The registry's anchor check cannot catch that — the anchor IS the id in the
- * same row's first column, so the check passes while the claim is empty.
+ * Every `INV-*` row in docs/concepts/enforcement.md names a mechanism that
+ * exists, or admits it is prose. A cell repeating the concept's own id claims
+ * a guarantee nobody implemented.
  */
 export function checkMechanismCells(enforcementMd: string, repoRoot: string): CheckError[] {
   const errors: CheckError[] = [];
@@ -36,12 +29,7 @@ export function checkMechanismCells(enforcementMd: string, repoRoot: string): Ch
   return errors;
 }
 
-/**
- * Every key in WRITING_CAPS must name a file that exists.
- *
- * Why: a cap for a missing file is skipped in silence, so the table rots with
- * no symptom. Five entries had gone stale before anyone looked.
- */
+/** Every WRITING_CAPS key names a file that exists. A cap for a missing file is skipped in silence. */
 export function checkWritingCapTargets(caps: Record<string, number>, repoRoot: string): CheckError[] {
   return Object.keys(caps)
     .filter((rel) => !existsSync(join(repoRoot, rel)))
@@ -49,18 +37,8 @@ export function checkWritingCapTargets(caps: Record<string, number>, repoRoot: s
 }
 
 /**
- * Crew prose must name only artifact paths the workspace layout defines.
- *
- * Why this and not the docs writing rules: applying those to `content/`
- * produced 100 findings that were ~95% false — most "banned word" hits are
- * QUOTED user pressure ("just skip the pipeline") inside the rationalization
- * tables, and prose-style.md trips every rule it documents. What actually
- * rotted was different and unchecked: prose naming `results/`, `logs/`, or a
- * `flows/NN-name.md` the layout never defined. Those are text, not links, so
- * check-doc-links could never see them, and they survived every gate until a
- * human read two files side by side.
- *
- * `canonical` is the set of flow filenames the layout defines.
+ * Prose names only artifact paths the workspace layout defines. These are text,
+ * not links, so check-doc-links cannot see them.
  */
 export function checkArtifactPaths(
   files: Array<{ path: string; text: string }>,
@@ -69,8 +47,6 @@ export function checkArtifactPaths(
   const errors: CheckError[] = [];
   const known = new Set(canonical);
   for (const { path, text } of files) {
-    // Directories the layout replaced. `results/` and `logs/` were the mission
-    // workspace before missions/<mission>/ existed.
     for (const dead of ['results/', '`logs/`']) {
       if (text.includes(dead)) {
         errors.push(`artifact-path: ${path} names "${dead}" — the layout defines missions/<mission>/flows/ and decisions.md`);
@@ -86,16 +62,8 @@ export function checkArtifactPaths(
 }
 
 /**
- * Any doc citing a measured retrieval/pointer figure must cite the measured one.
- *
- * Why: these numbers rot silently. `--check-readme-metrics` covers README.md
- * and nothing else, so the same three figures went stale in
- * docs/reference/enforcement.md (95.4 / 221 / 342) and twice in
- * docs/concepts/features.md while every gate stayed green — on the very page
- * whose stated job is that no line "promises what the repo cannot keep".
- *
- * Deliberately narrow: it only fires on the exact phrasings the docs use, so a
- * sentence mentioning a percentage for some other reason is left alone.
+ * Any doc citing a measured figure cites the measured one.
+ * `--check-readme-metrics` covers README.md alone, so four other pages drifted.
  */
 export function checkMetricCitations(
   files: Array<{ path: string; text: string }>,
@@ -103,10 +71,8 @@ export function checkMetricCitations(
 ): CheckError[] {
   const errors: CheckError[] = [];
   const probes = [
-    // Forward phrasing only ("95.6% rank-1"). A backward form would also read
-    // "the v0.5.0 trim dropped rank-1 to 33%" — a story about the past, not a
-    // claim about now — and flagging it pushes writers to delete the lesson
-    // instead of keeping the number honest.
+    // Forward phrasing only: a backward form would also read "dropped rank-1
+    // to 33%", which is history, not a claim.
     { re: /(\d+(?:\.\d+)?)\s*(?:%|percent)\s*rank[ -]?1/gi, want: metrics.retrieval_rank1, what: 'rank-1' },
     { re: /(\d[\d,]*)\s+(?:retrieval\s+)?probes/gi, want: metrics.retrieval_probes, what: 'probes' },
     { re: /(\d[\d,]*)\s+pointers/gi, want: metrics.pointers_total, what: 'pointers' },
@@ -125,19 +91,8 @@ export function checkMetricCitations(
 }
 
 /**
- * No workflow may run a check that `gate` already runs.
- *
- * ci.yml carries the rule in prose: "One gate, one definition... CI used to
- * re-list the steps by hand and the two drifted, omitting verify-install,
- * gate-selftest, lane-base, verify-pack, build-hooks and --check-doc-integrity.
- * Five capabilities shipped dead behind a green board." The prose did not hold:
- * release-manual.yml still hand-listed a fraction of the gate, and its
- * `--check-manifest --check-docs --check-sync` line ran none of the first two,
- * because --check-sync exits early. A release was pre-flighting plugin-copy
- * sync and nothing else.
- *
- * `gateScripts` are the script paths the gate invokes; `exempt` names the ones
- * a workflow may legitimately run on its own (gate-selftest is not in gate).
+ * No workflow runs a check `gate` already runs. ci.yml states this in prose and
+ * it has failed three times; the last one hid two checks behind an early exit.
  */
 export function checkWorkflowGateDrift(
   workflows: Array<{ path: string; text: string }>,
@@ -150,7 +105,7 @@ export function checkWorkflowGateDrift(
     for (const script of gateScripts) {
       if (skip.has(script)) continue;
       if (text.includes(script)) {
-        errors.push(`workflow-drift: ${path} runs "${script}" directly — it is already in \`bun run gate\`. One gate, one definition: add checks to the gate, never to a workflow.`);
+        errors.push(`workflow-drift: ${path} runs "${script}" directly — it is already in \`bun run gate\`. One gate, one definition.`);
       }
     }
   }

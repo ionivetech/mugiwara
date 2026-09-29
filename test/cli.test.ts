@@ -1689,16 +1689,12 @@ describe('run() — clean, migrate and sign edge paths', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('sign --gen-key --backend minisign refuses when minisign is absent', async () => {
-    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
-    const prevPath = process.env.PATH;
-    process.env.PATH = dir; // no minisign on this PATH
-    try {
-      const { err } = await capture(['sign', '--gen-key', '--backend', 'minisign'], dir);
-      expect(err).toContain('minisign');
-    } finally {
-      process.env.PATH = prevPath;
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
+  // NOT tested here: `sign --gen-key --backend minisign` with minisign absent.
+  // The only way to force that is to replace process.env.PATH, and `bun test
+  // --parallel=2` runs two files in ONE process — so wiping PATH breaks any
+  // concurrent `execSync('git ...')` in another file. That is exactly what it
+  // did: seven savepoint.test.ts tests failed on CI with an empty-error
+  // `git commit --allow-empty` while this test held the PATH. Five lines of
+  // coverage are not worth a cross-file hazard; test it when hasMinisign()
+  // takes an injectable env.
 });

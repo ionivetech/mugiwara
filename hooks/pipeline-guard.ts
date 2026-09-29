@@ -290,12 +290,8 @@ function bannerRecorded(sessionId: string): boolean {
 }
 
 /**
- * Highest banner in the Stop-hook transcript.
- *   `null` — there is no transcript to read (cannot tell).
- *   `0`    — transcript read, and it contains no banner.
- * These are different facts. Collapsing them into `0` is what let a fully
- * silent session pass check 4: the mission-file fallback answered "is there a
- * `## Flow N —` heading in an artifact I wrote?", which is not the question.
+ * Highest banner in the Stop-hook transcript. `null` = no transcript to read;
+ * `0` = read it, no banner. Collapsing the two let a silent session pass.
  */
 function bannerFromTranscript(payload: Record<string, unknown>): number | null {
   const p = payload.transcript_path;
@@ -397,13 +393,9 @@ async function main(): Promise<void> {
     // marker's same-session record → mission-file fallback.
     const transcriptFlow = bannerFromTranscript(payload);
     if (transcriptFlow !== null && transcriptFlow > 0) recordBannerFlow(transcriptFlow, sessionId);
-    // The transcript IS what the user saw, so when it is readable it is the
-    // whole answer. A `## Flow N —` heading inside decisions.md or flows/*.md
-    // proves a file was written, never that anything reached the thread — an
-    // agent can run the entire pipeline inside tool calls, write perfect
-    // artifacts, and narrate nothing. Mission files stay as a fallback only
-    // where there is no transcript to read. Warning-only either way, so a
-    // false positive costs one line of stderr.
+    // The transcript is what the user saw; when readable it is the whole
+    // answer. A heading in decisions.md proves a file was written, not that
+    // anything reached the thread. Mission files are the no-transcript fallback.
     const bannerShown = transcriptFlow !== null
       ? transcriptFlow > 0
       : bannerRecorded(sessionId) || bannerThisSession();
