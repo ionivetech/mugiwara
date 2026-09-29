@@ -140,13 +140,9 @@ if (!existsSync(summaryPath))
   skip('coverage run produced no lcov.info (coverage-reporter=lcov not configured)');
 
 /**
- * Lines inside a multi-line template literal, which v8 can never report as
- * hit. `console.log(\`...\`)` executes as ONE expression: the opening line
- * gets the hit count and every line of the literal's text reports 0 forever.
- * src/cli.ts's help block ran 2702 times and contributed 55 permanently-dead
- * lines to its own denominator, deflating the file by 3.5 points and making a
- * two-word fix unshippable. Excluding them does not hide uncovered code —
- * there is no code there to cover.
+ * Lines inside a multi-line template literal. v8 gives the opening line the hit
+ * count and reports the literal's text as 0 forever, so they are unhittable —
+ * 55 of them in src/cli.ts's help block alone. Not code, not counted.
  */
 function templateBodyLines(src: string): Set<number> {
   const out = new Set<number>();

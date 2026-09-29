@@ -1,15 +1,6 @@
 // src/memory-template.ts — the `.mugiwara/MEMORY.md` template gate.
-//
-// Extracted from scripts/validate-content.ts for a mechanical reason: the
-// validator's test suite imported this one function, and importing a script
-// executes its whole top-level body. That pulled all ~950 of the validator's
-// lines into lcov at ~30% line coverage, and the coverage gate measures
-// whole-file line% against a 90% modified threshold — so ANY edit to the
-// project's main validator failed the project's own gate. Two real fixes were
-// blocked by it before the cause was found.
-//
-// Pure functions live in src/ and get tested; scripts/ stays a thin runner
-// nothing imports. Same split as src/enforcement-check.ts.
+// Split out of scripts/validate-content.ts so no test imports that script:
+// importing it runs its whole body and drags ~950 lines into lcov.
 export const MEMORY_TEMPLATE_SECTIONS = ['Facts', 'Conventions', 'Preferences', 'Never'];
 export const MEMORY_TEMPLATE_MAX_LINES = 40;
 
