@@ -6,7 +6,7 @@
 // a real install. runScript is mocked so `savepoint` dispatch is provable
 // without spawning the real harness.
 import { describe, expect, test, vi, afterEach } from 'bun:test';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -1356,5 +1356,349 @@ describe('run() — --help', () => {
     expect(out).toMatch(/^mugiwara \d+\.\d+\.\d+ —/m);
     expect(out).toContain('savepoint.sh');
     expect(out).toContain('lane.sh');
+  });
+});
+
+describe('run() — waste', () => {
+  // `mugiwara waste` shipped with no test at all: 35 uncovered lines in the
+  // command path, which is also why the crew skills never referenced it.
+  test('no mission dir → names the mission and exits 1', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('ghost') }]);
+    try {
+      const { err } = await capture(['waste', '--mission', 'ghost'], dir);
+      expect(err).toContain('No mission dir found for "ghost"');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('unreadable trigger source aborts rather than guessing', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
+    try {
+      const { err } = await capture(['waste', '--mission', 'm'], dir);
+      expect(err).toContain('trigger source unreadable');
+      expect(err).toContain('aborting');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('resolves the single mission when none is named', async () => {
+    const dir = fixture([{ root: 'state', mission: 'solo', file: 'state', body: state('solo') }]);
+    try {
+      const { err } = await capture(['waste'], dir);
+      expect(err).toContain('solo');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--files scopes the diff', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
+    try {
+      const { err } = await capture(['waste', '--mission', 'm', '--files', 'src/,test/'], dir);
+      expect(err.length).toBeGreaterThan(0);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — migrate mission inference', () => {
+  // 27 uncovered lines: the picker that decides which mission --to-team or
+  // --to-solo applies to when the user names none.
+  test('--to-team infers the single solo mission', async () => {
+    const dir = fixture([{ root: 'state', mission: 'only', file: 'state', body: state('only') }]);
+    try {
+      const { out, err } = await capture(['migrate', '--to-team', 'zoro', '--dry-run'], dir);
+      expect(out + err).toContain('only');
+      expect(err).not.toContain('could not infer mission');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--to-team with two solo missions refuses and names both', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'alpha', file: 'state', body: state('alpha') },
+      { root: 'state', mission: 'beta', file: 'state', body: state('beta') },
+    ]);
+    try {
+      const { err } = await capture(['migrate', '--to-team', 'zoro', '--dry-run'], dir);
+      expect(err).toContain('multiple solo missions');
+      expect(err).toContain('alpha');
+      expect(err).toContain('beta');
+      expect(err).toContain('--mission');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--to-team with no solo mission says so', async () => {
+    const dir = fixture([{ root: 'state', mission: 'team', file: 'zoro', body: state('team') }]);
+    try {
+      const { err } = await capture(['migrate', '--to-team', 'zoro', '--dry-run'], dir);
+      expect(err).toContain('no solo mission with state.json found');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--to-solo infers the single mission carrying that member file', async () => {
+    const dir = fixture([{ root: 'state', mission: 'one', file: 'zoro', body: state('one') }]);
+    try {
+      const { out, err } = await capture(['migrate', '--to-solo', 'zoro', '--dry-run'], dir);
+      expect(out + err).toContain('one');
+      expect(err).not.toContain('could not infer mission');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--to-solo with two candidates refuses and names both', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'a', file: 'zoro', body: state('a') },
+      { root: 'state', mission: 'b', file: 'zoro', body: state('b') },
+    ]);
+    try {
+      const { err } = await capture(['migrate', '--to-solo', 'zoro', '--dry-run'], dir);
+      expect(err).toContain('multiple missions with zoro.json');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('--to-solo with no candidate says which file it looked for', async () => {
+    const dir = fixture([{ root: 'state', mission: 'solo', file: 'state', body: state('solo') }]);
+    try {
+      const { err } = await capture(['migrate', '--to-solo', 'nami', '--dry-run'], dir);
+      expect(err).toContain('no mission with nami.json found');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — continue with a team roster', () => {
+  const PLAN = [
+    '# m',
+    '',
+    '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+    '|----|------|----------|--------|--------|-----------|---------------|',
+    '| S1 | api | zoro | feat/api | [ ] | - | src/api.ts |',
+    '| S2 | web | nami | feat/web | [ ] | - | src/web.ts |',
+    '',
+  ].join('\n');
+
+  const withRoster = (extra?: (dir: string) => void) => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'zoro', body: state('m', { member: 'zoro', flow: 3 }) }]);
+    writeFileSync(join(dir, '.mugiwara', 'missions', 'm', 'plan.md'), PLAN);
+    extra?.(dir);
+    return dir;
+  };
+
+  // 19 uncovered lines: the picker shown when a roster exists and the caller
+  // has not said which member they are.
+  test('no member and no cache → prints the roster and exits 2', async () => {
+    const dir = withRoster();
+    try {
+      const { out } = await capture(['continue', 'm'], dir);
+      expect(out).toContain('Mission: m');
+      expect(out).toContain('ASSIGNEE');
+      expect(out).toContain('zoro');
+      expect(out).toContain('nami');
+      expect(out).toContain('Which one are you?');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('the roster shows per-member state, started and not', async () => {
+    const dir = withRoster();
+    try {
+      const { out } = await capture(['continue', 'm'], dir);
+      expect(out).toMatch(/zoro\s+Flow 3/);
+      expect(out).toContain('— not started');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('a cached member with no entry yet starts at Flow 0', async () => {
+    const dir = withRoster((d) => {
+      writeFileSync(join(d, '.mugiwara', 'active-member'), 'nami\n');
+    });
+    try {
+      const { out } = await capture(['continue', 'm'], dir);
+      expect(out).toContain('Started: m [nami], Flow 0');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — continue refuses a resume point without its state', () => {
+  // A continue-<member>.json with no <member>.json beside it is a guess, not a
+  // resume point. Both the cached-member path and the direct path refuse it.
+  const orphan = (mission: string, member: string) => {
+    const dir = fixture([{ root: 'continue', mission, file: member, body: { mission, member, flow: 3, next_action: 'go' } }]);
+    // the cached-member branch lives inside the roster block, so the plan
+    // needs a sub-mission table for that path to be reachable at all
+    writeFileSync(join(dir, '.mugiwara', 'missions', mission, 'plan.md'), [
+      '# m', '',
+      '| ID | Name | Assignee | Branch | Status | Depends On | Touched Files |',
+      '|----|------|----------|--------|--------|-----------|---------------|',
+      `| S1 | api | ${member} | feat/api | [ ] | - | src/api.ts |`,
+      '',
+    ].join('\n'));
+    return dir;
+  };
+
+  test('direct: orphan continue-<member>.json is refused with the cleanup command', async () => {
+    const dir = orphan('m', 'zoro');
+    try {
+      const { err } = await capture(['continue', 'm', 'zoro'], dir);
+      expect(err).toContain('has a resume point but no');
+      expect(err).toContain('continue-zoro.json');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('cached: the same orphan is refused through the active-member cache', async () => {
+    const dir = orphan('m', 'zoro');
+    writeFileSync(join(dir, '.mugiwara', 'active-member'), 'zoro\n');
+    try {
+      const { err } = await capture(['continue'], dir);
+      expect(err).toContain('has a');
+      expect(err).toContain('savepoint');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('solo continue.json without state.json still resumes — it is the only resume point', async () => {
+    const dir = fixture([{ root: 'continue', mission: 'solo', file: 'state', body: { mission: 'solo', member: null, flow: 2, next_action: 'keep going' } }]);
+    try {
+      const { out, err } = await capture(['continue', 'solo'], dir);
+      expect(err).not.toContain('has a resume point but no');
+      expect(out).toContain('solo');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('the member list is the union of state and continue files', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'm', file: 'zoro', body: state('m', { member: 'zoro' }) },
+      { root: 'continue', mission: 'm', file: 'nami', body: { mission: 'm', member: 'nami', flow: 1, next_action: 'x' } },
+    ]);
+    try {
+      const { out, err } = await capture(['continue', '--all'], dir);
+      expect(out + err).toContain('zoro');
+      expect(out + err).toContain('nami');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — savepoint --solo', () => {
+  // --solo must force solo for both the short and long form: the script reads
+  // the active-member cache itself, so the flag travels as env, not a blank arg.
+  test('--solo sets MUGIWARA_SOLO even when a member cache exists', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
+    writeFileSync(join(dir, '.mugiwara', 'active-member'), 'zoro\n');
+    mockedRunScript().mockClear();
+    const prev = process.env.MUGIWARA_SOLO;
+    delete process.env.MUGIWARA_SOLO;
+    try {
+      await capture(['savepoint', 'm', '--solo'], dir);
+      expect(String(process.env.MUGIWARA_SOLO ?? '')).toBe('1');
+    } finally {
+      if (prev === undefined) delete process.env.MUGIWARA_SOLO; else process.env.MUGIWARA_SOLO = prev;
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('an explicit empty member positional forces solo too', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
+    mockedRunScript().mockClear();
+    const prev = process.env.MUGIWARA_SOLO;
+    delete process.env.MUGIWARA_SOLO;
+    try {
+      await capture(['savepoint', 'm', '', '3'], dir);
+      expect(String(process.env.MUGIWARA_SOLO ?? '')).toBe('1');
+    } finally {
+      if (prev === undefined) delete process.env.MUGIWARA_SOLO; else process.env.MUGIWARA_SOLO = prev;
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('run() — waste over a real diff', () => {
+  // The report body needs a readable base..branch diff, so this fixture is a
+  // real repo. These 13 lines were the last untested block of a shipped
+  // command that no crew skill referenced either.
+  const gitRepo = (): { dir: string; base: string } => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-waste-'));
+    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+    execFileSync('git', ['config', 'user.email', 'z@ex.com'], { cwd: dir });
+    execFileSync('git', ['config', 'user.name', 'Zoro'], { cwd: dir });
+    writeFileSync(join(dir, 'a.ts'), 'export const a = 1;\n');
+    execFileSync('git', ['add', '-A'], { cwd: dir });
+    execFileSync('git', ['commit', '-qm', 'base'], { cwd: dir });
+    const base = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim();
+    execFileSync('git', ['checkout', '-q', '-b', 'feat'], { cwd: dir });
+    writeFileSync(join(dir, 'b.ts'), 'export const b = 2;\n');
+    execFileSync('git', ['add', '-A'], { cwd: dir });
+    execFileSync('git', ['commit', '-qm', 'work'], { cwd: dir });
+    return { dir, base };
+  };
+
+  const seed = (dir: string, base: string) => {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'state.json'), JSON.stringify(state('m', { base_sha: base, branch: 'feat' })));
+  };
+
+  test('reports a clean advisory and names the file count', async () => {
+    const { dir, base } = gitRepo();
+    seed(dir, base);
+    try {
+      const { out } = await capture(['waste', '--mission', 'm'], dir);
+      expect(out).toContain('waste check: clean');
+      expect(out).toMatch(/\d+ file\(s\), advisory only/);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  // A clean check writes NO trail row: the ledger records waste, not the
+  // absence of it, so a quiet run must leave the mission dir untouched.
+  test('a clean check records nothing', async () => {
+    const { dir, base } = gitRepo();
+    seed(dir, base);
+    try {
+      const before = readdirSync(join(dir, '.mugiwara', 'missions', 'm')).sort();
+      await capture(['waste', '--mission', 'm'], dir);
+      expect(readdirSync(join(dir, '.mugiwara', 'missions', 'm')).sort()).toEqual(before);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('a declared --files scope narrower than the diff raises an advisory', async () => {
+    const { dir, base } = gitRepo();
+    seed(dir, base);
+    try {
+      const { out } = await capture(['waste', '--mission', 'm', '--files', 'a.ts'], dir);
+      expect(out.length).toBeGreaterThan(0);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — clean, migrate and sign edge paths', () => {
+  test('clean --dry-run folds only closed missions by default', async () => {
+    const dir = fixture([{ root: 'state', mission: 'live', file: 'state', body: state('live') }]);
+    const closed = join(dir, '.mugiwara', 'missions', 'done');
+    mkdirSync(closed, { recursive: true });
+    writeFileSync(join(closed, 'report.md'), '# done\n');
+    try {
+      const { out, err } = await capture(['clean', '--dry-run'], dir);
+      expect(out + err).toContain('done');
+      expect(out + err).not.toMatch(/\blive\b/);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('clean --include-live widens to in-flight missions', async () => {
+    const dir = fixture([{ root: 'state', mission: 'live', file: 'state', body: state('live') }]);
+    try {
+      const { out, err } = await capture(['clean', '--include-live', '--dry-run'], dir);
+      expect(out + err).toContain('live');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('migrate with no legacy layout says there is nothing to move', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
+    try {
+      const { out, err } = await capture(['migrate', '--dry-run'], dir);
+      expect(out + err).toContain('no legacy layout found');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('sign --gen-key --backend minisign refuses when minisign is absent', async () => {
+    const dir = fixture([{ root: 'state', mission: 'm', file: 'state', body: state('m') }]);
+    const prevPath = process.env.PATH;
+    process.env.PATH = dir; // no minisign on this PATH
+    try {
+      const { err } = await capture(['sign', '--gen-key', '--backend', 'minisign'], dir);
+      expect(err).toContain('minisign');
+    } finally {
+      process.env.PATH = prevPath;
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

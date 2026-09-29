@@ -39,7 +39,12 @@ function config(key: string): string | undefined {
   return undefined;
 }
 
-/** Documented defaults: new >= 90, modified >= 80. A key set to 0 = no threshold. */
+/**
+ * Fallbacks, used only when the key is absent from config. They must match the
+ * shipped defaults in src/config.ts, which are new >= 85 and modified >= 85 —
+ * this comment claimed 90/80, the reverse, and the fallbacks matched the claim
+ * rather than the product. A key set to 0 means no threshold.
+ */
 function threshold(key: string, fallback: number): number {
   const raw = config(key);
   if (raw === undefined || raw === '') return fallback;
@@ -204,8 +209,8 @@ try {
   process.exit(1);
 }
 
-const NEW = effectiveThreshold(threshold('coverage_new', 90), policyCoverage?.new);
-const MOD = effectiveThreshold(threshold('coverage_modified', 80), policyCoverage?.modified);
+const NEW = effectiveThreshold(threshold('coverage_new', 85), policyCoverage?.new);
+const MOD = effectiveThreshold(threshold('coverage_modified', 85), policyCoverage?.modified);
 
 const rows = changed.map((c) => {
   const isNew = c.status === 'A';

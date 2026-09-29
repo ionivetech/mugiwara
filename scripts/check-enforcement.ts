@@ -4,6 +4,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWritingCapTargets } from '../src/enforcement-check.ts';
+import { checkContentProse } from '../src/content-prose.ts';
 import { WRITING_CAPS } from '../src/check-writing.ts';
 
 const root = join(import.meta.dirname, '..');
@@ -35,6 +36,9 @@ const docs = [...walk(join(root, 'docs')), join(root, 'README.md')].map((p) => (
 const errors = [
   ...checkArtifactPaths([...prose, ...docs], CANONICAL_FLOWS),
   ...checkMetricCitations(docs, metrics),
+  // Prose rules for the crew prompts. cost-governor.md maps the host
+  // capability names to repo names, so it is the one file allowed to say them.
+  ...checkContentProse(prose, { hostNameAllowlist: ['references/cost-governor.md'] }),
   ...checkMechanismCells(readFileSync(join(root, 'docs/concepts/enforcement.md'), 'utf8'), root),
   ...checkWritingCapTargets(WRITING_CAPS, root),
 ];
@@ -43,4 +47,4 @@ if (errors.length) {
   console.log(`check-enforcement: ${errors.length} problem(s)`);
   process.exit(1);
 }
-console.log('✓ enforcement: every mechanism cell resolves; every writing cap has a file');
+console.log('✓ enforcement: mechanisms resolve, caps have files, metrics match, crew prose holds');

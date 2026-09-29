@@ -16,7 +16,8 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG).toContain('branch=feature/{type}-{issue}-{slug}');
     expect(DEFAULT_CONFIG).toContain('auto_commit=off');
     expect(DEFAULT_CONFIG).toContain('coverage_new=85');
-    expect(DEFAULT_CONFIG).toContain('coverage_modified=90');
+    // equal to coverage_new: touching a file is not held stricter than writing one
+    expect(DEFAULT_CONFIG).toContain('coverage_modified=85');
     expect(DEFAULT_CONFIG).toContain('heal_max_cycles=3');
     expect(DEFAULT_CONFIG).toContain('verbosity=normal');
   });

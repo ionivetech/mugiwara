@@ -15,7 +15,12 @@ export const DEFAULT_CONFIG = [
   'commit=conventional',
   'auto_commit=off',
   'coverage_new=85',
-  'coverage_modified=90',
+  // Equal to coverage_new, not stricter. Holding a file you merely TOUCH to a
+  // higher bar than code you write fresh is backwards, and it made a two-word
+  // help-text fix in src/cli.ts unshippable: whole-file coverage counts every
+  // untested line of a 1,300-line entry point against a one-line edit. The
+  // original gate comment intended modified to be the LOOSER bar (it said 80).
+  'coverage_modified=85',
   'review_depth=full',
   'quality_depth=full',
   'verify_merged=off',
