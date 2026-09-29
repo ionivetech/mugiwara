@@ -34,7 +34,10 @@ continue` resume, not a bare dispatch, and step 1 below proceeds as usual.
 2. **No active mission → you ARE Flow 0. Create it before anything else:**
    announce `## Flow 0 — Luffy (triage)`, classify the request, size the lane
    (`mugiwara run lane.sh`), read the mode, decide solo or team, write the
-   decision log, run `mugiwara savepoint <mission> "" 0 <mode>`.
+   decision log, run `MUGIWARA_LANE=<lane> mugiwara savepoint <mission> "" 0 <mode>` —
+   seed the triaged lane or state.json records `direct` for every mission,
+   because lane.sh measures a diff that does not exist yet. It is a floor; the
+   lane can still rise.
  3. Ask solo or team when the mode is `guided` or `semi` — always, at any lane. If team, collect name + area per person and write the roster to the decision log **before** the first savepoint. See `mugiwara-orchestration` → Solo or team. In `auto`, derive it and log what you derived.
  4. Announce `→ Flow N — <crew>` and hand off.
    **You never do another crew member's work.** Brainstorm is Usopp's. The plan

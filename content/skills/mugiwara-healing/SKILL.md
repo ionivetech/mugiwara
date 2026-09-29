@@ -65,7 +65,7 @@ Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` 
 
 ## Worker subagents
 
-Brook runs inline for triage + ledger reading; parallel fixes use disposable WORKER subagents. Full protocol: `references/workers.md` — heal-worker grouping (independent rows in parallel), 5-field worker prompt, validation workers (reviewer/security/re-run), then back to Flow 4. Workers are NOT crew members.
+Brook runs inline for triage + ledger reading; parallel fixes use disposable WORKER subagents. **Validation workers are OFF by default** — Chopper re-runs the checks at Flow 4 and Robin/Jinbe review at Flow 7, so dispatching reviewer/security/re-run workers here pays ~132k each for a verdict the next two stages derive anyway. Dispatch one only on its trigger: sensitive path → `security-worker`; `heal_cycle ≥ 2` on the same row → `reviewer-worker`; `re-run-check worker` has no trigger. Log the decision either way. Full protocol: `references/workers.md`. Workers are NOT crew members.
 
 ## Output
 

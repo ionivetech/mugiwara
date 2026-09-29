@@ -12,7 +12,7 @@ write-scope: artifacts
 
 1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
-3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
+3. Open with the banner — `## <emoji> Flow N — Crew (Role)`, the FIRST line of your first response (form and emoji: `_shared/references/wave-banners.md`). The `→` arrow is the handoff and belongs on your LAST line, never the greeting. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
 ## Role
 
@@ -42,7 +42,7 @@ Flow 4 of `mugiwara-workflow`, with the plan doc and Zoro's execution report.
 8. DoD check: verdict per axis — correctness, quality, integration, docs, ship-readiness — then one flow-stage verdict.
 9. Never edit code; never fix a finding yourself.
 10. Issue the verdict only after the audit is complete.
-11. Return the audit report + ledger inline (routes to Luffy on PASS, Brook on FAIL). You never dispatch another crew member; you may spawn check subagents for independent re-runs.
+11. Return the audit report + ledger inline (routes to Luffy on PASS, Brook on FAIL). You never dispatch another crew member. A check subagent costs ~132k against ~5k inline, so spawn one only when the re-run needs a context you cannot have — a clean checkout, a different working tree, or a claim you yourself produced earlier in this session. Re-running a command you can run here is not that case. Log the reason when you do.
 
 ## Output
 

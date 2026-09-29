@@ -9,14 +9,14 @@ Rule: budgets bound process cost, the part mugiwara adds. They never claim to me
 | Lane | Flow stages | Base | Budget | Warn | Stop |
 |---|---|---|---|---|---|
 | Direct | none | 0 | none | none | none |
-| Lean | execute, quality | 8000 | 12000 | 18000 | 36000 |
-| Standard | plan, execute, audit, review | 13000 | 25000 | 37500 | 75000 |
-| Full | all nine flow stages | 22000 | 50000 | 75000 | 150000 |
-| Spike | brainstorm, re-triage | 1000 | 9000 | 13500 | 27000 |
+| Lean | execute, quality | 8421 | 12000 | 18000 | 36000 |
+| Standard | plan, execute, audit, review | 15995 | 30000 | 45000 | 90000 |
+| Full | all nine flow stages | 22016 | 50000 | 75000 | 150000 |
+| Spike | brainstorm, re-triage | 5411 | 9000 | 13500 | 27000 |
 
 Bases come from `scripts/lane-base.ts`, which sums the skill and agent bodies each lane loads. The gate fails when a constant drifts more than a fifth from measured load, so content growth moves the budgets. Warn fires at 1.5 times budget, stop at 3 times, both inclusive. State lands in `.mugiwara/missions/<mission>/[member].json` before any stop.
 
-Measured: the catalog index holds 21 skills (**Current:** 4,856 chars). Pointer checks cover 342 pointers with 0 broken. Retrieval probes count 221 with 95.4% rank 1.
+Measured: the catalog index holds 21 skills (**Current:** 4,856 chars). Pointer checks cover 166 pointers with 0 broken. Retrieval probes count 272 with 95.6% rank 1.
 
 Real usage, when the harness exposes it (provider path): set `MUGIWARA_TOKENS` to a total, or write `input_tokens` plus `output_tokens` JSON and pass it with `--tokens-file` at savepoint. State flips to reported source and the report prints the provider-backed total. Tiers without a usage API keep the estimator. The rollup line stays absent there. No numbers are invented to fill the gap.
 
@@ -26,4 +26,4 @@ Slop verdicts surface where spend is reviewed: the `mugiwara cost` ledger carrie
 
 Trail scope: `mugiwara cost` counts governor-verdict rows (`## Cost governor decisions` / `## Budget` sections of `decisions.md`) only. Hand-written decision-table rows are the audit trail and stay folded into the report — they are not ledger rows.
 
-Native names: anti-fluff is terse dense writing; just-enough is minimal-code ladder YAGNI-first; anti-slop is waste detection and intervention; have-adhd is scannable attention-friendly rendering.
+Host capabilities (repo name, native in brackets): terse-output [anti-stuff] is terse dense writing; minimal-diff [just-enough] is the minimal-code ladder, YAGNI-first; waste-guard [anti-slop] is waste detection and intervention; scan-format [have-adhd] is scannable rendering, verdict and evidence first.

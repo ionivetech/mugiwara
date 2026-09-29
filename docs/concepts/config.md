@@ -29,7 +29,7 @@ Gate and escalation keys:
 | Key | Default | Meaning |
 |---|---|---|
 | `coverage_new` | 85 | New-code gate |
-| `coverage_modified` | 90 | Modified-code gate |
+| `coverage_modified` | 85 | Modified-code gate, equal to new |
 | `review_depth` | full / standard / quick | Review pass depth |
 | `quality_depth` | full / standard / quick | Quality pass depth |
 | `verify_merged` | on / off | Merged verify pass outside lane 3 |

@@ -26,13 +26,33 @@ Each heal worker receives a prompt with 5 fields:
 - **MUST DO** — Prove-It: write regression test, watch it fail, implement fix, watch it pass, commit
 - **MUST NOT** — files outside scope, drive-by refactor, delete/weaken tests
 
-## Validation workers (verify)
+## Validation workers (verify) — off by default
 
-After all heal workers complete, dispatch validation workers in parallel:
-- **reviewer-worker** — adversarial diff review from fresh context (per `mugiwara-review`)
-- **security-worker** — security pass over fixes (per `mugiwara-security`)
-- **re-run-check worker** — independently re-runs failed checks, returns raw evidence
+Healing hands back to Flow 4, and Chopper re-runs every failed check there;
+Flow 7 then runs Robin and Jinbe over the same diff. A reviewer-worker, a
+security-worker and a re-run-check worker reproduce all three, one stage early,
+at roughly 132k tokens per dispatch against 5k inline. Three workers a cycle
+across the 3-cycle cap is ~1.19M tokens buying a verdict the next two stages
+derive anyway.
 
-Flow: Brook triage + grouping → dispatch heal workers parallel → aggregate results → dispatch validation workers → update ledger → back to Flow 4.
+So: **dispatch none of them by default.** Aggregate the heal results, update the
+ledger, hand back to Flow 4.
+
+Dispatch a validation worker only when fresh context genuinely beats the next
+stage, which is one of two cases:
+
+| Trigger | Worker | Why it beats waiting for Flow 4/7 |
+|---|---|---|
+| the heal touched a sensitive path (auth, payment, secrets, migration, public API) | `security-worker` | Jinbe runs at Flow 7, two gates away — a sensitive-path regression should not travel that far unexamined |
+| `heal_cycle ≥ 2` on the same row | `reviewer-worker` | Brook has now failed the same row twice; its own context is the suspect, and fresh eyes are the point |
+
+`re-run-check worker` has no trigger — Chopper re-runs the checks at Flow 4 as
+its entire job, and running them one stage early only produces evidence Chopper
+must re-derive to trust. Record the skip; do not dispatch it.
+
+Log the dispatch decision either way — which workers ran, or the one line saying
+none did and why. Trail row `slop-governor`.
+
+Flow: Brook triage + grouping → dispatch heal workers parallel → aggregate results → (validation worker only on a trigger above) → update ledger → back to Flow 4.
 
 Workers are NOT crew members — disposable subagents, one narrow job per worker. Crew runs inline in main thread.

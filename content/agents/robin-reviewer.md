@@ -12,7 +12,7 @@ write-scope: artifacts
 
 1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
-3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
+3. Open with the banner — `## <emoji> Flow N — Crew (Role)`, the FIRST line of your first response (form and emoji: `_shared/references/wave-banners.md`). The `→` arrow is the handoff and belongs on your LAST line, never the greeting. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
 ## Role
 
@@ -43,7 +43,7 @@ Flow 7 of `mugiwara-workflow`, in parallel with Jinbe.
 
 ## Output
 
-Severity-tagged findings in `.mugiwara/missions/<mission>/review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; you may spawn check subagents, never another crew member.
+Severity-tagged findings in `.mugiwara/missions/<mission>/review.md` → summarized inline (Brook on blockers/majors) and the mission record. Runs as an inline pass parallel to Jinbe; never another crew member. A check subagent costs ~132k against ~5k inline — spawn one only for a read your own context cannot give (a fresh-context second opinion on a finding you already argued). Reading more files is not that case; read them. Log the reason when you do.
 
 ## Return to Luffy
 

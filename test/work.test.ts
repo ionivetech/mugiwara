@@ -175,7 +175,7 @@ describe('shouldLoadSkill — skill loading control (§9)', () => {
 describe('evaluateDelegation — delegation optimization (§30, Q1 remainder)', () => {
   const base = {
     lane: 'full',
-    budget: 25000,
+    budget: 30000,
     tokens_used: 6000,
     threshold_pct: 60,
     independent_tasks: 2,
@@ -199,14 +199,14 @@ describe('evaluateDelegation — delegation optimization (§30, Q1 remainder)', 
 
   it('value exceeds floor and within budget → delegate (budget_at = threshold math)', () => {
     const r = evaluateDelegation({ ...base, lane: 'full' });
-    expect(r.budget_at).toBe(15000); // delegateAt(25000, 60)
+    expect(r.budget_at).toBe(18000); // delegateAt(30000, 60)
     expect(r.overhead).toBe(22016); // max(5000, 22016) floor
     expect(r.delegate).toBe(true);
   });
 
   it('tokens_used above budget_at → refuse delegation (over threshold)', () => {
-    const r = evaluateDelegation({ ...base, lane: 'full', tokens_used: 16000 });
-    expect(r.budget_at).toBe(15000);
+    const r = evaluateDelegation({ ...base, lane: 'full', tokens_used: 19000 });
+    expect(r.budget_at).toBe(18000); // delegateAt(30000, 60)
     expect(r.delegate).toBe(false);
     expect(r.reason).toMatch(/budget/);
   });

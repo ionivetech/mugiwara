@@ -277,16 +277,16 @@ test('savepoint: fully-completed plan reports tasks.done=total (not 0)', { timeo
 
 // ---------- budget warn/stop for standard + full lanes ----------
 
-test('savepoint: budget warn/stop boundaries for standard (25000) and full (50000)', { timeout: 60000 }, () => {
+test('savepoint: budget warn/stop boundaries for standard (30000) and full (50000)', { timeout: 60000 }, () => {
   const dir = newRepo('budget');
   try {
     // 3 files -> standard
     commitFiles(dir, { 'a.ts': 'a\n', 'b.ts': 'b\n', 'c.ts': 'c\n' });
-    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '37499' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '44999' });
     expect(readState(dir).budget_status).toBe('ok');
-    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '37500' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '45000' });
     expect(readState(dir).budget_status).toBe('warn');
-    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '75000' });
+    runSavepoint(dir, 'm "" 1 guided', { MUGIWARA_TOKENS: '90000' });
     expect(readState(dir).budget_status).toBe('stop');
 
     // 9 files -> full
@@ -343,4 +343,23 @@ test('savepoint: lane rise direct -> full sets lane_rose with lane_prev', { time
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// lane.sh measures the working diff, so at Flow 0 — before a file has changed
+// — it answers "direct" for every mission, including a 40-file one, and
+// state.json contradicts the decision log from the first write. MUGIWARA_LANE
+// seeds the triaged lane as a FLOOR: it can raise, never lower.
+test('savepoint: MUGIWARA_LANE raises an unmeasurable lane but never lowers a measured one', { timeout: 60000 }, () => {
+  const dir = newRepo('lane-floor');
+  try {
+    runSavepoint(dir, 'm "" 0 auto');
+    expect(readState(dir, 'm').lane).toBe('direct');
+
+    runSavepoint(dir, 'm2 "" 0 auto', { MUGIWARA_LANE: 'full' });
+    expect(readState(dir, 'm2').lane).toBe('full');
+
+    // a floor cannot lower: lane 'lean' under a measured/held 'full' is ignored
+    runSavepoint(dir, 'm2 "" 1 auto', { MUGIWARA_LANE: 'lean' });
+    expect(readState(dir, 'm2').lane).toBe('full');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });

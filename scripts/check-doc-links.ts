@@ -16,7 +16,10 @@ function walk(d: string, out: string[] = []): string[] {
   return out;
 }
 const files: string[] = [];
-for (const r of ["docs", "examples"]) {
+// content/ and references/ carry the crew prompts. They were excluded, and
+// that is how a batch of links to directories the layout never defined
+// survived every gate: they were text inside skills, not links inside docs.
+for (const r of ["docs", "examples", "content", "references"]) {
   const p = join(root, r);
   if (existsSync(p)) files.push(...walk(p));
 }
@@ -27,7 +30,10 @@ for (const r of ["README.md", "ROADMAP.md"]) {
 
 let bad = 0;
 for (const f of files) {
-  const body = readFileSync(f, "utf8");
+  // Strip fenced blocks first: a link inside a ``` fence is example content
+  // (a template showing what a mission artifact looks like), not a pointer
+  // this repo can resolve. Checking it reports a break that does not exist.
+  const body = readFileSync(f, "utf8").replace(/^```[\s\S]*?^```/gm, "");
   for (const m of body.matchAll(/\]\(([^)\s]+)\)/g)) {
     const t = m[1];
     if (/^(https?:|mailto:|#|\/\/)/.test(t)) continue;

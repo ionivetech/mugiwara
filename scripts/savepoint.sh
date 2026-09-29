@@ -350,6 +350,18 @@ if [ -n "$PREV_MISSION" ] && [ "$PREV_MISSION" != "$MISSION" ]; then
   LANE_PREV=""
   LANE_PEAK=""
 fi
+# Triage floor (MUGIWARA_LANE): lane.sh measures the working diff, so at Flow 0
+# — before a single file has changed — it reports "direct / no changed files"
+# for every mission, including a 40-file one. The measurement is not wrong, it
+# has no input yet; recording it as `direct` makes state.json contradict the
+# decision log from the first savepoint. Luffy passes the triaged lane here and
+# it acts as a FLOOR, never a ceiling: a larger measurement still wins, so this
+# can only raise, exactly like the peak clamp below.
+if [ -n "${MUGIWARA_LANE:-}" ] && [ "$(lane_rank "${MUGIWARA_LANE}")" -gt "$(lane_rank "$LANE")" ]; then
+  LANE_REASON="$LANE_REASON (raised to ${MUGIWARA_LANE} by triage — diff not yet measurable)"
+  LANE="${MUGIWARA_LANE}"
+fi
+
 # monotonic clamp: never drop below the previous peak; spike is a resize, not a rise.
 if [ -n "$LANE_PEAK" ] && [ "$LANE_PEAK" != "spike" ] && [ "$(lane_rank "$LANE")" -lt "$(lane_rank "$LANE_PEAK")" ]; then
   LANE="$LANE_PEAK"
@@ -760,7 +772,7 @@ if [ -n "$MISSION" ]; then
     lane: process.argv[8],
     lane_prev: process.argv[9] || null,
     updated_at: process.argv[10],
-    next_action: 'verify this wave against the plan, then continue per plan (next wave or closure)'
+    next_action: 'verify this flow stage against the plan, then continue per plan (next stage or closure)'
   };
   try { data.next_session_prompt = JSON.parse(fs.readFileSync(process.argv[12],'utf8')).next_session_prompt || ''; } catch (e) { data.next_session_prompt = ''; }
   fs.writeFileSync(process.argv[11], JSON.stringify(data, null, 2) + '\n');

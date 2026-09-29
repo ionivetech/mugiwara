@@ -8,7 +8,7 @@ and `verbosity=full`. Match the shape for the level in effect. Reference:
 
 Whatever the level, these are always visible — they are the audit surface:
 
-- wave banner (the owning agent's color)
+- flow banner (the owning agent's color)
 - file edits: path + one-line summary
 - gate verdicts + evidence path
 - decisions, questions, blockers, lane rises, escalations
@@ -18,7 +18,7 @@ Whatever the level, these are always visible — they are the audit surface:
 
 | Before | After |
 |---|---|
-| 200 lines of test output | `✓ tests 84/84 → results/m/03-quality.md` |
+| 200 lines of test output | `✓ tests 84/84 → flows/03-quality.md` |
 | Read/grep/probe tool calls + file contents | *(not echoed at `normal` — a file is named only when it matters)* |
 | Step-by-step reasoning | the conclusion |
 | Per-task bookkeeping | one summary line per flow stage |
@@ -32,8 +32,8 @@ Whatever the level, these are always visible — they are the audit surface:
 ## ⚔️ Flow 3 — Zoro (Execution)
 ✎ src/auth/invitation.ts   +42/-8   token validation + redirect guard
 ✎ src/routes/index.ts      +6/-0    route registration
-✓ tests 84/84 · lint 0     → results/m/03-quality.md
-→ 🩺 Flow 4 — Chopper (Checkpoint)
+✓ tests 84/84 · lint 0     → flows/03-quality.md
+→ 🩺 Flow 4 — Chopper
 ```
 
 Commands ran and passed; output collapsed to one line per gate with the
@@ -44,7 +44,7 @@ appear. Reasoning reduced to conclusions.
 ## `full` — everything
 
 ```
-## `Flow 3 — Zoro (Execution)`
+## ⚔️ Flow 3 — Zoro (Execution)
 $ mugiwara run lane.sh m
 lane: full (44 files, 5 sensitive)
 $ readFileSync src/auth/invitation.ts
@@ -58,8 +58,8 @@ $ bun test test/unit
   ✓ redirect guard … (8ms)
 ✎ src/auth/invitation.ts   +42/-8   token validation + redirect guard
 ✎ src/routes/index.ts      +6/-0    route registration
-✓ quality pass → results/m/03-quality.md
-→ Flow 4 — Chopper (Checkpoint)
+✓ quality pass → flows/03-quality.md
+→ 🩺 Flow 4 — Chopper
 ```
 
 Every command, every read, every reasoning step — the raw transcript. Use it
@@ -86,7 +86,7 @@ literals stay exact. A bare `→ Flow N` or an unexplained next-flow label is a
 defect.
 
 ```
-## ⚔️ Flow 2 — Nami (Planning)
+## 🧭 Flow 2 — Nami (Planning)
 **Result** — Plan ready for `<mission>`: goal is actionable flow-boundary
 handoffs and truthful state recovery; 2 tasks/2 waves; evidence:
 `.mugiwara/missions/<mission>/plan.md`; gate/risk: the GO decision and Flow 2
@@ -102,11 +102,11 @@ none — T2 depends on T1, so run it after T1 completes.
 **New session** — Run `/mugiwara continue <mission>`; it resumes the Flow 2
 checkpoint with the plan saved and the GO decision pending.
 ✓ Flow 2 — Nami · plan 2 tasks/2 waves → .mugiwara/missions/<mission>/plan.md
-→ Flow 0 — Luffy (GO decision)
+→ 🏴‍☠️ Flow 2 — Luffy (routing)
 ```
 
 In Semi, the choices are the planning GO gate. In Auto, keep the same result,
 next action, and resume facts but state that routine continuation is automatic;
 do not ask for a redundant GO. The summary line and the
-`→ Flow N — Crew (Role)` text keep their exact shapes — the blocks wrap them
+`→ <emoji> Flow N — Crew` handoff keep their exact shapes — the blocks wrap them
 without replacing them.

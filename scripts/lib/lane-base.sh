@@ -8,12 +8,12 @@
 # from content word-sums × 1.35 (see scripts/lane-base.ts). spike is a
 # resize, not a rise — small base, tiny budget.
 LANE_BASE_lean=8421
-LANE_BASE_standard=13325
+LANE_BASE_standard=15995
 LANE_BASE_full=22016
 LANE_BASE_spike=5411
 
 # BUDGET: warn at 1.5×, stop at 3×.
 BUDGET_lean=12000
-BUDGET_standard=25000
+BUDGET_standard=30000
 BUDGET_full=50000
 BUDGET_spike=9000

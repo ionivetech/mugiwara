@@ -225,6 +225,35 @@ test('savepoint hook: config mode=auto + plan, no state → state records auto',
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+// `mugiwara archive` removes state on purpose and leaves report.md. Reading
+// "artifacts, no state" as "never started" reseeded flow 2 from plan.md, and a
+// mission whose PR merged days earlier reappeared as in-flight — which is how
+// 2026-09-25-clean-uninstall-per-harness sat at "flow 2 · 0/0 tasks".
+test('savepoint hook: a closed mission is not resurrected', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    writeFileSync(join(d, 'report.md'), '# Report\n');
+    const r = hook(SAVEHOOK, dir, {});
+    expect(r.status).toBe(0);
+    expect(existsSync(join(d, 'state.json'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: pr-verdict alone also marks a mission closed', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    writeFileSync(join(d, 'pr-verdict.md'), '# Verdict\n');
+    expect(hook(SAVEHOOK, dir, {}).status).toBe(0);
+    expect(existsSync(join(d, 'state.json'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 test('savepoint hook: decisions-only mission bootstraps Flow 0', { timeout: 30000 }, () => {
   const dir = repo();
   try {
@@ -350,6 +379,26 @@ test('guard banner: banner in mission files suppresses warning without transcrip
     writeFileSync(join(d, 'decisions.md'), '## Flow 2 — Nami (Planning)\n');
     const r = hook(GUARD, dir, { session_id: 's1' });
     expect(r.err).not.toContain('no flow banner');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard banner: a readable transcript with no banner beats tidy mission files', { timeout: 20000 }, () => {
+  // The session this test was written from: the whole pipeline ran inside tool
+  // calls, decisions.md got perfect `## Flow N —` headings, and the user saw
+  // nothing. The mission-file fallback answered "is there a heading in a file
+  // I wrote?" and passed. The transcript is what the user actually saw, so
+  // when it is readable it is the only evidence that counts.
+  const dir = repo();
+  try {
+    engage(dir);
+    bannerState(dir);
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    writeFileSync(join(d, 'decisions.md'), '## Flow 0 — Luffy (Triage)\n## Flow 3 — Zoro (Execution)\n');
+    const transcript = join(dir, 'transcript.jsonl');
+    writeFileSync(transcript, '{"role":"assistant","content":"ran the whole mission in tool calls, said nothing"}\n');
+    const r = hook(GUARD, dir, { session_id: 's1', transcript_path: transcript });
+    expect(r.status).toBe(0);
+    expect(r.err).toContain('no flow banner');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

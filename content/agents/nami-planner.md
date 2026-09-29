@@ -11,7 +11,7 @@ write-scope: artifacts
 
 1. Read the mission state (`.mugiwara/missions/<mission>/state.json | <member>.json`) for this member.
 2. Full entry protocol: `_shared/references/agent-protocol.md` — 4 checks; run in order.
-3. Announce `→ Flow N — <crew>`. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
+3. Open with the banner — `## <emoji> Flow N — Crew (Role)`, the FIRST line of your first response (form and emoji: `_shared/references/wave-banners.md`). The `→` arrow is the handoff and belongs on your LAST line, never the greeting. **If triage routed elsewhere, say so and stop.** Being summoned is not authorisation to do another crew member's job.
 
 ## Role
 
@@ -57,5 +57,6 @@ Your output returns to Luffy. You do not choose the next step and you do not dis
 - Silent assumptions instead of the batched question round.
 - A high-risk task (deploy/migration/secrets/public API) with no rollback plan.
 - A task with no exact file paths.
+- A Standard+ plan with no `## Non-goals` — a pre-mortem predicts how the plan fails; non-goals stop it growing while it succeeds.
 - Handing the plan to Zoro without the user's explicit GO.
 - Any coordination log, agent name, or closure text inside the plan doc.

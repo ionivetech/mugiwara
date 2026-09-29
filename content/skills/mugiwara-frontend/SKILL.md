@@ -4,7 +4,7 @@ description: Use for frontend component, CSS styling, responsive layout, accessi
 gate_artifact: flows/01-execution.md — frontend evidence (tokens.css + component evidence)
 ---
 
-# Frontend (Anti-Slop)
+# Frontend (UI slop guard)
 
 ## Skip when
 

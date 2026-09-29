@@ -43,8 +43,5 @@ jobs:
       - name: "Gate self-test (every gate must fail when it should)"
         run: bun scripts/gate-selftest.ts
 
-      - name: "Plugin sync check"
-        run: bun scripts/validate-content.ts --check-sync
-
       - name: "Smoke test (CLI --version)"
         run: node dist/mugiwara.js --version

@@ -12,7 +12,7 @@ The session died and the plan is on disk, not in your context. Rebuild the pictu
    mugiwara continue m jane-doe
    ```
    ```
-   Resumed: m [jane-doe], Flow 1, 0/0 tasks — next_action: verify this wave against the plan, then continue per plan (next wave or closure) — run: (no next_session_prompt recorded)
+   Resumed: m [jane-doe], Flow 1, 0/0 tasks — next_action: verify this flow stage against the plan, then continue per plan (next stage or closure) — run: (no next_session_prompt recorded)
    ```
 2. Several missions: list, then pick.
    ```bash

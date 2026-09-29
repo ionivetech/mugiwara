@@ -32,7 +32,7 @@ approval. "Never weakens configs" without that diff is a claim, not a fact.
 
 ## Order
 
-Full checklist: `references/order-checklist.md` — 11 steps; see file for thresholds and evidence.
+Full checklist: `references/order-checklist.md` — 12 steps; see file for thresholds and evidence. Step 12 is the **waste pass** (`mugiwara waste`) — advisory, never blocks, and it is the cost governor's only automated read on the mission diff. Skipping it silently is the defect; reporting that no CLI rung answered is not.
 
 ## User suites (per `mugiwara-testcases`)
 
@@ -64,7 +64,7 @@ Say so explicitly, propose the minimal standard setup for the stack, and continu
 
 ## Report
 
-Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/missions/<mission>/flows/03-quality.md`; the `duplicated_lines_density` + `cognitive_complexity` table is mirrored into `flows/01-execution.md` for the gate artifact. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next flow stage, fail → Brook (healing) or Zoro (trivial fix).
+Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/missions/<mission>/flows/03-quality.md`, plus a `## Waste (advisory)` section carrying step 12's rows (or the one line saying why none were produced); the `duplicated_lines_density` + `cognitive_complexity` table is mirrored into `flows/01-execution.md` for the gate artifact. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next flow stage, fail → Brook (healing) or Zoro (trivial fix).
 
 ## Rationalizations
 

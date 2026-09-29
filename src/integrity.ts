@@ -13,7 +13,7 @@ import { isAbsolute, join, relative } from 'node:path';
 import { loadPolicy } from './policy.ts';
 
 export type IntegrityIssue = {
-  kind: 'dangling-path' | 'secret' | 'secret-warn' | 'evidence' | 'evidence-thin';
+  kind: 'dangling-path' | 'secret' | 'secret-warn' | 'evidence' | 'evidence-thin' | 'verdict-shape';
   detail: string;
   severity?: 'block' | 'warn';
 };
@@ -230,7 +230,61 @@ export function checkTrail(missionDir: string, projectRoot: string): IntegrityIs
     }
   }
 
+  // 5: pr-verdict checklist shape. closure.md states the rule in prose — the
+  // Tests, Checks and Deferred sections are ALWAYS one `- [x]`/`- [ ]` item
+  // per line — and prose alone has never held: a paragraph or a comma-joined
+  // list reads fine and defeats every downstream reader that counts boxes.
+  // Warn, never block: the verdict file is the handoff to a human, and a
+  // refused archive over formatting is worse than a flagged one.
+  for (const rel of ['pr-verdict.md', join('flows', '07-pr-verdict.md')]) {
+    const f = join(missionDir, rel);
+    if (!existsSync(f)) continue;
+    let body: string;
+    try { body = readFileSync(f, 'utf8'); } catch { continue; }
+    // A stub is not a verdict. Only demand the checklist sections from a file
+    // that is actually one — every real verdict ends in `## Verdict`, and test
+    // fixtures that write a placeholder should not be nagged about a template
+    // they are not using. Non-checkbox CONTENT is still flagged either way,
+    // because that is the defect: prose where boxes belong.
+    const isVerdict = sectionBody(body, 'Verdict') !== null;
+    for (const heading of ['Tests', 'Checks', 'Deferred / follow-ups']) {
+      const sec = sectionBody(body, heading);
+      if (sec === null) {
+        if (!isVerdict) continue;
+        issues.push({ kind: 'verdict-shape', severity: 'warn', detail: `${rel} has no "## ${heading}" section — the verdict template requires it` });
+        continue;
+      }
+      const lines = sec.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (!lines.length) {
+        issues.push({ kind: 'verdict-shape', severity: 'warn', detail: `${rel} "## ${heading}" is empty — write \`None.\` explicitly or list the boxes` });
+        continue;
+      }
+      // The template's own empty marker, in any shape the template shows it:
+      // `None.`, `- None.`, or backticked. Accepting only the bare word made
+      // the check reject a file that followed the template correctly.
+      if (lines.length === 1 && /^-?\s*`?none\.?`?$/i.test(lines[0])) continue;
+      const bad = lines.filter((l) => !/^- \[[ xX]\] \S/.test(l));
+      if (bad.length) {
+        issues.push({
+          kind: 'verdict-shape',
+          severity: 'warn',
+          detail: `${rel} "## ${heading}" has ${bad.length} non-checkbox line(s) — one \`- [x]\`/\`- [ ]\` item per line; first: "${bad[0].slice(0, 60)}"`,
+        });
+      }
+    }
+  }
+
   return issues;
+}
+
+/** Body of a `## <heading>` section up to the next `## `, or null when absent. */
+function sectionBody(md: string, heading: string): string | null {
+  const lines = md.split(/\r?\n/);
+  const start = lines.findIndex((l) => l.trim() === `## ${heading}`);
+  if (start === -1) return null;
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((l) => /^## /.test(l));
+  return (end === -1 ? rest : rest.slice(0, end)).join('\n');
 }
 
 export function formatIssues(issues: IntegrityIssue[]): string {

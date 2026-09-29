@@ -58,7 +58,7 @@ All actors read and write to the same file. Append-only, never overwrite.
 
 ## Member namespacing
 
-`mugiwara savepoint` writes per-(mission, member) state (on Claude Code a Stop hook also writes savepoints automatically; the explicit call is the wave-boundary marker). Solo missions (no
+`mugiwara savepoint` writes per-(mission, member) state (on Claude Code a Stop hook also writes savepoints automatically; the explicit call is the flow-stage-boundary marker). Solo missions (no
 member argument) write `state.json`; team missions write `<member>.json`.
 The member argument defaults to the `.mugiwara/active-member` cache — pass it
 explicitly only to act as someone else:

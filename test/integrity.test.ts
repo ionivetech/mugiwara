@@ -73,6 +73,44 @@ describe('integrity — secret patterns', () => {
     }
   });
 
+  // closure.md states the checkbox rule in prose. Prose never held: a
+  // comma-joined list reads fine and silently defeats every reader that
+  // counts boxes. Warn-only — a refused archive over formatting is worse.
+  it('checkTrail warns when a pr-verdict checklist section is not checkboxes', () => {
+    const missionDir = join(dir, 'verdict');
+    mkdirSync(missionDir, { recursive: true });
+    writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ evidence: ['x'] }));
+    writeFileSync(
+      join(missionDir, 'pr-verdict.md'),
+      [
+        '# PR verdict: m',
+        '## Tests',
+        '- [x] unit 10/10',
+        '## Checks',
+        'typecheck clean, lint 0, build exits 0',   // prose — the defect
+        '## Deferred / follow-ups',
+        'None.',                                    // explicit empty is fine
+        '',
+      ].join('\n'),
+    );
+    const issues = checkTrail(missionDir, dir);
+    const shape = issues.filter((i) => i.kind === 'verdict-shape');
+    expect(shape.length).toBe(1);
+    expect(shape[0].severity).toBe('warn');
+    expect(shape[0].detail).toContain('## Checks');
+  });
+
+  it('checkTrail passes a well-formed pr-verdict checklist', () => {
+    const missionDir = join(dir, 'verdict-ok');
+    mkdirSync(missionDir, { recursive: true });
+    writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ evidence: ['x'] }));
+    writeFileSync(
+      join(missionDir, 'pr-verdict.md'),
+      ['## Tests', '- [x] unit 10/10', '## Checks', '- [x] typecheck clean', '- [ ] e2e skipped', '## Deferred / follow-ups', '- [ ] item — owner: alice', ''].join('\n'),
+    );
+    expect(checkTrail(missionDir, dir).filter((i) => i.kind === 'verdict-shape')).toEqual([]);
+  });
+
   it('checkTrail flags block secrets and warn for card shape', () => {
     const missionDir = join(dir, 'trail');
     mkdirSync(missionDir, { recursive: true });

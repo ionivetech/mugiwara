@@ -2,7 +2,7 @@
 
 Single source for Work, Scope/Code, Cognitive/Output, Stop-Slop, Adaptive Budget, Benchmark. Verdicts recommended, not enforced; crew acts. Trail rows → `.mugiwara/missions/<mission>/decisions.md` → `## Cost governor decisions`. `savepoint`/`lane-base`/`config` untouched.
 
-Native names: anti-fluff is terse dense writing; just-enough is minimal-code ladder YAGNI-first; anti-slop is waste detection and intervention; have-adhd is scannable attention-friendly rendering.
+Host capabilities (repo name, native in brackets): terse-output [anti-stuff] is terse dense writing; minimal-diff [just-enough] is the minimal-code ladder, YAGNI-first; waste-guard [anti-slop] is waste detection and intervention; scan-format [have-adhd] is scannable rendering, verdict and evidence first.
 
 ## Ladder — before adding code, run top to bottom, stop at first that holds
 

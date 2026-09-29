@@ -14,10 +14,10 @@ Example: a plan document schedules work in "waves" while the pipeline runs "flow
 - **Execution posture**: how work runs: inline-sequential by default, batched, parallel workers, context relief, phase isolated, or team scoped. Chosen at flow boundaries, recorded in the decision trail.
 - **Cost Governor**: the spend-safety decision: reserve, project, avoid, or stop verdicts with a recorded optimization trail. Recommends and records, never silently skips a safety stage.
 - **Slop**: wasted cost the governor flags: repeated reads, useless abstraction, healing spin, out-of-scope work.
-- **anti-fluff**: terse, dense writing.
-- **just-enough**: minimal-code ladder, YAGNI-first building.
-- **anti-slop**: waste detection and intervention.
-- **have-adhd**: scannable, attention-friendly rendering.
+- **terse-output** (native: anti-stuff): terse, dense writing.
+- **minimal-diff** (native: just-enough): minimal-code ladder, YAGNI-first building.
+- **waste-guard** (native: anti-slop): waste detection and intervention. Not the frontend skill's UI slop guard — different meaning, same word.
+- **scan-format** (native: have-adhd): scannable rendering, verdict and evidence first.
 - **Savepoint**: state written at each flow-stage boundary. Powers resume and every computed command.
 - **Continue**: deterministic resume printing the exact pickup point.
 - **Evidence**: recorded artifact behind a claim. Claims without evidence never pass a flow stage.

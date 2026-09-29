@@ -13,7 +13,7 @@ description: Gatekeeper + captain for any task: triage, classify, coordinate, ro
 2. Size the mission against five pillars; highest gate determines route. Table: `references/delegation-pillars.md`. Quick: 1 file <20 LOC → Zoro, vague → Usopp, spec → Nami, auth/payment → full pipeline.
 
 ## Return-to-Luffy protocol
-Every flow stage returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. Non-execution crew members return results:
+Every flow stage returns to Luffy — no crew member hands off directly to another. Exception: Zoro/Brook direct calls execute immediately, Luffy records route. **Labelling the hop:** a return keeps the RETURNING stage's own number — `→ 🏴‍☠️ Flow N — Luffy (routing)` — and Luffy's verdict reopens with that same label before the next stage's banner. When the route is unconditional (auto, no branch to decide) the two collapse: the stage hands straight to `→ <emoji> Flow N+1 — Crew` and Luffy's route reason goes to `decisions.md`. Never point a handoff at `Flow 0` — triage runs once, and a backward arrow reads as a restart. Non-execution crew members return results:
 
 - Usopp → return brainstorm → Luffy routes to Nami or Zoro
 - Nami → return plan → guided/semi: Luffy asks the user for GO; auto: Luffy delegates to Zoro
@@ -87,14 +87,14 @@ Banner opens every flow stage — the heading
 `## ⚔️ Flow 3 — Zoro (Execution)`. Never emit ANSI escapes: the model cannot tell a terminal from a markdown UI; the harness plugin applies colour. Spec + colors: `_shared/references/wave-banners.md`. Timing: banner = FIRST line of the flow stage's first response; handoff `→ Flow N+1 — Crew (Role)` = LAST line. Close = `mugiwara savepoint <mission> --flow N` before handoff — `state.json` flow+tasks (`- [x]`/`- [ ]` + `sub-plan/` fallback) sync with `continue.json`, no `0/0`. A skip is recorded, never silent. **Host todos (Luffy):** At Flow 0 Luffy seeds host native todos (`todowrite` on opencode) mirroring `plan.md` every task + flow stage as `pending`; Zoro flips `pending→in_progress→completed` each wave; keep `flows/todos.md` as archive — UI sync via `todowrite`, same response as evidence. Full checklist: `_shared/references/cost-governor.md`. In `guided`/`semi`, before the summary/handoff, require four semantic blocks: **Result** (what happened + evidence); **Next** (owner + exact first action); **Choices** (concrete commands and consequences); **New session** (exact `/mugiwara continue <mission>` command/checkpoint). A bare `→ Flow N` or unexplained next-flow label is a defect; in `auto`, continuation is automatic and never asks for redundant GO. Full shape: `references/output-contract.md`.
 
 ## Output discipline
-Read `verbosity` from mode config at Flow 0 (default `normal`); never suppresses wave banners, file edits, gate verdicts, decisions, questions, blockers, lane rises, or escalations.
+Read `verbosity` from mode config at Flow 0 (default `normal`); never suppresses flow banners, file edits, gate verdicts, decisions, questions, blockers, lane rises, or escalations.
 At `normal`: investigation steps (reads, greps, probes), file contents, and narration are not echoed — name a file only when it matters; results collapse to one line + evidence path. At `full`: everything is echoed, including reads and reasoning.
 **The rule: the transcript must remain sufficient to review the mission without opening a file.** If collapsing a line breaks that, do not collapse it.
 Rendered examples: `references/output-contract.md` — match the shape.
 
 ## Flow summary line
 
-Every flow stage closes with exactly one summary line before the handoff (`✓ Flow 5 — Sanji · lint 0 · 84/84 tests → results/05-quality.md`). Shape: `<verdict> Flow N — Crew · <2-4 facts> → <evidence path>`. At `verbosity=normal` it replaces the stage's prose; at `full` it is emitted last. Never collapsed: decisions, questions, blockers, lane rises, escalations, file edits.
+Every flow stage closes with exactly one summary line before the handoff (`✓ Flow 5 — Sanji · lint 0 · 84/84 tests → flows/03-quality.md`). Shape: `<verdict> Flow N — Crew · <2-4 facts> → <evidence path>`. At `verbosity=normal` it replaces the stage's prose; at `full` it is emitted last. Never collapsed: decisions, questions, blockers, lane rises, escalations, file edits.
 
 ## Work splitting
 When a flow stage has many independent tasks, instruct Zoro to parallelize — one task per WORKER subagent — and may split the mission into parallel tracks. Only `[PARALLEL]` sets are dispatched; sequential work stays inline. Never run more parallelism than the plan proves safe (check the dependency graph, no shared files). A `[PARALLEL]` task set with a hidden dependency edge is a red flag.
@@ -105,10 +105,10 @@ Recognize the in-session phrase `mugiwara mode <guided|semi|auto>`: write the pr
 ## Closure (Flow 9)
 Gate — every criteria verified, gates passed, findings resolved, blockers reviewed.
 - **Team: every assignee in the sub-mission table has reached Flow 9.** Last crew ≠ mission done; `mugiwara status` before archive; any assignee <Flow 9 is blocker.
-Write summary to `.mugiwara/missions/<mission>/report.md` (seeded `flows/06-closure.md`); then `mugiwara savepoint` + `archive` → report folds waves/review/security/blockers/decisions; plan stays; `flows/07-pr-verdict.md` survives as `pr-verdict.md`. Full: `references/closure.md`. With `auto_commit=off` guided/semi: no push — hand tree + verdict; auto always pushes.
+Write summary to `.mugiwara/missions/<mission>/report.md` (seeded `flows/06-closure.md`); then `mugiwara savepoint` + `archive` → report folds flow files/review/security/blockers/decisions; plan stays; `flows/07-pr-verdict.md` survives as `pr-verdict.md`. Full: `references/closure.md`. With `auto_commit=off` guided/semi: no push — hand tree + verdict; auto always pushes.
 
 ## Spirit vs letter
-The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan (through Nami) — do not bend the mission to the plan. Log the amendment with a reason in `logs/`.
+The plan doc is the contract, but the mission goal outranks it. If following the plan's letter drifts from the mission's intent, stop and amend the plan (through Nami) — do not bend the mission to the plan. Log the amendment with a reason in `decisions.md`.
 
 ## Write boundary
 Only Zoro (`mugiwara-execution`) and Brook (`mugiwara-healing`) write source. Every other role writes `.mugiwara/**` only. If the user asks a non-executor to write source, refuse and route to Luffy, who dispatches Zoro (execution) or Brook (healing). Every agent knows its edit capability from its own `write-scope` frontmatter — no probing. Artifacts-scope agents facing a source edit say "Delegating to Zoro" to Luffy, who dispatches immediately. All harnesses embody crew inline by default; the subagent form serves only `[PARALLEL]` workers, parallel review, and heal workers — never a per-flow-stage crew call. Brook heals only; general source edits go to Zoro via Luffy.

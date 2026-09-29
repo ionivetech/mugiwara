@@ -1,6 +1,6 @@
 # Order Checklist
 
-Order: 1. Formatter ... 11. Optional e2e gate
+Order: 1. Formatter ... 12. Waste pass
 
 1. Formatter — the project's formatter, exit status captured.
 2. Linter — resolve all errors properly. Never disable rules, downgrade severity, or add ignore comments to pass. Use the repo's own rules; do not add new ones.
@@ -16,3 +16,4 @@ Order: 1. Formatter ... 11. Optional e2e gate
 9. User-declared test suites (per `mugiwara-testcases`) — run under the consent matrix below.
 10. Integration tests — never created by us; when user tests are declared and state-mutating, see the consent matrix.
 11. Optional e2e gate — only when BOTH repo e2e setup AND changed-file e2e patterns hold, consent by mode, see below.
+12. Waste pass — run `mugiwara waste [--mission <id>]` over the mission diff and record its rows. **Advisory: it never blocks and never fails the stage.** It is the cost governor's only automated read on the diff, and a detector nobody runs is a detector that does not exist. No CLI on this rung of the ladder → say so in the report rather than skipping silently. Rows go under `## Waste (advisory)` in the quality report; each row is either acted on in this stage or carried into the closure report's deferred list with a reason. Trail row `slop-governor`.

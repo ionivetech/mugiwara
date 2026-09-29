@@ -3,7 +3,7 @@
 Every mission creates and works inside `.mugiwara/` at the repo root.
 One directory per mission — everything about a mission lives together.
 
-**Language:** every artifact the crew writes into `.mugiwara/` — plans, waves,
+**Language:** every artifact the crew writes into `.mugiwara/` — plans, flow files,
 reports, spec, state, continue, blockers, review, decisions — is English, one
 language only. The audit trail is shared by the whole team and by future
 sessions; it must not depend on the author's conversational language. A

@@ -68,16 +68,34 @@ export function buildNotes(commits: ReleaseCommit[]): { count: number; markdown:
     const title = text.charAt(0).toUpperCase() + text.slice(1);
     const breakingTag = breaking ? ' ⚠️ **BREAKING**' : '';
 
-    const bodyLines = commit.body
-      .split(/\r?\n/)
-      .map(l => l.trim())
-      .filter(l => l && !TRAILER.test(l) && l !== '---')
-      // the release-version marker commit repeats the subject as body — drop it
-      .filter(l => l !== text);
+    // A commit body is prose that was hard-wrapped at ~72 columns. Rendering
+    // one bullet per physical line shreds every paragraph into fragments —
+    // which is what shipped in the release notes until this was fixed. Split
+    // on blank lines to recover the author's paragraphs, then rejoin each
+    // one. Lines the author really did write as a list keep their shape.
+    const LIST_ITEM = /^\s*(?:[-*+]\s|\d+[.)]\s)/;
+    const bodyBlocks = commit.body
+      .split(/\r?\n\s*\r?\n/)
+      .map(block =>
+        block
+          .split(/\r?\n/)
+          .map(l => l.trim())
+          .filter(l => l && !TRAILER.test(l) && l !== '---')
+          // the release-version marker commit repeats the subject as body — drop it
+          .filter(l => l !== text),
+      )
+      .filter(lines => lines.length)
+      .map(lines =>
+        lines.some(l => LIST_ITEM.test(l))
+          ? lines.map(l => l.replace(LIST_ITEM, ''))       // author's own list
+          : [lines.join(' ')],                             // reflowed paragraph
+      );
 
     const typeLabel = TYPE_LABEL[type] ?? 'Housekeeping';
     const base = `${title}${breakingTag} \`${commit.sha}\``;
-    const bodyBlock = bodyLines.length ? '\n' + bodyLines.map(l => `  - ${l}`).join('\n') : '';
+    const bodyBlock = bodyBlocks.length
+      ? '\n' + bodyBlocks.flat().map(l => `  - ${l}`).join('\n')
+      : '';
 
     if (scope) {
       const key = scope.toLowerCase();
@@ -137,25 +155,29 @@ export function buildNotes(commits: ReleaseCommit[]): { count: number; markdown:
   return { count, markdown: lines.join('\n').trimEnd() };
 }
 
-// Guard the CLI path so importing buildNotes in tests does not run git.
-if (import.meta.main) {
-  const args = process.argv;
-  const sinceIdx = args.indexOf('--since');
-  let since = sinceIdx !== -1 ? args[sinceIdx + 1] : null;
+/**
+ * Resolve the `since` boundary. `--since` always wins. Without it the answer
+ * depends on whether the release tag already exists:
+ *
+ *  - `taggedHead: true`  — the caller tagged HEAD before asking for notes, so
+ *    tags[0] IS this release. The boundary is the one before it, tags[1];
+ *    otherwise the range `<release>..HEAD` is empty and the notes come out blank.
+ *  - `taggedHead: false` — the tag does not exist yet, so tags[0] is the
+ *    PREVIOUS release and is itself the boundary.
+ *
+ * Getting this backwards silently drops a whole release from the notes, which
+ * is why it is a function with tests rather than a branch inside the CLI block.
+ * First release, no previous tag: null — show everything.
+ */
+export function resolveSince(tags: string[], explicit: string | null, taggedHead: boolean): string | null {
+  if (explicit) return explicit;
+  if (taggedHead) return tags.length >= 2 ? tags[1] : null;
+  return tags.length >= 1 ? tags[0] : null;
+}
 
-  if (!since) {
-    // The release workflow tags HEAD BEFORE generating notes, so the newest tag
-    // is the release tag itself. The "since" boundary must be the tag BEFORE it,
-    // otherwise range = "<release>..HEAD" is empty and the notes come out blank.
-    // With only one tag (first release), there is no previous tag — show all.
-    const tags = execFileSync('git', ['tag', '--sort=-version:refname'], { encoding: 'utf8' })
-      .split(/\r?\n/).filter(Boolean);
-    since = tags.length >= 2 ? tags[1] : null;
-  }
-
-  const range = since ? `${since}..HEAD` : '';
-  const raw = execFileSync('git', ['log', '--pretty=%H%n%s%n%n%b%n__END__', ...(range ? [range] : [])], { encoding: 'utf8' });
-  const commits: ReleaseCommit[] = raw
+/** Parse `git log --pretty=%H%n%s%n%n%b%n__END__` output into commits. Pure. */
+export function parseCommitLog(raw: string): ReleaseCommit[] {
+  return raw
     .split('__END__\n')
     .map(c => c.trim())
     .filter(Boolean)
@@ -163,9 +185,25 @@ if (import.meta.main) {
       const [sha, subject, ...rest] = c.split('\n');
       return { sha: sha.slice(0, 7), subject: subject ?? '', body: rest.join('\n').trim() };
     });
+}
 
-  const { count, markdown } = buildNotes(commits);
-  console.log(`**${count} change${count === 1 ? '' : 's'} since ${since ?? 'the start.'}**`);
+/** The header line above the sections. Pure so its pluralisation is tested. */
+export function notesHeader(count: number, since: string | null): string {
+  return `**${count} change${count === 1 ? '' : 's'} since ${since ?? 'the start.'}**`;
+}
+
+// Guard the CLI path so importing the helpers above in tests does not run git.
+if (import.meta.main) {
+  const args = process.argv;
+  const sinceIdx = args.indexOf('--since');
+  const explicit = sinceIdx !== -1 ? args[sinceIdx + 1] : null;
+  const tags = execFileSync('git', ['tag', '--sort=-version:refname'], { encoding: 'utf8' })
+    .split(/\r?\n/).filter(Boolean);
+  const since = resolveSince(tags, explicit, args.includes('--tagged-head'));
+  const range = since ? `${since}..HEAD` : '';
+  const raw = execFileSync('git', ['log', '--pretty=%H%n%s%n%n%b%n__END__', ...(range ? [range] : [])], { encoding: 'utf8' });
+  const { count, markdown } = buildNotes(parseCommitLog(raw));
+  console.log(notesHeader(count, since));
   console.log('');
   console.log(markdown);
 }

@@ -1,6 +1,6 @@
 # What skills exist?
 
-A role without a playbook improvises. Each skill below carries the portable markdown playbook the crew follows when it embodies a role: 21 skills, loaded on demand, measured at 95.4% rank-1 over 221 retrieval probes with 342 pointers resolving and 0 broken.
+A role without a playbook improvises. Each skill below carries the portable markdown playbook the crew follows when it embodies a role: 21 skills, loaded on demand, measured at 95.6% rank-1 over 272 retrieval probes with 166 pointers resolving and 0 broken.
 
 Example: a vague request arrives and Luffy must decide the route. Luffy loads `mugiwara-orchestration`, runs the 5-way triage, and records the decision. The playbook decided the shape before any work started.
 

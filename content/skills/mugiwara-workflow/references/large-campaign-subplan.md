@@ -13,7 +13,7 @@ Large campaigns (>3 phases or >1500-line plans) split into isolated phase slices
 ## Execution isolation (Zoro)
 
 - `flows/phase-NN/` per phase holds `02-execution.md`, `02-audit.md`, `03-quality.md`, `04-gates.md`
-- No flat `flows/02-execution.md` overwrite for large campaigns
+- No flat `flows/01-execution.md` overwrite for large campaigns
 - Per-phase evidence captured, merged at archive
 
 ## Archive merge (Luffy)

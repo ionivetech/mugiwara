@@ -15,9 +15,16 @@ Every flow stage opens with this line and closes with a handoff:
 Rules, all unconditional:
 
 - A markdown heading (`## `), the crew emoji, then `Flow N — Crew (Role)`.
+- **The role suffix belongs to the banner, never the handoff.** Banner:
+  `## ⚔️ Flow 3 — Zoro (Execution)`. Handoff: `→ 🩺 Flow 4 — Chopper`. An
+  example that adds `(Checkpoint)` to a handoff is a defect — the model copies
+  the example, not the rule.
 - The handoff carries the NEXT crew's emoji too — `→ <emoji> Flow N+1 — Crew`.
   The literal `Flow N —` plus the crew name stay exact (check-in protocol and
   handoff-target gates read them); the emoji is decoration around them.
+- A return to Luffy keeps the RETURNING stage's number —
+  `→ 🏴‍☠️ Flow N — Luffy (routing)`, never `→ Flow 0`. Flow 0 is triage; it
+  runs once, and a backward arrow reads as a restart.
 - **Never emit ANSI escapes.** The model cannot tell a terminal from a markdown
   UI, so it must not try. Colour is applied by the harness plugin, which knows
   the surface — see "Colour" below.

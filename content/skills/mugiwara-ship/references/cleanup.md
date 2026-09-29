@@ -19,7 +19,7 @@ dir to its durable core. Never touch anything outside `.mugiwara/`.
 - `missions/<mission>/state.json | <member>.json`,
   `continue.json | continue-<member>.json` — session state dies with the mission
 
-Procedure: run `mugiwara archive <mission>` (dry-run first) — it folds the wave
+Procedure: run `mugiwara archive <mission>` (dry-run first) — it folds the flow
 files into `report.md`, removes the loose files, and appends an index line to
 `.mugiwara/index.md`. Batch form for several closed missions:
 `mugiwara clean [--include-live] [--stale <date>]`.

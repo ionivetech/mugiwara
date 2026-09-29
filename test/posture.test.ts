@@ -51,8 +51,24 @@ describe('selectPosture — deterministic matrix', () => {
     expect(r.reason).toContain('order preserved');
   });
 
-  it('independent tasks >= 2 → parallel-workers', () => {
+  // Dispatch floor: a worker costs ~132k against ~5k inline, so two small
+  // independent tasks are cheaper batched than dispatched. Count alone does
+  // not buy a worker — the mission has to be full-lane, or big enough in
+  // task count that serial cost dominates the floor.
+  it('2 independent tasks on a standard lane → inline-batched, not workers', () => {
     const r = selectPosture({ ...base, independent_tasks: 2 });
+    expect(r.posture).toBe('inline-batched');
+    expect(r.reason).toContain('dispatch floor');
+  });
+
+  it('2 independent tasks on a full lane → parallel-workers', () => {
+    const r = selectPosture({ ...base, lane: 'full', independent_tasks: 2 });
+    expect(r.posture).toBe('parallel-workers');
+    expect(r.evidence_refs).toContain('Nami dependency map');
+  });
+
+  it('4 independent tasks clears the floor on any lane', () => {
+    const r = selectPosture({ ...base, independent_tasks: 4 });
     expect(r.posture).toBe('parallel-workers');
     expect(r.evidence_refs).toContain('Nami dependency map');
   });

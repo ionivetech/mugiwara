@@ -43,7 +43,7 @@ escapes (the model cannot tell a terminal from a markdown UI; the harness
 plugin applies colour). The literal `Flow N —`
 text must stay exact (the check-in protocol reads it; heal cycles are counted
 from the decision log's `## Flow 8` sections, not from banners). Colors
-and the full spec: `_shared/references/wave-banners.md`. No wave starts without its banner. A wave intentionally
+and the full spec: `_shared/references/wave-banners.md`. No flow stage starts without its banner. A flow stage intentionally
 omitted is never silent — record flow stage, owner, and reason in the decision log
 before moving on. The user must always see which crew runs now and who takes
 over next. In `guided`/`semi` the handoff closes a human-readable block
@@ -87,7 +87,7 @@ Facts stay numeric (adjectives without numbers are banned on the fact line);
 the middle option is always a creative way out, never a bare "no"; the stop
 option always promises the end state (clean tree, saved plan, revert point).
 Approval pauses happen only at decision boundaries (route, option, plan,
-drift/failure, closure) — routine wave progress is info-only with no options,
+drift/failure, closure) — routine flow-stage progress is info-only with no options,
 or users stop reading.
 
 Examples (adapt, keep the three moves):

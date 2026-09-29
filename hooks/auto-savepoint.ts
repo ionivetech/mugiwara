@@ -39,8 +39,15 @@ function bootstrapMission(): Active | null {
       const stem = f.slice(0, -5);
       return stem !== 'continue' && !stem.startsWith('continue-');
     });
+    // A closed mission has no state on purpose: `mugiwara archive` removes it
+    // and leaves report.md (+ pr-verdict.md). Without this guard the hook reads
+    // "artifacts, no state" as "never started", reseeds flow 2 from plan.md,
+    // and a mission whose branch was merged days ago reappears as in-flight.
+    // That is not hypothetical — 2026-09-25-clean-uninstall-per-harness sat at
+    // "flow 2 · 0/0 tasks" for days after its PR merged, for exactly this.
+    const closed = files.includes('report.md') || files.includes('pr-verdict.md');
     const hasArtifacts = ['plan.md', 'spec.md', 'decisions.md'].some((f) => files.includes(f));
-    if (!hasState && hasArtifacts) {
+    if (!hasState && hasArtifacts && !closed) {
       const wave = files.includes('plan.md') ? '2' : files.includes('spec.md') ? '1' : '0';
       return { mission: e.name, member: '', wave, mode: readMode(), updated: 0 };
     }
