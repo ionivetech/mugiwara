@@ -3,7 +3,7 @@
 // Thin on purpose: the logic is tested there, this only reads files and exits.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWritingCapTargets } from '../src/enforcement-check.ts';
+import { checkArtifactPaths, checkMechanismCells, checkMetricCitations, checkWorkflowGateDrift, checkWritingCapTargets, gateScriptPaths } from '../src/enforcement-check.ts';
 import { checkContentProse } from '../src/content-prose.ts';
 import { WRITING_CAPS } from '../src/check-writing.ts';
 
@@ -33,7 +33,15 @@ const docs = [...walk(join(root, 'docs')), join(root, 'README.md')].map((p) => (
   text: readFileSync(p, 'utf8'),
 }));
 
+const gate = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts.gate as string;
+const workflows = readdirSync(join(root, '.github/workflows'))
+  .filter((f) => /\.ya?ml$/.test(f))
+  .map((f) => ({ path: `.github/workflows/${f}`, text: readFileSync(join(root, '.github/workflows', f), 'utf8') }));
+
 const errors = [
+  // gate-selftest is deliberately NOT in the gate (it is slow and mutates the
+  // tree), so ci.yml may run it on its own.
+  ...checkWorkflowGateDrift(workflows, gateScriptPaths(gate), ['scripts/gate-selftest.ts']),
   ...checkArtifactPaths([...prose, ...docs], CANONICAL_FLOWS),
   ...checkMetricCitations(docs, metrics),
   // Prose rules for the crew prompts. cost-governor.md maps the host
