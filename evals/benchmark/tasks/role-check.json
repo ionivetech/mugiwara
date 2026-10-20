@@ -1,0 +1,15 @@
+{
+  "id": "role-check",
+  "title": "Role permission check",
+  "trap": "Unknown roles must deny instead of throwing, and prototype keys such as __proto__ and constructor must not act as roles.",
+  "prompt": "Add can(role, action) to src/roles.js. It returns true when the role is allowed to perform the action according to the PERMISSIONS table, and false otherwise. Add tests in test/roles.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/roles.js": "export const PERMISSIONS = {\n  admin: ['read', 'write', 'delete'],\n  editor: ['read', 'write'],\n  viewer: ['read'],\n};\n",
+    "test/roles.test.js": "import { test, expect } from 'bun:test';\nimport { can } from '../src/roles.js';\ntest('admin may delete', () => expect(can('admin', 'delete')).toBe(true));\ntest('editor may write but not delete', () => { expect(can('editor', 'write')).toBe(true); expect(can('editor', 'delete')).toBe(false); });\ntest('viewer may only read', () => { expect(can('viewer', 'read')).toBe(true); expect(can('viewer', 'write')).toBe(false); });\n"
+  },
+  "hidden": {
+    "test/roles.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { can } from '../src/roles.js';\ntest('an unknown role is denied, not an error', () => {\n  expect(can('guest', 'read')).toBe(false);\n  expect(can(undefined, 'read')).toBe(false);\n  expect(can(null, 'read')).toBe(false);\n});\ntest('prototype keys are not roles', () => {\n  for (const role of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) expect(can(role, 'read')).toBe(false);\n});\ntest('an unknown action is denied', () => {\n  expect(can('admin', 'constructor')).toBe(false);\n  expect(can('admin', undefined)).toBe(false);\n});\n"
+  }
+}

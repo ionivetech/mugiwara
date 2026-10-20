@@ -1,0 +1,15 @@
+{
+  "id": "rate-limit",
+  "title": "Sliding-window rate limiter",
+  "trap": "Fixed-window counters let a burst of 2x the limit through around the window edge, and rejected calls must not use up quota.",
+  "prompt": "Add createLimiter({ limit, windowMs, now = Date.now }) to src/limiter.js. It returns an object with allow(key) that says whether a call for that key may go ahead: at most limit calls per key are allowed in any span of windowMs milliseconds. Use the now() function for the time so tests can control it. Add tests in test/limiter.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/limiter.js": "export const DEFAULT_WINDOW_MS = 60_000;\n",
+    "test/limiter.test.js": "import { test, expect } from 'bun:test';\nimport { createLimiter } from '../src/limiter.js';\nconst make = (limit, windowMs) => { const clock = { t: 0 }; return { clock, lim: createLimiter({ limit, windowMs, now: () => clock.t }) }; };\ntest('allows up to the limit then denies', () => {\n  const { lim } = make(3, 1000);\n  expect([lim.allow('a'), lim.allow('a'), lim.allow('a'), lim.allow('a')]).toEqual([true, true, true, false]);\n});\ntest('allows again once the window has passed', () => {\n  const { clock, lim } = make(2, 1000);\n  lim.allow('a'); lim.allow('a');\n  expect(lim.allow('a')).toBe(false);\n  clock.t = 2000;\n  expect(lim.allow('a')).toBe(true);\n});\ntest('keys are independent', () => {\n  const { lim } = make(1, 1000);\n  expect(lim.allow('a')).toBe(true);\n  expect(lim.allow('b')).toBe(true);\n  expect(lim.allow('a')).toBe(false);\n});\n"
+  },
+  "hidden": {
+    "test/limiter.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { createLimiter } from '../src/limiter.js';\nconst make = (limit, windowMs) => { const clock = { t: 0 }; return { clock, lim: createLimiter({ limit, windowMs, now: () => clock.t }) }; };\ntest('no burst of twice the limit across a window edge', () => {\n  const { clock, lim } = make(3, 1000);\n  const at = (t) => { clock.t = t; return lim.allow('a'); };\n  expect([at(900), at(950), at(990)]).toEqual([true, true, true]);\n  expect([at(1010), at(1020), at(1500)]).toEqual([false, false, false]);\n  expect(at(1901)).toBe(true);\n});\ntest('denied calls do not use up quota', () => {\n  const { clock, lim } = make(2, 1000);\n  const at = (t) => { clock.t = t; return lim.allow('a'); };\n  expect([at(0), at(100), at(500), at(900)]).toEqual([true, true, false, false]);\n  expect(at(1001)).toBe(true);\n  expect(at(1101)).toBe(true);\n  expect(at(1102)).toBe(false);\n});\n"
+  }
+}

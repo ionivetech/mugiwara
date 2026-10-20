@@ -1,0 +1,15 @@
+{
+  "id": "merge-blocks",
+  "title": "Merge booked time blocks",
+  "trap": "Touching blocks ([60,90] and [90,120]) must merge, a block inside another must not shrink it, and the input arrays must not be mutated or shared with the result.",
+  "prompt": "Add mergeBlocks(blocks) to src/blocks.js. Each block is [start, end] in minutes with start <= end, in any order. Return the smallest list of blocks that covers exactly the same time, sorted by start. Do not change the input. Add tests in test/blocks.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/blocks.js": "export const length = ([start, end]) => end - start;\n",
+    "test/blocks.test.js": "import { test, expect } from 'bun:test';\nimport { mergeBlocks } from '../src/blocks.js';\ntest('merges overlapping blocks', () => expect(mergeBlocks([[0, 30], [20, 50], [100, 120]])).toEqual([[0, 50], [100, 120]]));\ntest('sorts unsorted input', () => expect(mergeBlocks([[100, 120], [20, 50], [0, 30]])).toEqual([[0, 50], [100, 120]]));\ntest('empty input', () => expect(mergeBlocks([])).toEqual([]));\ntest('disjoint blocks stay apart', () => expect(mergeBlocks([[0, 10], [20, 30]])).toEqual([[0, 10], [20, 30]]));\n"
+  },
+  "hidden": {
+    "test/blocks.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { mergeBlocks } from '../src/blocks.js';\ntest('touching blocks merge', () => {\n  expect(mergeBlocks([[60, 90], [90, 120]])).toEqual([[60, 120]]);\n  expect(mergeBlocks([[90, 120], [0, 60], [60, 90]])).toEqual([[0, 120]]);\n});\ntest('a block inside another does not shrink it', () => {\n  expect(mergeBlocks([[0, 100], [10, 20], [30, 40]])).toEqual([[0, 100]]);\n  expect(mergeBlocks([[10, 20], [0, 100]])).toEqual([[0, 100]]);\n});\ntest('the input is left alone and not shared with the result', () => {\n  const input = [[50, 60], [0, 30], [20, 40]];\n  const snapshot = JSON.stringify(input);\n  const out = mergeBlocks(input);\n  expect(JSON.stringify(input)).toBe(snapshot);\n  out[0][1] = -1;\n  expect(JSON.stringify(input)).toBe(snapshot);\n});\n"
+  }
+}

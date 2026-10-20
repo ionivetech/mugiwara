@@ -1,0 +1,16 @@
+{
+  "id": "control-unique",
+  "title": "Control: small feature, no trap",
+  "trap": "None: a small feature with no trap, used to measure the pure overhead of the crew.",
+  "control": true,
+  "prompt": "Add unique(items) to src/list.js: return a new array with duplicates removed, keeping the first occurrence of each item in its original order. Add tests in test/list.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/list.js": "export const last = (xs) => xs[xs.length - 1];\n",
+    "test/list.test.js": "import { test, expect } from 'bun:test';\nimport { last, unique } from '../src/list.js';\ntest('last', () => expect(last([1, 2])).toBe(2));\ntest('unique keeps first occurrences in order', () => expect(unique([3, 1, 3, 2, 1])).toEqual([3, 1, 2]));\ntest('unique of empty', () => expect(unique([])).toEqual([]));\n"
+  },
+  "hidden": {
+    "test/list.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { unique } from '../src/list.js';\ntest('does not mutate and keeps 1 and \"1\" apart', () => {\n  const xs = [1, '1', 1];\n  expect(unique(xs)).toEqual([1, '1']);\n  expect(xs).toEqual([1, '1', 1]);\n});\n"
+  }
+}

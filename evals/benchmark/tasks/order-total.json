@@ -1,0 +1,15 @@
+{
+  "id": "order-total",
+  "title": "Order total with tax",
+  "trap": "Half-cent rounding must be exact (no float drift) and negative or fractional amounts must be rejected.",
+  "prompt": "Add orderTotal(items, taxPercent) to src/cart.js. Each item is { priceCents, qty }. Return the order total in cents: the sum of priceCents * qty, plus tax at taxPercent of that sum, rounded to the nearest cent. Add tests in test/cart.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/cart.js": "export const itemCount = (items) => items.reduce((n, i) => n + i.qty, 0);\n",
+    "test/cart.test.js": "import { test, expect } from 'bun:test';\nimport { itemCount, orderTotal } from '../src/cart.js';\ntest('item count', () => expect(itemCount([{ priceCents: 100, qty: 2 }, { priceCents: 5, qty: 1 }])).toBe(3));\ntest('total without tax', () => expect(orderTotal([{ priceCents: 1999, qty: 3 }], 0)).toBe(5997));\ntest('total with tax', () => expect(orderTotal([{ priceCents: 1000, qty: 2 }], 10)).toBe(2200));\ntest('empty cart', () => expect(orderTotal([], 8)).toBe(0));\n"
+  },
+  "hidden": {
+    "test/cart.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { orderTotal } from '../src/cart.js';\ntest('half cents round up exactly', () => {\n  expect(orderTotal([{ priceCents: 50, qty: 1 }], 15)).toBe(58);\n  expect(orderTotal([{ priceCents: 90, qty: 1 }], 15)).toBe(104);\n  expect(orderTotal([{ priceCents: 100, qty: 1 }], 0.5)).toBe(101);\n});\ntest('negative or fractional amounts are rejected', () => {\n  expect(() => orderTotal([{ priceCents: -500, qty: 1 }], 0)).toThrow();\n  expect(() => orderTotal([{ priceCents: 500, qty: -1 }], 0)).toThrow();\n  expect(() => orderTotal([{ priceCents: 19.99, qty: 1 }], 0)).toThrow();\n  expect(() => orderTotal([{ priceCents: 500, qty: 1 }], -5)).toThrow();\n});\n"
+  }
+}

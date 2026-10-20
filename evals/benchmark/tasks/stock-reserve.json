@@ -1,0 +1,15 @@
+{
+  "id": "stock-reserve",
+  "title": "Reserve stock",
+  "trap": "Check-then-act across awaits: many concurrent reserve calls all read the same stock and oversell unless the read-modify-write is serialized.",
+  "prompt": "Add reserve(store, sku, qty) to src/stock.js. It takes qty units out of the stock the store holds for sku and resolves to the quantity left. If fewer than qty units are available it rejects with an Error and leaves the stock unchanged. The store (src/store.js) only offers async get(sku) and set(sku, qty). Add tests in test/stock.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/store.js": "export function createStore(initial) {\n  const data = new Map(Object.entries(initial));\n  const tick = () => new Promise((r) => setTimeout(r, 1));\n  return {\n    async get(sku) { await tick(); return data.get(sku) ?? 0; },\n    async set(sku, qty) { await tick(); data.set(sku, qty); },\n  };\n}\n",
+    "test/stock.test.js": "import { test, expect } from 'bun:test';\nimport { createStore } from '../src/store.js';\nimport { reserve } from '../src/stock.js';\ntest('reserve takes stock and returns what is left', async () => {\n  const store = createStore({ a: 5 });\n  expect(await reserve(store, 'a', 3)).toBe(2);\n  expect(await store.get('a')).toBe(2);\n});\ntest('rejects when there is not enough, stock unchanged', async () => {\n  const store = createStore({ a: 2 });\n  await expect(reserve(store, 'a', 3)).rejects.toThrow();\n  expect(await store.get('a')).toBe(2);\n});\n"
+  },
+  "hidden": {
+    "test/stock.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { createStore } from '../src/store.js';\nimport { reserve } from '../src/stock.js';\ntest('concurrent reservations never oversell', async () => {\n  const store = createStore({ a: 5 });\n  const res = await Promise.allSettled(Array.from({ length: 10 }, () => reserve(store, 'a', 1)));\n  expect(res.filter((r) => r.status === 'fulfilled').length).toBe(5);\n  expect(res.filter((r) => r.status === 'rejected').length).toBe(5);\n  expect(await store.get('a')).toBe(0);\n});\ntest('a rejected reservation does not block later ones, other skus are independent', async () => {\n  const store = createStore({ a: 1, b: 4 });\n  const res = await Promise.allSettled([reserve(store, 'a', 2), reserve(store, 'b', 2), reserve(store, 'b', 2), reserve(store, 'a', 1)]);\n  expect(res.map((r) => r.status)).toEqual(['rejected', 'fulfilled', 'fulfilled', 'fulfilled']);\n  expect(await store.get('a')).toBe(0);\n  expect(await store.get('b')).toBe(0);\n});\n"
+  }
+}

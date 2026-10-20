@@ -1,0 +1,15 @@
+{
+  "id": "split-bill",
+  "title": "Split a bill by weights",
+  "trap": "Rounding each share independently makes the shares drift from the total; the shares must sum exactly to totalCents (largest-remainder allocation).",
+  "prompt": "Add splitByWeights(totalCents, weights) to src/split.js. weights are positive integers, for example [50, 30, 20] for a 50/30/20 split. Return an array with each payee's share in whole cents, in the same order. Add tests in test/split.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/split.js": "export const sum = (xs) => xs.reduce((a, b) => a + b, 0);\n",
+    "test/split.test.js": "import { test, expect } from 'bun:test';\nimport { splitByWeights } from '../src/split.js';\ntest('splits by weight', () => expect(splitByWeights(1000, [50, 30, 20])).toEqual([500, 300, 200]));\ntest('equal weights', () => expect(splitByWeights(100, [1, 1, 1, 1])).toEqual([25, 25, 25, 25]));\ntest('single payee gets everything', () => expect(splitByWeights(777, [3])).toEqual([777]));\n"
+  },
+  "hidden": {
+    "test/split.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { splitByWeights } from '../src/split.js';\nconst cases = [[100, [1, 1, 1]], [1, [1, 1, 1]], [5, [1, 1]], [999, [50, 30, 20]], [10, [1, 1, 1, 1, 1, 1, 1]], [1001, [7, 3, 3]]];\ntest('shares are whole cents and sum exactly to the total', () => {\n  for (const [total, weights] of cases) {\n    const shares = splitByWeights(total, weights);\n    expect(shares.length).toBe(weights.length);\n    expect(shares.every((s) => Number.isInteger(s) && s >= 0)).toBe(true);\n    expect(shares.reduce((a, b) => a + b, 0)).toBe(total);\n  }\n});\ntest('each share is within one cent of its exact proportion', () => {\n  for (const [total, weights] of cases) {\n    const w = weights.reduce((a, b) => a + b, 0);\n    splitByWeights(total, weights).forEach((s, i) => expect(Math.abs(s - (total * weights[i]) / w)).toBeLessThan(1));\n  }\n});\n"
+  }
+}

@@ -1,0 +1,46 @@
+name: Benchmark (real model)
+
+# Manual only. Never runs on pull requests or pushes: it makes paid model calls.
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Runs per arm per task
+        default: '3'
+      tasks:
+        description: Comma-separated task ids (empty = all)
+        default: ''
+      config:
+        description: Extra Mugiwara config lines, space-separated key=value (e.g. independent_review=off)
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: npm i -g @anthropic-ai/claude-code
+      - name: Run benchmark
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RUNS: ${{ inputs.runs }}
+          TASKS: ${{ inputs.tasks }}
+          CONFIG: ${{ inputs.config }}
+        run: |
+          args="--runs $RUNS --out benchmark-results"
+          if [ -n "$TASKS" ]; then args="$args --tasks $TASKS"; fi
+          for c in $CONFIG; do args="$args --config $c"; done
+          bun scripts/benchmark-real.ts $args
+      - if: always()
+        run: cat benchmark-results/benchmark.md >> "$GITHUB_STEP_SUMMARY"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results/
