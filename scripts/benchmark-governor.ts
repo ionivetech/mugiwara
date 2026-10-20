@@ -429,11 +429,11 @@ export function runHarness(opts?: { thresholds?: Thresholds }): {
   return { ok, workloads: workloadResults, slop: slopResults, stress: stressResults, regressions };
 }
 
-function main(): void {
-  const args = process.argv.slice(2);
+/** CLI body; returns the exit code so tests can drive it in-process. */
+export function main(args: string[]): number {
   if (args.includes('--help') || args.includes('-h')) {
     printHelp();
-    process.exit(0);
+    return 0;
   }
   // note: harness measures, does not enforce — no runtime gate
   const result = runHarness();
@@ -457,10 +457,10 @@ function main(): void {
   console.log(`\nThresholds: scripts/benchmark-thresholds.json (ratchet)`);
   if (!result.ok) {
     console.error('\n✗ benchmark-governor failed — thresholds or slop detection mismatch');
-    process.exit(1);
+    return 1;
   }
   console.log('\n✓ benchmark-governor pass');
-  process.exit(0);
+  return 0;
 }
 
-if (import.meta.main) main();
+if (import.meta.main) process.exit(main(process.argv.slice(2)));

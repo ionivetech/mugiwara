@@ -352,3 +352,157 @@ describe('calibration', () => {
     expect(md).toContain('No verdict');
   });
 });
+
+// ---- in-process CLI, driven by a fake host command (no model, no network) ----
+import { afterAll, beforeAll, spyOn } from 'bun:test';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { main } from '../scripts/benchmark-real.ts';
+
+describe('loadTasks / verifyTask edge cases', () => {
+  const dirs: string[] = [];
+  const tmp = () => { const d = mkdtempSync(join(tmpdir(), 'mugi-bench-tasks-')); dirs.push(d); return d; };
+  afterAll(() => dirs.forEach((d) => rmSync(d, { recursive: true, force: true })));
+  const task = { id: 't', title: 'T', prompt: 'p', accept: 'true', trap: 'x', files: { 'a.txt': 'a' } };
+  it('rejects a task missing a required string', () => {
+    const d = tmp();
+    writeFileSync(join(d, 'bad.json'), JSON.stringify({ ...task, prompt: '' }));
+    expect(() => loadTasks(d)).toThrow('bad.json: missing prompt');
+  });
+  it('rejects a task with no fixture files', () => {
+    const d = tmp();
+    writeFileSync(join(d, 'bad.json'), JSON.stringify({ ...task, files: {} }));
+    expect(() => loadTasks(d)).toThrow('files empty');
+  });
+  it('loads valid tasks sorted by file name and ignores non-json', () => {
+    const d = tmp();
+    writeFileSync(join(d, 'b.json'), JSON.stringify({ ...task, id: 'b' }));
+    writeFileSync(join(d, 'a.json'), JSON.stringify({ ...task, id: 'a' }));
+    writeFileSync(join(d, 'notes.txt'), 'ignored');
+    expect(loadTasks(d).map((t) => t.id)).toEqual(['a', 'b']);
+  });
+  it('verifyTask reports a task with no reference or naive solution', () => {
+    expect(verifyTask({ ...task, id: 'no-such-reference' })).toEqual(['no-such-reference: missing reference or naive solution']);
+  });
+});
+
+describe('benchmark-real main with a fake host', () => {
+  const work = mkdtempSync(join(tmpdir(), 'mugi-bench-main-'));
+  const fake = join(work, 'fake-host.sh');
+  const naive = join(process.cwd(), 'evals', 'benchmark', 'reference', 'add-months', 'naive');
+  const saved = { cmd: process.env.MUGIWARA_EVAL_CMD };
+  let logs: string[] = [], errs: string[] = [];
+  let logSpy: ReturnType<typeof spyOn>, errSpy: ReturnType<typeof spyOn>;
+  const sandbox = () => join(work, `out-${Math.random().toString(36).slice(2)}`);
+  const run = async (mode: string, ...argv: string[]) => {
+    process.env.MUGIWARA_EVAL_CMD = `sh ${fake} ${mode} ${naive}`;
+    logs = []; errs = [];
+    const code = await main(argv);
+    return { code, out: logs.join('\n'), err: errs.join('\n') };
+  };
+  beforeAll(() => {
+    // Prints stream-json like the real CLI; argv[1] picks the behaviour, argv[2] is the files to copy in.
+    writeFileSync(fake, `#!/bin/sh
+case "$1" in
+  limit) echo '{"type":"result","is_error":true,"result":"usage limit reached","usage":{"input_tokens":1,"output_tokens":1}}'; exit 1 ;;
+  crash) exit 2 ;;
+  edit) echo x > note.txt ;;
+  solve) cp -R "$2"/. . ;;
+esac
+echo '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"mugiwara"}},{"type":"tool_use","name":"Edit"}]}}'
+echo '{"type":"result","is_error":false,"total_cost_usd":0.01,"result":"done","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}'
+`);
+    logSpy = spyOn(console, 'log').mockImplementation((...a: unknown[]) => { logs.push(a.join(' ')); });
+    errSpy = spyOn(console, 'error').mockImplementation((...a: unknown[]) => { errs.push(a.join(' ')); });
+  });
+  afterAll(() => {
+    logSpy.mockRestore(); errSpy.mockRestore();
+    if (saved.cmd === undefined) delete process.env.MUGIWARA_EVAL_CMD; else process.env.MUGIWARA_EVAL_CMD = saved.cmd;
+    rmSync(work, { recursive: true, force: true });
+  });
+
+  it('rejects bad arguments', async () => {
+    const r = await run('ok', '--arm', 'nope');
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('--arm must be');
+  });
+  it('--dry-run verifies tasks and makes no run', async () => {
+    const r = await run('ok', '--dry-run', '--tasks', 'add-months');
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('task verification ok: 1 tasks');
+    expect(r.out).toContain('dry run: no model calls made');
+  });
+  it('rejects an unknown task id', async () => {
+    const r = await run('ok', '--tasks', 'nope', '--out', sandbox());
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('unknown task(s)');
+  });
+  it('plain arm records a run, writes the report, and refuses to overwrite without --resume', async () => {
+    const out = sandbox();
+    const r = await run('edit', '--tasks', 'add-months', '--arm', 'plain', '--out', out);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('fail add-months plain #1');
+    const row = JSON.parse(readFileSync(join(out, 'runs.jsonl'), 'utf8').trim());
+    expect(row).toMatchObject({ task: 'add-months', arm: 'plain', accepted: false, filesChanged: ['note.txt'], toolCalls: 2 });
+    expect(existsSync(join(out, 'benchmark.json'))).toBe(true);
+    expect(existsSync(join(out, 'benchmark.md'))).toBe(true);
+    const again = await run('edit', '--tasks', 'add-months', '--arm', 'plain', '--out', out);
+    expect(again.code).toBe(1);
+    expect(again.err).toContain('Pass --resume');
+    const resumed = await run('edit', '--tasks', 'add-months', '--arm', 'plain', '--out', out, '--resume');
+    expect(resumed.code).toBe(0);
+    expect(resumed.out).toContain('skip (already recorded) add-months plain #1');
+  }, 30_000);
+  it('a non-zero host exit is recorded as an error', async () => {
+    const out = sandbox();
+    await run('crash', '--tasks', 'add-months', '--arm', 'plain', '--out', out);
+    expect(JSON.parse(readFileSync(join(out, 'runs.jsonl'), 'utf8').trim()).error).toBe('exit 2');
+  }, 30_000);
+  it('mugiwara arm installs into the fixture and records engagement', async () => {
+    const out = sandbox();
+    const r = await run('ok', '--tasks', 'add-months', '--arm', 'mugiwara', '--config', 'coverage=85', '--prompt-suffix', 'be brief', '--out', out);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('mugiwara arm: project install + mode=auto + coverage=85');
+    const row = JSON.parse(readFileSync(join(out, 'runs.jsonl'), 'utf8').trim());
+    expect(row.arm).toBe('mugiwara');
+    expect(row.config).toEqual(['coverage=85']);
+    expect(row.engagement).toBeTruthy();
+  }, 60_000);
+  it('rate limit stops with exit 3, records nothing, and still writes the report', async () => {
+    const out = sandbox();
+    const r = await run('limit', '--tasks', 'add-months', '--arm', 'plain', '--out', out);
+    expect(r.code).toBe(3);
+    expect(r.err).toContain('rate/session limit reached');
+    expect(existsSync(join(out, 'runs.jsonl'))).toBe(false);
+    expect(existsSync(join(out, 'benchmark.json'))).toBe(true);
+  }, 30_000);
+  it('--calibrate then --tasks-from flows through, and guards its error paths', async () => {
+    const cal = sandbox();
+    const c = await run('solve', '--calibrate', '--tasks', 'add-months', '--runs', '1', '--out', cal);
+    expect(c.code).toBe(0);
+    expect(c.out).toContain('calibration (plain arm only)');
+    const calFile = join(cal, 'calibration.json');
+    expect(JSON.parse(readFileSync(calFile, 'utf8')).discriminating).toEqual(['add-months']);
+    expect(existsSync(join(cal, 'calibration.md'))).toBe(true);
+
+    const reuse = await run('solve', '--tasks-from', calFile, '--runs', '1', '--out', sandbox());
+    expect(reuse.code).toBe(1);
+    expect(reuse.err).toContain('reuse calibration run ids');
+
+    const cmp = sandbox();
+    const ok = await run('solve', '--tasks-from', calFile, '--run-offset', '1', '--runs', '1', '--arm', 'plain', '--out', cmp);
+    expect(ok.code).toBe(0);
+    expect(ok.out).toContain('run ids 2..2');
+    expect(ok.out).toContain('wrote');
+
+    const missing = await run('ok', '--tasks-from', join(work, 'nope.json'), '--out', sandbox());
+    expect(missing.code).toBe(1);
+    expect(missing.err).toContain('cannot read');
+
+    const none = join(work, 'none.json');
+    writeFileSync(none, JSON.stringify({ tasks: [] }));
+    const empty = await run('ok', '--tasks-from', none, '--out', sandbox());
+    expect(empty.code).toBe(1);
+    expect(empty.err).toContain('no discriminating tasks');
+  }, 60_000);
+});

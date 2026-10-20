@@ -1,11 +1,12 @@
 // test/benchmark.test.ts — Phase 9 benchmark harness pure helpers
-import { describe, it, expect } from 'bun:test';
+import { describe, it, expect, spyOn } from 'bun:test';
 import {
   isOverBudget,
   checkRegression,
   evaluateStopSlopScenario,
   evaluateStressWorkload,
   runHarness,
+  main,
   THRESHOLDS,
 } from '../scripts/benchmark-governor.ts';
 
@@ -162,5 +163,66 @@ describe('harness integration', () => {
     };
     const result = runHarness({ thresholds: bad });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe('runHarness workload branches', () => {
+  const w = THRESHOLDS.workloads[0];
+  it('flags a workload whose measured context exceeds context_max', () => {
+    const r = runHarness({ thresholds: { ...THRESHOLDS, workloads: [{ ...w, id: 'lean-trivial', context_max: 1 }] } });
+    expect(r.ok).toBe(false);
+    expect(r.workloads[0].reason).toMatch(/^context over/);
+  });
+  it('workloads outside the fixed table use derived measurements and default surface', () => {
+    const r = runHarness({ thresholds: { ...THRESHOLDS, workloads: [{ id: 'custom-standard', projected: 1000, overhead: 100, context_max: 5000, evidence_min: 2 }] } });
+    expect(r.workloads).toHaveLength(1);
+    expect(r.workloads[0].pass).toBe(true);
+    expect(r.regressions[0].regression).toBe(false);
+  });
+  it('missing baselines fall back to 100 without throwing', () => {
+    const r = runHarness({ thresholds: { ...THRESHOLDS, baselines: {} } });
+    expect(r.ok).toBe(true);
+  });
+});
+
+describe('evaluateStressWorkload extra paths', () => {
+  it('large-repo derives scope from files_changed and fails when changes fall outside declared scope', () => {
+    const r = evaluateStressWorkload({ id: 'large-repository', files_changed: ['x.ts'], declared_scope: ['y.ts'] });
+    expect(r.pass).toBe(false);
+    expect(r.reason).toMatch(/^large-repo fail/);
+  });
+  it('large-repo with no inputs defaults to 50 files in scope', () => {
+    expect(evaluateStressWorkload({ id: 'large-repo' }).reason).toContain('50 files within declared scope');
+  });
+  it('actual/expected path uses the budget with default overhead 0', () => {
+    expect(evaluateStressWorkload({ id: 'x', actual: 11, expected: 10 }).pass).toBe(false);
+    expect(evaluateStressWorkload({ id: 'x', actual: 10, expected: 10 }).pass).toBe(true);
+  });
+  it('anything else has no stress condition', () => {
+    expect(evaluateStressWorkload({ id: 'other' })).toEqual({ pass: true, reason: 'other — no stress condition' });
+  });
+});
+
+describe('main (CLI)', () => {
+  const capture = (args: string[]) => {
+    const out: string[] = [];
+    const log = spyOn(console, 'log').mockImplementation((...a: unknown[]) => { out.push(a.join(' ')); });
+    const err = spyOn(console, 'error').mockImplementation((...a: unknown[]) => { out.push(a.join(' ')); });
+    try { return { code: main(args), out: out.join('\n') }; } finally { log.mockRestore(); err.mockRestore(); }
+  };
+  it('--help and -h print usage and exit 0', () => {
+    for (const f of ['--help', '-h']) {
+      const r = capture([f]);
+      expect(r.code).toBe(0);
+      expect(r.out).toContain('Usage: bun scripts/benchmark-governor.ts');
+    }
+  });
+  it('a normal run prints every suite and exits 0', () => {
+    const r = capture([]);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('benchmark-governor — PASS');
+    expect(r.out).toContain('anti-slop (12 scenarios)');
+    expect(r.out).toContain('Regressions: none');
+    expect(r.out).toContain('benchmark-governor pass');
   });
 });

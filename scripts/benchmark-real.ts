@@ -125,22 +125,23 @@ function runOne(t: Task, arm: Arm, run: number, cmd: string[], config: string[],
   } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
-if (import.meta.main) {
-  const a = parseBenchArgs(process.argv.slice(2));
-  if ('error' in a) { console.error(a.error); process.exit(1); }
+/** CLI body; returns the exit code so tests can drive it in-process. */
+export async function main(argv: string[]): Promise<number> {
+  const a = parseBenchArgs(argv);
+  if ('error' in a) { console.error(a.error); return 1; }
   const { dry, resume, runs, runOffset, config, promptSuffix, host } = a;
   const arms = armsOf(a.arm);
   const all = loadTasks();
   let want = a.tasks;
   let cal: { runOffset?: number; runs?: number; tasks?: any[] } | undefined;
   if (a.tasksFrom) {
-    try { cal = JSON.parse(readFileSync(a.tasksFrom, 'utf8')); } catch (e) { console.error(`cannot read ${a.tasksFrom}: ${(e as Error).message}`); process.exit(1); }
+    try { cal = JSON.parse(readFileSync(a.tasksFrom, 'utf8')); } catch (e) { console.error(`cannot read ${a.tasksFrom}: ${(e as Error).message}`); return 1; }
     want = discriminatingTasks(cal!);
-    if (!want.length) { console.error(`${a.tasksFrom} has no discriminating tasks: nothing to compare. Add harder tasks and calibrate again.`); process.exit(1); }
-    if (overlapsCalibration(cal!, runOffset, runs)) { console.error(`run ids ${runOffset + 1}..${runOffset + runs} reuse calibration run ids. Pass --run-offset ${(cal!.runOffset ?? 0) + (cal!.runs ?? 0)} or higher: the comparison needs fresh runs.`); process.exit(1); }
+    if (!want.length) { console.error(`${a.tasksFrom} has no discriminating tasks: nothing to compare. Add harder tasks and calibrate again.`); return 1; }
+    if (overlapsCalibration(cal!, runOffset, runs)) { console.error(`run ids ${runOffset + 1}..${runOffset + runs} reuse calibration run ids. Pass --run-offset ${(cal!.runOffset ?? 0) + (cal!.runs ?? 0)} or higher: the comparison needs fresh runs.`); return 1; }
   }
   const tasks = want ? all.filter((t) => want!.includes(t.id)) : all;
-  if (want && tasks.length !== want.length) { console.error(`unknown task(s); have: ${all.map((t) => t.id).join(', ')}`); process.exit(1); }
+  if (want && tasks.length !== want.length) { console.error(`unknown task(s); have: ${all.map((t) => t.id).join(', ')}`); return 1; }
   const cmdStr = process.env.MUGIWARA_EVAL_CMD ?? DEFAULT_CMDS[host];
   const calls = plannedCalls(tasks.length, runs, arms.length);
   const ids = runIds(runOffset, runs);
@@ -153,13 +154,13 @@ if (import.meta.main) {
   if (dry) {
     console.log(problems.length ? `task verification FAILED:\n${problems.map((p) => '  ' + p).join('\n')}` : `task verification ok: ${tasks.length} tasks (fixture fails, reference passes, naive fails hidden checks)`);
     console.log('dry run: no model calls made');
-    process.exit(problems.length ? 1 : 0);
+    return problems.length ? 1 : 0;
   }
-  if (problems.length) { console.error(`task verification FAILED, no model calls made:\n${problems.map((p) => '  ' + p).join('\n')}`); process.exit(1); }
+  if (problems.length) { console.error(`task verification FAILED, no model calls made:\n${problems.map((p) => '  ' + p).join('\n')}`); return 1; }
   const out = a.out ?? join(root, a.calibrate ? 'benchmark-results-calibration' : 'benchmark-results');
   const log = join(out, 'runs.jsonl');
   mkdirSync(out, { recursive: true });
-  if (existsSync(log) && !resume) { console.error(`${log} exists. Pass --resume to continue it, or choose a new --out.`); process.exit(1); }
+  if (existsSync(log) && !resume) { console.error(`${log} exists. Pass --resume to continue it, or choose a new --out.`); return 1; }
   const load = (): RunResult[] => (existsSync(log) ? readFileSync(log, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
   const done = new Set(load().map((r) => runKey(r.task, r.arm, r.run, r.config ?? [], r.host ?? 'claude')));
   const report = () => {
@@ -188,8 +189,11 @@ if (import.meta.main) {
     if (!(e instanceof RateLimit)) throw e;
     report();
     console.error(`rate/session limit reached: stopped, the interrupted run was not recorded. Wait for the limit to reset, then re-run the same command with --resume (results so far: ${log}).`);
-    process.exit(3);
+    return 3;
   }
   report();
   console.log(a.calibrate ? `wrote ${join(out, 'calibration.json')} and calibration.md` : `wrote ${join(out, 'benchmark.json')} and benchmark.md`);
+  return 0;
 }
+
+if (import.meta.main) process.exit(await main(process.argv.slice(2)));
