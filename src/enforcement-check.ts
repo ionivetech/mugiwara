@@ -8,7 +8,7 @@ import { join } from 'node:path';
 export type CheckError = string;
 
 /**
- * Every `INV-*` row in docs/concepts/enforcement.md names a mechanism that
+ * Every `INV-*` row in docs/reference/enforcement.md names a mechanism that
  * exists, or admits it is prose. A cell repeating the concept's own id claims
  * a guarantee nobody implemented.
  */

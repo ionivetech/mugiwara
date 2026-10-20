@@ -172,10 +172,10 @@ describe('initiative sub-mission parsing (N1)', () => {
     }
   });
 
-  it('CLI --target cursor names the marketplace path and exits 1', async () => {
+  it('CLI --target kimi names the marketplace path and exits 1', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-init-mkt-'));
     try {
-      const r = await cli(['install', '--project', dir, '--target', 'cursor', '--yes']);
+      const r = await cli(['install', '--project', dir, '--target', 'kimi', '--yes']);
       expect(r.code).toBe(1);
       expect(r.err).toContain('marketplace manifest');
     } finally {

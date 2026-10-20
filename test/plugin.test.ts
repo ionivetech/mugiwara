@@ -30,14 +30,14 @@ test('config hook registers skills path (absolute, deduped)', async () => {
   expect(cfg.skills.paths).toContain('/fake/pre-existing');
 });
 
-test('config hook registers all 14 agents: internal -> subagent mode, user-facing -> all mode', async () => {
+test('config hook registers all 13 agents: internal -> subagent mode, user-facing -> all mode', async () => {
   const { config } = await plugin();
   const cfg = { agent: {} };
   await config(cfg);
   const names = Object.keys(cfg.agent);
-  expect(names).toHaveLength(14);
+  expect(names).toHaveLength(13);
   expect(names).toContain('luffy-orchestrator');
-  const internal = ['skeptic-verifier', 'eval-runner', 'memory-keeper'];
+  const internal = ['skeptic-verifier', 'memory-keeper'];
   for (const [name, a] of Object.entries(cfg.agent)) {
     expect(typeof a).toBe('object');
     expect(typeof (a as { description?: string }).description).toBe('string');
@@ -64,11 +64,11 @@ test('agent prompt embeds the body, never an absolute cache path', async () => {
   }
 });
 
-test('internal flag: eval-runner is subagent + [INTERNAL] prefix, zoro-execution is all + no prefix', async () => {
+test('internal flag: skeptic-verifier is subagent + [INTERNAL] prefix, zoro-execution is all + no prefix', async () => {
   const { config } = await plugin();
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
   await config(cfg);
-  const internal = cfg.agent['eval-runner'];
+  const internal = cfg.agent['skeptic-verifier'];
   expect(internal.mode).toBe('subagent');
   expect(internal.description).toMatch(/^\[INTERNAL\] /);
   const userFacing = cfg.agent['zoro-execution'];
@@ -81,7 +81,7 @@ test('runtime edit permission applies only to internal subagent agents (write-sc
   const cfg: { agent: Record<string, Record<string, unknown>> } = { agent: {} };
   await config(cfg);
   // internal subagent-only agents keep runtime write-scope enforcement
-  const internal = ['skeptic-verifier', 'eval-runner', 'memory-keeper'];
+  const internal = ['skeptic-verifier', 'memory-keeper'];
   for (const name of internal) {
     const a = cfg.agent[name];
     expect(a).toBeDefined();
@@ -96,17 +96,17 @@ test('runtime edit permission applies only to internal subagent agents (write-sc
   }
 });
 
-test('wave-banners table: crew colors are the single source (all agents, valid hex)', async () => {
+test('flow-banners table: crew colors are the single source (all agents, valid hex)', async () => {
   // the plugin derives agent colors from the table — the table must cover the
   // full crew with well-formed hexes or agent chips silently lose their tint
-  const table = readFileSync(join(contentDir, '..', 'references', 'wave-banners.md'), 'utf8');
+  const table = readFileSync(join(contentDir, '..', 'references', 'flow-banners.md'), 'utf8');
   const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)];
-  expect(rows).toHaveLength(14);
+  expect(rows).toHaveLength(13);
   const ids = rows.map(r => r[1]);
   const expected = [
     'luffy-orchestrator', 'usopp-brainstorm', 'nami-planner', 'zoro-execution', 'chopper-checkpoint',
     'sanji-quality', 'franky-gates', 'robin-reviewer', 'jinbe-security', 'brook-healing',
-    'skeptic-verifier', 'eval-runner', 'resume-coordinator', 'memory-keeper',
+    'skeptic-verifier', 'resume-coordinator', 'memory-keeper',
   ];
   expect(ids.sort()).toEqual(expected.sort());
   for (const r of rows) {
@@ -119,11 +119,11 @@ test('wave-banners table: crew colors are the single source (all agents, valid h
   expect(rows.find(r => r[1] === 'luffy-orchestrator')![2]).toBe('#ef4444');
 });
 
-test('wave-banners table: fallback CREW maps stay in parity with the table', () => {
+test('flow-banners table: fallback CREW maps stay in parity with the table', () => {
   // the CREW maps are cold-path fallbacks — if they drift from the table,
   // a table-read failure silently serves stale colors (the exact class the
   // single-source refactor closed). Read both sources and compare hexes.
-  const table = readFileSync(join(contentDir, '..', 'references', 'wave-banners.md'), 'utf8');
+  const table = readFileSync(join(contentDir, '..', 'references', 'flow-banners.md'), 'utf8');
   const rows = [...table.matchAll(/^\| ([\w-]+) \| [^|]+ \| (#[0-9a-f]{6}) \| (\d+) \| (\S+) \|\r?$/gm)];
   const tableHex: Record<string, string> = {};
   for (const r of rows) tableHex[r[1]] = r[2];
@@ -131,7 +131,7 @@ test('wave-banners table: fallback CREW maps stay in parity with the table', () 
     const code = readFileSync(join(import.meta.dirname, src), 'utf8');
     for (const id of Object.keys(tableHex)) {
       const m = code.match(new RegExp(`'${id}': \\{ color: '(#[0-9a-f]{6})'`));
-      expect(m, `${src}: ${id} is in wave-banners.md but missing from the fallback CREW map`).not.toBeNull();
+      expect(m, `${src}: ${id} is in flow-banners.md but missing from the fallback CREW map`).not.toBeNull();
       expect(m![1], `${src}: ${id} fallback hex`).toBe(tableHex[id]);
     }
   }
@@ -267,28 +267,24 @@ test('ensureDefaultConfig: writes full default config on first use, idempotent, 
       'branch=feature/{type}-{issue}-{slug}',
       'commit=conventional',
       'auto_commit=off',
-      'coverage_new=85',
-      'coverage_modified=90',
+      'coverage=85',
       'review_depth=full',
       'quality_depth=full',
-      'verify_merged=off',
       'delegate_threshold=60',
       'heal_max_cycles=3',
+      'independent_review=on',
       '# lane_scope_glob=packages/api/**',
       '# context_budget_chars=150000',
-      '# investigation_max_passes=2',
-      '# investigation_max_unrelated_files=5',
-      '# investigation_repeated_read_threshold=2',
       '# team=off',
       '# sign=auto',
       '# features=core+auto',
-      '# enforce=block',
+      '# enforce=warn',
     ]) {
       expect(body).toContain(key);
     }
     // completeness: every documented key ships with a default — a fresh
     // user's config must not silently miss a key (absent != default).
-    expect(body.trim().split('\n')).toHaveLength(21);
+    expect(body.trim().split('\n')).toHaveLength(17);
     // idempotent: second call returns false, leaves file unchanged
     expect(ensureDefaultConfig({ projectDir: dir })).toBe(false);
     expect(readFileSync(file, 'utf8')).toBe(body);
@@ -435,9 +431,9 @@ test('D10: session-start auto-resumes single in-flight mission for actor', { tim
 
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
     const json = JSON.parse(out) as { additionalContext: string };
-    expect(json.additionalContext).toContain('AUTO-RESUME: mission "test-mission"');
-    expect(json.additionalContext).toContain('flow 3, 7/12 tasks');
-    expect(json.additionalContext).toContain('Never restart the mission');
+    expect(json.additionalContext).toContain('mission "test-mission" was left unfinished');
+    expect(json.additionalContext).toContain('stage 3, 7/12 tasks done');
+    expect(json.additionalContext).toContain('never restart it');
     // F1: free-text fields are never interpolated into the prompt
     expect(json.additionalContext).not.toContain('Run T1-T5');
   } finally {
@@ -459,7 +455,7 @@ test('D10: real savepoint output round-trips to session-start AUTO-RESUME', { ti
 
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
     const json = JSON.parse(out) as { additionalContext: string };
-    expect(json.additionalContext).toContain('AUTO-RESUME: mission "test-mission"');
+    expect(json.additionalContext).toContain('mission "test-mission" was left unfinished');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -483,7 +479,7 @@ test('D10: session-start lists multiple in-flight missions, does not auto-resume
 
     const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
     const json = JSON.parse(out) as { additionalContext: string };
-    expect(json.additionalContext).toContain('2 missions in-flight');
+    expect(json.additionalContext).toContain('2 missions are unfinished');
     expect(json.additionalContext).toContain('payment-gateway (john)');
     expect(json.additionalContext).toContain('payment-gateway (patty)');
     expect(json.additionalContext).toContain('Run /mugiwara continue <mission> [member]');
@@ -508,11 +504,11 @@ test('D10: session-start lists in-flight missions in non-auto modes, never auto-
       const out = execSync(`cd "${dir}" && bun "${join(import.meta.dirname, '..', 'hooks', 'session-start.ts')}"`, { encoding: 'utf8' });
       const json = JSON.parse(out) as { additionalContext: string };
       // listed in every mode
-      expect(json.additionalContext).toContain('IN-FLIGHT: 1 mission in-flight');
+      expect(json.additionalContext).toContain('1 mission is unfinished');
       expect(json.additionalContext).toContain('test-mission');
       expect(json.additionalContext).toContain('Run /mugiwara continue <mission> [member]');
       // auto-resume is auto-only
-      expect(json.additionalContext).not.toContain('AUTO-RESUME:');
+      expect(json.additionalContext).not.toContain('was left unfinished');
       expect(json.additionalContext).not.toContain('continue from the exact point');
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -585,7 +581,7 @@ test('E5: tool.execute.before denies irreversible bash, allows the rest', async 
   const before = hooks['tool.execute.before'] as (input: unknown, output: unknown) => Promise<void>;
   expect(typeof before).toBe('function');
   await expect(before({ tool: 'bash' }, { args: { command: 'gh pr create --fill' } }))
-    .rejects.toThrow(/refusing to opening or merging a PR/);
+    .rejects.toThrow(/blocked this command \(opening or merging a PR\)/);
   await expect(before({ tool: 'bash' }, { args: { command: 'git push origin main' } }))
     .rejects.toThrow(/protected branch/);
   await before({ tool: 'bash' }, { args: { command: 'git push -u origin feature/MKR-412' } });

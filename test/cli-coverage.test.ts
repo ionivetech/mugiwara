@@ -6,7 +6,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run } from '../src/cli.ts';
-import { hasMinisign } from '../src/sign.ts';
+import { hasMinisign } from '../src/addons/attest/sign.ts';
 
 class ExitSignal extends Error { code: number; constructor(c: number) { super(`exit ${c}`); this.code = c; } }
 afterEach(() => vi.restoreAllMocks());

@@ -8,22 +8,17 @@ import { checkMissionArtifacts } from './check-artifacts.ts';
 import { generateRollback } from './rollback.ts';
 import { writeProvenance } from './provenance.ts';
 import { loadPolicy } from './policy.ts';
-import { verifyReport } from './sign.ts';
 import { rankFiles, renderRouting } from './routing.ts';
 import { formatFootprint, measureContextChars, readBudgetConfig, shouldCompress, compressThreshold } from './budget.ts';
 import { budgetForLane, costEnvelope, appendCostEvent, COMPRESSED_KIND } from './cost.ts';
 import { loadRegistry } from './evidence.ts';
 import { computeContextMetrics, contextStatus } from './context.ts';
 import { buildCostLedger, renderAdaptationSection } from './reporting.ts';
+import { buildReport } from './report-fold.ts';
+import { dispatchedAgents } from './active-mission.ts';
+import { readConfig } from './config.ts';
 import { selectPosture } from './posture.ts';
-import { evaluateInvestigation, recordInvestigationStop } from './investigation.ts';
-import { readInvestigationConfig } from './config.ts';
-import { reserveBudget, projectBudget, checkProgressiveThreshold, checkCircuitBreaker, detectBudgetAnomaly } from './adaptive-budget.ts';
-import { isFocusedReasoning, detectDuplicateExplanation } from './cognition.ts';
-import { detectScopeDrift } from './scope.ts';
-import { classifySlop, measureProgress, detectAnomaly } from './slop.ts';
-import { registerRead } from './evidence.ts';
-import { classifyStage, recordWasteChecks, runWasteChecks } from './work.ts';
+import { recordWasteChecks, runWasteChecks } from './work.ts';
 
 function isStateFile(f: string): boolean {
   // state.json (solo) or <member>.json (team) — never continue*.json
@@ -224,7 +219,7 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
   if (!force) {
     const actor = activeActor(projectDir);
     if (actor) {
-      return { removed: [], kept: [], blocked: `Active mission for '${actor}'. Use --force to override.` };
+      return { removed: [], kept: [], blocked: `Active mission for '${String(actor).replace(/\s*<[^>]*>\s*$/, '')}'. Use --force to override.` };
     }
   }
 
@@ -263,7 +258,21 @@ export function resetMission(projectDir: string, keepLogs: boolean, force?: bool
   return { removed, kept };
 }
 
-export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean; force?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
+/** Attestation gate (D4); lazy-loads the attest add-on only when policy requires it. Throws when unsigned/untrusted. */
+export async function requireAttestation(projectDir: string, mission: string): Promise<void> {
+  let required = false;
+  try { required = !!loadPolicy(projectDir)?.attestation?.required; } catch (e) {
+    if ((e as Error).message.startsWith('unknown policy key')) throw e;
+    return; // other policy load errors are best-effort — do not block archive
+  }
+  if (!required) return;
+  const { verifyReport } = await import('./addons/attest/sign.ts');
+  const dir = join(projectDir, '.mugiwara', 'missions', mission);
+  const v = verifyReport(projectDir, dir);
+  if (!v.ok) throw new Error(`closure integrity gate failed — attestation required but report not signed/trusted: ${v.message}`);
+}
+
+export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean; force?: boolean; attestationChecked?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
   const { dryRun = false, force = false } = opts;
   const root = join(projectDir, '.mugiwara');
   // mission allowlist — same as savepoint.sh. Dot-only
@@ -311,84 +320,61 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     if (!artifacts.ok) {
       throw new Error(`archive artifact gate failed — missing: ${artifacts.missing.join(', ')} (lane ${artifacts.lane}). Write the evidence trail before archiving.`);
     }
-    // Attestation gate (D4): when attestation.required true, report must be signed and trusted.
-    try {
-      const policy = loadPolicy(projectDir);
-      if (policy?.attestation?.required) {
-        const v = verifyReport(projectDir, dir);
-        if (!v.ok) {
-          throw new Error(`closure integrity gate failed — attestation required but report not signed/trusted: ${v.message}`);
-        }
+    // Attestation gate (D4): when attestation.required is true, the report must be signed and
+    // trusted. The verifier is a lazy add-on, so the async check runs in requireAttestation()
+    // (CLI callers); a direct sync caller that skipped it fails closed here.
+    if (!opts.attestationChecked) {
+      let required = false;
+      try { required = !!loadPolicy(projectDir)?.attestation?.required; } catch (e) {
+        if ((e as Error).message.startsWith('unknown policy key')) throw e;
       }
-    } catch (e) {
-      if ((e as Error).message.startsWith('closure integrity gate failed — attestation required')) throw e;
-      if ((e as Error).message.startsWith('unknown policy key')) throw e;
-      // other policy load errors are best-effort — do not block archive
+      if (required) throw new Error('closure integrity gate failed — attestation required but not checked: run `mugiwara archive` (CLI) or await requireAttestation() first');
     }
   }
 
   const files = readdirSync(dir);
   const state = primaryState(dir, files);
-  // W7 wiring: previously built but never called — deterministic adaptive layer.
-  // This ensures posture/investigation/adaptive-budget/cognition/scope are
-  // imported and exercised during archive (savepoint.sh already writes posture
-  // to state; this is the report-side wiring). (W7/W8)
+  // Independent-review gate: a risky mission (full lane or sensitive paths) does
+  // not close until Robin (review) AND Jinbe (security) each ran as a separate
+  // agent for it. Enforced only where the Claude hook ledger exists (marker or
+  // ledger file present): other hosts record no dispatches and must not be
+  // blocked forever. --force archives anyway and the report says "inline".
+  if (!dryRun && !force && state) {
+    const risky = state.lane === 'full' || (Array.isArray(state.sensitive_paths) && state.sensitive_paths.length > 0);
+    const ledgerActive = existsSync(join(root, '.engaged')) || existsSync(join(root, 'review-dispatch.jsonl'));
+    if (risky && ledgerActive && readConfig(projectDir).independent_review !== 'off') {
+      const ran = dispatchedAgents(projectDir, mission);
+      const missing = [
+        ran.has('robin-reviewer') ? '' : 'the review (Robin)',
+        ran.has('jinbe-security') ? '' : 'the security check (Jinbe)',
+      ].filter(Boolean);
+      if (missing.length) {
+        throw new Error(
+          `closure blocked — mission "${mission}" has not had ${missing.join(' and ')} run as a separate agent. ` +
+          'This change touches a risky area, so those checks must not be done in the conversation that wrote it. ' +
+          'Run the missing check as a separate agent, then close again; or set independent_review=off in .mugiwara/config to accept an inline check (--force also archives, and the report then says the check was inline).',
+        );
+      }
+    }
+  }
   try {
     if (state) {
-      const sLane = (typeof state.lane === 'string' ? state.lane : 'standard') as 'direct' | 'lean' | 'standard' | 'full' | 'spike';
-      const sRisk = (Array.isArray(state.sensitive_paths) && (state.sensitive_paths as string[]).length ? 'high' : 'low') as 'low' | 'medium' | 'high';
+      // Posture is chosen deterministically at closure too (savepoint.sh writes the live value to state).
+      // ponytail: result unused today; delete src/posture.ts + references/posture-routing.md when nothing reads it.
+      const sRisk = Array.isArray(state.sensitive_paths) && (state.sensitive_paths as string[]).length ? 'high' : 'low';
       const sTokens = typeof state.tokens_est === 'number' ? state.tokens_est : 0;
       const sBudget = typeof state.budget === 'number' ? state.budget : 0;
-      const sStatus = typeof state.budget_status === 'string' ? state.budget_status : 'ok';
-      const sTeam = rosterSize(dir); // roster-derived, replaces deleted team_members config
-      const sRepeated = typeof (state as Record<string, unknown>).repeated_reads === 'number' ? (state as Record<string, unknown>).repeated_reads as number : 0;
-      // posture selection (mirrors savepoint.sh logic, records to adaptation trail via decisions.md if needed)
       selectPosture({
-        lane: sLane,
+        lane: (typeof state.lane === 'string' ? state.lane : 'standard') as 'direct' | 'lean' | 'standard' | 'full' | 'spike',
         risk: sRisk,
         independent_tasks: 0,
         order_dependent: true,
         context_pressure: sBudget > 0 && sTokens > sBudget * 0.6,
-        team_members: sTeam, // roster
+        team_members: rosterSize(dir),
         phases: 1,
         plan_lines: 0,
-        governor: sStatus === 'stop' ? 'stop' : sStatus === 'warn' ? 'avoid' : 'normal',
+        governor: state.budget_status === 'stop' ? 'stop' : state.budget_status === 'warn' ? 'avoid' : 'normal',
       });
-      const invCfg = readInvestigationConfig(projectDir);
-      const inv = evaluateInvestigation({
-        pass: 0,
-        acceptance_mapped: false,
-        surface_understood: false,
-        path_established: false,
-        unrelated_files_opened: 0,
-        repeated_reads: sRepeated,
-        max_passes: invCfg.max_passes,
-        max_unrelated_files: invCfg.max_unrelated_files,
-        repeated_read_threshold: invCfg.repeated_read_threshold,
-      });
-      if (inv.stop) recordInvestigationStop(dir, inv);
-      // adaptive-budget wiring
-      reserveBudget({ remaining: Math.max(0, sBudget - sTokens), expected_max: 1000 });
-      projectBudget({ current: sTokens, remaining_required: 2000, expected_conditional: 500, possible_healing: 1000 });
-      checkProgressiveThreshold({ budget: sBudget, used: sTokens });
-      checkCircuitBreaker({ expected: 1000, actual: sTokens, progress_delta: 0, scope_expanded: false, evidence_delta: 0 });
-      detectBudgetAnomaly({ progress_before: 0, progress_after: 0, tokens_before: 0, tokens_after: sTokens });
-      // cognition/scope: exercised with minimal inputs (real inputs require model-supplied fields — marked planned in docs)
-      isFocusedReasoning({ question: 'wired', evidence_available: true, speculative_paths: 0, reconsiderations: 0, hypothetical_requirements: false, unrelated_implementations: 0 });
-      detectDuplicateExplanation({ explanations: [] });
-      detectScopeDrift({ change: 'wired', declared_scope: [], touched_files: [] });
-      // slop wiring (W9): classify, progress, anomaly — compare progress-per-token vs baseline
-      classifySlop('repeated read');
-      const prog = measureProgress({ tokens_used: 0, evidence_items: 0, criteria_mapped: 0, files_understood: 0, tests_fixed: 0, code_chars: 0 }, { tokens_used: sTokens, evidence_items: 0, criteria_mapped: 0, files_understood: 0, tests_fixed: 0, code_chars: 0 });
-      detectAnomaly({ progress_per_cost: prog.progress_per_cost, baseline_per_cost: 0.01 });
-      // evidence wiring (W10): ensure repeated_reads can be non-zero — register plan.md read
-      try {
-        const reg = loadRegistry(dir);
-        const planContent = readFileSync(join(dir, 'plan.md'), 'utf8');
-        registerRead(reg, { kind: 'file', file: 'plan.md', content: planContent });
-      } catch {}
-      // work wiring (ensure work.ts not dangling)
-      classifyStage({ stage: 'wired', requirement_kind: 'explicit', uncertainty_high: false, provides_required_evidence: false, protects_quality_security: false });
       // T6 anti-slop: advisory waste-detector pass over the mission diff.
       // Warn-only — findings land as slop-governor trail rows; archive never
       // blocks here (blocking needs 2+ recorded rejections — shouldBlockWaste).
@@ -420,6 +406,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
 
   // Cost surface — always readable section for the report (T8)
   let costSection = '';
+  const toolingLog: string[] = []; // tooling-only lines -> collapsed block in the report appendix
   if (!dryRun && state) {
     const chars = measureContextChars(dir);
     const budget = readBudgetConfig(projectDir);
@@ -472,12 +459,18 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     // provider-reported rollup when any stage reported
     let reportedTotal = 0;
     let hasReported = false;
+    let processEst = 0;
+    let cacheRead = 0;
+    let cacheCreate = 0;
     for (const f of files.filter(isStateFile)) {
       try {
         const s = JSON.parse(readFileSync(join(dir, f), 'utf8')) as Record<string, unknown>;
         if (s.tokens_source === 'reported' && typeof s.tokens_est === 'number') {
           reportedTotal += s.tokens_est;
           hasReported = true;
+          if (typeof s.tokens_process_est === 'number') processEst += s.tokens_process_est;
+          if (typeof s.tokens_cache_read === 'number') cacheRead += s.tokens_cache_read;
+          if (typeof s.tokens_cache_creation === 'number') cacheCreate += s.tokens_cache_creation;
         }
       } catch { /* corrupt — skip */ }
     }
@@ -485,17 +478,24 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       reportedTotal = est;
       hasReported = true;
     }
-    // W15: single Cost paragraph — one number, no internal field names, no n/a
+    // W15: single Cost paragraph — one number, no internal field names, no n/a.
+    // Lane and fix-cycle counts are tooling detail: they go to the appendix.
     const healCycleVal = typeof state.heal_cycle === 'number' ? state.heal_cycle : 1;
-    const healText = healCycleVal === 1 ? '1 heal cycle' : `${healCycleVal} heal cycles`;
-    costSection = `## Cost\n\nUsed **${est.toLocaleString()}** of ${effBudget ? effBudget.toLocaleString() : '—'} tokens${effBudget ? ` (${env.pct}%)` : ''}. Lane \`${lane}\`. ${healText}.\n`;
-    // keep provider total only if reported, but without duplicating pct
+    const pctOf = (n: number) => (effBudget ? ` of ${effBudget.toLocaleString()} tokens (${Math.round((n / effBudget) * 100)}%)` : ' tokens');
+    // Provider usage (input+output, no cache) is a different measure from the
+    // budget, which is defined on the process estimate. Never divide it by the budget.
     if (hasReported && reportedTotal) {
-      costSection += `\nProvider total: ${reportedTotal.toLocaleString()} tokens (provider-reported).\n`;
+      costSection = `## Cost\n\n${processEst ? `Process estimate: ${processEst.toLocaleString()}${pctOf(processEst)}.` : 'The process estimate was not recorded.'}\n`;
+      costSection += `\nProvider-reported: ${reportedTotal.toLocaleString()} input and output tokens` +
+        (cacheRead || cacheCreate ? `, plus ${cacheRead.toLocaleString()} cache reads and ${cacheCreate.toLocaleString()} cache writes` : '') + '.\n';
+    } else {
+      costSection = `## Cost\n\nUsed **${est.toLocaleString()}** of ${effBudget ? effBudget.toLocaleString() : '—'} tokens${effBudget ? ` (${env.pct}%)` : ''}.\n`;
     }
+    toolingLog.push(`Lane \`${lane}\`, ${healCycleVal} heal cycle${healCycleVal === 1 ? '' : 's'}.`);
     // Phase E — adaptation summary from the posture decision trail
     try {
-      costSection += renderAdaptationSection(dir);
+      const adaptation = renderAdaptationSection(dir).trim();
+      if (adaptation) toolingLog.push(adaptation.replace(/^## /, '### '));
     } catch { /* best-effort */ }
 
     // T4: auto-compress when context >80% budget — compress flows → stub, not throw
@@ -526,7 +526,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
           context_status: ctxStatus,
           context_metrics: metrics,
         });
-        costSection += `\n| **Compressed** | yes — ${chars} chars >80% of ${budget} — flows stubbed as 00-compressed.md |`;
+        toolingLog.push(`Context compressed: ${chars} chars is over 80% of the ${budget} budget; flow files were replaced by 00-compressed.md.`);
       } catch { /* compress best-effort — never blocks archive */ }
     }
 
@@ -612,44 +612,14 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
       writeFileSync(prVerdictPath, readFileSync(prVerdictSrc, 'utf8'));
       kept.push(join('missions', mission, PR_VERDICT));
     }
-    // W15: build report with required shape — Verdict first, single Cost paragraph, no raw JSONL
-    if (!report.trim()) {
-      const date = new Date().toISOString().slice(0, 10);
-      const actor = typeof state?.actor === 'string' ? state.actor : 'unknown';
-      const branch = typeof state?.branch === 'string' ? state.branch : 'unknown';
-      const laneStr = typeof state?.lane === 'string' ? state.lane : 'unknown';
-      const modeStr = typeof state?.mode === 'string' ? state.mode : 'unknown';
-      report = `# Mission: ${mission}\n${date} · ${actor} · branch \`${branch}\` · lane **${laneStr}** · mode ${modeStr}\n`;
-    }
-    if (!report.includes('## Verdict')) {
-      const parts = report.split('\n');
-      const headerLines = parts.slice(0, 2).join('\n');
-      const rest = parts.slice(2).join('\n');
-      report = `${headerLines}\n\n## Verdict\n**GO** — all gates passed.\n` + rest;
-    }
-    const sections = fold.map((f) => {
-      const body = readFileSync(join(dir, f), 'utf8').trim();
-      const name = f.includes('/') ? (f.split('/').pop() ?? f) : f;
-      return `\n\n## Archived: ${name}\n\n${body}`;
-    }).join('');
-    let extraSections = '';
-    if (state) {
-      const filesTouched = typeof (state as Record<string, unknown>).files_touched === 'number' ? (state as Record<string, unknown>).files_touched as number : 0;
-      const locIns = typeof (state as Record<string, unknown>).loc_ins === 'number' ? (state as Record<string, unknown>).loc_ins as number : 0;
-      const locDel = typeof (state as Record<string, unknown>).loc_del === 'number' ? (state as Record<string, unknown>).loc_del as number : 0;
-      const sens = Array.isArray((state as Record<string, unknown>).sensitive_paths) ? (state as Record<string, unknown>).sensitive_paths as string[] : [];
-      extraSections += `\n\n## What changed\n${filesTouched} files, +${locIns} / -${locDel}.\n`;
-      if (sens.length) extraSections += `Sensitive paths touched: \`${sens.join('`, `')}\`\n`;
-      extraSections += `\n## Gates\n| Gate | Verdict | Evidence |\n|---|---|---|\n| Checkpoint (Flow 4) | PASS | \`flows/04-audit.md\` |\n| Quality (Flow 5) | PASS | \`flows/05-quality.md\` |\n| Coverage (Flow 6) | PASS | \`flows/05-quality.md\` |\n| Security (Flow 7) | PASS | \`review/security.md\` |\n`;
-      try {
-        const decRaw = existsSync(join(dir, 'decisions.md')) ? readFileSync(join(dir, 'decisions.md'), 'utf8').trim() : '';
-        if (decRaw) extraSections += `\n## Decisions\n${decRaw}\n`;
-        else extraSections += `\n## Decisions\nNo decisions recorded.\n`;
-      } catch {
-        extraSections += `\n## Decisions\nNo decisions recorded.\n`;
-      }
-      extraSections += `\n## Not verified\nNothing was left unverified.\n`;
-    }
+    // Reader-first report: summary + verdict, topic sections, Evidence appendix.
+    const rs = state as Record<string, unknown> | null;
+    const num = (k: string): number => (rs && typeof rs[k] === 'number' ? rs[k] as number : 0);
+    const sens = rs && Array.isArray(rs.sensitive_paths) ? rs.sensitive_paths as string[] : [];
+    const changeLine = state
+      ? `${num('files_touched')} file${num('files_touched') === 1 ? '' : 's'} changed (+${num('loc_ins')} / -${num('loc_del')}) on branch \`${typeof state.branch === 'string' ? state.branch : 'unknown'}\`, closed ${new Date().toISOString().slice(0, 10)}.` +
+        (sens.length ? ` Sensitive paths touched: \`${sens.join('`, `')}\`.` : '')
+      : '';
     const routingSection = state
       ? renderRouting(rankFiles(changedFiles(projectDir, state), {
           mission,
@@ -657,9 +627,16 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
           sensitive_paths: Array.isArray(state.sensitive_paths) ? (state.sensitive_paths as string[]) : [],
         } as never), mission)
       : '';
-    if (fold.length || sections || extraSections || routingSection || costSection || !existsSync(reportPath)) {
+    const seedIsClosure = !files.includes('report.md') && existsSync(join(artDir, '06-closure.md'));
+    const folded = fold.map((f) => ({ name: f.split('/').pop() ?? f, body: readFileSync(join(dir, f), 'utf8') }));
+    const hasReportBody = fold.length > 0 || changeLine || routingSection || costSection;
+    if (hasReportBody || !existsSync(reportPath)) {
       const tmp = `${reportPath}.tmp`;
-      writeFileSync(tmp, report.trimEnd() + sections + extraSections + (routingSection || '') + (costSection ? `\n${costSection}\n` : '') + '\n');
+      writeFileSync(tmp, buildReport({
+        mission, seed: report, seedIsClosure, files: folded, changeLine,
+        cost: costSection, routing: routingSection, tooling: toolingLog, hasState: !!state,
+        dispatched: [...dispatchedAgents(projectDir, mission)],
+      }));
       renameSync(tmp, reportPath);
     }
     for (const f of fold) {

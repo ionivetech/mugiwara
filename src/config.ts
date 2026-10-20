@@ -14,23 +14,20 @@ export const DEFAULT_CONFIG = [
   'branch=feature/{type}-{issue}-{slug}',
   'commit=conventional',
   'auto_commit=off',
-  'coverage_new=85',
-  // Equal to coverage_new: touching a file is not held stricter than writing one.
-  'coverage_modified=85',
+  // One threshold for new and modified files. Legacy coverage_new /
+  // coverage_modified are still honored when present (they win per kind).
+  'coverage=85',
   'review_depth=full',
   'quality_depth=full',
-  'verify_merged=off',
   'delegate_threshold=60',
   'heal_max_cycles=3',
+  'independent_review=on',
   '# lane_scope_glob=packages/api/**',
   '# context_budget_chars=150000',
-  '# investigation_max_passes=2',
-  '# investigation_max_unrelated_files=5',
-  '# investigation_repeated_read_threshold=2',
   '# team=off',
   '# sign=auto',
   '# features=core+auto',
-  '# enforce=block',
+  '# enforce=warn',
 ].join('\n') + '\n';
 
 /** Config file path candidates: project first, then user home. */
@@ -41,15 +38,10 @@ function configPaths(projectDir: string): string[] {
 /**
  * Parse the config as a flat key=value map. Project config wins over the
  * user-level one (per-key, first-wins across the two files). Comments and
- * blank lines are skipped; values are trimmed.
+ * blank lines are skipped; values are trimmed. Side-effect free: never creates
+ * the file (callers that want a default config call ensureConfig explicitly).
  */
 export function readConfig(projectDir: string): Record<string, string> {
-  try {
-    const file = join(projectDir, '.mugiwara', 'config');
-    let exists = false;
-    try { exists = lstatSync(file).isFile() || lstatSync(file).isSymbolicLink(); } catch { exists = false; }
-    if (!exists) ensureConfig(projectDir);
-  } catch { /* best-effort: auto-create must not break reads */ }
   const out: Record<string, string> = {};
   for (const file of configPaths(projectDir)) {
     if (!existsSync(file)) continue;
@@ -84,37 +76,4 @@ export function ensureConfig(projectDir: string): boolean {
   mkdirSync(join(projectDir, '.mugiwara'), { recursive: true });
   writeFileSync(file, DEFAULT_CONFIG);
   return true;
-}
-
-// ── Investigation limits (§13) ──────────────────────────────────────────────
-// Three flat policy keys, all optional (commented in DEFAULT_CONFIG per §52).
-// Defaults: max_passes 2, max_unrelated_files 5, repeated_read_threshold 2.
-
-export type InvestigationConfig = {
-  max_passes: number;
-  max_unrelated_files: number;
-  repeated_read_threshold: number;
-};
-
-const INVESTIGATION_DEFAULTS: InvestigationConfig = {
-  max_passes: 2,
-  max_unrelated_files: 5,
-  repeated_read_threshold: 2,
-};
-
-/** Parse a flat config value as a positive integer; invalid/absent → default. */
-function positiveInt(raw: string | undefined, fallback: number): number {
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : fallback;
-}
-
-/** Read the three investigation limit keys via readConfig; non-numeric/zero → default. */
-export function readInvestigationConfig(projectDir: string): InvestigationConfig {
-  const cfg = readConfig(projectDir);
-  return {
-    max_passes: positiveInt(cfg.investigation_max_passes, INVESTIGATION_DEFAULTS.max_passes),
-    max_unrelated_files: positiveInt(cfg.investigation_max_unrelated_files, INVESTIGATION_DEFAULTS.max_unrelated_files),
-    repeated_read_threshold: positiveInt(cfg.investigation_repeated_read_threshold, INVESTIGATION_DEFAULTS.repeated_read_threshold),
-  };
 }

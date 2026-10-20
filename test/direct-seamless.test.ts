@@ -83,7 +83,7 @@ describe('T8 seamless — solo direct', () => {
   it('Memory Keeper skip when lessons.md empty & lane direct', () => {
     // prose gate: both agent and skill document the skip
     const keeper = readFileSync(join(ROOT, 'content', 'agents', 'memory-keeper.md'), 'utf8');
-    const lessons = readFileSync(join(ROOT, 'content', 'skills', 'mugiwara-lessons', 'SKILL.md'), 'utf8');
+    const lessons = readFileSync(join(ROOT, 'content', 'skills', 'mugiwara-orchestration', 'references', 'lessons.md'), 'utf8');
     expect(keeper).toContain('Lane 0 direct with empty ledger');
     expect(lessons).toContain('Lane 0 direct with empty ledger');
     // functional predicate: direct + missing ledger → skip

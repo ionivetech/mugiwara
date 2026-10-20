@@ -4,7 +4,7 @@
 // rationalization tables. Each rule below is a defect this repo shipped.
 export type ProseError = string;
 
-/** Flow number to crew, from mugiwara-workflow's pipeline table. */
+/** Flow number to crew, from the stage table in mugiwara-orchestration. */
 export const PIPELINE: Record<string, string> = {
   '0': 'Luffy', '1': 'Usopp', '2': 'Nami', '3': 'Zoro', '4': 'Chopper',
   '5': 'Sanji', '6': 'Franky', '7': 'Robin', '8': 'Brook', '9': 'Luffy',
@@ -58,7 +58,7 @@ export function checkContentProse(
       if (!allow.has(path)) {
         for (const cap of HOST_CAPABILITIES) {
           if (line.includes(cap)) {
-            errors.push(`content-prose: ${path} names the host capability "${cap}" — the crew owns its own output shape; host names live in docs/concepts/host-skills.md`);
+            errors.push(`content-prose: ${path} names the host capability "${cap}" — the crew owns its own output shape; host names live in docs/concepts/cost.md`);
           }
         }
       }

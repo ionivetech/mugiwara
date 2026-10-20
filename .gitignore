@@ -9,3 +9,4 @@ coverage/
 .mugiwara/
 
 .DS_Store
+benchmark-results/

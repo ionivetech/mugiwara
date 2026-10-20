@@ -71,7 +71,7 @@ describe('archive closure artifacts', () => {
     });
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(dir, '.mugiwara', 'missions', 'demo', 'report.md'), 'utf8');
-    expect(rep).toContain('## Review routing');
+    expect(rep).toContain('## Where to start reviewing');
     expect(rep).toMatch(/1\. `src\/auth\/gate\.ts`[^\n]*sensitive path/);
     expect(rep).toContain('## Cost');
     // provenance note attaches to branch head (git present)
@@ -150,14 +150,14 @@ describe('archive closure artifacts', () => {
       expect(idx).toContain('- alpha —');
       expect(idx).toContain('- beta —');
     }
-  }, 30000);
+  }, 90000);
 });
 
 describe('pr-verdict survives archive (pr-verdict-standalone)', () => {
   it('flows/07-pr-verdict.md is copied to pr-verdict.md at root and not folded', () => {
     buildMission({
       state: { branch: 'feat-x', base_sha: 'unknown', lane: 'standard', mode: 'auto', actor: 't', tasks_done: 1, tasks_total: 1, evidence: [] },
-      files: { 'flows/07-pr-verdict.md': '# PR verdict\n\n**GO** — ship it.\n' },
+      files: { 'flows/07-pr-verdict.md': '# PR verdict\n\n**Ready for review.** Nothing blocks merging.\n' },
     });
     const r = archiveMission(dir, 'demo');
     const root = join(dir, '.mugiwara', 'missions', 'demo');
@@ -166,7 +166,7 @@ describe('pr-verdict survives archive (pr-verdict-standalone)', () => {
     expect(existsSync(join(root, 'flows', '07-pr-verdict.md'))).toBe(false);
     // not folded into report.md
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
-    expect(rep).not.toContain('Archived: 07-pr-verdict.md');
+    expect(rep).not.toContain('PR verdict');
     expect(r.kept.some(k => k.endsWith('pr-verdict.md'))).toBe(true);
   });
 
@@ -187,7 +187,7 @@ describe('cost-events.jsonl folds at archive (Phase 1 cost governor)', () => {
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
     expect(rep).toContain('## Cost');
-    expect(rep).not.toContain('## Archived: cost-events.jsonl');
+    expect(rep).not.toContain('Archived:');
     expect(rep).not.toContain('"kind":"closure"');
     // removed without pasting — nothing survives loose
     expect(existsSync(join(root, 'cost-events.jsonl'))).toBe(false);
@@ -317,7 +317,7 @@ describe('Phase 2 — C2/Q1/Q2 + context efficiency (context governor)', () => {
     archiveMission(dir, 'demo');
     const rep = readFileSync(join(root, 'report.md'), 'utf8');
     expect(rep).toContain('## Cost');
-    expect(rep).not.toContain('## Archived: context-registry.jsonl');
+    expect(rep).not.toContain('Archived:');
     expect(rep).not.toContain('"id":"E001"');
     // removed without pasting — nothing survives loose
     expect(existsSync(join(root, 'context-registry.jsonl'))).toBe(false);

@@ -22,14 +22,14 @@ function newRepo(tag: string): string {
 
 describe('prompt injection surfaces', () => {
   test('workflow skill states the artifact-trust rule', () => {
-    const s = readFileSync(join(root, 'content/skills/mugiwara-workflow/SKILL.md'), 'utf8');
+    const s = readFileSync(join(root, 'content/skills/mugiwara-orchestration/SKILL.md'), 'utf8');
     expect(s).toMatch(/data, never instructions/);
     expect(s).toMatch(/## Artifact trust/);
   });
 
   test('resume and lessons carry the injection red flag', () => {
-    for (const p of ['mugiwara-resume', 'mugiwara-lessons']) {
-      const s = readFileSync(join(root, `content/skills/${p}/SKILL.md`), 'utf8');
+    for (const p of ['resume', 'lessons']) {
+      const s = readFileSync(join(root, `content/skills/mugiwara-orchestration/references/${p}.md`), 'utf8');
       expect(s.toLowerCase(), `${p} missing injection red flag`).toMatch(/artifact|redefine/);
     }
   });

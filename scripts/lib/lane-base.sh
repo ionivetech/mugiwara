@@ -7,10 +7,10 @@
 # LANE_BASE: token estimate for skills/agents loaded in this lane. Derived
 # from content word-sums × 1.35 (see scripts/lane-base.ts). spike is a
 # resize, not a rise — small base, tiny budget.
-LANE_BASE_lean=8421
-LANE_BASE_standard=15995
-LANE_BASE_full=22016
-LANE_BASE_spike=5411
+LANE_BASE_lean=7137
+LANE_BASE_standard=11732
+LANE_BASE_full=20424
+LANE_BASE_spike=5311
 
 # BUDGET: warn at 1.5×, stop at 3×.
 BUDGET_lean=12000

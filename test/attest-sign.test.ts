@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync, statSync, chmodSync } from 'node:fs';
 import { tmpdir, homedir } from 'node:os';
 import { join } from 'node:path';
-import { pureSign, pureVerify, generatePureKey, ensurePureKey, resolveBackend, signReport, verifyReport, type BackendChoice } from '../src/sign.ts';
+import { pureSign, pureVerify, generatePureKey, ensurePureKey, resolveBackend, signReport, verifyReport, type BackendChoice } from '../src/addons/attest/sign.ts';
 
 function tmpHome(): string {
   return mkdtempSync(join(tmpdir(), 'mugi-home-'));
@@ -287,6 +287,17 @@ describe('signing error branches', () => {
       expect(result.message).toBe('invalid .mugisig file');
     } finally {
       rmSync(project, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('attest add-on is lazy', () => {
+  it('no core module imports it statically', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const dir = join(import.meta.dirname, '..', 'src');
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.ts'))) {
+      const src = readFileSync(join(dir, f), 'utf8');
+      expect(/^import[^\n]*addons\/attest/m.test(src)).toBe(false);
     }
   });
 });

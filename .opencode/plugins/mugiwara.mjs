@@ -7,7 +7,7 @@
 // single export because OpenCode's legacy loader calls every exported function
 // as a plugin (same constraint ponytail documents).
 //
-// Crew COLORS come from references/wave-banners.md (single source, shared
+// Crew COLORS come from references/flow-banners.md (single source, shared
 // references dir); the CREW map below is the cold-path
 // fallback only. Temperature/steps stay here (runtime tuning, not banner
 // material).
@@ -29,7 +29,7 @@ const contentDir = join(__dirname, '..', '..', 'content');
 const skillsDir = join(contentDir, 'skills');
 const agentsDir = join(contentDir, 'agents');
 
-// Colors are fallbacks — the wave-banners table is the source of truth.
+// Colors are fallbacks — the flow-banners table is the source of truth.
 const CREW = {
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 30 },
   'usopp-brainstorm': { color: '#b45309', temperature: 0.6, steps: 30 },
@@ -42,7 +42,6 @@ const CREW = {
   'jinbe-security': { color: '#6366f1', temperature: 0.2, steps: 30 },
   'brook-healing': { color: '#2dd4bf', temperature: 0.1, steps: 30 },
   'skeptic-verifier': { color: '#64748b', temperature: 0.1, steps: 30 },
-  'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 30 },
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 30 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 30 },
 };
@@ -52,7 +51,7 @@ const CREW = {
 // anchors the exact table shape: | agent-id | role | hex | ansi-256 | emoji |
 function readBannerColors() {
   try {
-    const path = join(__dirname, '..', '..', 'references', 'wave-banners.md');
+    const path = join(__dirname, '..', '..', 'references', 'flow-banners.md');
     if (!existsSync(path)) return {};
     const text = readFileSync(path, 'utf8');
     // null-prototype: agent ids are trusted repo content, but a future
@@ -128,7 +127,7 @@ function readAgents(stepsEnabled = true) {
       agents[name] = { ...agents[name], ...rest };
       if (stepsEnabled) agents[name] = { ...agents[name], steps };
     }
-    // color comes from the wave-banners table (single source); CREW fallback
+    // color comes from the flow-banners table (single source); CREW fallback
     // covers agents the table does not list (and vice versa)
     if (bannerColors[name] || CREW[name]) {
       agents[name] = { ...agents[name], color: bannerColors[name] ?? CREW[name].color };
@@ -173,7 +172,7 @@ function checkCommand(command) {
 
 function refusalMessage(action) {
   return (
-    `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` +
+    `Mugiwara blocked this command (${action}). The crew never creates a PR, merges, or ` +
     `deploys — the human does, from the branch and the verdict the crew hands over. ` +
     `Run it yourself, or set enforce=off in .mugiwara/config.`
   );
@@ -332,7 +331,7 @@ export default async () => ({
         if (action && readEnforce(cwd) === 'block') throw new Error(refusalMessage(action));
       }
     } catch (e) {
-      if (e && /Mugiwara: refusing/.test(e.message)) throw e;
+      if (e && /Mugiwara blocked this command/.test(e.message)) throw e;
       // fail open — never wedge a tool call
     }
   },

@@ -28,7 +28,6 @@
       "jinbe-security",
       "brook-healing",
       "skeptic-verifier",
-      "eval-runner",
       "resume-coordinator",
       "memory-keeper"
     ],
@@ -39,21 +38,14 @@
       "mugiwara-contract-first",
       "mugiwara-execution",
       "mugiwara-frontend",
-      "mugiwara-gates",
-      "mugiwara-git",
       "mugiwara-healing",
-      "mugiwara-lessons",
       "mugiwara-migration",
       "mugiwara-orchestration",
       "mugiwara-planning",
       "mugiwara-quality",
-      "mugiwara-resume",
       "mugiwara-review",
-      "mugiwara-root-cause",
       "mugiwara-security",
-      "mugiwara-ship",
-      "mugiwara-testcases",
-      "mugiwara-workflow"
+      "mugiwara-ship"
     ]
   }
 }

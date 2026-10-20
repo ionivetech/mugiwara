@@ -2,9 +2,50 @@
 // @bun
 
 // hooks/mugiwara-mode-tracker.ts
-import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from "fs";
+import { existsSync as existsSync2, mkdirSync as mkdirSync2, readFileSync as readFileSync2, writeFileSync as writeFileSync2, renameSync } from "fs";
+
+// src/config.ts
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+var DEFAULT_CONFIG = [
+  "mode=guided",
+  "verbosity=normal",
+  "branch=feature/{type}-{issue}-{slug}",
+  "commit=conventional",
+  "auto_commit=off",
+  "coverage=85",
+  "review_depth=full",
+  "quality_depth=full",
+  "delegate_threshold=60",
+  "heal_max_cycles=3",
+  "independent_review=on",
+  "# lane_scope_glob=packages/api/**",
+  "# context_budget_chars=150000",
+  "# team=off",
+  "# sign=auto",
+  "# features=core+auto",
+  "# enforce=warn"
+].join(`
+`) + `
+`;
+function ensureConfig(projectDir) {
+  const file = join(projectDir, ".mugiwara", "config");
+  let exists = false;
+  try {
+    exists = lstatSync(file).isFile() || lstatSync(file).isSymbolicLink();
+  } catch {
+    exists = false;
+  }
+  if (exists)
+    return false;
+  mkdirSync(join(projectDir, ".mugiwara"), { recursive: true });
+  writeFileSync(file, DEFAULT_CONFIG);
+  return true;
+}
+
+// hooks/mugiwara-mode-tracker.ts
 import { tmpdir } from "os";
-import { join } from "path";
+import { join as join2 } from "path";
 var VALID_MODES = new Set(["guided", "semi", "auto"]);
 function parseModeChange(promptRaw) {
   if (typeof promptRaw !== "string")
@@ -30,16 +71,77 @@ function parseModeChange(promptRaw) {
     return natural[1];
   return null;
 }
+var NOT_A_REQUEST = new Set([
+  "guided",
+  "semi",
+  "auto",
+  "mode",
+  "off",
+  "archive",
+  "clean",
+  "continue",
+  "status",
+  "cost",
+  "handoff",
+  "sign",
+  "lesson",
+  "migrate",
+  "crew",
+  "features",
+  "reset",
+  "waste",
+  "plan",
+  "join",
+  "list",
+  "install",
+  "update",
+  "uninstall"
+]);
+function isExplicitCrewRequest(promptRaw) {
+  if (typeof promptRaw !== "string")
+    return false;
+  const m = /^\/(?:mugiwara:)?mugiwara(?:[ \t]+(\S+)[\s\S]*)?$/i.exec(promptRaw.trim());
+  return !!m && !!m[1] && !NOT_A_REQUEST.has(m[1].toLowerCase());
+}
+var RISK_WORDS = /\b(auth\w*|log[- ]?in|sign[- ]?in|password\w*|credential\w*|secrets?|tokens?|rbac|roles?|permissions?|tenant\w*|payments?|billing|refund\w*|invoices?|migrat\w+|schema|ci\/cd|github actions)\b/i;
+function riskReminder(promptRaw) {
+  const m = RISK_WORDS.exec(promptRaw.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ""));
+  return m ? `Mugiwara: this request mentions "${m[1].toLowerCase()}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission before you edit code.` : null;
+}
+function recordExplicitCrew(sessionId) {
+  try {
+    const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const dir = join2(cwd, ".mugiwara");
+    const file = join2(dir, ".engaged");
+    mkdirSync2(dir, { recursive: true });
+    ensureConfig(cwd);
+    let prev = {};
+    try {
+      prev = JSON.parse(readFileSync2(file, "utf8"));
+    } catch {}
+    const same = !sessionId || typeof prev.session_id !== "string" || !prev.session_id || prev.session_id === sessionId;
+    const base = same ? prev : {};
+    const now = new Date().toISOString();
+    writeFileSync2(file, JSON.stringify({
+      ...base,
+      session_id: sessionId || (typeof base.session_id === "string" ? base.session_id : ""),
+      first_seen: typeof base.first_seen === "string" ? base.first_seen : now,
+      touched_at: now,
+      explicit_crew_at: now
+    }, null, 2) + `
+`);
+  } catch {}
+}
 function applyModeChange(mode) {
   if (!VALID_MODES.has(mode))
     return;
   const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
-  const dir = join(cwd, ".mugiwara");
-  const file = join(dir, "config");
-  mkdirSync(dir, { recursive: true });
+  const dir = join2(cwd, ".mugiwara");
+  const file = join2(dir, "config");
+  mkdirSync2(dir, { recursive: true });
   const lines = [];
-  if (existsSync(file)) {
-    for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+  if (existsSync2(file)) {
+    for (const line of readFileSync2(file, "utf8").split(/\r?\n/)) {
       const t = line.trim();
       if (t.startsWith("mode="))
         continue;
@@ -50,8 +152,8 @@ function applyModeChange(mode) {
   const body = lines.filter((_l, i) => !(lines[i] === "" && (i === lines.length - 1 || i === 0))).join(`
 `) + `
 `;
-  const tmp = join(tmpdir(), `mugiwara-config-${process.pid}-${Date.now()}.tmp`);
-  writeFileSync(tmp, body);
+  const tmp = join2(tmpdir(), `mugiwara-config-${process.pid}-${Date.now()}.tmp`);
+  writeFileSync2(tmp, body);
   renameSync(tmp, file);
 }
 function isCodexInput(parsed) {
@@ -82,6 +184,13 @@ async function main() {
   const change = parseModeChange(prompt);
   if (change)
     applyModeChange(change);
+  else if (isExplicitCrewRequest(prompt))
+    recordExplicitCrew(typeof parsed.session_id === "string" ? parsed.session_id : "");
+  const reminder = !change && isExplicitCrewRequest(prompt) ? riskReminder(prompt) : null;
+  if (reminder) {
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: reminder } }));
+    return;
+  }
   const codex = isCodexInput(parsed);
   if (codex) {
     if (change) {

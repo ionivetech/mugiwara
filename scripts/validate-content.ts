@@ -165,7 +165,7 @@ for (const f of agentFiles) {
 }
 
 for (const dir of skillDirs) {
-  if (dir !== 'mugiwara-workflow' && !usedSkills.has(dir)) errors.push(`skill ${dir}: not referenced by any agent`);
+  if (!usedSkills.has(dir)) errors.push(`skill ${dir}: not referenced by any agent`);
 }
 
 // --- write-scope gate (F2): every agent declares a scope; only executors may write source ---
@@ -191,7 +191,7 @@ const internalAgents = agentFiles.filter(f => {
   return parsed.data.internal === 'true';
 });
 const canonicalCount = `${agentFiles.length - internalAgents.length} agents (+${internalAgents.length} internal)`;
-for (const doc of ['README.md', 'docs/index.md', 'docs/concepts/agents.md']) {
+for (const doc of ['README.md', 'docs/index.md', 'docs/concepts/crew.md']) {
   const p = join(import.meta.dirname, '..', doc);
   if (existsSync(p) && !readFileSync(p, 'utf8').includes(canonicalCount)) {
     errors.push(`${doc}: missing canonical agent count "${canonicalCount}"`);
@@ -224,7 +224,7 @@ for (const f of agentFiles) {
 
 // --- handoff-target gate (F4): a body naming another crew member as a handoff
 // target without Luffy in the same line fails CI ---
-const HANDOFF_CREW = ['usopp', 'nami', 'zoro', 'chopper', 'sanji', 'franky', 'robin', 'jinbe', 'brook', 'skeptic', 'memory-keeper', 'resume-coordinator', 'eval-runner'];
+const HANDOFF_CREW = ['usopp', 'nami', 'zoro', 'chopper', 'sanji', 'franky', 'robin', 'jinbe', 'brook', 'skeptic', 'memory-keeper', 'resume-coordinator'];
 // Verb class covers direct handoff language plus synonyms (route/send/pass/
 // escalate/delegate/transfer) so the F4 gate does not leak through paraphrase.
 const handoffRe = new RegExp(`\\b(hand to|hand off to|dispatch|route to|send to|pass to|escalate to|delegate to|transfer to)\\s+(?:a\\s+|another\\s+|the\\s+)?(?:crew members?|${HANDOFF_CREW.join('|')})`, 'i');
@@ -350,20 +350,20 @@ if (existsSync(costDoc)) {
 const docsArg = process.argv.indexOf('--check-docs');
 if (docsArg !== -1) {
   const docsDir = join(import.meta.dirname, '..', 'docs');
-const skillsDoc = join(docsDir, 'concepts', 'skills.md');
-const agentsDoc = join(docsDir, 'concepts', 'agents.md');
+const skillsDoc = join(docsDir, 'concepts', 'crew.md');
+const agentsDoc = join(docsDir, 'concepts', 'crew.md');
   let docErrors = 0;
 
   if (existsSync(skillsDoc)) {
     const content = readFileSync(skillsDoc, 'utf8');
     for (const dir of skillDirs) {
       if (!content.includes(dir)) {
-        errors.push(`docs/concepts/skills.md: missing skill "${dir}"`);
+        errors.push(`docs/concepts/crew.md: missing skill "${dir}"`);
         docErrors++;
       }
     }
   } else {
-    errors.push('docs/concepts/skills.md: file not found');
+    errors.push('docs/concepts/crew.md: file not found');
     docErrors++;
   }
 
@@ -372,12 +372,12 @@ const agentsDoc = join(docsDir, 'concepts', 'agents.md');
     for (const f of agentFiles) {
       const name = f.replace(/\.md$/, '');
       if (!content.includes(name)) {
-        errors.push(`docs/concepts/agents.md: missing agent "${name}"`);
+        errors.push(`docs/concepts/crew.md: missing agent "${name}"`);
         docErrors++;
       }
     }
   } else {
-    errors.push('docs/concepts/agents.md: file not found');
+    errors.push('docs/concepts/crew.md: file not found');
     docErrors++;
   }
 
@@ -422,7 +422,7 @@ if (integrityArg !== -1) {
     // README cites one budget inside a sample transcript; it does not publish
     // the threshold table and should not be made to. The two docs that do are
     // the ones held to it.
-    const docs = ['docs/concepts/cost.md', 'docs/concepts/lanes.md'];
+    const docs = ['docs/concepts/cost.md', 'docs/concepts/mission-flow.md'];
     // Derived from lane-base.sh, never hardcoded. This gate exists to prove the
     // docs match the source constants; a second hardcoded copy of those
     // constants only proves the docs match the copy. It drifted exactly that
@@ -475,7 +475,7 @@ if (integrityArg !== -1) {
         }
       }
     }
-  if (!constants.includes('LANE_BASE_lean=8421')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 8421)');
+  if (!constants.includes('LANE_BASE_lean=7137')) errors.push('doc-integrity: source lane-base.sh lean base drifted (expected 7137)');
   if (!constants.includes('BUDGET_full=50000')) errors.push('doc-integrity: source lane-base.sh full budget drifted (expected 50000)');
   // W12 stale path check: obsolete layout must not appear
   const staleChecks: [string, string[]][] = [
@@ -507,7 +507,7 @@ if (integrityArg !== -1) {
   // instruction the agent cannot follow. This is how `initiative` shipped as a
   // dangling reference. Cases are read from the CLI source, not hardcoded.
   const cliSrc = readFileSync(join(import.meta.dirname, '..', 'src', 'cli.ts'), 'utf8');
-  // In-session phrases, not CLI verbs — see mugiwara-workflow.
+  // In-session phrases, not CLI verbs — see mugiwara-orchestration.
   const IN_SESSION = new Set(['mode', 'off']);
   const referenced = new Set<string>();
   const walkMarkdown = (dir: string): string[] =>
@@ -544,7 +544,7 @@ if (integrityArg !== -1) {
     }
   }
   // N2 banner-format: no raw ANSI escapes in model-facing instructions. The
-  // colour table in wave-banners.md is data for the plugin, not an
+  // colour table in flow-banners.md is data for the plugin, not an
   // instruction — it holds hex, never escapes, so no exemption is needed.
   // N8 in-session phrases must never read as slash commands.
   const proseFiles: string[] = [];
@@ -719,7 +719,7 @@ if (process.argv.includes('--check-config')) {
     // sign allowlist lives in TypeScript: read the exported union, not grep.
     // 'minisign-fail' is internal (never a valid config value); 'auto' is an
     // explicit resolveBackend case, so it counts as accepted.
-    { key: 'sign', accepted: parseTsUnion('src/sign.ts', 'BackendChoice', ['auto'], /-fail$/) },
+    { key: 'sign', accepted: parseTsUnion('src/addons/attest/sign.ts', 'BackendChoice', ['auto'], /-fail$/) },
     { key: 'enforce', accepted: parseTsUnion('hooks/pipeline-guard.ts', 'Enforce') },
   ];
   for (const { key, accepted } of ENUM_CHECKS) {
@@ -857,14 +857,14 @@ if (process.argv.includes('--check-readme-metrics')) {
 
 // --- invariant-mechanism gate (E-gaps 5.2): every never/always/MUST has a mechanism ---
 // A rule with no machine behind it and no prose-only entry is a gap, not a
-// rule. Concepts live in docs/concepts/enforcement.md; each concept below
+// rule. Concepts live in docs/reference/enforcement.md; each concept below
 // must have its anchor there, and every never/always/MUST line in content/
 // must match at least one concept. Adding a rule = table row + concept here
 // + mutation in gate-selftest.ts.
 if (process.argv.includes('--check-invariants')) {
-  const enfPath = join(import.meta.dirname, '..', 'docs', 'concepts', 'enforcement.md');
+  const enfPath = join(import.meta.dirname, '..', 'docs', 'reference', 'enforcement.md');
   const enf = existsSync(enfPath) ? readFileSync(enfPath, 'utf8') : '';
-  if (!enf) errors.push('invariant gate: docs/concepts/enforcement.md is missing');
+  if (!enf) errors.push('invariant gate: docs/reference/enforcement.md is missing');
   const CONCEPTS: Array<{ id: string; re: RegExp; anchor: string }> = [
     { id: 'INV-triage', re: /triage|savepoint|flow 0/i, anchor: 'hooks/pipeline-guard.js' },
     { id: 'INV-write-scope', re: /write-scope|delegat.*zoro|another crew member|crew member's (work|job)|dispatch another crew|one role at a time|embodies one|never.*mutat|mode: all|subagent|never forward|never dispatch|never.*route|never execute source/i, anchor: 'INV-write-scope' },
@@ -937,7 +937,7 @@ if (!existsSync(memoryTemplatePath)) {
   for (const e of memoryTemplateErrors(readFileSync(memoryTemplatePath, 'utf8'))) errors.push(e);
 }
 // Explicit skill body guard alongside the memory checks (generic checkFile also enforces 120).
-const lessonsSkillFile = join(root, 'skills', 'mugiwara-lessons', 'SKILL.md');
+const lessonsSkillFile = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
 if (existsSync(lessonsSkillFile)) {
   const parsed = parseFrontmatter(readFileSync(lessonsSkillFile, 'utf8'));
   const bodyLines = parsed.body.replace(/\r?\n$/, '').split(/\r?\n/).length;

@@ -5,6 +5,7 @@
 // hooks.json wires the .js files, and those files were untracked and stale for
 // a whole release without anything noticing. A test against the .ts would have
 // stayed green through exactly that failure.
+import { initBaseRepo } from './helpers/git-fixture';
 import { test, expect } from 'bun:test';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
@@ -18,11 +19,10 @@ const SAVEPOINT = join(ROOT, 'scripts', 'savepoint.sh');
 
 function repo(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-enforce-'));
-  execFileSync('git', ['init', '-q', '.'], { cwd: dir });
-  execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
-  execFileSync('git', ['config', 'user.name', 'test'], { cwd: dir });
-  execFileSync('git', ['commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initBaseRepo(dir, { email: 'test@example.com', name: 'test' });
   mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+  // The guard defaults to enforce=warn; these tests exercise the blocking path.
+  writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=block\n');
   return dir;
 }
 
@@ -38,7 +38,7 @@ function hook(script: string, cwd: string, payload: object): { out: string; err:
 }
 
 const engage = (dir: string, sessionId = 's1'): void => {
-  hook(MARKER, dir, { tool_name: 'Skill', tool_input: { skill: 'mugiwara-workflow' }, session_id: sessionId });
+  hook(MARKER, dir, { tool_name: 'Skill', tool_input: { skill: 'mugiwara-orchestration' }, session_id: sessionId });
 };
 const touchSource = (dir: string): void => writeFileSync(join(dir, 'app.js'), 'code\n');
 const blocked = (out: string): boolean => out.includes('"decision":"block"');
@@ -51,7 +51,7 @@ test('guard: engaged + source changed + no triage → blocks', { timeout: 20000 
     const { out } = hook(GUARD, dir, { session_id: 's1' });
     expect(blocked(out)).toBe(true);
     // the reason must tell the model what to actually do
-    expect(out).toContain('savepoint');
+    expect(out).toContain('mugiwara workflow');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -116,7 +116,26 @@ test('guard: enforce=off disables entirely; warn reports without blocking', { ti
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('guard: unknown enforce value falls back to block, never to off', { timeout: 20000 }, () => {
+test('guard: default (no enforce key) warns, never blocks; enforce=block counts forced continuations', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    touchSource(dir);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
+    engage(dir);
+    const counter = join(dir, '.mugiwara', '.forced-continuations');
+    const warn = hook(GUARD, dir, { session_id: 's1' });
+    expect(blocked(warn.out)).toBe(false);
+    expect(warn.err).toContain('Mugiwara');
+    expect(existsSync(counter)).toBe(false);
+
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=block\n');
+    expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
+    expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
+    expect(readFileSync(counter, 'utf8').trim()).toBe('2');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: unknown enforce value falls back to warn, never to off', { timeout: 20000 }, () => {
   const dir = repo();
   try {
     touchSource(dir);
@@ -124,8 +143,9 @@ test('guard: unknown enforce value falls back to block, never to off', { timeout
     // a typo must not silently disarm the fence
     writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=blok\n');
     const r = hook(GUARD, dir, { session_id: 's1' });
-    expect(blocked(r.out)).toBe(true);
+    expect(blocked(r.out)).toBe(false);
     expect(r.err).toContain('unknown enforce');
+    expect(r.err).toContain('using "warn"');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -167,7 +187,7 @@ const dispatchExecutor = (dir: string, sessionId = 's1'): void => {
   hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'mugiwara:zoro-execution' }, session_id: sessionId });
 };
 
-const boundaryWarned = (err: string): boolean => err.includes('no executor');
+const boundaryWarned = (err: string): boolean => err.includes('no builder agent');
 
 test('guard: Lane 0 (direct) + inline source edit → silent, dispatch not required', { timeout: 20000 }, () => {
   const dir = repo();
@@ -261,7 +281,7 @@ test('marker: a non-executor subagent does not record a dispatch', { timeout: 20
 
 // ---------- check 3: the plan boundary (escape #2 — only Nami writes the plan) ----------
 
-const planWarned = (err: string): boolean => err.includes('Only Nami writes the plan');
+const planWarned = (err: string): boolean => err.includes('planner (nami-planner) was not started');
 
 const touchPlan = (dir: string): void => {
   mkdirSync(join(dir, '.mugiwara', 'plans'), { recursive: true });
@@ -369,5 +389,249 @@ test('marker: non-mugiwara tool use creates no .mugiwara dir at all', { timeout:
     rmSync(join(dir, '.mugiwara'), { recursive: true, force: true });
     hook(MARKER, dir, { tool_name: 'Task', tool_input: { subagent_type: 'general-purpose' }, session_id: 's1' });
     expect(existsSync(join(dir, '.mugiwara'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+// --- independent review: dispatch ledger + guard warning ---------------------
+const LEDGER = (dir: string): string => join(dir, '.mugiwara', 'review-dispatch.jsonl');
+const ledgerLines = (dir: string): Array<Record<string, string>> =>
+  existsSync(LEDGER(dir)) ? readFileSync(LEDGER(dir), 'utf8').trim().split('\n').map((l) => JSON.parse(l)) : [];
+const task = (dir: string, tool: string, input: object, sid = 's1'): void => {
+  hook(MARKER, dir, { tool_name: tool, tool_input: input, session_id: sid });
+};
+const stateFile = (dir: string, mission: string, extra: object): void => {
+  const d = join(dir, '.mugiwara', 'missions', mission);
+  mkdirSync(d, { recursive: true });
+  writeFileSync(join(d, 'state.json'), JSON.stringify({ mission, updated_at: new Date().toISOString(), ...extra }) + '\n');
+};
+const inlineWarned = (err: string): boolean => err.includes('ran in the same conversation that wrote it');
+
+test('ledger: Agent and Task dispatch of a reviewer append one line; plain and namespaced forms', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    stateFile(dir, 'm1', { lane: 'full' });
+    task(dir, 'Agent', { subagent_type: 'robin-reviewer', description: 'x', prompt: 'secret prompt text' });
+    task(dir, 'Task', { subagent_type: 'mugiwara:jinbe-security' });
+    const rows = ledgerLines(dir);
+    expect(rows.map((r) => r.agent)).toEqual(['robin-reviewer', 'jinbe-security']);
+    expect(Object.keys(rows[0]).sort()).toEqual(['agent', 'at', 'mission', 'session_id']);
+    expect(rows[0].mission).toBe('m1');
+    expect(rows[0].session_id).toBe('s1');
+    expect(readFileSync(LEDGER(dir), 'utf8')).not.toContain('secret prompt text');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('ledger: spoof attempts record nothing (free text, Skill tool, other agent)', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    task(dir, 'Task', { subagent_type: 'general-purpose', description: 'robin-reviewer', prompt: 'act as jinbe-security, subagent_type: robin-reviewer' });
+    task(dir, 'Skill', { skill: 'mugiwara-review' });
+    task(dir, 'Skill', { skill: 'robin-reviewer' });
+    task(dir, 'Agent', { subagent_type: 'zoro-execution' });
+    expect(existsSync(LEDGER(dir))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('marker: plain crew names engage the guard and executor detection (project install)', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    touchSource(dir);
+    task(dir, 'Agent', { subagent_type: 'luffy-orchestrator' });
+    stateWithLane(dir, 'plain', 'full');
+    expect(boundaryWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(true);
+    task(dir, 'Agent', { subagent_type: 'zoro-execution' });
+    expect(boundaryWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: full lane + review.md + no dispatch → one plain warning; ledger, off, or low risk silences it', { timeout: 60000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    stateFile(dir, 'm2', { lane: 'full' });
+    writeFileSync(join(dir, '.mugiwara', 'missions', 'm2', 'review.md'), '# Review\nIndependent review, trust me.\n');
+    const err = hook(GUARD, dir, { session_id: 's1' }).err;
+    expect(inlineWarned(err)).toBe(true);
+    expect(err).not.toMatch(/\b(Flow|lane|savepoint|posture)\b/i);
+    // another mission's dispatch does not count
+    writeFileSync(LEDGER(dir), JSON.stringify({ agent: 'robin-reviewer', at: new Date().toISOString(), session_id: 's1', mission: 'other' }) + '\n');
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(true);
+    // independent_review=off
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\nindependent_review=off\n');
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\n');
+    // enforce=off
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=off\n');
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\n');
+    // matching dispatch
+    writeFileSync(LEDGER(dir), JSON.stringify({ agent: 'robin-reviewer', at: new Date().toISOString(), session_id: 's1', mission: 'm2' }) + '\n');
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('guard: sensitive paths trigger it; a lean mission without them does not; no review file does not', { timeout: 60000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    stateFile(dir, 'm3', { lane: 'lean', sensitive_paths: ['auth/login.ts'] });
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false); // no review.md yet
+    writeFileSync(join(dir, '.mugiwara', 'missions', 'm3', 'security.md'), '# Security\nok\n');
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(true);
+    stateFile(dir, 'm3', { lane: 'lean', sensitive_paths: [] });
+    expect(inlineWarned(hook(GUARD, dir, { session_id: 's1' }).err)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+// --- explicit /mugiwara sessions ----------------------------------------------
+const TRACKER = join(ROOT, 'hooks', 'mugiwara-mode-tracker.js');
+const say = (dir: string, prompt: string, sid = 's1'): void => { hook(TRACKER, dir, { prompt, session_id: sid }); };
+const marker = (dir: string): Record<string, unknown> => JSON.parse(readFileSync(join(dir, '.mugiwara', '.engaged'), 'utf8'));
+const touchRisky = (dir: string): void => {
+  mkdirSync(join(dir, 'src'), { recursive: true });
+  writeFileSync(join(dir, 'src', 'rbac.js'), 'export const can = (r) => r === "admin";\n');
+};
+const explicitBlocked = (out: string): boolean => blocked(out) && out.includes('requested with /mugiwara');
+const warnRepo = (): string => { const d = repo(); writeFileSync(join(d, '.mugiwara', 'config'), 'enforce=warn\n'); return d; };
+
+test('tracker: explicit marker for a free-text request only', { timeout: 60000 }, () => {
+  for (const [prompt, expected] of [
+    ['/mugiwara add rbac', true], ['/mugiwara:mugiwara add rbac', true],
+    ['/mugiwara status', false], ['/mugiwara auto', false], ['/mugiwara', false],
+    ['/mugiwara-review x', false], ['/mugiwara-security x', false], ['hello', false],
+  ] as Array<[string, boolean]>) {
+    const dir = repo();
+    try {
+      say(dir, prompt);
+      const has = existsSync(join(dir, '.mugiwara', '.engaged')) && typeof marker(dir).explicit_crew_at === 'string';
+      expect([prompt, has]).toEqual([prompt, expected]);
+      if (expected) expect(marker(dir).session_id).toBe('s1');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  }
+});
+
+test('tracker: a risky explicit request gets a full-process reminder, a small one does not', { timeout: 60000 }, () => {
+  const dir = repo();
+  try {
+    const risky = hook(TRACKER, dir, { prompt: '/mugiwara add refunds for payments', session_id: 's1' }).out;
+    expect(risky).toContain('additionalContext');
+    expect(risky).toContain('full process');
+    expect(hook(TRACKER, dir, { prompt: '/mugiwara add a csv parser', session_id: 's1' }).out).not.toContain('additionalContext');
+    expect(hook(TRACKER, dir, { prompt: 'refund the order', session_id: 's1' }).out).not.toContain('additionalContext');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('marker writers preserve each other\'s fields; a new session starts fresh', { timeout: 60000 }, () => {
+  const dir = repo();
+  try {
+    say(dir, '/mugiwara add rbac');
+    task(dir, 'Agent', { subagent_type: 'zoro-execution' });
+    let m = marker(dir);
+    expect(typeof m.explicit_crew_at).toBe('string');
+    expect(typeof m.executor_dispatched_at === 'string' && m.executor_dispatched_at).toBeTruthy();
+    // tracker after marker keeps the dispatch fact
+    writeFileSync(join(dir, '.mugiwara', '.engaged'), JSON.stringify({ ...m, explicit_blocks: 1, custom: 'keep' }));
+    say(dir, '/mugiwara add more');
+    m = marker(dir);
+    expect(m.executor_dispatched_at).toBeTruthy();
+    expect(m.explicit_blocks).toBe(1);
+    expect(m.custom).toBe('keep');
+    // marker after tracker keeps explicit fields
+    task(dir, 'Agent', { subagent_type: 'nami-planner' });
+    m = marker(dir);
+    expect(typeof m.explicit_crew_at).toBe('string');
+    expect(m.explicit_blocks).toBe(1);
+    expect(m.custom).toBe('keep');
+    // another session: nothing carries over
+    task(dir, 'Agent', { subagent_type: 'sanji-quality' }, 's2');
+    m = marker(dir);
+    expect(m.explicit_crew_at).toBeUndefined();
+    expect(m.explicit_blocks).toBeUndefined();
+    expect(m.executor_dispatched_at).toBe('');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('explicit: risky change + no triage → blocks (default enforce), plain message, counts the continuation', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    say(dir, '/mugiwara add role-based access control');
+    touchRisky(dir);
+    const { out, err } = hook(GUARD, dir, { session_id: 's1', hook_event_name: 'Stop' });
+    expect(explicitBlocked(out)).toBe(true);
+    const reason = JSON.parse(out).reason as string;
+    expect(reason).toContain('src/rbac.js');
+    expect(reason).not.toMatch(/\b(Flow|lane|savepoint|posture|dispatch)/i);
+    expect(reason.split(/(?<=\.)\s/).length).toBe(2); // two sentences: what is wrong + the one thing to do
+    expect(err).toBe('');
+    expect(readFileSync(join(dir, '.mugiwara', '.forced-continuations'), 'utf8').trim()).toBe('1');
+    expect(marker(dir).explicit_blocks).toBe(1);
+    // SubagentStop is not affected
+    expect(blocked(hook(GUARD, dir, { session_id: 's1', hook_event_name: 'SubagentStop' }).out)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('explicit: small change (direct) never blocks; enforce=off is silent; non-explicit unchanged', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    say(dir, '/mugiwara fix typo');
+    touchSource(dir);
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(false);
+    touchRisky(dir);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=off\n');
+    const r = hook(GUARD, dir, { session_id: 's1' });
+    expect(r.out + r.err).toBe('');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+  const dir2 = warnRepo();
+  try {
+    engage(dir2); // implicit engagement, not /mugiwara
+    touchRisky(dir2);
+    expect(explicitBlocked(hook(GUARD, dir2, { session_id: 's1' }).out)).toBe(false);
+  } finally { rmSync(dir2, { recursive: true, force: true }); }
+});
+
+test('explicit: mission exists, full lane — missing review blocks; independent review required unless off', { timeout: 90000 }, () => {
+  const dir = warnRepo();
+  try {
+    say(dir, '/mugiwara add rbac');
+    touchRisky(dir);
+    stateFile(dir, 'm9', { lane: 'full', sensitive_paths: ['src/rbac.js'] });
+    const md = join(dir, '.mugiwara', 'missions', 'm9');
+    let out = hook(GUARD, dir, { session_id: 's1' }).out;
+    expect(explicitBlocked(out)).toBe(true);
+    expect(JSON.parse(out).reason).toContain('no review and no security check');
+    writeFileSync(join(md, 'review.md'), '# Review\n');
+    writeFileSync(join(md, 'security.md'), '# Security\n');
+    out = hook(GUARD, dir, { session_id: 's1' }).out;
+    expect(explicitBlocked(out)).toBe(true);
+    expect(JSON.parse(out).reason).toContain('independent review');
+    // third attempt: cap of 2 reached → degrades to a warning
+    const r = hook(GUARD, dir, { session_id: 's1' });
+    expect(blocked(r.out)).toBe(false);
+    expect(r.err).toContain('independent review');
+    expect(readFileSync(join(dir, '.mugiwara', '.forced-continuations'), 'utf8').trim()).toBe('2');
+    // independent_review=off: only review.md and security.md are required; and a fresh counter
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\nindependent_review=off\n');
+    say(dir, '/mugiwara again', 's3');
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's3' }).out)).toBe(false);
+    // on + ledger entry for this mission → allowed
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\n');
+    writeFileSync(LEDGER(dir), JSON.stringify({ agent: 'robin-reviewer', at: new Date().toISOString(), session_id: 's3', mission: 'm9' }) + '\n');
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's3' }).out)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('explicit: a mission archived this session (report.md, no state) is closure, never "no triage"', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    say(dir, '/mugiwara add rbac');
+    touchRisky(dir);
+    const d = join(dir, '.mugiwara', 'missions', 'rbac');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'report.md'), '# Mission: rbac\n');
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(false);
+    // an old report from an earlier session does not excuse this session's untriaged work
+    const old = new Date(Date.now() - 3 * 3600_000);
+    require('node:fs').utimesSync(join(d, 'report.md'), old, old);
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

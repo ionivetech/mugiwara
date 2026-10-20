@@ -8,6 +8,7 @@ import { execSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { initBaseRepo } from './helpers/git-fixture';
 
 const SAVEPOINT = join(import.meta.dirname, '..', 'scripts', 'savepoint.sh');
 
@@ -21,8 +22,7 @@ function runSavepoint(dir: string, args: string, envExtra?: Record<string, strin
 }
 
 function setupGit(dir: string) {
-  execSync('git init && git config user.email test@test.com && git config user.name Test', { cwd: dir });
-  execSync('git commit --allow-empty -m base', { cwd: dir });
+  initBaseRepo(dir);
 }
 
 function statePath(dir: string, mission: string, member = '') {
@@ -528,3 +528,32 @@ test('todos mirror wins over plan.md when it has boxes (provenance 0/N fix)', { 
 });
 
 import { dirname } from 'node:path';
+
+test('two [PARALLEL] tasks below the full lane batch inline, never dispatch workers', { timeout: 60000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-posture-'));
+  try {
+    setupGit(dir);
+    const missionDir = join(dir, '.mugiwara', 'missions', 'pm');
+    mkdirSync(missionDir, { recursive: true });
+    writeFileSync(join(missionDir, 'plan.md'), '# Plan\n\n## Wave 1\n- [ ] T1 [PARALLEL] a\n- [ ] T2 [PARALLEL] b\n');
+    runSavepoint(dir, 'pm "" 2 guided');
+    const state = JSON.parse(readFileSync(statePath(dir, 'pm'), 'utf8'));
+    expect(state.lane).not.toBe('full');
+    expect(state.posture).toBe('inline-batched');
+    expect(state.posture_reason).toContain('batch them inline');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('long flags work on the shell fallback and a name never starts with a dash', { timeout: 60000 }, () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-flags-'));
+  try {
+    setupGit(dir);
+    runSavepoint(dir, 'fl --flow 2 --mode auto');
+    const state = JSON.parse(readFileSync(statePath(dir, 'fl'), 'utf8'));
+    expect(String(state.flow)).toBe('2');
+    expect(state.mode).toBe('auto');
+    expect(readdirSync(join(dir, '.mugiwara', 'missions', 'fl')).some((f) => f.startsWith('-'))).toBe(false);
+    expect(() => runSavepoint(dir, '-bad "" 1 guided')).toThrow();
+    expect(() => runSavepoint(dir, 'fl2 --member --evil 1 guided')).toThrow();
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

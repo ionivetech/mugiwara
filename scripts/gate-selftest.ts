@@ -366,9 +366,9 @@ if (!existsSync(skillsDoc)) {
 
 // --- Index budget ---
 console.log('\nIndex budget');
-const budgetSkillFile = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+const budgetSkillFile = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
 if (!existsSync(budgetSkillFile)) {
-  console.log('  ⚠  mugiwara-workflow not found, skipping');
+  console.log('  ⚠  mugiwara-orchestration not found, skipping');
 } else {
   const original = readFileSync(budgetSkillFile, 'utf8');
   try {
@@ -482,9 +482,9 @@ if (!existsSync(brainstormSkill)) {
 
 // --- F2: red-flags gate — strip the heading from one skill, prove red ---
 console.log('\nF2 — red-flags gate');
-const redSkill = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+const redSkill = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
 if (!existsSync(redSkill)) {
-  console.log('  ⚠  mugiwara-workflow/SKILL.md not found, skipping');
+  console.log('  ⚠  mugiwara-orchestration/SKILL.md not found, skipping');
 } else {
   const original = readFileSync(redSkill, 'utf8');
   try {
@@ -516,9 +516,9 @@ if (!existsSync(wbSkill)) {
 
 // --- F14: agent-count gate — flip an internal agent to user-facing, prove red ---
 console.log('\nF14 — agent-count gate');
-const countAgent = join(root, 'content', 'agents', 'eval-runner.md');
+const countAgent = join(root, 'content', 'agents', 'skeptic-verifier.md');
 if (!existsSync(countAgent)) {
-  console.log('  ⚠  eval-runner.md not found, skipping');
+  console.log('  ⚠  skeptic-verifier.md not found, skipping');
 } else {
   const original = readFileSync(countAgent, 'utf8');
   try {
@@ -690,7 +690,7 @@ console.log('\nT3 — lane-aware gates');
 // --- B1: CLI availability — remove section → content validation fails ---
 console.log('\nB1 — CLI availability');
 {
-  const wf = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+  const wf = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
   const original = readFileSync(wf, 'utf8');
   try {
     const b1Pattern = /## CLI availability[\s\S]*?## Artifact trust/;
@@ -700,11 +700,11 @@ console.log('\nB1 — CLI availability');
       failed++;
     } else {
       writeFileSync(wf, b1Broken);
-      assert('missing CLI availability → grep fails', false, () => run('B1-grep', 'grep -q "CLI availability" content/skills/mugiwara-workflow/SKILL.md'));
+      assert('missing CLI availability → grep fails', false, () => run('B1-grep', 'grep -q "CLI availability" content/skills/mugiwara-orchestration/SKILL.md'));
     }
   } finally {
     writeFileSync(wf, original);
-    assert('restored → content validation passes', true, () => run('B1-restore', 'grep -q "CLI availability" content/skills/mugiwara-workflow/SKILL.md'));
+    assert('restored → content validation passes', true, () => run('B1-restore', 'grep -q "CLI availability" content/skills/mugiwara-orchestration/SKILL.md'));
   }
 }
 
@@ -793,7 +793,7 @@ console.log('\nB5 — spike budget');
       failed++;
     } else {
       writeFileSync(baseFile, broken);
-      assert('BUDGET_spike 3000 < LANE_BASE 5411 → lane-base fails', false, () => run('B5', 'bun scripts/lane-base.ts'));
+      assert('BUDGET_spike 3000 < LANE_BASE 5311 → lane-base fails', false, () => run('B5', 'bun scripts/lane-base.ts'));
     }
   } finally {
     writeFileSync(baseFile, original);
@@ -1188,10 +1188,10 @@ console.log('\nN1 — initiative case mutation');
   }
 }
 
-// --- N2 mutation: ANSI escape back into wave-banners.md → banner-format red ---
+// --- N2 mutation: ANSI escape back into flow-banners.md → banner-format red ---
 console.log('\nN2 — banner-format mutation');
 {
-  const f = join(root, 'references', 'wave-banners.md');
+  const f = join(root, 'references', 'flow-banners.md');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = `${original}\nTerminal: wrap in ANSI \`\\x1b[38;2;R;G;Bm\` ... \`\\x1b[0m\`.\n`;
@@ -1304,10 +1304,10 @@ console.log('\nN7 — lessons-import mutation');
 // --- N8 mutation: `/mugiwara mode` slash form → in-session phrase check red ---
 console.log('\nN8 — slash-mode mutation');
 {
-  const f = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+  const f = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
   const original = readFileSync(f, 'utf8');
   try {
-    const broken = original.replace('Say `mugiwara mode <guided|semi|auto>` in session', '`/mugiwara mode <guided|semi|auto>` applies');
+    const broken = original.replace('The in-session phrase `mugiwara mode <guided|semi|auto>`', 'The slash command `/mugiwara mode <guided|semi|auto>`');
     if (broken === original) {
       console.error('✗ N8: mutation target not found');
       failed++;
@@ -1351,8 +1351,8 @@ console.log('\nT1 — removed-key resurrection mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      "  '# enforce=block',",
-      "  '# team_member=jane-doe  # resurrected key (must fail)',\n  '# enforce=block',",
+      "  '# enforce=warn',",
+      "  '# team_member=jane-doe  # resurrected key (must fail)',\n  '# enforce=warn',",
     );
     if (broken === original) {
       console.error('✗ T1: mutation target not found');

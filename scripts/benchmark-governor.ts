@@ -6,9 +6,6 @@
 
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { budgetForLane } from '../src/cost.ts';
-import { checkCircuitBreaker, projectBudget } from '../src/adaptive-budget.ts';
-import { isFocusedReasoning } from '../src/cognition.ts';
 import {
   detectSlopSignal,
   decideIntervention,
@@ -141,21 +138,7 @@ export function evaluateStopSlopScenario(scenario: StopSlopScenario): {
   // dispatch to category detectors for specific scenario ids
   const id = scenario.id;
 
-  // category detectors (pure, no FS)
-  if (id === 'repeated-reasoning') {
-    const r = isFocusedReasoning({
-      question: scenario.id,
-      evidence_available: (scenario.evidence_delta ?? 0) !== 0,
-      speculative_paths: 0,
-      reconsiderations: scenario.count ?? scenario.repeated_reads ?? 0,
-      hypothetical_requirements: false,
-      unrelated_implementations: 0,
-    });
-    if (!r.focused) {
-      const iv = decideIntervention({ kind: 'reasoning', slop: true, severity: scenario.severity ?? 'wasteful', progress_stalled: scenario.progress_stalled ?? true });
-      return { slop: true, intervention: iv.intervention, reason: `slop: reasoning — ${r.reason}` };
-    }
-  }
+  // category detectors (pure, no FS); other ids use the generic signal path below
   if (id === 'repeated-reads' || id === 'excessive-context') {
     const r = detectContextSlop({
       repeated_reads: scenario.repeated_reads ?? scenario.count ?? 0,
@@ -263,17 +246,11 @@ export type StressWorkload = {
   files_changed?: string[];
   actual?: number;
   expected?: number;
-  progress_delta?: number;
-  scope_expanded?: boolean;
-  evidence_delta?: number;
-  stages?: number;
-  projected?: number;
   overhead?: number;
 };
 
 export function evaluateStressWorkload(workload: StressWorkload): {
   pass: boolean;
-  breaker_tripped?: boolean;
   reason: string;
 } {
   // large repository — many files but declared scope covers them → pass
@@ -291,43 +268,10 @@ export function evaluateStressWorkload(workload: StressWorkload): {
     return { pass: true, reason: `large-repo pass — ${files} files within declared scope` };
   }
 
-  // long mission — many stages, projection within lane budget
-  if (workload.id === 'long-mission') {
-    const stages = workload.stages ?? 9;
-    const proj = projectBudget({ current: 5000, remaining_required: stages * 1000, expected_conditional: 2000, possible_healing: 1000 });
-    const budget = budgetForLane('full');
-    const over = proj.projected_max > budget;
-    if (over) return { pass: false, reason: `long-mission fail — projected_max ${proj.projected_max} > budget ${budget}` };
-    return { pass: true, reason: `long-mission pass — projected_max ${proj.projected_max} ≤ budget ${budget} (${stages} stages)` };
-  }
-
-  // runaway — 2× expected with no progress → breaker tripped + fail
-  if (workload.id === 'runaway') {
-    const expected = workload.expected ?? 1000;
-    const actual = workload.actual ?? expected * 2;
-    const progress_delta = workload.progress_delta ?? 0;
-    const scope_expanded = workload.scope_expanded ?? false;
-    const evidence_delta = workload.evidence_delta ?? 0;
-    const cb = checkCircuitBreaker({ expected, actual, progress_delta, scope_expanded, evidence_delta });
-    if (cb.tripped) {
-      return { pass: false, breaker_tripped: true, reason: `runaway fail — breaker tripped: ${cb.reason}` };
-    }
-    return { pass: !cb.tripped, breaker_tripped: cb.tripped, reason: cb.reason };
-  }
-
   // generic isOverBudget path
   if (workload.actual !== undefined && workload.expected !== undefined) {
-    const overhead = workload.overhead ?? 0;
-    const ob = isOverBudget(workload.actual, workload.expected, overhead);
-    const cb = checkCircuitBreaker({
-      expected: workload.expected,
-      actual: workload.actual,
-      progress_delta: workload.progress_delta ?? 0,
-      scope_expanded: workload.scope_expanded ?? false,
-      evidence_delta: workload.evidence_delta ?? 0,
-    });
-    if (cb.tripped) return { pass: false, breaker_tripped: true, reason: cb.reason };
-    return { pass: !ob.over, breaker_tripped: cb.tripped, reason: ob.reason };
+    const ob = isOverBudget(workload.actual, workload.expected, workload.overhead ?? 0);
+    return { pass: !ob.over, reason: ob.reason };
   }
 
   return { pass: true, reason: `${workload.id} — no stress condition` };
@@ -401,7 +345,7 @@ Usage: bun scripts/benchmark-governor.ts [--help]
 Runs:
   - cost suite (§48): ${THRESHOLDS.workloads.length} workloads, tokens ≤ projected+overhead, context ≤ max, evidence ≥ min
   - anti-slop suite (§45): 12 scenarios, detect→classify→intervene
-  - stress: large-repo / long-mission / runaway (bench-only, no runtime)
+  - stress: large-repo (bench-only, no runtime)
 Thresholds: scripts/benchmark-thresholds.json (ratchet — only moves on explicit update)
 Exit: 0 all pass, 1 any threshold/regression fail`);
 }
@@ -468,21 +412,13 @@ export function runHarness(opts?: { thresholds?: Thresholds }): {
 
   const stressInputs: StressWorkload[] = [
     { id: 'large-repo', files_touched: 50, declared_scope: Array.from({ length: 50 }, (_, i) => `file${i}.ts`) },
-    { id: 'long-mission', stages: 9 },
-    { id: 'runaway', expected: 10000, actual: 20000, progress_delta: 0, scope_expanded: false, evidence_delta: 0 },
   ];
   const stressResults = stressInputs.map((w) => {
     const r = evaluateStressWorkload(w);
     return { id: w.id, pass: r.pass, reason: r.reason };
   });
 
-  // runaway is expected to fail (breaker tripped) — harness reports it but does not fail CI for the expected failure?
-  // For CI, the harness fails only if workloads/slop mismatch expectations. Runaway's breaker tripped is the correct measurement.
-  // So we treat runaway breaker-tripped as a passing measurement (the detector works), not a CI failure.
-  const stressOk = stressResults.every((r) => {
-    if (r.id === 'runaway') return r.reason.includes('breaker tripped');
-    return r.pass;
-  });
+  const stressOk = stressResults.every((r) => r.pass);
 
   // slop: all 12 must be detected as slop (they are slop scenarios)
   const slopOk = slopResults.every((r) => r.slop);
@@ -513,10 +449,9 @@ function main(): void {
   for (const s of result.slop) {
     console.log(`  ${s.slop ? '✓' : '✗'} ${s.id}: ${s.intervention} — ${s.reason}`);
   }
-  console.log(`\nStress (large/long/runaway):`);
+  console.log(`\nStress (large-repo):`);
   for (const s of result.stress) {
-    const icon = s.id === 'runaway' ? (s.reason.includes('breaker tripped') ? '✓' : '✗') : s.pass ? '✓' : '✗';
-    console.log(`  ${icon} ${s.id}: ${s.reason}`);
+    console.log(`  ${s.pass ? '✓' : '✗'} ${s.id}: ${s.reason}`);
   }
   console.log(`\nRegressions: ${result.regressions.every((r) => !r.regression) ? 'none' : result.regressions.filter((r) => r.regression).map((r) => r.id).join(', ')}`);
   console.log(`\nThresholds: scripts/benchmark-thresholds.json (ratchet)`);

@@ -2,7 +2,7 @@
 // scripts/coverage-gate.ts — enforce the `coverage_new` / `coverage_modified`
 // thresholds declared in `.mugiwara/config` against the files THIS diff adds
 // and changes, not against a global project number. Two keys exist precisely
-// because the two populations are judged differently (mugiwara-gates SKILL.md
+// because the two populations are judged differently (mugiwara-quality references/gates.md
 // §Coverage gate); a global percentage would collapse them into one and let an
 // untested new file hide behind an old well-tested one.
 //
@@ -41,13 +41,14 @@ function config(key: string): string | undefined {
 
 /**
  * Fallbacks, used only when the key is absent from config. They must match the
- * shipped defaults in src/config.ts, which are new >= 85 and modified >= 85 —
+ * shipped defaults in src/config.ts (`coverage=85`, both kinds) —
  * this comment claimed 90/80, the reverse, and the fallbacks matched the claim
  * rather than the product. A key set to 0 means no threshold.
  */
 function threshold(key: string, fallback: number): number {
-  const raw = config(key);
-  if (raw === undefined || raw === '') return fallback;
+  // `coverage` sets both thresholds; the legacy per-kind key still wins when present.
+  const raw = [config(key), config('coverage')].find((v) => v !== undefined && v !== '');
+  if (raw === undefined) return fallback;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0 || n > 100) {
     console.log(`coverage-gate: ignoring unparseable ${key}="${raw}", using ${fallback}`);

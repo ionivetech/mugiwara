@@ -9,14 +9,13 @@ import { execSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { initBaseRepo } from './helpers/git-fixture';
 
 const LANE = join(import.meta.dirname, '..', 'scripts', 'lane.sh');
 const SAVEPOINT = join(import.meta.dirname, '..', 'scripts', 'savepoint.sh');
 
 function setupGit(dir: string) {
-  execSync('git init && git config user.email test@test.com && git config user.name Test', { cwd: dir });
-  execSync('git commit --allow-empty -m base', { cwd: dir });
-  execSync('git checkout -b feat-w', { cwd: dir });
+  initBaseRepo(dir, { branch: 'feat-w' });
 }
 
 function commitFiles(dir: string, files: Record<string, string>) {

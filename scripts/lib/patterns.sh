@@ -51,7 +51,7 @@ HARNESS_PAT="\.claude/|\.opencode/|\.github/(instructions|agents)/|\.gemini/mugi
 # same manifest savepoint already trusts for skill_version.
 harness_excluded() {
   local root
-  root=$(git rev-parse --show-toplevel 2>/dev/null || echo .)
+  root="${MUGI_TOPLEVEL:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
   ! grep -qE '"name"[[:space:]]*:[[:space:]]*"(@[^"/]+/)?mugiwara"' "$root/package.json" 2>/dev/null
 }
 
@@ -75,7 +75,7 @@ drop_harness() {
 mugiwara_rel() {
   local d="${MUGIWARA_DIR:-.mugiwara}" root
   case "$d" in
-    /*) root=$(git rev-parse --show-toplevel 2>/dev/null || true)
+    /*) root="${MUGI_TOPLEVEL:-$(git rev-parse --show-toplevel 2>/dev/null || true)}"
         [ -n "$root" ] && d="${d#"$root"/}"
         # symlinked repo roots (/var vs /private/var on macOS) defeat the
         # prefix strip; fall back to the leaf name, which is what git reports.

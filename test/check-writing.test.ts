@@ -17,23 +17,24 @@ const CLEAN = [
 
 describe('checkWritingFile', () => {
   it('clean page passes with zero errors', () => {
-    expect(checkWritingFile('docs/concepts/lanes.md', CLEAN)).toEqual([]);
+    expect(checkWritingFile('docs/concepts/config.md', CLEAN)).toEqual([]);
   });
 
   it('page over cap +15% fails naming file and counts', () => {
-    const text = `${CLEAN}\n${'word '.repeat(700)}`;
-    const errs = checkWritingFile('docs/concepts/lanes.md', text);
+    const cap = WRITING_CAPS['docs/concepts/config.md'];
+    const text = `${CLEAN}\n${'word '.repeat(Math.ceil(cap * 1.2))}`;
+    const errs = checkWritingFile('docs/concepts/config.md', text);
     expect(errs.length).toBe(1);
-    expect(errs[0]).toContain('docs/concepts/lanes.md');
-    expect(errs[0]).toContain('exceeds cap 600');
+    expect(errs[0]).toContain('docs/concepts/config.md');
+    expect(errs[0]).toContain(`exceeds cap ${cap}`);
   });
 
   it('two tables over 12 rows fail, one passes', () => {
     const big = Array.from({ length: 13 }, (_, i) => `| a${i} | b |`).join('\n');
     const two = `${CLEAN}\n\n${big}\n\nbetween\n\n${big}\n`;
-    expect(checkWritingFile('docs/concepts/lanes.md', two).some((e) => e.includes('tables over 12 rows'))).toBe(true);
+    expect(checkWritingFile('docs/concepts/config.md', two).some((e) => e.includes('tables over 12 rows'))).toBe(true);
     const one = `${CLEAN}\n\n${big}\n`;
-    expect(checkWritingFile('docs/concepts/lanes.md', one)).toEqual([]);
+    expect(checkWritingFile('docs/concepts/config.md', one)).toEqual([]);
   });
 
   it('banned word "simply" fails, "simplify" does not (word boundary)', () => {
@@ -60,8 +61,8 @@ describe('checkWritingFile', () => {
 
   it('caps cover every numeric audit target plus README', () => {
     expect(WRITING_CAPS['README.md']).toBe(1800);
-    expect(WRITING_CAPS['docs/concepts/features.md']).toBe(2400);
-    expect(Object.keys(WRITING_CAPS).length).toBeGreaterThan(40);
+    expect(WRITING_CAPS['docs/concepts/crew.md']).toBeGreaterThan(0);
+    expect(Object.keys(WRITING_CAPS).length).toBeGreaterThan(20);
   });
 
   it('stripFences removes fenced spans only', () => {

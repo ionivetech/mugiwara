@@ -279,6 +279,9 @@ describe('heal: status/cost/continue/cover remaining branches', () => {
       writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=auto\n');
       const { out } = await cap(['cost', '--mission', 'with-reg'], dir);
       expect(out).toContain('Cost envelope');
+      expect(out).toContain('Forced continuations (Stop hook blocks): 0');
+      writeFileSync(join(dir, '.mugiwara', '.forced-continuations'), '3\n');
+      expect((await cap(['cost', '--mission', 'with-reg'], dir)).out).toContain('Forced continuations (Stop hook blocks): 3');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 

@@ -130,29 +130,13 @@ describe('evaluateStressWorkload', () => {
     });
     expect(r.pass).toBe(true);
   });
-  it('runaway 2× expected no progress → breaker tripped + fail', () => {
-    const r = evaluateStressWorkload({
-      id: 'runaway',
-      expected: 10000,
-      actual: 20000,
-      progress_delta: 0,
-      scope_expanded: false,
-      evidence_delta: 0,
-    });
-    expect(r.breaker_tripped).toBe(true);
+  it('over expected + overhead → fail', () => {
+    const r = evaluateStressWorkload({ id: 'generic', expected: 10000, actual: 20000, overhead: 1000 });
     expect(r.pass).toBe(false);
-    expect(r.reason).toContain('breaker tripped');
+    expect(r.reason).toContain('over budget');
   });
-  it('runaway with progress → no breaker', () => {
-    const r = evaluateStressWorkload({
-      id: 'runaway',
-      expected: 10000,
-      actual: 20000,
-      progress_delta: 1,
-      scope_expanded: false,
-      evidence_delta: 0,
-    });
-    expect(r.breaker_tripped).toBe(false);
+  it('within expected + overhead → pass', () => {
+    expect(evaluateStressWorkload({ id: 'generic', expected: 10000, actual: 10500, overhead: 1000 }).pass).toBe(true);
   });
 });
 

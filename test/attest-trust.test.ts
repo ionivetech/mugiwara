@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { generatePureKey, pureSign, verifyReport } from '../src/sign.ts';
+import { generatePureKey, pureSign, verifyReport } from '../src/addons/attest/sign.ts';
 import { loadPolicy, extractAttestation, parsePolicyYaml } from '../src/policy.ts';
-import { archiveMission } from '../src/mission.ts';
+import { archiveMission, requireAttestation } from '../src/mission.ts';
 
 function tmpProj(): string {
   return mkdtempSync(join(tmpdir(), 'mugi-trust-proj-'));
@@ -168,7 +168,21 @@ describe('sign --verify trust checks', () => {
 });
 
 describe('attestation.required archive gate', () => {
-  it('fails archive when required but not signed', () => {
+  it('a sync archiveMission call that skipped requireAttestation fails closed', () => {
+    const proj = tmpProj();
+    try {
+      const mdir = join(proj, '.mugiwara', 'missions', 'demo');
+      mkdirSync(join(mdir, 'flows'), { recursive: true });
+      writeFileSync(join(mdir, 'plan.md'), '# plan');
+      writeFileSync(join(mdir, 'flows', '01-execution.md'), 'exec');
+      writeFileSync(join(mdir, 'report.md'), '# report');
+      writeFileSync(join(mdir, 'state.json'), JSON.stringify({ mission: 'demo', lane: 'standard' }));
+      writeFileSync(join(proj, 'mugiwara.policy.yml'), 'attestation:\n  required: true\n');
+      expect(() => archiveMission(proj, 'demo')).toThrow('attestation required but not checked');
+    } finally { rmSync(proj, { recursive: true, force: true }); }
+  });
+
+  it('fails archive when required but not signed', async () => {
     const proj = tmpProj();
     try {
       const mdir = join(proj, '.mugiwara', 'missions', 'demo');
@@ -179,13 +193,13 @@ describe('attestation.required archive gate', () => {
       writeFileSync(join(mdir, 'state.json'), JSON.stringify({ mission: 'demo', lane: 'standard', flow: 3 }));
       writeFileSync(join(proj, 'mugiwara.policy.yml'), 'attestation:\n  required: true\n');
       let threw = '';
-      try { archiveMission(proj, 'demo'); } catch (e) { threw = (e as Error).message; }
+      try { await requireAttestation(proj, 'demo'); } catch (e) { threw = (e as Error).message; }
       expect(threw).toContain('attestation required but report not signed/trusted');
       expect(threw).toContain('closure integrity gate failed');
     } finally { rmSync(proj, { recursive: true, force: true }); }
   });
 
-  it('fails archive when required and signer untrusted', () => {
+  it('fails archive when required and signer untrusted', async () => {
     const proj = tmpProj();
     try {
       const mdir = join(proj, '.mugiwara', 'missions', 'demo');
@@ -200,13 +214,13 @@ describe('attestation.required archive gate', () => {
       pureSign(content, key, { mission: 'demo', commit: 'abc', ts: new Date().toISOString(), pub, outputPath: join(mdir, 'report.md.mugisig') });
       writeFileSync(join(proj, 'mugiwara.policy.yml'), `attestation:\n  required: true\n  trusted_keys:\n    - { id: "other", pubkey: "ed25519:${other}" }\n`);
       let threw = '';
-      try { archiveMission(proj, 'demo'); } catch (e) { threw = (e as Error).message; }
+      try { await requireAttestation(proj, 'demo'); } catch (e) { threw = (e as Error).message; }
       expect(threw).toContain('attestation required');
       expect(threw).toContain('untrusted');
     } finally { rmSync(proj, { recursive: true, force: true }); }
   });
 
-  it('passes archive when required and signed with trusted key', () => {
+  it('passes archive when required and signed with trusted key', async () => {
     const proj = tmpProj();
     try {
       const mdir = join(proj, '.mugiwara', 'missions', 'demo');
@@ -219,7 +233,8 @@ describe('attestation.required archive gate', () => {
       const content = readFileSync(join(mdir, 'report.md'), 'utf8');
       pureSign(content, key, { mission: 'demo', commit: 'abc', ts: new Date().toISOString(), pub, outputPath: join(mdir, 'report.md.mugisig') });
       writeFileSync(join(proj, 'mugiwara.policy.yml'), `attestation:\n  required: true\n  trusted_keys:\n    - { id: "jdoe", pubkey: "ed25519:${pub}" }\n`);
-      const r = archiveMission(proj, 'demo');
+      await requireAttestation(proj, 'demo');
+      const r = archiveMission(proj, 'demo', { attestationChecked: true });
       expect(r.report).toBeTruthy();
       expect(existsSync(join(mdir, 'report.md'))).toBe(true);
     } finally { rmSync(proj, { recursive: true, force: true }); }

@@ -72,8 +72,7 @@ export function selectPosture(input: PostureInput): PostureResult {
   // Dispatch floor: ~132k tokens per worker against ~5k inline (measured).
   // Task count alone never pays for it — lane is the size proxy.
   if (input.independent_tasks >= 2) {
-    const worthDispatch = input.lane === 'full' || input.independent_tasks >= 4;
-    if (!worthDispatch) {
+    if (input.lane !== 'full') {
       return {
         posture: 'inline-batched',
         pause: false,

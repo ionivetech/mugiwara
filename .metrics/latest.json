@@ -1,15 +1,15 @@
 {
-  "retrieval_rank1": 95.6,
-  "retrieval_rank1_rate": "95.6%",
-  "retrieval_probes": 272,
-  "retrieval_rank1_count": 172,
+  "retrieval_rank1": 96.7,
+  "retrieval_rank1_rate": "96.7%",
+  "retrieval_probes": 268,
+  "retrieval_rank1_count": 174,
   "retrieval_positives": 180,
-  "retrieval_negatives": 86,
-  "retrieval_index_size": 21,
-  "retrieval_index_terms": 301,
-  "pointers_total": 166,
-  "pointers_targets": 9,
+  "retrieval_negatives": 82,
+  "retrieval_index_size": 14,
+  "retrieval_index_terms": 239,
+  "pointers_total": 300,
+  "pointers_targets": 10,
   "pointers_broken": 0,
-  "index_size": 21,
-  "updated": "2026-09-29"
+  "index_size": 14,
+  "updated": "2026-10-20"
 }

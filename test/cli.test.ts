@@ -295,7 +295,7 @@ describe('run() — no-install command paths', () => {
       writeFileSync(join(m, 'plan.md'), '# plan');
       writeFileSync(join(m, 'spec.md'), '# spec');
       writeFileSync(join(m, 'decisions.md'), '# decisions');
-      writeFileSync(join(m, 'waves', '01-execution.md'), '# step');
+      writeFileSync(join(m, 'waves', '01-execution.md'), '# step\n\nadded the check');
       writeFileSync(join(m, 'waves', '06-closure.md'), '# closure');
       writeFileSync(join(m, 'state.json'), '{"mission":"live-m","flow":9}');
       const { out } = await capture(['archive', 'live-m'], dir);
@@ -306,9 +306,9 @@ describe('run() — no-install command paths', () => {
       expect(existsSync(join(m, 'waves'))).toBe(false);
       expect(existsSync(join(m, 'plan.md'))).toBe(true);
       const rep = readFileSync(join(m, 'report.md'), 'utf8');
-      expect(rep).toContain('# closure');
-      expect(rep).toContain('## Archived: 01-execution.md');
-      expect(rep).toContain('## Archived: decisions.md');
+      expect(rep).toContain('## Implementation');
+      expect(rep).toContain('## Decisions');
+      expect(rep).not.toContain('Archived:');
       expect(out).toContain('index updated');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
@@ -320,7 +320,7 @@ describe('run() — no-install command paths', () => {
         const d = join(dir, '.mugiwara', 'missions', m);
         mkdirSync(join(d, 'waves'), { recursive: true });
         writeFileSync(join(d, 'plan.md'), '# plan');
-        writeFileSync(join(d, 'waves', '06-closure.md'), '# closure');
+        writeFileSync(join(d, 'waves', '06-closure.md'), '# closure\n\nall done');
         if (!live) writeFileSync(join(d, 'report.md'), '# report');
         if (live) writeFileSync(join(d, 'state.json'), `{"mission":"${m}","flow":5}`);
       };
@@ -331,7 +331,7 @@ describe('run() — no-install command paths', () => {
       expect(out).toContain('cleaned done-m');
       expect(out).not.toContain('live-m');
       expect(existsSync(join(dir, '.mugiwara', 'missions', 'done-m', 'waves'))).toBe(false);
-      expect(readFileSync(join(dir, '.mugiwara', 'missions', 'done-m', 'report.md'), 'utf8')).toContain('## Archived: 06-closure.md');
+      expect(readFileSync(join(dir, '.mugiwara', 'missions', 'done-m', 'report.md'), 'utf8')).toContain('## Closure');
       expect(existsSync(join(dir, '.mugiwara', 'index.md'))).toBe(true);
       // --all without --force: in-flight blocks (process.exit(1))
       const { err } = await capture(['clean', '--include-live'], dir);
@@ -366,7 +366,7 @@ describe('run() — in-process install + uninstall (temp dir, no system writes)'
     const dir = mkdtempSync(join(tmpdir(), 'mugi-cli-install-'));
     try {
       const { out } = await capture(['install', '--yes', '--target', 'claude'], dir);
-      expect(existsSync(join(dir, '.claude', 'skills', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
+      expect(existsSync(join(dir, '.claude', 'skills', 'mugiwara-orchestration', 'SKILL.md'))).toBe(true);
       expect(existsSync(join(dir, '.mugiwara', 'manifest.json'))).toBe(true);
       expect(out).toContain('OK mugiwara');
       expect(out).toContain('Next:');
@@ -379,7 +379,7 @@ describe('run() — in-process install + uninstall (temp dir, no system writes)'
       await capture(['install', '--yes', '--target', 'claude'], dir);
       const { out } = await capture(['uninstall', '--yes'], dir);
       expect(out).toContain('OK removed');
-      expect(existsSync(join(dir, '.claude', 'skills', 'mugiwara-workflow'))).toBe(false);
+      expect(existsSync(join(dir, '.claude', 'skills', 'mugiwara-orchestration'))).toBe(false);
       expect(existsSync(join(dir, '.mugiwara', 'manifest.json'))).toBe(false);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
@@ -506,6 +506,48 @@ describe('run() — handoff', () => {
       expect(out).toContain('Open blockers');
       expect(out).toContain('Heal cycles');
       expect(existsSync(join(dir, '.mugiwara', 'missions', 'hm', 'handoff.md'))).toBe(true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — crew', () => {
+  test('crew prints every agent with role, when, and write scope', async () => {
+    const { out } = await capture(['crew']);
+    expect(out).toContain('NAME');
+    expect(out).toContain('WHEN IT APPEARS');
+    expect(out).toMatch(/luffy-orchestrator\s+Captain/);
+    expect(out).toMatch(/zoro-execution .*source code and tests/);
+    expect(out).toMatch(/jinbe-security .*mission notes only/);
+    expect(out.trim().split('\n').length).toBe(readdirSync(join(import.meta.dirname, '..', 'content', 'agents')).filter((f) => f.endsWith('.md')).length + 1);
+  });
+  test('--help lists crew', async () => {
+    const { out } = await capture(['--help']);
+    expect(out).toContain('mugiwara crew');
+  });
+});
+
+describe('run() — cost shows provider total beside the process estimate', () => {
+  test('reported state prints both numbers and cache separately', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'tk', file: 'state', body: state('tk', { tokens_est: 165, tokens_source: 'reported', tokens_process_est: 9000, tokens_cache_read: 1000, tokens_cache_creation: 500 }) },
+    ]);
+    try {
+      const { out } = await capture(['cost', 'tk'], dir);
+      expect(out).toContain('Tokens: 165 provider-reported (cache: 1000 read, 500 written, not included) · process estimate 9000');
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+});
+
+describe('run() — handoff privacy', () => {
+  test('handoff prints the actor name, never the git author email', async () => {
+    const dir = fixture([
+      { root: 'state', mission: 'pm', file: 'state', body: state('pm', { actor: 'Jane Doe <jane.doe@example.com>' }) },
+    ]);
+    try {
+      const { out } = await capture(['handoff', 'pm'], dir);
+      expect(out).toContain('| Actor | Jane Doe |');
+      expect(out).not.toContain('@');
+      expect(readFileSync(join(dir, '.mugiwara', 'missions', 'pm', 'handoff.md'), 'utf8')).not.toContain('@');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
@@ -893,12 +935,19 @@ describe('run() — usage errors + stalenessLine', () => {
       '',
     ].join('\n'));
     writeFileSync(join(md, 'decisions.md'), '# Decisions\n');
+    // a git identity WITH an email: the decision log must still carry the name only
+    execFileSync('git', ['init', '-q', '.'], { cwd: dir });
+    execFileSync('git', ['config', 'user.name', 'Sophia Martinez'], { cwd: dir });
+    execFileSync('git', ['config', 'user.email', 'sophia@example.com'], { cwd: dir });
     try {
       const { out } = await capture(['join', 'm', 'sophia-martinez', '--area', 'testing'], dir);
       expect(out).toContain('joined m as sophia-martinez');
       const plan = readFileSync(join(md, 'plan.md'), 'utf8');
       expect(plan).toContain('| S2 | testing | sophia-martinez |');
-      expect(readFileSync(join(md, 'decisions.md'), 'utf8')).toContain('sophia-martinez');
+      const dec = readFileSync(join(md, 'decisions.md'), 'utf8');
+      expect(dec).toContain('sophia-martinez');
+      expect(dec).toContain('Sophia Martinez');
+      expect(dec).not.toContain('@');
       expect(readFileSync(join(dir, '.mugiwara', 'active-member'), 'utf8').trim()).toBe('sophia-martinez');
       expect(exitSpy).not.toHaveBeenCalled();
     } finally { rmSync(dir, { recursive: true, force: true }); }

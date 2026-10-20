@@ -67,7 +67,7 @@ function wireSettings(root: string, hooksDir: string): { written: string[]; note
     SubagentStop: { file: 'pipeline-guard.js', timeout: 15 },
     // matcher scopes the marker to crew invocations — without it the hook would
     // fire on every tool call in the session for no benefit
-    PostToolUse: { file: 'engagement-marker.js', timeout: 5, matcher: 'Task|Skill' },
+    PostToolUse: { file: 'engagement-marker.js', timeout: 5, matcher: 'Task|Agent|Skill' },
   };
 
   let settings: Record<string, unknown> = {};
@@ -119,7 +119,7 @@ function unwireSettings(root: string): { changed: string[]; notes: string[] } {
   const hooks = settings.hooks as Record<string, HookGroup[]> | undefined;
   if (!hooks) return { changed: [], notes: [] };
 
-  const ours = new Set(['session-start.js', 'mugiwara-mode-tracker.js', 'auto-savepoint.js', 'pipeline-guard.js', 'engagement-marker.js']);
+  const ours = new Set(['session-start.js', 'mugiwara-mode-tracker.js', 'auto-savepoint.js', 'pipeline-guard.js', 'engagement-marker.js', 'pretool-guard.js']);
   const isOurs = (h: HookEntry): boolean =>
     [...ours].some((f) => h.command?.includes(join('hooks', f)) || h.command?.includes(`hooks/${f}`));
 

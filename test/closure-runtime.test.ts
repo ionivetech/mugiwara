@@ -7,7 +7,7 @@ import { join } from 'node:path';
 
 import { attachGitNote, blamePath, modelLabel, buildNote } from '../src/provenance.ts';
 import { loadPolicy } from '../src/policy.ts';
-import { signReport, verifyReport } from '../src/sign.ts';
+import { signReport, verifyReport } from '../src/addons/attest/sign.ts';
 import { run as runCliInProcess } from '../src/cli.ts';
 import { execSync as xsync } from 'node:child_process';
 const execSync2 = xsync;

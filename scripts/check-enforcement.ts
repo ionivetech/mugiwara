@@ -8,7 +8,7 @@ import { checkContentProse } from '../src/content-prose.ts';
 import { WRITING_CAPS } from '../src/check-writing.ts';
 
 const root = join(import.meta.dirname, '..');
-// The one source: content/skills/mugiwara-workflow/references/workspace-layout.md
+// The one source: content/skills/mugiwara-orchestration/references/workspace-layout.md
 const CANONICAL_FLOWS = [
   '01-execution.md', '02-audit.md', '03-quality.md', '04-gates.md',
   '05-healing.md', '06-closure.md', '07-pr-verdict.md', '08-verifier.md',
@@ -47,7 +47,7 @@ const errors = [
   // Prose rules for the crew prompts. cost-governor.md maps the host
   // capability names to repo names, so it is the one file allowed to say them.
   ...checkContentProse(prose, { hostNameAllowlist: ['references/cost-governor.md'] }),
-  ...checkMechanismCells(readFileSync(join(root, 'docs/concepts/enforcement.md'), 'utf8'), root),
+  ...checkMechanismCells(readFileSync(join(root, 'docs/reference/enforcement.md'), 'utf8'), root),
   ...checkWritingCapTargets(WRITING_CAPS, root),
 ];
 if (errors.length) {

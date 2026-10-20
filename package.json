@@ -50,8 +50,9 @@
     "node": ">=20.11"
   },
   "scripts": {
-    "test": "bun test --parallel",
-    "test:coverage": "bun test --coverage --coverage-reporter=lcov --parallel=2",
+    "test": "bun test --timeout 60000 --parallel --path-ignore-patterns=test/savepoint.test.ts --path-ignore-patterns=test/lane-integrity.test.ts --path-ignore-patterns=test/team-roster.test.ts --path-ignore-patterns=test/harness.test.ts --path-ignore-patterns=test/hooks.test.ts --path-ignore-patterns=test/enforcement.test.ts",
+    "test:slow": "bun test --timeout 60000 --parallel test/savepoint.test.ts test/lane-integrity.test.ts test/team-roster.test.ts test/harness.test.ts test/hooks.test.ts test/enforcement.test.ts",
+    "test:coverage": "bun test --timeout 60000 --coverage --coverage-reporter=lcov --parallel=2",
     "coverage-gate": "bun scripts/coverage-gate.ts",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",

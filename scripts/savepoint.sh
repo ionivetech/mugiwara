@@ -34,6 +34,29 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Long flags (--flow N, --mode M, --member X, --lane L) are accepted anywhere, so the
+# CLI form the docs show (`savepoint <mission> --flow N`) also works on this fallback.
+# Without this, `savepoint.sh rbac --flow 0` read "--flow" as the member name.
+_POS1=""; _POS2=""; _POS3=""; _POS4=""; _POS5=""; _npos=0
+_F_FLOW=""; _F_MODE=""; _F_MEMBER=""; _F_LANE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --flow|--mode|--member|--lane)
+      [ $# -ge 2 ] || die "$1 requires a value"
+      case "$1" in --flow) _F_FLOW="$2" ;; --mode) _F_MODE="$2" ;; --member) _F_MEMBER="$2" ;; --lane) _F_LANE="$2" ;; esac
+      shift 2 ;;
+    --flow=*) _F_FLOW="${1#*=}"; shift ;;
+    --mode=*) _F_MODE="${1#*=}"; shift ;;
+    --member=*) _F_MEMBER="${1#*=}"; shift ;;
+    --lane=*) _F_LANE="${1#*=}"; shift ;;
+    *)
+      _npos=$((_npos + 1))
+      case "$_npos" in 1) _POS1="$1" ;; 2) _POS2="$1" ;; 3) _POS3="$1" ;; 4) _POS4="$1" ;; 5) _POS5="$1" ;; esac
+      shift ;;
+  esac
+done
+set -- "$_POS1" "${_F_MEMBER:-$_POS2}" "${_F_FLOW:-$_POS3}" "${_F_MODE:-$_POS4}" "${_F_LANE:-$_POS5}"
+
 # shared path patterns — single source of truth (D3)
 # shellcheck source=scripts/lib/patterns.sh
 source "$(dirname "$0")/lib/patterns.sh"
@@ -57,8 +80,14 @@ lane_rank() {
 # Resolve once from repo git config; used when no actor is passed explicitly.
 # GIT_AUTHOR_NAME is an env var usually unset — falling through to $USER
 # attributes the savepoint to the OS user instead of the git identity.
-GIT_NAME="$(git config user.name 2>/dev/null || true)"
-GIT_EMAIL="$(git config user.email 2>/dev/null || true)"
+# One git spawn for both keys; the last value of each wins, as `git config <key>` does.
+GIT_NAME=""; GIT_EMAIL=""
+while IFS= read -r _gc; do
+  case "$_gc" in
+    user.name\ *) GIT_NAME="${_gc#user.name }" ;;
+    user.email\ *) GIT_EMAIL="${_gc#user.email }" ;;
+  esac
+done < <(git config --get-regexp '^user\.(name|email)$' 2>/dev/null || true)
 if [ -n "$GIT_NAME" ] && [ -n "$GIT_EMAIL" ]; then GIT_ID="$GIT_NAME <$GIT_EMAIL>"; else GIT_ID="$GIT_NAME"; fi
 
 # --- parse mission args: <mission> [member] [wave] [mode] ---
@@ -155,11 +184,16 @@ MODEL="${MUGIWARA_MODEL:-${ANTHROPIC_MODEL:-}}"
 # uses an empty arg. Accept both so callers need not know which one.
 if [ "$MEMBER" = '""' ]; then MEMBER=""; fi
 
+# bad_name <s> — true when <s> starts with '-' or has a char outside [a-zA-Z0-9._-]. LC_ALL=C is
+# scoped to this subshell: under a UTF-8 locale (macOS) the range globs match
+# non-ASCII letters such as "ü". Nothing else in the script changes locale.
+bad_name() ( LC_ALL=C; case "$1" in -*|*[!a-zA-Z0-9._-]*) exit 0 ;; esac; exit 1 )
+
 # mission allowlist — MISSION feeds paths + sed + node argv; traversal or
 # sed metacharacters must not reach filesystem operations
-case "$MISSION" in
-  ""|*[!a-zA-Z0-9._-]*) die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])" ;;
-esac
+if [ -z "$MISSION" ] || bad_name "$MISSION"; then
+  die "invalid mission name \"$MISSION\" (allowlist: [a-zA-Z0-9._-])"
+fi
 # dot-only names (".", "..", "...") pass the char allowlist but resolve upward
 # through join(...,"..") — reject them before any path is built from MISSION.
 if [[ "$MISSION" =~ ^\.+$ ]]; then
@@ -167,9 +201,9 @@ if [[ "$MISSION" =~ ^\.+$ ]]; then
 fi
 
 # member allowlist — MEMBER feeds a per-member file name; same rules as MISSION.
-case "$MEMBER" in
-  *[!a-zA-Z0-9._-]*) die "invalid member name \"$MEMBER\" (allowlist: [a-zA-Z0-9._-])" ;;
-esac
+if bad_name "$MEMBER"; then
+  die "invalid member name \"$MEMBER\" (allowlist: [a-zA-Z0-9._-])"
+fi
 if [[ "$MEMBER" =~ ^\.+$ ]]; then
   die "invalid member name \"$MEMBER\" (allowlist: [a-zA-Z0-9._-], not a dot-path)"
 fi
@@ -184,12 +218,14 @@ esac
 # a newline/control char in BRANCH would corrupt the JSON (F5). Dropping illegal
 # chars is safe: slugs are keys, not content. Dot-only slugs emptied
 # (BSD/macOS-safe: no \+ BRE).
-BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
+BRANCH_SLUG=$(echo "$BRANCH" | tr '/' '-' | LC_ALL=C tr -cd 'A-Za-z0-9._-' | sed 's/^\.\{1,\}$//' )
 
 # Resolve the repo root: handles subdirectories and git worktrees, where .git
 # is a file rather than a directory. (B4)
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || die "not a git repository"
 cd "$REPO_ROOT" || die "cannot enter repo root"
+# patterns.sh helpers reuse this instead of re-running rev-parse (each is a spawn).
+export MUGI_TOPLEVEL="$REPO_ROOT"
 
 # state + continue live in the mission dir. Solo (member empty) → state.json
 # + continue.json; team writes <member>.json + continue-<member>.json so
@@ -338,12 +374,35 @@ LANE_PREV=""
 LANE_PEAK=""
 LANE_ROSE=false
 PREV_MISSION=""
-if [ -f "$STATE_FILE" ]; then
-  PREV_JSON=$(node -e "try{const fs=require('fs');const s=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(JSON.stringify({mission:s.mission||'',lane:s.lane||'',peak:s.lane_peak||''}))}catch(e){process.stdout.write('{}')}" "$STATE_FILE" 2>/dev/null || true)
-  PREV_MISSION=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).mission||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
-  LANE_PREV=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).lane||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
-  LANE_PEAK=$(echo "$PREV_JSON" | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{process.stdout.write(JSON.parse(d).peak||'')}catch(e){process.stdout.write('')}})" 2>/dev/null || true)
+# One node process reads every JSON/text input this script needs (previous
+# state, plan fingerprint, context registry, package version). Each node start
+# costs ~0.15 s, and this script runs on every Stop hook. Fields are joined
+# with \x1f; every read is individually try/caught so a bad file yields "".
+# If --tokens-file not given, try env/file fallbacks so estimator is last resort.
+if [ -z "$TOKENS_FILE" ]; then
+  for _cand in "${MUGIWARA_TOKENS_FILE:-}" "${CLAUDE_TOKENS_FILE:-}" "${OPENCODE_TOKENS_FILE:-}" "/tmp/mugiwara-tokens.json" "$HOME/.cache/mugiwara/tokens.json" ".mugiwara/tokens.json"; do
+    [ -n "$_cand" ] && [ -f "$_cand" ] && TOKENS_FILE="$_cand" && break
+  done
 fi
+[ -z "$TOKENS_FILE" ] || [ -f "$TOKENS_FILE" ] || die "tokens file not found: $TOKENS_FILE"
+SKILL_VERSION="unknown"
+PKG_JSON="$(dirname "$0")/../package.json"
+_SEP=$'\x1f'
+_BATCH=$(node -e "
+const fs=require('fs'),cr=require('crypto'),a=process.argv;
+const rd=f=>{try{return fs.readFileSync(f,'utf8')}catch(e){return null}};
+let m='',l='',p='',fp='',rr=0,v='unknown',tt='',tr=0,tc=0;
+try{const s=JSON.parse(rd(a[1]));m=s.mission||'';l=s.lane||'';p=s.lane_peak||''}catch(e){}
+try{const d=rd(a[4]);if(d!==null)fp=cr.createHash('sha256').update(d).digest('hex')}catch(e){}
+try{for(const x of rd(a[2]).split(/\r?\n/)){if(!x.trim())continue;try{const e=JSON.parse(x);if(typeof e.reads==='number'&&e.reads>=2)rr+=Math.floor(e.reads)-1}catch{}}}catch(e){}
+try{v=JSON.parse(rd(a[3])).version||'unknown'}catch(e){}
+if(a[5]){try{const j=JSON.parse(rd(a[5]));tt=(Number(j.input_tokens)||0)+(Number(j.output_tokens)||0);tr=Number(j.cache_read_input_tokens)||0;tc=Number(j.cache_creation_input_tokens)||0}catch(e){tt=0}}
+process.stdout.write([m,l,p,fp,rr,v,tt,tr,tc].join('\x1f'));
+" "$STATE_FILE" "$MISSION_DIR/context-registry.jsonl" "$PKG_JSON" "$MISSION_DIR/plan.md" "$TOKENS_FILE" 2>/dev/null || true)
+IFS="$_SEP" read -r PREV_MISSION LANE_PREV LANE_PEAK _plan_fp _rr _sv _tok_total _tok_cr _tok_cc <<EOF
+$_BATCH
+EOF
+[ -n "${_sv:-}" ] && SKILL_VERSION="$_sv"
 # fresh mission resets the clamp: a different mission in state.json is a new
 # run, not a lane drop — no carry-over of peak or prev (case 10).
 if [ -n "$PREV_MISSION" ] && [ "$PREV_MISSION" != "$MISSION" ]; then
@@ -449,7 +508,6 @@ fi
 # W10: register plan.md read so repeated_reads is not structurally zero (evidence.registerRead)
 if [ -f "$MISSION_DIR/plan.md" ] && [ ! -s "$MISSION_DIR/context-registry.jsonl" ]; then
   mkdir -p "$MISSION_DIR"
-  _plan_fp=$(node -e "const crypto=require('crypto');const fs=require('fs');try{const d=fs.readFileSync(process.argv[1],'utf8');process.stdout.write(crypto.createHash('sha256').update(d).digest('hex'))}catch(e){process.stdout.write('')}" "$MISSION_DIR/plan.md" 2>/dev/null || true)
   if [ -n "$_plan_fp" ]; then
     _plan_chars=$(wc -c < "$MISSION_DIR/plan.md" 2>/dev/null | tr -d ' ' || echo 0)
     printf '{"fingerprint":"%s","kind":"file","file":"plan.md","id":"E001","reads":1,"chars":%s,"ref":"E001 plan.md"}\n' "$_plan_fp" "$_plan_chars" >> "$MISSION_DIR/context-registry.jsonl" 2>/dev/null || true
@@ -461,8 +519,7 @@ REPEATED_READS=0
 REPEATED_THRESHOLD=3
 REGISTRY_FILE="$MISSION_DIR/context-registry.jsonl"
 if [ -f "$REGISTRY_FILE" ]; then
-  REPEATED_READS=$(node -e "try{const fs=require('fs');const t=fs.readFileSync(process.argv[1],'utf8');let s=0;for(const l of t.split(/\r?\n/)){if(!l.trim())continue;try{const e=JSON.parse(l);if(typeof e.reads==='number'&&e.reads>=2)s+=Math.floor(e.reads)-1}catch{}}console.log(s)}catch(e){console.log(0)}" "$REGISTRY_FILE" 2>/dev/null || echo 0)
-  REPEATED_READS=$(( ${REPEATED_READS:-0} + 0 ))
+  REPEATED_READS=$(( ${_rr:-0} + 0 ))
 fi
 # repeated_reads > threshold → context slop — crew must skip re-read/compress before dispatch (§22,31); heal_cycle≥max → halt/escalate (§21.7/32) — cost-governor §§20,21-24
 
@@ -507,24 +564,12 @@ done
 # release. Never fall back to the user's file — "unknown" is the honest
 # answer. Full version, not the major: mugiwara's breaking changes land in
 # 0.x minors, which a major-only string can never see.
-SKILL_VERSION="unknown"
-PKG_JSON="$(dirname "$0")/../package.json"
-if [ -f "$PKG_JSON" ]; then
-  SKILL_VERSION=$(node -e "try{const v=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version;console.log(v||'unknown')}catch(e){console.log('unknown')}" "$PKG_JSON" 2>/dev/null || echo "unknown")
-fi
-[ -z "$SKILL_VERSION" ] && SKILL_VERSION="unknown"
 
 # tokens proxy (F7): deterministic estimate when the harness does not report
 # real usage. Monotonic beats precise — LANE_BASE stands in for the skills
 # loaded this lane (measured from content, validated by scripts/lane-base.ts);
 # loc_churn and written-artifact words scale with growth.
 # auto-detect harness for token reporting (Tier-1: Claude Code / opencode)
-# If --tokens-file not given, try env/file fallbacks so estimator is last resort.
-if [ -z "$TOKENS_FILE" ]; then
-  for _cand in "${MUGIWARA_TOKENS_FILE:-}" "${CLAUDE_TOKENS_FILE:-}" "${OPENCODE_TOKENS_FILE:-}" "/tmp/mugiwara-tokens.json" "$HOME/.cache/mugiwara/tokens.json" ".mugiwara/tokens.json"; do
-    [ -n "$_cand" ] && [ -f "$_cand" ] && TOKENS_FILE="$_cand" && break
-  done
-fi
 # detect harness (for logging / future tier checks)
 HARNESS="unknown"
 if [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ] || echo "${ANTHROPIC_MODEL:-}" | grep -qi claude 2>/dev/null; then HARNESS="claude";
@@ -544,15 +589,17 @@ DOC_WORDS=$(cat "$MISSION_DIR"/"$FLOWDIR"/*.md "$MISSION_DIR"/plan.md "$MISSION_
 LOC_TOKENS=$(( LOC_CHURN * 12 ))
 TOKENS_SOURCE="estimator"
 TOKENS_EST=$(( LANE_BASE + DOC_WORDS * 135 / 100 + LOC_TOKENS ))
+TOKENS_PROCESS_EST="$TOKENS_EST"
 if [ -n "${MUGIWARA_TOKENS:-}" ]; then
   TOKENS_EST="${MUGIWARA_TOKENS}"
   TOKENS_SOURCE="reported"
 fi
 if [ -n "$TOKENS_FILE" ]; then
-  [ -f "$TOKENS_FILE" ] || die "tokens file not found: $TOKENS_FILE"
-  TOKENS_EST=$(node -e "try{const j=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));const i=Number(j.input_tokens)||0;const o=Number(j.output_tokens)||0;console.log(i+o)}catch(e){console.log(0)}" "$TOKENS_FILE" 2>/dev/null || echo 0)
+  TOKENS_EST="${_tok_total:-0}"
   TOKENS_SOURCE="reported"
 fi
+TOKENS_CACHE_READ="${_tok_cr:-0}"
+TOKENS_CACHE_CREATE="${_tok_cc:-0}"
 
 # budget per lane
 BUDGET=0
@@ -644,32 +691,30 @@ elif [ "$PHASES" -gt 3 ] 2>/dev/null || [ "$PLAN_LINES" -gt 1500 ] 2>/dev/null; 
 elif [ "$CONTEXT_PRESSURE" = true ]; then
   POSTURE="context-relief"
   POSTURE_REASON="context pressure with ordered dependent tasks — one worker at a time, order preserved"
-elif [ "$INDEPENDENT_TASKS" -ge 2 ] 2>/dev/null; then
+elif [ "$INDEPENDENT_TASKS" -ge 2 ] 2>/dev/null && [ "$LANE" = "full" ]; then
   POSTURE="parallel-workers"
-  POSTURE_REASON="$INDEPENDENT_TASKS independent tasks, no shared files/interfaces"
+  POSTURE_REASON="$INDEPENDENT_TASKS independent tasks, no shared files/interfaces, full lane"
+elif [ "$INDEPENDENT_TASKS" -ge 2 ] 2>/dev/null; then
+  POSTURE="inline-batched"
+  POSTURE_REASON="$INDEPENDENT_TASKS independent tasks below the full lane — a worker costs far more than the task, so batch them inline"
 fi
-# investigation config (W8) — three keys, defaults 2/5/2
-INV_MAX_PASSES=2
-INV_MAX_UNRELATED=5
+# investigation_status: fixed threshold, no config keys (the governor that read them is gone)
 INV_REPEATED_THRESH=2
-if [ -f "$MUGIWARA_DIR/config" ]; then
-  _v=$(grep -E '^investigation_max_passes=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
-  [ -n "$_v" ] && INV_MAX_PASSES="$_v"
-  _v=$(grep -E '^investigation_max_unrelated_files=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
-  [ -n "$_v" ] && INV_MAX_UNRELATED="$_v"
-  _v=$(grep -E '^investigation_repeated_read_threshold=' "$MUGIWARA_DIR/config" 2>/dev/null | head -1 | cut -d= -f2- | cut -d'#' -f1 | tr -d '[:space:]')
-  [ -n "$_v" ] && INV_REPEATED_THRESH="$_v"
-fi
-case "$INV_MAX_PASSES" in ''|*[!0-9]*) INV_MAX_PASSES=2 ;; esac
-case "$INV_MAX_UNRELATED" in ''|*[!0-9]*) INV_MAX_UNRELATED=5 ;; esac
-case "$INV_REPEATED_THRESH" in ''|*[!0-9]*) INV_REPEATED_THRESH=2 ;; esac
-# investigation_status: simple threshold check on repeated_reads (W8/W10)
 INVESTIGATION_STATUS="continue"
 if [ "$REPEATED_READS" -ge "$INV_REPEATED_THRESH" ] 2>/dev/null; then
   INVESTIGATION_STATUS="stop"
 fi
 
 mkdir -p "$MISSION_DIR"
+
+# N2: every field echoed into continue is validated first. MISSION + MEMBER
+# are allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized.
+case "$MODE" in
+  guided|semi|auto) CONT_MODE="$MODE" ;;
+  *) CONT_MODE="guided" ;;
+esac
+CONT_BRANCH="${BRANCH_SLUG:-unknown}"
+_NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 node -e "
 const data = {
@@ -717,70 +762,54 @@ const data = {
   posture: process.argv[43] || 'inline-sequential',
   posture_reason: process.argv[44] || '',
   posture_pause: process.argv[45] === 'true',
-  investigation_status: process.argv[46] || 'continue'
+  investigation_status: process.argv[46] || 'continue',
+  tokens_process_est: parseInt(process.argv[50], 10) || 0, // Mugiwara's own estimate, kept beside the provider total
+  tokens_cache_read: parseInt(process.argv[51], 10) || 0,
+  tokens_cache_creation: parseInt(process.argv[52], 10) || 0
 };
 require('fs').writeFileSync(process.argv[23], JSON.stringify(data, null, 2) + '\n');
+
+// --- continue.json (D10): machine-written resume point ---
+// Written alongside state.json so an interrupted session (step-limit truncation,
+// crash, new session) can resume without human recall. Same trust as state.json:
+// computed fields, never model judgement. The resume skill treats it as data to
+// verify against the plan/todos, never verbatim instructions.
+// Scoped by (mission, member) like state.json — solo writes continue.json, team
+// writes continue-<member>.json. The crew-written next_session_prompt line is
+// preserved across savepoints. Same node process as state.json: one start, not two.
+const cont = {
+  mission: process.argv[1],
+  member: process.argv[31] || null,
+  actor: process.argv[2] || '',
+  branch: process.argv[47],
+  flow: parseInt(process.argv[6], 10) || 0,
+  mode: process.argv[48],
+  tasks_done: parseInt(process.argv[13], 10) || 0,
+  tasks_total: parseInt(process.argv[14], 10) || 0,
+  lane: process.argv[4],
+  lane_prev: process.argv[24] || null,
+  updated_at: process.argv[22],
+  next_action: 'verify this flow stage against the plan, then continue per plan (next stage or closure)'
+};
+try { cont.next_session_prompt = JSON.parse(require('fs').readFileSync(process.argv[49],'utf8')).next_session_prompt || ''; } catch (e) { cont.next_session_prompt = ''; }
+require('fs').writeFileSync(process.argv[49], JSON.stringify(cont, null, 2) + '\n');
 " \
   "$MISSION" "$ACTOR" "$BRANCH" "$LANE" "$LANE_REASON" \
   "$WAVE_INT" "$MODE" "$BASE_SHA" "$HEAD_SHA" "$FILES_TOUCHED" \
   "$LOC_DELTA" "$SENSITIVE_PATHS" "$TASKS_DONE" "$TASKS_TOTAL" \
   "$BLOCKERS_OPEN" "$HEAL_CYCLE" "$TOKENS_EST" "$BUDGET" \
   "$STATUS" "$SKILL_VERSION" "$EVIDENCE" \
-  "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  "$_NOW" \
   "$STATE_FILE" "$LANE_PREV" "$LANE_ROSE" "$TOKENS_SOURCE" "$LANE_PEAK" \
   "$LOC_INS" "$LOC_DEL" "$LOC_CHURN" "$MEMBER" "$VERBOSITY" \
   "$HEAL_MAX_CYCLES" "$HEAL_HALT" "$DELEGATE_THRESHOLD" "$DELEGATE_DUE" \
   "$MODEL" "$DEPTH_REVIEW" "$DEPTH_QUALITY" "$DEPTH_VERIFY" \
-  "$REPEATED_READS" "$TEAM_MEMBERS" "$POSTURE" "$POSTURE_REASON" "$POSTURE_PAUSE" "$INVESTIGATION_STATUS"
+  "$REPEATED_READS" "$TEAM_MEMBERS" "$POSTURE" "$POSTURE_REASON" "$POSTURE_PAUSE" "$INVESTIGATION_STATUS" \
+  "$CONT_BRANCH" "$CONT_MODE" "$CONTINUE_FILE" \
+  "$TOKENS_PROCESS_EST" "$TOKENS_CACHE_READ" "$TOKENS_CACHE_CREATE"
 
 if [ "$LANE_ROSE" = true ]; then
   echo "⚠ LANE ROSE: $LANE_PREV → $LANE ($LANE_REASON) — escalate per check-in protocol"
-fi
-
-# --- continue.json (D10): machine-written resume point ---
-# Written alongside state.json so an interrupted session (step-limit truncation,
-# crash, new session) can resume without human recall. Same trust as state.json:
-# computed fields, never model judgement. The resume skill treats it as data to
-# verify against the plan/todos, never verbatim instructions.
-# Scoped by (mission, member) like state.json — solo writes continue.json, team
-# writes continue-<member>.json. The crew-written next_session_prompt line is
-# preserved across savepoints.
-if [ -n "$MISSION" ]; then
-  NEXT_SESSION_PROMPT=""
-  if [ -f "$CONTINUE_FILE" ]; then
-    NEXT_SESSION_PROMPT=$(node -e "try{const s=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(s.next_session_prompt||'')}catch(e){process.stdout.write('')}" "$CONTINUE_FILE" 2>/dev/null || true)
-  fi
-  # N2: every field echoed into continue is validated first. MISSION + MEMBER
-  # are allowlisted upstream; WAVE numeric, MODE enum, BRANCH slug-sanitized.
-  CONT_WAVE="$WAVE_INT"
-  case "$MODE" in
-    guided|semi|auto) CONT_MODE="$MODE" ;;
-    *) CONT_MODE="guided" ;;
-  esac
-  CONT_BRANCH="${BRANCH_SLUG:-unknown}"
-  node -e "
-  const fs = require('fs');
-  const data = {
-    mission: process.argv[1],
-    member: process.argv[2] || null,
-    actor: process.argv[13] || '',
-    branch: process.argv[3],
-    flow: parseInt(process.argv[4], 10) || 0,
-    mode: process.argv[5],
-    tasks_done: parseInt(process.argv[6], 10) || 0,
-    tasks_total: parseInt(process.argv[7], 10) || 0,
-    lane: process.argv[8],
-    lane_prev: process.argv[9] || null,
-    updated_at: process.argv[10],
-    next_action: 'verify this flow stage against the plan, then continue per plan (next stage or closure)'
-  };
-  try { data.next_session_prompt = JSON.parse(fs.readFileSync(process.argv[12],'utf8')).next_session_prompt || ''; } catch (e) { data.next_session_prompt = ''; }
-  fs.writeFileSync(process.argv[11], JSON.stringify(data, null, 2) + '\n');
-  " \
-    "$MISSION" "$MEMBER" "$CONT_BRANCH" "$CONT_WAVE" "$CONT_MODE" \
-    "$TASKS_DONE" "$TASKS_TOTAL" "$LANE" "$LANE_PREV" \
-    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    "$CONTINUE_FILE" "$CONTINUE_FILE" "$ACTOR"
 fi
 
 echo "✓ savepoint written: $STATE_FILE (lane=$LANE, flow=$WAVE, files=$FILES_TOUCHED)"

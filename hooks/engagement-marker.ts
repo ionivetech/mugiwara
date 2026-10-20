@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// hooks/engagement-marker.ts — PostToolUse on Task|Skill: record that this
+// hooks/engagement-marker.ts — PostToolUse on Task|Agent|Skill: record that this
 // session engaged the mugiwara crew.
 //
 // The pipeline guard only polices sessions that actually used mugiwara. Without
@@ -10,11 +10,18 @@
 // Never throws: a failed marker write degrades to "not engaged", which means
 // the guard stays silent. Failing open is deliberate — an enforcement layer
 // that can wedge a session gets turned off, and then it enforces nothing.
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ensureConfig } from '../src/config.ts';
+import { REVIEW_LEDGER, activeMission } from '../src/active-mission.ts';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+
+// A project install registers agents under their plain names, so the crew is
+// recognized by name as well as by the `mugiwara` namespace/prefix.
+const CREW = /(?:^|[^a-z-])(?:zoro-execution|nami-planner|robin-reviewer|jinbe-security|luffy-orchestrator|chopper-checkpoint|sanji-quality|franky-gates|brook-healing|usopp-brainstorm|skeptic-verifier|resume-coordinator|memory-keeper)(?![a-z-])/;
+// Agents whose dispatch proves an independent (fresh-context) review.
+const REVIEW_AGENTS = new Set(['robin-reviewer', 'jinbe-security', 'skeptic-verifier']);
 
 async function main(): Promise<void> {
   let input = '';
@@ -34,7 +41,21 @@ async function main(): Promise<void> {
   const subagentType = typeof toolInput.subagent_type === 'string' ? toolInput.subagent_type.toLowerCase() : '';
   const skillName = typeof toolInput.skill === 'string' ? toolInput.skill.toLowerCase() : '';
   const agentField = `${toolName} ${subagentType} ${skillName}`;
-  if (!agentField.includes('mugiwara')) return;
+  if (!agentField.includes('mugiwara') && !CREW.test(agentField)) return;
+
+  // Review-dispatch ledger: a real SUBAGENT dispatch (Claude Code names the tool
+  // Task or Agent) with a structured subagent_type. Never the Skill tool (the
+  // inline form) and never free text. Numbers and names only; fail open.
+  try {
+    const agent = subagentType.replace(/^.*:/, '');
+    if ((toolName === 'task' || toolName === 'agent') && REVIEW_AGENTS.has(agent)) {
+      const sid = typeof payload.session_id === 'string' ? payload.session_id : '';
+      mkdirSync(join(cwd, '.mugiwara'), { recursive: true });
+      appendFileSync(join(cwd, '.mugiwara', REVIEW_LEDGER), JSON.stringify({
+        agent, at: new Date().toISOString(), session_id: sid, mission: activeMission(cwd)?.mission ?? '',
+      }) + '\n');
+    }
+  } catch { /* fail open */ }
 
   // Executor dispatch is a second, narrower fact recorded in the same marker:
   // did the session hand source work to the only two roles allowed to write it
@@ -71,37 +92,26 @@ async function main(): Promise<void> {
     // first_seen forward would make every prior plan count as "written this
     // session" while the new session's planner dispatch is empty, warning on
     // every guard event. Reset first_seen when the session changes.
-    let firstSeen = new Date().toISOString();
-    let dispatchedAt = '';
-    let plannedAt = '';
-    let bannerFlow: number | null = null;
-    let bannerFlowAt = '';
+    // Merge, never rewrite wholesale: other hooks own fields in this file
+    // (explicit_crew_at from the prompt tracker; banner and block counters from
+    // the guard). A same-session marker keeps all of them; a new session starts
+    // fresh, because those facts belong to the session that made them.
+    // first_seen is the "this session" anchor for the plan guard's planTouched().
+    const now = new Date().toISOString();
+    let prev: Record<string, unknown> = {};
     if (existsSync(file)) {
-      try {
-        const prev = JSON.parse(readFileSync(file, 'utf8')) as { session_id?: string; first_seen?: string; executor_dispatched_at?: string; planner_dispatched_at?: string; last_banner_flow?: number; last_banner_flow_at?: string };
-        const sameSession = !sessionId || !prev.session_id || prev.session_id === sessionId;
-        if (sameSession && typeof prev.first_seen === 'string') firstSeen = prev.first_seen;
-        // A dispatch belongs to the session that made it. Carrying it into the
-        // next session would excuse a captain who implements inline today
-        // because Zoro ran yesterday.
-        if (sameSession && typeof prev.executor_dispatched_at === 'string') dispatchedAt = prev.executor_dispatched_at;
-        if (sameSession && typeof prev.planner_dispatched_at === 'string') plannedAt = prev.planner_dispatched_at;
-        // A banner belongs to its session too — yesterday's banner must not
-        // silence today's missing one.
-        if (sameSession && typeof prev.last_banner_flow === 'number') bannerFlow = prev.last_banner_flow;
-        if (sameSession && typeof prev.last_banner_flow_at === 'string') bannerFlowAt = prev.last_banner_flow_at;
-      } catch { /* corrupt marker — rewrite it */ }
+      try { prev = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>; } catch { /* corrupt marker — rewrite it */ }
     }
-    if (dispatched) dispatchedAt = new Date().toISOString();
-    if (planned) plannedAt = new Date().toISOString();
+    const prevSession = typeof prev.session_id === 'string' ? prev.session_id : '';
+    const base = !sessionId || !prevSession || prevSession === sessionId ? prev : {};
     writeFileSync(file, JSON.stringify({
-      session_id: sessionId,
-      first_seen: firstSeen,
-      touched_at: new Date().toISOString(),
-      executor_dispatched_at: dispatchedAt,
-      planner_dispatched_at: plannedAt,
-      last_banner_flow: bannerFlow,
-      last_banner_flow_at: bannerFlowAt,
+      last_banner_flow: null,
+      ...base,
+      session_id: sessionId || prevSession,
+      first_seen: typeof base.first_seen === 'string' ? base.first_seen : now,
+      touched_at: now,
+      executor_dispatched_at: dispatched ? now : (typeof base.executor_dispatched_at === 'string' ? base.executor_dispatched_at : ''),
+      planner_dispatched_at: planned ? now : (typeof base.planner_dispatched_at === 'string' ? base.planner_dispatched_at : ''),
     }, null, 2) + '\n');
   } catch {
     // cannot write (read-only fs, permissions) — stay silent, guard stays off

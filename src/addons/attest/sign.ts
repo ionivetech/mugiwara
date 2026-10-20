@@ -1,4 +1,4 @@
-// src/sign.ts
+// src/addons/attest/sign.ts (optional add-on; loaded lazily, never imported by core)
 // Signed attestation: evidence that cannot be fabricated
 // after the fact — optional, user-keyed, never a hard dependency.
 //
@@ -10,10 +10,10 @@
 import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign, verify } from 'node:crypto';
-import { homeDir } from './home.ts';
+import { homeDir } from '../../home.ts';
 import { join } from 'node:path';
-import { readConfig } from './config.ts';
-import { loadPolicy } from './policy.ts';
+import { readConfig } from '../../config.ts';
+import { loadPolicy } from '../../policy.ts';
 
 export function signArgs(reportPath: string, secretKey: string): string[] {
   return ['-Sm', reportPath, '-s', secretKey];

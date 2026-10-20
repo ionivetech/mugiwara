@@ -1,34 +1,58 @@
 # Mission: invitation-accepted-flow
-2026-09-03 · John Doe · branch `feature/MKR-412` · lane **full** · mode guided
+
+Invitation acceptance now signs the user in, returns them to the page they came from, and expires the invitation after one use.
+
+11 files changed (+340 / -82) on branch `feature/invitation-flow`, closed 2026-10-19. Sensitive paths touched: `src/auth/invitation.ts`.
 
 ## Verdict
-**GO** — all gates passed. 1 finding deferred with an owner.
 
-## What changed
-11 files, +340 / -82.
-Sensitive paths touched: `src/auth/invitation.ts`, `migrations/004.sql`
+**Ready for review.** All gates passed. 1 finding deferred, with an owner.
 
-## Gates
-| Gate | Verdict | Evidence |
-|---|---|---|
-| Checkpoint (Flow 4) | PASS | `flows/04-audit.md` |
-| Quality (Flow 5) | PASS | `flows/05-quality.md` |
-| Coverage (Flow 6) | PASS | new 94% / modified 87% |
-| Security (Flow 7) | PASS | STRIDE, 0 high -> `review/security.md` |
+## Audit
+
+The plan matches the spec. No missing acceptance criteria.
+
+## Quality
+
+Lint and format are clean. No duplicated code. The unit suite passes.
+
+## Coverage
+
+Coverage on new code is 94%, on modified code 87%. The build exits 0.
 
 ## Decisions
-| # | Decision | By | Why |
-|---|---|---|---|
-| 1 | Redirect via `flow` param | user | avoids server state |
-| 2 | Skipped e2e gate | crew | repo has no e2e setup |
+
+2026-09-03 · Redirect through a `flow` query parameter · it avoids server-side state · Demo Author
 
 ## Not verified
-- e2e: no repo setup. Logged, not waived silently.
+
+- e2e: the repo has no e2e setup. Logged, not waived silently.
 
 ## Cost
-Used **8,781** of 12,000 tokens (73%). Lane `lean`. 1 heal cycle.
 
-## Review order
-Read these first:
-1. `src/auth/invitation.ts` — sensitive path, 3 review findings
-2. `src/routes/index.ts` — production code, not covered by recorded evidence
+Used **8,781** of 30,000 tokens (29%).
+
+## Where to start reviewing
+
+Suggested reading order, most important first. It says where to look first, not what is correct:
+
+1. `src/auth/invitation.ts` — sensitive path; production code; not covered by recorded evidence
+2. `src/routes/index.ts` — production code; not covered by recorded evidence
+
+## Evidence
+
+Where each part of this report came from. Crew names and Flow numbers appear only here.
+
+| Section | Source file | Flow | Crew |
+|---|---|---|---|
+| Decisions | `decisions.md` | - | - |
+| Audit | `02-audit.md` | 4 | Chopper |
+| Quality | `03-quality.md` | 5 | Sanji |
+| Coverage | `04-gates.md` | 6 | Franky |
+
+<details>
+<summary>Tooling log</summary>
+
+Lane `standard`, 1 heal cycle.
+
+</details>

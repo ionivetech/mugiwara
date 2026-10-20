@@ -7,7 +7,7 @@ import type { Target } from '../installer.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const COMMANDS_SRC = join(here, '..', '..', '.opencode', 'commands');
-const BANNER_TABLE = join(here, '..', '..', 'references', 'wave-banners.md');
+const BANNER_TABLE = join(here, '..', '..', 'references', 'flow-banners.md');
 
 type CrewConfig = {
   color: string;
@@ -16,7 +16,7 @@ type CrewConfig = {
   permission?: Record<string, string>;
 };
 
-// Colors are fallbacks — the wave-banners table is the source of truth.
+// Colors are fallbacks — the flow-banners table is the source of truth.
 // Temperature/steps stay here (runtime tuning, not banner material).
 const CREW: Record<string, CrewConfig> = {
   'luffy-orchestrator': { color: '#ef4444', temperature: 0.2, steps: 15 },
@@ -30,12 +30,11 @@ const CREW: Record<string, CrewConfig> = {
   'jinbe-security': { color: '#6366f1', temperature: 0.2, steps: 15 },
   'brook-healing': { color: '#2dd4bf', temperature: 0.1, steps: 20 },
   'skeptic-verifier': { color: '#64748b', temperature: 0.1, steps: 12 },
-  'eval-runner': { color: '#14b8a6', temperature: 0.2, steps: 15 },
   'resume-coordinator': { color: '#d97706', temperature: 0.2, steps: 10 },
   'memory-keeper': { color: '#d946ef', temperature: 0.2, steps: 8 },
 };
 
-// Crew colors from the wave-banners table (single source of truth). Returns
+// Crew colors from the flow-banners table (single source of truth). Returns
 // {} on any failure — callers fall back to the CREW map. Same table shape as
 // the opencode plugin parses: | agent-id | role | hex | ansi-256 | emoji |
 function readBannerColors(): Record<string, string> {
@@ -74,7 +73,7 @@ function permissionFromScope(scope: string | undefined): Record<string, string |
 function agentFrontmatter(name: string, description: string, internal: boolean, writeScope?: string) {
   const crew = CREW[name];
   const lines = [`description: ${description}`, `mode: all`];
-  // color: wave-banners table wins; CREW fallback for agents the table lacks.
+  // color: flow-banners table wins; CREW fallback for agents the table lacks.
   // temperature/steps only exist for CREW members (runtime tuning).
   const color = BANNER_COLORS[name] ?? crew?.color;
   if (color) lines.push(`color: '${color}'`);
