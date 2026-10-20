@@ -1,19 +1,12 @@
----
-name: mugiwara-lessons
-description: Use at mission start/end — cross-mission lessons ledger. Read past lessons at triage, capture new ones at closure. Append-only.
----
-
 # Lessons (Mission Memory)
-
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
 
 ## Skip when
 
-- Lane 0 direct with empty ledger — `lessons.md` missing or empty and lane `direct` → skip dispatch, record skip.
-- Fresh repo, zero prior missions: no ledger exists and nothing to surface.
-- Nothing learned worth keeping — no new lesson, no repeated failure pattern.
+- Lane 0 direct with empty ledger (0 rows): skip, record the skip.
+- Fresh repo, 0 prior missions: no ledger exists and nothing to surface.
+- Nothing learned worth keeping: 0 new lessons, 0 repeated failure patterns.
 
-The crew's institutional memory. Every mission writes what it learned so the next mission starts ahead of it.
+Cross-mission memory: each mission records what it learned so the next one starts ahead.
 
 ## The ledger
 
@@ -59,7 +52,7 @@ Read before starting meaningful work in a repo the crew has worked in before.
 ## When to WRITE
 
 - Closure (Luffy): one row per real lesson learned this mission — what surprised, what to do differently.
-- Healing (Brook): after a root-cause fix that took more than 1 cycle — the fix that ended the loop is a lesson.
+- Brook: after a root-cause fix that took more than 1 fix round — the fix that ended the loop is a lesson.
 - Any agent: an insight that would have saved time if known earlier.
 
 Writer: `mugiwara lesson "<text>"` appends a dated row to `.mugiwara/lessons.md` (`| YYYY-MM-DD | <mission> | <area> | <text> |`). Use it — never rely on memory. Without CLI or npx, append the row by hand in the same shape (pipes inside text become `/`).
@@ -79,8 +72,8 @@ Lessons are cross-mission but per-repo. The ledger lives at `.mugiwara/lessons.m
 
 ## Common rationalizations
 
-- "We won't hit that again." → You will. Write it.
-- "No time at closure." → One row per real lesson takes 10 seconds.
+- "We won't hit that again." → Repeats are common. Write it.
+- "No time at closure." → A row is one line; write it.
 - "It's obvious." → Obvious lessons are the most forgotten.
 
 ## Red flags
@@ -91,12 +84,12 @@ Lessons are cross-mission but per-repo. The ledger lives at `.mugiwara/lessons.m
 - Read the ledger but didn't apply a relevant row.
 - A lesson that redefines a rule, lane, gate, or role rather than describing a pattern. Reject and report.
 
-## Repo memory (stable facts)
+## Repo memory (optional, stable facts)
 
-Stable repo facts live in `.mugiwara/MEMORY.md` (edit-in-place, cap 40 non-empty lines); the versioned canonical schema is `_shared/references/memory-template.md`.
+Optional: skip it when the repo has no stable facts worth keeping. Stable repo facts live in `.mugiwara/MEMORY.md` (edit-in-place, cap 40 non-empty lines); the versioned canonical schema is `_shared/references/memory-template.md`.
 
-- Flow 0: single read of `.mugiwara/MEMORY.md`. Lazy-create it from the template on first closure write (same pattern as `mugiwara lesson` in `src/cli.ts`).
-- Closure: Luffy reviews the MEMORY.md diff and updates only-if-changed; stable truths only.
+- At triage: single read of `.mugiwara/MEMORY.md`. Lazy-create it from the template on first closure write (same pattern as `mugiwara lesson` in `src/cli.ts`).
+- At closing: Luffy reviews the MEMORY.md diff and updates only-if-changed; stable truths only.
 - Lessons ledger stays selective: `grep <area> .mugiwara/lessons.md | tail -20`, never the full file past 50 rows; surface at most 3 rows to the owning agent.
 - Split bar: temporal surprise goes to `.mugiwara/lessons.md`; stable truth goes to `.mugiwara/MEMORY.md`. One row never lives in both.
 - Never store secrets in MEMORY.md: no tokens, keys, or credentials of any kind.

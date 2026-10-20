@@ -14,11 +14,26 @@
       {
         "prompt": "duplication complexity lint after checkpoint",
         "top_k": 3
+      },
+      {
+        "prompt": "sonar style gate coverage thresholds build",
+        "top_k": 3
+      },
+      {
+        "prompt": "coverage gate verdict after quality checks",
+        "top_k": 3
+      },
+      {
+        "prompt": "gate binary verdict pass fail",
+        "top_k": 3
       }
     ],
     "negative": [
       {
         "prompt": "review the PR diff after gates"
+      },
+      {
+        "prompt": "security audit STRIDE OWASP diff"
       }
     ]
   }

@@ -1,19 +1,17 @@
 ---
 name: mugiwara-review
-description: Use after gates pass to review PR diff, code review — breaking-change map via caller mapping, five-axis review, severity-tagged findings. Max 3 cycles.
+description: Use after gates pass to review a PR diff or do a code review: breaking-change map via caller mapping, five-axis review, severity-tagged findings.
 gate_artifact: flows/review — .mugiwara/missions/<mission>/review.md: severity-tagged path:line findings
 ---
 
 # Review
 
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
-
 ## Skip when
 
-- Zero diff to review: docs-only change or lane 0 one-line fix.
+- 0 code files in the diff (docs-only), or a one-line direct fix.
 - User explicitly deferred review and recorded the decision.
 
-Review like the diff will be maintained by someone else at 3am — and like the implementer is wrong until proven otherwise.
+Review as if someone else will maintain this diff, and treat the implementer's claims as unproven until verified.
 
 ## Scope gate: small CLs
 
@@ -34,32 +32,31 @@ Review like the diff will be maintained by someone else at 3am — and like the 
 
 Per-axis worksheet: `references/five-axis-worksheet.md`. One verdict + evidence per axis: correctness / readability / architecture / security / performance. No axis passes on assertion. FAIL on any axis → overall FAIL.
 
-Correctness always asks: does this change BREAK anything that currently works? Run the suite, exercise the feature tests for the touched areas, and verify no silent regression.
+Correctness always asks: does this change BREAK anything that currently works? Use the test evidence from the quality stage, and name any touched area with no test.
 
-## Reliability/bug rating
+## Reliability rating
 
-After five-axis review, classify all bugs found by severity and compute an overall rating:
+After the five axes, rate the diff from the findings (blocker/major/minor, defined once in `references/severity-rubric.md`). Thresholds are unverified defaults; project policy overrides.
 
 | Rating | Criteria |
 |--------|----------|
-| **A** | Zero bugs of any severity |
-| **B** | ≥1 minor, zero major/critical/blocker |
-| **C** | ≥1 major, zero critical/blocker |
-| **D** | ≥1 critical, zero blocker |
-| **E** | ≥1 blocker |
+| A | no findings |
+| B | minor only |
+| C | 1-2 major, no blocker |
+| D | 3+ major, no blocker |
+| E | 1+ blocker |
 
-Each finding includes a remediation effort estimate: hours, days, or weeks. Rating E = won't merge. Rating D = review with caution + mitigation plan required.
+Each finding carries an effort estimate (hours, days, weeks). E means do not merge. D needs a mitigation plan.
 
 ## Regression emphasis
 
-"No damage elsewhere" is claimed, not assumed. Re-run the tests covering ALL callers of the changed code, not just the changed files. Flag any behavior change outside the task's declared scope as major — scope creep that changes behavior is a regression in disguise.
+"No damage elsewhere" must be shown, not assumed. Check the test evidence covers ALL callers of the changed code, and ask Chopper or Luffy for a re-run when it does not (Robin has no shell). Flag any behavior change outside the task's declared scope as major — scope creep that changes behavior is a regression in disguise.
 
 ## Sonar-style checks
 
 - Duplication: 3+ near-identical blocks that should be one function.
 - Unused code: dead functions, unreachable branches, orphaned imports/vars.
-- Complexity: cyclomatic AND cognitive per changed function. Cyclomatic (1 + decision points): flag >10, major >20. Cognitive (nesting-weighted): flag >15, major >25 — catches deep nesting a branch count misses.
-- Method + thresholds + evidence format: `_shared/references/complexity.md`. Every flagged function lists its counted branches / nesting levels.
+- Complexity: Robin has no shell and does not measure it. Read the cyclomatic and cognitive numbers from Sanji's quality report (method in `_shared/references/complexity.md`); without a report, flag only visible deep nesting by line.
 - Naming: names that lie about behavior, deviation from repo conventions.
 - Comments: commented-out code, stale comments contradicting the code.
 
@@ -69,11 +66,7 @@ The quality analyzer produces metrics (quantitative); the reviewer interprets co
 
 ## Severity
 
-What each level means, with examples: `references/severity-rubric.md`.
-
-- blocker: public-break with no migration path, wrong behavior shipped, security hole, correctness failure reaching users. Fix before merge.
-- major: internal-break with callers unfixed, missed contract, real-cost readability/architecture/performance issue, behavior change outside declared scope. Fix this mission.
-- minor: polish, style drift, batched items. May batch for a later pass.
+One scale, blocker / major / minor, defined once with examples in `references/severity-rubric.md`. Security findings use Critical/High/Medium/Low from `mugiwara-security`; the same file maps them onto this scale.
 
 ## Dispute hierarchy
 
@@ -87,13 +80,11 @@ Never pass the implementer's CLAIM. For each claim:
 2. Strip the implementer's reasoning. Re-derive what the code actually does.
 3. Review adversarially: "find issues, do NOT validate." Approval is earned by surviving the search, not by matching a summary.
 4. Reconcile findings into categories: contract-misread / actionable / trade-off / noise. Report only the first three.
-5. Max 3 cycles. After 3, stop — or escalate to the orchestrator with the unresolved claim.
+5. Cap at `heal_max_cycles` cycles, then stop or escalate to Luffy with the unresolved claim.
 
 ## Re-review scope
 
-Cycle N+1 re-reviews ONLY the fixed findings plus their callers — never the
-full diff again. A fix that touches new callers extends the scope to those
-callers, nothing else. Full-diff re-review is waste wearing diligence.
+The next cycle re-reviews only the fixed findings plus their callers, not the full diff. A fix that touches new callers extends the scope to those callers and nothing else.
 
 ## Documentation
 
@@ -101,17 +92,14 @@ Public API changes must be reflected in README/docs/changelog where the repo has
 
 ## Findings format
 
-One line each: `path:line: [blocker|major|minor] problem → fix`. Write findings to `.mugiwara/missions/<mission>/review.md`. Deep security concerns → hand to the security review (`mugiwara-security`), do not duplicate. **Ownership approval:** the change owner must acknowledge every blocker/major (approve, fix, or dispute with evidence) before merge. **Return to the orchestrator**, which routes: blockers/majors → fix, minors → defer or batch. Never dispatch follow-up yourself.
+One line each: `path:line: [blocker|major|minor] problem → fix`. Write them to `.mugiwara/missions/<mission>/review.md`; shape and a short example: `references/review-template.md`. Deep security concerns go to `mugiwara-security`, not duplicated here. The change owner acknowledges every blocker and major (approve, fix, or dispute with evidence) before merge. Return the findings to Luffy and `recommend: Brook` for blockers and majors, `recommend: defer or batch` for minors. Luffy decides; never dispatch a follow-up yourself. When dispatched as a subagent you start with no memory: read the diff, plan, spec and flow files Luffy names, write only `review.md`, and do not state whether the check was independent or inline (archive adds it).
 
 ## Common rationalizations
 
-- "I reviewed the diff already" → you reviewed your own work. Fresh eyes + damage map required.
+- "I reviewed the diff already" → that was your own work. Fresh eyes and a damage map are required.
 - "It's just internal" → internal breaks still block the mission; callers are users too.
-- "No time for breaking-change map" → mapping callers is the point of review. No map, no review.
-- "The tests pass" → the suite only proves what it covers; it proves nothing about callers outside the changed files.
+- "The tests pass" → the suite proves only what it covers, not callers outside the changed files.
 
 ## Red flags
 
-- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
-
-Full list: `references/red-flags-review.md` — 14 checks; any hit means review missed its job.
+Full list: `references/red-flags-review.md`, 12 checks; any hit means the review missed its job.

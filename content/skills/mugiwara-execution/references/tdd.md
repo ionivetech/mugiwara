@@ -1,7 +1,5 @@
 # Test-Driven Development
 
-Full TDD discipline: `references/tdd.md` — 5 sections, 89 lines.
-
 A test proves nothing by existing. It proves nothing by passing. Its entire value lives in WHEN it runs and HOW it fails. TDD is the discipline that makes that proof real.
 
 ## Skip when
@@ -53,13 +51,9 @@ Build bottom-up: the pyramid's point is that the slow, fragile, expensive layers
 
 | Rationalization | Reality |
 |---|---|
-| "I'll write the test after, then run it" | That run can only pass — it can never prove it catches the bug. You bought confidence, not proof. |
-| "The test passed first try, that's fine" | It tested code that already existed. The RED step is the whole point; skipping it skips the proof. |
-| "I'm sure this is broken, I'll just fix it" | No failing test first means no regression net, and you'll never know if you fixed the symptom or the cause. |
-| "The failing test was a typo, let's just move on" | A red for the wrong reason is not red at all. Fix the harness, re-watch it fail for the intended reason. |
-| "Mock it, faster than a real boundary" | A mock asserting your own call order verifies your imagination, not the software. |
-| "Just weaken this assertion to pass CI" | You converted the proof into a lie and shipped it. Never. |
-| "It's only one function, test is overkill" | The one function you skip is the one that breaks the deploy. |
+| "I'll write the test after, then run it" | That run can only pass; it never proves the test catches the bug. |
+| "The test passed first try, that's fine" | It tested code that already existed. The failing run is the proof. |
+| "Just weaken this assertion to pass CI" | The proof becomes false. Never. |
 
 ## Red flags
 

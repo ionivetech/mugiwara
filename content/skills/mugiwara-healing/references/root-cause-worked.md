@@ -14,12 +14,12 @@ Reported: Aug 2026
 
 ```bash
 # Create user with no displayName
-$ curl -X POST /api/users -d '{"email":"test@ex.com"}'
-{"id": "u_42", "email": "test@ex.com"}
+$ curl -X POST /api/users -d '{"email":"<test-email>"}'
+{"id": "u_42", "email": "<test-email>"}
 
 # Fetch profile
 $ curl /api/users/u_42
-{"id": "u_42", "displayName": "null", "email": "test@ex.com"}
+{"id": "u_42", "displayName": "null", "email": "<test-email>"}
 ```
 
 Expected: `displayName` should be `null` (JSON null) or omitted, not string `"null"`.
@@ -54,7 +54,7 @@ return user.displayName ?? null; // JSON null
 
 // Guard test:
 it('returns null for missing displayName, not string "null"', () => {
-  const user = { id: 'u_42', email: 'test@ex.com' };
+  const user = { id: 'u_42', email: '<test-email>' };
   const profile = buildProfile(user);
   expect(profile.displayName).toBeNull(); // was: toBe('null')
 });

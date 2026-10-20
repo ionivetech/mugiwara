@@ -1,8 +1,6 @@
 # Triage & Escalation — full reference
 
-Full classifier, lane routing, precedence, pressure rationalizations, auto
-auto-never-drops, escalation owners, and heal bounds. The SKILL.md body carries one-line
-pointers; this file is the detail.
+Full classifier, lane routing, precedence, escalation owners, and the install-sync and tool-surface rules. The SKILL.md body carries one-line pointers; this file is the detail.
 
 ## Request classifier (Flow 0) — 8 classes
 
@@ -11,13 +9,13 @@ of the decision log. Any route without a recorded reason is a red flag.
 
 | Class | Signal | Route |
 |-------|--------|-------|
-| Trivial | one obvious small change, no ambiguity, single file | Flow 2 directly |
-| Explicit | clear requirements, written spec or reference exists | Flow 2 directly |
-| Exploratory | needs direction, options, or research before planning | Flow 1 first |
-| Open-ended | broad goal, undefined scope or success criteria | Flow 1 first |
-| Ambiguous | requirements, APIs, or scope unclear | Flow 1 first |
+| Trivial | one obvious small change, no ambiguity, single file | Nami directly (Flow 2) |
+| Explicit | clear requirements, written spec or reference exists | Nami directly (Flow 2) |
+| Exploratory | needs direction, options, or research before planning | Usopp first (Flow 1) |
+| Open-ended | broad goal, undefined scope or success criteria | Usopp first (Flow 1) |
+| Ambiguous | requirements, APIs, or scope unclear | Usopp first (Flow 1) |
 | **Answer** | question, explanation, code reading — no file change | **Answer directly. No mission, no workspace, no banner.** |
-| **Refuse** | deploy, prod migration, key rotation, merge | **Decline at Flow 0, state why, offer the branch-handoff path.** |
+| **Refuse** | deploy, prod migration, key rotation, merge | **Decline at triage, state why, offer the branch-handoff path.** |
 | **Hotfix** | production broken | Lane 1, gates deferred with an owner, never skipped |
 
 After class+lane, read `features=` from the project config and log the resolved extension set as one decision-log row — `features=<csv> | intents=<k=v csv> | files=<N>` — then run `mugiwara features explain [--mission <id>]` as the reproducibility check: the logged row must replay via `explain --json`. An unreadable diff or state is a blocker (log it, escalate), never a guess.
@@ -39,25 +37,15 @@ override class route — see lane escalation).
 
 ## Explicit class still sizes the lane
 
-A pasted spec routes to Flow 2 (Explicit) — but planning is NOT skipped on
-faith. Before routing to Flow 2, size the lane from the spec's file list: count
+A pasted spec routes to Nami (Explicit) — but planning is NOT skipped on
+faith. Before routing to Nami, size the lane from the spec's file list: count
 the files the spec implies. A 40-file spec sizes to Lane 3 even though the class
 is Explicit. A 2-file spec stays Lane 1. Never let a spec's existence substitute
 for sizing its size.
 
 ## Lane routing (Flow 0, size before process)
 
-| Lane | Runs | Size signal |
-|------|------|-------------|
-| 0 Direct | skips pipeline | 1 file <20 LOC |
-| 1 Lean | execute → quality | 1-2 files |
-| 2 Standard | plan → execute → checkpoint → review | 3-8 files |
-| 3 Full | all 9 flow stages | 9+ files or auth/payment/migration paths |
-| 4 Spike | brainstorm then re-sizes | exploratory |
-
-Escalation only: a lane may rise mid-mission (diff grew, sensitive path
-touched, failures repeated), never drop. Record the chosen lane and its signal
-in the decision log.
+The lane table (what each lane runs, size signals, budgets) is in the stage table (stages.md). Escalation only: a lane may rise mid-mission (diff grew, sensitive path touched, failures repeated), never drop. Record the chosen lane and its signal in the decision log.
 
 **Pass the triaged lane to the first savepoint.** `lane.sh` measures the
 working diff, and at Flow 0 nothing has changed yet, so it answers `direct` for
@@ -72,20 +60,9 @@ It is a FLOOR, not an override: a larger measurement still wins, and the peak
 clamp means the lane can only rise afterwards. Skip it on Lane 0/1, where the
 measurement and the triage agree anyway.
 
-## Rationalizations (pressure resistance)
+## Auto mode stays auto
 
-Moved to the SKILL.md body — pressure resistance must fire mid-argument, before
-the agent opens a reference. See `## Rationalizations (pressure resistance)`
-in `SKILL.md`.
-
-## Auto mode never drops
-
-`auto` runs every flow stage autonomously to closure. Lane rise (`lane_rose`), a
-sensitive path touched (auth/payment/billing/crypto/secrets/migration — see
-`mugiwara run lane.sh`), or heal cycles do NOT downgrade the mode. The lane may
-escalate (more flow stages, more care) but the mode stays auto. Only a genuine
-blocker or the heal halt pauses and escalates to the user; the mode is never
-switched down mid-mission.
+`auto` runs every stage autonomously to closing. A lane rise (`lane_rose`), a sensitive path (auth, payment, billing, crypto, secrets, migration; see `mugiwara run lane.sh`), or a fix round does not change the mode: more stages run and more care applies. The pauses are a genuine blocker, the fix-loop halt, and a rise to lane 3, which is announced once with a request for a go while the mode stays `auto`.
 
 ## Lane-escalation owner (who checks, when)
 
@@ -101,12 +78,9 @@ repeated). The owner is Luffy, at every per-flow-stage check-in:
 Nobody else owns this. Chopper audits what was done, not what lane should have
 been; Luffy owns the lane decision.
 
-## Heal bound — halt, not a red flag
+## Fix-loop halt
 
-Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json` (savepoint computes it as `heal_cycle ≥ heal_max_cycles`, config default 3). When it reads
-`true`, STOP and escalate to the user with full history. This is a halt, not a red
-flag: red flags are prose, a counter is state. Nothing re-runs Flow 8 past
-`heal_max_cycles`.
+Read `heal_halt` from `.mugiwara/missions/<mission>/state.json | <member>.json`. When it is `true`, stop and escalate to the user with the full history. The cap and per-row attempts are defined in the stage table (stages.md). Nothing re-runs the fix stage past `heal_max_cycles`.
 
 ## Install sync rules (Flow 0)
 

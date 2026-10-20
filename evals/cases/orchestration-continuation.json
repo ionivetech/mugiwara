@@ -1,6 +1,6 @@
 {
   "name": "orchestration-continuation",
-  "skill": "mugiwara-resume",
+  "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
       {

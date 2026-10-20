@@ -1,6 +1,6 @@
 # Test Intake Formats
 
-Single home for the ATDD contract. Referenced by `mugiwara-quality` and `mugiwara-gates`.
+Single home for the ATDD contract. Referenced by `references/testcases.md` and `references/gates.md`.
 
 ## Format 1: Executable tests (user test files)
 

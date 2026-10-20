@@ -2,6 +2,8 @@
 
 A backend task done with the source-grounding protocol.
 
+Illustrative only: package names and versions below are an example, not facts about your repo.
+
 ## The task
 
 ```

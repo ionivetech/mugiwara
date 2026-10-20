@@ -17,8 +17,8 @@ phases, plan_lines, governor verdict.
 | Trigger | Posture |
 |---------|---------|
 | ordinary / none | `inline-sequential` (default) |
-| 2-3 independent tasks below lane 3 | `inline-batched` — under the dispatch floor |
-| ≥2 independent tasks on lane 3, or ≥4 on any lane | `parallel-workers` |
+| ≥2 independent tasks below lane 3, however many | `inline-batched` — under the dispatch floor |
+| ≥2 independent tasks on lane 3 | `parallel-workers` |
 | context pressure + ordered tasks | `context-relief` |
 | >3 phases or >1500 plan lines | `phase-isolated` |
 | >1 team member | `team-scoped` |
@@ -32,6 +32,11 @@ inline (measured — `mugiwara-orchestration`). Two small independent tasks are
 work must be big enough that the floor disappears into it. Lane is the size
 proxy the pipeline already computes. Below the floor, batch inline —
 `inline-batched` keeps the tasks in one context and one plan order.
+
+Independent review is the one exception to the floor: on the full lane or a
+sensitive path (`independent_review=on`), Robin and Jinbe run as subagents
+despite the cost, because a fresh context is the point. Everywhere else review
+stays inline (`mugiwara-orchestration` → `references/pipeline.md`).
 
 ## Plan posture (Flow 2)
 

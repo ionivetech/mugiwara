@@ -1,8 +1,3 @@
----
-name: mugiwara-root-cause
-description: Use for debugging bugs — debug, bug, crash, error, recurring, intermittent, track it down. 4-phase: reproduce, localize, reduce, fix+guard. Root cause hunt.
----
-
 # Systematic Debugging
 
 ## Skip when
@@ -20,9 +15,9 @@ Framework code from docs, not memory: `_shared/references/source-grounding.md`.
 
 ## Process
 
-Full 4-phase walkthrough: `references/process.md` — reproduce, localize, reduce, fix+guard, escalation. 33 lines of detail; no step is optional.
+Full 4-phase walkthrough: `references/root-cause-process.md` — reproduce, localize, reduce, fix+guard, escalation; no step is optional.
 
-Worked example, one bug from report to guard: `references/four-phase-worked.md`.
+Worked example, one bug from report to guard: `references/root-cause-worked.md`.
 
 A failure is a stopping event, not a speed bump. Do not guess, do not patch. Walk the four phases in order; each gates the next.
 
@@ -31,11 +26,8 @@ A failure is a stopping event, not a speed bump. Do not guess, do not patch. Wal
 | Rationalization | Reality |
 |-----------------|---------|
 | "It works sometimes, must be flaky" | Intermittent failures have a root cause; reproduce harder, never shrug |
-| "I know the fix, let's skip the test" | No red test = no proof. Write it first |
+| "I know the fix, let's skip the test" | No red test means no proof. Write it first |
 | "This one path is enough" | Other callers share the same root; patch the shared function |
-| "A quick patch now, cleanup later" | Pile-on fixes bury the root cause |
-| "The failure is environmental" | Prove it with a repro or mark `unreproducible` — do not assume |
-| "Too risky, let's just roll back everything" | Rollback prep, not blanket revert — know the exact revert point |
 
 ## Red flags
 

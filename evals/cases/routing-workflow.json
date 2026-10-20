@@ -1,6 +1,6 @@
 {
   "name": "routing-workflow",
-  "skill": "mugiwara-workflow",
+  "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
       {

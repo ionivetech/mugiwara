@@ -1,14 +1,9 @@
----
-name: mugiwara-testcases
-description: Use when mission declares user test cases, e2e, playwright, cypress, integration tests — intake formats, immutable-gold rule, consent, failure adjudication.
----
-
 # Test Cases (ATDD Contract)
 
 ## Skip when
 
-- No user-declared test cases or acceptance criteria in this mission.
-- No repo test source declared and no acceptance oracle needed.
+- 0 user-declared test cases or acceptance criteria in this mission.
+- The user only asks to write or run tests normally (e2e, playwright, cypress included): no oracle is being declared.
 
 User tests are the crew's acceptance oracle. This is the single home for the ATDD contract — intake, immutable gold, routing, consent, and failure adjudication. Shared by planning, execution, quality, and gates so they cannot drift.
 
@@ -16,12 +11,12 @@ User tests are the crew's acceptance oracle. This is the single home for the ATD
 
 What each format must carry to be usable: `references/intake-formats.md`.
 
-1. Existing repo test files (bun:test / vitest / pytest / playwright / JUnit).
+1. Existing repo test files (the project's own runner: pytest, JUnit, playwright, and so on).
 2. User-written acceptance criteria — Gherkin AND plain markdown.
 
 ## Intake
 
-The declared test source is a path glob in the mission prompt (e.g. `tests/acceptance/`) or an explicit repo path, read at Flow 0 alongside the mode config. No automatic whole-repo scan. No test source declared → no user tests; quality runs unit / lint / format only.
+The declared test source is a path glob in the mission prompt (e.g. `tests/acceptance/`) or an explicit repo path, read at triage alongside the mode config. No automatic whole-repo scan. No test source declared → no user tests; quality runs unit / lint / format only.
 
 ## Trust (per the planning trust doctrine)
 
@@ -44,19 +39,19 @@ State-mutating user tests against non-isolated / shared state (real DB writes, n
 
 ## Failure adjudication
 
-A red user test needs green-run evidence, not silence. After the 3-cycle heal loop, escalate to the human with the test untouched. Never skip a user test to pass.
+A red user test needs green-run evidence, not silence. After `heal_max_cycles` fix rounds (stage table, `mugiwara-orchestration` stages.md), escalate to the human with the test untouched. Never skip a user test to pass.
 
 ## Integration-class rule
 
-Sanji never creates integration tests; user-declared suites are the only integration-class tests that exist. The verdict on them comes from the quality flow stage evidence — user suites actually run, never asserted.
+Sanji never creates integration tests; user-declared suites are the only integration-class tests that exist. The verdict on them comes from the quality stage evidence — user suites actually run, never asserted.
 
 ## Rules
 
-1. Read the declared test source at Flow 0; no source declared = no user tests.
+1. Read the declared test source at triage; no source declared = no user tests.
 2. User executable tests are immutable gold — edit or skip only with consent + a ledger row.
 3. Declarative AC always routes to translate-or-command-check; "run the .feature file" is banned.
 4. State-mutating user tests against shared state consent in every mode; provably-isolated ones run without consent.
-5. A red user test escalates untouched after the heal loop — never skipped to pass.
+5. A red user test escalates untouched after the fix loop — never skipped to pass.
 
 ## Red flags
 

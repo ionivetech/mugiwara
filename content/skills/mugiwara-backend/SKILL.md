@@ -1,10 +1,10 @@
 ---
 name: mugiwara-backend
-description: Use for backend/server code — repo standards first, API endpoint design, data integrity, error handling, source-backed code. Match the codebase before judging it.
+description: Use when writing or changing backend or server code: REST API endpoint design, database schema, data integrity, error handling. Matches the repo's own standards before judging it.
 gate_artifact: flows/01-execution.md cited doc link — backend evidence with source citation
 ---
 
-# Backend (Sanji)
+# Backend
 
 ## Skip when
 
@@ -15,100 +15,65 @@ Backend engineer in the repo's own stack. Match the codebase before you judge it
 
 ## Source-backed code (no invented APIs)
 
-Framework code from documentation, not memory. Full protocol: `_shared/references/source-grounding.md`. Pin the stack from the dependency file, consult the authoritative page for that version, code to the docs not memory, cite non-obvious choices. Evidence: write each cited doc link into `flows/01-execution.md` (see `gate_artifact` in frontmatter) — a code change with no citation is unverified.
+Framework code from documentation, not memory. Protocol: `_shared/references/source-grounding.md`. Pin the stack from the dependency file, read the page for that version, cite non-obvious choices. Append a `## backend (<task id>)` section to `flows/01-execution.md` (never overwrite it) with each cited doc link; a change with no citation is unverified. Worked example: `references/source-backed-example.md`.
 
-Worked example — endpoint built from the docs: `references/source-backed-example.md`.
+## Repo standard first
 
-## Existing-repo standard FIRST
+Before writing a line, learn how this repo already does backend: language, layout, error model, logging, config, data access, endpoint patterns, auth middleware. An existing repo convention beats every default in this skill, including the layering and file-size guidance below. Never add a parallel architecture, a second error model, or a second data layer. With no repo standard, pick boring idiomatic defaults and note the choice.
 
-Before writing a line, learn how this repo already does backend: framework/language, layout (controllers/services/repos), error model, logging, config loading, DB access (ORM vs raw SQL), endpoint patterns, auth middleware. Match it. Never invent a parallel architecture, a second error model, or a second DB layer. No repo standard → pick boring idiomatic defaults, note the choice. Stack-gate: the Prisma / Express sections below apply only when that stack is detected — other stacks follow the same rules grounded in their own docs per the protocol above.
+Stack-specific notes (Prisma, Express) are in `references/stacks.md`; use them only when that stack is detected.
 
-## Clean architecture (measured)
+## Layering (default when the repo has none)
 
-Layered: `controllers → services → repos → domain`. Dependency rule: import inward only — controllers→services→repos→domain; a reverse import (repo calling a controller) is a defect. **300 LOC/file max**; a file crossing it splits at a layer seam, never a util dump. SOLID composition: one responsibility per layer, dependencies injected (repo interface into service, `tx` into the writer), code to interfaces, no god objects.
+Layered `controllers → services → repos → domain`, imports inward only; a reverse import is a defect. Keep files small (about 300 lines is a default, not a rule): split at a layer seam, never into a util dump. One responsibility per layer, dependencies injected.
 
 ## API design
 
-- Contract-first: write request/response shape + status codes before code.
-- REST/JSON per repo convention; simple + consistent when none.
-- Idempotency on mutating ops (retries, payments, callbacks).
-- List endpoints: pagination + filtering, never unbounded.
-- Evolve additively; no silent breaking changes.
-- Validate at the boundary with a schema; never trust the client.
-- One error envelope everywhere, machine-readable. Status map: 400 malformed, 401/403 authz, 404 missing, 409 conflict, 422 validation, 429 rate-limited, 500 unexpected.
+Follow `mugiwara-contract-first` for contracts, the single error envelope, validation, and versioning. Backend additions:
 
-## Data integrity (Prisma)
+- Idempotency on mutating operations (retries, payments, callbacks).
+- List endpoints: pagination and filtering, never unbounded.
+- Status map: 400 malformed, 401/403 authz, 404 missing, 409 conflict, 422 validation, 429 rate-limited, 500 unexpected.
 
-Raw SQL vs ORM decisions, concurrency, migrations, indexes: `references/database.md`.
+## Data integrity
 
-Prisma is the repo's SQL toolkit; patterns verified against its v7 docs.
+Raw SQL vs ORM, concurrency, migrations, indexes: `references/database.md`. Multi-row writes run in one transaction. Fix N+1 by eager loading.
 
-- Multi-row writes: `prisma.$transaction(async (tx) => { ... })` — a throw inside rolls back atomically. Guard with `transactionOptions`: `timeout` 5000ms / `maxWait` 2000ms defaults — an over-time transaction is cancelled and rolled back.
-- Singleton `PrismaClient`: one instance per process; in hot-reload dev cache it on `globalThis` — a client per request leaks connections.
-- Anti N+1: eager-load with `include`/`select` in one query, e.g. `findFirst({ include: { posts: { select: { title: true } } } })`; never loop-query a relation.
-- Indexes: hot WHERE/JOIN/ORDER BY → `@@index([field])` in the schema. Measured ~80x on Prisma's benchmark (66ms → <1ms) for one indexed lookup.
-- Unique races: concurrent writes on a unique column throw P2002 (`PrismaClientKnownRequestError`); catch, retry or map to 409. Never a bare 500.
-
-Docs: https://www.prisma.io/docs/orm/v7/prisma-client/queries/transactions (transactions); https://www.prisma.io/docs/orm/reference/prisma-client-reference (P2002); https://www.prisma.io/docs/orm/v7/prisma-client/queries/relation-queries (relation queries); blog https://www.prisma.io/blog/improving-query-performance-using-indexes — all from the Prisma docs.
-
-## Error handling (Express)
-
-Express error API verified against its 5.x middleware docs.
-
-- Never render errors in the route. On failure call `next(err)`; Express routes it to the centralized error middleware registered after all routes.
-- One error middleware, exactly 4 args `(err, req, res, next)`, defined last: `app.use((err, req, res, next) => res.status(err.status || 500).json({ error: { status, message } }))` — one response shape for the whole app.
-- Log every error with context: `logger.error({ path: req.path, method: req.method, stack: err.stack, traceId })`; include the OpenTelemetry trace id so the log line links to the request trace.
-- Never leak internals or stack traces to clients; map domain errors to the status map above.
-
-Docs: https://expressjs.com/en/guide/error-handling.html (single error handler); https://expressjs.com/en/4x/api.html#app.use (4-arg middleware, `next(err)`) — from the Express docs.
-
-## Correctness
+## Correctness and performance
 
 - Edge cases: empty input, nulls, timezones, large payloads, duplicates, malformed data.
-- Concurrency: no shared mutable state; code to the runtime model (threads vs event loop vs workers).
-- Deterministic where expected: stable ordering/pagination, no unseeded randomness in tests.
-
-## Performance
-
-- No N+1 (see Data integrity). No O(n²) in request paths.
+- No shared mutable state; stable ordering and pagination.
 - Cache hot reads with invalidation; stream large payloads, never buffer whole.
-- Timeouts + cancellation on downstream calls; never hang on a slow dependency.
-- Measure before optimizing; optimize the real hot path.
+- Timeouts and cancellation on downstream calls.
+- Measure before optimizing.
 
 ## Security (backend layer)
 
-- Authz server-side on every protected path; never trust client checks.
-- Secrets via env/secret manager, never in code or committed files.
-- Validate/sanitize all input against SQL/NoSQL/command/template injection.
+- Authz server-side on every protected path.
+- Secrets via env or secret manager, never in code or committed files.
+- Validate and sanitize input against injection.
 - Rate-limit sensitive endpoints (auth, payment, callbacks).
-- No PII in logs. Safe file handling (path traversal, symlinks, size/type limits).
+- No PII in logs; safe file handling (path traversal, size and type limits).
 - Dependency audit as part of the change.
 
 ## Testability
 
-- Contract tests for APIs, unit for logic, integration for DB — repo's existing setup only.
-- Test error paths, not just happy paths.
+Contract tests for APIs, unit tests for logic, integration tests for the database, using the repo's existing setup only. Test error paths too.
 
-## Common rationalizations
+## Rationalizations
 
-- "The client validates" → validate at the server boundary; client is untrusted.
+- "The client validates" → validate at the server boundary; the client is untrusted.
 - "I'll add authz later" → authz ships with the route.
-- "One big function is fine" → split at seams; a request handler is not a service.
-- "No tests, it's a small endpoint" → endpoints grow; cheap contract test now.
-- "I'm confident about this API" → fetch the docs for that version and cite.
-- "Fetching docs wastes tokens" → hallucinating an API wastes an hour; one fetch prevents it.
+- "I'm confident about this API" → read the docs for that version and cite them.
 
 ## Red flags
 
-- Endpoint without input validation.
-- Authz missing on a protected route.
-- Swallowed catch with no log, no rethrow, no mapping.
-- N+1 in the hot path.
+- Endpoint without input validation, or authz missing on a protected route.
+- Swallowed catch with no log, rethrow, or mapping.
+- N+1 in a hot path, or a unique-constraint race surfacing as a bare 500.
 - Breaking API change without migration.
 - Secret in code or committed files.
 - Error path untested.
-- File > 300 LOC with no layer seam.
-- Reverse architecture import (repo → controller).
-- P2002/unique race surfacing as a bare 500.
+- A second architecture or error model next to the repo's own.
 
 Any red flag = the backend basics are off. Stop, fix, then continue.

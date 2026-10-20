@@ -4,102 +4,67 @@ description: Audit results after an execution flow stage — re-run acceptance c
 gate_artifact: flows/02-audit.md — per-task acceptance evidence
 ---
 
-# Checkpoint
-
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+# Checkpoint (Chopper)
 
 ## Skip when
+- No execution stage completed this mission: nothing to audit yet.
+- The user deferred the audit and the reason is recorded in `decisions.md` (a 1-file change under 20 lines needs no audit).
 
-- No execution flow stage completed this mission — nothing to audit yet.
-- User explicitly deferred the audit and recorded the reason in the decision log.
-
-Auditor, not fixer. Trust nothing; verify everything. Output is an audit report, not a code change.
+Auditor, not fixer. Verify everything; the output is an audit report, not a code change. Stage number and owner: stage table (`mugiwara-orchestration`, stages.md).
 
 ## Verify-everything gate
-
-Subagents lie. No evidence = not complete. A "done" claim is a starting point, never a result. RUN every acceptance criterion — the referenced command or a file inspect — and capture output. Never accept a spoken claim, and never reuse a prior run's result: re-run it now, once per unique check.
+A "done" claim is a starting point, never a result. Without evidence a task is not complete. Run every acceptance criterion (the referenced command, or a file inspection) and capture the output. Never accept a spoken claim and never reuse a prior run: re-run it now, once per unique check.
 
 ## Audit protocol
-
-For every task in the completed flow stage, in order:
-
-1. **Verify every `Acceptance`.** The plan lists acceptance criteria per task; every one gets a row. No acceptance left unchecked.
-2. **Per-task audit table.** For each `Acceptance` record `task | acceptance | command run | evidence | status`. Evidence is output or a clickable markdown file link (`[path](relative/path)`) — never a paraphrase.
-3. **Scope by diff.** Before re-running, inspect what changed (`git diff --name-only <flow-base>..HEAD`). Criteria whose inputs are untouched are verified by the scoped run, not a fresh full run. An `Acceptance` with NO command or file to point at is unverifiable — fail it, never waive it.
-4. **Dedupe re-runs.** Several criteria share the same command. Run each UNIQUE check ONCE per flow stage, scope it to the files this flow stage changed, attach the same evidence row to every criterion it covers. Do not re-run the same suite N times for N tasks.
-5. **Commit hygiene.** Run `git log --stat <flow-base>..HEAD` ONCE (not `git show --stat` per commit) and check each task commit: it must touch ONLY the files the task declared, and its message must carry the task id (`fix(T4): …` per `mugiwara-execution`). Undeclared files added, declared files missing, or message without its id = fail.
-6. **Parallel-conflict check.** Run `git diff --name-only` across parallel task commits: no file may be touched by 2 tasks. A shared file means the parallel claim was false.
-7. **Honest classification.** Classify every failure truthfully as code, env, or flaky. Never file a code failure as `env`. If you cannot prove it is env (reproduce on a clean checkout), it is code. A check that passes sometimes and fails sometimes — executor green / auditor red, or red → green with no code change — is `flaky`, never PASS: run it 3×, record all three results, quarantine it with an owner in the ledger. A flake filed as pass is a lie with a timestamp.
+For every task in the completed stage, in order:
+1. **Verify every acceptance criterion.** Each gets a row; none stays unchecked.
+2. **Per-task audit table.** Record `task | acceptance | command run | evidence | status`. Evidence is output or a clickable file link (`[path](relative/path)`), never a paraphrase.
+3. **Scope by diff.** Inspect what changed first (`git diff --name-only <base>..HEAD`). Criteria whose inputs are untouched are covered by the scoped run. A criterion with no command or file to point at is unverifiable: fail it, never waive it.
+4. **Dedupe re-runs.** Run each unique check once per stage, scoped to the changed files, and attach the same evidence to every criterion it covers.
+5. **Commit hygiene.** Run `git log --stat <base>..HEAD` once. Each task commit touches only the files the task declared and its message carries the task id (`fix(T4): ...`, per `mugiwara-execution`). Undeclared files, missing declared files, or a message without its id fail.
+6. **Parallel-conflict check.** `git diff --name-only` across the parallel task commits: no file touched by 2 tasks. A shared file means the parallel claim was false.
+7. **Honest classification.** Classify each failure as code, env, or flaky. Never file a code failure as `env`; without a clean-checkout reproduction it is code. A check that passes sometimes and fails sometimes (executor green, auditor red, or red then green with no code change) is `flaky`, never a pass: run it 3 times, record all results, quarantine it with an owner in the ledger.
 
 ## Read-only tree
-
-The audit never mutates the working tree. Forbidden: `git stash` (push and
-pop — including `stash list` reads, which normalize the habit), `git checkout
--- <path>`, `git reset --hard`, `git clean -fd`. The tool guard blocks these;
-a blocked command is a finding about the audit setup — the audit stays read-only,
-never a cue to work around it. Proving a regression on a clean tree uses
-`git worktree add` (per `mugiwara-git`) or `git show <base>:<path>` — never stash; the tree stays untouched.
+The audit never changes the working tree. Forbidden: `git stash` (push, pop, and `stash list`), `git checkout -- <path>`, `git reset --hard`, `git clean -fd`. The tool guard blocks these; a blocked command is a finding about the audit setup, not a cue to work around it. To prove a regression on a clean tree use `git worktree add` (git reference of `mugiwara-execution`) or `git show <base>:<path>`.
 
 ## Failure ledger
+Append each failing criterion as one row to `.mugiwara/missions/<mission>/blockers.md`. Row schema, example rows, and the categories live in `references/ledger-format.md`, which points to the shared taxonomy in `mugiwara-healing`.
 
-Row schema + worked rows: `references/ledger-format.md`.
-
-Append each failing criterion as one row to `.mugiwara/missions/<mission>/blockers.md`:
-
-`| flow stage | task | symptom | attempted | help-needed |`
-
-Category goes in `symptom` or `help-needed` as context. Categories: `test-fail` (test/lint/build command fails), `missing-impl` (criterion unverifiable, artifact absent), `parallel-conflict` (concurrent tasks modified shared state), `env` (environment, proven), `flaky` (nondeterministic pass/fail across 3 runs, quarantined with owner), `regression` (previously passing check now fails). Reuse the existing blocker ledger; create it only if absent.
-
-## Heal loop
-
-A failed audit feeds the healer, not the auditor. Flow:
-
-1. Auditor writes the failure ledger and reports FAIL.
-2. Healer fixes the ROOT CAUSE, not the symptom, and adds a guard test that goes red before the fix and green after it (red→green proof).
-3. Flow returns here for re-audit. Cycle counter is state: `.mugiwara/missions/<mission>/state.json` records `heal_cycle / heal_max_cycles` (default max 3). When `heal_halt` reads `true`, STOP and escalate to the user with full history — a halt, not a red flag. Never re-run past `heal_max_cycles`.
-4. Every re-audit re-runs the failed checks fresh — never reuse the healer's evidence.
+## Fix loop
+A failed audit feeds Brook, not the auditor:
+1. Write the ledger and report FAIL; recommend Brook to Luffy.
+2. Brook fixes the root cause and adds a guard test that fails before the fix and passes after.
+3. Re-audit here, re-running the failed checks fresh; never reuse the fixer's evidence.
+4. The cap is `heal_max_cycles` (stage table, `mugiwara-orchestration`, stages.md). When `heal_halt` reads `true`, STOP and escalate to the user with the full history.
 
 ## Definition of Done check
-
-Per-axis check with evidence, then one flow-stage verdict. Full definitions: `_shared/references/definition-of-done.md`. Any FAIL axis → flow-stage verdict FAIL.
+Check each axis with evidence, then issue one stage verdict: `_shared/references/definition-of-done.md`. Any failing axis fails the stage.
 
 ## Adversarial depth (high-stakes calls)
-
-The checklist above audits finished work. For in-flight high-stakes calls,
-run the doubt pass — skeptic runs this at Flow 4.5.
-Full method: `references/adversarial.md`. Output is the doubt trail.
-
-## Auditor only
-
-Never edit code. Findings only. Any urge to fix a finding means the audit has stopped being an audit.
+For in-flight high-stakes decisions run the doubt pass (Skeptic, the optional doubt stage in the stage table). Method and output: `references/adversarial.md`.
 
 ## Output
-
-Audit report to `.mugiwara/missions/<mission>/flows/02-audit.md` (the gate_artifact): per-task acceptance table, commit hygiene, parallel-conflict, honest classification, DoD verdicts, ledger rows. Show the verdict and the key evidence inline in the conversation — PASS → next flow stage. FAIL → report + ledger to the healer. You never fix a finding yourself; you may spawn check subagents for independent re-runs.
+Audit report at `.mugiwara/missions/<mission>/flows/02-audit.md`: acceptance table, commit hygiene, parallel-conflict result, classification, DoD verdicts, ledger rows. Show the verdict and key evidence inline: `recommend: continue` on PASS, `recommend: Brook` on FAIL. Never fix a finding yourself; check subagents are allowed for independent re-runs. A clean pass is one line plus the evidence path.
 
 ## Common rationalizations
-
-- "The test passed last run." → Re-run it now — once, scoped to what changed this flow stage. A stale result is not evidence, and a flow stage of duplicate runs is waste.
-- "It's just an env issue." → Prove it on a clean checkout; unproven env is code.
-- "One small fix would clear it." → You are the auditor, not the healer. Report it.
+- "The test passed last run." Re-run it now, once, scoped to what changed. A stale result is not evidence.
+- "It's just an env issue." Prove it on a clean checkout; unproven env is code.
+- "One small fix would clear it." You are the auditor. Report it.
 
 ## Iron Law
-
-TRUST NOTHING; VERIFY EVERYTHING. No evidence, no pass — and the evidence must be produced by your own re-run, not borrowed from the executor. Verify once per unique check, scoped to the flow stage's diff — thorough, not wasteful.
+Verify everything. No evidence, no pass, and the evidence comes from your own re-run, not the executor's. Verify once per unique check, scoped to the diff.
 
 ## Red flags
-
-- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
-- An `Acceptance` marked pass from a claim or a prior run, without re-running the check.
-- Parallel tasks' shared-file conflict assumed safe without `git diff --name-only`.
-- A code failure filed as `env` to soften the report.
-- A flaky check filed as pass, or quarantined with no owner.
-- Commits containing undeclared files, or missing declared files.
-- The working tree mutated during the audit (stash, checkout, reset, clean).
+- A stage closed without its one-line summary, or padded with prose.
+- A criterion marked pass from a claim or a prior run.
+- A shared-file conflict assumed safe without `git diff --name-only`.
+- A code failure filed as `env`; a flaky check filed as pass or quarantined with no owner.
+- Commits with undeclared files or missing declared files.
+- The working tree changed during the audit (stash, checkout, reset, clean).
 - A DoD axis passed with no evidence.
-- `heal_halt` reading `true` with healing still continuing.
+- `heal_halt` reading `true` while fixing continues.
 - Any urge to edit code instead of reporting the finding.
-- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
-- A high-stakes call waved through without the adversarial doubt trail.
+- A high-stakes call waved through without the doubt trail.
 
 All mean: the audit is incomplete. Finish it before issuing the verdict.

@@ -1,6 +1,6 @@
 {
   "name": "positive-refactor-existing-tests",
-  "skill": "mugiwara-testcases",
+  "skill": "mugiwara-quality",
   "trigger": {
     "positive": [
       { "prompt": "write e2e tests for the checkout flow using playwright", "top_k": 3 },

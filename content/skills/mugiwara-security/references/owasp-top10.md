@@ -1,3 +1,5 @@
+> Snapshot only. Check the current OWASP Top 10 edition at owasp.org before auditing and record the edition used.
+
 | Code | Category | Review area |
 |------|----------|-------------|
 | A01 | Broken access control | authz gaps, IDOR, missing server-side checks |

@@ -1,29 +1,27 @@
----
-name: mugiwara-git
-description: Use for commits, splitting, or git history debugging — atomic commits, save-points, style detection, bisect.
----
-
 # Git Discipline (Zoro, Brook)
 
 ## Skip when
 
-- No commits to make this flow stage — nothing staged, nothing to split or amend.
+- No commits to make in this stage: 0 files staged, nothing to split or amend.
 - User handles version control manually for this mission.
 
-Git hygiene keeps the mission reversible: one logical change per commit, a save-point before risky work, and history you can bisect.
+Git hygiene keeps the mission reversible: one logical change per commit, a coherent save-point before risky work, and history you can bisect.
 
 ## Atomic commits
 
 1. One logical change per commit. A rename, a refactor, and its feature are three commits.
-2. Each commit must compile and pass the relevant checks — never commit a broken tree.
+2. Each task commit compiles and passes the relevant checks. Never commit a broken tree.
 3. Commit when a unit of work passes its acceptance criteria, not at arbitrary time points.
 4. Staging is exact: `git add` specific files and paths, never `git add -A` sweeping an unrelated commit.
 
 ## Save-point pattern
 
-1. Before any risky or large operation (refactor, migration, merge), commit the current working state as a save-point even if incomplete.
-2. A save-point message names the intent, e.g. `checkpoint: before renderer migration`.
-3. Save-points make rollback one command: `git reset --hard <save-point>`. Verify with a diff before resetting.
+A save-point is a local WIP commit on the mission branch, never pushed. It is not a task commit.
+
+1. Before a risky or large operation (refactor, migration, merge), make a save-point only when the tree is in a coherent, runnable state. If it is broken, fix or stash it first; never commit a broken tree as a save-point.
+2. The message names the intent, e.g. `checkpoint: before renderer migration`.
+3. Task commits stay atomic per logical task. Fold a save-point into its task commit before handoff when the history should read one change per commit.
+4. Rolling back with `git reset --hard <save-point>` destroys uncommitted work. Show the user the diff and name exactly what will be lost, then run it only after explicit consent. Prefer `git revert` or `git stash` when they do the job.
 
 ## Multi-commit splitting
 
@@ -35,10 +33,10 @@ Git hygiene keeps the mission reversible: one logical change per commit, a save-
 
 1. Imperative mood subject, capitalized, <= 50 chars: `Add route guard for /api`.
 2. Scoped subject when scope is not obvious: `feat(auth): enforce session TTL`.
-3. Mission commits carry the task id (`fix(T4): test seams` per `mugiwara-execution`) — style detection copies the repo's case/prefix habits but never drops the id; traceability beats local style.
-3. Body (after a blank line) explains WHY, not what. What is visible in the diff; why is not.
-4. Match the repo's existing style — detect it before writing messages (below).
-5. Config `commit` may be a template: any value containing `{` is a template with
+3. Mission commits carry the task id (`fix(T4): test seams` per `SKILL.md`). Style detection copies the repo's case and prefix habits but never drops the id.
+4. The body (after a blank line) explains why, not what.
+5. Match the repo's existing style: detect it before writing messages (below).
+6. Config `commit` may be a template: any value containing `{` is a template with
    placeholders `{type}` `{issue}` `{title}` (e.g. `{issue}: {title}` → `CR-5432: Testing
    button`). Fill placeholders from mission metadata; `{issue}` falls back to the date.
    Style names (conventional/gitmoji/plain) keep their normal rules.
@@ -81,8 +79,9 @@ EVERY COMMIT IS REVERSIBLE AND EXPLAINABLE. If you cannot name the logical chang
 
 - A commit mixing refactor and feature, or failing to compile.
 - `git add -A` sweeping unrelated files into a commit.
-- A save-point skipped before a risky operation.
+- A save-point skipped before a risky operation, or one made from a broken tree.
+- `git reset --hard` run without the user naming what is lost.
 - Writing commit messages in a style the repo's history does not use.
 - A secret reaching a commit, or a force-added ignored file.
 
-All mean: stop, unstage or reset, and re-stage exactly what belongs together.
+All mean: stop, unstage, and re-stage exactly what belongs together.

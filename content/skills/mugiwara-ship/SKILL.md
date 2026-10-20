@@ -1,18 +1,16 @@
 ---
 name: mugiwara-ship
-description: Use at mission end — pre-launch checklist, feature flags, staged rollout, mandatory rollback plan. Binary GO/NO-GO.
+description: Use at mission end — pre-launch checklist, feature flags, staged rollout, mandatory rollback plan. A plain verdict: ready for review, needs fixes, or not enough evidence.
 ---
 
-# Ship Gate (Luffy, Franky)
-
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+# Ship Gate (Luffy)
 
 ## Skip when
 
-- Not releasing: no deploy, rollout, feature-flag flip, or user-facing change.
+- Not releasing: 0 deploys, rollouts, feature-flag flips, or user-facing changes.
 - Internal-only change with zero production exposure.
 
-The last gate before anything reaches a user. Binary GO or NO-GO, each backed by evidence. Default is NO-GO until every item is proven. Trigger: close/archive intent at Flow 8 — mission-end release decision only, never the per-flow-stage bar (`mugiwara-gates` verdicts in `flows/04-gates.md`; this verdict goes to `flows/06-closure.md`).
+The last gate before anything reaches a user. One of three verdicts, each backed by evidence: **Ready for review**, **Needs fixes**, or **Not enough evidence**. The default is **Not enough evidence** until every item is proven. Trigger: close or archive intent, which is Flow 9 in the stage table (`mugiwara-orchestration`, stages.md). Luffy owns it. It is the mission-end release decision only, never the per-stage bar (`mugiwara-quality` gate verdicts live in `flows/04-gates.md`).
 
 ## Pre-launch checklist
 
@@ -56,12 +54,12 @@ Reads (`gh pr view`, `terraform plan`, `kubectl get`) and feature-branch
 pushes stay allowed. The human runs the terminal step from the handed-over
 branch and verdict.
 
-## Binary verdict
+## The verdict
 
-1. Verdict is GO or NO-GO. No "GO with caveats", no "almost".
+1. The verdict is one of: **Ready for review** (every item proven), **Needs fixes** (a check failed: say which, who owns it, and where it re-enters the pipeline), or **Not enough evidence** (a check did not run or left no output: say which). Follow the label with one sentence a reader can act on. No "almost", no "ready with caveats": list deferred findings next to a Ready verdict instead.
 2. Every checklist item cites evidence as a clickable link: `[command output](path)`, `[file](path)`, or a commit hash.
-3. A critical finding at any stage → NO-GO. Non-critical findings → list them, decide ship-with-tracking or fix-first, and record which.
-4. Write the verdict and evidence to `.mugiwara/missions/<mission>/flows/06-closure.md`. Verdict and PR-material prose follow `_shared/references/prose-style.md`.
+3. A critical finding at any stage → Needs fixes. Non-critical findings → list them, decide ship-with-tracking or fix-first, and record which.
+4. Write ONE verdict file, `.mugiwara/missions/<mission>/flows/07-pr-verdict.md`; it survives archive as `pr-verdict.md`. The closing summary goes to `flows/06-closure.md` and links to it. Prose follows `_shared/references/prose-style.md`.
 
 ## Cleanup (after the terminal step)
 
@@ -69,7 +67,7 @@ Full procedure: `references/cleanup.md` — KEEP the audit trail + PR material, 
 
 ## Iron Law
 
-NO-GO UNTIL PROVEN. Missing evidence is a NO-GO. A release that cannot be rolled back is a NO-GO. A mission that ships without cleanup leaves a rotting `.mugiwara/`.
+NOT READY UNTIL PROVEN. Missing evidence means Not enough evidence. A release that cannot be rolled back means Needs fixes. A mission that ships without cleanup leaves a rotting `.mugiwara/`.
 
 ## Red flags
 

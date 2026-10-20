@@ -1,34 +1,16 @@
-# Ledger Format
+# Failure ledger (checkpoint)
 
-Blocker ledger row format used by Chopper (flow-audit) and Brook (healing).
+Chopper appends one row per failing criterion to `.mugiwara/missions/<mission>/blockers.md`, creating it only if absent. Row schema, field meanings, and the categories (`test-fail`, `type-error`, `missing-impl`, `parallel-conflict`, `regression`, `flaky`, `env`): see the failure taxonomy in `mugiwara-healing`.
 
-## Row format
+Checkpoint-specific rules:
 
-```
-| flow stage | task | symptom | attempted | help-needed |
-```
+- Every unmet acceptance criterion gets its own row, with the command that was re-run in `attempted`.
+- An acceptance criterion with no command or file to check gives no evidence and is unverifiable: file it as `missing-impl`, do not waive it.
+- `env` needs a clean-checkout reproduction. Without it, file `test-fail`.
+- A check that passes sometimes and fails sometimes is `flaky`: run it 3 times, put all three results in `attempted`, and name an owner in `help-needed`.
 
-## Fields
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `flow stage` | yes | Which flow stage produced the failure (4, 5, 6, 7, 8) |
-| `task` | yes | Task identifier from the plan (T3, T5, etc.) |
-| `symptom` | yes | What failed — error message, exit code, missing artifact. Include category: `test-fail`, `missing-impl`, `parallel-conflict`, `env`, `regression` |
-| `attempted` | yes | What was tried — "re-ran npm test -- scope", "checked caller imports" |
-| `help-needed` | no | What the healer needs to know — "race in token expiry check", "env var missing in CI" |
-
-## Example
+Example:
 
 ```
-| 4 | T3 | test-fail: formatDate returns wrong locale | re-ran with en-US locale explicitly | locale detection differs between Node 18 and 20 |
-| 4 | T5 | missing-impl: no thumbnail endpoint | searched routes/ dir, not found | endpoint was in a different plan flow stage |
-| 5 | T2 | env: bun test hangs on CI | re-ran locally, passes | needs --shard split on CI |
+| 4 | T5 | missing-impl: no thumbnail endpoint | searched routes/, not found | endpoint may sit in a later plan task |
 ```
-
-## Rules
-
-- Every blocker gets one row. Never combine two failures into one row.
-- Category goes in `symptom` or `help-needed` — whichever is more specific.
-- `env` classification must be proven (reproduce on clean checkout). Unproven = `test-fail`.
-- File at `.mugiwara/missions/<mission>/blockers.md`. Create if absent.

@@ -1,4 +1,4 @@
-# AI Slop Catalog
+# Generic-looking UI patterns
 
 Banned default patterns. If the brief genuinely calls for one, execute it well — but the default is: don't.
 

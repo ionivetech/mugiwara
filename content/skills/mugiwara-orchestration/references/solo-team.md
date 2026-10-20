@@ -27,9 +27,7 @@ derived and why.
 Record the roster in `.mugiwara/missions/<mission>/decisions.md` before the
 first savepoint:
 
-    | # | Decision | By | Why |
-    |---|----------|----|-----|
-    | 1 | Team mission: jane-doe (api), john-smith (frontend), eleanor-vance (shared types) | user | Flow 0 roster |
+    - 2026-10-19: Team mission: jane-doe (api), john-smith (frontend), eleanor-vance (shared types). Roster given at triage. Who: user: jane-doe.
 
 | Verdict | First savepoint | State layout |
 |---|---|---|

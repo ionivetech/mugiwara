@@ -38,7 +38,7 @@ Intervene (§20): tolerate / stop / compress / escalate by severity.
 
 Detectors — six categories:
 - retry §21.6/§31 same-action same-evidence same-failure → STOP
-- healing §21.7/§32 no progress → stop; `heal_cycle ≥ 3` → halt
+- healing §21.7/§32 no progress → stop; `heal_halt` true → halt (cap: `heal_max_cycles`, see the stage table in `mugiwara-orchestration`)
 - scope §21.8 out-of-scope without acceptance → reject
 - context §21.2 duplicate/irrelevant → discard/compress
 - investigation §21.1 unbounded exploration → stop
@@ -74,34 +74,9 @@ Anomaly (§24): flag 5k-zero-progress, re-consumes slop signal.
 
 Record every non-ok verdict via `recordBudgetDecision` (§41). Trail row `budget-governor`. Ledger aggregates envelope+events+registry+trail; `mugiwara cost` surfaces ledger (--json); report Cost section renders ledger+avoided+efficiency+trail (§43).
 
-## Benchmark & hardening
+## Benchmark
 
-Tracks `scripts/benchmark-governor.ts` harness (deterministic, no network).
-
-Cost suite (§48) — 4 workloads:
-- lean-trivial: projected 8000 + overhead 1000, context ≤20000, evidence ≥1, surface 2 files 50 LOC
-- standard-feature: projected 15000 + overhead 1500, context ≤40000, evidence ≥3
-- large-repo: projected 22000 + overhead 2200, context ≤80000, evidence ≥5, surface 50 files
-- long-mission: projected 23000 + overhead 2300, context ≤90000, 9 stages projection ≤ budget
-Check: `measured.tokens ≤ projected + overhead` else fail; `measured.context ≤ max` else fail
-
-Stop-Slop suite (§45) — 12 scenarios detect→classify→intervene:
-- endless-exploration → investigation slop → stop
-- repeated-reads (3× no evidence) → context slop → stop; with concrete reason → tolerate
-- repeated-commands (same cmd+evidence fail) → retry slop → stop
-- repeated-failed-test → retry slop → stop
-- repeated-reasoning → reasoning slop → stop
-- unnecessary-abstraction → code slop → stop
-- unnecessary-dependency → code slop → stop
-- unrelated-refactor → scope slop → stop
-- verbose-output → output slop → stop
-- no-progress-healing (cycle ≥3, 0 fixes) → healing slop → stop
-- premature-completion → scope slop → escalate
-- excessive-context (repeated reads + duplicate chars) → context slop → stop
-
-Stress (bench-only, no runtime): large repository 50 files within scope → pass; long mission 9 stages projection ≤ full budget → pass; runaway 2× expected no progress → breaker tripped.
-
-Thresholds live in `scripts/benchmark-thresholds.json` (or THRESHOLDS const) — `tokens > projected+overhead` fail, `context > max` fail, only move on explicit fixture update, ratchet like retrieval-eval. Regression (§49): cost down but correctness/evidence/security/quality/scope down → fail. Determinism: harness pure over explicit fixture inputs, no Date.now/Math.random/network. CI: `package.json:gate` includes harness; `gate-selftest` tampers thresholds → harness must exit 1. Harness measures, not enforces.
+`scripts/benchmark-governor.ts` is the deterministic harness (no network) that checks token and context projections per lane; thresholds live in `scripts/benchmark-thresholds.json`. It measures, it does not enforce. Maintainer detail stays in that script, not in crew instructions.
 
 ## Reporting & trail
 
@@ -114,7 +89,6 @@ Ledger aggregates envelope+events+registry+trail; `mugiwara cost` surfaces ledge
 - [ ] scope/code: reuse checked, abstraction & dep justified
 - [ ] slop: taxonomy classified, signals measured, intervention applied
 - [ ] budget: reserved, projected, thresholds respected, breaker armed
-- [ ] benchmark: 4 cost + 12 slop + 3 stress green, thresholds ratcheted
 - [ ] every stop left a findings handoff (facts, dead ends, next step + owner)
 - [ ] trail rows written for every non-trivial verdict
 

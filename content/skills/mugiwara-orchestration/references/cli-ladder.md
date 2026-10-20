@@ -4,13 +4,13 @@
 **once at Flow 0**, reuse the whole mission:
 
 1. `mugiwara --version` → use `mugiwara`.
-2. Else `npx -y @ionivetech/mugiwara@latest --version` → use the npx form.
+2. Else `npx -y @ionivetech/mugiwara@1.0.5 --version` → use the npx form.
 3. Else `.mugiwara/bin/` shell fallbacks, installed by `mugiwara install` next
    to every project: `.mugiwara/bin/savepoint.sh` writes
    `.mugiwara/missions/<mission>/state.json | <member>.json` +
    `continue.json | continue-<member>.json`; `.mugiwara/bin/lane.sh` sizes the
    lane. Read-only commands (`continue`/`status`/`cost`) read
-   `.mugiwara/missions/` directly per the layout in `mugiwara-resume` → State
+   `.mugiwara/missions/` directly per the layout in `references/resume.md` → State
    contract. Full state, no degradation.
 4. Else (offline AND no fallbacks on disk) announce the degradation before doing
    any work:

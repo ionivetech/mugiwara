@@ -1,15 +1,25 @@
 {
   "name": "routing-git",
-  "skill": "mugiwara-git",
+  "skill": "mugiwara-execution",
   "trigger": {
     "positive": [
-      { "prompt": "commit these changes with atomic commits per logical unit", "top_k": 3 },
-      { "prompt": "split this diff into separate commits by topic", "top_k": 3 },
-      { "prompt": "find which commit introduced this bug using bisect", "top_k": 3 }
+      {
+        "prompt": "commit these changes with atomic commits per logical unit",
+        "top_k": 3
+      },
+      {
+        "prompt": "split this diff into separate commits by topic",
+        "top_k": 3
+      },
+      {
+        "prompt": "find which commit introduced this bug using bisect",
+        "top_k": 3
+      }
     ],
     "negative": [
-      { "prompt": "push the branch and open a pull request" },
-      { "prompt": "deploy the release to production" }
+      {
+        "prompt": "deploy the release to production"
+      }
     ]
   },
   "behavioral": [

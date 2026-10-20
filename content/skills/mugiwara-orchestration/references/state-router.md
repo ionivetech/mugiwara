@@ -1,9 +1,9 @@
 # State-command router (every harness)
 
 `mugiwara <cmd>` means the global binary if present, else
-`npx -y @ionivetech/mugiwara@latest <cmd>`, else the `.mugiwara/bin/` shell
+`npx -y @ionivetech/mugiwara@1.0.5 <cmd>`, else the `.mugiwara/bin/` shell
 fallbacks, else direct `.mugiwara/missions/` file ops (read-only commands read
-`state.json`+`continue.json` per the layout in `mugiwara-resume` → State
+`state.json`+`continue.json` per the layout in `mugiwara-orchestration` → `references/resume.md` State
 contract). Degraded (no machine state) only when all four rungs fail. State commands are deterministic
 (directory scan + allowlist) — never a reasoning turn. Run them via the highest
 rung that works,

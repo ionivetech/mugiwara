@@ -1,128 +1,36 @@
-# Closure — full reference
+# Closure
 
-Detailed closure summary, terminal step, and lessons.
-Read after deciding to close a mission — never mid-argument.
+Read after deciding to close a mission, never mid-argument. Templates for `report.md` and `pr-verdict.md`: `references/artifact-templates.md`.
 
-## Detailed closure summary (mandatory, inline)
+## Closing summary (inline)
 
-Present a detailed summary to the user — never a one-liner:
+Give the user a summary with substance, not a one-liner:
 
-- Mission summary — goal, mode, flow stages, task count.
-- Per-flow-stage outcome table — flow stage, tasks, status, evidence link (clickable `[path](relative/path)`). Flow files under `missions/<mission>/flows/` are evidence — archive folds them into report.md rather than deleting them.
-- Gate verdicts — quality, gates (coverage/build/DoD), review + security findings with dispositions, e2e (run / skipped + why).
-- Tests — unit/integration results; ATDD oracle verdict when user tests were declared.
-- Risks / rollback — remaining risk and the rollback path (revert commit / feature flag).
-- Deferred items + owner.
-- Next steps — PR material pointer, anything the user must do.
+- Goal, mode, stages run, task count.
+- Per-stage outcome with a clickable evidence link `[path](relative/path)`. Archive folds the stage files into `report.md` instead of deleting them.
+- Gate verdicts: quality, coverage and build, review and security findings with what was done about each, e2e (run, or skipped and why). Do not state how review was done; archive adds the independent or inline label from the dispatch ledger.
+- Tests: unit and integration results; the user-test verdict when user tests were declared.
+- Remaining risk and the rollback path (revert commit or feature flag).
+- Deferred items with an owner, and what the user must do next.
+
+Say it in plain words. Open with the verdict, then what changed, then what was not verified.
 
 ## Terminal step
 
-Save-point commit → push branch with plain `git push -u origin <branch>` → write
-`.mugiwara/missions/<mission>/flows/07-pr-verdict.md` → hand branch + verdict to user.
-Crew never creates PR, never merges, never deploys. On push failure, fall back
-to local closure report.
+0. Fold the trail with `mugiwara archive <mission>`. With no `mugiwara` binary, run the npx form from the CLI ladder first. Write the report by hand only when both fail: use every section of the report template and say in the report that archive did not run.
+1. Run `mugiwara-ship` for the go/no-go verdict.
+2. Save-point commit, then `git push -u origin <branch>`.
+3. Write `flows/07-pr-verdict.md` (it survives archive as `pr-verdict.md`).
+4. Hand branch and verdict to the user.
 
-**Verdict file = ready PR material.** ONE document the user pastes into their
-PR. Every section below is mandatory and in order; a section with nothing to
-say writes `None.` explicitly — an omitted section or a one-lined whole file
-fails review. Draw every verdict from captured evidence, never assertion. Scan the file for
-secret patterns before handoff — on a match, redact and log; a leaked secret
-in a pasted PR description is irreversible. Interpolated identifiers (branch,
-owner/repo) come from git config/remote only — validate against a safe
-charset (`[A-Za-z0-9._/-]`) and quote them in shell commands.
+The crew never creates a PR, merges, or deploys. On a push failure, fall back to the local closing report and log the reason.
 
-Checklist rule: the Tests, Checks, and Deferred sections are ALWAYS one item
-per line with `- [x]` done / `- [ ]` open — the todo shape; a paragraph or a
-comma-joined list here fails review. An unchecked box names its owner.
-
-```
-# PR verdict: <mission> → <branch>
-
-## Title
-<one line, the PR title>
-
-## Summary
-- <3–7 key-point bullets: what, why, scope>
-
-## Breaking changes
-- <each: what breaks, who must adapt> / `None.`
-
-## What changed
-- `<area>`: <files> (+<n>/-<m>) — <one-line why>
-
-## Per-flow-stage evidence
-| Flow | Tasks | Status | Evidence |
-|---|---|---|---|
-| 3 | 4/4 | PASS | [01-exec](flows/01-execution.md) |
-
-## Tests
-- [x] unit 969/969 → <path>
-- [ ] e2e skipped — <why>
-
-## Checks
-- [x] typecheck clean
-- [x] lint 0
-- [x] build exits 0
-- [x] gates (coverage/build/DoD) PASS
-- [x] review findings disposed
-- [x] security 0 high
-- [x] secret scan clean
-
-## Security disposition
-<STRIDE/OWASP outcome, deferred findings + owner, or `None — docs-only lane`.>
-
-## Rollback
-<exact commands, newest-first; mark tested or untested>
-<e.g.> `git revert <sha>  # tested` / `rollback.sh` path when generated
-
-## Risks
-- <remaining risk + likelihood + mitigation> / `None known.`
-
-## Deferred / follow-ups
-- [ ] <item> — owner: <name>
-
-## For the reviewer
-<ranked reading order: 3–5 files, sensitive paths first>
-
-## Verdict
-<GO — ship it | NO-GO — <blocking finding, owner, re-entry stage>>
-```
-
-**`auto_commit=off` (guided/semi only).** No save-point commit, no push — the
-working tree stays uncommitted. Write the verdict file exactly as usual, then
-hand the user: the branch name, the exact commands to commit and push
-(`git status` first, then `git add` of the mission's files only — never bare
-`git add -A`, which would stage unrelated or secret files — then
-`git commit -m "<suggested message>" && git push -u origin <branch>`), and the
-verdict pointer. In `auto` mode `auto_commit` is ignored — the terminal step
-runs unchanged.
+With `auto_commit=off` in guided/semi there is no save-point commit and no push. Write the verdict as usual, then hand over the branch name, the exact commands (`git status`, then `git add` of the mission's files only, never a bare `git add -A`, then `git commit -m "<suggested message>"` and `git push -u origin <branch>`), and the verdict path. In `auto` the terminal step runs unchanged.
 
 ## Lessons
 
-At Flow 0 triage read `.mugiwara/lessons.md` and surface relevant rows to
-the owning agent. At closure embody memory-keeper inline to append this mission's
-lessons to `.mugiwara/lessons.md` — one row per real lesson, append-only,
-never overwrite.
+At triage read `.mugiwara/lessons.md` and pass relevant rows to the owning agent. At closing, write this mission's lessons as one row each, append-only, never overwriting.
 
-## Human-readable report layering checklist
+## Report layering
 
-Rule: plain-language executive summary FIRST, machine-checkable detail
-BEHIND. A reader who stops after the first screen still knows who did what
-and the outcome; a reviewer who keeps reading can verify every claim.
-
-Applies to `report.md`, `pr-verdict.md`, and `flows/*.md`:
-
-1. Open with one plain paragraph: who, what changed, outcome in human words.
-   No identifiers, paths, or hashes in the first paragraph.
-2. Verdict words stay literal: GO / NO-GO, PASS / FAIL. Never paraphrase a
-   verdict into prose.
-3. Detail behind: evidence as clickable `[label](relative/path)` links,
-   parseable `- [ ]` / `- [x]` boxes, `## Flow <n>` sections, baseline
-   accounting (planned vs done counts). Keep their byte-meaning: checkboxes
-   stay one item per line, tables keep their columns.
-4. Prose around findings follows `references/prose-style.md` (verdict first,
-    numbers over adjectives); the machine-checkable shapes in this file stay
-    fixed regardless of style.
-5. Template sections above stay byte-stable: add guidance as new subsections
-    only, leaving the verdict template, checkbox rules, and
-    evidence-table shape with identical wording.
+The first paragraph of `report.md`, `pr-verdict.md`, and each flow file says who did what and the outcome in plain words, with no identifiers or hashes. Check results stay literal (PASS, FAIL); the mission verdict is one of Ready for review, Needs fixes, Not enough evidence. Detail sits behind it: evidence links, `- [ ]`/`- [x]` boxes (one item per line), and tables with their columns intact. Prose follows `_shared/references/prose-style.md`.

@@ -1,92 +1,65 @@
 ---
 name: mugiwara-quality
-description: Use after checkpoint passes — formatter, linter, duplication, complexity, maintainability, code attributes, eslint, prettier, lint, format, unit tests, test suite. Never weakens configs.
+description: Use after checkpoint passes: format, linter, eslint, prettier, duplication, complexity, test suite, then gate verdict on coverage thresholds, build, definition of done. Also user test cases, e2e, integration tests.
 gate_artifact: flows/01-execution.md quality evidence — duplicated_lines_density + cognitive_complexity table
 ---
 
 # Quality (Sanji)
 
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
-
 ## Skip when
+- The user declared no tests or criteria: the ATDD contract (`references/testcases.md`) does not apply; ordinary test-writing requests are not declarations.
+- No code changed: a docs-only or config-only diff with no lint or test surface.
+- The repo has no detectable tooling (no test, lint, or format commands, 0 found): record the skip.
 
-- No code changed: docs-only or config-only diff with no lint/test surface.
-- Repo has no detectable tooling (no test/lint/format commands) — record the skip.
-
-Cook the checks properly; never cut corners to make them pass. The gate artifact lives in `flows/01-execution.md`: a table of `duplicated_lines_density` and `cognitive_complexity` per changed file, which the gates flow stage reads.
+Run the checks properly; never cut corners to make them pass. Stage number and owner: stage table (`mugiwara-orchestration`, stages.md). This stage is the only place complexity and duplication are measured; Robin cites these numbers and does not re-measure. The gate artifact is a table of `duplicated_lines_density` and `cognitive_complexity` per changed file, mirrored into `flows/01-execution.md` for the gates stage.
 
 ## Discover the stack first
+Never assume `npm test`. Detect the project's real commands from package scripts, `pyproject.toml`, `Makefile`, and CI config. Use the project's own test, lint, build, and format commands; do not invent parallel tooling.
 
-Never assume `npm test`. Detect the project's real commands from package.json scripts, pyproject.toml, Makefile, and CI config. Use the project's own test/lint/build/format commands; do not invent parallel tooling.
+Reuse across stages: a check already recorded in `flows/02-audit.md` for an unchanged diff is cited, not re-run; a changed diff re-runs fresh.
 
-Reuse across flow stages: a check whose result is already recorded in `flows/02-audit.md` for an unchanged diff (same flow-base) is cited, not re-run; a changed diff re-runs fresh.
-
-## Delta vs base, configs proven untouched
-
-Duplication and complexity are judged on the DELTA against the flow-base,
-not the absolute file: a file already at 290 LOC before the mission is
-pre-existing condition, not this mission's debt — what the mission ADDED is
-what fails. Same for configs: `git diff <flow-base>..HEAD` on lint/format/
-typecheck configs must be empty, or each hunk carries an explicit user
-approval. "Never weakens configs" without that diff is a claim, not a fact.
+## Delta, not absolute
+Judge duplication, complexity, and file health on the change: what the mission added or modified fails, a file's pre-existing condition does not. Example: a file already at 290 lines before the mission is not this mission's debt. If the project's config sets an absolute threshold, that threshold applies as written. Configs get the same proof: `git diff <base>..HEAD` on lint, format, and typecheck configs must be empty, or each hunk carries the user's explicit approval. "Never weakens configs" without that diff is a claim, not a fact.
 
 ## Order
+Full checklist: `references/order-checklist.md` — 12 steps with thresholds and evidence. Step 12 is the waste pass (`mugiwara waste`): advisory, never blocks. Skipping it silently is the defect; reporting that no CLI answered is not.
 
-Full checklist: `references/order-checklist.md` — 12 steps; see file for thresholds and evidence. Step 12 is the **waste pass** (`mugiwara waste`) — advisory, never blocks, and it is the cost governor's only automated read on the mission diff. Skipping it silently is the defect; reporting that no CLI rung answered is not.
+## Gates (Franky)
+After the checks, the binary gates stage runs coverage, build, diff size, and Definition of Done, and writes `flows/04-gates.md`: `references/gates.md`. Quality evidence (`flows/03-quality.md`) feeds it.
 
-## User suites (per `mugiwara-testcases`)
-
+## User suites (ATDD contract: `references/testcases.md`)
 Run the declared user test files under the consent matrix:
-
-- Unit-level user tests: no consent — they are part of the suite.
-- Integration / e2e user tests: consent by mode — `guided`/`semi` ask first; `auto` runs only provably-isolated ones.
-- State-mutating user tests (DB writes, network, browsers): consent in ALL modes.
-
-The user-AC verdict feeds the gates flow stage — it must come from these runs actually executing, never asserted.
+- Unit-level user tests: no consent needed; they are part of the suite.
+- Integration and e2e user tests: `guided` and `semi` ask first; `auto` runs only provably isolated ones.
+- State-mutating user tests (DB writes, network, browsers): consent in all modes.
+The user-test verdict feeds the gates stage and must come from runs that actually executed.
 
 ## Optional e2e gate
+Optional, never default-on. Trigger only when both hold: the repo has e2e setup (`playwright.config.*`, `cypress.config.*`, an `e2e/` directory, or a `test:e2e` script) and the changed files match e2e patterns (`e2e/**`, `*.e2e.*`, `specs/**`). When triggered, consent follows the mode: `guided` and `semi` ask (run now, skip, run manually later); `auto` runs only provably isolated e2e. Otherwise skip and log the reason (no setup, no matching files, no consent). A skip is logged, not a failure.
 
-Optional, never default-on. Trigger ONLY when BOTH hold:
-- Repo has e2e setup — any of `playwright.config.*`, `cypress.config.*`, `e2e/` dir, `test:e2e` npm script.
-- Changed/staged files match e2e patterns — `e2e/**`, `*.e2e.*`, `specs/**`.
+## Consent
+Consent is an invariant, not a mode setting. State-mutating tests against shared state (real DB writes, network, browsers) always need explicit user consent. Provably isolated tests (in-memory, temp, or container-backed databases) need none. Record every consent answer in the report.
 
-When triggered, consent by mode (per mode config invariant): `guided`/`semi` ask first — run now / skip / run manually later; `auto` runs only provably-isolated e2e (in-memory / local / tooling-proven isolation). Otherwise skip-and-log: record the skip reason (no setup, no matching files, no consent) in the report. The e2e gate never blocks silently and never blocks a pass — a skip is logged, not a failure.
-
-## Mode + consent (per mode config)
-
-Consent is an invariant, not a mode knob. State-mutating tests against NON-isolated / shared state (real DB writes, network, browsers) ALWAYS require explicit user consent in ALL modes. Provably-isolated mutation — in-memory / temp / testcontainer-backed DBs, tooling-proven isolation — is explicitly auto-safe and needs no consent. `auto` runs only provably-isolated tests automatically (unit-level, or tooling-proven isolation such as in-memory / local DB). `guided`/`semi`: integration tests keep the existing ask-first rule — run automatically now / skip / run manually later. Record every consent answer in the report.
-
-Hard rule: never create, write, or invent integration/e2e tests. If no user testcase / ATDD is declared, run unit / lint / format only and skip integration. Never weaken configs to pass.
+Never create, write, or invent integration or e2e tests. If no user test is declared, run unit, lint, and format checks only. Never weaken configs to pass.
 
 ## No tooling found
-
-Say so explicitly, propose the minimal standard setup for the stack, and continue with what exists. Never silently skip the flow stage.
+Say so, propose the minimal standard setup for the stack, and continue with what exists. Never skip the stage silently.
 
 ## Report
-
-Per check: command run, exit status, key output excerpt, pass/fail → to `.mugiwara/missions/<mission>/flows/03-quality.md`, plus a `## Waste (advisory)` section carrying step 12's rows (or the one line saying why none were produced); the `duplicated_lines_density` + `cognitive_complexity` table is mirrored into `flows/01-execution.md` for the gate artifact. **Return to Luffy.** Do not dispatch Zoro or Brook yourself. Luffy decides based on severity: pass → next flow stage, fail → Brook (healing) or Zoro (trivial fix).
+Per check: command, exit status, key output excerpt, pass or fail, written to `.mugiwara/missions/<mission>/flows/03-quality.md`, plus a `## Waste (advisory)` section with step 12's rows (or one line saying why there are none). Return to Luffy; do not dispatch Zoro or Brook. Recommend `continue` on pass, `Brook` for a real fix, `Zoro` for a trivial one. A clean pass is one line plus the evidence path.
 
 ## Rationalizations
-
 | Excuse | Reality |
 |--------|---------|
-| "I'll test later." | You won't. The gate rejects it; test now with output. |
-| "Close enough passes." | Gates reject it; run the check, show the output. |
-| "The config is too strict, weaken it." | Never weaken configs or downgrade severity to pass — fix the code. |
-| "The linter rule is wrong anyway." | Resolve it properly or report it; disabling is not resolving. |
-| "The file is 350 LOC, close enough." | File health caps at 300 LOC / 30 LOC per function; extract and re-run. |
-| "Integration tests, skip them, too slow." | Skipping is policy, not laziness: we never create integration tests, and undeclared suites don't run. Declared user suites run under the consent matrix. |
-| "No tooling found, flow stage done." | No tooling means say so and propose the minimal setup, never a silent skip. |
-| "Formatter and linter are the same." | They are separate checks; run both. |
-| "E2E setup exists, so the gate runs." | No — trigger needs BOTH setup AND changed-file e2e patterns, plus consent by mode. Otherwise skip-and-log, never run unasked. |
+| "Close enough passes." | Run the check and show the output. |
+| "The config is too strict, weaken it." | Fix the code; weakening a config or severity is never allowed. |
+| "No tooling found, stage done." | Say so and propose the minimal setup; a silent skip hides the gap, so report it. |
 
 ## Red flags
-
-- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
+- A stage closed without its one-line summary, or padded with prose.
 - Weakening configs or disabling rules to make checks pass.
-- Claiming configs unweakened without the empty-diff proof against flow-base.
+- Claiming configs unweakened without the empty-diff proof.
 - Asserting test results without running the suite.
-- Silently skipping the flow stage when no tooling is found.
+- Silently skipping the stage when no tooling is found.
 - Running state-mutating user tests without consent.
-- Reporting complexity/duplication from memory instead of a measured run.
-- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
+- Reporting complexity or duplication from memory instead of a measured run.
