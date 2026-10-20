@@ -1,7 +1,8 @@
-# Skill Anatomy
+# Anatomy of a skill and an agent
 
-Every mugiwara skill ships as one `SKILL.md` file. No code, no runtime, only
-frontmatter plus a playbook the agent follows.
+A new skill or agent written freehand drifts: no summon line, no boundary, output landing nowhere. The fixed shapes below keep every file readable the same way, so authors fill slots instead of inventing structure.
+
+A skill is the reusable playbook. An agent is the persona that applies it. One agent may hold several skills, and the main thread plays the persona by loading them. Every skill ships as one `SKILL.md` file: no code, no runtime, only frontmatter plus a playbook the agent follows.
 
 ## The three layers
 
@@ -18,9 +19,7 @@ only shrinks.
 you open after deciding to do the work. *If the agent must open a file to know
 whether a rule applies, that rule effectively does not exist.*
 
-**Measured at v1.0.4:** index 1.2k tokens across 21 skills and 14 agents, 1.4%
-of total content. Body averages 1,070 words per skill; references hold 22,183
-words across 57 files. 98.6% of the pack costs nothing until it is needed.
+**Measured:** the index and pointer numbers are published from `.metrics/latest.json` and summarized in the [README](../../README.md#what-is-measured-and-what-is-not). Most of the pack costs nothing until it is needed.
 
 **The eight mechanisms that make it hold:**
 
@@ -65,7 +64,7 @@ description: Use after an execution flow stage to audit results against the plan
 | Field | Required | Notes |
 |-------|----------|-------|
 | `name` | yes | lowercase, hyphen-separated, matches folder name, ≤64 chars |
-| `description` | yes | 20–500 chars; trigger conditions + disambiguators only. Front-load trigger keywords. |
+| `description` | yes | 20–220 chars; trigger conditions + disambiguators only. Front-load trigger keywords. |
 | `license`/`compatibility`/`metadata` | no | optional |
 
 ## Playbook body
@@ -107,5 +106,19 @@ after deciding to do the work.
 bun run validate
 ```
 
-Checks: name matches folder, description 20–500 chars, body ≤120 lines, no
+Checks: name matches folder, description 20–220 chars, body ≤120 lines, no
 duplicate names, `## Skip when` block with 1–4 bullets.
+
+## Agent files
+
+Every agent is `content/agents/<name>.md`. The frontmatter has a required `name` (lowercase, hyphenated, matching the file name), a required `description` that says what the agent does and when to summon it, and an optional `skills` list of held skills, comma-separated. Internal helpers add `internal: true`.
+
+```markdown
+---
+name: chopper-checkpoint
+description: Persona for mugiwara-checkpoint. Auditor only; never fixes code.
+skills: mugiwara-checkpoint
+---
+```
+
+The body follows a fixed skeleton. Role states the work and the boundary never crossed. Experience gives a one-line persona. Dispatch states the stage and inputs. Rules stay numbered, each an action bound to its reason, deferring to the held skill for protocol. Output names the artifact path and the route. Red flags name the behaviors that prove the member stopped doing its job. Every agent carries a "Before you start" entry check, and every agent except Luffy a "Return to Luffy" rule.

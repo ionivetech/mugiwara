@@ -2,11 +2,11 @@
 
 A crew that fights your workflow loses to your workflow. Adoption works when the harness, the mode, and the pipeline size fit how your team already builds. This guide fits all three before your first mission.
 
-Example: a Claude Code team wanting the full pipeline installs natively, sets `mode=guided` in `.mugiwara/config`, and runs trivial fixes at Lane 0 with zero flow stages. Same crew, same week: small fixes stay light while payment work gets all nine stages.
+Example: a Claude Code team wanting the full pipeline installs natively, sets `mode=guided` in `.mugiwara/config`, and runs trivial fixes on the direct lane with zero stages. Same crew, same week: small fixes stay light while payment work gets all nine stages.
 
 ## Pick your harness
 
-Native installs (Claude Code, opencode, Copilot) register agents plus skills directly. Skills-only installs serve every other tool through the agentskills.io layout. Single-tool users follow their per-harness page from the [install index](../install/index.md).
+Claude Code and opencode load the crew natively. Every other tool gets pointer files that read the playbooks on demand. Single-tool users follow the table on the [install page](../install.md).
 
 ## Pick your mode
 
@@ -14,7 +14,7 @@ Guided asks everything: plan, branch, commits, ambiguities, check-ins. Semi asks
 
 ## Fit the pipeline
 
-Trivial one-liners route to Lane 0 and run with zero flow stages. Medium features run triage, plan, execute, checkpoint, quality, gates, review, closure. High-stakes work involving money, security, data, or public API always runs the full pipeline with the adversarial pass and the heal loop. Repos with history read the lessons ledger at triage, so each mission stands on previous ones.
+Trivial one-liners route to the direct lane and run with zero stages. Medium features run the standard lane: plan, execute, audit, review. High-stakes work involving money, security, data, or public API runs the full lane, with the adversarial pass and the fix-and-recheck (heal) loop. Repos with history read the lessons ledger at triage, so each mission stands on previous ones.
 
 ## Solo or shared
 
@@ -22,4 +22,4 @@ Teams pick solo-or-shared at Flow 0: a lone builder keeps `team=off` and the ful
 
 ## What the crew never does
 
-It never merges, deploys, or reacts to review comments or CI on its own. It pushes the branch and hands over the verdict file, since PR review is the terminal gate. No flow stage passes on a spoken claim, and no blocker is worked around silently; everything lands in the ledger. Contributors continue at [developer onboarding](developer-onboarding.md).
+It never merges, deploys, or reacts to review comments or CI on its own. With `auto_commit=on` it pushes the branch. By default it prints the commit and push commands for you. Either way it hands over the verdict file, since PR review is the terminal gate. No flow stage passes on a spoken claim, and no blocker is worked around silently; everything lands in the ledger. Contributors continue at [developer onboarding](../contributing/developer-onboarding.md).

@@ -1,44 +1,65 @@
-# Getting Started
+# Getting started
 
-You want the crew running without learning nine [flow stages](concepts/workflow.md) on day one. You worry a small fix will trigger a heavy process. This page answers "how do I start" with one example, then the short path. Nothing here runs in the background.
+You want the crew on a change that is worth reviewing, and you worry that every small fix will trigger a heavy process. It will not: the crew sizes the work from your diff, and a small fix usually runs direct, with no mission and no report. This page takes you from install to a first finished mission.
 
-Example: you report a date formatting bug in one file. Luffy routes it to a lean [lane](concepts/lanes.md). Zoro reproduces and fixes, Sanji runs format plus lint plus tests. Two flow stages, compact checkpoint reports, no planning ceremony. A typo runs zero flow stages.
+Example: you ask for role-based access control. The crew sizes it as the full pipeline, asks six questions it cannot guess, plans, builds test-first, reviews and closes with one report. A typo fix runs none of that.
 
-Rule: the process scales to the work. Small changes stay small by lane sizing. Large or sensitive changes get plans, audits, gates, and a reviewable trail.
+## 1. Install
 
-## Install
+Claude Code, two slash commands:
 
-Requirements: git, plus Node.js 20.11 or newer. Bash runs `lane.sh` and `savepoint.sh`. On Windows, Git for Windows ships bash. Set `MUGIWARA_BASH` when yours lives elsewhere.
-
-| Harness | Install |
-|---|---|
-| opencode | Add the plugin block below to `opencode.json` |
-| Claude Code | Marketplace add `ionivetech/mugiwara`, then install `mugiwara` |
-| Gemini, Codex, Copilot, Cursor, others | `npx @ionivetech/mugiwara@latest` with your target flag and `--yes` |
-| Any target, CLI path | `npx @ionivetech/mugiwara@latest --project ./my-app --target all --yes` |
-
-```json
-{ "plugin": ["@ionivetech/mugiwara"] }
+```text
+/plugin marketplace add ionivetech/mugiwara
+/plugin install mugiwara
 ```
 
-Install writes `.mugiwara/config` with defaults. Edit it directly to set [mode](concepts/modes.md), branch pattern, review depth, quality depth, coverage, and commit style.
+opencode: add `{ "plugin": ["@ionivetech/mugiwara"] }` to `opencode.json` and restart. Other platforms, and what each one really installs, are on the [install page](install.md).
 
-## Start a mission
+Then install the CLI once: `npm i -g @ionivetech/mugiwara`. Without it the crew falls back to `npx` and shell scripts, and the closing report comes out shorter because `archive` does not run.
 
-The workflow auto-activates at session start. The crew announces itself. Two
-equally valid entry points, always in your main conversation: plain language
-("add role-based access control"), or `/mugiwara <request>` on hosts that
-have the slash command. Never your host's `@agent`/subagent picker to summon
-a crew member directly: only `zoro-execution`, `brook-healing`,
-`robin-reviewer`, and `jinbe-security` are designed to run isolated that way,
-dispatched by the crew itself, never by you.
+## 2. Give it a risky change
 
-A medium change such as a search bar across frontend plus API routes to a standard lane. Nami plans tasks, Zoro executes test-first, Chopper audits each criterion, Sanji gates quality, Franky gates coverage, Robin and Jinbe review plus security. A large change touching auth routes to a full lane with all nine flow stages, STRIDE plus OWASP review, and at most 3 heal cycles before escalation.
+Pick something you would want reviewed: auth, payments, a migration, or many files. Use the slash command on Claude Code and opencode. Do not use your host's `@agent` picker.
 
-The crew runs inline in your main conversation. Subagents cover parallel task batches only. Slash commands exist for mission start, mode switch, continue, review, and security. The rest routes itself.
+```text
+/mugiwara add role-based access control: admin, editor, viewer
+```
 
-## Your role and your trail
+The crew picks the full pipeline, names its members, and stops before any code to ask numbered questions. Answer them, or reply `use your defaults`. Guided mode, the default, waits for you at each decision. To run to the end, set `mode=auto` in `.mugiwara/config` or say `mugiwara mode auto`.
 
-In guided mode you answer one batched round of clarifying questions, give the written plan an explicit GO, and open the PR at the end. The crew pushes the branch and hands you a ready summary. It never creates a PR, merges, or deploys. Semi keeps your plan approval and automates from execution to ship. Auto resolves ambiguities internally and pauses only on a genuine blocker.
+Small fixes and plain requests behave differently, on purpose. `/mugiwara <small fix>` is usually handled directly: the crew says it is a one-line fix, makes it, and writes no report. A request without `/mugiwara` usually does not engage the crew at all. To put the crew on a small change, say `use the full crew`.
 
-Every mission writes to `.mugiwara/missions/<mission>/`: `plan.md`, `decisions.md`, `blockers.md`, `report.md`, state JSON, continue JSON, and per-flow-stage files under `flows/`. Open `report.md` first at review time. Runbooks cover team missions, resume after a crash, and troubleshooting. Meet the [crew](concepts/agents.md), read the [lanes](concepts/lanes.md), set your [mode](concepts/modes.md).
+Check the position at any time:
+
+```bash
+mugiwara status
+```
+
+```
+rbac
+  flow 1 · 0/0 tasks · lane full (sensitive paths: src/auth/rbac.js,test/rbac.test.js) · mode guided
+  blockers 0 · heal cycle 1/3 · files touched 3
+  tokens 20580/50000 (ok)
+  branch feat/rbac · updated 2026-10-19T05:05:06Z
+```
+
+*Real output from a throwaway repo (v1.0.5). The token figure is the process estimate described in [cost](concepts/cost.md).*
+
+## 3. Close the mission and read the report
+
+When the last stage passes, the crew closes the mission. By default (`auto_commit=off`) your tree stays uncommitted and the crew prints the commands. It never opens a PR, merges or deploys. Open the file you would attach to a PR:
+
+```text
+open .mugiwara/missions/<m>/report.md
+```
+
+It holds the verdict, what changed, which checks ran with evidence, what was not verified, and the cost. On Claude Code, a full-lane or sensitive-path review runs as separate subagents; otherwise it runs inline, the same model checking its own work. The report says which (`Checked independently` or `Checked inline`).
+
+## What to read next
+
+- Step by step with real output: [your first mission](runbooks/solo-mission.md).
+- Auth, payments or migrations: [run a risky change](runbooks/risky-change.md).
+- Which runbook fits your situation: the [runbook index](runbooks/README.md).
+- Something did not happen: [troubleshooting](runbooks/troubleshooting.md).
+
+Run `/mugiwara` on the riskiest change in your repo this week, and open the report when it closes.

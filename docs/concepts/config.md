@@ -1,93 +1,64 @@
 # Config
 
-You want one behavior changed and you cannot find which key owns it. You edit a file and nothing enforces the change, or the wrong gate fires. This page answers "what can I set" with one example file, then the full key table. Prose on this page never overrides the table.
+You want one behavior changed and cannot find which key owns it. This page lists every key `.mugiwara/config` reads, with its default.
 
-Example: set `commit=plain` and `review_depth=standard` in `.mugiwara/config`, which wins per key over `~/.mugiwara/config`. Delete a line to take its default. Unknown keys stay ignored.
+Example: set `commit=plain` and `review_depth=standard`. The project file wins per key over `~/.mugiwara/config`. Delete a line to take its default. Unknown keys are ignored.
 
 ```ini
 mode=guided
 commit=plain
 review_depth=standard
-coverage_new=85
+coverage=85
 heal_max_cycles=3
 ```
 
-Optional keys ship commented; uncomment to set.
+Install writes the file with defaults. Optional keys ship commented out; uncomment to set them.
 
 ## Keys
 
-| Key | Default | Meaning |
-|---|---|---|
-| `mode` | guided / semi / auto | Stage autonomy |
-| `verbosity` | normal / full | Echo depth |
-| `branch` | feature/{type}-{issue}-{slug} | Mission branch pattern |
-| `commit` | conventional | Message style |
-| `auto_commit` | off | Push in guided, semi |
-
-Gate and escalation keys:
-
-| Key | Default | Meaning |
-|---|---|---|
-| `coverage_new` | 85 | New-code gate |
-| `coverage_modified` | 85 | Modified-code gate, equal to new |
-| `review_depth` | full / standard / quick | Review pass depth |
-| `quality_depth` | full / standard / quick | Quality pass depth |
-| `verify_merged` | on / off | Merged verify pass outside lane 3 |
-| `delegate_threshold` | 60 | Delegation budget percent |
-| `heal_max_cycles` | 3 | Heal cap |
-
-**Commented keys**
-
-Commented keys: what, when, example.
-
-| Key | What | When | Example |
+| Key | Values | Default | Meaning |
 |---|---|---|---|
-| `lane_scope_glob` | One-package lane scans | Monorepo with many packages | `lane_scope_glob=packages/api/**` |
-| `context_budget_chars` | Archive trail cap | Long missions, big trails | `context_budget_chars=200000` |
-| `investigation_max_passes` | Investigation pass cap | Saving budget on small diffs | `investigation_max_passes=1` |
-| `investigation_max_unrelated_files` | Unrelated-file tolerance | Keeping investigation focused | `investigation_max_unrelated_files=3` |
-| `investigation_repeated_read_threshold` | Repeat-read threshold | Catching read loops early | `investigation_repeated_read_threshold=1` |
-| `team` | Shared roster switch | First shared mission, Flow 0 | `team=on` |
-| `sign` | off / minisign / pure / auto | Regulated missions only | `sign=auto` |
-| `features` | Extension roster control | Trimming skills per mission | `features=core+auto,ship,-testcases` |
-| `enforce` | off / warn / block | Stopping on violation | `enforce=block` |
+| `mode` | guided / semi / auto | guided | How often the crew stops to ask. See [mission flow](mission-flow.md#modes-how-closely-you-watch). |
+| `verbosity` | normal / full | normal | How much the crew echoes per stage. |
+| `branch` | pattern | `feature/{type}-{issue}-{slug}` | Mission branch name. A convention the crew follows, not substituted by code. |
+| `commit` | conventional / gitmoji / plain / template | conventional | Commit message style. |
+| `auto_commit` | off / on | off | Whether the crew commits for you. Details below. |
+| `coverage` | number | 85 | Minimum coverage (%) for new and modified code. Older configs may still set `coverage_new` or `coverage_modified`; they win when present. |
+| `review_depth` | full / standard / quick | full | Review pass depth. |
+| `independent_review` | on / off | on | Run Robin and Jinbe as separate subagents on the full lane or a sensitive path, on hosts that can dispatch. `off` keeps review inline. Costs more tokens; see [cost](cost.md). |
+| `quality_depth` | full / standard / quick | full | Quality pass depth. |
+| `delegate_threshold` | number | 60 | Percent of the token budget after which remaining tasks go to workers. |
+| `heal_max_cycles` | number | 3 | Fix-and-recheck attempts (a heal cycle) before the crew hands the failure to a human. The one place this cap is defined. |
+
+Optional keys, commented out by default:
+
+| Key | Values | Use when | Example |
+|---|---|---|---|
+| `lane_scope_glob` | glob | Monorepo: size the lane from one package | `lane_scope_glob=packages/api/**` |
+| `context_budget_chars` | number | Fail archive when the trail grows past a size | `context_budget_chars=200000` |
+| `team` | on / off | First shared mission (set at Flow 0) | `team=on` |
+| `sign` | off / minisign / pure / auto | Optional add-on, see [signing](../optional/signing.md) | `sign=auto` |
+| `features` | token list | Trim which skills load | `features=core+auto,ship,-review` |
+| `enforce` | off / warn / block | What the stop hook does when the pipeline was skipped. Default `warn` | `enforce=warn` |
+
+## `enforce` and the explicit `/mugiwara` check
+
+`enforce` governs sessions that did not use `/mugiwara`: by default the stop hook only warns. When you type `/mugiwara <request>` the hook records an explicit crew request, and at stop it compares the real diff with what happened. A risky change (sensitive path, standard or full lane) with no mission recorded blocks the end of the turn with a plain message, at most 2 times per session, then it warns. A mission already closed this session is not blocked. Only `enforce=off` disables this check. It is a Claude Code hook; no other host has it.
+
+## What `auto_commit` does
+
+With `auto_commit=off` (the default), guided and semi missions leave your working tree uncommitted. The crew writes the verdict file and prints the exact `git add`, `git commit` and `git push` commands for you to run. With `auto_commit=on`, the crew commits per task and pushes at closure. Auto mode ignores the key and always commits. In every case the crew never opens the PR, merges or deploys.
 
 ## Features
 
-<details>
-<summary>Token table: 7 core plus 7 common auto tokens</summary>
+`features=` picks which skills a mission loads. Absent means `core+auto`: the core skills (orchestration, planning, execution, checkpoint, quality) plus the ones whose trigger fires, such as `migration` on a schema diff, `security` on a sensitive path, or `frontend` on UI files. Three shapes cover most missions:
 
-| Token | Fires when | Default |
-|---|---|---|
-| `orchestration` | always on | core |
-| `planning` | always on | core |
-| `execution` | always on | core |
-| `checkpoint` | always on | core |
-| `gates` | always on | core |
-| `quality` | always on | core |
-| `lessons` | always on, read half | core |
-| `ship` | close intent at Flow 8 | auto |
-| `migration` | schema, data, framework diff | auto |
-| `contract-first` | boundary file diff | auto |
-| `testcases` | user declares tests | auto |
-| `frontend` | UI paths in diff | auto |
-| `backend` | server paths in diff | auto |
-| `security` | sensitive path hit | auto |
+- `features=core+auto,ship,-review` adds close-out and drops the diff review.
+- `features=all` loads everything.
+- A bare `features=ship` means the default plus ship.
 
-The rest load the same way: `brainstorm` on vague requests, `healing` after a failed stage, `review` once gates pass, `root-cause` on bug reports, `git` on git operations, `resume` on interrupted missions, `workflow` on meta missions. `team` is read-only (`team=on` or roster over one); `sign` and `lessons-write` stay off unless regulated or closing.
+Old tokens from before the skill merge still work as aliases: `gates` and `testcases` map to `quality`, `git` to `execution`, `root-cause` to `healing`, and `resume`, `lessons` and `workflow` to `orchestration`. Adding one adds its owner; removing one does nothing, because the capability now ships inside the owner skill.
 
-</details>
+Dropping `security` or `contract-first` while its trigger fires is an error, as is an unknown token. `mugiwara features explain` prints each token with its trigger and whether it fired.
 
-Three shapes cover most missions:
-
-- `features=core+auto,ship,-testcases` adds close-out, drops test intake.
-- `features=all` is the explicit default.
-- Bare `features=ship` means base `features=core+auto` plus ship.
-
-Dropping `security` or `contract-first` while it fires throws an error, as does any unknown token. `skeptic` is a role, not a token.
-
-## Branch patterns
-
-Branch names are convention-only with no substitution in code. `{type}` is the commit type (feat, fix, chore, docs, refactor); `{issue}` the tracker id or `noissue`; `{slug}` a short kebab-case summary. Custom shapes reuse the slots: `release/{issue}-{slug}`, `{type}/{issue}`.
-
-Missing config means guided. Say `mugiwara mode auto` to flip for the next stage. `mugiwara.policy.yml` only raises coverage.
+Missing config means guided. Say `mugiwara mode auto` in session to flip for the next stage. `mugiwara.policy.yml` can only raise coverage, never lower it: see [policy](policy.md).

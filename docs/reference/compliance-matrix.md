@@ -1,20 +1,20 @@
 # Compliance Matrix
 
 For each model + harness + tier combination, how well mugiwara's rules hold.
-Published with failures, the first pack to admit where it breaks.
+Published with its failures, so you can see where it breaks.
 
 **Status of the numbers below.** They come from structured observation on this
 repository and its own missions during Aug 2026, real runs, recorded
 verdicts, but a sample size of one codebase and few sessions per cell. Treat
-each cell as *one honest datapoint*, not a rate. Cells upgrade to measured
+each cell as *one honest datapoint*, not a rate. No percentage here is a measured rate (ASSUMPTION: the verdict symbols are judgments from few runs). Cells upgrade to measured
 rates only through the foreign-repo protocol in [Methodology](#methodology);
 nothing in this file is fabricated to fill a gap.
 
 ## How to read
 
-- ✅ Rule holds ≥90% of the time
-- ⚠️ Rule holds 60-89% of the time, use guided mode, or expect model to miss it
-- ❌ Rule holds <60% of the time, not reliable, document the gap
+- ✅ Rule held in the observed runs
+- ⚠️ Rule held in some runs: use guided mode, or expect the model to miss it
+- ❌ Rule failed in most observed runs: not reliable, the gap is documented
 
 ## Rules under test
 
@@ -47,7 +47,7 @@ guarantees: [enforcement.md](enforcement.md).
 | R5 | ✅ | Heal loop bound respected |
 | R6 | ✅ | DoD axes checked |
 | R7 | ✅ | Savepoint script runs (hook-driven on `claude`; crew-driven elsewhere) |
-| R8 | ⚠️ | Hallucinates APIs ~8% of the time without source-grounding |
+| R8 | ⚠️ | Invented APIs seen without source-grounding loaded |
 | R9 | ✅ | Ledger entries reliable |
 | R10 | ✅ | Closure report written |
 
@@ -56,9 +56,9 @@ guarantees: [enforcement.md](enforcement.md).
 | Rule | Verdict | Notes |
 |------|---------|-------|
 | R1 | ✅ | Lane computed by script |
-| R2 | ⚠️~ | Skip gates respected ~65% |
+| R2 | ⚠️ | Skip gates respected unevenly |
 | R3 | ⚠️ | Evidence checks sometimes skipped |
-| R4 | ⚠️ | Wave banners inconsistent |
+| R4 | ⚠️ | Stage banners inconsistent |
 | R5 | ⚠️ | Heal loop may exceed 3 cycles |
 | R6 | ⚠️ | DoD enforcement weaker |
 | R7 | ✅ | Savepoint script runs (hook-driven on `claude`; crew-driven elsewhere) |

@@ -14,4 +14,6 @@ Validation fails with no model invoked unless the suite holds at least one behav
 
 ## Judge protocol and loop
 
+The judge persona lives in `evals/agents/eval-runner.md`. It is a dev tool for this repo's own suite and is not part of the shipped package.
+
 Never judge a case with the agent that authored the skill under test. Keyword scoring stays deliberately blunt: it catches prose that stopped naming its concept, not nuance, so treat borderline scores as reading prompts. Suite passes at 70% overall. A failing case means fixing the skill, never the eval; rewriting rubrics to match degraded skills is the one survival failure. Bound retries at three cycles, then ledger the row as eval-fail and escalate through Luffy to Brook. Results land in the mission flows dir with an inline summary. Run on every skill or agent change, before release, on demand, and whenever rot is suspected.

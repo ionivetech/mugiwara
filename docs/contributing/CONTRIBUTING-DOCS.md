@@ -24,10 +24,13 @@ scripts/validate-content.ts --check-writing` enforces the testable ones in CI.
     output, and closes with exactly one call to action.
 12. Take a stance. Name who the page is for and not for, state one trade-off.
     A page with no opinion reads as machine-written.
-13. README span: 1,200 to 1,800 words. Required sections: hook, banner,
-    problem, report sample, lane table, install matrix, quickstart, feature
-    tour, when-not-to-use, measured, CTA, links. Banner image and install
-    matrix are never cut.
+13. README span: about 120 to 150 lines, never over 1,800 words. Order: one
+    sentence hook, banner, report sample, three-line install, one small first
+    task ending in "open the report", lanes in four lines, short crew list,
+    what is measured and what is not, when not to use it, links. Slash
+    commands and JSON go in labeled `text` or `json` blocks, never `bash`.
+    Reference tables (config, CLI, docs index) live in `docs/`, not in the
+    README. The banner image is never cut.
 14. No forced inline. One idea per line, newlines allowed, prose breathes.
     Density never trades away completeness.
 15. Budget follows function. Entry pages persuade, reference pages complete,
@@ -35,6 +38,13 @@ scripts/validate-content.ts --check-writing` enforces the testable ones in CI.
 16. Long matrices fold, never cut. A matrix over 8 rows lives in a
     `<details>` block behind one summary line; the quickstart stays above
     the fold. Folding is presentation, cutting is loss.
-17. Every shipped skill owns a features section, or is named with its job
-    inside one. A roster line that neither explains nor points is an
-    undocumented feature; fix it in the same change that ships the skill.
+17. Every shipped skill is named with its job on the crew page
+    (`docs/concepts/crew.md`). A roster line that neither explains nor points
+    is an undocumented feature; fix it in the same change that ships the skill.
+18. Plain language. Internal jargon (slop, governor, posture, savepoint, heal,
+    INV-ids, tier) is explained in a clause on first use or left out. Do not
+    invent anecdotes. An illustration is labeled as one.
+19. Platform claims match `src/targets/`. Say what installs today, and mark
+    anything the code does not yet back as "in progress".
+20. A page that moved leaves no stub behind. Update every link to it and run
+    `bun scripts/check-doc-links.ts`.
