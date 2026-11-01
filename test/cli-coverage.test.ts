@@ -181,15 +181,15 @@ describe('command usage + state errors', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
-  test('status with corrupt state warns instead of crashing', async () => {
+  test('status with corrupt state names the file and exits 1', async () => {
     const dir = tmp();
     try {
       const d = join(dir, '.mugiwara', 'missions', 'm');
       mkdirSync(d, { recursive: true });
       writeFileSync(join(d, 'state.json'), '{corrupt\n');
       const r = await cap(['status', '--project', dir]);
-      expect(r.code).toBe(0);
-      expect(r.err).toContain('unreadable state file');
+      expect(r.code).toBe(1);
+      expect(r.err).toContain('state.json: not valid JSON');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 
@@ -201,7 +201,7 @@ describe('command usage + state errors', () => {
       writeFileSync(join(d, 'state.json'), '{corrupt\n');
       const r = await cap(['continue', 'm', '--project', dir]);
       expect(r.code).toBe(1);
-      expect(r.err).toContain('unreadable state');
+      expect(r.err).toContain('fix: delete .mugiwara/missions/m/state.json');
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 

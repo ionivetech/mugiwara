@@ -56,6 +56,7 @@ Example: you ask for role-based access control. Mugiwara sizes it as a full miss
 | Capability | What it does | Page |
 |---|---|---|
 | Resume | A dead session continues from the exact stage. `mugiwara continue` lists in-flight missions. | [resume runbook](runbooks/resume-after-crash.md) |
+| Doctor | `mugiwara doctor` checks the install, hooks, config, lane, mission files and version pin in one read-only pass, with one fix line per failure. | [CLI](reference/cli.md) |
 | Team missions | One plan split into sub-missions, one state file per person, file conflicts caught before merge. | [team runbook](runbooks/team-mission.md) |
 | Monorepos | Size the lane from one package with `lane_scope_glob`. | [monorepo runbook](runbooks/monorepo.md) |
 | Status | `mugiwara status` shows stage, tasks, lane, blockers and budget for any mission. | [CLI](reference/cli.md) |

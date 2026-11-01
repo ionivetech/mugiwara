@@ -37,6 +37,9 @@ Usage:
   mugiwara uninstall     remove installed files via manifest
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
+  mugiwara doctor [--json]
+                         read-only repo check (install, hooks, config, lane, missions, version pin);
+                         one fix line per failure, exit 1 on any failure
   mugiwara reset         wipe mission state (missions/ + legacy dirs)
   mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
@@ -91,6 +94,23 @@ Flags:
 ```
 
 Two commands work but are not listed in `--help`: `mugiwara join` and `mugiwara plan`. Their usage is below. `sign` is an optional add-on, see [signing](../optional/signing.md).
+
+## `mugiwara doctor`
+
+Read-only repo check: install, hooks, config, lane, mission files. Each failure gets a fix line. Exit 1 on any failure. `--json` prints `{ version, ok, checks }`.
+
+It also compares the npx pin in `.claude/commands/mugiwara.md` with the CLI. `install` warns on the same mismatch.
+
+## Corrupt state
+
+`continue`, `status`, `cost` and `archive` stop with exit 1 on a corrupt mission file, naming it and the fix:
+
+```
+✗ .mugiwara/missions/crew1/state.json: not valid JSON (truncated or corrupt)
+  fix: delete .mugiwara/missions/crew1/state.json (the next savepoint rewrites it), or restore it with git
+```
+
+An empty mission directory stops only commands that name a mission.
 
 ## Commands that print their own usage
 

@@ -821,6 +821,7 @@ describe('run() — usage errors + stalenessLine', () => {
   test('cost with a mission dir but no state uses the full-lane fallback', async () => {
     const dir = fixture([]);
     mkdirSync(join(dir, '.mugiwara', 'missions', 'nostate'), { recursive: true });
+    writeFileSync(join(dir, '.mugiwara', 'missions', 'nostate', 'plan.md'), '# plan\n');
     try {
       const { out } = await capture(['cost', '--mission', 'nostate'], dir);
       expect(out).toContain('Cost envelope');

@@ -27,6 +27,8 @@ import { fingerprint, loadRegistry } from './evidence.ts';
 import { runInitiative } from './initiative.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
 import { enforceHarnessPolicy } from './policy.ts';
+import { doctor, renderDoctor, pinMismatch } from './doctor.ts';
+import { inspectMissions, formatProblems } from './state-health.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
@@ -50,7 +52,7 @@ export async function run(argv: string[]): Promise<void> {
   // (only opencode is runtime-enforced). Covers run/savepoint/archive/status
   // + other workflow commands; install/update/uninstall/list are setup and bypass.
   {
-    const bypass = new Set(['install', 'update', 'uninstall', 'list', 'features']);
+    const bypass = new Set(['install', 'update', 'uninstall', 'list', 'features', 'doctor']);
     if (!bypass.has(command)) {
       const projectDirForHarness = resolveProjectDir(str(flags.project));
       enforceHarnessPolicy(projectDirForHarness);
@@ -61,7 +63,8 @@ export async function run(argv: string[]): Promise<void> {
   // a config. Also covered by readConfig() auto-create for non-CLI entry.
   // Skipped for install/update --dry-run: a dry run must not mutate the project.
   const isDryRunInstall = (command === 'install' || command === 'update') && flag(flags.dryRun);
-  if (!isDryRunInstall) {
+  // doctor is read-only: it must not even create the default config
+  if (!isDryRunInstall && command !== 'doctor') {
     const projectDir = resolveProjectDir(str(flags.project));
     if (ensureConfig(projectDir)) {
       console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
@@ -75,6 +78,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'update': return install({ ...flags, force: true });
     case 'uninstall': return uninstall(flags);
     case 'list': return list(flags);
+    case 'doctor': return doctorCmd(flags);
     case 'reset': return resetCmd(flags);
     case 'archive': return await archive(flags, _);
     case 'clean': return await cleanCmd(flags);
@@ -234,6 +238,26 @@ function joinCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`joined ${mission} as ${member} (${area}) — plan updated, decisions logged, active-member set`);
 }
 
+/** `mugiwara doctor [--json]` — read-only health check, exit 1 when any check fails. */
+function doctorCmd(flags: Args['flags']): void {
+  const checks = doctor(resolveProjectDir(str(flags.project)), homeDir());
+  const ok = !checks.some((c) => c.status === 'fail');
+  if (flag(flags.json)) console.log(JSON.stringify({ version: VERSION, ok, checks }, null, 2));
+  else {
+    console.log(renderDoctor(checks));
+    console.log(ok ? '\nAll checks passed.' : `\n${checks.filter((c) => c.status === 'fail').length} check(s) failed.`);
+  }
+  if (!ok) process.exit(1);
+}
+
+/** Stop with the bad file and the exact fix instead of crashing on corrupt mission state. */
+function failOnCorruptState(projectDir: string, mission?: string): void {
+  const problems = inspectMissions(projectDir, mission);
+  if (!problems.length) return;
+  console.error(formatProblems(problems));
+  process.exit(1);
+}
+
 function resetCmd(flags: Args['flags']): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const force = flag(flags.force);
@@ -288,10 +312,11 @@ async function archive(flags: Args['flags'], positionals: string[]): Promise<voi
     console.log('\nPick one: mugiwara archive <mission>');
     process.exit(2);
   }
+  failOnCorruptState(projectDir, mission);
   if (!flag(flags.dryRun)) await requireAttestation(projectDir, mission);
   const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force), attestationChecked: true });
   if (result.report) console.log(`archive target: ${result.report}`);
-  else console.error(`no mission dir for "${mission}" under .mugiwara/missions/`);
+  else { console.error(`no mission dir for "${mission}" under .mugiwara/missions/`); process.exit(1); }
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
   if (result.index) console.log(`index updated: ${result.index}`);
@@ -434,6 +459,8 @@ async function install(flags: Args['flags']): Promise<void> {
     allNotes.push(...r.notes);
   }
   if (scope === 'project') {
+    const pin = pinMismatch(projectDir);
+    if (pin) console.log(`\n! ${pin}`);
     const gi = ensureProjectGitignore(projectDir, { dryRun: flag(flags.dryRun) });
     allNotes.push(...gi.notes);
   }
@@ -642,8 +669,9 @@ export function startOrResumeMember(projectDir: string, cachePath: string, missi
 async function continueCmd(flags: Args['flags'], positionals: string[]): Promise<void> {
   const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
-  schemaWarnings(projectDir);
   const [mission, member] = positionals.slice(1);
+  failOnCorruptState(projectDir, mission);
+  schemaWarnings(projectDir);
   let entries = readContinue(projectDir);
 
   // If the requested member's state file is unreadable, refuse rather than
@@ -820,6 +848,7 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
 /** `mugiwara status` — one screen of computed mission state, no model needed. */
 function statusCmd(flags: Args['flags']): void {
   const projectDir = resolveProjectDir(str(flags.project));
+  failOnCorruptState(projectDir);
   legacyWarning(projectDir);
   schemaWarnings(projectDir);
   const states = readState(projectDir);
@@ -868,6 +897,7 @@ function ledgerForMission(projectDir: string, mission: string) {
 function costCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const explicit = str(flags.mission) ?? positionals[1] ?? null;
+  failOnCorruptState(projectDir, explicit ?? undefined);
   if (!explicit) {
     const missions = [...new Set(readState(projectDir).map((s) => s.mission))].filter((m) =>
       existsSync(join(projectDir, '.mugiwara', 'missions', m)));
@@ -1457,6 +1487,9 @@ Usage:
   mugiwara uninstall     remove installed files via manifest
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
+  mugiwara doctor [--json]
+                         read-only repo check (install, hooks, config, lane, missions, version pin);
+                         one fix line per failure, exit 1 on any failure
   mugiwara reset         wipe mission state (missions/ + legacy dirs)
   mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
