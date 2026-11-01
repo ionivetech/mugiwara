@@ -8,7 +8,9 @@ Requirements: git and Node.js 20.11 or newer. Bash runs the lane and savepoint s
 
 ## Install on a first-class platform
 
-First-class targets are Claude Code, opencode, Codex and Cursor, each with native files and a conformance test. Codex's risky benchmark passed code checks but skipped orchestration. The skill now requires the risk workflow; a fresh host run is still needed. Cursor remains untested.
+First-class targets are Claude Code, opencode, Codex and Cursor, each with native files and a conformance test.
+
+Status as of 2026-11-01. Claude Code and opencode: tested end to end. Codex and Cursor: install verified by smoke only (`bun run smoke` checks files in a temp repo, not the host). Marketplace commands (`/plugin marketplace add`, `/plugin install`): unverified.
 
 **Claude Code.** Run these two slash commands inside Claude Code:
 

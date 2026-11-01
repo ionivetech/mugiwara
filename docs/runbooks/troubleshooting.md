@@ -16,32 +16,35 @@ The crew did not start, a report came out thin, or a command failed with a messa
    No mission in flight. Start one with Flow 0 triage (mugiwara-orchestration).
    ```
 2. If the crew did not do what you expected, check these first.
-   - **The crew did not engage.** A plain request with no `/mugiwara` usually gets your agent's normal behavior, with no skill call, no mission and no report. `/mugiwara <small fix>` often ends with the crew saying it is a one-line fix and skipping the pipeline. Both are by design. Run `/mugiwara <request>, use the full crew` when you want it.
-   - **The report is a few hand-written lines.** The global CLI is missing, so the crew fell back to shell scripts and never ran `archive`. Run `npm i -g @ionivetech/mugiwara`, then `mugiwara archive <mission>`.
+   - **The crew did not engage.** A plain request with no `/mugiwara` gets your agent's normal behavior. Both outcomes are by design. Run `/mugiwara <request>, use the full crew` when you want it.
+   - **The report is a few hand-written lines.** The global CLI is missing, so `archive` never ran. Run `npm i -g @ionivetech/mugiwara`, then `mugiwara archive <mission>`.
    - **The crew keeps waiting for you.** Guided mode asks at each decision. Reply, set `mode=auto` in `.mugiwara/config`, or say `mugiwara mode auto` in the chat.
    - **A hook warns about triage.** The Stop hook saw changed code with no mission to size it. Default `enforce=warn` prints:
      ```
      ⚠ Mugiwara: this session changed source or mission artifacts but no mission was started to size the work. Start the mugiwara workflow first (it also records trivial work), or set enforce=off in .mugiwara/config to stop this check.
      ```
      Start the work with `/mugiwara <request>`. With `enforce=block` the hook stops the turn instead of warning, and the stop is counted in `mugiwara cost` as a forced continuation.
-   - **The turn was blocked after `/mugiwara`.** The stop hook compared the real diff with what happened: the change is risky and no mission was recorded. Let the crew continue and run the process. It blocks at most twice per session, then warns. Only `enforce=off` disables it.
+   - **The turn was blocked after `/mugiwara`.** The stop hook compared the real diff with what happened: the change is risky and no mission was recorded. Let the crew continue and run the process. It blocks at most twice per session, then warns.
    - **`mugiwara archive` refused to close.** On the full lane or a sensitive path, the ledger shows no independent run of Robin and Jinbe. The message names the missing check. Run it as a separate agent and archive again, or set `independent_review=off`, or use `--force` (the report then says `Checked inline`). Hosts without the Claude Code ledger are not blocked.
-   - **A hook warns that the review was not independent.** The Stop hook found a full-lane or sensitive-path mission with `review.md` or `security.md` and no recorded subagent dispatch, so the review ran inline. Causes: `independent_review=off`, a host that cannot dispatch, or the crew skipped the dispatch. Re-run review on Claude Code with `independent_review=on`, or accept the inline review and do the extra checking yourself. It warns and does not block.
+   - **A hook warns that the review was not independent.** The Stop hook found a full-lane or sensitive-path mission with `review.md` or `security.md` and no recorded subagent dispatch, so the review ran inline. Causes: `independent_review=off`, a host that cannot dispatch, or a skipped dispatch. Re-run review on Claude Code with `independent_review=on`, or check the inline review yourself. It only warns.
    - **A command was blocked.** The guard refuses merges, deploys, pushes to a protected branch and other irreversible commands on Claude Code. A real refusal for `git push origin main`:
      ```
      {"decision":"block","reason":"Mugiwara: refusing to pushing to a protected branch, because the crew never creates a PR, merges or deploys; a human does. Run it yourself, or set enforce=off in .mugiwara/config."}
      ```
-     Run that command in your own terminal. Turn the guard off only if you accept that nothing will stop the next one.
+     Run that command in your own terminal.
    - **A savepoint rejects a name.** Mission and member names allow letters, digits, dot, dash and underscore, and may not start with a dash:
      ```
      savepoint: invalid mission name "bad name" (allowlist: [a-zA-Z0-9._-])
      savepoint: invalid member name "-x" (allowlist: [a-zA-Z0-9._-])
      ```
      *Real output from the installed `.mugiwara/bin/savepoint.sh`.* In the shell script, put the mission first and the flags after it: `savepoint.sh <mission> --flow 2`. A flag before the mission is rejected as an unknown flag.
+   - **Why the crew did not engage, in detail.** Run `mugiwara doctor` first; it reports what it finds. The usual causes:
+     - Mode: `mode` in `.mugiwara/config` sets how much the crew asks. Guided waits at each decision.
+     - Small-request direct path: a trivial request is answered directly, with no mission.
+     - Risk reminder: on a risky change the hook asks for a mission. It is a reminder, not an error.
+     - Mugiwara off: `mugiwara off` in chat stands the crew down for the session. Start again with `/mugiwara <request>`.
 3. For a message from a command, find it in the table and apply the fix.
 4. Run the command again. If the message changed, match it again from the top.
-
-Some fixes ask you to run a state step by hand. A savepoint is the state snapshot the crew normally writes at every stage boundary, so you run `mugiwara savepoint` yourself only when repairing state.
 
 ## If something goes wrong
 
@@ -55,6 +58,7 @@ Some fixes ask you to run a state step by hand. A savepoint is the state snapsho
 | `closure integrity gate failed` from `mugiwara archive` | a missing file link, a secret-shaped string, or a bad evidence path | fix the flagged file and archive again. There is no bypass flag |
 | `invalid member name "x"` | spaces, a leading dash or a reserved word | use a slug such as `grace-hopper` |
 | `conflict (not overwritten; run update to replace with backup)` from install | the target file differs from what install writes | `mugiwara update`, which backs up first |
+| `✗ …/state.json: not valid JSON` or `mission dir is empty` | a truncated mission file | run the printed `fix:` line. `mugiwara doctor` lists all |
 | `No mission state on disk.` | nothing recorded in this checkout | check the branch, or start with `/mugiwara <request>` |
 | `multiple missions on disk … specify <mission>` | the short form cannot tell which mission | pass the mission: `mugiwara savepoint --flow 2 <mission>` |
 | no crew banner in the chat | the crew is not loaded in this session | ask "which crew members are available?". If it cannot answer, reinstall: see [install](../install.md) |

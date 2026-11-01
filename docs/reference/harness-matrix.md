@@ -2,7 +2,7 @@
 
 You switch editors and the crew behaves differently. Skills that auto-fired now sit idle, or agents that dispatched now narrate instead. This page answers "which harness supports what" with one example, then the tier table. Loading differs per tier. Workflow, lane sizing, and evidence discipline stay identical.
 
-Example: on Claude Code a security audit on a sensitive path dispatches Jinbe as an isolated subagent. On a tier 3 target the same request runs inline: the main thread embodies the Jinbe persona from markdown and reads the full body from `.mugiwara/refs/` on demand. Same checklist, different loading path.
+Example: on Claude Code a security audit on a sensitive path dispatches Jinbe as a subagent; on tier 3 the main thread plays Jinbe inline from `.mugiwara/refs/`.
 
 Rule: every skill and agent file ships to every harness. The tier decides native trigger versus rules file versus stub pointer. A conformance script (`scripts/conformance.ts`) checks every installable target against golden files in CI.
 
@@ -13,11 +13,20 @@ Rule: every skill and agent file ships to every harness. The tier decides native
 | 3 | Windsurf, Cline, Kilo, Antigravity, Gemini (community, best effort) | Stub pointer, body in `.mugiwara/refs/` | Project only | Shell fallback |
 | Marketplace | Kimi, Pi (community, best effort) | Manifest plus content pointers | Per host | npx only |
 
-First-class means native files and a conformance golden (`test/golden/<id>.json`). A 2026-10-19 Codex run created a full-lane mission and ran focused tests, but review dispatch failed under ephemeral mode and no archived report was produced. The benchmark default is fixed; a fresh run is pending. Cursor remains untested. Community targets are best effort.
+**Host status (as of 2026-11-01).** "Smoke" is `bun run smoke` (`scripts/smoke-lifecycle.ts`): install, upgrade and uninstall in a temp repo, checking files only.
 
-**Codex and Cursor enforcement.** Both ship skills and agents natively and nothing else: no hooks, runtime write-scope or irreversible-command guard. Codex custom agents cannot override `sandbox_mode`; Cursor's `readonly` would block `.mugiwara/**` writes so it is unused. Codex entered the workflow, but reviewer dispatch failed under ephemeral mode; independent review remains unverified. Cursor agent dispatch is also unverified. Keep the four-dispatch-worthy rule below and use inline review when dispatch is unavailable. The Codex plugin and Cursor plugin manifests ship skills only (agent bundling undocumented).
+| Host | Status | Evidence |
+|---|---|---|
+| Claude Code | Tested end to end | Real host |
+| opencode | Tested end to end | Real host |
+| Codex | Install verified by smoke only | Files only. A 2026-10-19 real run was partial: review dispatch failed |
+| Cursor | Install verified by smoke only | Not run in a real Cursor |
+| Claude Code marketplace commands (`/plugin marketplace add`, `/plugin install`) | Unverified | Not exercised by smoke or a recorded run |
+| Other community hosts | Not run in the real host | Conformance goldens only; Kimi and Pi are manifest only |
 
-Tier 1 auto-triggers on description match and supports progressive disclosure from description to body to references. Tier 2 installs stubs and opens the reference only when the task needs it, with native worker dispatch. Tier 3 installs stubs to save glob-load and opens the reference only when the task needs it. Marketplace targets resolve through the host plugin manifest.
+First-class means native files and a conformance golden (`test/golden/<id>.json`). Community targets are best effort.
+
+**Codex and Cursor enforcement.** Both ship skills and agents natively and nothing else: no hooks, runtime write-scope or irreversible-command guard. Codex custom agents cannot override `sandbox_mode`; Cursor's `readonly` would block `.mugiwara/**` writes so it is unused. Independent review and agent dispatch are unverified on both. Keep the four-dispatch-worthy rule below and use inline review when dispatch is unavailable. The Codex plugin and Cursor plugin manifests ship skills only (agent bundling undocumented).
 
 **"Dispatchable agents" is not one behavior.** opencode's agent switch is a
 foreground, context-preserving mode change: the same session keeps

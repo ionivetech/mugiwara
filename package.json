@@ -61,6 +61,7 @@
     "evals": "bun scripts/run-evals.ts",
     "retrieval-eval": "bun scripts/retrieval-eval.ts",
     "verify-install": "bun scripts/verify-install.ts",
+    "smoke": "bun scripts/smoke-lifecycle.ts",
     "sync-version": "bun scripts/sync-version.ts",
     "build-hooks": "bun scripts/build-hooks.ts",
     "build-hooks:check": "bun scripts/build-hooks.ts --check",
