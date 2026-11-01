@@ -34,6 +34,7 @@ function parseModeChange(promptRaw: string): string | null {
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { ensureConfig } from '../src/config.ts';
+import { riskReminder } from '../src/risk.ts';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -50,16 +51,6 @@ function isExplicitCrewRequest(promptRaw: string): boolean {
   if (typeof promptRaw !== 'string') return false;
   const m = /^\/(?:mugiwara:)?mugiwara(?:[ \t]+(\S+)[\s\S]*)?$/i.exec(promptRaw.trim());
   return !!m && !!m[1] && !NOT_A_REQUEST.has(m[1].toLowerCase());
-}
-
-// Words that make a request risky. Matches the sizing list in the /mugiwara command;
-// a miss only means the model decides by itself, a false hit only adds process.
-const RISK_WORDS = /\b(auth\w*|log[- ]?in|sign[- ]?in|password\w*|credential\w*|secrets?|tokens?|rbac|roles?|permissions?|tenant\w*|payments?|billing|refund\w*|invoices?|migrat\w+|schema|ci\/cd|github actions)\b/i;
-
-/** Reminder for an explicit crew request that names a risk area, else null. */
-function riskReminder(promptRaw: string): string | null {
-  const m = RISK_WORDS.exec(promptRaw.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ''));
-  return m ? `Mugiwara: this request mentions "${m[1].toLowerCase()}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission before you edit code.` : null;
 }
 
 /**

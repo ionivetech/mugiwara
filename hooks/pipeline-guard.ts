@@ -27,7 +27,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { findBash } from '../src/run.ts';
 import { readConfig } from '../src/config.ts';
-import { dispatchedAgents } from '../src/active-mission.ts';
+import { dispatchedAgents, closingPending } from '../src/active-mission.ts';
+import { reviewNextStep } from '../src/risk.ts';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 const MARKER_TTL_MS = 12 * 60 * 60 * 1000; // 12h — a stale marker must not police tomorrow's session
@@ -443,7 +444,7 @@ function explicitProblem(sessionId: string): string | null {
   }
   if (readConfig(cwd).independent_review !== 'off' && dispatchedAgents(cwd, state.mission).size === 0) {
     return 'Mugiwara: the review of this change ran in the same conversation that wrote it, and the crew\'s process was requested with /mugiwara. ' +
-      'Ask the crew to run the independent review (Robin and Jinbe as separate agents) before finishing, or tell the user you are skipping it.';
+      'Ask the crew to run the independent review (Robin and Jinbe as separate agents) before finishing, or tell the user you are skipping it. ' + reviewNextStep(state.mission);
   }
   return null;
 }
@@ -492,6 +493,10 @@ async function main(): Promise<void> {
   const state = newestMissionState();
   const sourceChangedNow = sourceChanged();
 
+  // Closing artifacts exist but no report.md and no archive: headless runs end here.
+  const pending = closingPending(cwd);
+  if (pending) process.stderr.write(`Mugiwara: mission "${pending}" has its closing files but no report.md. Run \`mugiwara archive ${pending}\` to write it.\n`);
+
   // --- check 2: the write boundary -----------------------------------------
   // Triage exists and sized the mission Lane 1+, source changed, and no
   // executor was ever dispatched or embodied this session. That is the captain
@@ -534,7 +539,7 @@ async function main(): Promise<void> {
       if (risky && reviewed && readConfig(cwd).independent_review !== 'off' && dispatchedAgents(cwd, state.mission).size === 0) {
         process.stderr.write(
           'Mugiwara: the review of this change ran in the same conversation that wrote it. ' +
-          'Ask the crew to run the independent review (Robin and Jinbe as separate agents), or set independent_review=off if you accept an inline review.\n',
+          'Ask the crew to run the independent review (Robin and Jinbe as separate agents), or set independent_review=off if you accept an inline review. ' + reviewNextStep(state.mission, dispatchedAgents(cwd, state.mission)) + '\n',
         );
       }
     } catch { /* fail open */ }

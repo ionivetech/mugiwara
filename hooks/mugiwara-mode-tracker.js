@@ -43,6 +43,68 @@ function ensureConfig(projectDir) {
   return true;
 }
 
+// src/risk.ts
+var RISK_WORDS = new RegExp("\\b(" + [
+  "auth\\w*",
+  "log[- ]?in",
+  "sign[- ]?in",
+  "password\\w*",
+  "credential\\w*",
+  "secrets?",
+  "tokens?",
+  "rbac",
+  "roles?",
+  "permissions?",
+  "tenant\\w*",
+  "multi-tenant",
+  "payments?",
+  "billing",
+  "refund\\w*",
+  "invoices?",
+  "migrat\\w+",
+  "schema",
+  "ci/cd",
+  "github actions",
+  "izin",
+  "hak akses",
+  "otorisasi",
+  "autentikasi",
+  "masuk akun",
+  "pembayaran",
+  "penagihan",
+  "pengembalian dana",
+  "kata sandi",
+  "sandi",
+  "rahasia",
+  "kunci api",
+  "penyewa",
+  "migrasi",
+  "skema"
+].join("|") + ")\\b", "i");
+var RISK_PATH_PARTS = new Set(["auth", "payment", "payments", "billing", "migration", "migrations", "rbac", "permission", "permissions", "secret", "secrets"]);
+function riskPath(text) {
+  for (const tok of text.split(/[\s"'`()<>,;]+/)) {
+    if (!tok.includes("/"))
+      continue;
+    for (const part of tok.toLowerCase().split(/[/\\_.\-]+/))
+      if (RISK_PATH_PARTS.has(part))
+        return tok;
+  }
+  return null;
+}
+function riskTerm(text) {
+  if (typeof text !== "string")
+    return null;
+  const m = RISK_WORDS.exec(text);
+  if (m)
+    return m[1].toLowerCase();
+  return riskPath(text)?.toLowerCase() ?? null;
+}
+function riskReminder(text) {
+  const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ""));
+  return term ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission before you edit code. ` + "Before closing, dispatch Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents; a review written by the conversation that made the change does not count." : null;
+}
+
 // hooks/mugiwara-mode-tracker.ts
 import { tmpdir } from "os";
 import { join as join2 } from "path";
@@ -102,11 +164,6 @@ function isExplicitCrewRequest(promptRaw) {
     return false;
   const m = /^\/(?:mugiwara:)?mugiwara(?:[ \t]+(\S+)[\s\S]*)?$/i.exec(promptRaw.trim());
   return !!m && !!m[1] && !NOT_A_REQUEST.has(m[1].toLowerCase());
-}
-var RISK_WORDS = /\b(auth\w*|log[- ]?in|sign[- ]?in|password\w*|credential\w*|secrets?|tokens?|rbac|roles?|permissions?|tenant\w*|payments?|billing|refund\w*|invoices?|migrat\w+|schema|ci\/cd|github actions)\b/i;
-function riskReminder(promptRaw) {
-  const m = RISK_WORDS.exec(promptRaw.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ""));
-  return m ? `Mugiwara: this request mentions "${m[1].toLowerCase()}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission before you edit code.` : null;
 }
 function recordExplicitCrew(sessionId) {
   try {

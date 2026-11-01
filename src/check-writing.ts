@@ -22,7 +22,7 @@ export const WRITING_CAPS: Record<string, number> = {
   'docs/reference/adoption-guide.md': 400,
   'docs/reference/cli.md': 800,
   'docs/reference/compliance-matrix.md': 850,
-  'docs/reference/enforcement.md': 1180,
+  'docs/reference/enforcement.md': 1200,
   'docs/reference/glossary.md': 550,
   'docs/reference/harness-matrix.md': 840,
   'docs/runbooks/README.md': 240,

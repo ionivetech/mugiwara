@@ -30,6 +30,8 @@ export type ReportInput = {
    * from anything written in review.md / security.md.
    */
   dispatched?: string[];
+  /** Optional evidence files not found in the mission folder (e.g. review.md); listed under Not verified. */
+  absent?: string[];
 };
 
 type Topic = { title: string; flow: string; crew: string };
@@ -162,6 +164,7 @@ export function buildReport(o: ReportInput): string {
 
   const notVerified = seedSec('Not verified')?.text;
   if (notVerified) out.push(`## Not verified\n\n${notVerified}`);
+  else if (o.absent?.length) out.push(`## Not verified\n\nNo ${o.absent.join(' and no ')} in the mission folder, so that part was not checked or not recorded.`);
   else if (o.hasState) out.push('## Not verified\n\nNo list of unverified items was recorded. Treat that as unknown, not as "nothing".');
 
   const seedCost = seedSec('Cost')?.text;

@@ -2,7 +2,7 @@
 // Active-mission resolution, shared by the Stop hook (auto-savepoint) and the
 // PostToolUse marker (review-dispatch ledger), plus the ledger reader shared by
 // the archive fold and the pipeline guard. Fail-soft: never throws.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SAFE = /^[A-Za-z0-9._-]+$/;
@@ -101,4 +101,28 @@ export function dispatchedAgents(cwd: string, mission: string): Set<string> {
     }
   } catch { /* unreadable ledger = no dispatch */ }
   return out;
+}
+
+/**
+ * A mission that reached its closing files (flows/06-closure.md or
+ * flows/07-pr-verdict.md) and still has live state but no report.md, i.e. it was
+ * never archived. Returns the most recently touched one, else null. Never throws.
+ */
+export function closingPending(cwd: string): string | null {
+  const base = join(cwd, '.mugiwara', 'missions');
+  let best: { name: string; at: number } | null = null;
+  try {
+    for (const e of readdirSync(base, { withFileTypes: true })) {
+      if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name)) continue;
+      const dir = join(base, e.name);
+      const files = readdirSync(dir);
+      const live = files.some((f) => f.endsWith('.json') && f !== 'continue.json' && !f.startsWith('continue-'));
+      if (!live || files.includes('report.md')) continue;
+      const marks = ['06-closure.md', '07-pr-verdict.md'].map((f) => join(dir, 'flows', f)).filter((f) => existsSync(f));
+      if (!marks.length) continue;
+      const at = Math.max(...marks.map((f) => statSync(f).mtimeMs));
+      if (!best || at > best.at) best = { name: e.name, at };
+    }
+  } catch { /* no missions dir or unreadable: no opinion */ }
+  return best?.name ?? null;
 }

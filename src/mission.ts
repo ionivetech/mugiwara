@@ -636,6 +636,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
         mission, seed: report, seedIsClosure, files: folded, changeLine,
         cost: costSection, routing: routingSection, tooling: toolingLog, hasState: !!state,
         dispatched: [...dispatchedAgents(projectDir, mission)],
+        absent: ['review.md', 'security.md'].filter((f) => !files.includes(f)),
       }));
       renameSync(tmp, reportPath);
     }
@@ -663,7 +664,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     // report.md must exist after archive — the closed marker `mugiwara clean`
     // filters on. A stale in-flight mission folds nothing, so seed a stub.
     if (!existsSync(reportPath)) {
-      writeFileSync(reportPath, `# Mission: ${mission}\n\nArchived before closure — no wave artifacts were present.\n`);
+      writeFileSync(reportPath, `# Mission: ${mission}\n\nArchived before closure — no wave artifacts were present.\n\n## Not verified\n\nNo review.md and no security.md in the mission folder, so nothing was checked or recorded.\n`);
     }
     // Closure artifacts: executable rollback map and the
     // two-layer provenance record. Best-effort — absent git/base degrades.

@@ -75,7 +75,7 @@ function sumTranscriptUsage(path) {
 }
 
 // src/active-mission.ts
-import { existsSync as existsSync2, readFileSync as readFileSync2, readdirSync } from "node:fs";
+import { existsSync as existsSync2, readFileSync as readFileSync2, readdirSync, statSync as statSync2 } from "node:fs";
 import { join as join2 } from "node:path";
 var SAFE = /^[A-Za-z0-9._-]+$/;
 function bootstrapMission(cwd) {

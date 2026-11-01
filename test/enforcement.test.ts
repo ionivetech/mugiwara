@@ -635,3 +635,22 @@ test('explicit: a mission archived this session (report.md, no state) is closure
     expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('guard: missing-dispatch warning names the next step; closing files without report.md name the archive command', { timeout: 60000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    stateFile(dir, 'm9', { lane: 'full' });
+    const m = join(dir, '.mugiwara', 'missions', 'm9');
+    writeFileSync(join(m, 'review.md'), '# Review\n');
+    let err = hook(GUARD, dir, { session_id: 's1' }).err;
+    expect(err).toContain('Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents for mission "m9"');
+    expect(err).not.toContain('no report.md');
+    mkdirSync(join(m, 'flows'), { recursive: true });
+    writeFileSync(join(m, 'flows', '06-closure.md'), '# Closed\n');
+    err = hook(GUARD, dir, { session_id: 's1' }).err;
+    expect(err).toContain('Run `mugiwara archive m9` to write it.');
+    writeFileSync(join(m, 'report.md'), '# Report\n');
+    expect(hook(GUARD, dir, { session_id: 's1' }).err).not.toContain('mugiwara archive m9` to write');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

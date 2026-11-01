@@ -2,7 +2,7 @@
 // @bun
 
 // hooks/pipeline-guard.ts
-import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync3, readdirSync as readdirSync2, statSync, lstatSync as lstatSync2, writeFileSync as writeFileSync2 } from "fs";
+import { existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync3, readdirSync as readdirSync2, statSync as statSync2, lstatSync as lstatSync2, writeFileSync as writeFileSync2 } from "fs";
 import { execFileSync } from "child_process";
 import { homedir as homedir2 } from "os";
 import { dirname as dirname2, join as join4 } from "path";
@@ -104,8 +104,9 @@ function readConfig(projectDir) {
 }
 
 // src/active-mission.ts
-import { existsSync as existsSync3, readFileSync as readFileSync2, readdirSync } from "node:fs";
+import { existsSync as existsSync3, readFileSync as readFileSync2, readdirSync, statSync } from "node:fs";
 import { join as join3 } from "node:path";
+var SAFE = /^[A-Za-z0-9._-]+$/;
 var REVIEW_LEDGER = "review-dispatch.jsonl";
 function dispatchedAgents(cwd, mission) {
   const out = new Set;
@@ -126,6 +127,72 @@ function dispatchedAgents(cwd, mission) {
     }
   } catch {}
   return out;
+}
+function closingPending(cwd) {
+  const base = join3(cwd, ".mugiwara", "missions");
+  let best = null;
+  try {
+    for (const e of readdirSync(base, { withFileTypes: true })) {
+      if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name))
+        continue;
+      const dir = join3(base, e.name);
+      const files = readdirSync(dir);
+      const live = files.some((f) => f.endsWith(".json") && f !== "continue.json" && !f.startsWith("continue-"));
+      if (!live || files.includes("report.md"))
+        continue;
+      const marks = ["06-closure.md", "07-pr-verdict.md"].map((f) => join3(dir, "flows", f)).filter((f) => existsSync3(f));
+      if (!marks.length)
+        continue;
+      const at = Math.max(...marks.map((f) => statSync(f).mtimeMs));
+      if (!best || at > best.at)
+        best = { name: e.name, at };
+    }
+  } catch {}
+  return best?.name ?? null;
+}
+
+// src/risk.ts
+var RISK_WORDS = new RegExp("\\b(" + [
+  "auth\\w*",
+  "log[- ]?in",
+  "sign[- ]?in",
+  "password\\w*",
+  "credential\\w*",
+  "secrets?",
+  "tokens?",
+  "rbac",
+  "roles?",
+  "permissions?",
+  "tenant\\w*",
+  "multi-tenant",
+  "payments?",
+  "billing",
+  "refund\\w*",
+  "invoices?",
+  "migrat\\w+",
+  "schema",
+  "ci/cd",
+  "github actions",
+  "izin",
+  "hak akses",
+  "otorisasi",
+  "autentikasi",
+  "masuk akun",
+  "pembayaran",
+  "penagihan",
+  "pengembalian dana",
+  "kata sandi",
+  "sandi",
+  "rahasia",
+  "kunci api",
+  "penyewa",
+  "migrasi",
+  "skema"
+].join("|") + ")\\b", "i");
+var RISK_PATH_PARTS = new Set(["auth", "payment", "payments", "billing", "migration", "migrations", "rbac", "permission", "permissions", "secret", "secrets"]);
+function reviewNextStep(mission, ran = new Set) {
+  const todo = [["robin-reviewer", "Robin"], ["jinbe-security", "Jinbe"]].filter(([a]) => !ran.has(a)).map(([a, n]) => `${n} (${a})`);
+  return `Next step: start ${todo.length ? todo.join(" and ") : "the reviewers"} as separate agents for mission "${mission}", then run \`mugiwara archive ${mission}\`.`;
 }
 
 // hooks/pipeline-guard.ts
@@ -210,7 +277,7 @@ function artifactWorkNow() {
             stack.push(full);
             continue;
           }
-          if (statSync(full).mtimeMs + 1000 >= sessionStart)
+          if (statSync2(full).mtimeMs + 1000 >= sessionStart)
             return true;
         } catch {}
       }
@@ -239,7 +306,7 @@ function newestMissionState() {
           const s = JSON.parse(readFileSync3(p, "utf8"));
           if (typeof s.mission !== "string" || !s.mission)
             continue;
-          const at = statSync(p).mtimeMs;
+          const at = statSync2(p).mtimeMs;
           if (at <= bestAt)
             continue;
           bestAt = at;
@@ -392,7 +459,7 @@ function bannerThisSession() {
         try {
           if (!existsSync4(f))
             continue;
-          if (statSync(f).mtimeMs + 1000 < sessionStart)
+          if (statSync2(f).mtimeMs + 1000 < sessionStart)
             continue;
           if (re.test(readFileSync3(f, "utf8")))
             return true;
@@ -464,7 +531,7 @@ function closedThisSession(sessionId) {
       const closed = ["report.md", "pr-verdict.md"].map((f) => join4(base, e.name, f)).filter((f) => existsSync4(f));
       if (!closed.length)
         continue;
-      if (start && closed.some((f) => statSync(f).mtimeMs + 1000 >= start))
+      if (start && closed.some((f) => statSync2(f).mtimeMs + 1000 >= start))
         return true;
       if (ledger.some((x) => x.mission === e.name && (!sessionId || !x.session_id || x.session_id === sessionId)))
         return true;
@@ -499,7 +566,7 @@ function explicitProblem(sessionId) {
     return `Mugiwara: this change has no ${missing.join(" and no ")}, and the crew's process was requested with /mugiwara. ` + `Run the ${missing.join(" and the ")} now and write the result into the mission folder before finishing.`;
   }
   if (readConfig(cwd).independent_review !== "off" && dispatchedAgents(cwd, state.mission).size === 0) {
-    return "Mugiwara: the review of this change ran in the same conversation that wrote it, and the crew's process was requested with /mugiwara. " + "Ask the crew to run the independent review (Robin and Jinbe as separate agents) before finishing, or tell the user you are skipping it.";
+    return "Mugiwara: the review of this change ran in the same conversation that wrote it, and the crew's process was requested with /mugiwara. " + "Ask the crew to run the independent review (Robin and Jinbe as separate agents) before finishing, or tell the user you are skipping it. " + reviewNextStep(state.mission);
   }
   return null;
 }
@@ -543,6 +610,10 @@ async function main() {
     return;
   const state = newestMissionState();
   const sourceChangedNow = sourceChanged();
+  const pending = closingPending(cwd);
+  if (pending)
+    process.stderr.write(`Mugiwara: mission "${pending}" has its closing files but no report.md. Run \`mugiwara archive ${pending}\` to write it.
+`);
   if (state) {
     const rank = LANE_RANK[state.lane] ?? -1;
     if (rank >= 1 && sourceChangedNow && !executorDispatched(sessionId)) {
@@ -557,7 +628,7 @@ async function main() {
       const risky = state.lane === "full" || state.sensitive;
       const reviewed = ["review.md", "security.md"].some((f) => existsSync4(join4(cwd, ".mugiwara", "missions", state.dir, f)));
       if (risky && reviewed && readConfig(cwd).independent_review !== "off" && dispatchedAgents(cwd, state.mission).size === 0) {
-        process.stderr.write("Mugiwara: the review of this change ran in the same conversation that wrote it. " + `Ask the crew to run the independent review (Robin and Jinbe as separate agents), or set independent_review=off if you accept an inline review.
+        process.stderr.write("Mugiwara: the review of this change ran in the same conversation that wrote it. " + "Ask the crew to run the independent review (Robin and Jinbe as separate agents), or set independent_review=off if you accept an inline review. " + reviewNextStep(state.mission, dispatchedAgents(cwd, state.mission)) + `
 `);
       }
     } catch {}
