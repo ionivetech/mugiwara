@@ -18,7 +18,7 @@ import { crewRows, renderCrew } from './crew.ts';
 import { blamePath, actorName } from './provenance.ts';
 import { ensureConfig } from './config.ts';
 import { costEnvelope } from './cost.ts';
-import { readConfig } from './config.ts';
+import { modeNote, readConfig } from './config.ts';
 import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
 import { deriveStructuralIntents } from './intents.ts';
 import { computeLiveSlop } from './slop.ts';
@@ -35,6 +35,12 @@ const flag = (v: FlagValue): boolean => v === true;
 
 // Anchor to the repo root so running from a package subdirectory does not
 // create a shadow .mugiwara/ there. (B4)
+/** The resume line, plus a note when the config mode differs from the mission's. */
+function resumeLine(projectDir: string, e: ContinueEntry): string {
+  const note = modeNote(e.mode, readConfig(projectDir).mode);
+  return formatResume(e) + (note ? `\n  note: ${note}` : '');
+}
+
 function resolveProjectDir(explicit?: string): string {
   if (explicit) return resolve(explicit);
   try {
@@ -651,7 +657,7 @@ export function startOrResumeMember(projectDir: string, cachePath: string, missi
   if (hasState) {
     const rChosen = resolveContinue(entries, mission, chosenMember);
     if (rChosen.kind === 'resume') {
-      console.log(formatResume(rChosen.entry));
+      console.log(resumeLine(projectDir, rChosen.entry));
       const st = readState(projectDir).find((s) => s.mission === rChosen.entry.mission && s.member === rChosen.entry.member);
       const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
       if (stale) console.log(stale);
@@ -757,7 +763,7 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
               console.error(`    rm .mugiwara/missions/${rCached.entry.mission}/continue-${rCached.entry.member}.json`);
               process.exit(1);
             }
-            console.log(formatResume(rCached.entry));
+            console.log(resumeLine(projectDir, rCached.entry));
             const st = readState(projectDir).find((s) => s.mission === rCached.entry.mission && s.member === rCached.entry.member);
             const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
             if (stale) console.log(stale);
@@ -820,7 +826,7 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
       console.error(`    rm .mugiwara/missions/${r.entry.mission}/continue-${r.entry.member}.json`);
       process.exit(1);
     }
-    console.log(formatResume(r.entry));
+    console.log(resumeLine(projectDir, r.entry));
     const st = readState(projectDir).find((s) => s.mission === r.entry.mission && s.member === r.entry.member);
     const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
     if (stale) console.log(stale);
@@ -867,6 +873,8 @@ function statusCmd(flags: Args['flags']): void {
     const scope = s.member ? ` [${s.member}]` : '';
     console.log(`${s.mission}${scope}`);
     console.log(`  flow ${s.flow} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
+    const note = modeNote(s.mode, readConfig(projectDir).mode);
+    if (note) console.log(`  note: ${note}`);
     console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALT' : ''} · files touched ${s.files_touched}`);
     if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})${s.delegate_due ? ' · delegate due' : ''}`);
     console.log(`  branch ${s.branch} · updated ${s.updated_at}`);

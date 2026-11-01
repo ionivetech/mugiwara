@@ -99,7 +99,7 @@ Two commands work but are not listed in `--help`: `mugiwara join` and `mugiwara 
 
 Read-only repo check: install, hooks, config, lane, mission files. Each failure gets a fix line. Exit 1 on any failure. `--json` prints `{ version, ok, checks }`.
 
-It also compares the npx pin in `.claude/commands/mugiwara.md` with the CLI. `install` warns on the same mismatch.
+It also compares the npx pin in `.claude/commands/mugiwara.md` with the CLI. `install` warns on the same mismatch. It also flags a key set twice and a mode mismatch; `status` shows the same note.
 
 ## Corrupt state
 

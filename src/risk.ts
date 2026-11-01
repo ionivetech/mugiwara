@@ -38,7 +38,7 @@ export function riskTerm(text: string): string | null {
 export function riskReminder(text: string): string | null {
   const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ''));
   return term
-    ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission before you edit code. ` +
+    ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission with --lane full before you edit code. ` +
       'Before closing, dispatch Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents; a review written by the conversation that made the change does not count.'
     : null;
 }

@@ -8,6 +8,7 @@ import { cap } from './helpers/cli-capture.ts';
 import { initBaseRepo } from './helpers/git-fixture.ts';
 import { doctor, renderDoctor, commandPins, pinMismatch, CLAUDE_HOOKS } from '../src/doctor.ts';
 import { VERSION } from '../src/installer.ts';
+import { duplicateKeys, modeNote } from '../src/config.ts';
 
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });
@@ -182,5 +183,42 @@ describe('renderDoctor', () => {
       { name: 'a', status: 'ok', detail: 'fine', fix: 'ignored' },
       { name: 'b', status: 'fail', detail: 'bad', fix: 'do x' },
     ])).toBe('[ok  ] a: fine\n[FAIL] b: bad\n       fix: do x');
+  });
+});
+
+describe('config conflicts', () => {
+  test('doctor warns when a key is set twice with different values, and the first wins', () => {
+    const d = repo();
+    mkdirSync(join(d, '.mugiwara'), { recursive: true });
+    writeFileSync(join(d, '.mugiwara', 'config'), 'mode=guided\nenforce=warn\nmode=auto\n');
+    const c = find(d, 'config mode', false);
+    expect(c?.status).toBe('warn');
+    expect(c?.detail).toContain('lines 1 and 3');
+    expect(c?.detail).toContain('guided');
+    expect(duplicateKeys(d)).toEqual([{ key: 'mode', lines: [1, 3], winner: 'guided' }]);
+  });
+
+  test('the same value twice is not a conflict, and a missing file has none', () => {
+    const d = repo();
+    expect(duplicateKeys(d)).toEqual([]);
+    mkdirSync(join(d, '.mugiwara'), { recursive: true });
+    writeFileSync(join(d, '.mugiwara', 'config'), 'mode=auto\nmode=auto # again\n# mode=guided\n');
+    expect(duplicateKeys(d)).toEqual([]);
+  });
+
+  test('modeNote names both modes only when they differ', () => {
+    expect(modeNote('guided', 'auto')).toContain('mugiwara mode auto');
+    expect(modeNote('auto', 'auto')).toBeNull();
+    expect(modeNote('guided', undefined)).toBeNull();
+  });
+
+  test('doctor warns about a mission started in another mode than the config', () => {
+    const d = repo();
+    mkdirSync(join(d, '.mugiwara', 'missions', 'm1'), { recursive: true });
+    writeFileSync(join(d, '.mugiwara', 'config'), 'mode=auto\n');
+    writeFileSync(join(d, '.mugiwara', 'missions', 'm1', 'state.json'), JSON.stringify({ mission: 'm1', flow: 2, lane: 'full', mode: 'guided', tasks_done: 0, tasks_total: 0 }));
+    const c = find(d, 'mission m1 mode', false);
+    expect(c?.status).toBe('warn');
+    expect(c?.fix).toContain('mugiwara mode auto');
   });
 });

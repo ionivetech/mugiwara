@@ -62,6 +62,30 @@ export function readConfig(projectDir: string): Record<string, string> {
   return out;
 }
 
+/** Keys set more than once with different values in the project config; the first line wins. */
+export function duplicateKeys(projectDir: string): Array<{ key: string; lines: number[]; winner: string }> {
+  const file = configPaths(projectDir)[0];
+  if (!existsSync(file)) return [];
+  const seen = new Map<string, Array<{ line: number; value: string }>>();
+  readFileSync(file, 'utf8').split(/\r?\n/).forEach((raw, i) => {
+    const t = raw.trim();
+    const eq = t.indexOf('=');
+    if (!t || t.startsWith('#') || eq === -1) return;
+    const key = t.slice(0, eq).trim();
+    if (!key) return;
+    const value = t.slice(eq + 1).split('#')[0].trim();
+    seen.set(key, [...(seen.get(key) ?? []), { line: i + 1, value }]);
+  });
+  return [...seen].filter(([, v]) => new Set(v.map((x) => x.value)).size > 1)
+    .map(([key, v]) => ({ key, lines: v.map((x) => x.line), winner: v[0].value }));
+}
+
+/** One line when a mission started in a different mode than the config now says, else null. */
+export function modeNote(missionMode: string, configMode: string | undefined): string | null {
+  if (!configMode || configMode === missionMode) return null;
+  return `.mugiwara/config says mode ${configMode}, but this mission started in ${missionMode}. A mission keeps its mode; say "mugiwara mode ${configMode}" in the chat to switch it.`;
+}
+
 /**
  * Write the default config into <project>/.mugiwara/config when it is missing.
  * Never overwrites an existing file, never follows a symlink (defense-in-depth

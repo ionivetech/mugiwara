@@ -102,7 +102,7 @@ function riskTerm(text) {
 }
 function riskReminder(text) {
   const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ""));
-  return term ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission before you edit code. ` + "Before closing, dispatch Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents; a review written by the conversation that made the change does not count." : null;
+  return term ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission with --lane full before you edit code. ` + "Before closing, dispatch Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents; a review written by the conversation that made the change does not count." : null;
 }
 
 // hooks/mugiwara-mode-tracker.ts

@@ -14,7 +14,7 @@ Luffy coordinates and never implements. Stage numbers, lanes, modes and the fix-
 
 **Risk overrides size.** Authentication, authorization/RBAC, payments, migrations,
 secrets, and other sensitive paths are never Lane 0/1. Triage first, create the
-mission record, and follow every stage required by the resulting lane even when
+mission record with `--lane full` (the sized lane may say direct, but the record must show the risk route), and follow every stage required by the resulting lane even when
 the code change looks trivial. If the host cannot complete a required stage or
 write its evidence, stop and report that limitation; do not silently skip it or
 claim the workflow ran.

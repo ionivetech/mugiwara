@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
-import { readConfig } from './config.ts';
+import { duplicateKeys, modeNote, readConfig } from './config.ts';
 import { readManifest, manifestPath } from './manifest.ts';
 import { targets } from './targets/index.ts';
 import { VERSION } from './installer.ts';
@@ -98,6 +98,13 @@ function configChecks(projectDir: string, out: Check[]): void {
     ['enforce', 'warn', ['off', 'warn', 'block']],
     ['independent_review', 'on', ['on', 'off']],
   ];
+  for (const d of duplicateKeys(projectDir)) {
+    out.push({ name: `config ${d.key}`, status: 'warn', detail: `set on lines ${d.lines.join(' and ')} with different values; the first line wins (${d.winner})`, fix: `delete the ${d.key} line you do not want in .mugiwara/config` });
+  }
+  for (const s of readState(projectDir)) {
+    const note = modeNote(s.mode, cfg.mode);
+    if (note) out.push({ name: `mission ${s.mission} mode`, status: 'warn', detail: note, fix: `say "mugiwara mode ${cfg.mode}" in the chat, or keep ${s.mode} for this mission` });
+  }
   for (const [key, def, allowed] of rows) {
     const v = cfg[key] ?? def;
     out.push(allowed.includes(v)
