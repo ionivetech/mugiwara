@@ -89,9 +89,11 @@ Calibration (plain only, 16 tasks): 4 tasks left a defect (`csv-rows`, `order-to
 
 The sentence, not the crew, explains the gain: plain with the sentence did better than the crew's fast path. Most extra tokens in the full-pipeline row were cache reads. Fast-path runs load no skill, so the harness counts them as not engaged. Fewer than five tasks and overlapping intervals: no conclusion.
 
-### Risky tasks (2026-10-20, Claude Code, anecdote)
+### Risky tasks (2026-11-02, Claude Code)
 
-Four tasks that name a risk area, plain missed each at least once in calibration, three fresh runs per arm, with the prompt hook that reminds the crew to take the full process. Hidden checks passed: plain 2 of 12, crew 3 of 12. Only `refund-payment` moved: plain 1 of 3, crew 3 of 3 (5 of 6 across two sessions, plain 1 of 6), with Robin as a separate agent in the passing runs. `api-token`, `role-assign` and `tenant-notes` stayed at or near 0 in both arms. The crew engaged in all 12 runs (before the hook, 1 of 3 on `tenant-notes`) and sent a separate reviewer in 5. Cost: $3.92 against $1.69 over 12 runs, median $0.22 against $0.14. No `report.md` was written headless. One task of four shows a gain, which is no conclusion.
+Three tasks that name a risk area and that plain missed in calibration, ten fresh runs per arm per task. Hidden checks passed: plain 1 of 30 (95% interval 1% to 17%), crew 12 of 30 (25% to 58%), disjoint intervals. `refund-payment`: plain 1 of 10, crew 10 of 10. `api-token`: 0 and 2. `role-assign`: 0 and 0. Every crew run engaged and sent separate reviewers; none wrote a `report.md` headless. Median cost $0.59 against $0.14 (about 4 times); total $17.23 against $4.37. The token medians (134k against 164k) are misleading, since reviewer subagent tokens do not appear in the parent session total.
+
+Limits: three tasks, below the five-task minimum, and tasks were picked because plain failed, so plain's rate is low by construction. Plain was not given a review prompt of its own, which would be the fair next test.
 
 ### Codex CLI diagnostic (2026-10-19, one run per task)
 

@@ -73,4 +73,4 @@ Claude Code and opencode are tested end to end. Codex and Cursor install in each
 - It does not make an agent smarter. It adds order and evidence.
 - Review is independent only where it can be: on Claude Code, on the full lane or a sensitive path, with `independent_review=on`. Everywhere else the review is the same model checking its own work, and the report says `Checked inline`. Independent review costs more tokens and is not a substitute for your own checks. The order of stages is not enforced: the checks prove artifacts exist, not that planning came first.
 - It does not open pull requests, merge or deploy.
-- It does not prove that it saves tokens or improves results. Small runs found about 10% more tokens and no conclusive quality difference. See the [benchmark](contributing/benchmark.md).
+- It does not prove that it saves tokens or improves results. On small tasks it found no quality benefit; on three risky tasks the crew caught more defects at about 4 times the cost. See the [benchmark](contributing/benchmark.md).

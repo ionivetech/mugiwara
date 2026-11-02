@@ -67,4 +67,4 @@ The report now starts the Review and Security sections with `*Checked independen
 
 ## Measured so far
 
-A benchmark harness exists ([benchmark](docs/contributing/benchmark.md)). Small runs found about 10% more tokens than an unaided agent and no quality benefit: plain with one extra prompt sentence did as well or better. They do not measure the review trail on risky changes.
+A benchmark harness exists ([benchmark](docs/contributing/benchmark.md)). On small tasks the crew costs about 10% more than an unaided agent with no quality benefit. On three risky tasks it passed hidden checks in 12 of 30 runs against 1 of 30, at about 4 times the cost. Three tasks is too few for a general claim.

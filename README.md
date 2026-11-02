@@ -143,7 +143,7 @@ Most of the crew runs inside your conversation. The exception is review: on Clau
 | Lane budgets match the content they load | verified in CI |
 | Independent review | Claude Code only: on the full lane or a sensitive path, `mugiwara archive` refuses to close unless a hook ledger shows Robin and Jinbe ran as separate agents (`--force` closes anyway, labeled inline). The label proves a separate agent ran, not that the review was good. Stage order is not enforced. Other hosts have no ledger |
 | Write-scope enforcement | opencode only. Claude Code blocks irreversible commands. Elsewhere it is written rules |
-| Cost and results against an unaided agent | **small runs, mostly no difference**: on small tasks the crew costs about 10% more tokens and a plain prompt with one extra sentence did as well. On 4 risky tasks, hidden checks passed in 3 of 12 crew runs against 2 of 12 plain, at about 2.3 times the cost; only the refund task showed a gain, with separate reviewers. Too small to conclude. See the [benchmark](docs/contributing/benchmark.md) |
+| Cost and results against an unaided agent | **small tasks: no benefit; risky tasks: a gain at about 4 times the cost**: on 3 risky tasks where plain failed, hidden checks passed in 12 of 30 crew runs against 1 of 30 plain (intervals do not overlap), with separate reviewers in every crew run, but only one task moved much (refund 10 of 10 against 1 of 10) and two did not. On small tasks the crew costs about 10% more and a plain prompt with one extra sentence did as well. Not a general claim. See the [benchmark](docs/contributing/benchmark.md) |
 
 Nothing in this table is an estimate. Budgets count the process Mugiwara adds, not your provider's bill, and nothing here claims savings.
 
