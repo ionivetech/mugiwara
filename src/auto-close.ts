@@ -7,6 +7,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { recordStage } from './record.ts';
 import { archiveMission } from './mission.ts';
+import { dispatchCounts } from './active-mission.ts';
 
 /** The mode frozen in the mission's state file, or '' when unreadable. */
 export function missionMode(cwd: string, mission: string): string {
@@ -36,4 +37,34 @@ export function autoCloseIfAuto(cwd: string, mission: string): { closed: boolean
   } catch (e) {
     return { closed: false, message: `automatic close failed: ${(e as Error).message}` };
   }
+}
+
+const FAILING = /verdict[^\n]*\b(fail(ed|s)?|changes requested|needs? (fixes|changes)|blocked)\b/i;
+
+/**
+ * The first failing verdict line in review.md or security.md ("Verdict: FAIL (2 open High)"), else null.
+ * ASSUMPTION: a rough match on the word; reviewers do not share one verdict format yet.
+ */
+export function openFindings(cwd: string, mission: string): string | null {
+  const dir = join(cwd, '.mugiwara', 'missions', mission);
+  for (const f of ['security.md', 'review.md']) {
+    try {
+      const line = readFileSync(join(dir, f), 'utf8').split('\n').find((l) => FAILING.test(l));
+      if (line) return `${f}: ${line.replace(/[*#`]/g, '').trim().slice(0, 120)}`;
+    } catch { /* file not written yet */ }
+  }
+  return null;
+}
+
+/** Heal cycles used so far (a review dispatched again after the first) and the cap from state (default 3). */
+export function healProgress(cwd: string, mission: string): { cycles: number; max: number } {
+  const robin = dispatchCounts(cwd, mission).get('robin-reviewer') ?? 0;
+  let max = 3;
+  try {
+    const dir = join(cwd, '.mugiwara', 'missions', mission);
+    const f = readdirSync(dir).find((x) => x.endsWith('.json') && x !== 'continue.json' && !x.startsWith('continue-'));
+    const m = f ? (JSON.parse(readFileSync(join(dir, f), 'utf8')) as { heal_max_cycles?: unknown }).heal_max_cycles : undefined;
+    if (typeof m === 'number' && m > 0) max = m;
+  } catch { /* default cap */ }
+  return { cycles: Math.max(0, robin - 1), max };
 }

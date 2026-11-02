@@ -29,7 +29,7 @@ import { findBash } from '../src/run.ts';
 import { readConfig } from '../src/config.ts';
 import { dispatchedAgents, closingPending } from '../src/active-mission.ts';
 import { reviewNextStep } from '../src/risk.ts';
-import { autoCloseIfAuto } from '../src/auto-close.ts';
+import { autoCloseIfAuto, missionMode, openFindings, healProgress } from '../src/auto-close.ts';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 const MARKER_TTL_MS = 12 * 60 * 60 * 1000; // 12h — a stale marker must not police tomorrow's session
@@ -488,7 +488,9 @@ async function main(): Promise<void> {
   if (payload.stop_hook_active === true && payload.hook_event_name !== 'SubagentStop' && readEnforce() !== 'off') {
     const marker = readMarker();
     const pendingNow = typeof marker.archive_blocks === 'number' && marker.archive_blocks >= 1 ? closingPending(cwd) : null;
-    if (pendingNow) {
+    // Never with open findings while heal cycles remain: that mission is still being healed.
+    const healing = pendingNow ? openFindings(cwd, pendingNow) && healProgress(cwd, pendingNow).cycles < healProgress(cwd, pendingNow).max : false;
+    if (pendingNow && !healing) {
       const r = autoCloseIfAuto(cwd, pendingNow);
       process.stderr.write(`Mugiwara: ${r.message}\n`);
     }
@@ -510,20 +512,37 @@ async function main(): Promise<void> {
   // Closing artifacts exist but no report.md and no archive: headless runs end here.
   const pending = closingPending(cwd);
   if (pending) {
-    // stderr alone never reaches the model on a clean exit, so a headless run ended here with no report.md.
-    // Hold the turn open (the model sees `reason`), at most twice a session (separate from the explicit hold), then fall back to a warning.
     const marker = readMarker();
-    const blocks = typeof marker.archive_blocks === 'number' ? marker.archive_blocks : 0; // its own budget: explicit holds must not use it up
-    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). Run it even when the work is not ready: the report records the verdict (Ready for review, Needs fixes or Not enough evidence) and the open findings. Not closing leaves no report.`;
-    if (blocks < EXPLICIT_MAX_BLOCKS) {
-      try { writeFileSync(join(cwd, '.mugiwara', '.engaged'), JSON.stringify({ ...marker, archive_blocks: blocks + 1 }, null, 2) + '\n'); } catch { /* counter is best-effort */ }
+    const bump = (key: string, n: number): void => {
+      try { writeFileSync(join(cwd, '.mugiwara', '.engaged'), JSON.stringify({ ...marker, [key]: n + 1 }, null, 2) + '\n'); } catch { /* counter is best-effort */ }
       countForcedContinuation();
-      process.stdout.write(JSON.stringify({ decision: 'block', reason }));
-      return;
+    };
+    const num = (k: string): number => (typeof marker[k] === 'number' ? (marker[k] as number) : 0);
+    const open = openFindings(cwd, pending);
+    const auto = missionMode(cwd, pending) === 'auto';
+    const heal = healProgress(cwd, pending);
+    if (open && !auto) {
+      // A person is present: findings are theirs to weigh. No hold, no auto-close.
+      process.stderr.write(`Mugiwara: mission "${pending}" has open findings (${open}); it stays open for your decision.\n`);
+    } else if (open && heal.cycles < heal.max) {
+      // mode=auto: nobody is waiting, so the crew heals, re-reviews and then closes.
+      if (num('heal_blocks') < heal.max) {
+        bump('heal_blocks', num('heal_blocks'));
+        process.stdout.write(JSON.stringify({ decision: 'block', reason:
+          `Mugiwara: mission "${pending}" is in mode auto and has open findings (${open}). Heal now, do not stop: start Brook (brook-healing) to fix them, then run Robin (robin-reviewer) and Jinbe (jinbe-security) again as separate agents, and rewrite review.md and security.md with the new verdicts. Heal cycle ${heal.cycles + 1} of ${heal.max}. When both pass, run: mugiwara close ${pending}.` }));
+        return;
+      }
+    } else {
+      // Clean (or the heal cap is spent): close. The hold repeats at most twice, then an auto mission is closed here.
+      const reason = `Mugiwara: mission "${pending}" has its review files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}).${open ? ` The heal cap of ${heal.max} is spent, so the report records the open findings as Needs fixes.` : ''}`;
+      if (num('archive_blocks') < EXPLICIT_MAX_BLOCKS) {
+        bump('archive_blocks', num('archive_blocks'));
+        process.stdout.write(JSON.stringify({ decision: 'block', reason }));
+        return;
+      }
+      const r = autoCloseIfAuto(cwd, pending);
+      process.stderr.write(r.closed ? `Mugiwara: ${r.message}\n` : `${reason}\n`);
     }
-    // Budget spent and the model still has not closed: an unattended (auto) mission is closed here; others only get the warning.
-    const r = autoCloseIfAuto(cwd, pending);
-    process.stderr.write(r.closed ? `Mugiwara: ${r.message}\n` : `${reason}\n`);
   }
 
   // --- check 2: the write boundary -----------------------------------------

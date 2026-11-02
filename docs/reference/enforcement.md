@@ -14,7 +14,7 @@ Review independence is machine-checked evidence. A hook appends each real review
 
 Machine-checked on Claude Code:
 
-- **Explicit-request hold.** `/mugiwara <request>` records `.mugiwara/.engaged`. At stop the guard compares the real diff with what happened; a risky change with no mission, no review or security file, or an inline-only review blocks the turn, at most 2 times a session, then warns. A mission closed earlier in the session is not blocked. Both review files without `report.md` hold it too, pointing to `mugiwara close`. Once that is spent, the hook closes a `mode=auto` mission itself; guided and semi never. Only `enforce=off` disables it.
+- **Explicit-request hold.** `/mugiwara <request>` marks the session. At stop the guard compares the real diff with what happened; a risky change with no mission, no review or security file, or an inline-only review blocks the turn, twice at most, then warns. A mission closed earlier is not blocked. Both review files without `report.md` hold it too, pointing to `close`. In `mode=auto` with open findings it holds the turn to heal and re-review up to the heal cap, then closes the mission; guided and semi never. `enforce=off` disables it.
 - **Risk reminder.** When `/mugiwara <request>` names a risk area (auth, roles, payments, tokens, secrets, migrations, schema, Indonesian equivalents such as izin or pembayaran, or a path like `auth/`), the prompt hook adds one line telling the model to take the full process and to dispatch Robin and Jinbe as separate agents before closing. It does not block anything.
 - **Closure gate.** `mugiwara archive` refuses to close a full-lane or sensitive-path mission unless the ledger shows an independent run of both `robin-reviewer` and `jinbe-security`. It names the missing check and the two ways forward: run it as a separate agent and close again, or set `independent_review=off`. `--force` archives anyway with the inline label. It applies only where the ledger exists, so other hosts are not blocked.
 
@@ -22,7 +22,7 @@ Not enforced: the order of stages. In a live run the plan file was written after
 
 ## Aspirational: written rules the model is asked to follow
 
-These are real rules, worth following, and unchecked at runtime. Lane re-checks at each boundary compute honestly when run, and nothing makes them run. "Evidence over claims" proves a check ran, while a spoken pass stays unchecked. The heal cap records a halt flag in state without stopping a model that ignores it. Blocker-free readiness is verified by a model reading a ledger a model wrote. Lane monotonicity is stored in state, which does not stop a model from sizing down. Config keys split: budgets, coverage thresholds, heal caps and context limits are computed into state or checked by gates, while mode, branch, commit style and depth are read by models only.
+These rules are unchecked at runtime. Lane re-checks at each boundary compute honestly when run, and nothing makes them run. "Evidence over claims" proves a check ran, while a spoken pass stays unchecked. The heal cap records a halt flag in state without stopping a model that ignores it. Blocker-free readiness is verified by a model reading a ledger a model wrote. Lane monotonicity is stored in state, which does not stop a model from sizing down. Config keys split: budgets, coverage thresholds, heal caps and context limits are computed into state or checked by gates, while mode, branch, commit style and depth are read by models only.
 
 ## Per platform
 

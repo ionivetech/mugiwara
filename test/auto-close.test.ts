@@ -52,3 +52,39 @@ describe('autoCloseIfAuto', () => {
     expect(r.message).toContain('automatic close failed');
   });
 });
+
+import { openFindings, healProgress } from '../src/auto-close.ts';
+
+describe('openFindings', () => {
+  const missionWith = (security: string, review = '# Review\n') => {
+    const { dir, md } = repo({ mode: 'auto' });
+    writeFileSync(join(md, 'security.md'), security);
+    writeFileSync(join(md, 'review.md'), review);
+    return dir;
+  };
+  test('failing verdicts in either file are open findings', () => {
+    expect(openFindings(missionWith('Verdict: **FAIL** (2 open High)'), 'm1')).toContain('security.md');
+    expect(openFindings(missionWith('ok', 'Verdict: CHANGES REQUESTED (1 blocker)'), 'm1')).toContain('review.md');
+    expect(openFindings(missionWith('ok', 'Verdict: needs fixes'), 'm1')).toContain('review.md');
+  });
+  test('passing verdicts are not, including "0 blockers"', () => {
+    expect(openFindings(missionWith('## Verdict: PASS (no open Critical or High)', 'Verdict: APPROVE. 0 blockers, 0 majors, 3 minors'), 'm1')).toBeNull();
+    expect(openFindings(missionWith('Verdict: PASS\nfailing tests were fixed'), 'm1')).toBeNull();
+  });
+  test('no files: no findings', () => {
+    expect(openFindings(repo({ mode: 'auto' }).dir, 'm1')).toBeNull();
+  });
+});
+
+describe('healProgress', () => {
+  test('cycles are re-reviews after the first; the cap comes from state', () => {
+    const { dir } = repo({ mode: 'auto', heal_max_cycles: 2 });
+    const row = (a: string) => JSON.stringify({ agent: a, at: new Date().toISOString(), session_id: 's', mission: 'm1' }) + '\n';
+    expect(healProgress(dir, 'm1')).toEqual({ cycles: 0, max: 2 });
+    writeFileSync(join(dir, '.mugiwara', 'review-dispatch.jsonl'), row('robin-reviewer') + row('jinbe-security') + row('robin-reviewer'));
+    expect(healProgress(dir, 'm1')).toEqual({ cycles: 1, max: 2 });
+  });
+  test('default cap is 3', () => {
+    expect(healProgress(repo({ mode: 'auto' }).dir, 'm1').max).toBe(3);
+  });
+});

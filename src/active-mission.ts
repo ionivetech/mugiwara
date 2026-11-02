@@ -87,7 +87,12 @@ export const REVIEW_LEDGER = 'review-dispatch.jsonl';
  * mission's review vouch for another. Failing toward "inline" is the safe side.
  */
 export function dispatchedAgents(cwd: string, mission: string): Set<string> {
-  const out = new Set<string>();
+  return new Set(dispatchCounts(cwd, mission).keys());
+}
+
+/** How many times each agent was dispatched for `mission` (a re-review after a heal counts again). */
+export function dispatchCounts(cwd: string, mission: string): Map<string, number> {
+  const out = new Map<string, number>();
   if (!mission) return out;
   try {
     const file = join(cwd, '.mugiwara', REVIEW_LEDGER);
@@ -96,7 +101,7 @@ export function dispatchedAgents(cwd: string, mission: string): Set<string> {
       if (!line.trim()) continue;
       try {
         const e = JSON.parse(line) as { agent?: unknown; mission?: unknown };
-        if (e.mission === mission && typeof e.agent === 'string') out.add(e.agent);
+        if (e.mission === mission && typeof e.agent === 'string') out.set(e.agent, (out.get(e.agent) ?? 0) + 1);
       } catch { /* torn line — skip */ }
     }
   } catch { /* unreadable ledger = no dispatch */ }

@@ -620,7 +620,10 @@ import { join as join3 } from "node:path";
 var SAFE = /^[A-Za-z0-9._-]+$/;
 var REVIEW_LEDGER = "review-dispatch.jsonl";
 function dispatchedAgents(cwd, mission) {
-  const out = new Set;
+  return new Set(dispatchCounts(cwd, mission).keys());
+}
+function dispatchCounts(cwd, mission) {
+  const out = new Map;
   if (!mission)
     return out;
   try {
@@ -633,7 +636,7 @@ function dispatchedAgents(cwd, mission) {
       try {
         const e = JSON.parse(line);
         if (e.mission === mission && typeof e.agent === "string")
-          out.add(e.agent);
+          out.set(e.agent, (out.get(e.agent) ?? 0) + 1);
       } catch {}
     }
   } catch {}
@@ -722,7 +725,10 @@ import { existsSync as existsSync4, readFileSync as readFileSync3, readdirSync a
 import { join as join4 } from "node:path";
 var REVIEW_LEDGER2 = "review-dispatch.jsonl";
 function dispatchedAgents2(cwd, mission) {
-  const out = new Set;
+  return new Set(dispatchCounts2(cwd, mission).keys());
+}
+function dispatchCounts2(cwd, mission) {
+  const out = new Map;
   if (!mission)
     return out;
   try {
@@ -735,7 +741,7 @@ function dispatchedAgents2(cwd, mission) {
       try {
         const e = JSON.parse(line);
         if (e.mission === mission && typeof e.agent === "string")
-          out.add(e.agent);
+          out.set(e.agent, (out.get(e.agent) ?? 0) + 1);
       } catch {}
     }
   } catch {}
@@ -2659,6 +2665,31 @@ function autoCloseIfAuto(cwd, mission) {
     return { closed: false, message: `automatic close failed: ${e.message}` };
   }
 }
+var FAILING = /verdict[^\n]*\b(fail(ed|s)?|changes requested|needs? (fixes|changes)|blocked)\b/i;
+function openFindings(cwd, mission) {
+  const dir = join17(cwd, ".mugiwara", "missions", mission);
+  for (const f of ["security.md", "review.md"]) {
+    try {
+      const line = readFileSync12(join17(dir, f), "utf8").split(`
+`).find((l) => FAILING.test(l));
+      if (line)
+        return `${f}: ${line.replace(/[*#`]/g, "").trim().slice(0, 120)}`;
+    } catch {}
+  }
+  return null;
+}
+function healProgress(cwd, mission) {
+  const robin = dispatchCounts2(cwd, mission).get("robin-reviewer") ?? 0;
+  let max = 3;
+  try {
+    const dir = join17(cwd, ".mugiwara", "missions", mission);
+    const f = readdirSync7(dir).find((x) => x.endsWith(".json") && x !== "continue.json" && !x.startsWith("continue-"));
+    const m = f ? JSON.parse(readFileSync12(join17(dir, f), "utf8")).heal_max_cycles : undefined;
+    if (typeof m === "number" && m > 0)
+      max = m;
+  } catch {}
+  return { cycles: Math.max(0, robin - 1), max };
+}
 
 // hooks/pipeline-guard.ts
 var cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
@@ -3068,7 +3099,8 @@ async function main() {
   if (payload.stop_hook_active === true && payload.hook_event_name !== "SubagentStop" && readEnforce() !== "off") {
     const marker = readMarker();
     const pendingNow = typeof marker.archive_blocks === "number" && marker.archive_blocks >= 1 ? closingPending(cwd) : null;
-    if (pendingNow) {
+    const healing = pendingNow ? openFindings(cwd, pendingNow) && healProgress(cwd, pendingNow).cycles < healProgress(cwd, pendingNow).max : false;
+    if (pendingNow && !healing) {
       const r = autoCloseIfAuto(cwd, pendingNow);
       process.stderr.write(`Mugiwara: ${r.message}
 `);
@@ -3087,21 +3119,38 @@ async function main() {
   const pending = closingPending(cwd);
   if (pending) {
     const marker = readMarker();
-    const blocks = typeof marker.archive_blocks === "number" ? marker.archive_blocks : 0;
-    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). Run it even when the work is not ready: the report records the verdict (Ready for review, Needs fixes or Not enough evidence) and the open findings. Not closing leaves no report.`;
-    if (blocks < EXPLICIT_MAX_BLOCKS) {
+    const bump = (key, n) => {
       try {
-        writeFileSync7(join18(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, archive_blocks: blocks + 1 }, null, 2) + `
+        writeFileSync7(join18(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, [key]: n + 1 }, null, 2) + `
 `);
       } catch {}
       countForcedContinuation();
-      process.stdout.write(JSON.stringify({ decision: "block", reason }));
-      return;
-    }
-    const r = autoCloseIfAuto(cwd, pending);
-    process.stderr.write(r.closed ? `Mugiwara: ${r.message}
+    };
+    const num = (k) => typeof marker[k] === "number" ? marker[k] : 0;
+    const open = openFindings(cwd, pending);
+    const auto = missionMode(cwd, pending) === "auto";
+    const heal = healProgress(cwd, pending);
+    if (open && !auto) {
+      process.stderr.write(`Mugiwara: mission "${pending}" has open findings (${open}); it stays open for your decision.
+`);
+    } else if (open && heal.cycles < heal.max) {
+      if (num("heal_blocks") < heal.max) {
+        bump("heal_blocks", num("heal_blocks"));
+        process.stdout.write(JSON.stringify({ decision: "block", reason: `Mugiwara: mission "${pending}" is in mode auto and has open findings (${open}). Heal now, do not stop: start Brook (brook-healing) to fix them, then run Robin (robin-reviewer) and Jinbe (jinbe-security) again as separate agents, and rewrite review.md and security.md with the new verdicts. Heal cycle ${heal.cycles + 1} of ${heal.max}. When both pass, run: mugiwara close ${pending}.` }));
+        return;
+      }
+    } else {
+      const reason = `Mugiwara: mission "${pending}" has its review files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}).${open ? ` The heal cap of ${heal.max} is spent, so the report records the open findings as Needs fixes.` : ""}`;
+      if (num("archive_blocks") < EXPLICIT_MAX_BLOCKS) {
+        bump("archive_blocks", num("archive_blocks"));
+        process.stdout.write(JSON.stringify({ decision: "block", reason }));
+        return;
+      }
+      const r = autoCloseIfAuto(cwd, pending);
+      process.stderr.write(r.closed ? `Mugiwara: ${r.message}
 ` : `${reason}
 `);
+    }
   }
   if (state) {
     const rank = LANE_RANK[state.lane] ?? -1;

@@ -757,3 +757,84 @@ test('auto-close: a guided mission with a spent budget only gets the warning', {
     expect(reportOf(md)).toBe(false);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+const setLedger = (dir: string, robin: number): void => {
+  const row = (agent: string) => JSON.stringify({ agent, at: new Date().toISOString(), session_id: 's1', mission: 'm9' });
+  writeFileSync(LEDGER(dir), [...Array(robin).fill(0).map(() => row('robin-reviewer')), row('jinbe-security')].join('\n') + '\n');
+};
+const failSecurity = (md: string): void => writeFileSync(join(md, 'security.md'), '# Security\n\nVerdict: **FAIL** (2 open High)\n');
+
+
+  test('heal: mode=auto with open findings is held with the heal command, once per cycle, capped at the heal limit', { timeout: 60000 }, () => {
+    const dir = warnRepo();
+    try {
+      const md = closingMission(dir, 'auto');
+      failSecurity(md);
+      for (let i = 0; i < 3; i++) {
+        const out = hook(GUARD, dir, { session_id: 's1' }).out;
+        expect(blocked(out)).toBe(true);
+        const reason = JSON.parse(out).reason as string;
+        expect(reason).toContain('Brook (brook-healing)');
+        expect(reason).toContain('mode auto');
+        expect(reason).not.toContain('mugiwara close m9 (without');
+      }
+      expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(false); // heal budget spent: no endless loop
+      expect(reportOf(md)).toBe(false); // and never auto-closed while cycles remain
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('heal: after the fix passes review, the same mission is told to close and then closed', { timeout: 60000 }, () => {
+    const dir = warnRepo();
+    try {
+      const md = closingMission(dir, 'auto');
+      failSecurity(md);
+      expect(JSON.parse(hook(GUARD, dir, { session_id: 's1' }).out).reason).toContain('Heal cycle 1 of 3');
+      writeFileSync(join(md, 'security.md'), '# Security\n\nVerdict: PASS\n'); // Brook fixed it; Jinbe re-reviewed
+      setLedger(dir, 2);
+      expect(JSON.parse(hook(GUARD, dir, { session_id: 's1' }).out).reason).toContain('mugiwara close m9');
+      hook(GUARD, dir, { session_id: 's1' });
+      const last = hook(GUARD, dir, { session_id: 's1' });
+      expect(last.err).toContain('closed mission "m9" automatically');
+      expect(reportOf(md)).toBe(true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('heal: with the heal cap spent, open findings go to close and the report records Needs fixes', { timeout: 60000 }, () => {
+    const dir = warnRepo();
+    try {
+      const md = closingMission(dir, 'auto');
+      failSecurity(md);
+      setLedger(dir, 4); // first review plus three heal cycles
+      const reason = JSON.parse(hook(GUARD, dir, { session_id: 's1' }).out).reason as string;
+      expect(reason).toContain('heal cap of 3 is spent');
+      hook(GUARD, dir, { session_id: 's1' });
+      expect(hook(GUARD, dir, { session_id: 's1' }).err).toContain('closed mission "m9" automatically');
+      expect(reportOf(md)).toBe(true);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
+
+  test('heal: guided and semi with open findings are never pushed or closed', { timeout: 60000 }, () => {
+    for (const mode of ['guided', 'semi']) {
+      const dir = warnRepo();
+      try {
+        const md = closingMission(dir, mode);
+        failSecurity(md);
+        const r = hook(GUARD, dir, { session_id: 's1' });
+        expect(blocked(r.out)).toBe(false);
+        expect(r.err).toContain('stays open for your decision');
+        expect(hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }).err).not.toContain('automatically');
+        expect(reportOf(md)).toBe(false);
+      } finally { rmSync(dir, { recursive: true, force: true }); }
+    }
+  });
+
+  test('heal: a stop_hook_active stop never closes an auto mission that still has heal cycles', { timeout: 60000 }, () => {
+    const dir = warnRepo();
+    try {
+      const md = closingMission(dir, 'auto');
+      failSecurity(md);
+      hook(GUARD, dir, { session_id: 's1' });
+      hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
+      expect(reportOf(md)).toBe(false);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  });
