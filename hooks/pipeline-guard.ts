@@ -469,49 +469,15 @@ function explicitCheck(sessionId: string): boolean {
   return true;
 }
 
-async function main(): Promise<void> {
-  let input = '';
-  for await (const chunk of process.stdin) input += chunk;
-  let payload: Record<string, unknown> = {};
-  try { payload = JSON.parse(input) as Record<string, unknown>; } catch { /* no payload */ }
-
-  // Explicit /mugiwara sessions: Stop only (SubagentStop is unaffected). Runs
-  // before the stop_hook_active return below because it has its own cap
-  // (EXPLICIT_MAX_BLOCKS per session); otherwise the continuation it causes
-  // would exempt the very next Stop from the check.
-  const sid0 = typeof payload.session_id === 'string' ? payload.session_id : '';
-  if (payload.hook_event_name !== 'SubagentStop' && explicitSession(sid0) && readEnforce() !== 'off' && explicitCheck(sid0)) return;
-
-  // Last resort for an unattended mission: the model was told to run `mugiwara close` (archive_blocks >= 1)
-  // and stopped again (stop_hook_active). Mode auto means nobody is waiting, so close it for the report.
-  // Guided and semi missions are never closed here.
-  if (payload.stop_hook_active === true && payload.hook_event_name !== 'SubagentStop' && readEnforce() !== 'off') {
-    const marker = readMarker();
-    const pendingNow = typeof marker.archive_blocks === 'number' && marker.archive_blocks >= 1 ? closingPending(cwd) : null;
-    // Never with open findings while heal cycles remain: that mission is still being healed.
-    const healing = pendingNow ? openFindings(cwd, pendingNow) && healProgress(cwd, pendingNow).cycles < healProgress(cwd, pendingNow).max : false;
-    if (pendingNow && !healing) {
-      const r = autoCloseIfAuto(cwd, pendingNow);
-      process.stderr.write(`Mugiwara: ${r.message}\n`);
-    }
-  }
-
-  // Loop protection. Non-negotiable: without this the block would re-fire on
-  // the turn it itself caused.
-  if (payload.stop_hook_active === true) return;
-
-  const enforce = readEnforce();
-  if (enforce === 'off') return;
-
-  const sessionId = typeof payload.session_id === 'string' ? payload.session_id : '';
-  if (!engaged(sessionId)) return;
-
-  const state = newestMissionState();
-  const sourceChangedNow = sourceChanged();
-
-  // Closing artifacts exist but no report.md and no archive: headless runs end here.
+/**
+ * A mission with both review files and no report.md is at closing. True when this stop was held (block emitted).
+ * mode=auto with open findings: hold to heal (cap heal_blocks); clean or heal cap spent: hold to run close (cap 2),
+ * then close it here. guided and semi: never held, never closed. Headless runs ended here with no report.md.
+ */
+function closingCheck(): boolean {
   const pending = closingPending(cwd);
-  if (pending) {
+  if (!pending) return false;
+  {
     const marker = readMarker();
     const bump = (key: string, n: number): void => {
       try { writeFileSync(join(cwd, '.mugiwara', '.engaged'), JSON.stringify({ ...marker, [key]: n + 1 }, null, 2) + '\n'); } catch { /* counter is best-effort */ }
@@ -530,7 +496,7 @@ async function main(): Promise<void> {
         bump('heal_blocks', num('heal_blocks'));
         process.stdout.write(JSON.stringify({ decision: 'block', reason:
           `Mugiwara: mission "${pending}" is in mode auto and has open findings (${open}). Heal now, do not stop: start Brook (brook-healing) to fix them, then run Robin (robin-reviewer) and Jinbe (jinbe-security) again as separate agents, and rewrite review.md and security.md with the new verdicts. Heal cycle ${heal.cycles + 1} of ${heal.max}. When both pass, run: mugiwara close ${pending}.` }));
-        return;
+        return true;
       }
     } else {
       // Clean (or the heal cap is spent): close. The hold repeats at most twice, then an auto mission is closed here.
@@ -538,12 +504,44 @@ async function main(): Promise<void> {
       if (num('archive_blocks') < EXPLICIT_MAX_BLOCKS) {
         bump('archive_blocks', num('archive_blocks'));
         process.stdout.write(JSON.stringify({ decision: 'block', reason }));
-        return;
+        return true;
       }
       const r = autoCloseIfAuto(cwd, pending);
       process.stderr.write(r.closed ? `Mugiwara: ${r.message}\n` : `${reason}\n`);
     }
   }
+  return false;
+}
+
+async function main(): Promise<void> {
+  let input = '';
+  for await (const chunk of process.stdin) input += chunk;
+  let payload: Record<string, unknown> = {};
+  try { payload = JSON.parse(input) as Record<string, unknown>; } catch { /* no payload */ }
+
+  // Explicit /mugiwara sessions: Stop only (SubagentStop is unaffected). Runs
+  // before the stop_hook_active return below because it has its own cap
+  // (EXPLICIT_MAX_BLOCKS per session); otherwise the continuation it causes
+  // would exempt the very next Stop from the check.
+  const sid0 = typeof payload.session_id === 'string' ? payload.session_id : '';
+  if (payload.hook_event_name !== 'SubagentStop' && explicitSession(sid0) && readEnforce() !== 'off' && explicitCheck(sid0)) return;
+
+  // Closing: heal, close or leave open, depending on mode and the verdicts. It runs before the loop protection
+  // below because each action has its own cap (heal_blocks, archive_blocks), so it cannot loop forever.
+  if (payload.hook_event_name !== 'SubagentStop' && readEnforce() !== 'off' && engaged(typeof payload.session_id === 'string' ? payload.session_id : '') && closingCheck()) return;
+
+  // Loop protection. Non-negotiable: without this the block would re-fire on
+  // the turn it itself caused.
+  if (payload.stop_hook_active === true) return;
+
+  const enforce = readEnforce();
+  if (enforce === 'off') return;
+
+  const sessionId = typeof payload.session_id === 'string' ? payload.session_id : '';
+  if (!engaged(sessionId)) return;
+
+  const state = newestMissionState();
+  const sourceChangedNow = sourceChanged();
 
   // --- check 2: the write boundary -----------------------------------------
   // Triage exists and sized the mission Lane 1+, source changed, and no

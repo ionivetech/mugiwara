@@ -699,7 +699,8 @@ test('auto-close: mode=auto, told once and stopped again → the hook closes the
     // first stop: held with the exact command, nothing closed
     expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
     expect(reportOf(md)).toBe(false);
-    // the model stops again right after the hold
+    // the model stops again right after the hold (stop_hook_active): held once more, then closed
+    expect(blocked(hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }).out)).toBe(true);
     const r = hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
     expect(r.err).toContain('closed mission "m9" automatically');
     expect(reportOf(md)).toBe(true);
@@ -712,8 +713,10 @@ test('auto-close: guided and semi missions are never closed by the hook', { time
     try {
       const md = closingMission(dir, mode);
       hook(GUARD, dir, { session_id: 's1' });
+      hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
       const r = hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
-      expect(r.err).toContain(`mission mode is ${mode}`);
+      expect(r.err).toContain('mugiwara close m9');
+      expect(r.err).not.toContain('automatically');
       expect(reportOf(md)).toBe(false);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   }
@@ -723,9 +726,8 @@ test('auto-close: never before the model was told, and never with enforce=off', 
   const dir = warnRepo();
   try {
     const md = closingMission(dir, 'auto');
-    hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }); // no hold happened yet
+    expect(blocked(hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }).out)).toBe(true); // told first, not closed
     expect(reportOf(md)).toBe(false);
-    hook(GUARD, dir, { session_id: 's1' }); // the hold
     writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=off\n');
     hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
     expect(reportOf(md)).toBe(false);
@@ -838,3 +840,14 @@ const failSecurity = (md: string): void => writeFileSync(join(md, 'security.md')
       expect(reportOf(md)).toBe(false);
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
+
+test('heal: the hold repeats even when every stop is a continuation (stop_hook_active), bounded by the heal cap', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    const md = closingMission(dir, 'auto');
+    failSecurity(md);
+    for (let i = 1; i <= 3; i++) expect(JSON.parse(hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }).out).reason).toContain('Brook');
+    expect(blocked(hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }).out)).toBe(false);
+    expect(reportOf(md)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

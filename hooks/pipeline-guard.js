@@ -3085,39 +3085,11 @@ function explicitCheck(sessionId) {
   process.stdout.write(JSON.stringify({ decision: "block", reason }));
   return true;
 }
-async function main() {
-  let input = "";
-  for await (const chunk of process.stdin)
-    input += chunk;
-  let payload = {};
-  try {
-    payload = JSON.parse(input);
-  } catch {}
-  const sid0 = typeof payload.session_id === "string" ? payload.session_id : "";
-  if (payload.hook_event_name !== "SubagentStop" && explicitSession(sid0) && readEnforce() !== "off" && explicitCheck(sid0))
-    return;
-  if (payload.stop_hook_active === true && payload.hook_event_name !== "SubagentStop" && readEnforce() !== "off") {
-    const marker = readMarker();
-    const pendingNow = typeof marker.archive_blocks === "number" && marker.archive_blocks >= 1 ? closingPending(cwd) : null;
-    const healing = pendingNow ? openFindings(cwd, pendingNow) && healProgress(cwd, pendingNow).cycles < healProgress(cwd, pendingNow).max : false;
-    if (pendingNow && !healing) {
-      const r = autoCloseIfAuto(cwd, pendingNow);
-      process.stderr.write(`Mugiwara: ${r.message}
-`);
-    }
-  }
-  if (payload.stop_hook_active === true)
-    return;
-  const enforce = readEnforce();
-  if (enforce === "off")
-    return;
-  const sessionId = typeof payload.session_id === "string" ? payload.session_id : "";
-  if (!engaged(sessionId))
-    return;
-  const state = newestMissionState();
-  const sourceChangedNow = sourceChanged();
+function closingCheck() {
   const pending = closingPending(cwd);
-  if (pending) {
+  if (!pending)
+    return false;
+  {
     const marker = readMarker();
     const bump = (key, n) => {
       try {
@@ -3137,14 +3109,14 @@ async function main() {
       if (num("heal_blocks") < heal.max) {
         bump("heal_blocks", num("heal_blocks"));
         process.stdout.write(JSON.stringify({ decision: "block", reason: `Mugiwara: mission "${pending}" is in mode auto and has open findings (${open}). Heal now, do not stop: start Brook (brook-healing) to fix them, then run Robin (robin-reviewer) and Jinbe (jinbe-security) again as separate agents, and rewrite review.md and security.md with the new verdicts. Heal cycle ${heal.cycles + 1} of ${heal.max}. When both pass, run: mugiwara close ${pending}.` }));
-        return;
+        return true;
       }
     } else {
       const reason = `Mugiwara: mission "${pending}" has its review files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}).${open ? ` The heal cap of ${heal.max} is spent, so the report records the open findings as Needs fixes.` : ""}`;
       if (num("archive_blocks") < EXPLICIT_MAX_BLOCKS) {
         bump("archive_blocks", num("archive_blocks"));
         process.stdout.write(JSON.stringify({ decision: "block", reason }));
-        return;
+        return true;
       }
       const r = autoCloseIfAuto(cwd, pending);
       process.stderr.write(r.closed ? `Mugiwara: ${r.message}
@@ -3152,6 +3124,31 @@ async function main() {
 `);
     }
   }
+  return false;
+}
+async function main() {
+  let input = "";
+  for await (const chunk of process.stdin)
+    input += chunk;
+  let payload = {};
+  try {
+    payload = JSON.parse(input);
+  } catch {}
+  const sid0 = typeof payload.session_id === "string" ? payload.session_id : "";
+  if (payload.hook_event_name !== "SubagentStop" && explicitSession(sid0) && readEnforce() !== "off" && explicitCheck(sid0))
+    return;
+  if (payload.hook_event_name !== "SubagentStop" && readEnforce() !== "off" && engaged(typeof payload.session_id === "string" ? payload.session_id : "") && closingCheck())
+    return;
+  if (payload.stop_hook_active === true)
+    return;
+  const enforce = readEnforce();
+  if (enforce === "off")
+    return;
+  const sessionId = typeof payload.session_id === "string" ? payload.session_id : "";
+  if (!engaged(sessionId))
+    return;
+  const state = newestMissionState();
+  const sourceChangedNow = sourceChanged();
   if (state) {
     const rank = LANE_RANK[state.lane] ?? -1;
     if (rank >= 1 && sourceChangedNow && !executorDispatched(sessionId)) {
