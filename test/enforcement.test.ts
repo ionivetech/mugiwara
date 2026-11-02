@@ -604,11 +604,16 @@ test('explicit: mission exists, full lane — missing review blocks; independent
     out = hook(GUARD, dir, { session_id: 's1' }).out;
     expect(explicitBlocked(out)).toBe(true);
     expect(JSON.parse(out).reason).toContain('independent review');
-    // third attempt: cap of 2 reached → degrades to a warning
+    // third attempt: the explicit cap of 2 is reached → it degrades to a warning. The closing
+    // hold (review.md and security.md exist, no report.md) is its own budget and still points at close.
     const r = hook(GUARD, dir, { session_id: 's1' });
-    expect(blocked(r.out)).toBe(false);
+    expect(explicitBlocked(r.out)).toBe(false);
+    expect(blocked(r.out) && r.out.includes('mugiwara close m9')).toBe(true);
     expect(r.err).toContain('independent review');
-    expect(readFileSync(join(dir, '.mugiwara', '.forced-continuations'), 'utf8').trim()).toBe('2');
+    hook(GUARD, dir, { session_id: 's1' }); // second and last closing hold
+    const after = hook(GUARD, dir, { session_id: 's1' });
+    expect(blocked(after.out)).toBe(false);
+    expect(readFileSync(join(dir, '.mugiwara', '.forced-continuations'), 'utf8').trim()).toBe('4');
     // independent_review=off: only review.md and security.md are required; and a fresh counter
     writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\nindependent_review=off\n');
     say(dir, '/mugiwara again', 's3');

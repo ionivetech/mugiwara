@@ -104,8 +104,8 @@ export function dispatchedAgents(cwd: string, mission: string): Set<string> {
 }
 
 /**
- * A mission that reached its closing files (flows/06-closure.md or
- * flows/07-pr-verdict.md) and still has live state but no report.md, i.e. it was
+ * A mission that reached its closing files (flows/06-closure.md,
+ * flows/07-pr-verdict.md, or both review.md and security.md; a dispatch alone is not closing, the results may still be running) and still has live state but no report.md, i.e. it was
  * never archived. Returns the most recently touched one, else null. Never throws.
  */
 export function closingPending(cwd: string): string | null {
@@ -119,6 +119,8 @@ export function closingPending(cwd: string): string | null {
       const live = files.some((f) => f.endsWith('.json') && f !== 'continue.json' && !f.startsWith('continue-'));
       if (!live || files.includes('report.md')) continue;
       const marks = ['06-closure.md', '07-pr-verdict.md'].map((f) => join(dir, 'flows', f)).filter((f) => existsSync(f));
+      // Review and security both written also means the work is at closing, even when no flows/ file exists (headless runs skip them).
+      if (files.includes('review.md') && files.includes('security.md')) marks.push(join(dir, files.includes('review.md') ? 'review.md' : 'security.md'));
       if (!marks.length) continue;
       const at = Math.max(...marks.map((f) => statSync(f).mtimeMs));
       if (!best || at > best.at) best = { name: e.name, at };

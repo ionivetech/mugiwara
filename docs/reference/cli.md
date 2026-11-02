@@ -102,7 +102,7 @@ It warns when no `mugiwara` is on PATH (a headless run then falls back to npx an
 
 ## `mugiwara record` and `close`
 
-`record <stage>` writes `flows/NN-<stage>.md` from facts the CLI sees: `execution` the git diff, `audit` risky paths, `gates --cmd "<command>"` runs the command and keeps its real exit code, `closure` the review ledger. `quality` and `healing` need `--note`. With nothing real to record it refuses. `close` records execution and closure, then archives.
+`record <stage>` writes `flows/NN-<stage>.md` from facts the CLI sees: `execution` the git diff, `audit` risky paths, `gates --cmd "<command>"` runs the command and keeps its real exit code, `closure` the review ledger. `quality` and `healing` need `--note`. With nothing real to record it refuses. `close` records execution and closure, then archives. No `plan.md`: it archives and lists the plan as Not verified.
 
 ## Corrupt state
 

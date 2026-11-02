@@ -141,6 +141,8 @@ function closingPending(cwd) {
       if (!live || files.includes("report.md"))
         continue;
       const marks = ["06-closure.md", "07-pr-verdict.md"].map((f) => join3(dir, "flows", f)).filter((f) => existsSync3(f));
+      if (files.includes("review.md") && files.includes("security.md"))
+        marks.push(join3(dir, files.includes("review.md") ? "review.md" : "security.md"));
       if (!marks.length)
         continue;
       const at = Math.max(...marks.map((f) => statSync(f).mtimeMs));
@@ -614,7 +616,7 @@ async function main() {
   if (pending) {
     const marker = readMarker();
     const blocks = typeof marker.archive_blocks === "number" ? marker.archive_blocks : 0;
-    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). It records the evidence it can see and archives the mission.`;
+    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). Run it even when the work is not ready: the report records the verdict (Ready for review, Needs fixes or Not enough evidence) and the open findings. Not closing leaves no report.`;
     if (blocks < EXPLICIT_MAX_BLOCKS) {
       try {
         writeFileSync2(join4(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, archive_blocks: blocks + 1 }, null, 2) + `

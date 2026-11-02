@@ -272,7 +272,7 @@ export async function requireAttestation(projectDir: string, mission: string): P
   if (!v.ok) throw new Error(`closure integrity gate failed — attestation required but report not signed/trusted: ${v.message}`);
 }
 
-export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean; force?: boolean; attestationChecked?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
+export function archiveMission(projectDir: string, mission: string, opts: { dryRun?: boolean; force?: boolean; attestationChecked?: boolean; unplanned?: boolean } = {}): { report: string | null; removed: string[]; kept: string[]; index?: string } {
   const { dryRun = false, force = false } = opts;
   const root = join(projectDir, '.mugiwara');
   // mission allowlist — same as savepoint.sh. Dot-only
@@ -316,7 +316,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     }
     // Artifact gate (roadmap v0.8 item 4): Lane 2+ missions must carry
     // plan.md + flows/* evidence — a mission without its trail does not fold.
-    const artifacts = checkMissionArtifacts(dir);
+    const artifacts = checkMissionArtifacts(dir, { unplanned: opts.unplanned });
     if (!artifacts.ok) {
       throw new Error(`archive artifact gate failed — missing: ${artifacts.missing.join(', ')} (lane ${artifacts.lane}). Record what actually ran with: mugiwara record <execution|audit|quality|gates|healing|closure> (or mugiwara close <mission>) before archiving; never invent evidence.`);
     }
@@ -636,7 +636,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
         mission, seed: report, seedIsClosure, files: folded, changeLine,
         cost: costSection, routing: routingSection, tooling: toolingLog, hasState: !!state,
         dispatched: [...dispatchedAgents(projectDir, mission)],
-        absent: ['review.md', 'security.md'].filter((f) => !files.includes(f)),
+        absent: [...(opts.unplanned ? ['plan.md'] : []), 'review.md', 'security.md'].filter((f) => !files.includes(f)),
       }));
       renameSync(tmp, reportPath);
     }

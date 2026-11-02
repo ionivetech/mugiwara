@@ -498,10 +498,10 @@ async function main(): Promise<void> {
   const pending = closingPending(cwd);
   if (pending) {
     // stderr alone never reaches the model on a clean exit, so a headless run ended here with no report.md.
-    // Hold the turn open (the model sees `reason`), at most twice a session, then fall back to a warning.
+    // Hold the turn open (the model sees `reason`), at most twice a session (separate from the explicit hold), then fall back to a warning.
     const marker = readMarker();
-    const blocks = typeof marker.archive_blocks === 'number' ? marker.archive_blocks : 0;
-    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). It records the evidence it can see and archives the mission.`;
+    const blocks = typeof marker.archive_blocks === 'number' ? marker.archive_blocks : 0; // its own budget: explicit holds must not use it up
+    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). Run it even when the work is not ready: the report records the verdict (Ready for review, Needs fixes or Not enough evidence) and the open findings. Not closing leaves no report.`;
     if (blocks < EXPLICIT_MAX_BLOCKS) {
       try { writeFileSync(join(cwd, '.mugiwara', '.engaged'), JSON.stringify({ ...marker, archive_blocks: blocks + 1 }, null, 2) + '\n'); } catch { /* counter is best-effort */ }
       countForcedContinuation();

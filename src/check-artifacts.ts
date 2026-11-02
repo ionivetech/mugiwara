@@ -15,7 +15,7 @@ export interface ArtifactCheck {
 const LANE_MIN = new Set(['standard', 'full', 'spike']);
 
 /** Lane 2+ (standard/full/spike) missions require the evidence trail. */
-export function checkMissionArtifacts(missionDir: string): ArtifactCheck {
+export function checkMissionArtifacts(missionDir: string, opts: { unplanned?: boolean } = {}): ArtifactCheck {
   const statePath = join(missionDir, 'state.json');
   if (!existsSync(statePath)) {
     // archived mission (report.md survives, state folded away) — nothing to check
@@ -32,7 +32,8 @@ export function checkMissionArtifacts(missionDir: string): ArtifactCheck {
   }
 
   const missing: string[] = [];
-  if (!existsSync(join(missionDir, 'plan.md'))) missing.push('plan.md');
+  // `unplanned` (mugiwara close) accepts a missing plan.md; archive then lists it under Not verified.
+  if (!opts.unplanned && !existsSync(join(missionDir, 'plan.md'))) missing.push('plan.md');
   const flowsDir = join(missionDir, 'flows');
   const hasFlows = existsSync(flowsDir) && readdirSync(flowsDir).length > 0;
   if (!hasFlows) missing.push('flows/ (no execution evidence)');

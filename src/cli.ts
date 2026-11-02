@@ -344,7 +344,10 @@ async function closeCmd(flags: Args['flags'], positionals: string[]): Promise<vo
     if ('error' in r) console.log(`skipped ${stage}: ${r.error}`);
     else console.log(`recorded: ${r.path}`);
   }
-  await archive(flags, ['archive', mission]);
+  // No recorded plan: close says so and the report lists it under Not verified, instead of inventing one.
+  const unplanned = !existsSync(join(projectDir, '.mugiwara', 'missions', mission, 'plan.md'));
+  if (unplanned) console.log('note: no plan.md in this mission; the report will list it under Not verified.');
+  await archive({ ...flags, unplanned }, ['archive', mission]);
 }
 
 async function archive(flags: Args['flags'], positionals: string[]): Promise<void> {
@@ -366,7 +369,7 @@ async function archive(flags: Args['flags'], positionals: string[]): Promise<voi
   }
   failOnCorruptState(projectDir, mission);
   if (!flag(flags.dryRun)) await requireAttestation(projectDir, mission);
-  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force), attestationChecked: true });
+  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force), attestationChecked: true, unplanned: flag(flags.unplanned) });
   if (result.report) console.log(`archive target: ${result.report}`);
   else { console.error(`no mission dir for "${mission}" under .mugiwara/missions/`); process.exit(1); }
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);

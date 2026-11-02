@@ -155,3 +155,28 @@ describe('risk_words config', () => {
     expect(riskTerm('touch axb now', 'a.b')).toBeNull();
   });
 });
+
+describe('closingPending without flows/', () => {
+  test('review.md and security.md together mean closing, even with no flows/ file', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mugi-closing-'));
+    const m = join(cwd, '.mugiwara', 'missions', 'm1');
+    mkdirSync(m, { recursive: true });
+    writeFileSync(join(m, 'state.json'), '{}');
+    expect(closingPending(cwd)).toBeNull();
+    writeFileSync(join(m, 'review.md'), '# r\n');
+    expect(closingPending(cwd)).toBeNull();
+    writeFileSync(join(m, 'security.md'), '# s\n');
+    expect(closingPending(cwd)).toBe('m1');
+    writeFileSync(join(m, 'report.md'), '# done\n');
+    expect(closingPending(cwd)).toBeNull();
+  });
+  test('a dispatch in the ledger alone is not closing: the reviewers may still be running', () => {
+    const cwd = mkdtempSync(join(tmpdir(), 'mugi-closing-ledger-'));
+    const m = join(cwd, '.mugiwara', 'missions', 'm1');
+    mkdirSync(m, { recursive: true });
+    writeFileSync(join(m, 'state.json'), '{}');
+    const row = (agent: string) => JSON.stringify({ agent, at: new Date().toISOString(), session_id: 's', mission: 'm1' }) + '\n';
+    writeFileSync(join(cwd, '.mugiwara', 'review-dispatch.jsonl'), row('robin-reviewer') + row('jinbe-security'));
+    expect(closingPending(cwd)).toBeNull();
+  });
+});

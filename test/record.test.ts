@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -77,6 +77,21 @@ describe('mugiwara close', () => {
     const r = await cap(['close', 'm1', '--project', dir]);
     expect(r.code).toBe(0);
     expect(existsSync(join(dir, '.mugiwara', 'missions', 'm1', 'report.md'))).toBe(true);
+  });
+  test('without plan.md, close still archives and lists the plan under Not verified; archive alone refuses', async () => {
+    const dir = repo();
+    const m = join(dir, '.mugiwara', 'missions', 'm1');
+    rmSync(join(m, 'plan.md'));
+    writeFileSync(join(dir, 'b.js'), 'y\n');
+    writeFileSync(join(m, 'review.md'), '# Review\n');
+    const refused = await cap(['archive', 'm1', '--project', dir]);
+    expect(refused.code).not.toBe(0);
+    const r = await cap(['close', 'm1', '--project', dir]);
+    expect(r.code).toBe(0);
+    expect(r.out).toContain('no plan.md');
+    const report = readFileSync(join(m, 'report.md'), 'utf8');
+    expect(report).toContain('Not verified');
+    expect(report).toContain('plan.md');
   });
   test('skips execution with no diff and keeps going to the archive gate', async () => {
     const dir = repo();
