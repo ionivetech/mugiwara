@@ -18,7 +18,7 @@ Say it in plain words. Open with the verdict, then what changed, then what was n
 ## Terminal step
 
 0. Fold the trail with `mugiwara archive <mission>`. With no `mugiwara` binary, run the npx form from the CLI ladder first. Write the report by hand only when both fail: use every section of the report template and say in the report that archive did not run.
-1. Run `mugiwara-ship` for the go/no-go verdict.
+1. Run `mugiwara-ship` for the ship verdict (Ready for review, Needs fixes or Not enough evidence).
 2. Save-point commit, then `git push -u origin <branch>`.
 3. Write `flows/07-pr-verdict.md` (it survives archive as `pr-verdict.md`).
 4. Hand branch and verdict to the user.

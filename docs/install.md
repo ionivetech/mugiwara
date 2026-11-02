@@ -25,7 +25,7 @@ Status as of 2026-11-01. Claude Code and opencode: tested end to end. Codex and 
 { "$schema": "https://opencode.ai/config.json", "plugin": ["@ionivetech/mugiwara"] }
 ```
 
-**Codex.** The CLI writes native Codex files: 14 skills to `.agents/skills/<name>/SKILL.md` (references beside each skill) and 14 custom agents to `.codex/agents/<name>.toml` (`name`, `description`, `developer_instructions`). `--global` writes `~/.agents/skills` and `~/.codex/agents`.
+**Codex.** The CLI writes native Codex files: 14 skills to `.agents/skills/<name>/SKILL.md` (references beside each skill) and 13 custom agents to `.codex/agents/<name>.toml` (`name`, `description`, `developer_instructions`). `--global` writes `~/.agents/skills` and `~/.codex/agents`.
 
 ```bash
 npx -y @ionivetech/mugiwara@latest install --target codex --yes

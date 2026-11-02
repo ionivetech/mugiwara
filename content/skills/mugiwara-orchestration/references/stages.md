@@ -25,7 +25,7 @@ Rules:
 - **File prefixes are order, not Flow numbers.** `flows/01-` to `flows/08-` only sort the files; `05-healing.md` is Flow 8 and `08-verifier.md` is Flow 4.5. Never infer a Flow from a prefix. Use the table above.
 - A stage reached from Flow 8 returns to Chopper (Flow 4) for a re-check. A return is a routing decision by Luffy, not a restart.
 - The one machine heading: each fix round is logged in `decisions.md` as `## Flow 8 — healing` because savepoint counts those headings. Keep that exact text there and nowhere else.
-- The ship gate (go/no-go verdict) belongs to Luffy at Flow 9 through `mugiwara-ship`. Franky owns Flow 6 only.
+- The ship gate (ship verdict) belongs to Luffy at Flow 9 through `mugiwara-ship`. Franky owns Flow 6 only.
 - Agents outside the pipeline (Resume, MemoryKeeper) have no Flow number.
 
 ## Lane table

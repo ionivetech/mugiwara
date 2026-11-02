@@ -38,7 +38,7 @@ Run every item and record evidence; a checkbox ticked without output is a failed
 
 ## Mandatory rollback plan
 
-1. No GO without a written rollback plan: what is rolled back, how, in what order, and who executes it.
+1. No "Ready for review" verdict without a written rollback plan: what is rolled back, how, in what order, and who executes it.
 2. Rollback must be as fast as the deploy (flag off, or revert + redeploy).
 3. Prove the rollback path exists — a rollback that exists only on paper is not a rollback.
 

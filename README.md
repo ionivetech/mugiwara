@@ -121,8 +121,8 @@ Claude Code and opencode are tested end to end. A Codex CLI risky-task run enter
 1. Install, then open your repo in your agent.
 2. Run `/mugiwara add input validation to the signup form`, or any change that touches a sensitive path. Pick something you would want reviewed.
 3. Answer the questions, or say "use your defaults".
-4. Read `.mugiwara/missions/<mission>/report.md` and attach it to your PR.
-5. `mugiwara status` shows where a mission is. `mugiwara cost` shows what it spent.
+4. Read `.mugiwara/missions/<mission>/report.md` and attach it to your PR. If it is missing, run `mugiwara archive <mission>`.
+5. `mugiwara status` shows where a mission is, `mugiwara cost` what it spent, and `mugiwara doctor` why something is not working.
 
 A step-by-step with real output: the [first mission runbook](docs/runbooks/solo-mission.md).
 

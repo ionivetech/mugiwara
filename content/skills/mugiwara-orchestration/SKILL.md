@@ -79,7 +79,7 @@ Only `[PARALLEL]` task sets run as parallel workers, one task per worker. Never 
 The in-session phrase `mugiwara mode <guided|semi|auto>` writes project `.mugiwara/config`, appends a decision row (level, requester, time), and applies from the next stage. No CLI flag, no slash command.
 
 ## Closure (Flow 9)
-Gate: every criterion verified, gates passed, findings resolved, blockers reviewed. Team: every assignee has reached closing; `mugiwara status` before archive. Run `mugiwara-ship` for the go/no-go verdict, write `report.md`, then `savepoint` and `archive`. Detail and templates: `references/closure.md`, `references/artifact-templates.md`. With `auto_commit=off` in guided/semi: no push, hand over the tree and verdict.
+Gate: every criterion verified, gates passed, findings resolved, blockers reviewed. Team: every assignee has reached closing; `mugiwara status` before archive. Run `mugiwara-ship` for the ship verdict (Ready for review, Needs fixes or Not enough evidence), write `report.md`, then `savepoint` and `archive`. Detail and templates: `references/closure.md`, `references/artifact-templates.md`. With `auto_commit=off` in guided/semi: no push, hand over the tree and verdict.
 
 ## Spirit vs letter
 The plan is the contract, but the mission goal outranks it. If the plan's letter drifts from the goal, stop and amend the plan through Nami; log the reason in `decisions.md`.
