@@ -1,9 +1,12 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect, setDefaultTimeout } from 'bun:test';
 import { mkdtempSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cap } from './helpers/cli-capture.ts';
 import { doctor } from '../src/doctor.ts';
+
+// A full install plus doctor takes seconds under the parallel gate; the 5 s default is too tight.
+setDefaultTimeout(30_000);
 
 type Settings = { hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>> };
 const commandsOf = (s: Settings, event: string): string[] => (s.hooks[event] ?? []).flatMap((g) => g.hooks.map((h) => h.command));

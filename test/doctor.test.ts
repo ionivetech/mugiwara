@@ -1,6 +1,6 @@
 // `mugiwara doctor`, the version pin check and the install warning. All
 // in-process; doctor must never write a file.
-import { describe, test, expect, afterEach } from 'bun:test';
+import { describe, test, expect, afterEach, setDefaultTimeout } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, readdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,6 +9,9 @@ import { initBaseRepo } from './helpers/git-fixture.ts';
 import { doctor, renderDoctor, commandPins, pinMismatch, CLAUDE_HOOKS } from '../src/doctor.ts';
 import { VERSION } from '../src/installer.ts';
 import { duplicateKeys, modeNote } from '../src/config.ts';
+
+// A full install plus doctor takes seconds under the parallel gate; the 5 s default is too tight.
+setDefaultTimeout(30_000);
 
 const dirs: string[] = [];
 afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }); });

@@ -16,7 +16,7 @@ A new release landed, or you want the crew out of a repo, and you do not want to
    project: v1.0.5 targets=claude files=115 missing=0 stale=0 installed=2026-10-19T05:04:33.716Z
    ```
    `missing` counts installed files that are gone, `stale` counts files that no longer match.
-2. Read `UPGRADING.md` at the repo root of the package. Start with its "What to do" list: a release says there what you must change and what you can leave. It also lists what stays the same on purpose.
+2. Read the GitHub release notes for what you must change. For 2.0: old `features=` tokens still work, `eval-runner` moved to `evals/agents/`, and `coverage_new` and `coverage_modified` can become `coverage=<n>`. `flows/` file names and the `.mugiwara/` layout are unchanged.
 3. Refresh the installed copies.
    ```bash
    mugiwara update --target claude --yes
