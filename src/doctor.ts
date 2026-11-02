@@ -79,6 +79,11 @@ function hookCheck(projectDir: string): Check {
     return { name, status: 'fail', detail: '.claude/settings.json is not valid JSON', fix: 'repair the JSON by hand, then run `mugiwara update --target claude`' };
   }
   const missing = CLAUDE_HOOKS.filter((h) => !text.includes(h));
+  // The guard must run at Stop (main session), not only at SubagentStop: a CLI install once wired it only there.
+  const stop = ((JSON.parse(text) as { hooks?: { Stop?: Array<{ hooks?: Array<{ command?: string }> }> } }).hooks?.Stop ?? []);
+  if (!missing.length && !stop.some((g) => g.hooks?.some((h) => h.command?.includes('pipeline-guard.js')))) {
+    return { name, status: 'fail', detail: 'pipeline-guard.js is not wired to Stop, so no check runs when the main session ends', fix: 'run `mugiwara update --target claude`' };
+  }
   return missing.length
     ? { name, status: 'fail', detail: `settings.json does not wire: ${missing.join(', ')}`, fix: 'run `mugiwara update --target claude`' }
     : { name, status: 'ok', detail: `${CLAUDE_HOOKS.length} hooks wired in .claude/settings.json` };

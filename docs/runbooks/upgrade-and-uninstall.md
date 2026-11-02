@@ -97,6 +97,7 @@ If your `features=` line in `.mugiwara/config` names an old skill, it still work
 | `mugiwara: command not found` | the global CLI is not installed | `npm i -g @ionivetech/mugiwara`, or run `npx -y @ionivetech/mugiwara@latest <command>` |
 | `✗ in-flight mission(s)` from `clean` | a mission still has live state | finish it, or pass `--force` and lose its resume point |
 | `doctor` says the command pins an older version | `update` keeps an existing `.claude/commands/mugiwara.md` | delete it, run `mugiwara update` |
+| `doctor` says `pipeline-guard.js is not wired to Stop` | an older CLI install ran the guard only for subagents, so nothing checked the main session at stop | run `mugiwara update --target claude` |
 
 ## What you end up with
 

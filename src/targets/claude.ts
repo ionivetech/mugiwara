@@ -59,16 +59,19 @@ type HookGroup = { matcher?: string; hooks: HookEntry[] };
 
 function wireSettings(root: string, hooksDir: string): { written: string[]; notes: string[] } {
   const file = join(root, 'settings.json');
-  const events: Record<string, { file: string; timeout: number; matcher?: string }> = {
-    SessionStart: { file: 'session-start.js', timeout: 10 },
-    UserPromptSubmit: { file: 'mugiwara-mode-tracker.js', timeout: 5 },
-    PreToolUse: { file: 'pretool-guard.js', timeout: 10, matcher: 'Bash' },
-    Stop: { file: 'auto-savepoint.js', timeout: 20 },
-    SubagentStop: { file: 'pipeline-guard.js', timeout: 15 },
+  // pipeline-guard is wired to Stop as well as SubagentStop: every main-session check (the explicit hold,
+  // the review warnings, the closing hold) runs at Stop. Wired only to SubagentStop, none of them ever ran.
+  const events: Array<{ event: string; file: string; timeout: number; matcher?: string }> = [
+    { event: 'SessionStart', file: 'session-start.js', timeout: 10 },
+    { event: 'UserPromptSubmit', file: 'mugiwara-mode-tracker.js', timeout: 5 },
+    { event: 'PreToolUse', file: 'pretool-guard.js', timeout: 10, matcher: 'Bash' },
+    { event: 'Stop', file: 'auto-savepoint.js', timeout: 20 },
+    { event: 'Stop', file: 'pipeline-guard.js', timeout: 15 },
+    { event: 'SubagentStop', file: 'pipeline-guard.js', timeout: 15 },
     // matcher scopes the marker to crew invocations — without it the hook would
     // fire on every tool call in the session for no benefit
-    PostToolUse: { file: 'engagement-marker.js', timeout: 5, matcher: 'Task|Agent|Skill' },
-  };
+    { event: 'PostToolUse', file: 'engagement-marker.js', timeout: 5, matcher: 'Task|Agent|Skill' },
+  ];
 
   let settings: Record<string, unknown> = {};
   if (existsSync(file)) {
@@ -81,7 +84,8 @@ function wireSettings(root: string, hooksDir: string): { written: string[]; note
   }
   const hooks = (settings.hooks ?? {}) as Record<string, HookGroup[]>;
   let changed = false;
-  for (const [event, spec] of Object.entries(events)) {
+  for (const spec of events) {
+    const event = spec.event;
     const command = join(hooksDir, spec.file);
     if (!existsSync(command)) continue;
     const groups = Array.isArray(hooks[event]) ? hooks[event] : [];
