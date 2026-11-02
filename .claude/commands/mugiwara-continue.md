@@ -12,7 +12,7 @@ Identity is (mission, member), never branch. Solo missions use member-less files
 mugiwara continue $ARGUMENTS
 ```
 
-1. Global `mugiwara` binary if present, else `npx -y @ionivetech/mugiwara@1.0.5 continue $ARGUMENTS` — print stdout/stderr verbatim, never paraphrase.
+1. Global `mugiwara` binary if present, else `npx -y @ionivetech/mugiwara@2.0.0 continue $ARGUMENTS` — print stdout/stderr verbatim, never paraphrase.
 2. Else (no binary, no npx): read `.mugiwara/missions/<mission>/continue.json` (solo) or `continue-<member>.json` (team, same dir) plus the matching `state.json` directly — same solo-vs-team lookup, same exit-code protocol below. Selecting the mission/member stays a directory scan, never a guess.
 3. Only when all rungs fail: say degraded (no machine state) and stop.
 

@@ -4,7 +4,7 @@
 **once at Flow 0**, reuse the whole mission:
 
 1. `mugiwara --version` → use `mugiwara`.
-2. Else `npx -y @ionivetech/mugiwara@1.0.5 --version` → use the npx form.
+2. Else `npx -y @ionivetech/mugiwara@2.0.0 --version` → use the npx form.
 3. Else `.mugiwara/bin/` shell fallbacks, installed by `mugiwara install` next
    to every project: `.mugiwara/bin/savepoint.sh` writes
    `.mugiwara/missions/<mission>/state.json | <member>.json` +

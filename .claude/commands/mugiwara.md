@@ -28,7 +28,7 @@ loads orchestration and follows that table; this slash command is that same
 router surfaced for the hosts that have slash commands.
 
 Run it down the ladder — global `mugiwara <cmd>` if present, else
-`npx -y @ionivetech/mugiwara@1.0.5 <cmd>`, else `.mugiwara/bin/` shell
+`npx -y @ionivetech/mugiwara@2.0.0 <cmd>`, else `.mugiwara/bin/` shell
 fallbacks, else direct `.mugiwara/missions/` file ops — print stdout/stderr
 verbatim, then follow the exit code from the reference. Full ladder:
 workflow skill → CLI availability (`references/cli-ladder.md`).
