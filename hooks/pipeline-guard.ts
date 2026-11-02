@@ -426,7 +426,8 @@ function explicitProblem(sessionId: string): string | null {
   const state = newestMissionState();
   if (!state) {
     if (closedThisSession(sessionId)) return null;
-    if (!(lane.lane === 'standard' || lane.lane === 'full' || lane.sensitive.length)) return null;
+    // Same line as the /mugiwara fast path: only a full-lane diff (9+ files) or a risky path is held.
+    if (!(lane.lane === 'full' || lane.sensitive.length)) return null;
     const what = lane.sensitive.length
       ? `a risky area (${lane.sensitive.slice(0, 3).join(', ')}${lane.sensitive.length > 3 ? `, and ${lane.sensitive.length - 3} more` : ''})`
       : `${lane.files} files`;

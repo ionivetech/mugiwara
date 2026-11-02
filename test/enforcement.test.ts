@@ -654,3 +654,15 @@ test('guard: missing-dispatch warning names the next step; closing files without
     expect(hook(GUARD, dir, { session_id: 's1' }).err).not.toContain('mugiwara archive m9` to write');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('explicit: 5 plain source files (standard lane) are not held; 9 are', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    say(dir, '/mugiwara add a small feature');
+    const many = (n: number): void => { for (let i = 0; i < n; i++) writeFileSync(join(dir, `f${i}.js`), `export const v${i} = ${i};\n`); };
+    many(5);
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(false);
+    many(9);
+    expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

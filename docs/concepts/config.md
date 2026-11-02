@@ -43,7 +43,7 @@ Optional keys, commented out by default:
 
 ## `enforce` and the explicit `/mugiwara` check
 
-`enforce` governs sessions that did not use `/mugiwara`: by default the stop hook only warns. When you type `/mugiwara <request>` the hook records an explicit crew request, and at stop it compares the real diff with what happened. A risky change (sensitive path, standard or full lane) with no mission recorded blocks the end of the turn with a plain message, at most 2 times per session, then it warns. A mission already closed this session is not blocked. Only `enforce=off` disables this check. It is a Claude Code hook; no other host has it.
+`enforce` governs sessions that did not use `/mugiwara`: by default the stop hook only warns. When you type `/mugiwara <request>` the hook records an explicit crew request, and at stop it compares the real diff with what happened. A risky change (sensitive path, or 9+ files) with no mission recorded blocks the end of the turn with a plain message, at most 2 times per session, then it warns. A mission already closed this session is not blocked. Only `enforce=off` disables this check. It is a Claude Code hook; no other host has it.
 
 ## What `auto_commit` does
 

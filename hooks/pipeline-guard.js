@@ -549,7 +549,7 @@ function explicitProblem(sessionId) {
   if (!state) {
     if (closedThisSession(sessionId))
       return null;
-    if (!(lane.lane === "standard" || lane.lane === "full" || lane.sensitive.length))
+    if (!(lane.lane === "full" || lane.sensitive.length))
       return null;
     const what = lane.sensitive.length ? `a risky area (${lane.sensitive.slice(0, 3).join(", ")}${lane.sensitive.length > 3 ? `, and ${lane.sensitive.length - 3} more` : ""})` : `${lane.files} files`;
     return `Mugiwara: this change touches ${what}, and the crew's process was requested with /mugiwara but has not run. ` + "Size and record the work, then plan, build, review and check security before finishing; if the crew was not wanted, tell the user that instead of continuing.";
