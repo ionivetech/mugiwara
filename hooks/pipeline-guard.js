@@ -1,6 +1,16 @@
 #!/usr/bin/env node
 // @bun
-var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
+var __esm = (fn, res, err) => () => {
+  if (fn)
+    try {
+      res = fn(fn = 0);
+    } catch (e) {
+      err = [e];
+    }
+  if (err)
+    throw err[0];
+  return res;
+};
 
 // src/home.ts
 import { homedir } from "node:os";
@@ -33,10 +43,10 @@ function parsePolicyYaml(text) {
       stack.pop();
     const top = stack[stack.length - 1];
     if (top.pending && !line.startsWith("- ") && indent > top.pending.indent && !Array.isArray(top.obj[top.pending.key])) {
-      const { key: key2, indent: pIndent } = top.pending;
+      const { key, indent: pIndent } = top.pending;
       delete top.pending;
       const created = {};
-      top.obj[key2] = created;
+      top.obj[key] = created;
       stack.push({ keyIndent: pIndent, obj: created });
       return process2(i);
     }
@@ -2426,9 +2436,9 @@ Used **${est.toLocaleString()}** of ${effBudget ? effBudget.toLocaleString() : "
     } catch {}
     if (shouldCompress(budget, chars)) {
       try {
-        const flowsDir2 = join16(dir, "flows");
+        const flowsDir = join16(dir, "flows");
         const wavesDir = join16(dir, "waves");
-        const targetDir = existsSync12(flowsDir2) ? flowsDir2 : existsSync12(wavesDir) ? wavesDir : null;
+        const targetDir = existsSync12(flowsDir) ? flowsDir : existsSync12(wavesDir) ? wavesDir : null;
         if (targetDir && existsSync12(targetDir)) {
           const flowFiles = readdirSync6(targetDir).filter((f) => f.endsWith(".md"));
           if (flowFiles.length) {
@@ -2559,7 +2569,7 @@ Trail ${chars} chars exceeds ${pct}% of budget ${budget} (threshold ${compressTh
       rmSync(join16(dir, PR_VERDICT_SRC), { force: true });
       removed.push(join16("missions", mission, PR_VERDICT_SRC));
     }
-    for (const f of files.filter((f2) => f2.endsWith(".json")))
+    for (const f of files.filter((f) => f.endsWith(".json")))
       rmSync(join16(dir, f), { force: true });
     if (existsSync12(artDir) && readdirSync6(artDir).length === 0)
       rmSync(artDir, { recursive: true, force: true });
