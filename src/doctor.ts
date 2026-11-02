@@ -125,8 +125,14 @@ function laneCheck(projectDir: string): Check {
   }
 }
 
+/** Version printed by a `mugiwara` binary on PATH, or null when there is none. */
+export function globalCliVersion(): string | null {
+  const r = spawnSync('mugiwara', ['--version'], { encoding: 'utf8', timeout: 5000 });
+  return r.status === 0 ? (r.stdout.match(/\d+\.\d+\.\d+\S*/)?.[0] ?? 'unknown') : null;
+}
+
 /** `opts.lane: false` skips the lane.sh spawn (about 0.5 s) for callers that only need the other checks. */
-export function doctor(projectDir: string, home: string, opts: { lane?: boolean } = {}): Check[] {
+export function doctor(projectDir: string, home: string, opts: { lane?: boolean; globalCli?: () => string | null } = {}): Check[] {
   const out: Check[] = [];
   const installed = installChecks(projectDir, home, out);
   if (installed.includes('claude')) out.push(hookCheck(projectDir));
@@ -149,6 +155,11 @@ export function doctor(projectDir: string, home: string, opts: { lane?: boolean 
   out.push(ledger
     ? { name: 'review ledger', status: 'ok', detail: `.mugiwara/${REVIEW_LEDGER} present` }
     : { name: 'review ledger', status: 'warn', detail: `no .mugiwara/${REVIEW_LEDGER}, no independent review dispatched yet`, fix: 'expected until the first review stage runs' });
+
+  const g = (opts.globalCli ?? globalCliVersion)();
+  out.push(g
+    ? { name: 'global CLI', status: 'ok', detail: `mugiwara ${g} on PATH` }
+    : { name: 'global CLI', status: 'warn', detail: 'no `mugiwara` on PATH: the crew falls back to npx, and a headless run without it can leave state.json stale and skip archive', fix: 'run `npm i -g @ionivetech/mugiwara`' });
 
   const pins = commandPins(projectDir);
   const mismatch = pinMismatch(projectDir);

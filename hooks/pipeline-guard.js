@@ -611,9 +611,22 @@ async function main() {
   const state = newestMissionState();
   const sourceChangedNow = sourceChanged();
   const pending = closingPending(cwd);
-  if (pending)
-    process.stderr.write(`Mugiwara: mission "${pending}" has its closing files but no report.md. Run \`mugiwara archive ${pending}\` to write it.
+  if (pending) {
+    const marker = readMarker();
+    const blocks = typeof marker.archive_blocks === "number" ? marker.archive_blocks : 0;
+    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). It records the evidence it can see and archives the mission.`;
+    if (blocks < EXPLICIT_MAX_BLOCKS) {
+      try {
+        writeFileSync2(join4(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, archive_blocks: blocks + 1 }, null, 2) + `
 `);
+      } catch {}
+      countForcedContinuation();
+      process.stdout.write(JSON.stringify({ decision: "block", reason }));
+      return;
+    }
+    process.stderr.write(`${reason}
+`);
+  }
   if (state) {
     const rank = LANE_RANK[state.lane] ?? -1;
     if (rank >= 1 && sourceChangedNow && !executorDispatched(sessionId)) {

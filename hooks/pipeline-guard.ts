@@ -496,7 +496,20 @@ async function main(): Promise<void> {
 
   // Closing artifacts exist but no report.md and no archive: headless runs end here.
   const pending = closingPending(cwd);
-  if (pending) process.stderr.write(`Mugiwara: mission "${pending}" has its closing files but no report.md. Run \`mugiwara archive ${pending}\` to write it.\n`);
+  if (pending) {
+    // stderr alone never reaches the model on a clean exit, so a headless run ended here with no report.md.
+    // Hold the turn open (the model sees `reason`), at most twice a session, then fall back to a warning.
+    const marker = readMarker();
+    const blocks = typeof marker.archive_blocks === 'number' ? marker.archive_blocks : 0;
+    const reason = `Mugiwara: mission "${pending}" has its closing files but no report.md. Run: mugiwara close ${pending} (without a global install: npx -y @ionivetech/mugiwara@latest close ${pending}). It records the evidence it can see and archives the mission.`;
+    if (blocks < EXPLICIT_MAX_BLOCKS) {
+      try { writeFileSync(join(cwd, '.mugiwara', '.engaged'), JSON.stringify({ ...marker, archive_blocks: blocks + 1 }, null, 2) + '\n'); } catch { /* counter is best-effort */ }
+      countForcedContinuation();
+      process.stdout.write(JSON.stringify({ decision: 'block', reason }));
+      return;
+    }
+    process.stderr.write(`${reason}\n`);
+  }
 
   // --- check 2: the write boundary -----------------------------------------
   // Triage exists and sized the mission Lane 1+, source changed, and no

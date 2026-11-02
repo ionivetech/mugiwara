@@ -222,3 +222,16 @@ describe('config conflicts', () => {
     expect(c?.fix).toContain('mugiwara mode auto');
   });
 });
+
+describe('global CLI check', () => {
+  const d = () => mkdtempSync(join(tmpdir(), 'mugi-doc-cli-'));
+  test('warns, with the install command, when no mugiwara is on PATH', () => {
+    const c = doctor(d(), d(), { lane: false, globalCli: () => null }).find((x) => x.name === 'global CLI');
+    expect(c?.status).toBe('warn');
+    expect(c?.fix).toContain('npm i -g @ionivetech/mugiwara');
+  });
+  test('ok when a binary answers', () => {
+    const c = doctor(d(), d(), { lane: false, globalCli: () => '2.0.0' }).find((x) => x.name === 'global CLI');
+    expect(c).toMatchObject({ status: 'ok', detail: 'mugiwara 2.0.0 on PATH' });
+  });
+});

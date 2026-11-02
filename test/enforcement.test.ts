@@ -636,7 +636,7 @@ test('explicit: a mission archived this session (report.md, no state) is closure
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('guard: missing-dispatch warning names the next step; closing files without report.md name the archive command', { timeout: 60000 }, () => {
+test('guard: missing-dispatch warning names the next step; closing files without report.md hold the turn with the close command', { timeout: 60000 }, () => {
   const dir = repo();
   try {
     engage(dir);
@@ -648,10 +648,18 @@ test('guard: missing-dispatch warning names the next step; closing files without
     expect(err).not.toContain('no report.md');
     mkdirSync(join(m, 'flows'), { recursive: true });
     writeFileSync(join(m, 'flows', '06-closure.md'), '# Closed\n');
-    err = hook(GUARD, dir, { session_id: 's1' }).err;
-    expect(err).toContain('Run `mugiwara archive m9` to write it.');
+    // The model must see this: a block with the exact command, twice, then a stderr warning.
+    for (let i = 0; i < 2; i++) {
+      const out = hook(GUARD, dir, { session_id: 's1' }).out;
+      expect(blocked(out)).toBe(true);
+      expect(out).toContain('mugiwara close m9');
+    }
+    const third = hook(GUARD, dir, { session_id: 's1' });
+    expect(blocked(third.out)).toBe(false);
+    expect(third.err).toContain('mugiwara close m9');
     writeFileSync(join(m, 'report.md'), '# Report\n');
-    expect(hook(GUARD, dir, { session_id: 's1' }).err).not.toContain('mugiwara archive m9` to write');
+    const done = hook(GUARD, dir, { session_id: 's1' });
+    expect(done.err + done.out).not.toContain('mugiwara close m9');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
