@@ -851,3 +851,14 @@ test('heal: the hold repeats even when every stop is a continuation (stop_hook_a
     expect(reportOf(md)).toBe(false);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('debug log: MUGIWARA_HOOK_DEBUG appends one line per stop and never changes the decision', { timeout: 30000 }, () => {
+  const dir = warnRepo();
+  try {
+    const log = join(dir, 'hook-debug.jsonl');
+    const r = spawnSync('node', [GUARD], { cwd: dir, input: JSON.stringify({ session_id: 's1', hook_event_name: 'Stop', stop_hook_active: true }), encoding: 'utf8', env: { ...process.env, CLAUDE_PROJECT_DIR: dir, MUGIWARA_HOOK_DEBUG: log } });
+    expect(r.status).toBe(0);
+    const row = JSON.parse(readFileSync(log, 'utf8').trim());
+    expect(row).toMatchObject({ event: 'Stop', stop_hook_active: true, engaged: false, pending: null });
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

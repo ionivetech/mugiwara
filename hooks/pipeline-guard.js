@@ -525,7 +525,7 @@ var init_config = __esm(() => {
 });
 
 // hooks/pipeline-guard.ts
-import { existsSync as existsSync14, mkdirSync as mkdirSync7, readFileSync as readFileSync13, readdirSync as readdirSync8, statSync as statSync4, lstatSync as lstatSync3, writeFileSync as writeFileSync7 } from "fs";
+import { appendFileSync as appendFileSync3, existsSync as existsSync14, mkdirSync as mkdirSync7, readFileSync as readFileSync13, readdirSync as readdirSync8, statSync as statSync4, lstatSync as lstatSync3, writeFileSync as writeFileSync7 } from "fs";
 import { execFileSync as execFileSync5 } from "child_process";
 import { homedir as homedir2 } from "os";
 import { dirname as dirname2, join as join18 } from "path";
@@ -3134,6 +3134,14 @@ async function main() {
   try {
     payload = JSON.parse(input);
   } catch {}
+  if (process.env.MUGIWARA_HOOK_DEBUG) {
+    try {
+      const sid = typeof payload.session_id === "string" ? payload.session_id : "";
+      const pend = closingPending(cwd);
+      appendFileSync3(process.env.MUGIWARA_HOOK_DEBUG, JSON.stringify({ at: new Date().toISOString(), event: payload.hook_event_name, stop_hook_active: payload.stop_hook_active === true, engaged: engaged(sid), pending: pend, enforce: readEnforce(), marker: Object.keys(readMarker()) }) + `
+`);
+    } catch {}
+  }
   const sid0 = typeof payload.session_id === "string" ? payload.session_id : "";
   if (payload.hook_event_name !== "SubagentStop" && explicitSession(sid0) && readEnforce() !== "off" && explicitCheck(sid0))
     return;

@@ -19,7 +19,7 @@
 //
 // Fails OPEN on any internal error. A fence that can wedge a session gets
 // disabled by its users, and then it fences nothing.
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, lstatSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, lstatSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -518,6 +518,14 @@ async function main(): Promise<void> {
   for await (const chunk of process.stdin) input += chunk;
   let payload: Record<string, unknown> = {};
   try { payload = JSON.parse(input) as Record<string, unknown>; } catch { /* no payload */ }
+  // Opt-in diagnostics: MUGIWARA_HOOK_DEBUG=<file> appends one line per Stop (no prompt or file content).
+  if (process.env.MUGIWARA_HOOK_DEBUG) {
+    try {
+      const sid = typeof payload.session_id === 'string' ? payload.session_id : '';
+      const pend = closingPending(cwd);
+      appendFileSync(process.env.MUGIWARA_HOOK_DEBUG, JSON.stringify({ at: new Date().toISOString(), event: payload.hook_event_name, stop_hook_active: payload.stop_hook_active === true, engaged: engaged(sid), pending: pend, enforce: readEnforce(), marker: Object.keys(readMarker()) }) + '\n');
+    } catch { /* diagnostics must never break the hook */ }
+  }
 
   // Explicit /mugiwara sessions: Stop only (SubagentStop is unaffected). Runs
   // before the stop_hook_active return below because it has its own cap

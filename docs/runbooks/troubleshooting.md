@@ -64,6 +64,8 @@ The crew did not start, a report came out thin, or a command failed with a messa
 | no crew banner in the chat | the crew is not loaded in this session | ask "which crew members are available?". If it cannot answer, reinstall: see [install](../install.md) |
 | `no per-commit note` from `handoff --path` | git notes are not fetched by clone | see [signing and provenance](../optional/signing.md) |
 
+To see what the stop hook receives, run the host with `MUGIWARA_HOOK_DEBUG=<file>`: it appends one line per stop (event, whether it was already a continuation, pending mission).
+
 ## What you end up with
 
 Either a clean re-run or a narrower error. When two symptoms overlap, fix a corrupt state file before roster issues, because a corrupt file hides the roster.

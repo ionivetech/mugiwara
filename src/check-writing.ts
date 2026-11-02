@@ -32,7 +32,7 @@ export const WRITING_CAPS: Record<string, number> = {
   'docs/runbooks/risky-change.md': 1160,
   'docs/runbooks/solo-mission.md': 970,
   'docs/runbooks/team-mission.md': 650,
-  'docs/runbooks/troubleshooting.md': 960,
+  'docs/runbooks/troubleshooting.md': 985,
   'docs/runbooks/upgrade-and-uninstall.md': 750,
 };
 
