@@ -9,96 +9,66 @@
 //
 // Refreshes the CURRENT flow stage — it never advances one. Flow transitions
 // stay an explicit crew action; this only keeps tasks/lane/blockers honest.
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 // Shared with `mugiwara run` — a second copy here drifted (it lacked the PATH
 // probe), so the hook found no bash where the CLI did. One definition, bundled in.
 import { findBash } from '../src/run.ts';
+import { sumTranscriptUsage } from '../src/transcript-usage.ts';
+import { activeMission } from '../src/active-mission.ts';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
-const SAFE = /^[A-Za-z0-9._-]+$/;
-
-type Active = { mission: string; member: string; wave: string; mode: string; updated: number };
 
 /**
- * Name the mission when it has artifacts but no state, then seed the strongest
- * artifact flow: plan.md = 2, spec.md = 1, otherwise 0. Existing state remains
- * authoritative in activeMission().
+ * Stop-hook payload (Claude Code hooks docs: common fields session_id,
+ * transcript_path, cwd, hook_event_name). Empty object when stdin is absent or
+ * not JSON.
  */
-function bootstrapMission(): Active | null {
-  const base = join(cwd, '.mugiwara', 'missions');
-  if (!existsSync(base)) return null;
-  for (const e of readdirSync(base, { withFileTypes: true })) {
-    if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name)) continue;
-    const files = readdirSync(join(base, e.name));
-    const hasState = files.some((f) => {
-      if (!f.endsWith('.json')) return false;
-      const stem = f.slice(0, -5);
-      return stem !== 'continue' && !stem.startsWith('continue-');
-    });
-    // `mugiwara archive` removes state on purpose and leaves report.md.
-    // Without this, "artifacts, no state" reads as "never started" and a
-    // merged mission reappears as in-flight.
-    const closed = files.includes('report.md') || files.includes('pr-verdict.md');
-    const hasArtifacts = ['plan.md', 'spec.md', 'decisions.md'].some((f) => files.includes(f));
-    if (!hasState && hasArtifacts && !closed) {
-      const wave = files.includes('plan.md') ? '2' : files.includes('spec.md') ? '1' : '0';
-      return { mission: e.name, member: '', wave, mode: readMode(), updated: 0 };
-    }
-  }
-  return null;
+async function readPayload(): Promise<Record<string, unknown>> {
+  if (process.stdin.isTTY) return {};
+  let input = '';
+  for await (const chunk of process.stdin) input += chunk;
+  try { return JSON.parse(input) as Record<string, unknown>; } catch { return {}; }
 }
 
-function readMode(): string {
-  const file = join(cwd, '.mugiwara', 'config');
-  if (!existsSync(file)) return 'guided';
-  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
-    const [k, v] = line.split('=').map((s) => s.trim());
-    if (k === 'mode' && ['guided', 'semi', 'auto'].includes(v)) return v;
+/**
+ * Write the session's provider-reported usage (numbers only) where savepoint.sh
+ * reads it. Returns the env to pass on, or {} when there is nothing to report
+ * or the operator already chose a tokens file.
+ */
+function providerTokensEnv(payload: Record<string, unknown>): Record<string, string> {
+  try {
+    if (process.env.MUGIWARA_TOKENS_FILE) return {};
+    const tp = payload.transcript_path;
+    if (typeof tp !== 'string' || !tp) return {};
+    const usage = sumTranscriptUsage(tp);
+    if (!usage) return {};
+    const dir = join(cwd, '.mugiwara');
+    mkdirSync(dir, { recursive: true });
+    const file = join(dir, 'tokens.json');
+    writeFileSync(`${file}.tmp`, JSON.stringify(usage) + '\n');
+    renameSync(`${file}.tmp`, file);
+    return { MUGIWARA_TOKENS_FILE: file };
+  } catch {
+    return {}; // fail open: the estimate stays
   }
-  return 'guided';
-}
-
-function activeMission(): Active | null {
-  const base = join(cwd, '.mugiwara', 'missions');
-  if (!existsSync(base)) return bootstrapMission();
-  let best: Active | null = null;
-  for (const e of readdirSync(base, { withFileTypes: true })) {
-    if (!e.isDirectory() || !SAFE.test(e.name) || /^\.+$/.test(e.name)) continue;
-    for (const f of readdirSync(join(base, e.name))) {
-      // state.json (solo) or <member>.json (team) — never continue*.json
-      if (!f.endsWith('.json')) continue;
-      const stem = f.slice(0, -5);
-      if (stem === 'continue' || stem.startsWith('continue-')) continue;
-      const member = stem === 'state' ? '' : stem;
-      if (member && (!SAFE.test(member) || /^\.+$/.test(member))) continue;
-      try {
-        const s = JSON.parse(readFileSync(join(base, e.name, f), 'utf8'));
-        const updated = Date.parse(s.updated_at ?? '') || 0;
-        if (best && updated <= best.updated) continue;
-        const wave = String(s.flow ?? s.wave ?? '').replace(/\D/g, '') || '1';
-        const mode = ['guided', 'semi', 'auto'].includes(s.mode) ? s.mode : 'guided';
-        best = { mission: e.name, member, wave, mode, updated };
-      } catch {
-        // corrupt savepoint — skip, never break the Stop hook
-      }
-    }
-  }
-  return best ?? bootstrapMission();
 }
 
 try {
-  const active = activeMission();
+  const payload = await readPayload();
+  const active = activeMission(cwd);
   const script = join(root, 'scripts', 'savepoint.sh');
   const bash = findBash();
   if (active && bash && existsSync(script)) {
     spawnSync(bash, [script, active.mission, active.member, active.wave, active.mode], {
       cwd,
       stdio: 'ignore',
-      timeout: 15_000,
+      // Hook budget is 20 s (hooks.json); tests on a loaded machine raise it.
+      timeout: Number(process.env.MUGIWARA_SAVEPOINT_TIMEOUT_MS) || 15_000,
+      env: { ...process.env, ...providerTokensEnv(payload) },
     });
   }
 } catch {

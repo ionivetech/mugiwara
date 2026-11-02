@@ -1,8 +1,45 @@
 {
   "target": "cursor",
-  "kind": "marketplace-plugin",
-  "version_matches_package": true,
-  "skills_pointer_resolves": true,
-  "skills_count": 21,
-  "agents_metadata_set_equal": true
+  "tier": 1,
+  "state": {
+    "mission": "conform",
+    "member": null,
+    "lane": "standard",
+    "lane_reason": "4 files",
+    "files_touched": 4,
+    "loc_delta": 4,
+    "loc_ins": 4,
+    "loc_del": 0,
+    "loc_churn": 4,
+    "mode": "auto",
+    "verbosity": "normal",
+    "tasks_done": 0,
+    "tasks_total": 0,
+    "blockers_open": 0,
+    "heal_cycle": 1,
+    "heal_max_cycles": 3,
+    "heal_halt": false,
+    "delegate_threshold": 60,
+    "delegate_due": false,
+    "tokens_source": "estimator",
+    "budget_status": "ok",
+    "sensitive_paths": []
+  },
+  "report_sections": [],
+  "gitignore_block": [
+    "# >>> mugiwara >>> — audit trail is the product: commit plan.md, flows/, review.md,",
+    "# decisions.md, blockers.md, report.md under .mugiwara/missions/. Ignore session state.",
+    ".mugiwara/missions/**/*.json",
+    ".mugiwara/index.md",
+    ".mugiwara/config",
+    ".mugiwara/refs/",
+    ".mugiwara/active-member",
+    "# <<< mugiwara <<<"
+  ],
+  "file_count": {
+    "skills": 77,
+    "agents": 13,
+    "state": 0,
+    "evidence": 0
+  }
 }

@@ -3,7 +3,7 @@
 // (Native Cost Governor initiative, plan §51 Phase 3, spec §7/§8/§9/§19/§30/§41).
 //
 // Turns the Phase-2 signals into auditable skip/avoid/delegate/complete
-// verdicts. Honest boundary (same as Phase 2 for investigation.ts): this
+// verdicts. Honest boundary: this
 // module PRODUCES and RECORDS verdicts; the LLM crew (workflow skill, T4) is
 // the only thing that acts on them. The module makes the decision structured
 // and auditable — it does not pretend a TS function can force the model.
@@ -14,7 +14,26 @@
 import { delegateAt, laneBaseForLane, recordOptDecision } from './cost.ts';
 import { detectScopeDrift } from './scope.ts';
 import { detectCodeSlop, detectRetrySlop, detectScopeSlop, recordSlopDecision } from './slop.ts';
-import { detectDuplicateExplanation } from './cognition.ts';
+import { fingerprint } from './evidence.ts';
+
+/** Group explanations that share a fingerprint; any group of 2+ is a duplicate. */
+export function detectDuplicateExplanation(input: { explanations: string[] }): {
+  duplicate: boolean;
+  reason: string;
+  duplicate_groups: string[][];
+} {
+  const groups = new Map<string, string[]>();
+  for (const exp of input.explanations) {
+    const fp = fingerprint(exp);
+    groups.set(fp, [...(groups.get(fp) ?? []), exp]);
+  }
+  const duplicate_groups = [...groups.values()].filter((g) => g.length >= 2);
+  const duplicate = duplicate_groups.length > 0;
+  const reason = duplicate
+    ? `${duplicate_groups.length} duplicate group(s) — ${duplicate_groups.length} duplicate explanation(s) found`
+    : 'no duplicate explanations';
+  return { duplicate, reason, duplicate_groups };
+}
 
 // ── Stage classification (§7/§34) ───────────────────────────────────────────
 

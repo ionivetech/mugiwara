@@ -16,7 +16,7 @@ test('full content validation passes', () => {
 });
 
 test('single-file check passes on a valid file', () => {
-  expect(() => run(['--check', 'content/skills/mugiwara-workflow/SKILL.md'])).not.toThrow();
+  expect(() => run(['--check', 'content/skills/mugiwara-orchestration/SKILL.md'])).not.toThrow();
 });
 
 // --- gate_artifact (roadmap item 2) ---

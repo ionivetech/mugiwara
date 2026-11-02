@@ -22,7 +22,7 @@
     {
       "task": "The user runs /mugiwara-review and Robin finds blockers.",
       "rubric": [
-        "findings written to .mugiwara/review/",
+        "findings written to .mugiwara/missions/<mission>/review.md",
         "returns the findings to Luffy",
         "does not choose the next wave or dispatch Brook itself"
       ]

@@ -1,0 +1,15 @@
+{
+  "id": "signup-email",
+  "title": "Register a user by email",
+  "trap": "Email uniqueness must ignore case, surrounding spaces and Unicode composed/decomposed forms, or the same mailbox registers twice.",
+  "prompt": "Add registerUser(db, email) to src/users.js. It stores { id, email } in db.users (a Map keyed by id) and returns the new user. It throws an Error when that email is already registered. Add tests in test/users.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/users.js": "export const createDb = () => ({ users: new Map() });\n",
+    "test/users.test.js": "import { test, expect } from 'bun:test';\nimport { createDb, registerUser } from '../src/users.js';\ntest('registers a user', () => {\n  const db = createDb();\n  const u = registerUser(db, 'ann@example.test');\n  expect(u.email).toBe('ann@example.test');\n  expect(db.users.get(u.id)).toEqual(u);\n});\ntest('a second registration with the same email throws', () => {\n  const db = createDb();\n  registerUser(db, 'ann@example.test');\n  expect(() => registerUser(db, 'ann@example.test')).toThrow();\n  expect(db.users.size).toBe(1);\n});\ntest('different emails are fine', () => {\n  const db = createDb();\n  registerUser(db, 'ann@example.test');\n  registerUser(db, 'bo@example.test');\n  expect(db.users.size).toBe(2);\n});\n"
+  },
+  "hidden": {
+    "test/users.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { createDb, registerUser } from '../src/users.js';\ntest('case and surrounding spaces do not make a new email', () => {\n  const db = createDb();\n  registerUser(db, 'ann@example.test');\n  expect(() => registerUser(db, 'Ann@Example.TEST')).toThrow();\n  expect(() => registerUser(db, '  ann@example.test ')).toThrow();\n  expect(db.users.size).toBe(1);\n});\ntest('composed and decomposed Unicode forms are the same email', () => {\n  const db = createDb();\n  registerUser(db, 'caf\\u00E9@example.test');\n  expect(() => registerUser(db, 'cafe\\u0301@example.test')).toThrow();\n  expect(db.users.size).toBe(1);\n});\n"
+  }
+}

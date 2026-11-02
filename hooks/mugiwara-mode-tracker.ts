@@ -33,8 +33,53 @@ function parseModeChange(promptRaw: string): string | null {
 }
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
+import { ensureConfig, readConfig } from '../src/config.ts';
+import { riskReminder } from '../src/risk.ts';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+
+// First word after /mugiwara that is NOT a free-text request: mode words, state
+// commands, and stand-down. /mugiwara-review and /mugiwara-security never match
+// the prefix at all (they are read-only).
+const NOT_A_REQUEST = new Set([
+  'guided', 'semi', 'auto', 'mode', 'off', 'archive', 'clean', 'continue', 'status', 'cost', 'handoff', 'sign',
+  'lesson', 'migrate', 'crew', 'features', 'reset', 'waste', 'plan', 'join', 'list', 'install', 'update', 'uninstall',
+]);
+
+/** True for `/mugiwara <free-text request>` (also `/mugiwara:mugiwara ...`). */
+function isExplicitCrewRequest(promptRaw: string): boolean {
+  if (typeof promptRaw !== 'string') return false;
+  const m = /^\/(?:mugiwara:)?mugiwara(?:[ \t]+(\S+)[\s\S]*)?$/i.exec(promptRaw.trim());
+  return !!m && !!m[1] && !NOT_A_REQUEST.has(m[1].toLowerCase());
+}
+
+/**
+ * Record that this session asked for the crew explicitly. Merges into the
+ * shared marker: a same-session marker keeps every field (dispatch facts, block
+ * counters); a different session starts fresh, because those facts belong to
+ * the session that made them. Never throws.
+ */
+function recordExplicitCrew(sessionId: string): void {
+  try {
+    const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
+    const dir = join(cwd, '.mugiwara');
+    const file = join(dir, '.engaged');
+    mkdirSync(dir, { recursive: true });
+    ensureConfig(cwd);
+    let prev: Record<string, unknown> = {};
+    try { prev = JSON.parse(readFileSync(file, 'utf8')) as Record<string, unknown>; } catch { /* absent or corrupt */ }
+    const same = !sessionId || typeof prev.session_id !== 'string' || !prev.session_id || prev.session_id === sessionId;
+    const base = same ? prev : {};
+    const now = new Date().toISOString();
+    writeFileSync(file, JSON.stringify({
+      ...base,
+      session_id: sessionId || (typeof base.session_id === 'string' ? base.session_id : ''),
+      first_seen: typeof base.first_seen === 'string' ? base.first_seen : now,
+      touched_at: now,
+      explicit_crew_at: now,
+    }, null, 2) + '\n');
+  } catch { /* fail open */ }
+}
 
 function applyModeChange(mode: string) {
   if (!VALID_MODES.has(mode)) return;
@@ -86,6 +131,13 @@ async function main() {
 
   const change = parseModeChange(prompt);
   if (change) applyModeChange(change);
+  else if (isExplicitCrewRequest(prompt)) recordExplicitCrew(typeof parsed.session_id === 'string' ? parsed.session_id : '');
+
+  const reminder = !change && isExplicitCrewRequest(prompt) ? riskReminder(prompt, readConfig(process.env.CLAUDE_PROJECT_DIR ?? process.cwd()).risk_words ?? '') : null;
+  if (reminder) {
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: reminder } }));
+    return;
+  }
 
   const codex = isCodexInput(parsed);
   if (codex) {

@@ -31,7 +31,7 @@ function checkCommand(command) {
   return null;
 }
 function refusalMessage(action) {
-  return `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` + `deploys — the human does, from the branch and the verdict the crew hands over. ` + `Run it yourself, or set enforce=off in .mugiwara/config.`;
+  return `Mugiwara blocked this command (${action}), because the crew never creates a PR, merges or deploys; a human does. ` + `Run it yourself, or set enforce=off in .mugiwara/config.`;
 }
 
 // hooks/pretool-guard.ts

@@ -10,7 +10,7 @@ import { buildRollback } from '../src/rollback.ts';
 import { buildNote, renderProvenanceMd, blamePath } from '../src/provenance.ts';
 import { scorePath, rankFiles, renderRouting } from '../src/routing.ts';
 import { measureContextChars, formatFootprint, readBudgetConfig } from '../src/budget.ts';
-import { signArgs, verifyArgs } from '../src/sign.ts';
+import { signArgs, verifyArgs } from '../src/addons/attest/sign.ts';
 
 let dir: string;
 beforeEach(() => {
@@ -166,7 +166,7 @@ describe('provenance', () => {
   it('note carries agent, model, lane, evidence, review-pending', () => {
     const note = buildNote(state);
     expect(note).toContain('mission: invitation-accepted');
-    expect(note).toContain('agent: zoro <z@x>');
+    expect(note).toContain('agent: zoro · '); // email stripped from the actor, name only
     expect(note).toContain('lane full');
     expect(note).toContain('gates/evidence: waves/04-gates.md');
     expect(note).toContain('human review: pending');
@@ -210,9 +210,9 @@ describe('review routing', () => {
   });
   it('renders an ordered markdown section', () => {
     const md = renderRouting(rankFiles(['a.ts'], base), 'm');
-    expect(md).toContain('## Review routing');
+    expect(md).toContain('## Where to start reviewing');
     expect(md).toContain('1. `a.ts`');
-    expect(md).toContain('heuristic');
+    expect(md).toContain('Suggested reading order');
   });
 });
 

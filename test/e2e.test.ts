@@ -15,12 +15,12 @@ const runCli = (args: string[]) => execFileSync(process.execPath, [DIST, ...args
 test('install claude project scope, then uninstall clean', () => {
   const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
   runCli(['install', '--project', proj, '--target', 'claude', '--yes']);
-  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
+  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-orchestration', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(proj, '.claude', 'agents', 'luffy-orchestrator.md'))).toBe(true);
   expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-frontend', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(proj, '.mugiwara', 'manifest.json'))).toBe(true);
   runCli(['uninstall', '--project', proj, '--yes']);
-  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-workflow'))).toBe(false);
+  expect(existsSync(join(proj, '.claude', 'skills', 'mugiwara-orchestration'))).toBe(false);
   expect(existsSync(join(proj, '.mugiwara', 'manifest.json'))).toBe(false);
 });
 
@@ -34,7 +34,7 @@ test('all skills installed for opencode project scope', () => {
 test('tier-2 target installs flat rule files (project scope)', () => {
   const proj = mkdtempSync(join(tmpdir(), 'mugi-e2e-'));
   runCli(['install', '--project', proj, '--target', 'cline', '--yes']);
-  expect(existsSync(join(proj, '.clinerules', 'mugiwara-workflow.md'))).toBe(true);
+  expect(existsSync(join(proj, '.clinerules', 'mugiwara-orchestration.md'))).toBe(true);
   expect(existsSync(join(proj, '.clinerules', 'agent-luffy-orchestrator.md'))).toBe(true);
 });
 

@@ -5,10 +5,14 @@
 // case here names the gap it closes; a case duplicating that file is a defect.
 // Like that file, tests run the BUILT hooks/*.js — the wired artifact, never
 // the .ts source.
+import { initBaseRepo } from './helpers/git-fixture';
 import { test, expect } from 'bun:test';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+
+// Loaded machines make savepoint slow; the hook's own 15 s kill would read as a failure.
+process.env.MUGIWARA_SAVEPOINT_TIMEOUT_MS = '60000';
 import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -21,11 +25,10 @@ const SAVEPOINT = join(ROOT, 'scripts', 'savepoint.sh');
 
 function repo(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-hooks-'));
-  execFileSync('git', ['init', '-q', '.'], { cwd: dir });
-  execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
-  execFileSync('git', ['config', 'user.name', 'test'], { cwd: dir });
-  execFileSync('git', ['commit', '-q', '--allow-empty', '-m', 'init'], { cwd: dir });
+  initBaseRepo(dir, { email: 'test@example.com', name: 'test' });
   mkdirSync(join(dir, '.mugiwara'), { recursive: true });
+  // The guard defaults to enforce=warn; these tests exercise the blocking path.
+  writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=block\n');
   return dir;
 }
 
@@ -41,7 +44,7 @@ function hook(script: string, cwd: string, payload: object): { out: string; err:
 }
 
 const engage = (dir: string, sessionId = 's1'): void => {
-  hook(MARKER, dir, { tool_name: 'Skill', tool_input: { skill: 'mugiwara-workflow' }, session_id: sessionId });
+  hook(MARKER, dir, { tool_name: 'Skill', tool_input: { skill: 'mugiwara-orchestration' }, session_id: sessionId });
 };
 const bash = (dir: string, command: string): { out: string; err: string } => {
   const r = hook(PRETOOL, dir, { tool_name: 'Bash', tool_input: { command } });
@@ -225,6 +228,63 @@ test('savepoint hook: config mode=auto + plan, no state → state records auto',
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
+test('guard message is plain: no Flow N / lane / savepoint / posture jargon, at most two sentences', { timeout: 20000 }, () => {
+  const dir = repo();
+  try {
+    engage(dir);
+    touchArtifact(dir);
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=warn\n');
+    const msg = hook(GUARD, dir, { session_id: 's1' }).err.trim();
+    expect(msg).toContain('Mugiwara');
+    expect(msg).not.toMatch(/Flow \d|\blane\b|savepoint|posture/i);
+    expect(msg.split(/(?<=[.!?])\s+/).length).toBeLessThanOrEqual(2);
+    // the PreToolUse refusal carries the same promise
+    const r = bash(dir, 'terraform apply');
+    const refusal = r.out + r.err;
+    expect(refusal).toContain('blocked this command');
+    expect(refusal).not.toMatch(/Flow \d|\blane\b|savepoint|posture/i);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: transcript usage becomes provider-reported tokens (numbers only)', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    const line = (id: string, u: object) => JSON.stringify({ type: 'assistant', message: { id, content: [{ type: 'text', text: 'PRIVATE-WORDS' }], usage: u } });
+    const tp = join(dir, 'transcript.jsonl');
+    writeFileSync(tp, [
+      line('a', { input_tokens: 10, output_tokens: 100, cache_read_input_tokens: 1000, cache_creation_input_tokens: 500 }),
+      line('a', { input_tokens: 10, output_tokens: 100, cache_read_input_tokens: 1000, cache_creation_input_tokens: 500 }),
+      line('b', { input_tokens: 5, output_tokens: 50 }),
+    ].join('\n') + '\n');
+    expect(hook(SAVEHOOK, dir, { session_id: 's1', transcript_path: tp }).status).toBe(0);
+    const state = JSON.parse(readFileSync(join(d, 'state.json'), 'utf8'));
+    expect(state.tokens_source).toBe('reported');
+    expect(state.tokens_est).toBe(165);
+    expect(state.tokens_cache_read).toBe(1000);
+    expect(state.tokens_cache_creation).toBe(500);
+    expect(state.tokens_process_est).toBeGreaterThan(0);
+    const written = readFileSync(join(dir, '.mugiwara', 'tokens.json'), 'utf8');
+    expect(JSON.parse(written)).toEqual({ input_tokens: 15, output_tokens: 150, cache_read_input_tokens: 1000, cache_creation_input_tokens: 500 });
+    expect(written).not.toContain('PRIVATE');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('savepoint hook: unreadable transcript fails open and keeps the estimate', { timeout: 30000 }, () => {
+  const dir = repo();
+  try {
+    const d = join(dir, '.mugiwara', 'missions', 'm');
+    mkdirSync(d, { recursive: true });
+    writeFileSync(join(d, 'plan.md'), '# Plan\n');
+    expect(hook(SAVEHOOK, dir, { transcript_path: join(dir, 'missing.jsonl') }).status).toBe(0);
+    const state = JSON.parse(readFileSync(join(d, 'state.json'), 'utf8'));
+    expect(state.tokens_source).toBe('estimator');
+    expect(existsSync(join(dir, '.mugiwara', 'tokens.json'))).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
 // `mugiwara archive` removes state on purpose and leaves report.md. Reading
 // "artifacts, no state" as "never started" reseeded flow 2 from plan.md, and a
 // mission whose PR merged days earlier reappeared as in-flight — which is how
@@ -347,8 +407,8 @@ test('guard banner: work + state, no banner anywhere → warns naming the banner
     bannerState(dir);
     const r = hook(GUARD, dir, { session_id: 's1' });
     expect(r.status).toBe(0);
-    expect(r.err).toContain('no flow banner');
-    expect(r.err).toContain('## <emoji> Flow N');
+    expect(r.err).toContain('no crew banner');
+    expect(r.err).toContain('crew banner');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -360,7 +420,7 @@ test('guard banner: transcript banner suppresses warning and records last_banner
     const transcript = join(dir, 'transcript.jsonl');
     writeFileSync(transcript, '{"role":"assistant","content":"## ⚔️ Flow 3 — Zoro (Execution)\\nwork\\n"}\n');
     const r = hook(GUARD, dir, { session_id: 's1', transcript_path: transcript });
-    expect(r.err).not.toContain('no flow banner');
+    expect(r.err).not.toContain('no crew banner');
     const marker = JSON.parse(readFileSync(join(dir, '.mugiwara', '.engaged'), 'utf8'));
     expect(marker.last_banner_flow).toBe(3);
     // a later marker write in the same session preserves the record
@@ -378,7 +438,7 @@ test('guard banner: banner in mission files suppresses warning without transcrip
     const d = join(dir, '.mugiwara', 'missions', 'm');
     writeFileSync(join(d, 'decisions.md'), '## Flow 2 — Nami (Planning)\n');
     const r = hook(GUARD, dir, { session_id: 's1' });
-    expect(r.err).not.toContain('no flow banner');
+    expect(r.err).not.toContain('no crew banner');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -398,7 +458,7 @@ test('guard banner: a readable transcript with no banner beats tidy mission file
     writeFileSync(transcript, '{"role":"assistant","content":"ran the whole mission in tool calls, said nothing"}\n');
     const r = hook(GUARD, dir, { session_id: 's1', transcript_path: transcript });
     expect(r.status).toBe(0);
-    expect(r.err).toContain('no flow banner');
+    expect(r.err).toContain('no crew banner');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

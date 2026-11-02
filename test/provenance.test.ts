@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
-import { attachGitNote, blamePath, buildNote } from '../src/provenance.ts';
+import { actorName, attachGitNote, blamePath, buildNote } from '../src/provenance.ts';
 
 function gitRepo(): string {
   const repo = mkdtempSync(join(tmpdir(), 'mugi-prov-'));
@@ -77,5 +77,22 @@ describe('provenance blame across mission range (D2)', () => {
     const res = attachGitNote(repo, 'main', note, baseSha);
     expect(res!.count).toBe(2);
     rmSync(repo, { recursive: true, force: true });
+  });
+});
+
+describe('provenance privacy', () => {
+  it('the agent line carries the actor name, never the email', () => {
+    const note = buildNote({
+      mission: 'm', actor: 'Jane Doe <jane@example.com>', lane: 'full', mode: 'auto', branch: 'main', tasks_done: 1, tasks_total: 1, evidence: [],
+    });
+    expect(note).toContain('agent: Jane Doe · ');
+    expect(note).not.toContain('@');
+  });
+
+  it('actorName drops <email> and bare emails', () => {
+    expect(actorName('Jane Doe <jane@example.com>')).toBe('Jane Doe');
+    expect(actorName('jane@example.com')).toBe('unknown');
+    expect(actorName('')).toBe('unknown');
+    expect(actorName('jane')).toBe('jane');
   });
 });

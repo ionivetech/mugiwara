@@ -1,125 +1,79 @@
 ---
 name: mugiwara-execution
-description: Use when executing an approved plan — todo list first, sequential inline + parallel worker batches, commit per logical task, evidence per task. Reuse ladder, stdlib, one-line fix, reject unrequested abstraction.
+description: Use when executing an approved plan: todo list, parallel worker batches, one commit per logical task, split commits, bisect, evidence per task. Reuse ladder, stdlib before dependencies, no unrequested abstraction.
 gate_artifact: flows/01-execution.md task table — execution evidence
 ---
 
 # Execution (Zoro)
-**Language:** Conversational language may be any language, but all `.mugiwara/missions/<mission>/plan.md` artifacts (`plan.md`, `flows/*`, `report.md`, `spec.md`, `decisions.md`, `blockers.md`, `review.md`, `state.json` and `continue.json`) are always English, one language only. Chat responses follow the user's language.
+
 ## Skip when
+- No approved plan exists to execute: that is triage, brainstorm, or planning work.
+- Direct work under 20 lines in one file (typo, rename) with no stage structure.
 
-- No approved plan exists to execute — this is triage, brainstorm, or planning territory.
-- Lane 0 direct work (typo, rename, single small fix) with no flow-stage structure.
-
-Execute the plan exactly. No silent reordering, no skipping steps, no "close enough".
+Execute the plan exactly. No silent reordering, no skipped steps, no "close enough". Stage number and owner: stage table (`mugiwara-orchestration`, stages.md).
 
 ## Ask before working
-
-- `guided`: before touching any code, ASK THE USER — auto branch (dedicated mission branch, recommended, keeps `main` clean) or work on the current branch; auto commit per task or commit at user-controlled checkpoints. With `auto_commit=off`: the branch ask stays, the commit question is skipped — changes stay uncommitted.
-- `semi`: auto-create the mission branch per the config `branch` key; auto-commit per task in the config `commit` style ONLY when `auto_commit=on` (default off). Off → leave every task's changes uncommitted; the user commits manually.
-- `auto`: auto-create the branch and auto-commit per task ALWAYS — `auto_commit=off` has no effect in auto mode.
-Record mode + branch + commit style + `auto_commit` in the decision log (`.mugiwara/missions/<mission>/decisions.md`) and in `.mugiwara/missions/<mission>/flows/todos.md` — every mode.
-
-Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`. The plan doc stays clean — never edit it during execution except through Nami. If the user says no auto-commit in `guided`, still run every acceptance check and leave the diff staged or presented for approval. State-mutating consent is NOT covered by this rule — it still applies in every mode.
+- `guided`: before touching code, ask the user: a dedicated mission branch (recommended, keeps `main` clean) or the current branch; commit per task or at checkpoints they control. With `auto_commit=off` the branch question stays and the commit question is skipped.
+- `semi`: create the mission branch per the config `branch` key; commit per task in the config `commit` style only when `auto_commit=on`. Otherwise leave every task's changes uncommitted for the user.
+- `auto`: create the branch and commit per task always; `auto_commit=off` has no effect.
+Record mode, branch, commit style, and `auto_commit` in `decisions.md` and `flows/todos.md`. State-mutating consent applies in every mode. Code to the installed version's docs, not memory: `_shared/references/source-grounding.md`. Never edit the plan during execution; changes go through Nami.
 
 ## Todo list first
-Before touching code:
-1. Create `.mugiwara/missions/<mission>/flows/todos.md` — one checkbox per task, derived from the plan.
-2. Check each box off only when the task completes, WITH its evidence link (`[path](relative/path)`, clickable).
-3. Re-check the whole list after each task and after each batch; unmarked boxes mean the mission is not done.
-4. Mirror EVERY transition into the host's native todo tool (`todowrite` on opencode; `TaskUpdate` on Claude Code; none on tier 2/3 — plan doc only) in the SAME response the task's evidence lands — one transition per call, never batched at flow-stage end. Per-host table: `docs/reference/harness-matrix.md`. Every task response opens with `[task N/M] <status>` — progress is visible on every harness, todo tool or not.
-5. **Ownership:** Luffy seeds `pending` at Flow 0; Zoro flips `pending→in_progress→completed` each wave — `flows/todos.md` stays as archive, host UI sync via `todowrite` in same response. Full checklist: `_shared/references/cost-governor.md`.
+1. Create `.mugiwara/missions/<mission>/flows/todos.md`: one checkbox per plan task.
+2. Check a box only when the task completes, with its evidence link (`[path](relative/path)`).
+3. Re-check the list after each task and batch; an unchecked box means the mission is not done.
+4. Mirror each transition into the host todo tool (`todowrite` on opencode, `TaskUpdate` on Claude Code, none on other hosts: plan doc only) in the same response the evidence lands, one transition per call. Per-host table: `docs/reference/harness-matrix.md`.
+5. Luffy seeds the host todos as `pending` when the plan is approved; Zoro flips `pending`, `in_progress`, `completed` as each wave runs.
 
-## Flow-stage execution
-Before starting: if `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` exists, resume from its next_action — never re-run completed tasks; verify against todos `[x]` marks. Full protocol: `references/resume-batching.md` — batch-resume, TDD, user-test oracle.
+## Running the plan
+Resume first: if `continue.json | continue-<member>.json` exists, start from its `next_action` and never re-run completed tasks. Details: `references/dispatch.md`.
+1. Read the plan fully before touching code.
+2. Build the task graph from `[PARALLEL]` / `[SEQUENTIAL]` markers and depends-on fields.
+3. A contradictory graph (cycle, missing dependency) goes to Luffy; do not guess. A plan proven wrong mid-task (a missed root cause, a task impossible as written) gets an amendment proposal with evidence and the exact plan diff, approved by Nami: `references/amendments.md`.
+4. Sequential tasks run inline in the main thread, in plan order. No worker round-trips for ordered work unless context pressure triggers.
+5. Independent `[PARALLEL]` tasks go to concurrent workers, one task per worker. Workers are not crew members. Summarize each result inline with an evidence link before the next batch.
+6. Two tasks never edit the same file at once. If the plan allows it, serialize them and note the deviation.
+7. Source edits requested by another agent need a plan task or Luffy's approval. Without either, stop and ask Luffy.
 
-1. Read the plan doc fully before touching code.
-2. Build the task graph from `[PARALLEL]`/`[SEQUENTIAL]` markers and depends-on fields.
-3. Contradictory graph (cycle, missing dependency) → escalate to Luffy. Do not guess. Plan proven wrong mid-task (a root cause the plan missed, a task impossible as written) → propose an amendment, never edit the plan: evidence + exact plan diff → Nami approves → plan versioned → continue. Full loop: `references/amendments.md`.
-4. SEQUENTIAL tasks and chains → execute INLINE in the main thread, one at a time, in plan order. The user watches the work happen; no subagent round-trips for ordered work — UNLESS context pressure triggers (see Worker dispatch triggers).
-5. Independent `[PARALLEL]` task batches → dispatch WORKER subagents concurrently, one task per worker (host's native task/subagent mechanism). Workers are not crew members. A worker's result returns as a report; summarize inline with evidence links before starting the next batch.
-6. Two tasks must never edit the same file concurrently. The plan should prevent this; if it doesn't, serialize them and note the deviation.
+## When workers are used
+- Independence: `[PARALLEL]` batches, concurrent.
+- Context pressure: `delegate_due` is `true` in `state.json`; the remaining sequential tasks go to fresh workers one at a time, in plan order. Tell the user: "Context is getting full; the remaining tasks run in fresh workers, same order."
+- A worker returns a one-line verdict and an evidence link. Delegated work stays visible: banner and handoff stay in the main thread.
+- Posture and mode never change mid-task; re-evaluate only at a stage or batch boundary, recorded in `decisions.md` with the evidence (`_shared/references/posture-routing.md`).
 
-## Worker dispatch triggers
-
-1. **Independence** — `[PARALLEL]` batches, concurrent, one task per worker.
-2. **Context pressure** — when `delegate_due` reads `true` in
-   `.mugiwara/missions/<mission>/state.json | <member>.json`: savepoint computes
-   `tokens_est ≥ delegate_threshold% × budget` (default 60), never an absolute
-   `tokens_est > 80,000`. Remaining SEQUENTIAL tasks dispatch to workers — one
-   at a time, in plan order. Announce: `⚠ context — remaining tasks run in fresh workers, plan order unchanged.` A bigger budget raises the bar; it does not remove it. **Slop guard (all crews Luffy/Nami/Zoro/Brook):** before dispatch read `heal_cycle`/`heal_halt` + `repeated_reads` (context-registry) — `heal_cycle≥max` halt/escalate, `repeated_reads≥thr` skip re-read/compress — trail `slop-governor` — Full checklist: `_shared/references/cost-governor.md` §§21-24,20,31-32.
-
-## Batch resume
-
-After each batch, update `.mugiwara/missions/<mission>/continue.json | continue-<member>.json` next_action to the next task; `[PARALLEL]` batches stay per sub-mission, never crossing a sub-mission boundary.
-
-## Posture switching (boundaries)
-
-Re-evaluate posture only at a flow-stage/task-batch boundary, never mid-task:
-retain/switch/avoid/pause from lane/risk/governor/context evidence, recorded with
-reason + evidence ref in `decisions.md` (matrix: `_shared/references/posture-routing.md`). A
-switch never changes mode/roles; workers only for Nami-declared independent tasks.
-On halt, emit state + continue with exact next action incl. posture verification.
-
-## Task batching & delegation format (parallel workers only)
-
-Full protocol: `references/dispatch.md` — output rule, batch report format, six-field worker prompt. Thin prompts cause thin results.
-
-## Surfacing rule
-
-> **Delegated work is not hidden work.** A worker may run out of view; its
-> result may not. Every worker returns a one-line verdict and an evidence link —
-> never a banner. The user never clicks into a subagent to know what happened:
-> banner + handoff stay in the main thread. Isolation is for context and
-> permission, never for autonomy.
-
-## TDD discipline & user tests
-
-Full protocol: `references/resume-batching.md` — batch-resume, TDD RED-GREEN-REFACTOR (`references/tdd.md`), user tests as oracle, failing-first rule. One task end to end, RED through commit: `references/worked-example.md`.
+## TDD and user tests
+Red, green, refactor: `references/tdd.md`. User-supplied tests are the oracle, failing first and never edited. One task end to end: `references/worked-example.md`.
 
 ## One logical task, one commit
+Commit per logical task (a feature, fix, or refactor), not per micro-step. Verify every acceptance criterion; commit only the task's declared files. Subject: `feat(T4 scope):` or `fix(T4 scope):`, body only for the why, so plan and history stay traceable. With `auto_commit=off`, still print the exact message per task in the report. A TDD task commits its test with the code it proves. Commit, save-point, branch, worktree, and bisect rules: `references/git.md`.
 
-Commit per LOGICAL task — a feature, fix, or refactor, not a micro-step; verify every acceptance criterion, commit only the task's declared files. Message carries the task id — `fix(T4): test seams for bun:test` — so plan↔history stays traceable. The id binds the message, not the author: with `auto_commit=on` the agent uses it verbatim; with `off` Zoro still outputs the exact message per task in its report and the user copy-pastes it. Report done (with evidence) or blocked (with reason). Message: `feat(Tn scope):` / `fix(Tn scope):` — one subject line, body only for the why. One commit = one task; a flow stage of micro-commits is a defect. A TDD task commits its test with the code it proves (`references/tdd.md` verification) — never orphaned.
+## Blockers
+Blocked: append one row (`| stage | task | symptom | attempted | help-needed |`) to `.mugiwara/missions/<mission>/blockers.md`, then escalate to Luffy. Never work around a blocker silently.
 
-## Blockers → issues ledger
+## Quality floor
+Every touched file leaves cleaner than found: one refactor per touch, done while green, in its own commit. Use the project's own typecheck and dead-code tooling when it exists; never invent tooling. Before adding code: reuse a helper, then stdlib, then native, then an installed dependency, then one line, then new code.
 
-Blocked → one row `| flow stage | task | symptom | attempted | help-needed |` to `.mugiwara/missions/<mission>/blockers.md`, then escalate to Luffy. Never work around a blocker silently.
-
-## Code quality floor
-
-Boy Scout rule — every touched file leaves cleaner than found: one refactor per touch, done while green, its own commit, never bundled into another task.
-
-TS tasks gate on numbers: `strict: true` in tsconfig (no `strict:false`); dead code 0 — `bunx ts-prune` or `knip` reports zero unused exports/imports. Run both in one evidence call: `bun run typecheck && bunx ts-prune`. Before adding code: ladder reuse helper?→stdlib?→native?→installed dep?→one line?→code — Full checklist: `_shared/references/cost-governor.md`.
-
-## Large campaign — phase-isolated flows
-Full checklist: `references/execution-phase-flows.md` — 4 items; `flows/phase-NN/02-execution.md` per phase, `flows/todos.md` with `## Phase NN` sections, no flat overwrite.
 ## Frontend tasks
+A task touching UI markup, styling, or components also applies `mugiwara-frontend`. Every interactive element carries a `data-testid` that the task's test asserts.
 
-Any task touching UI markup, styling, or components applies `mugiwara-frontend` in the same pass. Every interactive element — button, link, input, form — carries a `data-testid`, asserted by the task's test, not merely present in markup.
-
-## Report (scan-format)
-
-After each flow stage: compact task table (status, evidence link, deviations) shown inline in the conversation. Format: `references/dispatch.md` — report table. Then return to Luffy, who routes to Chopper (Flow 4). Write detailed execution log to `.mugiwara/missions/<mission>/flows/01-execution.md`. Never dispatch another crew member.
-- **Decision/Action/Result/Evidence/Blocker** lead every bullet — filler dies anywhere ([src/cognition.ts](src/cognition.ts)).
-- **Short** bullets, one idea per line; **tables** over prose; **evidence** links clickable repo-root-relative.
-- **Dedupe** repeats, keep first; full logs stay in the artifact, chat stays out.
+## Report
+After each stage, show a compact task table inline (status, evidence link, deviations): `references/dispatch.md`. Append the detailed log as a `## execution (<task id>)` section of `.mugiwara/missions/<mission>/flows/01-execution.md`; never overwrite it. Then return to Luffy, who decides the next stage. Quiet stage: one result line.
+- Lead each bullet with Decision, Action, Result, Evidence, or Blocker.
+- Short bullets, tables over prose, evidence links relative to the repo root.
 
 ## Step budget
-Tool calls finite — cap per session (Lane1 ≤15, Lane2 ≤35, Lane3 ≤60). Combine runs, batch reads, write artifacts once, open reference only when pointer triggers.
-- Prefer a `mugiwara` subcommand over an inline pipeline; a check longer than one line goes in a script, not the transcript.
+Tool calls are finite: lean lane at most 15 per session, standard 35, full 60. Combine runs, batch reads, write artifacts once, open a reference only when its pointer triggers. Prefer a `mugiwara` subcommand to an inline pipeline; a check longer than one line goes in a script.
 
 ## Red flags
-
-- Closing a flow stage without its one-line summary, or padding it with prose at `verbosity=normal`.
+- Closing a stage without its one-line summary, or padding it with prose.
 - Plan steps reordered or skipped as "unnecessary".
-- Done reported without evidence ("close enough").
-- Two tasks editing the same file concurrently.
-- A blocker worked around silently instead of escalated.
-- Echoing raw output when `verbosity=normal` — summarize and cite the evidence path.
-- TDD order inverted, or a test passing immediately without having failed first.
-- A commit without its task id, beyond its declared files, or one of a micro-commit flow stage; the plan edited directly instead of amended via Nami.
-- Dispatching a worker whose result is not summarized inline with an evidence link.
-- Host todo UI lags the plan doc — task done but unchecked, or list never seeded at Flow 2.
-- `strict:false`, dead code reported by ts-prune/knip, or an interactive element missing `data-testid`.
+- Done reported without evidence.
+- Two tasks editing the same file at once.
+- A blocker worked around silently.
+- TDD order inverted, or a test that passed without failing first.
+- A commit without its task id, beyond its declared files, or one of many micro-commits; the plan edited directly.
+- A worker result not summarized inline with an evidence link.
+- The host todo list lagging the plan doc.
+- An interactive element missing `data-testid`.
 
 All mean: stop, realign to the plan, or escalate to Luffy.

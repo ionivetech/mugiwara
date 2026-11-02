@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // scripts/lane-base.ts — G5: validate LANE_BASE constants against measured
 // content instruction load. Each lane loads a fixed set of skills + agents
-// (wave owners from docs/concepts/workflow.md). The honest base is the sum of
+// (wave owners from docs/concepts/mission-flow.md). The honest base is the sum of
 // their body word-sums × 1.35 tokens/word. A constant that drifts more than
 // the tolerance from that load fails — content growth must be reflected in
 // lane-base.sh, or the estimate is a lie (D5).
@@ -25,12 +25,12 @@ const WAVE_OWNER: Record<string, [string, string]> = {
   '4': ['mugiwara-checkpoint', 'chopper-checkpoint'],
   '4.5': ['mugiwara-checkpoint', 'skeptic-verifier'],
   '5': ['mugiwara-quality', 'sanji-quality'],
-  '6': ['mugiwara-gates', 'franky-gates'],
+  '6': ['mugiwara-quality', 'franky-gates'],
   '7': ['mugiwara-review', 'robin-reviewer'],
   '8': ['mugiwara-healing', 'brook-healing'],
 };
 
-// skills always loaded regardless of lane: none — resume/lessons only load
+// skills always loaded regardless of lane: none — resume and lessons (orchestration references) only load
 // mid-mission on interruption, too cheap to count as a lane base.
 const ALWAYS: Array<[string, string]> = [];
 

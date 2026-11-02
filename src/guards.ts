@@ -37,8 +37,7 @@ export function checkCommand(command: string): string | null {
 /** Deny message: names the action, the human terminal step, the escape hatch. */
 export function refusalMessage(action: string): string {
   return (
-    `Mugiwara: refusing to ${action}. The crew never creates a PR, merges, or ` +
-    `deploys — the human does, from the branch and the verdict the crew hands over. ` +
+    `Mugiwara blocked this command (${action}), because the crew never creates a PR, merges or deploys; a human does. ` +
     `Run it yourself, or set enforce=off in .mugiwara/config.`
   );
 }

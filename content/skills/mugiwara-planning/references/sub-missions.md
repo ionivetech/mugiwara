@@ -1,7 +1,7 @@
 # Sub-missions (team only) — full reference
 
-When Flow 0 recorded a roster, turn the area table into a sub-mission table
-before writing task detail. Use the **exact names from the Flow 0 roster** —
+When triage recorded a roster, turn the area table into a sub-mission table
+before writing task detail. Use the **exact names from the triage roster** —
 they are the member ids the crew will use for state files.
 
 | ID | Name | Assignee | Branch | Status | Depends On | Touched Files |

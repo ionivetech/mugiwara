@@ -1,7 +1,7 @@
 // src/features.ts
 // `features=` extension mechanism (p16): single trigger table + grammar parser
 // + cheap trigger resolvers, owned next to DEFAULT_CONFIG. Vocabulary drift
-// fix: one table, one test (test/features.test.ts pins all 21 placements).
+// fix: one table, one test (test/features.test.ts pins all 14 placements).
 
 export type FeatureDefault = 'core' | 'auto' | 'off';
 
@@ -14,40 +14,48 @@ export type ExtensionRow = {
 };
 
 /**
- * Token → skill dir(s) + trigger + default. 21 skill placements, binding:
- * 7 core always-on + 11 auto trigger-loaded + 3 conditional-auto.
- * Tokens are extension names, never raw skill dir names. `skeptic` is
- * deliberately absent (role, not extension — see parseFeatures).
+ * Token → skill dir(s) + trigger + default. 14 skill placements, binding:
+ * 5 core always-on + 9 trigger-loaded auto. Tokens are extension names, never
+ * raw skill dir names. `skeptic` is deliberately absent (role, not extension
+ * — see parseFeatures). Tokens of skills merged in v2 live in ALIASES.
  */
 export const EXTENSION_TABLE: Record<string, ExtensionRow> = {
-  // ── core always-on (7) ──────────────────────────────────────────────
+  // ── core always-on (5) ──────────────────────────────────────────────
   orchestration: { skills: ['mugiwara-orchestration'], trigger: 'always on', default: 'core' },
   planning: { skills: ['mugiwara-planning'], trigger: 'always on', default: 'core' },
   execution: { skills: ['mugiwara-execution'], trigger: 'always on', default: 'core' },
   checkpoint: { skills: ['mugiwara-checkpoint'], trigger: 'always on', default: 'core' },
-  gates: { skills: ['mugiwara-gates'], trigger: 'always on', default: 'core' },
   quality: { skills: ['mugiwara-quality'], trigger: 'always on', default: 'core' },
-  lessons: { skills: ['mugiwara-lessons'], trigger: 'always on (read-half)', default: 'core' },
-  // ── auto trigger-loaded (11) ────────────────────────────────────────
+  // ── auto trigger-loaded (9) ─────────────────────────────────────────
   ship: { skills: ['mugiwara-ship'], trigger: 'close/archive intent, Flow 9', default: 'auto' },
   migration: { skills: ['mugiwara-migration'], trigger: 'schema/data/framework diff', default: 'auto' },
   'contract-first': { skills: ['mugiwara-contract-first'], trigger: 'boundary diff', default: 'auto' },
-  testcases: { skills: ['mugiwara-testcases'], trigger: 'user declares tests/e2e', default: 'auto' },
   frontend: { skills: ['mugiwara-frontend'], trigger: 'UI globs in diff', default: 'auto' },
   backend: { skills: ['mugiwara-backend'], trigger: 'server globs in diff', default: 'auto' },
   security: { skills: ['mugiwara-security'], trigger: 'sensitive-path predicate fires', default: 'auto' },
   brainstorm: { skills: ['mugiwara-brainstorm'], trigger: 'vague/exploratory class at triage', default: 'auto' },
-  healing: { skills: ['mugiwara-healing'], trigger: 'failure ledger non-empty / prior flow FAIL', default: 'auto' },
+  healing: { skills: ['mugiwara-healing'], trigger: 'failure ledger non-empty / prior flow FAIL / bug report', default: 'auto' },
   review: { skills: ['mugiwara-review'], trigger: 'gates PASS on diff-bearing mission', default: 'auto' },
-  'root-cause': { skills: ['mugiwara-root-cause'], trigger: 'bug/crash report', default: 'auto' },
-  // ── conditional-auto (3) ────────────────────────────────────────────
-  git: { skills: ['mugiwara-git'], trigger: 'git-op intent', default: 'auto' },
-  resume: { skills: ['mugiwara-resume'], trigger: 'interruption marker (continue.json pending)', default: 'auto' },
-  workflow: { skills: ['mugiwara-workflow'], trigger: 'meta mission, with orchestration', default: 'auto' },
   // ── non-skill tokens (config/CLI concerns) ──────────────────────────
   team: { skills: [], trigger: 'team=on in config or roster > 1 (read-only)', default: 'auto' },
-  sign: { skills: [], trigger: 'regulated mission / attestation policy / keys present', default: 'off' },
-  'lessons-write': { skills: ['mugiwara-lessons'], trigger: 'closure + new lesson found', default: 'off' },
+  sign: { skills: [], trigger: 'optional attestation add-on (not core flow): regulated mission / attestation policy / keys present', default: 'off' },
+  'lessons-write': { skills: ['mugiwara-orchestration'], trigger: 'closure + new lesson found', default: 'off' },
+};
+
+/**
+ * Tokens of skills merged into another skill. Still accepted in `features=`
+ * so old configs keep working. Adding an alias adds its owner token; removing
+ * one is a no-op (the merged capability ships inside the owner skill, which
+ * is removed only by naming the owner).
+ */
+export const ALIASES: Record<string, string> = {
+  gates: 'quality',
+  testcases: 'quality',
+  git: 'execution',
+  'root-cause': 'healing',
+  resume: 'orchestration',
+  lessons: 'orchestration',
+  workflow: 'orchestration',
 };
 
 export type ParsedFeatures = {
@@ -62,11 +70,12 @@ const SKEPTIC_HINT =
 function checkToken(token: string): void {
   if (token === 'skeptic' || token === '-skeptic') throw new Error(`unknown feature token "skeptic": ${SKEPTIC_HINT}`);
   const name = token.startsWith('-') ? token.slice(1) : token;
-  if (!(name in EXTENSION_TABLE)) throw new Error(`unknown feature token "${name}"`);
+  if (!(name in EXTENSION_TABLE) && !(name in ALIASES)) throw new Error(`unknown feature token "${name}"`);
 }
 
 /**
  * Parse a `features=` value: `all` | `core+auto[,token...][,-token...]`.
+ * Alias tokens (ALIASES) are normalized to their owner token.
  * A bare token list implies base `core+auto`. Unknown token = hard error
  * (fail-closed), never ignore. `skeptic` redirects to the checkpoint role.
  */
@@ -87,9 +96,11 @@ export function parseFeatures(raw: string): ParsedFeatures {
     checkToken(token);
     if (token.startsWith('-')) {
       const name = token.slice(1);
+      if (name in ALIASES) continue; // alias removal is a no-op, see ALIASES
       if (!remove.includes(name)) remove.push(name);
     } else {
-      if (!add.includes(token)) add.push(token);
+      const name = ALIASES[token] ?? token;
+      if (!add.includes(name)) add.push(name);
     }
   }
   return { base: 'core+auto', add, remove };
@@ -149,7 +160,6 @@ function fires(token: string, changedFiles: string[], config: Record<string, str
     case 'ship': return intents.close === true; // O(1) state key
     case 'migration': return anyMatch(changedFiles, MIGRATION_GLOBS); // O(diff) globs
     case 'contract-first': return anyMatch(changedFiles, BOUNDARY_GLOBS); // O(diff) globs
-    case 'testcases': return intents.tests === true; // O(1) intent
     case 'frontend': return anyMatch(changedFiles, FRONTEND_GLOBS); // O(diff) globs
     case 'backend': return anyMatch(changedFiles, BACKEND_GLOBS); // O(diff) globs
     case 'team': return config.team === 'on' || (intents.rosterSize ?? 0) > 1; // O(1) config/roster, read-only
@@ -157,12 +167,8 @@ function fires(token: string, changedFiles: string[], config: Record<string, str
     case 'sign': return false; // default OFF, regulated-only (unchanged)
     case 'security': return changedFiles.some((f) => SENSITIVE_RE.test(f)); // O(diff) globs
     case 'brainstorm': return intents.vague === true; // O(1) intent
-    case 'healing': return intents.failure === true; // O(1) state
+    case 'healing': return intents.failure === true || intents.bug === true; // O(1) state/intent
     case 'review': return intents.gatesPass === true; // O(1) state
-    case 'root-cause': return intents.bug === true; // O(1) intent
-    case 'git': return intents.gitOp === true; // O(1) intent
-    case 'resume': return intents.interrupted === true; // O(1) stat
-    case 'workflow': return intents.meta === true; // O(1) intent
     default: return false;
   }
 }

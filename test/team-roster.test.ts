@@ -7,16 +7,11 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { rosterSize, rosterAssignees, closureBlockers, readMemberStates } from '../src/mission.ts';
 import { knownMembers } from '../src/continue.ts';
+import { initBaseRepo } from './helpers/git-fixture';
 
 function mkTmp(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugiwara-team-'));
-  execFileSync('git', ['init', '-q'], { cwd: dir });
-  execFileSync('git', ['config', 'user.email', 'a@b.c'], { cwd: dir });
-  execFileSync('git', ['config', 'user.name', 't'], { cwd: dir });
-  mkdirSync(join(dir, 'src'), { recursive: true });
-  writeFileSync(join(dir, 'src', 'a.ts'), 'x');
-  execFileSync('git', ['add', '-A'], { cwd: dir });
-  execFileSync('git', ['commit', '-qm', 'i'], { cwd: dir });
+  initBaseRepo(dir, { email: 'a@b.c', name: 't', files: { 'src/a.ts': 'x' } });
   return dir;
 }
 

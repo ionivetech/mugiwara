@@ -28,8 +28,8 @@ test('collectContent includes all skills and agents', () => {
   expect(skills.some(s => s.name === 'mugiwara-frontend')).toBe(true);
   expect(skills.some(s => s.name === 'mugiwara-backend')).toBe(true);
   expect(agents.some(a => a.name === 'luffy-orchestrator')).toBe(true);
-  expect(skills.length).toBeGreaterThanOrEqual(20);
-  expect(agents.length).toBeGreaterThanOrEqual(14);
+  expect(skills.length).toBeGreaterThanOrEqual(14);
+  expect(agents.length).toBeGreaterThanOrEqual(13);
 });
 
 test('references/ files are collected from content', () => {
@@ -98,19 +98,19 @@ test('generic install keeps references outside the rules glob', () => {
   const rulesDir = join(dir, '.gemini', 'mugiwara');
   expect(existsSync(join(rulesDir, 'mugiwara-frontend.md'))).toBe(true);
   // Per-skill refs dir (F2): a flat refs dir let same-named references
-  // collide — contract-first/process.md would be lost to root-cause/process.md.
+  // collide — contract-first/process.md would be lost to a same-named healing reference.
   expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-frontend', 'checklist.md'))).toBe(true);
   expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-contract-first', 'process.md'))).toBe(true);
-  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-root-cause', 'process.md'))).toBe(true);
-  expect(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-root-cause', 'process.md'), 'utf8'))
+  expect(existsSync(join(dir, '.mugiwara', 'refs', 'mugiwara-healing', 'root-cause-process.md'))).toBe(true);
+  expect(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-healing', 'root-cause-process.md'), 'utf8'))
     .not.toBe(readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-contract-first', 'process.md'), 'utf8'));
   expect(existsSync(join(rulesDir, 'mugiwara-frontend', 'references', 'checklist.md'))).toBe(false);
 });
 
 test('installTo writes skills and agents, rerun skips identical', () => {
   const r1 = installTo(fakeTarget, opts);
-  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 21 skills + 14 agents + refs
-  expect(existsSync(join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md'))).toBe(true);
+  expect(r1.written.length).toBeGreaterThanOrEqual(35); // 14 skills + 13 agents + refs
+  expect(existsSync(join(projectDir, 'sk', 'mugiwara-orchestration', 'SKILL.md'))).toBe(true);
   expect(existsSync(join(projectDir, 'ag', 'luffy-orchestrator.md'))).toBe(true);
   const r2 = installTo(fakeTarget, opts);
   expect(r2.written.length).toBe(0);
@@ -118,7 +118,7 @@ test('installTo writes skills and agents, rerun skips identical', () => {
 });
 
 test('conflicting file not overwritten without force; backed up with force', () => {
-  const f = join(projectDir, 'sk', 'mugiwara-workflow', 'SKILL.md');
+  const f = join(projectDir, 'sk', 'mugiwara-orchestration', 'SKILL.md');
   writeFileSync(f, 'USER EDIT');
   const r1 = installTo(fakeTarget, opts);
   expect(readFileSync(f, 'utf8')).toBe('USER EDIT');
@@ -183,11 +183,11 @@ test('CLI install targets never force background mode on agents (opencode agents
 test('generic target installs workflow skill as stub with full body in refs', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-gen-'));
   const { skills, agents } = collectContent();
-  const workflow = skills.find(s => s.name === 'mugiwara-workflow')!;
+  const workflow = skills.find(s => s.name === 'mugiwara-orchestration')!;
   const out = targets['gemini'].transformSkill(workflow.data, workflow.body);
   expect(out).not.toBeNull();
-  expect(out!.text).not.toContain('Inline by default');
-  expect(out!.text).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
+  expect(out!.text).not.toContain('Write boundary');
+  expect(out!.text).toContain('.mugiwara/refs/mugiwara-orchestration/mugiwara-orchestration.md');
   const luffy = agents.find(a => a.name === 'luffy-orchestrator')!;
   const agentOut = targets['gemini'].transformAgent(luffy.data, luffy.body);
   expect(agentOut!.text).toContain('Agent: luffy-orchestrator');
@@ -232,17 +232,17 @@ test('copilot install writes .instructions.md skills and agent .md files', () =>
   const dir = mkdtempSync(join(tmpdir(), 'mugi-copilot-'));
   const home = mkdtempSync(join(tmpdir(), 'mugi-cphome-'));
   const r = installTo(targets['copilot'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const skillFile = join(dir, '.github', 'instructions', 'mugiwara-workflow.instructions.md');
+  const skillFile = join(dir, '.github', 'instructions', 'mugiwara-orchestration.instructions.md');
   expect(existsSync(skillFile)).toBe(true);
   // A1: copilot injects every matching instruction file into every request,
   // so the instructions dir carries a routing stub, not the skill body.
   const skillText = readFileSync(skillFile, 'utf8');
-  expect(skillText).not.toContain('Inline by default');
-  expect(skillText).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
+  expect(skillText).not.toContain('Write boundary');
+  expect(skillText).toContain('.mugiwara/refs/mugiwara-orchestration/mugiwara-orchestration.md');
   expect(skillText).toContain('applyTo: **/*');
-  const fullBody = join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md');
+  const fullBody = join(dir, '.mugiwara', 'refs', 'mugiwara-orchestration', 'mugiwara-orchestration.md');
   expect(existsSync(fullBody)).toBe(true);
-  expect(readFileSync(fullBody, 'utf8')).toContain('Inline by default');
+  expect(readFileSync(fullBody, 'utf8')).toContain('Write boundary');
   const agentFile = join(dir, '.github', 'agents', 'luffy-orchestrator.md');
   expect(existsSync(agentFile)).toBe(true);
   expect(r.written.length).toBeGreaterThanOrEqual(35);
@@ -250,34 +250,11 @@ test('copilot install writes .instructions.md skills and agent .md files', () =>
 
 test('copilot transformSkill wraps with applyTo glob', () => {
   const { skills } = collectContent();
-  const wf = skills.find(s => s.name === 'mugiwara-workflow')!;
+  const wf = skills.find(s => s.name === 'mugiwara-orchestration')!;
   const out = targets['copilot'].transformSkill(wf.data, wf.body);
   expect(out!.relPath).toContain('.instructions.md');
   expect(out!.text).toMatch(/^description: /m);
   expect(out!.text).toMatch(/applyTo: \*\*\/\*/);
-});
-
-test('codex tier-3 writes stubs + bootstrap AGENTS.md', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mugi-codex-'));
-  const home = mkdtempSync(join(tmpdir(), 'mugi-cxhome-'));
-  const r = installTo(targets['codex'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const skill = join(dir, '.codex', 'mugiwara', 'mugiwara-workflow.md');
-  expect(existsSync(skill)).toBe(true);
-  expect(readFileSync(skill, 'utf8')).not.toContain('Inline by default');
-  expect(readFileSync(skill, 'utf8')).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
-  const bootstrap = join(dir, 'AGENTS.md');
-  expect(existsSync(bootstrap)).toBe(true);
-  expect(readFileSync(bootstrap, 'utf8')).toContain('Mugiwara crew installed');
-  expect(r.written).toContain(bootstrap);
-});
-
-test('codex bootstrap does not overwrite existing AGENTS.md', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'mugi-cxexist-'));
-  const home = mkdtempSync(join(tmpdir(), 'mugi-cxeh-'));
-  writeFileSync(join(dir, 'AGENTS.md'), 'EXISTING');
-  const r = installTo(targets['codex'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  expect(readFileSync(join(dir, 'AGENTS.md'), 'utf8')).toBe('EXISTING');
-  expect(r.notes.some(n => n.includes('AGENTS.md'))).toBe(true);
 });
 
 test('claude postInstall skips hook if already exists', () => {
@@ -297,10 +274,10 @@ test('gemini tier-3 writes stubs + bootstrap GEMINI.md', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-gem-'));
   const home = mkdtempSync(join(tmpdir(), 'mugi-gemh-'));
   const r = installTo(targets['gemini'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const skill = join(dir, '.gemini', 'mugiwara', 'mugiwara-workflow.md');
+  const skill = join(dir, '.gemini', 'mugiwara', 'mugiwara-orchestration.md');
   expect(existsSync(skill)).toBe(true);
-  expect(readFileSync(skill, 'utf8')).not.toContain('Inline by default');
-  expect(readFileSync(skill, 'utf8')).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
+  expect(readFileSync(skill, 'utf8')).not.toContain('Write boundary');
+  expect(readFileSync(skill, 'utf8')).toContain('.mugiwara/refs/mugiwara-orchestration/mugiwara-orchestration.md');
   const bootstrap = join(dir, 'GEMINI.md');
   expect(existsSync(bootstrap)).toBe(true);
   expect(readFileSync(bootstrap, 'utf8')).toContain('Mugiwara crew installed');
@@ -310,22 +287,22 @@ test('windsurf tier-3 writes stubs only, full body in .mugiwara/refs/', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-wind-'));
   const home = mkdtempSync(join(tmpdir(), 'mugi-wh-'));
   const r = installTo(targets['windsurf'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const stub = join(dir, '.devin', 'rules', 'mugiwara-workflow.md');
+  const stub = join(dir, '.devin', 'rules', 'mugiwara-orchestration.md');
   expect(existsSync(stub)).toBe(true);
   const stubText = readFileSync(stub, 'utf8');
   expect(stubText).toContain('Skip when');
-  expect(stubText).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
-  expect(stubText).not.toContain('Inline by default');
-  const full = join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md');
+  expect(stubText).toContain('.mugiwara/refs/mugiwara-orchestration/mugiwara-orchestration.md');
+  expect(stubText).not.toContain('Write boundary');
+  const full = join(dir, '.mugiwara', 'refs', 'mugiwara-orchestration', 'mugiwara-orchestration.md');
   expect(existsSync(full)).toBe(true);
-  expect(readFileSync(full, 'utf8')).toContain('Inline by default');
+  expect(readFileSync(full, 'utf8')).toContain('Write boundary');
 });
 
 test('cline tier-3 writes stubs into .clinerules/', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-cline-'));
   const home = mkdtempSync(join(tmpdir(), 'mugi-clh-'));
   installTo(targets['cline'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const stub = join(dir, '.clinerules', 'mugiwara-workflow.md');
+  const stub = join(dir, '.clinerules', 'mugiwara-orchestration.md');
   expect(existsSync(stub)).toBe(true);
   expect(readFileSync(stub, 'utf8')).toContain('Skip when');
 });
@@ -334,7 +311,7 @@ test('kilo tier-3 writes stubs + kilo.jsonc bootstrap', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-kilo-'));
   const home = mkdtempSync(join(tmpdir(), 'mugi-kh-'));
   const r = installTo(targets['kilo'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const stub = join(dir, '.kilo', 'rules', 'mugiwara-workflow.md');
+  const stub = join(dir, '.kilo', 'rules', 'mugiwara-orchestration.md');
   expect(existsSync(stub)).toBe(true);
   expect(readFileSync(stub, 'utf8')).toContain('Skip when');
   const cfg = join(dir, 'kilo.jsonc');
@@ -347,13 +324,13 @@ test('antigravity tier-3 writes stubs into .agents/rules/', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-ag-'));
   const home = mkdtempSync(join(tmpdir(), 'mugi-agh-'));
   installTo(targets['antigravity'], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
-  const stub = join(dir, '.agents', 'rules', 'mugiwara-workflow.md');
+  const stub = join(dir, '.agents', 'rules', 'mugiwara-orchestration.md');
   expect(existsSync(stub)).toBe(true);
   expect(readFileSync(stub, 'utf8')).toContain('Skip when');
 });
 
 test('generic target globalscope throws for non-native targets', () => {
-  for (const id of ['codex', 'gemini', 'windsurf', 'cline', 'kilo', 'antigravity']) {
+  for (const id of ['gemini', 'windsurf', 'cline', 'kilo', 'antigravity']) {
     expect(() => targets[id].paths({ scope: 'global', projectDir: '/tmp', home: '/home' }))
       .toThrow(/project scope only/);
   }
@@ -641,9 +618,9 @@ function snapshotTree(dir: string): Map<string, string> {
   return out;
 }
 
-const CORE_SKILLS = ['mugiwara-orchestration', 'mugiwara-planning', 'mugiwara-execution', 'mugiwara-checkpoint', 'mugiwara-gates', 'mugiwara-quality', 'mugiwara-lessons'];
+const CORE_SKILLS = ['mugiwara-orchestration', 'mugiwara-planning', 'mugiwara-execution', 'mugiwara-checkpoint', 'mugiwara-quality'];
 
-test('absent features= key installs all 21 skills (zero-migration compat)', () => {
+test('absent features= key installs all 14 skills (zero-migration compat)', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-featabsent-'));
   const r = installTo(fakeTarget, { ...opts, projectDir: dir });
   expect(r.written.length).toBeGreaterThanOrEqual(35);

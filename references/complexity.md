@@ -1,7 +1,9 @@
 # Cyclomatic complexity — measurement method
 
 McCabe cyclomatic complexity: `CC = 1 + decision points` in a function. The
-gate for "is this function too complex" — measured, not eyeballed.
+gate for "is this function too complex" — measured, not eyeballed. Sanji
+measures it in the quality stage; Robin reads the numbers from the quality
+report and does not re-measure.
 
 ## Decision points (count each occurrence)
 

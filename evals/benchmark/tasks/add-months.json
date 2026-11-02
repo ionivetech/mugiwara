@@ -1,0 +1,15 @@
+{
+  "id": "add-months",
+  "title": "Add months to a date",
+  "trap": "End-of-month dates must clamp to the last day of the target month (Jan 31 plus one month is Feb 28/29), not overflow into the next month.",
+  "prompt": "Add addMonths(date, months) to src/dates.js. It takes a Date and an integer number of months (negative goes back) and returns a new Date that many calendar months away, keeping the time of day. Work in UTC. Do not change the Date that was passed in. Add tests in test/dates.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/dates.js": "export const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;\n",
+    "test/dates.test.js": "import { test, expect } from 'bun:test';\nimport { addMonths } from '../src/dates.js';\nconst iso = (d) => d.toISOString();\ntest('adds months', () => {\n  expect(iso(addMonths(new Date('2024-03-15T10:30:00Z'), 1))).toBe('2024-04-15T10:30:00.000Z');\n  expect(iso(addMonths(new Date('2024-11-10T00:00:00Z'), 3))).toBe('2025-02-10T00:00:00.000Z');\n});\ntest('negative months go back', () => expect(iso(addMonths(new Date('2024-01-20T08:00:00Z'), -2))).toBe('2023-11-20T08:00:00.000Z'));\ntest('does not change its input', () => {\n  const d = new Date('2024-05-05T00:00:00Z');\n  addMonths(d, 4);\n  expect(iso(d)).toBe('2024-05-05T00:00:00.000Z');\n});\n"
+  },
+  "hidden": {
+    "test/dates.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { addMonths } from '../src/dates.js';\nconst iso = (s, n) => addMonths(new Date(s), n).toISOString();\ntest('month end clamps to the last day of the target month', () => {\n  expect(iso('2023-01-31T09:00:00Z', 1)).toBe('2023-02-28T09:00:00.000Z');\n  expect(iso('2024-01-31T09:00:00Z', 1)).toBe('2024-02-29T09:00:00.000Z');\n  expect(iso('2024-05-31T00:00:00Z', 1)).toBe('2024-06-30T00:00:00.000Z');\n});\ntest('clamping also holds going back, across years and for long jumps', () => {\n  expect(iso('2024-03-31T12:00:00Z', -1)).toBe('2024-02-29T12:00:00.000Z');\n  expect(iso('2024-08-31T00:00:00Z', 6)).toBe('2025-02-28T00:00:00.000Z');\n  expect(iso('2024-01-31T00:00:00Z', 13)).toBe('2025-02-28T00:00:00.000Z');\n  expect(iso('2024-02-29T00:00:00Z', 12)).toBe('2025-02-28T00:00:00.000Z');\n});\n"
+  }
+}

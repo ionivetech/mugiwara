@@ -1,7 +1,6 @@
 # Adversarial depth — doubt-driven verification inside the audit
 
-Folded from `mugiwara-claim-audit` (removed): one skill, two depths. The
-checklist above audits finished work; this pass verifies a decision while it
+One skill, two depths. The standard audit checks finished work; this pass verifies a decision while it
 is still in-flight — when a wrong call costs minutes to catch and hours to
 reverse. The default disposition of the decider is self-preferential: biased
 toward its own conclusion. Doubt is the counterweight, and it works best in a
@@ -47,7 +46,7 @@ the claim's summary. Classify: contract-misread, actionable, trade-off,
 noise. Report the first three. Fix or reject. A surviving decision is not
 "correct" — it is "still standing after the search."
 
-### 5. STOP — cap 3 rounds, then escalate
+### 5. STOP — cap at `heal_max_cycles` rounds, then escalate
 
 After the cap the claim is reconciled or it is not. If not, STOP and escalate
 with the unresolved claim — never restart and call it rigor.
@@ -58,9 +57,6 @@ with the unresolved claim — never restart and call it rigor.
 | --- | --- |
 | "It's obvious, no need to doubt" | Obviousness is a bias signal, not proof. |
 | "The plan says so" | The plan is the claim, not the evidence. |
-| "We tested it" | Tests prove only what they cover. |
-| "Fresh context costs time" | Wrong decisions cost more. |
-| "One more round will settle it" | Unproductive third round means escalate. |
 | "I'm just double-checking" | Confirming is validating. Stop. |
 
 ## Red flags (adversarial)
@@ -69,7 +65,7 @@ with the unresolved claim — never restart and call it rigor.
 - A fact checked only in the confirming direction.
 - Findings from the decider's own context, no fresh re-derivation.
 - "Verified" without classification.
-- Past 3 rounds instead of escalating.
+- Going past `heal_max_cycles` rounds instead of escalating.
 - Editing code to "prove" a point — doubt finds, implementers fix.
 
 ## Verification output

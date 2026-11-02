@@ -1,0 +1,15 @@
+{
+  "id": "csv-rows",
+  "title": "Parse CSV rows",
+  "trap": "Real CSV has quoted fields: commas, doubled quotes and line breaks inside quotes belong to the value, and CRLF line endings are common.",
+  "prompt": "Add parseCsv(text) to src/csv.js. The first line is the header; return an array with one object per data row, keyed by the header names, all values as strings. Add tests in test/csv.test.js.",
+  "accept": "bun test test/",
+  "files": {
+    "package.json": "{\"name\":\"fixture\",\"type\":\"module\"}\n",
+    "src/csv.js": "export const columns = (rows) => Object.keys(rows[0] ?? {});\n",
+    "test/csv.test.js": "import { test, expect } from 'bun:test';\nimport { parseCsv } from '../src/csv.js';\ntest('parses header and rows', () => {\n  expect(parseCsv('id,name\\n1,Ann\\n2,Bo\\n')).toEqual([{ id: '1', name: 'Ann' }, { id: '2', name: 'Bo' }]);\n});\ntest('no trailing newline, empty values', () => {\n  expect(parseCsv('a,b\\n1,')).toEqual([{ a: '1', b: '' }]);\n});\ntest('header only', () => expect(parseCsv('a,b\\n')).toEqual([]));\n"
+  },
+  "hidden": {
+    "test/csv.hidden.test.js": "import { test, expect } from 'bun:test';\nimport { parseCsv } from '../src/csv.js';\ntest('quoted commas and doubled quotes stay in the value', () => {\n  expect(parseCsv('name,note\\n\"Smith, Ann\",\"said \"\"hi\"\"\"\\n')).toEqual([{ name: 'Smith, Ann', note: 'said \"hi\"' }]);\n});\ntest('a line break inside quotes stays in the value', () => {\n  expect(parseCsv('id,note\\n1,\"line one\\nline two\"\\n2,plain\\n')).toEqual([{ id: '1', note: 'line one\\nline two' }, { id: '2', note: 'plain' }]);\n});\ntest('CRLF line endings, no phantom last row', () => {\n  expect(parseCsv('a,b\\r\\n1,2\\r\\n3,4\\r\\n')).toEqual([{ a: '1', b: '2' }, { a: '3', b: '4' }]);\n});\n"
+  }
+}

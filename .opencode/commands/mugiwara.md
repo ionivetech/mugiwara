@@ -28,7 +28,7 @@ loads orchestration and follows that table; this slash command is that same
 router surfaced for the hosts that have slash commands.
 
 Run it down the ladder — global `mugiwara <cmd>` if present, else
-`npx -y @ionivetech/mugiwara@latest <cmd>`, else `.mugiwara/bin/` shell
+`npx -y @ionivetech/mugiwara@1.0.5 <cmd>`, else `.mugiwara/bin/` shell
 fallbacks, else direct `.mugiwara/missions/` file ops — print stdout/stderr
 verbatim, then follow the exit code from the reference. Full ladder:
 workflow skill → CLI availability (`references/cli-ladder.md`).
@@ -40,6 +40,7 @@ workflow skill → CLI availability (`references/cli-ladder.md`).
 | `continue [<m> [member]]` | `mugiwara continue` |
 | `status [--all]` | `mugiwara status` |
 | `cost [--mission <id>] [--ledger]` | `mugiwara cost` |
+| `crew` | `mugiwara crew` — who is on the crew, when each appears, what each may write |
 | `handoff [<m>] [--path <file>]` | `mugiwara handoff` — bare lists in-flight |
 | `sign [<m>] [--verify]` / `sign --gen-key` | `mugiwara sign` — bare lists signable |
 | `lesson "<text>"` | `mugiwara lesson` |
@@ -53,4 +54,23 @@ table and ask which job was meant.
 
 ## 3. Workflow entry
 
-For workflow: `mugiwara-orchestration` auto-loads as gatekeeper — classify, route, check-in, close. See skills/mugiwara-workflow for the full pipeline. `mugiwara off` for a request stands the crew down.
+Size the request BEFORE loading anything. A small request must cost about what
+a plain agent costs.
+
+- **Full process**: the request mentions or implies login or auth, roles or
+  permissions, payments or billing, secrets or tokens, migrations or schema, or
+  CI; or it touches 9 or more files; or the user says "use the full crew". FIRST
+  load the `mugiwara-orchestration` skill and run triage: record the mission
+  with `mugiwara savepoint <mission> --flow 0` (the CLI form; the shell
+  fallback takes the same flags). Then follow
+  skills/mugiwara-orchestration/references/pipeline.md.
+- **Everything else** (one feature or fix, a few files, no risk area above):
+  work directly, test-first. Do not load the skill, do not create a mission, do
+  not read references, do not delegate. Write the failing test, make it pass,
+  run the repo's tests, answer in a few lines: what changed, what ran, what
+  you did not check. Treat each edge case the request implies as part of the
+  work, not as a follow-up.
+
+If the real diff turns out risky (a sensitive path, 9 or more files), the stop
+hook holds the session open and you switch to the full process. `mugiwara off`
+for a request stands the crew down.

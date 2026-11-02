@@ -1,6 +1,6 @@
 # Code Attribute Deep Review
 
-Sanji produces metrics (quantitative), Robin interprets context (qualitative).
+Sanji produces the metrics, including complexity; Robin interprets context.
 Sanji's quality report is input to this review.
 
 ## Consistency

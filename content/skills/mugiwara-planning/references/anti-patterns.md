@@ -14,4 +14,4 @@ Patterns that fail the quality bar. Every one means: fix the plan before handoff
 | No Break point on 8+ file task | Unreviewable commit | Split into 2 tasks at natural seam |
 | Gold-plating | Speculative features | Cut to minimum that satisfies acceptance |
 | No rollback on high-risk task | Can't undo if it fails | Add: "revert commit X, re-deploy" |
-| "Executor will figure it out" | Fiction — wave stalls or ships wrong | Write the plan so a zero-context engineer can execute |
+| "Executor will figure it out" | Fiction: the wave stalls or ships wrong | Write the plan so a zero-context engineer can execute |

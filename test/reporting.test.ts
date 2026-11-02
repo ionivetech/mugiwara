@@ -176,12 +176,13 @@ describe('archive integration — reporting enriches report.md', () => {
     expect(report).toContain('## Cost');
     expect(report).toContain('Used **1,000** of 50,000 tokens (2%)');
     expect(report).toContain('## Verdict');
-    expect(report).toContain('## What changed');
-    expect(report).toContain('## Gates');
+    expect(report).toContain('files changed (+0 / -0) on branch `feat/test`');
+    expect(report).toContain('## Evidence');
+    expect(report).toContain('<summary>Tooling log</summary>');
     expect(report).toContain('## Decisions');
     expect(report).toContain('## Not verified');
-    expect(report).not.toContain('## Archived: cost-events.jsonl');
-    expect(report).not.toContain('## Archived: context-registry.jsonl');
+    expect(report).not.toContain('Archived:');
+    expect(report).not.toContain('Context footprint');
     expect(report).not.toContain('{"ts"');
     expect(report).not.toContain('n/a (no registry');
     expect(existsSync(join(dir, 'cost-events.jsonl'))).toBe(false);

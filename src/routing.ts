@@ -56,9 +56,9 @@ export function renderRouting(ranked: RankedFile[], mission: string): string {
   if (!ranked.length) return '';
   const lines = [
     '',
-    '## Review routing',
+    '## Where to start reviewing',
     '',
-    `Ranked reading order for \`${mission}\` (heuristic ordering — it decides where to look first, never correctness):`,
+    'Suggested reading order, most important first. It says where to look first, not what is correct:',
     '',
   ];
   ranked.forEach((r, i) => {

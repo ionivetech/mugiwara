@@ -6,6 +6,6 @@ export const target = makeGeneric({
   label: 'Gemini',
   rulesDir: '.gemini/mugiwara',
   bootstrapFile: 'GEMINI.md',
-  bootstrapPointer: 'Mugiwara crew installed in .gemini/mugiwara/ — read .gemini/mugiwara/mugiwara-workflow.md to run the pipeline inline in the main conversation.',
+  bootstrapPointer: 'Mugiwara crew installed in .gemini/mugiwara/ — read .gemini/mugiwara/mugiwara-orchestration.md to run the pipeline inline in the main conversation.',
   tier: 3, // T1: stub bodies to refs; bootstrapFile write is tier-independent
 });

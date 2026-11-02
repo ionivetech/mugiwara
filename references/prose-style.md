@@ -1,8 +1,25 @@
 # Prose Style — how mugiwara writes
 
 Applies to every sentence a human reads in the output: mission reports,
-review findings prose, PR descriptions, closure summaries, code comments.
-Findings keep their one-line format; this governs everything around them.
+review findings prose, PR descriptions, closure summaries, code comments, and
+every file the crew writes under `.mugiwara/`: `plan.md`, `spec.md`,
+`decisions.md`, `blockers.md`, `review.md`, `security.md`, `report.md`,
+`pr-verdict.md`, `flows/*`, lessons, and memory. Findings keep their one-line
+format; this governs everything around them. Artifact shapes:
+`mugiwara-orchestration` (artifact-templates.md).
+
+## Artifacts
+
+- Write for the pull-request reviewer: say what happened ("tests failed
+  twice, fixed on the third run"), not internal state names. Internal fields
+  stay in `state.json` and `continue.json`.
+- Short paragraphs and a few tables; no table where a sentence works. One
+  title, no repeated intro, no emoji, no decorative capitals.
+- Banned in artifacts: filler openers, hedges, inflation words, rhetorical
+  questions, marketing tone, and rule-voice copied from skill text
+  ("MANDATORY", "defect").
+- Decisions are one line each: what was chosen, why, who (name or handle,
+  never an email).
 
 ## Openings
 

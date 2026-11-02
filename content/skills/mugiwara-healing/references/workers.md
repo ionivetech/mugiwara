@@ -1,58 +1,42 @@
-# Worker Subagents
+# Worker subagents
 
-Brook runs inline for triage + ledger reading. Parallel fixes use disposable WORKER subagents.
+Brook runs inline for triage and ledger reading. Parallel fixes use disposable workers. Workers are not crew members.
 
-## Heal workers (parallel fixes)
+## Fix workers (parallel fixes)
 
-After triage, group ledger rows that are **independent** (different files, no shared function/interface) for parallel healing:
+After triage, group ledger rows that are independent (different files, no shared function or interface) and fix them in parallel:
 
 ```
 Ledger: 4 rows
-├─ Row 1: T3 settings POST guard missing     → src/routes/settings.ts
-├─ Row 2: T5 formatDate locale bug           → src/utils/format.ts
-├─ Row 3: review minor: error msg wording    → src/middleware/rbac.ts
-├─ Row 4: coverage: add test for edge case   → src/routes/users.test.ts
+- Row 1: T3 settings POST guard missing   -> src/routes/settings.ts
+- Row 2: T5 formatDate locale bug         -> src/utils/format.ts
+- Row 3: review minor: error wording      -> src/middleware/rbac.ts
+- Row 4: coverage gap for an edge case    -> src/routes/users.test.ts
 
-Group 1 [PARALLEL]: Row 1 (settings.ts) + Row 2 (format.ts) + Row 4 (users.test.ts)
-                     → 3 files, no shared surface → 3 heal workers parallel
-Group 2 [SEQUENTIAL]: Row 3 (rbac.ts)
-                       → shares interface with Row 1 (middleware) → after Group 1
+Group 1 [PARALLEL]: rows 1, 2, 4 (3 files, no shared surface, 3 workers)
+Group 2 [SEQUENTIAL]: row 3 (shares the middleware interface with row 1, runs after group 1)
 ```
 
-Each heal worker receives a prompt with 5 fields:
-- **FAILURE** — ledger row verbatim (flow stage, task, symptom, attempted)
-- **ROOT CAUSE** — Brook's triage result: where the bug is, why it happened
-- **FIX** — what to change, which file, which function
-- **MUST DO** — Prove-It: write regression test, watch it fail, implement fix, watch it pass, commit
-- **MUST NOT** — files outside scope, drive-by refactor, delete/weaken tests
+Each fix worker gets five fields:
+- FAILURE: the ledger row verbatim.
+- ROOT CAUSE: Brook's triage result, where the bug is and why.
+- FIX: what to change, in which file and function.
+- MUST DO: write a regression test, watch it fail, fix, watch it pass, commit.
+- MUST NOT: touch files outside scope, refactor on the side, delete or weaken tests.
 
-## Validation workers (verify) — off by default
+## Validation workers: off by default
 
-Healing hands back to Flow 4, and Chopper re-runs every failed check there;
-Flow 7 then runs Robin and Jinbe over the same diff. A reviewer-worker, a
-security-worker and a re-run-check worker reproduce all three, one stage early,
-at roughly 132k tokens per dispatch against 5k inline. Three workers a cycle
-across the 3-cycle cap is ~1.19M tokens buying a verdict the next two stages
-derive anyway.
+After the fix stage, Chopper re-runs every failed check and Robin and Jinbe review the same diff. A reviewer worker, security worker, and re-run worker reproduce those results one step early at about 132k tokens each against about 5k inline, for a verdict the next two stages produce anyway. So dispatch none by default: aggregate the fix results, update the ledger, hand back.
 
-So: **dispatch none of them by default.** Aggregate the heal results, update the
-ledger, hand back to Flow 4.
+Dispatch one only when fresh context beats waiting:
 
-Dispatch a validation worker only when fresh context genuinely beats the next
-stage, which is one of two cases:
-
-| Trigger | Worker | Why it beats waiting for Flow 4/7 |
+| Trigger | Worker | Why |
 |---|---|---|
-| the heal touched a sensitive path (auth, payment, secrets, migration, public API) | `security-worker` | Jinbe runs at Flow 7, two gates away — a sensitive-path regression should not travel that far unexamined |
-| `heal_cycle ≥ 2` on the same row | `reviewer-worker` | Brook has now failed the same row twice; its own context is the suspect, and fresh eyes are the point |
+| The fix touched a sensitive path (auth, payment, secrets, migration, public API) | security worker | Jinbe runs two stages later; a sensitive regression should not travel that far unexamined |
+| Second attempt on the same row | reviewer worker | Brook has failed the row twice; its own context is the suspect |
 
-`re-run-check worker` has no trigger — Chopper re-runs the checks at Flow 4 as
-its entire job, and running them one stage early only produces evidence Chopper
-must re-derive to trust. Record the skip; do not dispatch it.
+A re-run worker has no trigger: Chopper's whole job is re-running. Record the skip.
 
-Log the dispatch decision either way — which workers ran, or the one line saying
-none did and why. Trail row `slop-governor`.
+Log the decision either way: which workers ran, or one line saying none did and why.
 
-Flow: Brook triage + grouping → dispatch heal workers parallel → aggregate results → (validation worker only on a trigger above) → update ledger → back to Flow 4.
-
-Workers are NOT crew members — disposable subagents, one narrow job per worker. Crew runs inline in main thread.
+Sequence: triage and grouping, fix workers in parallel, aggregate, (validation worker only on a trigger), update the ledger, recommend Chopper for the re-check.

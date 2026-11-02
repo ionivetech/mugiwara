@@ -22,9 +22,6 @@
     ],
     "negative": [
       {
-        "prompt": "check if the coverage threshold is met"
-      },
-      {
         "prompt": "review the diff for breaking changes"
       }
     ]

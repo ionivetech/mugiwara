@@ -23,10 +23,10 @@ import type { ContextMetrics } from './context.ts';
 // ── Lane constants (MUST equal scripts/lib/lane-base.sh — enforced by test) ──
 
 export const LANE_BASE: Record<string, number> = {
-  lean: 8421,
-  standard: 15995,
-  full: 22016,
-  spike: 5411,
+  lean: 7137,
+  standard: 11732,
+  full: 20424,
+  spike: 5311,
 };
 
 export const LANE_BUDGET: Record<string, number> = {
@@ -183,7 +183,9 @@ export function recordOptDecision(missionDir: string, d: Omit<OptDecision, 'ts'>
   // into decisions.md → report.md (S2). CR/LF become spaces.
   const flat = (s: string): string => s.replace(/[\r\n]+/g, ' ');
   const ev = d.evidence ? ` — evidence: ${flat(d.evidence)}` : '';
-  const bullet = `- ${ts} — ${flat(d.actor)}: ${flat(d.decision)} — reason: ${flat(d.reason)}${ev}`;
+  // actor is a name/handle only, never `name <email>` (decisions.md is pushed).
+  const actor = flat(d.actor).replace(/\s*<[^<>\s]+@[^<>\s]+>/g, '');
+  const bullet = `- ${ts} — ${actor}: ${flat(d.decision)} — reason: ${flat(d.reason)}${ev}`;
   const body = hasSection ? `\n${bullet}\n` : `\n${OPT_SECTION}\n\n${bullet}\n`;
   appendFileSync(file, body, 'utf8');
 }

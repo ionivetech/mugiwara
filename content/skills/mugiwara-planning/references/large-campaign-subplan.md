@@ -1,41 +1,18 @@
-# Large Campaign — Sub-Plan Governance (Planning)
+# Large campaign: sub-plan split (planning)
 
-Trigger: `phase count >3` or `plan.md >1500 lines` (`wc -l`). When triggered, Nami auto-splits.
+Trigger: more than 3 phases, or `plan.md` over 1500 lines (`wc -l`). When triggered, Nami splits the plan.
 
 ## Naming
 
-- `sub-plan/NN-phaseNN-<slug>.md` (zero-padded, slug from `Phase N: Title` lowercased, `[^a-z0-9]+` → `-`)
-- Master `plan.md` holds Mission split table (index) + DoD + how-to-start; detail lives in `sub-plan/`
-- Example: `sub-plan/01-phase01-cost-governor-foundation.md`
+- `sub-plan/NN-phaseNN-<slug>.md`: zero-padded, slug from `Phase N: Title` lowercased with each run of non-alphanumerics turned into `-`. Example: `sub-plan/01-phase01-foundation.md`.
+- The master `plan.md` holds the mission split table (index), the definition of done, and how to start. Detail lives in `sub-plan/`. The master stays under 1500 lines.
+- Evidence for each phase lives in `flows/phase-NN/` with the usual file names: `01-execution.md`, `02-audit.md`, `03-quality.md`, `04-gates.md`. The archive step folds them into `report.md`. Execution side: `mugiwara-execution`.
 
-## Master index
+## Phase isolation vs sub-mission
 
-Master `plan.md` never exceeds 1500 lines — detail lives in sub-plan slices.
+- Phase isolation: one mission, one plan. Slices carry the detail, `flows/phase-NN/` carries the evidence. Phase-local choices live in the slice.
+- True sub-mission: a separate, independently mergeable unit with its own branch, done-criteria, continuation pointer, and mergeable end state. Only Nami creates one, explicitly.
 
-## Phase isolation vs true sub-mission
+## Write conflicts
 
-Two distinct decisions — do not conflate:
-
-- **Phase isolation** (sub-plan) = ONE mission, one plan. `sub-plan/NN-phaseNN-*.md`
-  slices detail; `flows/phase-NN/` owns evidence; archive folds the
-  trail. Phase-local posture lives in the slice.
-- **True sub-mission** = a SEPARATE, independently mergeable unit: own branch,
-  done-criteria, continuation pointer, and mergeable end state. Only Nami
-  creates it explicitly.
-
-## Dependency / write conflicts
-
-Each slice's task index makes write-conflict groups explicit: tasks that write
-the same file/area are never parallel. `[PARALLEL]` requires file- AND
-interface-disjoint proof (shared CODEOWNERS area is a conflict). Speculative
-parallelization is prohibited — every parallel set traces to an evidence-backed
-dependency map.
-
-## Skill body rule
-
-If body would exceed 120 lines, move checklist here; SKILL.md keeps one-line pointer.
-
-## Acceptance
-
-- `grep -c "sub-plan" content/skills/mugiwara-planning/SKILL.md` ≥1
-- `validate-content --check-manifest --check-docs` 0
+Each slice's task index names its write-conflict groups: tasks that write the same file or area are never parallel. `[PARALLEL]` needs file-disjoint and interface-disjoint proof; a shared CODEOWNERS area is a conflict. Every parallel set traces to an evidence-backed dependency map.

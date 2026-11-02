@@ -104,6 +104,7 @@ const RUNTIME_SHAPES: RegExp[] = [
   /^\.mugiwara\/bin\/$/,                                        // shell-fallback dir installed by `mugiwara install`
   /^\.mugiwara\/missions\/<mission>\/?$/,                       // mission dir itself (roster derivation scans it)
   /^\.mugiwara\/active-member$/,                                 // roster-pick cache written by continue/join
+  /^\.mugiwara\/review-dispatch\.jsonl$/,                         // ledger of real review/security subagent dispatches, written by the Claude Code hook
 ];
 
 // Shape violations that exist today and are NOT fixed in this mission because

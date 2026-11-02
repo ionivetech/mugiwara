@@ -35,6 +35,12 @@ export function modelLabel(): string {
     || 'model-unrecorded (set MUGIWARA_MODEL to attribute)';
 }
 
+/** Actor as name/handle only: drops `<email>` and any bare email address (output may be pushed). */
+export function actorName(actor: string): string {
+  const n = (actor || '').replace(/\s*<[^<>]*>/g, '').replace(/[^\s<>]+@[^\s<>]+/g, '').replace(/\s+/g, ' ').trim();
+  return n || 'unknown';
+}
+
 /** The provenance block — identical wording in the note and the md file. */
 export function buildNote(s: {
   mission: string; actor: string; lane: string; mode: string; branch: string;
@@ -48,7 +54,7 @@ export function buildNote(s: {
   const modelPart = uniqModels.length ? `model(s): ${uniqModels.join(', ')}` : (s.model ?? modelLabel());
   return [
     `mission: ${s.mission}`,
-    `agent: ${s.actor || 'unknown'} · ${modelPart} · lane ${s.lane} · mode ${s.mode}`,
+    `agent: ${actorName(s.actor)} · ${modelPart} · lane ${s.lane} · mode ${s.mode}`,
     `tasks: ${s.tasks_done}/${s.tasks_total}`,
     `gates/evidence: ${gates}`,
     `branch: ${s.branch}`,

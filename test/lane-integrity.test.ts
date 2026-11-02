@@ -3,6 +3,7 @@
 // Uses test/fixtures/*.json materialized by scripts/setup-fixtures.ts.
 // Every assertion is non-trivial — a field that reads a wrong value fails
 // (G3 assertion rule).
+import { initBaseRepo } from './helpers/git-fixture';
 import { test, expect } from 'bun:test';
 import { execSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
@@ -28,7 +29,7 @@ function fixtureDir(tag: string): string {
 
 // git init defaults to `main`; this creates a base commit and branches off it.
 function baseRepo(dir: string) {
-  execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -q -b feat-w', { cwd: dir });
+  initBaseRepo(dir, { email: 't@t.com', name: 'T', branch: 'feat-w' });
 }
 
 function run(bin: string, args: string[], cwd: string, envExtra: Record<string, string> = {}): { status: number | null; stdout: string; stderr: string } {
@@ -224,7 +225,7 @@ test('case 15: lane.sh and savepoint.sh agree (shared patterns)', { timeout: SLO
 test('case 16: churn 1800 -> tokens_est > 30000 (D4: churn x 12, not delta)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-churn-'));
   try {
-    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
+    initBaseRepo(dir, { email: 't@t.com', name: 'T' });
     // 3 files, 300 lines each committed on main = the base tree
     execSync('mkdir -p src', { cwd: dir });
     for (let i = 0; i < 3; i++) {
@@ -288,9 +289,9 @@ test('case 20: LANE_BASE matches lane-base.ts computed load (D5)', { timeout: SL
   try {
     runSavepoint(dir, 'm', '', 1, 'guided');
     const state = readState(dir);
-    // standard LANE_BASE is 15995 from scripts/lib/lane-base.sh
+    // standard LANE_BASE is 11732 from scripts/lib/lane-base.sh
     expect(state.budget).toBe(30000);
-    expect(state.tokens_est).toBeGreaterThan(15000);
+    expect(state.tokens_est).toBeGreaterThan(11000);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -305,7 +306,7 @@ test('case 21: lane-base generator validates constants (gate)', { timeout: SLOW 
 test('case 25: team member -> missions/<mission>/<member>.json, branch from git (D7)', { timeout: SLOW }, () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-br-'));
   try {
-    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base && git checkout -qb feat/other', { cwd: dir });
+    initBaseRepo(dir, { email: 't@t.com', name: 'T', branch: 'feat/other' });;
     const r = spawnSync('bash', [SAVEPOINT, 'm', 'patty', '1', 'guided'], {
       cwd: dir, encoding: 'utf8', env: { ...process.env, MUGIWARA_DIR: join(dir, '.mugiwara') },
     });
@@ -323,7 +324,7 @@ test('case 25: team member -> missions/<mission>/<member>.json, branch from git 
 test('case 27: uninstall leaves no mugiwara lines in .gitignore (D8)', { timeout: SLOW }, async () => {
   const dir = mkdtempSync(join(tmpdir(), 'mugi-uni-'));
   try {
-    execSync('git init -q && git config user.email t@t.com && git config user.name T && git commit --allow-empty -qm base', { cwd: dir });
+    initBaseRepo(dir, { email: 't@t.com', name: 'T' });
     const { ensureProjectGitignore, removeProjectGitignore } = await import(INSTALLER);
     writeFileSync(join(dir, '.gitignore'), 'node_modules/\ndist/\n');
     ensureProjectGitignore(dir);
@@ -467,7 +468,7 @@ test('fixture expect: sensitive-paths → full with ≥14 sensitive paths', { ti
 
 test('fixture expect: sensitive-paths-negative → standard, zero sensitive', { timeout: SLOW }, () => assertFixtureExpect('sensitive-paths-negative'));
 
-test('case 35: lanes.md pattern block matches patterns.sh (drift gate)', () => {
+test('case 35: mission-flow.md pattern block matches patterns.sh (drift gate)', () => {
   const pats = readFileSync(join(ROOT, 'scripts', 'lib', 'patterns.sh'), 'utf8');
   const m = pats.match(/SENSITIVE_PATS="([^"]+)"/);
   expect(m).not.toBeNull();
@@ -475,7 +476,7 @@ test('case 35: lanes.md pattern block matches patterns.sh (drift gate)', () => {
   // NOTE: the doc block is DISPLAY form — paste the raw regex verbatim and this
   // test goes red (fail-safe direction: false red, never false green).
   const sourceTokens = new Set(m![1].split('|').map(t => t.replace(/\\/g, '').replace(/\$$/, '')));
-  const doc = readFileSync(join(ROOT, 'docs', 'concepts', 'lanes.md'), 'utf8');
+  const doc = readFileSync(join(ROOT, 'docs', 'concepts', 'mission-flow.md'), 'utf8');
   const after = doc.slice(doc.indexOf('The patterns live in one place'));
   const block = after.match(/```\n([\s\S]*?)\n```/)?.[1];
   expect(block).toBeTruthy();

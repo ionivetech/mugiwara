@@ -44,6 +44,8 @@ for (const name of HOOK_ENTRIES) {
     rmSync(tmp, { force: true });
     if (readFileSync(out, 'utf8') !== built) {
       console.error(`stale build: hooks/${name}.js does not match ${name}.ts — run \`bun run build-hooks\` and commit it`);
+      const pin = readFileSync(join(root, '.github', 'workflows', 'ci.yml'), 'utf8').match(/bun-version:\s*([\d.]+)/)?.[1];
+      if (pin && pin !== Bun.version) console.error(`  note: CI builds with bun ${pin} and this is bun ${Bun.version}; bundles differ between versions, so rebuild with bun ${pin} (for example \`npx bun@${pin} scripts/build-hooks.ts\`).`);
       failed = true;
     }
     continue;

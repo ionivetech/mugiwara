@@ -64,6 +64,8 @@ All must pass on every PR. Run locally with:
 bun run gate     # everything CI runs on a PR
 ```
 
+Tests are split: `bun run test` runs the fast suites (about 10 s); `bun run test:slow` runs the six files that call `scripts/savepoint.sh` many times (savepoint, lane-integrity, team-roster, harness, hooks, enforcement). `gate` runs everything through `test:coverage`, so slow files are never skipped there. A new slow file must be added to both lists in `package.json` (`test` ignores it, `test:slow` names it). Build test repos with `initBaseRepo` from `test/helpers/git-fixture.ts`, not `git init` per test.
+
 ### Per-PR gates
 
 ```bash
@@ -180,12 +182,15 @@ manifest.
 
 ## Docs drift
 
-`docs/concepts/skills.md` must mention every skill directory. `docs/concepts/agents.md` must
-mention every agent file. Enforced by `--check-docs`.
+`docs/concepts/crew.md` must mention every skill directory and every agent
+file, and carry the canonical agent count ("11 agents (+2 internal)"). Enforced
+by `--check-docs`. Writing rules for all docs are in
+`docs/contributing/CONTRIBUTING-DOCS.md`; run `bun scripts/check-doc-links.ts`
+after moving or renaming a page.
 
 ## Skill count
 
-21 is the ceiling. A new skill replaces an old one — never add to grow.
+14 is the ceiling. A new skill replaces an old one — never add to grow.
 
 ## Commit style
 
@@ -194,8 +199,8 @@ Conventional Commits: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`.
 ## Directory map
 
 ```
-content/skills/    — 21 skill dirs, each with SKILL.md + optional references/
-content/agents/    — 14 agent .md files (11 user-facing + 3 internal)
+content/skills/    — 14 skill dirs, each with SKILL.md + optional references/
+content/agents/    — 13 agent .md files (11 user-facing + 2 internal)
 references/         — shared reference files (definition-of-done, source-grounding, etc.)
 docs/               — user-facing documentation
 scripts/            — validation + tooling scripts

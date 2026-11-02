@@ -200,7 +200,7 @@ describe('resolveContinue — the three command forms', () => {
   });
 });
 
-describe('formatResume — the single-line contract mugiwara-resume depends on', () => {
+describe('formatResume — the single-line contract mugiwara-orchestration resume reference depends on', () => {
   test('solo entry: no member scope, all five fields present on one line', () => {
     const line = formatResume({
       mission: 'seamless', member: null, actor: 'a', branch: 'main', flow: 3, mode: 'auto',

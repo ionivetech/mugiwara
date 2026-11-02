@@ -20,6 +20,7 @@ import {
   runWasteChecks,
   recordWasteChecks,
   shouldBlockWaste,
+  detectDuplicateExplanation,
 } from '../src/work.ts';
 
 describe('classifyStage — required/conditional/optional (§7)', () => {
@@ -151,7 +152,7 @@ describe('evaluateInvocation — agent invocation control (§8)', () => {
 });
 
 describe('shouldLoadSkill — skill loading control (§9)', () => {
-  const base = { skill: 'mugiwara-git', required_by_task: false, required_by_policy: false, required_by_dependency: false, failing_verification: false };
+  const base = { skill: 'mugiwara-execution', required_by_task: false, required_by_policy: false, required_by_dependency: false, failing_verification: false };
 
   it('required_by_task alone → load', () => {
     expect(shouldLoadSkill({ ...base, required_by_task: true }).load).toBe(true);
@@ -191,8 +192,8 @@ describe('evaluateDelegation — delegation optimization (§30, Q1 remainder)', 
 
   it('overhead floors at lane_base — value below floor refuses delegation', () => {
     const r = evaluateDelegation({ ...base, lane: 'full', parallel_value: 5000, estimated_overhead: 4000 });
-    expect(r.lane_base).toBe(22016);
-    expect(r.overhead).toBe(22016); // max(4000, 22016) floor
+    expect(r.lane_base).toBe(20424);
+    expect(r.overhead).toBe(20424); // max(4000, 20424) floor
     expect(r.delegate).toBe(false);
     expect(r.parallel_value).toBe(5000);
   });
@@ -200,7 +201,7 @@ describe('evaluateDelegation — delegation optimization (§30, Q1 remainder)', 
   it('value exceeds floor and within budget → delegate (budget_at = threshold math)', () => {
     const r = evaluateDelegation({ ...base, lane: 'full' });
     expect(r.budget_at).toBe(18000); // delegateAt(30000, 60)
-    expect(r.overhead).toBe(22016); // max(5000, 22016) floor
+    expect(r.overhead).toBe(20424); // max(5000, 20424) floor
     expect(r.delegate).toBe(true);
   });
 
@@ -388,5 +389,34 @@ describe('shouldBlockWaste — advisory-first gate (T6 anti-slop)', () => {
   it('2+ recorded rejections → block allowed', () => {
     expect(shouldBlockWaste(2)).toBe(true);
     expect(shouldBlockWaste(5)).toBe(true);
+  });
+});
+
+describe('detectDuplicateExplanation — duplicate explanation detection (§17/§18)', () => {
+  it('["fix X","fix X","fix Y"] → duplicate:true, duplicate_groups contains ["fix X","fix X"]', () => {
+    const r = detectDuplicateExplanation({ explanations: ['fix X', 'fix X', 'fix Y'] });
+    expect(r.duplicate).toBe(true);
+    expect(r.duplicate_groups.length).toBe(1);
+    expect(r.duplicate_groups[0]).toEqual(['fix X', 'fix X']);
+    expect(r.reason).toMatch(/duplicate/i);
+  });
+
+  it('all unique → duplicate:false, duplicate_groups:[]', () => {
+    const r = detectDuplicateExplanation({ explanations: ['fix X', 'fix Y', 'fix Z'] });
+    expect(r.duplicate).toBe(false);
+    expect(r.duplicate_groups).toEqual([]);
+    expect(r.reason).toContain('no duplicate');
+  });
+
+  it('multiple duplicate groups', () => {
+    const r = detectDuplicateExplanation({ explanations: ['a', 'a', 'b', 'b', 'c'] });
+    expect(r.duplicate).toBe(true);
+    expect(r.duplicate_groups.length).toBe(2);
+  });
+
+  it('empty explanations → duplicate:false', () => {
+    const r = detectDuplicateExplanation({ explanations: [] });
+    expect(r.duplicate).toBe(false);
+    expect(r.duplicate_groups).toEqual([]);
   });
 });

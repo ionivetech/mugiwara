@@ -10,15 +10,16 @@ import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
 import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
-import { resetMission, archiveMission, closureBlockers, rosterAssignees, rosterSize } from './mission.ts';
+import { recordStage, STAGES, type Stage } from './record.ts';
+import { resetMission, archiveMission, requireAttestation, closureBlockers, rosterAssignees, rosterSize } from './mission.ts';
 import { knownMembers } from './continue.ts';
 import { runScript, RUNNABLE } from './run.ts';
 import { readContinue, readState, resolveContinue, formatTable, formatResume, gitActor, hasLegacyLayout, CURRENT_SCHEMA_VERSION, unreadableStateFiles, type ContinueEntry } from './continue.ts';
-import { blamePath } from './provenance.ts';
-import { signReport, verifyReport, ensurePureKey, hasMinisign } from './sign.ts';
+import { crewRows, renderCrew } from './crew.ts';
+import { blamePath, actorName } from './provenance.ts';
 import { ensureConfig } from './config.ts';
 import { costEnvelope } from './cost.ts';
-import { readConfig } from './config.ts';
+import { modeNote, readConfig } from './config.ts';
 import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
 import { deriveStructuralIntents } from './intents.ts';
 import { computeLiveSlop } from './slop.ts';
@@ -27,12 +28,20 @@ import { fingerprint, loadRegistry } from './evidence.ts';
 import { runInitiative } from './initiative.ts';
 import { buildCostLedger, toCostJSON } from './reporting.ts';
 import { enforceHarnessPolicy } from './policy.ts';
+import { doctor, renderDoctor, pinMismatch } from './doctor.ts';
+import { inspectMissions, formatProblems } from './state-health.ts';
 
 const str = (v: FlagValue): string | undefined => (typeof v === 'string' ? v : undefined);
 const flag = (v: FlagValue): boolean => v === true;
 
 // Anchor to the repo root so running from a package subdirectory does not
 // create a shadow .mugiwara/ there. (B4)
+/** The resume line, plus a note when the config mode differs from the mission's. */
+function resumeLine(projectDir: string, e: ContinueEntry): string {
+  const note = modeNote(e.mode, readConfig(projectDir).mode);
+  return formatResume(e) + (note ? `\n  note: ${note}` : '');
+}
+
 function resolveProjectDir(explicit?: string): string {
   if (explicit) return resolve(explicit);
   try {
@@ -50,7 +59,7 @@ export async function run(argv: string[]): Promise<void> {
   // (only opencode is runtime-enforced). Covers run/savepoint/archive/status
   // + other workflow commands; install/update/uninstall/list are setup and bypass.
   {
-    const bypass = new Set(['install', 'update', 'uninstall', 'list', 'features']);
+    const bypass = new Set(['install', 'update', 'uninstall', 'list', 'features', 'doctor']);
     if (!bypass.has(command)) {
       const projectDirForHarness = resolveProjectDir(str(flags.project));
       enforceHarnessPolicy(projectDirForHarness);
@@ -61,7 +70,8 @@ export async function run(argv: string[]): Promise<void> {
   // a config. Also covered by readConfig() auto-create for non-CLI entry.
   // Skipped for install/update --dry-run: a dry run must not mutate the project.
   const isDryRunInstall = (command === 'install' || command === 'update') && flag(flags.dryRun);
-  if (!isDryRunInstall) {
+  // doctor is read-only: it must not even create the default config
+  if (!isDryRunInstall && command !== 'doctor') {
     const projectDir = resolveProjectDir(str(flags.project));
     if (ensureConfig(projectDir)) {
       console.log(`default .mugiwara/config written at ${join(projectDir, '.mugiwara', 'config')} (edit it to customise)`);
@@ -75,9 +85,12 @@ export async function run(argv: string[]): Promise<void> {
     case 'update': return install({ ...flags, force: true });
     case 'uninstall': return uninstall(flags);
     case 'list': return list(flags);
-    case 'reset': return resetCmd(flags);
-    case 'archive': return archive(flags, _);
-    case 'clean': return cleanCmd(flags);
+    case 'doctor': return doctorCmd(flags);
+    case 'reset': return resetCmd(flags, _);
+    case 'record': return recordCmd(flags, _);
+    case 'close': return await closeCmd(flags, _);
+    case 'archive': return await archive(flags, _);
+    case 'clean': return await cleanCmd(flags);
     case 'continue': return continueCmd(flags, _);
     case 'status': return statusCmd(flags);
     case 'cost': return costCmd(flags, _);
@@ -86,7 +99,8 @@ export async function run(argv: string[]): Promise<void> {
     case 'savepoint': return savepointCmd(flags, _);
     case 'join': return joinCmd(flags, _);
     case 'handoff': return handoffCmd(flags, _);
-    case 'sign': return signCmd(flags, _);
+    case 'sign': return await signCmd(flags, _);
+    case 'crew': console.log(renderCrew(crewRows())); return;
     case 'migrate': return migrateCmd(flags, _);
     case 'lesson': return lessonCmd(flags, _);
     case 'plan': return planCmd(flags, _);
@@ -217,11 +231,10 @@ function joinCmd(flags: Args['flags'], positionals: string[]): void {
   const decPath = join(missionDir, 'decisions.md');
   let decText = '';
   try { decText = readFileSync(decPath, 'utf8'); } catch { decText = '# Decisions\n\n| # | Decision | By | Why |\n|---|---|---|---|\n'; }
+  // Name only: decisions.md is archived into report.md and pushed, so no email.
   const actor = (() => {
     try {
-      const name = execFileSync('git', ['config', 'user.name'], { cwd: projectDir, encoding: 'utf8' }).trim();
-      const email = execFileSync('git', ['config', 'user.email'], { cwd: projectDir, encoding: 'utf8' }).trim();
-      return name && email ? `${name} <${email}>` : name || 'unknown';
+      return execFileSync('git', ['config', 'user.name'], { cwd: projectDir, encoding: 'utf8' }).trim() || 'unknown';
     } catch { return 'unknown'; }
   })();
   const date = new Date().toISOString().slice(0, 10);
@@ -234,8 +247,37 @@ function joinCmd(flags: Args['flags'], positionals: string[]): void {
   console.log(`joined ${mission} as ${member} (${area}) — plan updated, decisions logged, active-member set`);
 }
 
-function resetCmd(flags: Args['flags']): void {
+/** `mugiwara doctor [--json]` — read-only health check, exit 1 when any check fails. */
+function doctorCmd(flags: Args['flags']): void {
+  const checks = doctor(resolveProjectDir(str(flags.project)), homeDir());
+  const ok = !checks.some((c) => c.status === 'fail');
+  if (flag(flags.json)) console.log(JSON.stringify({ version: VERSION, ok, checks }, null, 2));
+  else {
+    console.log(renderDoctor(checks));
+    console.log(ok ? '\nAll checks passed.' : `\n${checks.filter((c) => c.status === 'fail').length} check(s) failed.`);
+  }
+  if (!ok) process.exit(1);
+}
+
+/** Stop with the bad file and the exact fix instead of crashing on corrupt mission state. */
+function failOnCorruptState(projectDir: string, mission?: string): void {
+  const problems = inspectMissions(projectDir, mission);
+  if (!problems.length) return;
+  console.error(formatProblems(problems));
+  process.exit(1);
+}
+
+function resetCmd(flags: Args['flags'], positionals: string[] = []): void {
   const projectDir = resolveProjectDir(str(flags.project));
+  const one = positionals[1];
+  if (one) {
+    // One named mission only: nothing else (other missions, lessons, index) is touched.
+    const dir = join(projectDir, '.mugiwara', 'missions', one);
+    if (!/^[\w.-]+$/.test(one) || !existsSync(dir)) { console.error(`✗ no mission named '${one}'. Run \`mugiwara continue\` to list them.`); process.exit(1); }
+    rmSync(dir, { recursive: true, force: true });
+    console.log(`removed mission: ${one}`);
+    return;
+  }
   const force = flag(flags.force);
   const result = resetMission(projectDir, flag(flags.keepLogs), force);
   if (result.blocked) {
@@ -271,7 +313,44 @@ function missionHasLiveState(projectDir: string, m: string): boolean {
   });
 }
 
-function archive(flags: Args['flags'], positionals: string[]): void {
+/** The mission to act on: the named one, or the only one; else list and exit 2 (the same pick-one contract as archive). */
+function pickMission(projectDir: string, named: string | undefined, verb: string): string {
+  if (named) return named;
+  const all = missionDirNames(projectDir);
+  if (all.length === 1) return all[0];
+  console.log(all.length ? `${all.length} missions: ${all.join(', ')}\nPick one: mugiwara ${verb} <mission>` : 'no missions.');
+  process.exit(2);
+}
+
+function recordCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const stage = positionals[1] as Stage | undefined;
+  if (!stage || !STAGES.includes(stage)) { console.error(`usage: mugiwara record <${STAGES.join('|')}> [mission] [--cmd "<command>"] [--note "<text>"]`); process.exit(2); }
+  const mission = pickMission(projectDir, positionals[2], `record ${stage}`);
+  const r = recordStage(projectDir, mission, stage, { cmd: str(flags.cmd), note: str(flags.note) });
+  if ('error' in r) { console.error(`✗ ${r.error}`); process.exit(1); }
+  console.log(`recorded: ${r.path}`);
+}
+
+/** Close a mission in one step: record the evidence the CLI can see, then archive. */
+async function closeCmd(flags: Args['flags'], positionals: string[]): Promise<void> {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const mission = pickMission(projectDir, positionals[1], 'close');
+  failOnCorruptState(projectDir, mission);
+  const flows = join(projectDir, '.mugiwara', 'missions', mission, 'flows');
+  for (const stage of ['execution', 'closure'] as const) {
+    if (existsSync(join(flows, `0${STAGES.indexOf(stage) + 1}-${stage}.md`))) continue;
+    const r = recordStage(projectDir, mission, stage);
+    if ('error' in r) console.log(`skipped ${stage}: ${r.error}`);
+    else console.log(`recorded: ${r.path}`);
+  }
+  // No recorded plan: close says so and the report lists it under Not verified, instead of inventing one.
+  const unplanned = !existsSync(join(projectDir, '.mugiwara', 'missions', mission, 'plan.md'));
+  if (unplanned) console.log('note: no plan.md in this mission; the report will list it under Not verified.');
+  await archive({ ...flags, unplanned }, ['archive', mission]);
+}
+
+async function archive(flags: Args['flags'], positionals: string[]): Promise<void> {
   const projectDir = resolveProjectDir(str(flags.project));
   const mission = positionals[1];
   if (!mission) {
@@ -288,9 +367,11 @@ function archive(flags: Args['flags'], positionals: string[]): void {
     console.log('\nPick one: mugiwara archive <mission>');
     process.exit(2);
   }
-  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force) });
+  failOnCorruptState(projectDir, mission);
+  if (!flag(flags.dryRun)) await requireAttestation(projectDir, mission);
+  const result = archiveMission(projectDir, mission, { dryRun: flag(flags.dryRun), force: flag(flags.force), attestationChecked: true, unplanned: flag(flags.unplanned) });
   if (result.report) console.log(`archive target: ${result.report}`);
-  else console.error(`no mission dir for "${mission}" under .mugiwara/missions/`);
+  else { console.error(`no mission dir for "${mission}" under .mugiwara/missions/`); process.exit(1); }
   if (result.removed.length) console.log(`${flag(flags.dryRun) ? 'would remove' : 'removed'}: ${result.removed.join(', ')}`);
   if (result.kept.length) console.log(`kept: ${result.kept.join(', ')}`);
   if (result.index) console.log(`index updated: ${result.index}`);
@@ -303,7 +384,7 @@ function archive(flags: Args['flags'], positionals: string[]): void {
  * the safety stop). --stale <date> restricts to missions whose state was last
  * touched before that date.
  */
-function cleanCmd(flags: Args['flags']): void {
+async function cleanCmd(flags: Args['flags']): Promise<void> {
   const projectDir = resolveProjectDir(str(flags.project));
   const dryRun = flag(flags.dryRun);
   const root = join(projectDir, '.mugiwara', 'missions');
@@ -363,7 +444,8 @@ function cleanCmd(flags: Args['flags']): void {
   }
   if (!candidates.length) { console.log('nothing to clean.'); return; }
   for (const m of candidates) {
-    const r = archiveMission(projectDir, m, { dryRun, force: flag(flags.force) });
+    if (!dryRun) await requireAttestation(projectDir, m);
+    const r = archiveMission(projectDir, m, { dryRun, force: flag(flags.force), attestationChecked: true });
     console.log(`${dryRun ? 'would clean' : 'cleaned'} ${m}${r.report ? ` → ${r.report}` : ''}`);
     if (r.index) console.log(`index updated: ${r.index}`);
   }
@@ -395,7 +477,7 @@ async function resolveOptions(flags: Args['flags']): Promise<{ scope: Scope; pro
         targetIds = idx.includes(0) ? [...TARGET_IDS] : idx.map(i => TARGET_IDS[i - 1]);
       }
     }
-    const MARKETPLACE = new Set(['cursor', 'kimi', 'pi']);
+    const MARKETPLACE = new Set(['kimi', 'pi']);
     for (const id of targetIds) {
       if (MARKETPLACE.has(id)) {
         console.error(`mugiwara: ${id} installs through its marketplace manifest, not --target.`);
@@ -432,6 +514,8 @@ async function install(flags: Args['flags']): Promise<void> {
     allNotes.push(...r.notes);
   }
   if (scope === 'project') {
+    const pin = pinMismatch(projectDir);
+    if (pin) console.log(`\n! ${pin}`);
     const gi = ensureProjectGitignore(projectDir, { dryRun: flag(flags.dryRun) });
     allNotes.push(...gi.notes);
   }
@@ -622,7 +706,7 @@ export function startOrResumeMember(projectDir: string, cachePath: string, missi
   if (hasState) {
     const rChosen = resolveContinue(entries, mission, chosenMember);
     if (rChosen.kind === 'resume') {
-      console.log(formatResume(rChosen.entry));
+      console.log(resumeLine(projectDir, rChosen.entry));
       const st = readState(projectDir).find((s) => s.mission === rChosen.entry.mission && s.member === rChosen.entry.member);
       const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
       if (stale) console.log(stale);
@@ -640,8 +724,9 @@ export function startOrResumeMember(projectDir: string, cachePath: string, missi
 async function continueCmd(flags: Args['flags'], positionals: string[]): Promise<void> {
   const projectDir = resolveProjectDir(str(flags.project));
   legacyWarning(projectDir);
-  schemaWarnings(projectDir);
   const [mission, member] = positionals.slice(1);
+  failOnCorruptState(projectDir, mission);
+  schemaWarnings(projectDir);
   let entries = readContinue(projectDir);
 
   // If the requested member's state file is unreadable, refuse rather than
@@ -727,7 +812,7 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
               console.error(`    rm .mugiwara/missions/${rCached.entry.mission}/continue-${rCached.entry.member}.json`);
               process.exit(1);
             }
-            console.log(formatResume(rCached.entry));
+            console.log(resumeLine(projectDir, rCached.entry));
             const st = readState(projectDir).find((s) => s.mission === rCached.entry.mission && s.member === rCached.entry.member);
             const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
             if (stale) console.log(stale);
@@ -790,7 +875,7 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
       console.error(`    rm .mugiwara/missions/${r.entry.mission}/continue-${r.entry.member}.json`);
       process.exit(1);
     }
-    console.log(formatResume(r.entry));
+    console.log(resumeLine(projectDir, r.entry));
     const st = readState(projectDir).find((s) => s.mission === r.entry.mission && s.member === r.entry.member);
     const stale = st ? stalenessLine(projectDir, st.base_sha) : null;
     if (stale) console.log(stale);
@@ -818,6 +903,7 @@ async function continueCmd(flags: Args['flags'], positionals: string[]): Promise
 /** `mugiwara status` — one screen of computed mission state, no model needed. */
 function statusCmd(flags: Args['flags']): void {
   const projectDir = resolveProjectDir(str(flags.project));
+  failOnCorruptState(projectDir);
   legacyWarning(projectDir);
   schemaWarnings(projectDir);
   const states = readState(projectDir);
@@ -836,6 +922,8 @@ function statusCmd(flags: Args['flags']): void {
     const scope = s.member ? ` [${s.member}]` : '';
     console.log(`${s.mission}${scope}`);
     console.log(`  flow ${s.flow} · ${s.tasks_done}/${s.tasks_total} tasks · lane ${s.lane}${s.lane_rose ? ' ⬆ ROSE' : ''}${s.lane_reason ? ` (${s.lane_reason})` : ''} · mode ${s.mode}`);
+    const note = modeNote(s.mode, readConfig(projectDir).mode);
+    if (note) console.log(`  note: ${note}`);
     console.log(`  blockers ${s.blockers_open} · heal cycle ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALT' : ''} · files touched ${s.files_touched}`);
     if (s.budget) console.log(`  tokens ${s.tokens_est}/${s.budget} (${s.budget_status})${s.delegate_due ? ' · delegate due' : ''}`);
     console.log(`  branch ${s.branch} · updated ${s.updated_at}`);
@@ -866,6 +954,7 @@ function ledgerForMission(projectDir: string, mission: string) {
 function costCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const explicit = str(flags.mission) ?? positionals[1] ?? null;
+  failOnCorruptState(projectDir, explicit ?? undefined);
   if (!explicit) {
     const missions = [...new Set(readState(projectDir).map((s) => s.mission))].filter((m) =>
       existsSync(join(projectDir, '.mugiwara', 'missions', m)));
@@ -889,14 +978,36 @@ function costCmd(flags: Args['flags'], positionals: string[]): void {
       tAvoided += ledger.avoided.tokens_avoided_est; tTrail += ledger.trail.length;
       console.log(`  ${m} — ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned}) · avoided ~${ledger.avoided.tokens_avoided_est} · trail ${ledger.trail.length}`);
     }
-    console.log(`\nTotal ${tUsed}/${tPlanned} · avoided ~${tAvoided} · trail ${tTrail}`);
+    console.log(`\nTotal ${tUsed}/${tPlanned} · avoided ~${tAvoided} · trail ${tTrail} · forced continuations ${forcedContinuations(projectDir)}`);
     console.log('Detail: mugiwara cost --mission <id> [--ledger]');
     return;
   }
   return costOne(projectDir, explicit, flags);
 }
 
-/** Single-mission cost view (the pre-existing behavior, unchanged). */
+/** Stop-hook blocks (forced extra model turns) counted by hooks/pipeline-guard.ts. */
+function forcedContinuations(projectDir: string): number {
+  try {
+    const n = Number(readFileSync(join(projectDir, '.mugiwara', '.forced-continuations'), 'utf8').trim());
+    return Number.isInteger(n) && n > 0 ? n : 0;
+  } catch { return 0; }
+}
+
+/** Provider-reported vs process-estimate tokens for a mission, from its state files (null when none). */
+function tokenTotals(projectDir: string, mission: string) {
+  const rows = readState(projectDir).filter((s) => s.mission === mission);
+  if (!rows.length) return null;
+  const reported = rows.filter((s) => s.tokens_source === 'reported');
+  const sum = (f: (s: (typeof rows)[number]) => number | undefined) => rows.reduce((a, s) => a + (f(s) ?? 0), 0);
+  return {
+    provider_total: reported.length ? reported.reduce((a, s) => a + s.tokens_est, 0) : null,
+    process_estimate: sum((s) => s.tokens_process_est) || (reported.length ? null : sum((s) => s.tokens_est)),
+    cache_read: reported.reduce((a, s) => a + (s.tokens_cache_read ?? 0), 0),
+    cache_creation: reported.reduce((a, s) => a + (s.tokens_cache_creation ?? 0), 0),
+  };
+}
+
+/** Single-mission cost view. */
 function costOne(projectDir: string, mission: string, flags: Args['flags']): void {
   const missionDir = join(projectDir, '.mugiwara', 'missions', mission);
   if (!existsSync(missionDir)) {
@@ -904,9 +1015,17 @@ function costOne(projectDir: string, mission: string, flags: Args['flags']): voi
     process.exit(1);
   }
   const { ledger, liveSlop } = ledgerForMission(projectDir, mission);
+  const forced = forcedContinuations(projectDir);
   if (flag(flags.json)) {
-    console.log(toCostJSON(ledger));
+    console.log(JSON.stringify({ ...JSON.parse(toCostJSON(ledger)), tokens: tokenTotals(projectDir, mission), forced_continuations: forced }, null, 2));
     return;
+  }
+  const tk = tokenTotals(projectDir, mission);
+  if (tk?.provider_total != null) {
+    const cache = tk.cache_read || tk.cache_creation ? ` (cache: ${tk.cache_read} read, ${tk.cache_creation} written, not included)` : '';
+    console.log(`Tokens: ${tk.provider_total} provider-reported${cache} · process estimate ${tk.process_estimate ?? 'unknown'}`);
+  } else if (tk) {
+    console.log(`Tokens: process estimate ${tk.process_estimate ?? 0} · no provider usage recorded`);
   }
   console.log(`Cost envelope: ${ledger.envelope.status} ${ledger.envelope.pct}% (${ledger.envelope.used}/${ledger.envelope.planned})`);
   console.log(`Avoided: ${ledger.avoided.stages_avoided} stages, ${ledger.avoided.contexts_avoided} contexts, ~${ledger.avoided.tokens_avoided_est} tokens`);
@@ -915,6 +1034,7 @@ function costOne(projectDir: string, mission: string, flags: Args['flags']): voi
     const roles = Object.entries(liveSlop.perRole).map(([r, n]) => `${r}:${n}`).join(', ');
     console.log(`Slop: ${ledger.avoided.slop_interventions} intervention(s) — ${roles}`);
   }
+  console.log(`Forced continuations (Stop hook blocks): ${forced}`);
   console.log(`Trail: ${ledger.trail.length} decisions`);
   if (flag(flags.ledger) && ledger.trail.length) {
     for (const t of ledger.trail.slice(0, 20)) console.log(`- ${t.ts} — ${t.actor}: ${t.decision} — reason: ${t.reason}${t.evidence ? ` — evidence: ${t.evidence}` : ''}`);
@@ -1132,7 +1252,7 @@ function handoffCmd(flags: Args['flags'], positionals: string[]): void {
     const scope = s.member ? ` [${s.member}]` : '';
     lines.push(`| Mission${scope} | flow ${s.flow}, tasks ${s.tasks_done}/${s.tasks_total}, lane ${s.lane}${s.lane_rose ? ' (rose)' : ''}, mode ${s.mode} |`);
     lines.push(`| Branch | \`${s.branch}\` |`);
-    lines.push(`| Actor | ${s.actor || '(unknown)'} |`);
+    lines.push(`| Actor | ${actorName(s.actor)} |`);
     if (s.next_action) lines.push(`| Next action | ${s.next_action} |`);
     if (s.blockers_open) lines.push(`| Open blockers | ${s.blockers_open} |`);
     if (s.heal_cycle) lines.push(`| Heal cycles | ${s.heal_cycle}/${s.heal_max_cycles}${s.heal_halt ? ' — HALTED' : ''} |`);
@@ -1379,7 +1499,8 @@ export function migrateCmd(flags: Args['flags'], positionals: string[] = []): vo
 }
 
 /** `mugiwara sign <mission>` / `--verify` / `--gen-key` — optional attestation. */
-function signCmd(flags: Args['flags'], _: string[]): void {
+async function signCmd(flags: Args['flags'], _: string[]): Promise<void> {
+  const { signReport, verifyReport, ensurePureKey, hasMinisign } = await import('./addons/attest/sign.ts'); // lazy add-on
   const projectDir = resolveProjectDir(str(flags.project));
   if (flag(flags.genKey)) {
     const backend = str(flags.backend) ?? 'auto';
@@ -1423,7 +1544,13 @@ Usage:
   mugiwara uninstall     remove installed files via manifest
   mugiwara list          show installations
   mugiwara list --check  health check: show installations + missing files
-  mugiwara reset         wipe mission state (missions/ + legacy dirs)
+  mugiwara doctor [--json]
+                         read-only repo check (install, hooks, config, lane, missions, version pin);
+                         one fix line per failure, exit 1 on any failure
+  mugiwara reset [<m>]   wipe ALL mission state (missions/ + legacy dirs), or only mission <m>
+  mugiwara record <stage> [<m>] [--cmd "<command>"] [--note "<text>"]
+                         write flows/NN-<stage>.md from real facts (diff, a command it runs, review ledger)
+  mugiwara close [<m>]   record execution + closure evidence, then archive
   mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
   mugiwara clean [--include-live] [--stale <date>]
@@ -1442,10 +1569,11 @@ Usage:
                          engineer can act on (computed state + staleness check)
                          [--path <file>: append the provenance note for <file>]
                          (no <m>: list in-flight, exit 2 = pick one)
-  mugiwara sign [<m>]    attestation: sign report.md (auto/minisign/pure/off; --verify to check)
+  mugiwara crew          list the crew: role, when it appears, what it may write
+  mugiwara sign [<m>]    optional attestation add-on (not part of the core flow): sign report.md (auto/minisign/pure/off; --verify to check)
                          (no <m>: list signable, exit 2 = pick one)
   mugiwara sign --gen-key [--backend pure|minisign]
-                         create signing keys (pure ed25519 default)
+                         create signing keys (pure ed25519 default; optional add-on)
   mugiwara migrate [--dry-run] [--project <dir>]
                            move legacy .mugiwara/state/ layout to .mugiwara/missions/
   mugiwara migrate --to-team <member> [--mission <id>] [--dry-run]
@@ -1455,7 +1583,7 @@ Usage:
   mugiwara lesson "<text>" append a dated row to .mugiwara/lessons.md
   mugiwara run <script> [args...]
                           run a bundled harness script here (${RUNNABLE.join(', ')})
-  mugiwara savepoint <mission> [member] [flow] [mode]
+  mugiwara savepoint <mission> [member] [flow] [mode]   (or: savepoint <mission> --flow <N>)
                           shorthand for: mugiwara run savepoint.sh ...
                           (--solo forces solo even with an active-member cache)
   mugiwara --help        this help

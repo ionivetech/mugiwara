@@ -40,7 +40,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Task|Skill",
+        "matcher": "Task|Agent|Skill",
         "hooks": [
           {
             "type": "command",

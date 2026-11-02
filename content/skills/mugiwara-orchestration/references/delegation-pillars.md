@@ -1,40 +1,36 @@
-# Delegation Pillars
+# Delegation pillars
 
-Size the mission against five pillars. The highest gate determines the route.
+Size the mission against five pillars. The highest gate sets the route. Lane contents and mode meanings are in the stage table (stages.md); this file only lists the questions.
 
-## Pillar 1: Size
+## 1. Size
 
-| Files | Delegation |
-|-------|-----------|
-| 1 file <20 LOC | Zoro directly |
-| 2-8 files | Nami planning → Zoro |
-| 9+ files | Full pipeline (Usopp or Nami depending on clarity) |
+| Files | Route |
+|-------|-------|
+| 1 file under 20 lines | Zoro directly |
+| 2-8 files | Nami plans, then Zoro |
+| 9+ files | Full pipeline (Usopp first if the request is unclear, else Nami) |
 
-## Pillar 2: Clarity
+## 2. Clarity
 
-| Signal | Delegation |
-|--------|-----------|
-| Spec explicit, acceptance criteria written | Skip Usopp → Nami |
+| Signal | Route |
+|--------|-------|
+| Explicit spec with acceptance criteria | Skip Usopp, go to Nami |
 | Vague, ambiguous, "maybe" | Usopp first |
 
-## Pillar 3: Risk
+## 3. Risk
 
-| Signal | Delegation |
-|--------|-----------|
-| auth/payment/migration/deploy/public API | Full pipeline, never shortcut |
-| Internal refactor, test-only, docs | Standard pipeline OK |
+| Signal | Route |
+|--------|-------|
+| auth, payment, migration, deploy, public API | Full pipeline, no shortcut |
+| Internal refactor, test-only, docs | Standard pipeline is enough |
 
-## Pillar 4: Mode
+## 4. Mode
 
-| Mode | Behavior |
-|------|----------|
-| `guided` | Ask user before Zoro or Brook executes. "Approve plan?" / "Fix these findings?" |
-| `semi` | Auto-go unless high-risk (pillar 3) |
-| `auto` | Auto-go unless high-risk AND blocking ambiguity |
+Read the mode from config and apply its definition from the stage table. High-risk work (pillar 3) gets a stop for the user in `guided` and `semi`.
 
-## Pillar 5: Healing vs execution
+## 5. Fix versus build
 
-| Finding type | Delegation |
-|-------------|-----------|
-| Test fail, lint, typo, format | Zoro (normal execution) |
-| Root cause, architecture, 3+ files, regression | Brook (healing pipeline) |
+| Finding type | Route |
+|-------------|-------|
+| Test failure, lint, typo, format | Zoro (normal build) |
+| Root cause unclear, architecture, regression, 3+ files | Brook |

@@ -4,7 +4,7 @@ description: Use for schema, data, or framework migrations — expand-contract p
 gate_artifact: flows/01-execution.md migration evidence — row counts before/after + rollback proof
 ---
 
-# Migration (Zoro)
+# Migration
 
 ## Skip when
 
@@ -12,7 +12,7 @@ gate_artifact: flows/01-execution.md migration evidence — row counts before/af
 - Greenfield schema with no existing rows and no deployed version to stay compatible with.
 - The change is a deploy, key rotation, or merge — refused territory, not migration territory.
 
-Migrations are one-way doors: a lost row cannot be reverted, only mourned. Expand first, prove, then contract. Never the reverse.
+Migrations are one-way doors: a lost row cannot be reverted. Expand first, verify, then contract. Never the reverse. Append a `## migration (<task id>)` section to `flows/01-execution.md` (never overwrite it) with the evidence.
 
 ## Expand–contract (the only pattern)
 
@@ -23,7 +23,7 @@ Migrations are one-way doors: a lost row cannot be reverted, only mourned. Expan
 5. **Cut over** — flip reads to the new shape behind a flag if risky.
 6. **Contract** — drop the old shape only after one full release with zero reads on it.
 
-Full steps with batching and flag discipline: `references/playbook.md`. A migration that starts at step 5 is a hope, not a plan.
+Full steps with batching and flag discipline: `references/playbook.md`. A migration that starts at step 5 has no verified base.
 
 ## Verification (counts, not claims)
 
@@ -57,9 +57,7 @@ asserted by tests until the cutover lands.
 
 - "Small table, one shot is fine" → small tables grow; batches are resumable, one-shots are not.
 - "Backup exists" → restored, or it does not exist. Prove it on scratch.
-- "We'll backfill after cutover" → cutover on unverified data is corruption with a flag.
 - "Down migration later" → the reverse ships with the migration, or the door is one-way.
-- "No users yet, skip verify" → counts cost seconds and catch real bugs; skip nothing.
 
 ## Red flags
 

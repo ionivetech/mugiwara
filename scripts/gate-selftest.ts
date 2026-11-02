@@ -131,13 +131,13 @@ if (!existsSync(join(root, 'test', 'savepoint.test.ts'))) {
     // nothing more for this mutation. Same RED proof, ~10s less wall.
     const g3cmd = FAST
       ? 'bun test test/savepoint.test.ts -t "non-trivial values"'
-      : 'bun run test -- savepoint';
+      : 'bun test --timeout 60000 test/savepoint.test.ts';
     assert('broken assertion → gate fails', false, () => run('G3', g3cmd));
   } finally {
     writeFileSync(testFile, original);
     assert('restored → gate passes', true, () => run('G3', FAST
       ? 'bun test test/savepoint.test.ts -t "non-trivial values"'
-      : 'bun run test -- savepoint'));
+      : 'bun test --timeout 60000 test/savepoint.test.ts'));
   }
 }
 
@@ -150,21 +150,20 @@ if (!existsSync(savepointFile)) {
   const original = readFileSync(savepointFile, 'utf8');
   try {
     // reintroduce the D1 defect: read lane_prev with require() of a relative path
-    const d1Pattern = /PREV_JSON=\$\(node -e "try\{const fs=require\('fs'\);const s=JSON\.parse\(fs\.readFileSync\(process\.argv\[1\],'utf8'\)\);process\.stdout\.write\(JSON\.stringify\(\{mission:s\.mission\|\|'',lane:s\.lane\|\|'',peak:s\.lane_peak\|\|''\}\)\)\}catch\(e\)\{process\.stdout\.write\('\{\}'\)\}" "\$STATE_FILE" 2>\/dev\/null \|\| true\)/;
-    const broken = original.replace(
-      d1Pattern,
-      "PREV_JSON=$(node -e \"try{const s=require(process.argv[1]);process.stdout.write(JSON.stringify({mission:s.mission||'',lane:s.lane||'',peak:s.lane_peak||''}))}catch(e){process.stdout.write('{}')}\" \"$STATE_FILE\" 2>/dev/null || true)"
-    );
-    if (!d1Pattern.test(original) || broken === original) {
+    // The previous state is now read inside the batched node call: JSON.parse(rd(a[1])). Reintroduce the D1
+    // defect there by loading it with require() of the (relative) path, which resolves from the script dir.
+    const d1Pattern = "const s=JSON.parse(rd(a[1]));m=s.mission||'';";
+    const broken = original.replace(d1Pattern, "const s=require(a[1]);m=s.mission||'';");
+    if (!original.includes(d1Pattern) || broken === original) {
       console.error('✗ D1: mutation target not found — the gate it guards may be dead.');
       failed++;
     } else {
       writeFileSync(savepointFile, broken);
-      assert('broken LANE_PREV resolve → lane-integrity fails', false, () => run('D1', 'bun run test -- lane-integrity -t "lane_prev"'));
+      assert('broken LANE_PREV resolve → lane-integrity fails', false, () => run('D1', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "lane_prev"'));
     }
   } finally {
     writeFileSync(savepointFile, original);
-    assert('restored → lane-integrity passes', true, () => run('D1', 'bun run test -- lane-integrity -t "lane_prev"'));
+    assert('restored → lane-integrity passes', true, () => run('D1', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "lane_prev"'));
   }
 }
 
@@ -186,11 +185,11 @@ if (!existsSync(savepointFile)) {
       failed++;
     } else {
       writeFileSync(savepointFile, broken);
-      assert('broken clamp → lane-integrity fails', false, () => run('D2', 'bun run test -- lane-integrity -t "clamp"'));
+      assert('broken clamp → lane-integrity fails', false, () => run('D2', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "clamp"'));
     }
   } finally {
     writeFileSync(savepointFile, original);
-    assert('restored → lane-integrity passes', true, () => run('D2', 'bun run test -- lane-integrity -t "clamp"'));
+    assert('restored → lane-integrity passes', true, () => run('D2', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "clamp"'));
   }
 }
 
@@ -213,11 +212,11 @@ if (!existsSync(patternsFile)) {
       failed++;
     } else {
       writeFileSync(patternsFile, broken);
-      assert('singular sensitive patterns → lane-integrity fails', false, () => run('D3', 'bun run test -- lane-integrity -t "payments"'));
+      assert('singular sensitive patterns → lane-integrity fails', false, () => run('D3', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "payments"'));
     }
   } finally {
     writeFileSync(patternsFile, original);
-    assert('restored → lane-integrity passes', true, () => run('D3', 'bun run test -- lane-integrity -t "payments"'));
+    assert('restored → lane-integrity passes', true, () => run('D3', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "payments"'));
   }
 }
 
@@ -246,11 +245,11 @@ if (!existsSync(patternsFile)) {
       failed++;
     } else {
       writeFileSync(patternsFile, original.replace(d3bPattern, brokenLine));
-      assert('missing new categories → lane-integrity fails', false, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
+      assert('missing new categories → lane-integrity fails', false, () => run('D3b', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "sensitive-paths"'));
     }
   } finally {
     writeFileSync(patternsFile, original);
-    assert('restored → lane-integrity passes', true, () => run('D3b', 'bun run test -- lane-integrity -t "sensitive-paths"'));
+    assert('restored → lane-integrity passes', true, () => run('D3b', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "sensitive-paths"'));
   }
 }
 
@@ -272,11 +271,11 @@ if (!existsSync(savepointFile)) {
       failed++;
     } else {
       writeFileSync(savepointFile, broken);
-      assert('zero churn tokens → lane-integrity fails', false, () => run('D4', 'bun run test -- lane-integrity -t "churn"'));
+      assert('zero churn tokens → lane-integrity fails', false, () => run('D4', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "churn"'));
     }
   } finally {
     writeFileSync(savepointFile, original);
-    assert('restored → lane-integrity passes', true, () => run('D4', 'bun run test -- lane-integrity -t "churn"'));
+    assert('restored → lane-integrity passes', true, () => run('D4', 'bun test --timeout 60000 test/lane-integrity.test.ts -t "churn"'));
   }
 }
 
@@ -287,23 +286,19 @@ if (!existsSync(savepointFile)) {
 } else {
   const original = readFileSync(savepointFile, 'utf8');
   try {
-    // silently drop the continue writer block (make it a no-op). Anchor on the
-    // D10 header comment so the regex hits the writer, not the STATE_FILE if.
-    const d10Pattern = /# --- continue.*\(D10\): machine-written resume point ---[\s\S]*?\nfi\n\n/;
-    const broken = original.replace(
-      d10Pattern,
-      '# --- continue writer disabled (D10) ---\n\n'
-    );
-    if (!d10Pattern.test(original) || broken === original) {
+    // The continue writer shares the node process with the state writer: disable its writeFileSync.
+    const d10Pattern = "require('fs').writeFileSync(process.argv[49], JSON.stringify(cont, null, 2) + '\\n');";
+    const broken = original.replace(d10Pattern, '/* continue writer disabled (D10) */');
+    if (!original.includes(d10Pattern) || broken === original) {
       console.error('✗ D10: mutation target not found — the gate it guards may be dead.');
       failed++;
     } else {
       writeFileSync(savepointFile, broken);
-      assert('broken continue writer → savepoint fails', false, () => run('D10', 'bun run test -- savepoint -t "D10"'));
+      assert('broken continue writer → savepoint fails', false, () => run('D10', 'bun test --timeout 60000 test/savepoint.test.ts -t "D10"'));
     }
   } finally {
     writeFileSync(savepointFile, original);
-    assert('restored → savepoint passes', true, () => run('D10', 'bun run test -- savepoint -t "D10"'));
+    assert('restored → savepoint passes', true, () => run('D10', 'bun test --timeout 60000 test/savepoint.test.ts -t "D10"'));
   }
 }
 
@@ -366,9 +361,9 @@ if (!existsSync(skillsDoc)) {
 
 // --- Index budget ---
 console.log('\nIndex budget');
-const budgetSkillFile = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+const budgetSkillFile = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
 if (!existsSync(budgetSkillFile)) {
-  console.log('  ⚠  mugiwara-workflow not found, skipping');
+  console.log('  ⚠  mugiwara-orchestration not found, skipping');
 } else {
   const original = readFileSync(budgetSkillFile, 'utf8');
   try {
@@ -482,9 +477,9 @@ if (!existsSync(brainstormSkill)) {
 
 // --- F2: red-flags gate — strip the heading from one skill, prove red ---
 console.log('\nF2 — red-flags gate');
-const redSkill = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+const redSkill = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
 if (!existsSync(redSkill)) {
-  console.log('  ⚠  mugiwara-workflow/SKILL.md not found, skipping');
+  console.log('  ⚠  mugiwara-orchestration/SKILL.md not found, skipping');
 } else {
   const original = readFileSync(redSkill, 'utf8');
   try {
@@ -516,9 +511,9 @@ if (!existsSync(wbSkill)) {
 
 // --- F14: agent-count gate — flip an internal agent to user-facing, prove red ---
 console.log('\nF14 — agent-count gate');
-const countAgent = join(root, 'content', 'agents', 'eval-runner.md');
+const countAgent = join(root, 'content', 'agents', 'skeptic-verifier.md');
 if (!existsSync(countAgent)) {
-  console.log('  ⚠  eval-runner.md not found, skipping');
+  console.log('  ⚠  skeptic-verifier.md not found, skipping');
 } else {
   const original = readFileSync(countAgent, 'utf8');
   try {
@@ -539,7 +534,10 @@ console.log('\nCI — closure integrity gate');
     const mdir = join(tmp, '.mugiwara', 'missions', 'selftest-mission');
     mkdirSync(mdir, { recursive: true });
     const cli = `bun src/cli.ts archive selftest-mission --project ${tmp}`;
-    // A mission with no trail at all archives fine (stub report path).
+    // A mission with no trail at all archives fine (stub report path). An empty mission dir is a corrupt
+    // state by design (exit 1), so the stub carries one plain note.
+    const stub = (): void => writeFileSync(join(mdir, 'notes.md'), '# notes\n');
+    stub();
     assert('clean stub → exit 0', true, () => run('CI-clean', cli));
     // A planted secret must turn the gate red.
     writeFileSync(join(mdir, 'report.md'), 'token = ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ123456\n');
@@ -547,6 +545,7 @@ console.log('\nCI — closure integrity gate');
     assert('planted secret → exit 1', false, () => run('CI-secret', cli));
     unlinkSync(join(mdir, 'report.md'));
     unlinkSync(join(mdir, 'state.json'));
+    stub();
     assert('cleaned → exit 0', true, () => run('CI-clean2', cli));
 
     // Context-budget gate: a ceiling that the trail exceeds must fail red.
@@ -690,7 +689,7 @@ console.log('\nT3 — lane-aware gates');
 // --- B1: CLI availability — remove section → content validation fails ---
 console.log('\nB1 — CLI availability');
 {
-  const wf = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+  const wf = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
   const original = readFileSync(wf, 'utf8');
   try {
     const b1Pattern = /## CLI availability[\s\S]*?## Artifact trust/;
@@ -700,11 +699,11 @@ console.log('\nB1 — CLI availability');
       failed++;
     } else {
       writeFileSync(wf, b1Broken);
-      assert('missing CLI availability → grep fails', false, () => run('B1-grep', 'grep -q "CLI availability" content/skills/mugiwara-workflow/SKILL.md'));
+      assert('missing CLI availability → grep fails', false, () => run('B1-grep', 'grep -q "CLI availability" content/skills/mugiwara-orchestration/SKILL.md'));
     }
   } finally {
     writeFileSync(wf, original);
-    assert('restored → content validation passes', true, () => run('B1-restore', 'grep -q "CLI availability" content/skills/mugiwara-workflow/SKILL.md'));
+    assert('restored → content validation passes', true, () => run('B1-restore', 'grep -q "CLI availability" content/skills/mugiwara-orchestration/SKILL.md'));
   }
 }
 
@@ -750,11 +749,11 @@ console.log('\nB3 — task counter');
       failed++;
     } else {
       writeFileSync(sp, broken);
-      assert('unanchored grep → savepoint task test fails', false, () => run('B3', 'bun run test -- savepoint -t "B3: task counting"'));
+      assert('unanchored grep → savepoint task test fails', false, () => run('B3', 'bun test --timeout 60000 test/savepoint.test.ts -t "B3: task counting"'));
     }
   } finally {
     writeFileSync(sp, original);
-    assert('restored → savepoint task test passes', true, () => run('B3-restore', 'bun run test -- savepoint -t "B3: task counting"'));
+    assert('restored → savepoint task test passes', true, () => run('B3-restore', 'bun test --timeout 60000 test/savepoint.test.ts -t "B3: task counting"'));
   }
 }
 
@@ -793,7 +792,7 @@ console.log('\nB5 — spike budget');
       failed++;
     } else {
       writeFileSync(baseFile, broken);
-      assert('BUDGET_spike 3000 < LANE_BASE 5411 → lane-base fails', false, () => run('B5', 'bun scripts/lane-base.ts'));
+      assert('BUDGET_spike 3000 < LANE_BASE 5311 → lane-base fails', false, () => run('B5', 'bun scripts/lane-base.ts'));
     }
   } finally {
     writeFileSync(baseFile, original);
@@ -1188,10 +1187,10 @@ console.log('\nN1 — initiative case mutation');
   }
 }
 
-// --- N2 mutation: ANSI escape back into wave-banners.md → banner-format red ---
+// --- N2 mutation: ANSI escape back into flow-banners.md → banner-format red ---
 console.log('\nN2 — banner-format mutation');
 {
-  const f = join(root, 'references', 'wave-banners.md');
+  const f = join(root, 'references', 'flow-banners.md');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = `${original}\nTerminal: wrap in ANSI \`\\x1b[38;2;R;G;Bm\` ... \`\\x1b[0m\`.\n`;
@@ -1269,9 +1268,8 @@ console.log('\nN6 — banner-recording mutation');
   const f = join(root, 'hooks', 'engagement-marker.ts');
   const original = readFileSync(f, 'utf8');
   try {
-    const broken = original
-      .replace("        if (sameSession && typeof prev.last_banner_flow === 'number') bannerFlow = prev.last_banner_flow;\n", '')
-      .replace("        if (sameSession && typeof prev.last_banner_flow_at === 'string') bannerFlowAt = prev.last_banner_flow_at;\n", '');
+    // The marker merges the previous same-session fields (`...base`), which is how a recorded banner survives the rewrite.
+    const broken = original.replace('      ...base,\n', '');
     if (broken === original) {
       console.error('✗ N6: mutation target not found');
       failed++;
@@ -1304,10 +1302,10 @@ console.log('\nN7 — lessons-import mutation');
 // --- N8 mutation: `/mugiwara mode` slash form → in-session phrase check red ---
 console.log('\nN8 — slash-mode mutation');
 {
-  const f = join(root, 'content', 'skills', 'mugiwara-workflow', 'SKILL.md');
+  const f = join(root, 'content', 'skills', 'mugiwara-orchestration', 'SKILL.md');
   const original = readFileSync(f, 'utf8');
   try {
-    const broken = original.replace('Say `mugiwara mode <guided|semi|auto>` in session', '`/mugiwara mode <guided|semi|auto>` applies');
+    const broken = original.replace('The in-session phrase `mugiwara mode <guided|semi|auto>`', 'The slash command `/mugiwara mode <guided|semi|auto>`');
     if (broken === original) {
       console.error('✗ N8: mutation target not found');
       failed++;
@@ -1327,10 +1325,8 @@ console.log('\nN9 — platform-count mutation');
   const f = join(root, 'README.md');
   const original = readFileSync(f, 'utf8');
   try {
-    const broken = original.replace(
-      '9 install full bodies, 3 via marketplace manifest.',
-      '9 install full bodies.',
-    );
+    // The README no longer carries the platform count. Plant an unqualified claim: the rule must catch it.
+    const broken = `${original}\n| 12 platforms | 11 agents on 12 harnesses: 9 install full bodies. |\n`;
     if (broken === original) {
       console.error('✗ N9: mutation target not found');
       failed++;
@@ -1351,8 +1347,8 @@ console.log('\nT1 — removed-key resurrection mutation');
   const original = readFileSync(f, 'utf8');
   try {
     const broken = original.replace(
-      "  '# enforce=block',",
-      "  '# team_member=jane-doe  # resurrected key (must fail)',\n  '# enforce=block',",
+      "  '# enforce=warn',",
+      "  '# team_member=jane-doe  # resurrected key (must fail)',\n  '# enforce=warn',",
     );
     if (broken === original) {
       console.error('✗ T1: mutation target not found');

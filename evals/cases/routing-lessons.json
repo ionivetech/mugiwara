@@ -1,6 +1,6 @@
 {
   "name": "routing-lessons",
-  "skill": "mugiwara-lessons",
+  "skill": "mugiwara-orchestration",
   "trigger": {
     "positive": [
       { "prompt": "capture what we learned from this mission", "top_k": 3 },

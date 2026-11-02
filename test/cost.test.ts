@@ -34,10 +34,10 @@ describe('budgetForLane', () => {
 
 describe('laneBaseForLane', () => {
   it('returns the lane-base.sh LANE_BASE constants per lane', () => {
-    expect(laneBaseForLane('lean')).toBe(8421);
-    expect(laneBaseForLane('standard')).toBe(15995);
-    expect(laneBaseForLane('full')).toBe(22016);
-    expect(laneBaseForLane('spike')).toBe(5411);
+    expect(laneBaseForLane('lean')).toBe(7137);
+    expect(laneBaseForLane('standard')).toBe(11732);
+    expect(laneBaseForLane('full')).toBe(20424);
+    expect(laneBaseForLane('spike')).toBe(5311);
   });
   it('returns 0 for unknown lanes', () => {
     expect(laneBaseForLane('direct')).toBe(0);
@@ -254,6 +254,13 @@ describe('recordOptDecision — decisions.md section append', () => {
     const lines = body.split(/\r?\n/);
     expect(lines.filter((l) => l.trim() === '## Cost governor decisions')).toHaveLength(1);
     expect(lines.some((l) => l.includes('- ') && l.includes('skip brainstorm') && l.includes('reason: spec explicit'))).toBe(true);
+  });
+
+  it('strips an email from the actor — decisions.md carries names, never addresses', () => {
+    recordOptDecision(dir, { actor: 'Jane Doe <jane@example.com>', decision: 'skip e2e', reason: 'no setup' });
+    const body = readFileSync(join(dir, 'decisions.md'), 'utf8');
+    expect(body).toContain('Jane Doe: skip e2e');
+    expect(body).not.toContain('@');
   });
 
   it('appends a second bullet without duplicating the header', () => {

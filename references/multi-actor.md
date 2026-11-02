@@ -8,7 +8,7 @@ each other's state; the roster fixes who is who before any work starts.
 
 Identity is **(mission, member)**, never branch — and the member half is never
 typed freehand. It comes from the roster: the sub-mission table in `plan.md`
-(id, area, assignee), written by Nami at Flow 2 and extended by
+(id, area, assignee), written by Nami at the plan stage and extended by
 `mugiwara join`. Every engineer's work lives in
 its own file inside the mission folder, so parallel work never collides:
 

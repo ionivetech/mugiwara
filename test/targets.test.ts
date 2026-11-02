@@ -7,8 +7,8 @@ import { targets, TARGET_IDS } from '../src/targets/index.ts';
 import { parseFrontmatter } from '../src/frontmatter.ts';
 import { installTo } from '../src/installer.ts';
 
-test('registry has 9 targets', () => {
-  expect(TARGET_IDS).toEqual(['claude', 'opencode', 'copilot', 'gemini', 'codex', 'windsurf', 'cline', 'kilo', 'antigravity']);
+test('registry has 10 targets', () => {
+  expect(TARGET_IDS).toEqual(['claude', 'opencode', 'copilot', 'gemini', 'codex', 'cursor', 'windsurf', 'cline', 'kilo', 'antigravity']);
 });
 
 test('every adapter has the full interface', () => {
@@ -22,7 +22,7 @@ test('every adapter has the full interface', () => {
 });
 
 test('native adapters resolve project and global scopes', () => {
-  for (const id of ['claude', 'opencode', 'copilot']) {
+  for (const id of ['claude', 'opencode', 'copilot', 'codex', 'cursor']) {
     const p = targets[id].paths({ scope: 'project', projectDir: '/p', home: '/h' });
     const g = targets[id].paths({ scope: 'global', projectDir: '/p', home: '/h' });
     expect(p.skillsDir && p.agentsDir && g.skillsDir && g.agentsDir).toBeTruthy();
@@ -30,13 +30,13 @@ test('native adapters resolve project and global scopes', () => {
 });
 
 test('generic adapters reject global scope', () => {
-  for (const id of ['gemini', 'codex', 'windsurf', 'cline', 'kilo', 'antigravity']) {
+  for (const id of ['gemini', 'windsurf', 'cline', 'kilo', 'antigravity']) {
     expect(() => targets[id].paths({ scope: 'global', projectDir: '/p', home: '/h' })).toThrow(/project scope only/i);
   }
 });
 
 test('transforms produce relPath + text; native skills keep parseable frontmatter', () => {
-  const skill = { name: 'mugiwara-workflow', description: 'Use at mission start for the crew pipeline.' };
+  const skill = { name: 'mugiwara-orchestration', description: 'Use at mission start for the crew pipeline.' };
   for (const t of Object.values(targets)) {
     const out = t.transformSkill(skill, 'BODY\n');
     expect(out!.relPath.endsWith('.md')).toBe(true);
@@ -56,7 +56,7 @@ test('transforms produce relPath + text; native skills keep parseable frontmatte
     expect(full === null || !out!.text.includes('BODY'), `${t.id} stub must not embed body`).toBe(true);
   }
   const claudeOut = targets.claude.transformSkill(skill, 'BODY\n');
-  expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-workflow');
+  expect(parseFrontmatter(claudeOut!.text).data.name).toBe('mugiwara-orchestration');
 });
 
 test('L1: claude transformAgent restricts tools only for internal agents', () => {
@@ -105,7 +105,7 @@ test('0-8 conformance: every target install lands skills, agents, and references
     const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
       .filter(e => e.isDirectory() || e.name.endsWith('.md'))
       .map(e => e.name);
-    expect(skillFiles.some(n => n.includes('mugiwara-workflow')), `${id}: workflow skill present`).toBe(true);
+    expect(skillFiles.some(n => n.includes('mugiwara-orchestration')), `${id}: workflow skill present`).toBe(true);
     expect(skillFiles.some(n => n.includes('mugiwara-frontend')), `${id}: frontend skill present`).toBe(true);
 
     // agents land
@@ -125,7 +125,7 @@ test('0-8 conformance: every target install lands skills, agents, and references
 });
 
 test('0-8 conformance: native targets expose parseable frontmatter on installed skills', () => {
-  for (const id of ['claude', 'opencode', 'copilot']) {
+  for (const id of ['claude', 'opencode', 'copilot', 'codex', 'cursor']) {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-fm-' + id + '-'));
     const home = mkdtempSync(join(tmpdir(), 'mugi-fmhome-' + id + '-'));
     installTo(targets[id], { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
@@ -133,7 +133,7 @@ test('0-8 conformance: native targets expose parseable frontmatter on installed 
     const entries = readdirSync(skillsDir, { withFileTypes: true });
     const dirNames = entries.filter(e => e.isDirectory()).map(e => e.name);
     const fileNames = entries.filter(e => e.isFile()).map(e => e.name);
-    expect(dirNames.concat(fileNames).some(n => n.includes('mugiwara-workflow')), `${id}: workflow present`).toBe(true);
+    expect(dirNames.concat(fileNames).some(n => n.includes('mugiwara-orchestration')), `${id}: workflow present`).toBe(true);
     for (const n of dirNames.slice(0, 5)) {
       const file = join(skillsDir, n, 'SKILL.md');
       if (!existsSync(file)) continue;
@@ -144,7 +144,7 @@ test('0-8 conformance: native targets expose parseable frontmatter on installed 
 });
 
 test('2-16 tier-3 targets emit stubs to the rules glob and full bodies to refs', () => {
-  for (const id of ['kilo', 'windsurf', 'cline', 'antigravity', 'gemini', 'codex']) {
+  for (const id of ['kilo', 'windsurf', 'cline', 'antigravity', 'gemini']) {
     const dir = mkdtempSync(join(tmpdir(), 'mugi-tier3-' + id + '-'));
     const home = mkdtempSync(join(tmpdir(), 'mugi-tier3home-' + id + '-'));
     const t = targets[id];
@@ -153,11 +153,11 @@ test('2-16 tier-3 targets emit stubs to the rules glob and full bodies to refs',
     expect(r.written.length, `${id}: wrote files`).toBeGreaterThan(0);
     const { skillsDir } = t.paths({ scope: 'project', projectDir: dir, home });
 
-    const stub = readFileSync(join(skillsDir, 'mugiwara-workflow.md'), 'utf8');
-    expect(stub.length, `${id} stub is small`).toBeLessThan(400);
-    expect(stub).toContain('.mugiwara/refs/mugiwara-workflow/mugiwara-workflow.md');
+    const stub = readFileSync(join(skillsDir, 'mugiwara-orchestration.md'), 'utf8');
+    expect(stub.length, `${id} stub is small`).toBeLessThan(500);
+    expect(stub).toContain('.mugiwara/refs/mugiwara-orchestration/mugiwara-orchestration.md');
 
-    const full = readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-workflow', 'mugiwara-workflow.md'), 'utf8');
+    const full = readFileSync(join(dir, '.mugiwara', 'refs', 'mugiwara-orchestration', 'mugiwara-orchestration.md'), 'utf8');
     expect(full.length, `${id} full body in refs`).toBeGreaterThan(2000);
 
     const agentStub = readFileSync(join(skillsDir, 'agent-luffy-orchestrator.md'), 'utf8');
@@ -257,6 +257,7 @@ test('claude postUninstall un-merges only mugiwara hooks from settings.json', ()
       SessionStart: [{ hooks: [{ type: 'command', command: JSON.stringify(join(claudeDir, 'hooks', 'session-start.js')), timeout: 10 }] }],
       UserPromptSubmit: [{ hooks: [{ type: 'command', command: JSON.stringify(join(claudeDir, 'hooks', 'mugiwara-mode-tracker.js')), timeout: 5 }] }],
       Stop: [{ hooks: [{ type: 'command', command: '/some/other/hook.js', timeout: 5 }] }],
+      PreToolUse: [{ matcher: 'Bash', hooks: [{ type: 'command', command: JSON.stringify(join(claudeDir, 'hooks', 'pretool-guard.js')), timeout: 10 }] }],
     },
   };
   writeFileSync(join(claudeDir, 'settings.json'), JSON.stringify(settings));
@@ -266,6 +267,7 @@ test('claude postUninstall un-merges only mugiwara hooks from settings.json', ()
   expect(after.foo).toBe('bar'); // user key preserved
   expect(after.hooks.SessionStart).toBeUndefined(); // mugiwara hook removed
   expect(after.hooks.UserPromptSubmit).toBeUndefined();
+  expect(after.hooks.PreToolUse).toBeUndefined(); // the command guard goes too
   expect(after.hooks.Stop).toHaveLength(1); // user hook kept
   expect(after.hooks.Stop[0].hooks[0].command).toContain('/some/other/hook.js');
 });
@@ -321,7 +323,7 @@ test('T3: copilot transformAgent emits stub, transformAgentFull carries body', (
 test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () => {
   // tier-3 targets (windsurf/cline/kilo/antigravity/gemini/codex) emit agent
   // stubs; the generic transform hardcodes the source-write refusal in the stub.
-  for (const id of ['windsurf', 'cline', 'kilo', 'antigravity', 'gemini', 'codex']) {
+  for (const id of ['windsurf', 'cline', 'kilo', 'antigravity', 'gemini']) {
     const t = targets[id];
     const out = t.transformAgent({ name: 'usopp-brainstorm', description: 'x', skills: 'mugiwara-brainstorm' } as never, 'BODY\n')!;
     expect(out.text, `${id} refusal line`).toContain('Only zoro-execution and brook-healing may modify source code');
@@ -331,3 +333,45 @@ test('write-boundary: tier-3 agent stub carries the prose refusal (case 3)', () 
 
 
 
+
+test('codex: native skills in .agents/skills, agents as valid TOML in .codex/agents', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-codexn-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-codexnh-'));
+  installTo(targets.codex, { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const skill = readFileSync(join(dir, '.agents', 'skills', 'mugiwara-orchestration', 'SKILL.md'), 'utf8');
+  const fm = parseFrontmatter(skill);
+  expect(Object.keys(fm.data).sort()).toEqual(['description', 'name']);
+  expect(fm.body.length).toBeGreaterThan(2000);
+  const agents = readdirSync(join(dir, '.codex', 'agents'));
+  expect(agents.length).toBeGreaterThanOrEqual(13);
+  for (const f of agents) {
+    const t = (Bun as never as { TOML: { parse(s: string): Record<string, string> } }).TOML.parse(readFileSync(join(dir, '.codex', 'agents', f), 'utf8'));
+    expect(t.name && t.description && t.developer_instructions, f).toBeTruthy();
+    expect(t.name + '.toml').toBe(f);
+    expect(Object.keys(t).sort()).toEqual(['description', 'developer_instructions', 'name']);
+  }
+  const g = targets.codex.paths({ scope: 'global', projectDir: dir, home });
+  expect(g.skillsDir).toBe(join(home, '.agents', 'skills'));
+  expect(g.agentsDir).toBe(join(home, '.codex', 'agents'));
+});
+
+test('codex TOML agent body round-trips quotes and backslashes', () => {
+  const body = 'a """ b \\ c "d"\n';
+  const out = targets.codex.transformAgent({ name: 'x', description: 'de"sc' } as never, body)!;
+  const t = (Bun as never as { TOML: { parse(s: string): Record<string, string> } }).TOML.parse(out.text);
+  expect(t.developer_instructions.replace(/^\n/, '')).toBe(body + '\n'); // Bun keeps the newline TOML trims
+});
+
+test('cursor: native skills + agents with documented frontmatter only', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-cursor-'));
+  const home = mkdtempSync(join(tmpdir(), 'mugi-cursorh-'));
+  installTo(targets.cursor, { scope: 'project', projectDir: dir, home, dryRun: false, force: false });
+  const skill = parseFrontmatter(readFileSync(join(dir, '.cursor', 'skills', 'mugiwara-orchestration', 'SKILL.md'), 'utf8'));
+  expect(skill.data.name).toBe('mugiwara-orchestration');
+  expect(Object.keys(skill.data).sort()).toEqual(['description', 'name']);
+  const agent = parseFrontmatter(readFileSync(join(dir, '.cursor', 'agents', 'zoro-execution.md'), 'utf8'));
+  expect(Object.keys(agent.data).sort()).toEqual(['description', 'model', 'name']);
+  expect(agent.data.readonly).toBeUndefined();
+  expect(existsSync(join(dir, '.cursor', 'skills', 'mugiwara-orchestration', 'references'))).toBe(true);
+  expect(targets.cursor.paths({ scope: 'global', projectDir: dir, home }).skillsDir).toBe(join(home, '.cursor', 'skills'));
+});

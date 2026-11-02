@@ -4,7 +4,7 @@ Canonical, single source. Every skill references this file — no duplicate defi
 
 ## Five axes
 
-Every mission wave must satisfy all five before it is Done:
+Every mission stage must satisfy all five before it is Done:
 
 | Axis | What it means | How to verify |
 |------|--------------|---------------|
@@ -26,7 +26,7 @@ Optional, never default-on. Triggered only when BOTH:
 1. Repo has e2e setup: `playwright.config.*`, `cypress.config.*`, `e2e/` dir, or `test:e2e` npm script.
 2. Changed files match e2e patterns: `e2e/**`, `*.e2e.*`, `specs/**`.
 
-When triggered, consent by mode (`mugiwara-mode`):
+When triggered, consent by mode (modes: stage table in `mugiwara-orchestration`):
 - `guided`/`semi`: ask user — run now / skip / run manually later.
 - `auto`: runs only provably-isolated e2e (in-memory / local / tooling-proven isolation). Otherwise skip-and-log.
 
@@ -36,7 +36,7 @@ When triggered, consent by mode (`mugiwara-mode`):
 
 This file supersedes duplicate definitions in:
 - `mugiwara-checkpoint` (correctness, quality, integration, docs, ship-readiness)
-- `mugiwara-gates` (correctness, quality, integration, docs, ship-readiness — same axes but different list)
+- `mugiwara-quality` (correctness, quality, integration, docs, ship-readiness — same axes but different list)
 - `mugiwara-planning` (referenced, not enumerated)
 
 Both skills now link here. Audit trail has one bar, not two.

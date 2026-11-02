@@ -1,6 +1,6 @@
 {
   "name": "routing-bug-one-file",
-  "skill": "mugiwara-root-cause",
+  "skill": "mugiwara-healing",
   "trigger": {
     "positive": [
       { "prompt": "debug a bug where dates render one month off in format.ts", "top_k": 3 },

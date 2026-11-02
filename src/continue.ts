@@ -73,6 +73,10 @@ export type StateEntry = ContinueEntry & {
   delegate_threshold: number;
   delegate_due: boolean;
   tokens_est: number;
+  tokens_source?: string;
+  tokens_process_est?: number;
+  tokens_cache_read?: number;
+  tokens_cache_creation?: number;
   budget: number;
   budget_status: string;
   files_touched: number;
@@ -208,6 +212,10 @@ export function readState(projectDir: string): StateEntry[] {
       delegate_threshold: num(r.delegate_threshold) || 60,
       delegate_due: r.delegate_due === true,
       tokens_est: num(r.tokens_est),
+      tokens_source: text(r.tokens_source),
+      tokens_process_est: num(r.tokens_process_est),
+      tokens_cache_read: num(r.tokens_cache_read),
+      tokens_cache_creation: num(r.tokens_cache_creation),
       budget: num(r.budget),
       budget_status: text(r.budget_status) || 'ok',
       files_touched: num(r.files_touched),
@@ -311,7 +319,7 @@ export function formatTable(entries: ContinueEntry[]): string {
   return [line(head), ...rows.map(line)].join('\n');
 }
 
-/** The single resume line the mugiwara-resume skill contracts for. */
+/** The single resume line the mugiwara-orchestration resume reference contracts for. */
 export function formatResume(e: ContinueEntry): string {
   const scope = e.member ? ` [${e.member}]` : '';
   const next = e.next_session_prompt || '(no next_session_prompt recorded)';

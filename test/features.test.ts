@@ -1,65 +1,67 @@
 import { describe, it, expect } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { EXTENSION_TABLE, parseFeatures, resolveFeatures, SAFETY, SENSITIVE_PATTERNS } from '../src/features.ts';
+import { ALIASES, EXTENSION_TABLE, parseFeatures, resolveFeatures, SAFETY, SENSITIVE_PATTERNS } from '../src/features.ts';
 
-// Expected placements per plan §21-skill placement (sums 21: 7 core + 11 auto + 3 conditional).
+// Expected placements: 14 skills (5 core + 9 auto).
 const CORE: Record<string, string> = {
   orchestration: 'mugiwara-orchestration',
   planning: 'mugiwara-planning',
   execution: 'mugiwara-execution',
   checkpoint: 'mugiwara-checkpoint',
-  gates: 'mugiwara-gates',
   quality: 'mugiwara-quality',
-  lessons: 'mugiwara-lessons',
 };
 
 const AUTO: Record<string, string> = {
   ship: 'mugiwara-ship',
   migration: 'mugiwara-migration',
   'contract-first': 'mugiwara-contract-first',
-  testcases: 'mugiwara-testcases',
   frontend: 'mugiwara-frontend',
   backend: 'mugiwara-backend',
   security: 'mugiwara-security',
   brainstorm: 'mugiwara-brainstorm',
   healing: 'mugiwara-healing',
   review: 'mugiwara-review',
-  'root-cause': 'mugiwara-root-cause',
 };
 
-const CONDITIONAL: Record<string, string> = {
-  git: 'mugiwara-git',
-  resume: 'mugiwara-resume',
-  workflow: 'mugiwara-workflow',
+// Tokens of merged skills: still accepted, normalized to the owner token.
+const ALIAS_OWNER: Record<string, string> = {
+  gates: 'quality',
+  testcases: 'quality',
+  git: 'execution',
+  'root-cause': 'healing',
+  resume: 'orchestration',
+  lessons: 'orchestration',
+  workflow: 'orchestration',
 };
 
 describe('EXTENSION_TABLE placements', () => {
-  it('pins the 7 core always-on skills by exact token string', () => {
+  it('pins the 5 core always-on skills by exact token string', () => {
     for (const [token, skill] of Object.entries(CORE)) {
       expect(EXTENSION_TABLE[token].skills).toEqual([skill]);
       expect(EXTENSION_TABLE[token].default).toBe('core');
     }
   });
 
-  it('pins the 11 auto trigger-loaded skills by exact token string', () => {
+  it('pins the 9 auto trigger-loaded skills by exact token string', () => {
     for (const [token, skill] of Object.entries(AUTO)) {
       expect(EXTENSION_TABLE[token].skills).toEqual([skill]);
       expect(EXTENSION_TABLE[token].default).toBe('auto');
     }
   });
 
-  it('pins the 3 conditional-auto skills by exact token string', () => {
-    for (const [token, skill] of Object.entries(CONDITIONAL)) {
-      expect(EXTENSION_TABLE[token].skills).toEqual([skill]);
-      expect(EXTENSION_TABLE[token].default).toBe('auto');
+  it('keeps every old token as an alias to its merged owner', () => {
+    expect(ALIASES).toEqual(ALIAS_OWNER);
+    for (const [alias, owner] of Object.entries(ALIAS_OWNER)) {
+      expect(alias in EXTENSION_TABLE).toBe(false);
+      expect(owner in EXTENSION_TABLE).toBe(true);
     }
   });
 
-  it('covers exactly 21 distinct skill dirs (7 core + 11 auto + 3 conditional)', () => {
+  it('covers exactly 14 distinct skill dirs (5 core + 9 auto)', () => {
     const skills = Object.values(EXTENSION_TABLE).flatMap((row) => row.skills);
-    expect(new Set(skills).size).toBe(21);
-    expect(skills.filter((s) => s === 'mugiwara-lessons').length).toBe(2); // read-half + lessons-write
+    expect(new Set(skills).size).toBe(14);
+    expect(skills.filter((s) => s === 'mugiwara-orchestration').length).toBe(2); // core + lessons-write
   });
 
   it('every skill dir in the table exists under content/skills/', () => {
@@ -74,8 +76,8 @@ describe('EXTENSION_TABLE placements', () => {
     expect(EXTENSION_TABLE['sign'].skills).toEqual([]);
   });
 
-  it('lessons-write maps to mugiwara-lessons and ships OFF', () => {
-    expect(EXTENSION_TABLE['lessons-write'].skills).toEqual(['mugiwara-lessons']);
+  it('lessons-write maps to mugiwara-orchestration and ships OFF', () => {
+    expect(EXTENSION_TABLE['lessons-write'].skills).toEqual(['mugiwara-orchestration']);
     expect(EXTENSION_TABLE['lessons-write'].default).toBe('off');
   });
 
@@ -98,15 +100,22 @@ describe('parseFeatures grammar', () => {
   });
 
   it('parses core+auto with removals', () => {
-    expect(parseFeatures('core+auto,-lessons')).toEqual({ base: 'core+auto', add: [], remove: ['lessons'] });
+    expect(parseFeatures('core+auto,-review')).toEqual({ base: 'core+auto', add: [], remove: ['review'] });
   });
 
   it('parses core+auto with mixed adds and removals', () => {
-    expect(parseFeatures('core+auto,ship,-lessons')).toEqual({ base: 'core+auto', add: ['ship'], remove: ['lessons'] });
+    expect(parseFeatures('core+auto,ship,-review')).toEqual({ base: 'core+auto', add: ['ship'], remove: ['review'] });
   });
 
   it('tolerates surrounding whitespace', () => {
-    expect(parseFeatures('  core+auto , ship , -lessons ')).toEqual({ base: 'core+auto', add: ['ship'], remove: ['lessons'] });
+    expect(parseFeatures('  core+auto , ship , -review ')).toEqual({ base: 'core+auto', add: ['ship'], remove: ['review'] });
+  });
+
+  it('normalizes old tokens to the merged owner (add) and ignores their removal', () => {
+    for (const [alias, owner] of Object.entries(ALIAS_OWNER)) {
+      expect(parseFeatures(`core+auto,${alias}`)).toEqual({ base: 'core+auto', add: [owner], remove: [] });
+      expect(parseFeatures(`core+auto,-${alias}`)).toEqual({ base: 'core+auto', add: [], remove: [] });
+    }
   });
 
   it('throws unknown feature token with the offending name', () => {
@@ -146,9 +155,9 @@ describe('resolveFeatures + SAFETY', () => {
       .toEqual(resolveFeatures({ config: {}, changedFiles: [] }));
   });
 
-  it('core+auto on an empty diff resolves exactly the 7 core tokens', () => {
+  it('core+auto on an empty diff resolves exactly the 5 core tokens', () => {
     expect(resolveFeatures({ config: { features: 'core+auto' }, changedFiles: [] }))
-      .toEqual(['orchestration', 'planning', 'execution', 'checkpoint', 'gates', 'quality', 'lessons']);
+      .toEqual(['orchestration', 'planning', 'execution', 'checkpoint', 'quality']);
   });
 
   it('security force-on: sensitive diff includes it and resists removal', () => {
@@ -168,7 +177,7 @@ describe('resolveFeatures + SAFETY', () => {
   it('removing a non-firing safety member is allowed', () => {
     const resolved = resolveFeatures({ config: { features: 'core+auto,-security' }, changedFiles: ['README.md'] });
     expect(resolved).not.toContain('security');
-    expect(resolved).toContain('lessons');
+    expect(resolved).toContain('orchestration');
   });
 
   it('unknown token throws through the resolver (fail-closed)', () => {
@@ -186,7 +195,7 @@ describe('resolveFeatures + SAFETY', () => {
     expect(resolved).toContain('ship');
   });
 
-  it('intent flags fire their tokens (ship/healing/review/root-cause)', () => {
+  it('intent flags fire their tokens (ship/healing/review)', () => {
     const resolved = resolveFeatures({
       config: { features: 'core+auto' }, changedFiles: [],
       intents: { close: true, failure: true, gatesPass: true, bug: true },
@@ -194,7 +203,7 @@ describe('resolveFeatures + SAFETY', () => {
     expect(resolved).toContain('ship');
     expect(resolved).toContain('healing');
     expect(resolved).toContain('review');
-    expect(resolved).toContain('root-cause');
+    expect(resolveFeatures({ config: { features: 'core+auto' }, changedFiles: [], intents: { bug: true } })).toContain('healing');
   });
 
   it('off-default tokens never auto-fire, even with every signal lit', () => {

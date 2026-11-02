@@ -1,5 +1,5 @@
 // test/mission.test.ts
-import { test, expect } from 'bun:test';
+import { test, expect, describe, it } from 'bun:test';
 import { mkdtempSync, writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -119,16 +119,23 @@ test('archiveMission folds flow files + findings into report.md, keeps plan.md +
   // report.md holds closure summary + every folded section, wave files last
   const rep = readFileSync(join(missionDir, 'report.md'), 'utf8');
   expect(rep).toContain('closure summary');
-  expect(rep).toContain('## Archived: decisions.md');
+  // sections are named by topic, never by source file
+  for (const h of ['## Decisions', '## Blockers', '## Review', '## Security', '## Spec', '## Implementation', '## Quality', '## Evidence']) {
+    expect(rep).toContain(h);
+  }
+  expect(rep).not.toContain('Archived:');
   expect(rep).toContain('decision log body');
-  expect(rep).toContain('## Archived: blockers.md');
-  expect(rep).toContain('## Archived: review.md');
-  expect(rep).toContain('## Archived: security.md');
-  expect(rep).toContain('## Archived: spec.md');
-  expect(rep).toContain('## Archived: 01-execution.md');
   expect(rep).toContain('exec evidence');
+  // one title; the closure file seeded the report and is not folded a second time
+  expect(rep.match(/^# /gm)).toHaveLength(1);
+  expect(rep.match(/closure summary/g)).toHaveLength(1);
+  // verdict comes before any topic section; crew names and Flow numbers only in Evidence
+  expect(rep.indexOf('## Verdict')).toBeLessThan(rep.indexOf('## Implementation'));
+  const body = rep.slice(0, rep.indexOf('## Evidence'));
+  expect(body).not.toMatch(/Flow \d|Zoro|Sanji/);
+  expect(rep.slice(rep.indexOf('## Evidence'))).toContain('| Implementation | `01-execution.md` | 3 | Zoro |');
   // 07-pr-verdict.md is NOT folded — it survives as pr-verdict.md at root
-  expect(rep).not.toContain('## Archived: 07-pr-verdict.md');
+  expect(rep).not.toContain('pr verdict');
 
   // index line lands at .mugiwara/index.md
   expect(index).toBe('index.md');
@@ -160,8 +167,8 @@ test('archiveMission folds a legacy waves/ mission without splitting the trail',
 
   const r = archiveMission(dir, 'old');
   const rep = readFileSync(join(missionDir, 'report.md'), 'utf8');
-  expect(rep).toContain('## Archived: 06-closure.md');
   expect(rep).toContain('legacy closure body');
+  expect(rep).not.toContain('Archived:');
   expect(r.removed.join(',')).toContain(join('missions', 'old', 'waves', '06-closure.md'));
   expect(existsSync(join(missionDir, 'flows'))).toBe(false); // never created for a legacy mission
 });
@@ -171,4 +178,70 @@ test('archiveMission returns null report for an unknown mission', () => {
   const r = archiveMission(dir, 'ghost');
   expect(r.report).toBeNull();
   expect(r.removed).toEqual([]);
+});
+
+test('archiveMission labels Review from the dispatch ledger only', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-'));
+  const missionDir = buildArchiveFixture(dir);
+  writeFileSync(join(dir, '.mugiwara', 'review-dispatch.jsonl'),
+    JSON.stringify({ agent: 'robin-reviewer', at: new Date().toISOString(), session_id: 's', mission: 'demo' }) + '\n');
+  archiveMission(dir, 'demo');
+  const body = readFileSync(join(missionDir, 'report.md'), 'utf8');
+  expect(body).toContain('*Checked independently: Robin ran as a separate agent with fresh context.*');
+  expect(body).toContain('*Checked inline: the same conversation and model that wrote the change.*'); // Security: no Jinbe entry
+});
+
+describe('archiveMission independent-review gate', () => {
+  const setup = (opts: { agents?: string[]; marker?: boolean; config?: string } = {}) => {
+    const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-'));
+    const missionDir = buildArchiveFixture(dir);
+    const root = join(dir, '.mugiwara');
+    writeFileSync(join(missionDir, 'state.json'), JSON.stringify({ mission: 'demo', flow: 9, lane: 'full', sensitive_paths: ['src/auth.ts'] }) + '\n');
+    if (opts.config) writeFileSync(join(root, 'config'), opts.config);
+    if (opts.marker !== false) writeFileSync(join(root, '.engaged'), '{}\n');
+    if (opts.agents) {
+      writeFileSync(join(root, 'review-dispatch.jsonl'), opts.agents.map((a) => JSON.stringify({ agent: a, at: new Date().toISOString(), session_id: 's', mission: 'demo' })).join('\n') + '\n');
+    }
+    return { dir, missionDir };
+  };
+  it('refuses without Jinbe, naming the check and both ways forward', () => {
+    const { dir } = setup({ agents: ['robin-reviewer'] });
+    let msg = '';
+    try { archiveMission(dir, 'demo'); } catch (e) { msg = (e as Error).message; }
+    expect(msg).toContain('the security check (Jinbe)');
+    expect(msg).not.toContain('(Robin)');
+    expect(msg).toContain('independent_review=off');
+    expect(msg).toContain('separate agent');
+  });
+  it('passes with both, and with independent_review=off', () => {
+    const a = setup({ agents: ['robin-reviewer', 'jinbe-security'] });
+    expect(() => archiveMission(a.dir, 'demo')).not.toThrow();
+    const b = setup({ config: 'mode=guided\nindependent_review=off\n' });
+    expect(() => archiveMission(b.dir, 'demo')).not.toThrow();
+  });
+  it('is not enforced when no marker and no ledger exist', () => {
+    const { dir } = setup({ marker: false });
+    expect(() => archiveMission(dir, 'demo')).not.toThrow();
+  });
+  it('--force archives and the report says inline', () => {
+    const { dir, missionDir } = setup({ agents: ['robin-reviewer'] });
+    archiveMission(dir, 'demo', { force: true });
+    const body = readFileSync(join(missionDir, 'report.md'), 'utf8');
+    expect(body).toContain('*Checked independently: Robin');
+    expect(body).toContain('*Checked inline: the same conversation');
+  });
+});
+
+test('archive Cost: process estimate against the budget, provider figure on its own line', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'mugi-archive-'));
+  const missionDir = buildArchiveFixture(dir);
+  writeFileSync(join(missionDir, 'state.json'), JSON.stringify({
+    mission: 'demo', flow: 9, lane: 'full', tokens_est: 2111, tokens_source: 'reported', tokens_process_est: 20855,
+    tokens_cache_read: 252276, tokens_cache_creation: 37420,
+  }) + '\n');
+  archiveMission(dir, 'demo');
+  const body = readFileSync(join(missionDir, 'report.md'), 'utf8');
+  expect(body).toMatch(/Process estimate: 20,855 of [\d,]+ tokens \(\d+%\)\./);
+  expect(body).toContain('Provider-reported: 2,111 input and output tokens, plus 252,276 cache reads and 37,420 cache writes.');
+  expect(body).not.toMatch(/2,111\*\* of|Used \*\*2,111/);
 });

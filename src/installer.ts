@@ -228,6 +228,7 @@ export function installTo(target: Target, opts: InstallOptions): InstallResult {
     const post = target.postInstall({ scope, projectDir, home, dryRun, files: result.written });
     result.written.push(...post.written);
     result.notes.push(...post.notes);
+    if (dryRun && (target.id === 'claude' || target.id === 'opencode')) result.notes.push('dry run: the count leaves out hook, script, command and settings files, which are written in the last step of a real install.');
   }
 
   // A fresh install must be immediately usable — write a default

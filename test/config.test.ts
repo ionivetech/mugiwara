@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DEFAULT_CONFIG, readConfig, ensureConfig, readInvestigationConfig } from '../src/config.ts';
+import { DEFAULT_CONFIG, readConfig, ensureConfig } from '../src/config.ts';
 
 function tmpProject(): string {
   const dir = mkdtempSync(join(tmpdir(), 'mugiwara-config-'));
@@ -15,10 +15,16 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG).toContain('mode=guided');
     expect(DEFAULT_CONFIG).toContain('branch=feature/{type}-{issue}-{slug}');
     expect(DEFAULT_CONFIG).toContain('auto_commit=off');
-    expect(DEFAULT_CONFIG).toContain('coverage_new=85');
-    // equal to coverage_new: touching a file is not held stricter than writing one
-    expect(DEFAULT_CONFIG).toContain('coverage_modified=85');
+    // one `coverage` key; legacy coverage_new/coverage_modified are not advertised
+    expect(DEFAULT_CONFIG).toContain('coverage=85');
+    expect(DEFAULT_CONFIG).not.toContain('coverage_new');
+    expect(DEFAULT_CONFIG).not.toContain('coverage_modified');
+    // keys with no behavioral consumer are not advertised (still read silently)
+    expect(DEFAULT_CONFIG).not.toContain('verify_merged');
+    expect(DEFAULT_CONFIG).not.toContain('investigation_');
+    expect(DEFAULT_CONFIG).toContain('# enforce=warn');
     expect(DEFAULT_CONFIG).toContain('heal_max_cycles=3');
+    expect(DEFAULT_CONFIG).toContain('independent_review=on');
     expect(DEFAULT_CONFIG).toContain('verbosity=normal');
   });
 
@@ -57,13 +63,11 @@ describe('readConfig', () => {
     expect(Object.keys(cfg).length).toBe(1);
   });
 
-  it('auto-creates default config when none exists (tier-3 bootstrap)', () => {
+  it('is side-effect free: does not create .mugiwara/config when missing', () => {
     expect(existsSync(join(dir, '.mugiwara', 'config'))).toBe(false);
     const cfg = readConfig(dir);
-    expect(cfg.mode).toBe('guided');
-    expect(cfg.branch).toBe('feature/{type}-{issue}-{slug}');
-    expect(existsSync(join(dir, '.mugiwara', 'config'))).toBe(true);
-    expect(readFileSync(join(dir, '.mugiwara', 'config'), 'utf8')).toBe(DEFAULT_CONFIG);
+    expect(cfg).toEqual({});
+    expect(existsSync(join(dir, '.mugiwara', 'config'))).toBe(false);
   });
 
   it('handles Windows line endings', () => {
@@ -83,33 +87,6 @@ describe('readConfig', () => {
     writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
     const cfg = readConfig(dir);
     expect('features' in cfg).toBe(false);
-  });
-});
-
-describe('readInvestigationConfig', () => {
-  let dir: string;
-  beforeEach(() => { dir = tmpProject(); });
-  afterEach(() => { rmSync(dir, { recursive: true, force: true }); });
-
-  it('returns defaults (2/5/2) when keys are absent', () => {
-    writeFileSync(join(dir, '.mugiwara', 'config'), 'mode=guided\n');
-    expect(readInvestigationConfig(dir)).toEqual({ max_passes: 2, max_unrelated_files: 5, repeated_read_threshold: 2 });
-  });
-
-  it('parses explicit values (4/9/3)', () => {
-    writeFileSync(
-      join(dir, '.mugiwara', 'config'),
-      'investigation_max_passes=4\ninvestigation_max_unrelated_files=9\ninvestigation_repeated_read_threshold=3\n',
-    );
-    expect(readInvestigationConfig(dir)).toEqual({ max_passes: 4, max_unrelated_files: 9, repeated_read_threshold: 3 });
-  });
-
-  it('falls back to defaults for non-numeric or zero values (2/5/2)', () => {
-    writeFileSync(
-      join(dir, '.mugiwara', 'config'),
-      'investigation_max_passes=abc\ninvestigation_max_unrelated_files=0\ninvestigation_repeated_read_threshold=-3\n',
-    );
-    expect(readInvestigationConfig(dir)).toEqual({ max_passes: 2, max_unrelated_files: 5, repeated_read_threshold: 2 });
   });
 });
 

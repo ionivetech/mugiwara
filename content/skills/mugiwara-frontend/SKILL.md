@@ -1,124 +1,93 @@
 ---
 name: mugiwara-frontend
-description: Use for frontend component, CSS styling, responsive layout, accessible — matching standards, extraction.
+description: Use when building or changing frontend UI: component, form, grid, image, CSS styling, responsive layout, accessible markup, ARIA labels, design tokens, performance budgets.
 gate_artifact: flows/01-execution.md — frontend evidence (tokens.css + component evidence)
 ---
 
-# Frontend (UI slop guard)
+# Frontend
 
 ## Skip when
 
 - Diff touches no UI code: backend, docs, config, or CLI-only change.
 - No visual change, markup, styling, or frontend behavior in the mission.
-Interfaces built under this skill must not look templated.
+
+Interfaces built under this skill must not look templated. Append a `## frontend (<task id>)` section to `flows/01-execution.md` (never overwrite it) with the evidence.
 
 ## Source-backed code
 
-Framework code from docs, not memory — `_shared/references/source-grounding.md`.
-- React Server Actions: `useActionState` for form pending/error state — https://react.dev/reference/react/useActionState
-- Tailwind class scanning: `content` purge paths — https://v3.tailwindcss.com/docs/content-configuration
+Framework code from docs, not memory: `_shared/references/source-grounding.md`. Pin the framework version from the dependency file and read that version's docs.
+
 ## Existing repo standard first
 
-Match the repo's standard before writing anything new; reuse its components and patterns. Greenfield with no UI: skip to design-system extraction.
-- Component library (MUI/Tailwind/shadcn/etc) — a new button looks like the repo's buttons, not the internet's.
-- File conventions, naming, folder structure, CSS strategy; lint/format/test scripts.
-- Tokens already in the theme/config; existing page patterns — how pages compose sections and state.
-## Redesigns: audit first
+Match the repo before writing anything new; reuse its components and patterns. A new button looks like the repo's buttons, not the internet's. Learn the component library, file and naming conventions, CSS strategy, existing tokens, and how pages compose sections and state. Greenfield with no UI: go to design-system extraction.
 
-Capture current layout, spacing/type scales, palette, and component inventory before changing existing UI. Fix real problems; do not restyle what works.
+Redesigns: capture current layout, spacing and type scales, palette, and component inventory first. Fix real problems; do not restyle what works.
 
-## Design-system extraction (before markup)
+## Design tokens (before markup)
 
-Tokens BEFORE markup — no tokens, no markup. Write `tokens.css` (CSS custom properties on `:root`) unless the stack keeps tokens elsewhere:
-- Spacing: 4/8 grid — 4, 8, 12, 16, 24, 32, 48, 64 (`space-xs`…`space-3xl`).
-- Type: 12/14/16/18/24/32/48 scale, 1.5 line-height, 45–75ch measure (`text-sm`…`text-display`).
-- Role palette: `surface-muted`, `text-primary`, `border-default`, `accent` — semantic, not color names.
-- Radii: 2/4/8/12/full; shadows sm–xl; motion: duration + easing (`duration-fast`, `ease-in-out`).
-Semantic names only (`surface-muted`, never `gray-100`). Full rules: `references/design-tokens.md`.
+Tokens before markup. Write `tokens.css` (CSS custom properties on `:root`) unless the stack keeps tokens elsewhere: a spacing grid, a type scale with 1.5 line-height and 45-75ch measure, a semantic role palette, radii, shadows, and motion durations. Semantic names only (`surface-muted`, never `gray-100`). Rules: `references/design-tokens.md`.
 
-## Primitives (reuse, 100%)
+## Components and state
 
-Build `Button`, `Input`, `Card`, `Stack` from tokens; compose every screen from them. A bespoke component is debt on every screen — reuse primitives or justify the exception.
-- Storybook story per primitive as behavior reference, not a build harness — https://storybook.js.org/docs
-- Tailwind: `content: ['./src/**/*.{ts,tsx}']` purge in `tailwind.config.ts`; `prettier-plugin-tailwindcss` for stable class order.
-- Variants over props soup: 3+ boolean props = split the component; children/slots over config flags.
-## Server Actions (React)
+- Build `Button`, `Input`, `Card`, `Stack` from tokens and compose screens from them. A bespoke component needs a stated reason.
+- Compose, do not inherit. One responsibility per component; extract on reuse; leaf components stay presentational.
+- Name by role (`ProductCard`, not `CardA`). Three or more boolean props means split the component.
+- State: local first, lift only what is shared. Cache and refetch at a data layer; no per-screen copies of API data. Design loading, error, empty, and success states.
+- Forms: disable submit while pending, render errors into a `role="alert"` or `aria-live` region, assert the keyboard path (tab order, focus, Enter, Escape).
 
-React-only below — other stacks apply the same patterns (pending/error/
-disabled states, keyboard paths, live regions) in their own idioms.
-`useActionState(fn, initial)` returns `[state, formAction, isPending]`; pass `formAction` to `<form action>`. Progressive enhancement works even before hydration.
-- Disable submit while `isPending` (`useFormStatus` for nested buttons).
-- Render `state.error` into a `role="alert"`/`aria-live` region; every async region gets a `data-testid`.
-- Keyboard path asserted: tab order, focus, Enter/Escape; no focus trap without escape.
-## Component architecture
+## From Figma or image references
 
-Compose, don't inherit. One responsibility per component; extract on reuse; leaves presentational (no data fetching).
-- Composition over configuration: children/slots beat dozens of props.
-- Naming by role (`ProductCard`, not `CardA`); variants over copy-paste.
-## State management
+Extract tokens first, then reproduce hierarchy, alignment, and whitespace faithfully. Do not improve the layout unasked. A one-off is not a license for a second system.
 
-Minimal state, local first; lift only what is shared. Server vs client: cache/refetch at a data layer, derive on render; no per-screen copies of API data. Loading/error/empty/success designed, not an afterthought.
+## Design judgment
 
-## From Figma / image references
+- One primary action and one focal point per view; consistent spacing.
+- Fewer, considered elements. 1-2 typefaces, deliberate scale.
+- Role-based palette, contrast AA minimum, no pure black on pure white.
+- Design hover, focus, active, disabled, loading, error, and empty states. Respect `prefers-reduced-motion`.
+- Every element earns its place.
 
-Extract tokens first, then reproduce structure faithfully: hierarchy, alignment, whitespace ratios. Do not "improve" the layout unasked. A one-off is not a license for a second system.
+## Responsive and performance
 
-## Taste: positive design judgment
+Mobile-first; stack columns only when there is room. Use the stack's breakpoints, fluid containers and type. Verify at every breakpoint, including between them.
 
-- Hierarchy and rhythm: one primary action per view, one focal point, consistent spacing.
-- Restraint: fewer, more considered elements; whitespace is a tool.
-- Typography: 1-2 typefaces, deliberate scale, weight for emphasis, 45-75ch lines.
-- Color: role-based palette, contrast AA minimum, never pure-black-on-pure-white for text.
-- Consistency: the same thing looks the same everywhere.
-- Intentionality: every element earns its place; if you cannot say why, remove it.
-- State design: hover, focus, active, disabled, loading, error, empty — designed.
-- Craft: spacing grids; motion respecting `prefers-reduced-motion`; verified at breakpoints.
-## Responsive behavior
+Budgets: LCP under 2.5s, CLS under 0.1, INP under 200ms. Images carry width/height or aspect-ratio; preload the LCP asset; animate only transform and opacity; lazy-load below the fold. Run Lighthouse when the repo has it and explain deltas. Measure before optimizing.
 
-Mobile-first; default full-width stacked, columns only when there is room. Use the stack's breakpoints, not a parallel scale; fluid containers, type, and spacing. Verify at every breakpoint, including between them — 3 widths checked is not 12 checked.
+## Generic-looking UI patterns to avoid
 
-## Performance budgets
+Centered hero trio, a row of identical feature cards, purple gradients everywhere, glassmorphism, emoji as icons, placeholder copy, stock hero illustrations. A brief that calls for one: build it well, but the default is to avoid. Catalog: `references/slop-catalog.md`.
 
-- LCP <2.5s, CLS <0.1, INP <200ms. Images carry width/height or aspect-ratio; LCP asset preloaded; fonts `font-display`; input handlers off the main thread.
-- No layout thrash; animate only transform/opacity; lazy-load below the fold; no whole icon library for two icons; no re-render storms (stable keys, no work in render).
-- Lighthouse/lighthouse-ci in repo? Run it; scores meet budgets, deltas explained. Measure before optimizing.
-## Banned AI-default patterns (the slop list)
+## Accessibility (WCAG 2.1 AA)
 
-- Centered hero trio; row of 3-4 identical feature cards; purple/indigo gradient everything; glassmorphism; emoji as icons; placeholder copy; stock hero illustrations.
-- Full catalog with the tell for each: `references/slop-catalog.md`. Brief genuinely calls for one? Execute it well — but default is don't.
-## WCAG 2.1 AA accessibility
+Checklist: `references/checklist.md`.
 
-Full checklist: `references/checklist.md`.
-- Keyboard: operable alone; logical tab order; visible focus; no trap without escape.
-- Semantics: native elements over ARIA; landmarks; logical heading order.
-- Contrast: 4.5:1 text, 3:1 large text/UI; never color-only meaning.
-- Forms: every input labeled (placeholder is not a label); `aria-describedby` help.
-- Dynamic content: `aria-live`; reduced-motion respected.
-## Testability and verification
+- Operable by keyboard alone; logical tab order; visible focus.
+- Native elements over ARIA; landmarks; heading order.
+- Contrast 4.5:1 for text, 3:1 for large text and UI; never meaning by color alone.
+- Every input labeled (a placeholder is not a label).
 
-Stable `data-testid` on every interactive element and every async state (loading/error/empty). Never test by CSS class or by text that changes. Prefer `getByRole` — accessible name doubles as an a11y assertion. Keyboard paths asserted for menu/modal/form. Compare result against reference; list remaining deltas before done.
+## Testability
 
-## Frontend security
+Every interactive element (button, link, input, form) and every async state carries a stable `data-testid`, asserted by the task's test and not only present in markup. Never test by CSS class or changing text. Prefer `getByRole`. Compare the result against the reference and list remaining deltas before done.
 
-- Never render user content via `dangerouslySetInnerHTML`/`v-html` unless sanitized.
-- Escape user input in every template; no secrets in client code; validate URL params/storage/API input.
-- `rel="noopener"` on `target="_blank"`; validate URLs before navigating.
-## Red flags
+## Security
 
-- "Optimize when it's slow" — perf regressions ship measured later, rarely.
-- "It's client-side, so no security review" — client is public by definition.
-- "New screen, new components" — primitives are default; bespoke is exception.
-- "Global store for everything" — local state first; lift only what's shared.
-## Common Rationalizations
+- No unsanitized user content in `dangerouslySetInnerHTML` or `v-html`; escape input in every template.
+- No secrets in client code; validate URL params, storage, and API input.
+- `rel="noopener"` on `target="_blank"`.
+
+## Rationalizations
 
 | Excuse | Reality |
 |--------|---------|
-| "The brief calls for a hero trio." | A brief calling for slop is a constraint, not a license. |
-| "It's just a landing page." | Still verified for responsive and a11y at every breakpoint. |
-| "Good enough." | Not done until compared against the reference with deltas listed. |
-| "Everyone ships this card row." | Popularity is not design; banned stays banned. |
-| "Tokens later." | Tokens extracted before markup, or the layout gets rebuilt. |
-| "Our repo is messy, I'll use my own style." | Match the repo standard first, then propose raising it. |
+| "The brief calls for a hero trio." | A brief is a constraint, not a reason to skip craft; name it as a known delta. |
+| "It's just a landing page." | Still verified for responsive layout and accessibility at every breakpoint. |
+| "Tokens later." | Tokens come before markup, or the layout gets rebuilt. |
 
-If a rationalization wins, name it in the report as a known delta — not as silence.
+## Red flags
 
+- "Optimize when it's slow": measure first.
+- "It's client-side, so no security review": the client is public.
+- New screen, new bespoke components instead of primitives.
+- Global store for everything.
+- An interactive element missing `data-testid`.

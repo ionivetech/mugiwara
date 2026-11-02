@@ -17,7 +17,7 @@ One verdict + evidence per axis. No axis passes on assertion.
 ```
 Axis: Correctness
 Verdict: PASS
-Evidence: npm test -- --shard=1/2 passes (312 tests), caller grep confirms all
+Evidence: the project test command passes (312 tests), caller grep confirms all
           imports of renamed function updated
 ```
 
@@ -32,5 +32,5 @@ Evidence: New endpoint POST /api/export has no authz middleware. Missing rate
 
 - One verdict per axis. "Partial pass" = FAIL.
 - Evidence is command output or file path, never a paraphrase.
-- FAIL on any axis → overall review FAIL → Brook (Flow 8).
-- PASS on all 5 → forward to closure.
+- FAIL on any axis: overall review FAIL. Return it to Luffy with `recommend: Brook`.
+- PASS on all 5: return to Luffy with `recommend: continue`.
