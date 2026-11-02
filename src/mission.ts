@@ -318,7 +318,7 @@ export function archiveMission(projectDir: string, mission: string, opts: { dryR
     // plan.md + flows/* evidence — a mission without its trail does not fold.
     const artifacts = checkMissionArtifacts(dir);
     if (!artifacts.ok) {
-      throw new Error(`archive artifact gate failed — missing: ${artifacts.missing.join(', ')} (lane ${artifacts.lane}). Record what actually ran as flows/NN-<stage>.md (01-execution, 02-audit, 03-quality, 04-gates, 05-healing, 06-closure) before archiving; never invent evidence.`);
+      throw new Error(`archive artifact gate failed — missing: ${artifacts.missing.join(', ')} (lane ${artifacts.lane}). Record what actually ran with: mugiwara record <execution|audit|quality|gates|healing|closure> (or mugiwara close <mission>) before archiving; never invent evidence.`);
     }
     // Attestation gate (D4): when attestation.required is true, the report must be signed and
     // trusted. The verifier is a lazy add-on, so the async check runs in requireAttestation()

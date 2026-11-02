@@ -10,6 +10,7 @@ import { createRl, choose, multiChoose, confirm } from './prompt.ts';
 import { targets, TARGET_IDS } from './targets/index.ts';
 import { installTo, removeInstalled, VERSION, ensureProjectGitignore, removeProjectGitignore } from './installer.ts';
 import { manifestPath, readManifest, writeManifest, type Scope } from './manifest.ts';
+import { recordStage, STAGES, type Stage } from './record.ts';
 import { resetMission, archiveMission, requireAttestation, closureBlockers, rosterAssignees, rosterSize } from './mission.ts';
 import { knownMembers } from './continue.ts';
 import { runScript, RUNNABLE } from './run.ts';
@@ -86,6 +87,8 @@ export async function run(argv: string[]): Promise<void> {
     case 'list': return list(flags);
     case 'doctor': return doctorCmd(flags);
     case 'reset': return resetCmd(flags, _);
+    case 'record': return recordCmd(flags, _);
+    case 'close': return await closeCmd(flags, _);
     case 'archive': return await archive(flags, _);
     case 'clean': return await cleanCmd(flags);
     case 'continue': return continueCmd(flags, _);
@@ -308,6 +311,40 @@ function missionHasLiveState(projectDir: string, m: string): boolean {
     const stem = f.replace(/\.json$/, '');
     return f.endsWith('.json') && stem !== 'continue' && !stem.startsWith('continue-');
   });
+}
+
+/** The mission to act on: the named one, or the only one; else list and exit 2 (the same pick-one contract as archive). */
+function pickMission(projectDir: string, named: string | undefined, verb: string): string {
+  if (named) return named;
+  const all = missionDirNames(projectDir);
+  if (all.length === 1) return all[0];
+  console.log(all.length ? `${all.length} missions: ${all.join(', ')}\nPick one: mugiwara ${verb} <mission>` : 'no missions.');
+  process.exit(2);
+}
+
+function recordCmd(flags: Args['flags'], positionals: string[]): void {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const stage = positionals[1] as Stage | undefined;
+  if (!stage || !STAGES.includes(stage)) { console.error(`usage: mugiwara record <${STAGES.join('|')}> [mission] [--cmd "<command>"] [--note "<text>"]`); process.exit(2); }
+  const mission = pickMission(projectDir, positionals[2], `record ${stage}`);
+  const r = recordStage(projectDir, mission, stage, { cmd: str(flags.cmd), note: str(flags.note) });
+  if ('error' in r) { console.error(`✗ ${r.error}`); process.exit(1); }
+  console.log(`recorded: ${r.path}`);
+}
+
+/** Close a mission in one step: record the evidence the CLI can see, then archive. */
+async function closeCmd(flags: Args['flags'], positionals: string[]): Promise<void> {
+  const projectDir = resolveProjectDir(str(flags.project));
+  const mission = pickMission(projectDir, positionals[1], 'close');
+  failOnCorruptState(projectDir, mission);
+  const flows = join(projectDir, '.mugiwara', 'missions', mission, 'flows');
+  for (const stage of ['execution', 'closure'] as const) {
+    if (existsSync(join(flows, `0${STAGES.indexOf(stage) + 1}-${stage}.md`))) continue;
+    const r = recordStage(projectDir, mission, stage);
+    if ('error' in r) console.log(`skipped ${stage}: ${r.error}`);
+    else console.log(`recorded: ${r.path}`);
+  }
+  await archive(flags, ['archive', mission]);
 }
 
 async function archive(flags: Args['flags'], positionals: string[]): Promise<void> {
@@ -1508,6 +1545,9 @@ Usage:
                          read-only repo check (install, hooks, config, lane, missions, version pin);
                          one fix line per failure, exit 1 on any failure
   mugiwara reset [<m>]   wipe ALL mission state (missions/ + legacy dirs), or only mission <m>
+  mugiwara record <stage> [<m>] [--cmd "<command>"] [--note "<text>"]
+                         write flows/NN-<stage>.md from real facts (diff, a command it runs, review ledger)
+  mugiwara close [<m>]   record execution + closure evidence, then archive
   mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
   mugiwara clean [--include-live] [--stale <date>]

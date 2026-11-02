@@ -26,6 +26,11 @@ function riskPath(text: string): string | null {
   return null;
 }
 
+/** Paths from `files` whose name parts hit a risky area. */
+export function riskPathsIn(files: string[]): string[] {
+  return files.filter((f) => riskPath(f.includes('/') ? f : `./${f}`) !== null);
+}
+
 /** The first risk word or risky path named in `text`, lowercased, or null. `extra` is the project's comma-separated `risk_words=` config value. */
 export function riskTerm(text: string, extra = ''): string | null {
   if (typeof text !== 'string') return null;
