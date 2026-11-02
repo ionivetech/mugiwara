@@ -29,6 +29,7 @@ import { findBash } from '../src/run.ts';
 import { readConfig } from '../src/config.ts';
 import { dispatchedAgents, closingPending } from '../src/active-mission.ts';
 import { reviewNextStep } from '../src/risk.ts';
+import { autoCloseIfAuto } from '../src/auto-close.ts';
 
 const cwd = process.env.CLAUDE_PROJECT_DIR ?? process.cwd();
 const MARKER_TTL_MS = 12 * 60 * 60 * 1000; // 12h — a stale marker must not police tomorrow's session
@@ -481,6 +482,18 @@ async function main(): Promise<void> {
   const sid0 = typeof payload.session_id === 'string' ? payload.session_id : '';
   if (payload.hook_event_name !== 'SubagentStop' && explicitSession(sid0) && readEnforce() !== 'off' && explicitCheck(sid0)) return;
 
+  // Last resort for an unattended mission: the model was told to run `mugiwara close` (archive_blocks >= 1)
+  // and stopped again (stop_hook_active). Mode auto means nobody is waiting, so close it for the report.
+  // Guided and semi missions are never closed here.
+  if (payload.stop_hook_active === true && payload.hook_event_name !== 'SubagentStop' && readEnforce() !== 'off') {
+    const marker = readMarker();
+    const pendingNow = typeof marker.archive_blocks === 'number' && marker.archive_blocks >= 1 ? closingPending(cwd) : null;
+    if (pendingNow) {
+      const r = autoCloseIfAuto(cwd, pendingNow);
+      process.stderr.write(`Mugiwara: ${r.message}\n`);
+    }
+  }
+
   // Loop protection. Non-negotiable: without this the block would re-fire on
   // the turn it itself caused.
   if (payload.stop_hook_active === true) return;
@@ -508,7 +521,9 @@ async function main(): Promise<void> {
       process.stdout.write(JSON.stringify({ decision: 'block', reason }));
       return;
     }
-    process.stderr.write(`${reason}\n`);
+    // Budget spent and the model still has not closed: an unattended (auto) mission is closed here; others only get the warning.
+    const r = autoCloseIfAuto(cwd, pending);
+    process.stderr.write(r.closed ? `Mugiwara: ${r.message}\n` : `${reason}\n`);
   }
 
   // --- check 2: the write boundary -----------------------------------------

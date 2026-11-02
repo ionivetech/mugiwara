@@ -679,3 +679,81 @@ test('explicit: 5 plain source files (standard lane) are not held; 9 are', { tim
     expect(explicitBlocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+function closingMission(dir: string, mode: string): string {
+  engage(dir);
+  stateFile(dir, 'm9', { lane: 'full', mode });
+  const md = join(dir, '.mugiwara', 'missions', 'm9');
+  writeFileSync(join(md, 'review.md'), '# Review\n');
+  writeFileSync(join(md, 'security.md'), '# Security\n');
+  writeFileSync(join(md, 'plan.md'), '# Plan\n');
+  writeFileSync(LEDGER(dir), ['robin-reviewer', 'jinbe-security'].map((a) => JSON.stringify({ agent: a, at: new Date().toISOString(), session_id: 's1', mission: 'm9' })).join('\n') + '\n');
+  return md;
+}
+const reportOf = (md: string): boolean => existsSync(join(md, 'report.md'));
+
+test('auto-close: mode=auto, told once and stopped again → the hook closes the mission and report.md exists', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    const md = closingMission(dir, 'auto');
+    // first stop: held with the exact command, nothing closed
+    expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
+    expect(reportOf(md)).toBe(false);
+    // the model stops again right after the hold
+    const r = hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
+    expect(r.err).toContain('closed mission "m9" automatically');
+    expect(reportOf(md)).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('auto-close: guided and semi missions are never closed by the hook', { timeout: 60000 }, () => {
+  for (const mode of ['guided', 'semi']) {
+    const dir = warnRepo();
+    try {
+      const md = closingMission(dir, mode);
+      hook(GUARD, dir, { session_id: 's1' });
+      const r = hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
+      expect(r.err).toContain(`mission mode is ${mode}`);
+      expect(reportOf(md)).toBe(false);
+    } finally { rmSync(dir, { recursive: true, force: true }); }
+  }
+});
+
+test('auto-close: never before the model was told, and never with enforce=off', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    const md = closingMission(dir, 'auto');
+    hook(GUARD, dir, { session_id: 's1', stop_hook_active: true }); // no hold happened yet
+    expect(reportOf(md)).toBe(false);
+    hook(GUARD, dir, { session_id: 's1' }); // the hold
+    writeFileSync(join(dir, '.mugiwara', 'config'), 'enforce=off\n');
+    hook(GUARD, dir, { session_id: 's1', stop_hook_active: true });
+    expect(reportOf(md)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('auto-close: when stop_hook_active is never set, the spent hold budget closes a mode=auto mission', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    const md = closingMission(dir, 'auto');
+    expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
+    expect(blocked(hook(GUARD, dir, { session_id: 's1' }).out)).toBe(true);
+    expect(reportOf(md)).toBe(false);
+    const third = hook(GUARD, dir, { session_id: 's1' });
+    expect(blocked(third.out)).toBe(false);
+    expect(third.err).toContain('closed mission "m9" automatically');
+    expect(reportOf(md)).toBe(true);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('auto-close: a guided mission with a spent budget only gets the warning', { timeout: 60000 }, () => {
+  const dir = warnRepo();
+  try {
+    const md = closingMission(dir, 'guided');
+    hook(GUARD, dir, { session_id: 's1' });
+    hook(GUARD, dir, { session_id: 's1' });
+    const third = hook(GUARD, dir, { session_id: 's1' });
+    expect(third.err).toContain('mugiwara close m9');
+    expect(reportOf(md)).toBe(false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
