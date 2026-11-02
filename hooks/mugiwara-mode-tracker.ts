@@ -33,7 +33,7 @@ function parseModeChange(promptRaw: string): string | null {
 }
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
-import { ensureConfig } from '../src/config.ts';
+import { ensureConfig, readConfig } from '../src/config.ts';
 import { riskReminder } from '../src/risk.ts';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -133,7 +133,7 @@ async function main() {
   if (change) applyModeChange(change);
   else if (isExplicitCrewRequest(prompt)) recordExplicitCrew(typeof parsed.session_id === 'string' ? parsed.session_id : '');
 
-  const reminder = !change && isExplicitCrewRequest(prompt) ? riskReminder(prompt) : null;
+  const reminder = !change && isExplicitCrewRequest(prompt) ? riskReminder(prompt, readConfig(process.env.CLAUDE_PROJECT_DIR ?? process.cwd()).risk_words ?? '') : null;
   if (reminder) {
     process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'UserPromptSubmit', additionalContext: reminder } }));
     return;

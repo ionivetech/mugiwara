@@ -85,7 +85,7 @@ export async function run(argv: string[]): Promise<void> {
     case 'uninstall': return uninstall(flags);
     case 'list': return list(flags);
     case 'doctor': return doctorCmd(flags);
-    case 'reset': return resetCmd(flags);
+    case 'reset': return resetCmd(flags, _);
     case 'archive': return await archive(flags, _);
     case 'clean': return await cleanCmd(flags);
     case 'continue': return continueCmd(flags, _);
@@ -264,8 +264,17 @@ function failOnCorruptState(projectDir: string, mission?: string): void {
   process.exit(1);
 }
 
-function resetCmd(flags: Args['flags']): void {
+function resetCmd(flags: Args['flags'], positionals: string[] = []): void {
   const projectDir = resolveProjectDir(str(flags.project));
+  const one = positionals[1];
+  if (one) {
+    // One named mission only: nothing else (other missions, lessons, index) is touched.
+    const dir = join(projectDir, '.mugiwara', 'missions', one);
+    if (!/^[\w.-]+$/.test(one) || !existsSync(dir)) { console.error(`✗ no mission named '${one}'. Run \`mugiwara continue\` to list them.`); process.exit(1); }
+    rmSync(dir, { recursive: true, force: true });
+    console.log(`removed mission: ${one}`);
+    return;
+  }
   const force = flag(flags.force);
   const result = resetMission(projectDir, flag(flags.keepLogs), force);
   if (result.blocked) {
@@ -1498,7 +1507,7 @@ Usage:
   mugiwara doctor [--json]
                          read-only repo check (install, hooks, config, lane, missions, version pin);
                          one fix line per failure, exit 1 on any failure
-  mugiwara reset         wipe mission state (missions/ + legacy dirs)
+  mugiwara reset [<m>]   wipe ALL mission state (missions/ + legacy dirs), or only mission <m>
   mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
   mugiwara clean [--include-live] [--stale <date>]

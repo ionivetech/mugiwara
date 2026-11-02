@@ -6,6 +6,19 @@ import { existsSync as existsSync2, mkdirSync as mkdirSync2, readFileSync as rea
 
 // src/config.ts
 import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+
+// src/home.ts
+import { homedir } from "node:os";
+function homeDir() {
+  if (process.platform !== "win32") {
+    const h = process.env.HOME?.trim();
+    if (h)
+      return h;
+  }
+  return homedir();
+}
+
+// src/config.ts
 import { join } from "node:path";
 var DEFAULT_CONFIG = [
   "mode=guided",
@@ -28,6 +41,35 @@ var DEFAULT_CONFIG = [
 ].join(`
 `) + `
 `;
+function configPaths(projectDir) {
+  return [join(projectDir, ".mugiwara", "config"), join(homeDir(), ".mugiwara", "config")];
+}
+function readConfig(projectDir) {
+  const out = {};
+  for (const file of configPaths(projectDir)) {
+    if (!existsSync(file))
+      continue;
+    for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+      const t = line.trim();
+      if (!t || t.startsWith("#"))
+        continue;
+      const eq = t.indexOf("=");
+      if (eq === -1)
+        continue;
+      const key = t.slice(0, eq).trim();
+      if (!key)
+        continue;
+      if (key in out)
+        continue;
+      let rawVal = t.slice(eq + 1).trim();
+      const hash = rawVal.indexOf("#");
+      if (hash !== -1)
+        rawVal = rawVal.slice(0, hash).trim();
+      out[key] = rawVal;
+    }
+  }
+  return out;
+}
 function ensureConfig(projectDir) {
   const file = join(projectDir, ".mugiwara", "config");
   let exists = false;
@@ -92,16 +134,19 @@ function riskPath(text) {
   }
   return null;
 }
-function riskTerm(text) {
+function riskTerm(text, extra = "") {
   if (typeof text !== "string")
     return null;
   const m = RISK_WORDS.exec(text);
   if (m)
     return m[1].toLowerCase();
-  return riskPath(text)?.toLowerCase() ?? null;
+  const own = extra.split(",").map((w) => w.trim().toLowerCase()).filter(Boolean);
+  const low = text.toLowerCase();
+  const hit = own.find((w) => new RegExp("(?<![\\p{L}\\p{N}])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\p{L}\\p{N}])", "u").test(low));
+  return hit ?? riskPath(text)?.toLowerCase() ?? null;
 }
-function riskReminder(text) {
-  const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ""));
+function riskReminder(text, extra = "") {
+  const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ""), extra);
   return term ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission with --lane full before you edit code. ` + "Before closing, dispatch Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents; a review written by the conversation that made the change does not count." : null;
 }
 
@@ -243,7 +288,7 @@ async function main() {
     applyModeChange(change);
   else if (isExplicitCrewRequest(prompt))
     recordExplicitCrew(typeof parsed.session_id === "string" ? parsed.session_id : "");
-  const reminder = !change && isExplicitCrewRequest(prompt) ? riskReminder(prompt) : null;
+  const reminder = !change && isExplicitCrewRequest(prompt) ? riskReminder(prompt, readConfig(process.env.CLAUDE_PROJECT_DIR ?? process.cwd()).risk_words ?? "") : null;
   if (reminder) {
     process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: "UserPromptSubmit", additionalContext: reminder } }));
     return;

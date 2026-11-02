@@ -26,17 +26,20 @@ function riskPath(text: string): string | null {
   return null;
 }
 
-/** The first risk word or risky path named in `text`, lowercased, or null. */
-export function riskTerm(text: string): string | null {
+/** The first risk word or risky path named in `text`, lowercased, or null. `extra` is the project's comma-separated `risk_words=` config value. */
+export function riskTerm(text: string, extra = ''): string | null {
   if (typeof text !== 'string') return null;
   const m = RISK_WORDS.exec(text);
   if (m) return m[1].toLowerCase();
-  return riskPath(text)?.toLowerCase() ?? null;
+  const own = extra.split(',').map((w) => w.trim().toLowerCase()).filter(Boolean);
+  const low = text.toLowerCase();
+  const hit = own.find((w) => new RegExp('(?<![\\p{L}\\p{N}])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}\\p{N}])', 'u').test(low));
+  return hit ?? riskPath(text)?.toLowerCase() ?? null;
 }
 
 /** Reminder for a request that names a risk area, else null. */
-export function riskReminder(text: string): string | null {
-  const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ''));
+export function riskReminder(text: string, extra = ''): string | null {
+  const term = riskTerm(text.replace(/^\s*\/(?:mugiwara:)?mugiwara\b/i, ''), extra);
   return term
     ? `Mugiwara: this request mentions "${term}", a risk area. Take the full process, not the direct path: load the mugiwara-orchestration skill and record the mission with --lane full before you edit code. ` +
       'Before closing, dispatch Robin (robin-reviewer) and Jinbe (jinbe-security) as separate agents; a review written by the conversation that made the change does not count.'

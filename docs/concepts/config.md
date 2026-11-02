@@ -2,7 +2,7 @@
 
 You want one behavior changed and cannot find which key owns it. This page lists every key `.mugiwara/config` reads, with its default.
 
-Example: set `commit=plain` and `review_depth=standard`. The project file wins per key over `~/.mugiwara/config`. Delete a line to take its default. Unknown keys are ignored.
+Example: set `commit=plain` and `review_depth=standard`. The project file wins per key over `~/.mugiwara/config`. Delete a line to take its default. Unknown keys are ignored. A key set twice: the first line wins and `mugiwara doctor` warns. `risk_words=kyc,ledger` adds risk words.
 
 ```ini
 mode=guided
@@ -12,13 +12,13 @@ coverage=85
 heal_max_cycles=3
 ```
 
-Install writes the file with defaults. Optional keys ship commented out; uncomment to set them.
+Optional keys ship commented out.
 
 ## Keys
 
 | Key | Values | Default | Meaning |
 |---|---|---|---|
-| `mode` | guided / semi / auto | guided | How often the crew stops to ask. See [mission flow](mission-flow.md#modes-how-closely-you-watch). |
+| `mode` | guided / semi / auto | guided | How often the crew stops to ask. A running mission keeps its mode. See [mission flow](mission-flow.md#modes-how-closely-you-watch). |
 | `verbosity` | normal / full | normal | How much the crew echoes per stage. |
 | `branch` | pattern | `feature/{type}-{issue}-{slug}` | Mission branch name. A convention the crew follows, not substituted by code. |
 | `commit` | conventional / gitmoji / plain / template | conventional | Commit message style. |

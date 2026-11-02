@@ -140,3 +140,18 @@ describe('archive without optional evidence', () => {
     } finally { rmSync(dir, { recursive: true, force: true }); }
   });
 });
+
+describe('risk_words config', () => {
+  test('a project word triggers a risk hit', () => {
+    expect(riskTerm('add the kyc check', 'kyc, ledger')).toBe('kyc');
+    expect(riskReminder('/mugiwara change the ledger export', 'kyc,ledger')).toContain('"ledger"');
+  });
+  test('whole words only, empty config is ignored', () => {
+    expect(riskTerm('rename skycap', 'kyc')).toBeNull();
+    expect(riskTerm('add the kyc check', '')).toBeNull();
+  });
+  test('regex characters in a word are literal', () => {
+    expect(riskTerm('touch a.b now', 'a.b')).toBe('a.b');
+    expect(riskTerm('touch axb now', 'a.b')).toBeNull();
+  });
+});
