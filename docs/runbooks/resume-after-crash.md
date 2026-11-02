@@ -55,8 +55,7 @@ If state was never saved, or a file is damaged, these are the manual repairs.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `has a resume point but no state file` | the state file was deleted | run `mugiwara savepoint <mission> [handle] <flow>` to write it again, or delete the stale `continue-<handle>.json` |
-| `has unreadable state: crew1/jane-doe.json` | corrupt JSON | restore the file from git, or delete it and re-run triage |
-| `⚠ 1 unreadable state file(s)` from `mugiwara status` | corrupt, not absent | inspect or delete it. Never ignore it: it blocks resume |
+| `✗ .mugiwara/missions/crew1/jane-doe.json: not valid JSON` from `continue`, `status`, `cost` or `archive` | a truncated or hand-edited state file; the command exits 1 | run the printed `fix:` line (restore from git, or delete the file and the next savepoint rewrites it). `mugiwara doctor` lists every bad file |
 | `No mission in flight. Start one with Flow 0 triage` | nothing on disk for you | check your branch, or run `mugiwara continue --all` on a shared checkout |
 
 ## What you end up with

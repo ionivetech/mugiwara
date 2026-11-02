@@ -31,7 +31,7 @@ You installed the crew, typed a small request, and nothing visibly changed. That
    ```text
    /mugiwara add role-based access control: admin, editor, viewer
    ```
-   The crew sizes the work from the diff and the paths involved. Access control touches security, so it picks the full pipeline (called a lane; the lanes are Direct, Lean, Standard and Full). It names its members in one line, then stops before writing code and asks numbered questions. This is an excerpt of a real first reply, shortened:
+   The crew sizes the work from the diff and the paths involved. Access control touches security, so it picks the full pipeline (called a lane; the lanes are Direct, Lean, Standard, Full and Spike). It names its members in one line, then stops before writing code and asks numbered questions. This is an excerpt of a real first reply, shortened:
    ```text
    Access control touches security, so this gets the full pipeline. Mode is guided, so I need
    your go at each stage. I'm stopping before any code because the request is too vague to plan.

@@ -14,7 +14,7 @@ Review independence is machine-checked evidence, not a model claim. A hook appen
 
 Machine-checked on Claude Code:
 
-- **Explicit-request hold.** `/mugiwara <request>` records `.mugiwara/.engaged`. At stop the guard compares the real diff (lane from `scripts/lane.sh`) with what happened; a risky change with no mission recorded blocks the turn, at most 2 times a session, then warns. A mission closed earlier in the session is not blocked. Only `enforce=off` disables it. Claude Code honors the block in headless `-p` mode.
+- **Explicit-request hold.** `/mugiwara <request>` records `.mugiwara/.engaged`. At stop the guard compares the real diff (lane from `scripts/lane.sh`) with what happened; a risky change with no mission, no review or security file, or an inline-only review blocks the turn, at most 2 times a session, then warns. A mission closed earlier in the session is not blocked. Only `enforce=off` disables it. Claude Code honors the block in headless `-p` mode.
 - **Risk reminder.** When `/mugiwara <request>` names a risk area (auth, roles, payments, tokens, secrets, migrations, schema, Indonesian equivalents such as izin or pembayaran, or a path like `auth/`), the prompt hook adds one line telling the model to take the full process and to dispatch Robin and Jinbe as separate agents before closing. It does not block anything.
 - **Closure gate.** `mugiwara archive` refuses to close a full-lane or sensitive-path mission unless the ledger shows an independent run of both `robin-reviewer` and `jinbe-security`. It names the missing check and the two ways forward: run it as a separate agent and close again, or set `independent_review=off`. `--force` archives anyway with the inline label. It applies only where the ledger exists, so other hosts are not blocked.
 
@@ -29,7 +29,7 @@ These are real rules, worth following, and unchecked at runtime. Lane re-checks 
 - **Turn-end savepoint:** enforced on Claude Code (the stop hooks run the savepoint). opencode warns at session end when work happened without triage. Every other platform is advisory only, because it has no hook mechanism.
 - **Irreversible-command guard** (blocks merges, publishes and similar): enforced on Claude Code and opencode before the command runs. Every other platform has prose only.
 
-Hooks are the only no-model mechanism and hooks are not portable. A documented gap beats a fake guarantee: where a rule matters on an advisory platform, a human or CI checks it. Behavioral scoring of skills stays out of the gate by decision, for token cost. A host is marked verified only after its workflow completes end to end; the Codex CLI risky-task run skipped Mugiwara orchestration and remains unverified. Mugiwara is a skills pack, not a supervisor.
+A documented gap beats a fake guarantee: where a rule matters on an advisory platform, a human or CI checks it. Behavioral scoring of skills stays out of the gate by decision, for token cost. A host is marked verified only after its workflow completes end to end; the Codex CLI risky-task run skipped Mugiwara orchestration and remains unverified. Mugiwara is a skills pack, not a supervisor.
 
 ## Rule by rule
 

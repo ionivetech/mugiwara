@@ -6,11 +6,11 @@ Example: a Claude Code team wanting the full pipeline installs natively, sets `m
 
 ## Pick your harness
 
-Claude Code and opencode load the crew natively. Every other tool gets pointer files that read the playbooks on demand. Single-tool users follow the table on the [install page](../install.md).
+Claude Code, opencode, Codex and Cursor load the crew natively. Every other tool gets pointer files that read the playbooks on demand. Single-tool users follow the table on the [install page](../install.md).
 
 ## Pick your mode
 
-Guided asks everything: plan, branch, commits, ambiguities, check-ins. Semi asks the written plan only, then runs automatically from Flow 3 while still asking real questions. Auto asks nothing, resolving ambiguities internally. Missing config reads as guided; a flip applies from the next flow stage, never mid-stage. State-mutating tests against shared state always need explicit consent, in every mode, with no knob to disable it.
+Guided asks everything: plan, branch, commits, ambiguities, check-ins. Semi asks the written plan only, then runs automatically from Flow 3 while still asking real questions. Auto asks nothing, resolving ambiguities internally. Missing config reads as guided; a flip applies from the next flow stage, never mid-stage, and a mission keeps the mode it started in. State-mutating tests against shared state always need explicit consent, in every mode, with no knob to disable it.
 
 ## Fit the pipeline
 

@@ -23,7 +23,7 @@ nothing in this file is fabricated to fill a gap.
 | R1 | Lane sizing | `mugiwara run lane.sh` | aspirational, the script is honest, nothing runs it | 2 |
 | R2 | Skip gates respected | Skill prose (presence checked by the validator) | enforced (presence) / aspirational (use) | 1 |
 | R3 | Evidence over claims | Chopper re-verification | aspirational | 1 |
-| R4 | Flow-stage boundaries (banner + report) | Workflow skill | aspirational | 2 |
+| R4 | Flow-stage boundaries (banner + report) | Orchestration skill | aspirational | 2 |
 | R5 | Heal loop bound (≤3 cycles) | Orchestration skill | aspirational, no mechanism halts a 4th | 2 |
 | R6 | DoD verified (5 axes) | `references/definition-of-done.md` | aspirational | 1 |
 | R7 | State written at flow-stage boundary | `mugiwara savepoint`; `hooks/auto-savepoint.ts` on Claude Code | **enforced on `claude`**, aspirational elsewhere | 2 |

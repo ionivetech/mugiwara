@@ -1,6 +1,6 @@
 # Getting started
 
-You want the crew on a change that is worth reviewing, and you worry that every small fix will trigger a heavy process. It will not: the crew sizes the work from your diff, and a small fix usually runs direct, with no mission and no report. This page takes you from install to a first finished mission.
+You want the crew on a change that is worth reviewing, and you worry that every small fix will trigger a heavy process. It will not: the crew sizes the work from your request and checks it against your diff, and a small fix usually runs direct, with no mission and no report. This page takes you from install to a first finished mission.
 
 Example: you ask for role-based access control. The crew sizes it as the full pipeline, asks six questions it cannot guess, plans, builds test-first, reviews and closes with one report. A typo fix runs none of that.
 

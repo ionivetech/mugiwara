@@ -35,7 +35,7 @@ The report now starts the Review and Security sections with `*Checked independen
 
 **Sign is an add-on.** The signing code lives in `src/addons/attest/` and loads only when you run `mugiwara sign` or when policy sets `attestation.required`. Behavior and the `mugiwara sign` command are unchanged.
 
-**Config.** `coverage=<n>` sets the threshold for new and modified code (default 85). `coverage_new` and `coverage_modified` still win per kind when set. `enforce` now defaults to `warn`: the stop hook warns when a session skipped triage and no longer forces extra model turns. The command guard keeps `block`.
+**Config.** `coverage=<n>` sets the threshold for new and modified code (default 85). `coverage_new` and `coverage_modified` still win per kind when set. `enforce` now defaults to `warn`: the stop hook warns when a session skipped triage and no longer forces extra model turns. The command guard keeps `block`. When a key is set twice the first line wins, and `doctor` warns. A mission keeps the mode it started in: editing `mode=` does not change a running mission, and `status` says so.
 
 **Cost.** The Stop hook now reads the session transcript and records provider-reported token counts (numbers only, no content). `mugiwara cost` and the closing report show them next to the process estimate. A session that spans several missions attributes its full total to each mission. `mugiwara cost` also prints how many times the stop hook forced a continuation.
 
@@ -47,13 +47,15 @@ The report now starts the Review and Security sections with `*Checked independen
 
 **Risk reminder.** On Claude Code, `/mugiwara <request>` that names a risk area (auth, roles, payments, tenant, tokens, migrations) gets a one-line reminder to take the full process, because the model did not always follow the sizing text on its own.
 
-**Fewer surprises.** Reading config no longer creates `.mugiwara/config`. Parallel workers are chosen only for the full lane with at least two independent tasks. The `npx` fallback the crew runs when no global CLI exists is pinned to the plugin's own version; install lines in the docs stay `@latest`.
+**Doctor and corrupt state.** `mugiwara doctor` is a read-only check of install, hooks, config, lane, mission files and the npx pin, with one fix line per failure and exit 1 on any failure. `continue`, `status`, `cost` and `archive` now stop with exit 1 on a truncated or invalid mission file, naming it and the fix, instead of reporting no mission.
+
+**Fewer surprises.** Reading config from code no longer creates `.mugiwara/config`; every CLI command except `doctor` still writes the default file when it is missing. Parallel workers are chosen only for the full lane with at least two independent tasks. The `npx` fallback the crew runs when no global CLI exists is pinned to the plugin's own version; install lines in the docs stay `@latest`.
 
 **For contributors.** `bun test` runs the fast suites. `bun run test:slow` runs the six slow ones. `bun run gate` runs everything.
 
 ## What to do
 
-1. Update the package or plugin, then run `mugiwara install` again so installed copies refresh.
+1. Update the package or plugin, then run `mugiwara update` so installed copies refresh (it backs up files you edited). `update` keeps an existing `.claude/commands/mugiwara.md`, so its npx pin stays old: if `mugiwara doctor` reports an older pin, delete that file and run `mugiwara update` again.
 2. If your `features=` line names an old skill, nothing breaks. You can switch to the new names at your pace.
 3. If you installed `eval-runner` by name anywhere, point it at `evals/agents/eval-runner.md`.
 4. Replace `coverage_new` and `coverage_modified` with `coverage=<n>` in `.mugiwara/config`. Optional.

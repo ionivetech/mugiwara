@@ -9,7 +9,7 @@ Example: a plan schedules work in "waves" while the pipeline runs in "stages". T
 - **Wave**: an ordered group of tasks Zoro runs together. Nami's plan lists tasks in waves. A wave is never a stage and never a directory name.
 - **flows/**: the mission directory holding one file per stage. Files are numbered in the order written, not by stage number. Older missions that kept a `waves/` directory stay on it.
 - **Lane**: the process size for a change: direct, lean, standard, full or spike. Computed from the diff. Sensitive paths force full.
-- **Mode**: how often the crew asks you: guided, semi or auto. Set in `.mugiwara/config`.
+- **Mode**: how often the crew asks you: guided, semi or auto. Set in `.mugiwara/config`. A mission keeps the mode it started in.
 - **Execution posture**: how work runs, for example inline one task after another, or in parallel workers. Chosen at stage boundaries and recorded in the decision trail. Independent of mode and cost.
 - **Cost governor**: the part of the crew that watches process spend against the lane budget and records warn or stop decisions. It recommends and records. It never silently skips a safety stage.
 - **Slop**: wasted work the governor flags: repeated reads, needless abstraction, a fix loop going nowhere, out-of-scope changes.

@@ -31,7 +31,7 @@ A **wave** is an ordered group of tasks Zoro runs together. Nami's plan lists ta
 
 ## Lanes: how many stages run
 
-The lane is computed from `git diff`, never guessed, and it only rises during a mission. Over-processing a small change costs less than under-processing a large one.
+The lane is computed from `git diff`, never guessed, and it only rises during a mission. Over-processing a small change costs less than under-processing a large one. A small request with no risk area runs directly, no mission.
 
 - **Direct**: a typo, a rename, one file under 20 lines. No stages. Budget none.
 - **Lean**: a bug in one or two files, under 50 lines. Execute, then quality. Budget 12,000 tokens.
@@ -83,7 +83,7 @@ secrets?.ya?ml
 .tfvars
 ```
 
-Two scoping rules. A change with no code in it (docs only) is sized standard, never full, however many files it touches. In a monorepo, `lane_scope_glob` sizes the lane from one package, while sensitive-path escalation still reads the whole diff. Policy `force_full` wins over both: see [policy](policy.md). To see the lane for the current diff, run `mugiwara status`.
+Two scoping rules. A change with no code in it (docs only) is sized standard, never full, however many files it touches. In a monorepo, `lane_scope_glob` sizes the lane from one package, while sensitive-path escalation still reads the whole diff. Policy `force_full` wins over both: see [policy](policy.md). To see the lane for the current diff, run `mugiwara run lane.sh`.
 
 ## Modes: how closely you watch
 
@@ -91,7 +91,7 @@ Two scoping rules. A change with no code in it (docs only) is sized standard, ne
 - **semi**: you approve the written plan, then the crew runs from execution to closure and asks only when a question matters. Fits a plan you trust but want to bless.
 - **auto**: the crew runs from triage to closure and resolves ambiguities itself, pausing only on a real blocker. In a team it covers your own scope only. Fits well-defined fixes you will review the next morning.
 
-A mode flip applies from the next stage, never mid-stage: say `mugiwara mode auto` in session. Mode only decides how often you are asked. It does not change the lane or the budget.
+A mission keeps the mode it started in, so editing `mode=` in config does not change a running one. Say `mugiwara mode auto` in session to flip it, from the next stage. Mode only decides how often you are asked. It does not change the lane or the budget.
 
 ## Branches and commits
 
@@ -99,4 +99,4 @@ Zoro commits during the work, one commit per logical task, so a regression found
 
 ## How work runs
 
-Work runs inline in your conversation by default. Workers (separate sub-sessions) are meant for tasks proven independent, such as parallel fixes or parallel review, and each returns a one-line verdict with an evidence path. A worker costs many times the tokens of the same work done inline, so sequential work stays inline. Review is the one deliberate exception: on the full lane or a sensitive path, with `independent_review=on` on a host that can dispatch, Robin and Jinbe run in parallel as subagents with no memory of the build, so the diff is read by something other than its author. Luffy names what they read, records what they return and routes blockers; the subagents never route. Smaller lanes review inline. On Claude Code, closing such a mission is refused until the hook ledger shows both ran as separate agents; `--force` closes it labeled inline. The order of stages is not enforced, only that the artifacts exist. Each stage opens with one heading line so you can see where the mission is.
+Work runs inline in your conversation by default. Workers (separate sub-sessions) are meant for tasks proven independent, such as parallel fixes or parallel review, and each returns a one-line verdict with an evidence path. A worker costs many times the tokens of the same work done inline, so sequential work stays inline. Review is the one deliberate exception: on the full lane or a sensitive path, with `independent_review=on` on a host that can dispatch, Robin and Jinbe run in parallel as subagents with no memory of the build, so the diff is read by something other than its author. Luffy names what they read, records what they return and routes blockers; the subagents never route. Smaller lanes review inline. On Claude Code, closing such a mission is refused until the hook ledger shows both ran as separate agents; `--force` closes it labeled inline. The order of stages is not enforced, only that the artifacts exist.

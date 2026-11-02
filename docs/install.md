@@ -33,7 +33,7 @@ npx -y @ionivetech/mugiwara@latest install --target codex --yes
 
 Enforced vs rules: Codex has no hooks, runtime write-scope or irreversible-command guard; roles and workflow are prose. On 2026-10-19, a fresh risky-task run created a full-lane mission and ran focused tests, but its review worker failed because the harness used ephemeral mode; no archived report was produced. That harness default is fixed, pending another end-to-end run. Independent review remains unverified. Layout: [skills](https://developers.openai.com/codex/skills), [subagents](https://developers.openai.com/codex/subagents), [plugins](https://developers.openai.com/codex/plugins/build). Plugin agent bundling is undocumented, so its manifest ships skills only.
 
-**Cursor.** The CLI writes native Cursor files: skills to `.cursor/skills/<name>/SKILL.md` and 14 subagents to `.cursor/agents/<name>.md` (`name`, `description`, `model: inherit`). `--global` writes `~/.cursor/skills` and `~/.cursor/agents`.
+**Cursor.** The CLI writes native Cursor files: skills to `.cursor/skills/<name>/SKILL.md` and 13 subagents to `.cursor/agents/<name>.md` (`name`, `description`, `model: inherit`). `--global` writes `~/.cursor/skills` and `~/.cursor/agents`.
 
 ```bash
 npx -y @ionivetech/mugiwara@latest install --target cursor --yes
@@ -58,26 +58,26 @@ Pin a version instead of `@latest` when you need repeatable installs, for exampl
 
 | Platform | Tier | Standing | Files written | Where |
 |---|---|---|---|---|
-| Claude Code | 1 | first-class | 117 | `.claude/` plus hooks in `settings.json` |
-| opencode | 1 | first-class | 100 | `.opencode/` |
-| Codex | 1 | first-class | see `install --dry-run` | `.agents/skills/`, `.codex/agents/*.toml` |
-| Cursor | 1 | first-class | see `install --dry-run` | `.cursor/skills/`, `.cursor/agents/` |
-| GitHub Copilot | 2 | community | 131 | `.github/`, `.mugiwara/refs/` |
-| Gemini CLI | 3 | community | 132 | `.gemini/mugiwara/`, `GEMINI.md` line |
-| Windsurf | 3 | community | 131 | `.devin/rules/` |
-| Cline | 3 | community | 131 | `.clinerules/` |
-| Kilo Code | 3 | community | 132 | `.kilo/`, `kilo.jsonc` |
-| Antigravity | 3 | community | 131 | `.agents/` |
+| Claude Code | 1 | first-class | 115 | `.claude/` plus hooks in `settings.json` |
+| opencode | 1 | first-class | 98 | `.opencode/` |
+| Codex | 1 | first-class | 94 | `.agents/skills/`, `.codex/agents/*.toml` |
+| Cursor | 1 | first-class | 94 | `.cursor/skills/`, `.cursor/agents/` |
+| GitHub Copilot | 2 | community | 121 | `.github/`, `.mugiwara/refs/` |
+| Gemini CLI | 3 | community | 122 | `.gemini/mugiwara/`, `GEMINI.md` line |
+| Windsurf | 3 | community | 121 | `.devin/rules/` |
+| Cline | 3 | community | 121 | `.clinerules/` |
+| Kilo Code | 3 | community | 122 | `.kilo/`, `kilo.jsonc` |
+| Antigravity | 3 | community | 121 | `.agents/` |
 | Kimi Code | marketplace | community | none | manifest only, CLI refuses |
 | Pi | marketplace | community | none | manifest only, CLI refuses |
 
 </details>
 
-File counts are from real installs into an empty repo with v1.0.5 and move as content changes. Run `mugiwara install --dry-run --target <id>` to see yours. Tier 3 targets keep rule files small and read the full playbook from `.mugiwara/refs/` on demand. Every install also writes `.mugiwara/config` and a manifest of the files it wrote.
+File counts are from real installs into an empty repo with v1.0.5 and move as content changes. The install output prints yours as `written N`. Tier 3 targets keep rule files small and read the full playbook from `.mugiwara/refs/` on demand. Every install also writes `.mugiwara/config` and a manifest of the files it wrote.
 
 ## Verify
 
-Ask the agent "which crew members are available?". A correct install answers with the roster of 11 agents (+2 internal). Then run `mugiwara list --check`, which reports missing or stale files.
+Ask the agent "which crew members are available?". A correct install answers with the roster of 11 agents (+2 internal). Then run `mugiwara doctor`, a read-only check with one fix line per failure, and `mugiwara list --check` for missing or stale files.
 
 ## Update and remove
 
@@ -85,6 +85,6 @@ On Claude Code, update with `/plugin update mugiwara` and remove with `/plugin u
 
 On opencode, removing the plugin line is not enough, because opencode keeps a pinned copy. Remove the line from `opencode.json`, delete `~/.cache/opencode/packages/@ionivetech/`, restart, and check that `/mugiwara` is unknown. To update, delete that cache directory and restart.
 
-For CLI installs, `mugiwara update --target <id> --yes` replaces files (backing up differences first), and `mugiwara uninstall [--global]` removes exactly the files the manifest recorded. By hand, remove what the manifest never owned: the pointer line in `GEMINI.md` or `kilo.jsonc` if your file existed before the install, and `.mugiwara/refs/`. `.mugiwara/config` and the `.gitignore` block are yours and stay.
+For CLI installs, `mugiwara update --target <id> --yes` replaces files (backing up differences first, but keeping an existing `.claude/commands/mugiwara.md`; `doctor` flags an old npx pin in it), and `mugiwara uninstall [--global]` removes exactly the files the manifest recorded. By hand, remove what the manifest never owned: the pointer line in `GEMINI.md` or `kilo.jsonc` if your file existed before the install, and `.mugiwara/refs/`. `.mugiwara/config` and the `.gitignore` block are yours and stay.
 
 Switch autonomy by saying `mugiwara mode guided`, `semi` or `auto` in chat, or pin it in `.mugiwara/config`, see [config](concepts/config.md). Next, [get started](getting-started.md) with one small task.

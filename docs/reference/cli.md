@@ -2,11 +2,10 @@
 
 You need the exact flags for a command and do not want to guess. This page lists every `mugiwara` command as printed by the real CLI (v1.0.5), then the usage of the commands that print their own.
 
-Example: list in-flight missions, then print the resume point for one.
+Example: list in-flight missions. Then `mugiwara continue crew1 jane-doe` prints that handle's resume point.
 
 ```bash
 mugiwara continue
-mugiwara continue crew1 jane-doe
 ```
 
 ```
@@ -18,11 +17,7 @@ mugiwara continue crew1 jane-doe
 Pick one: mugiwara continue <mission> [member]
 ```
 
-```
-Resumed: crew1 [jane-doe], Flow 2, 0/0 tasks — next_action: verify this flow stage against the plan, then continue per plan (next stage or closure) — run: (no next_session_prompt recorded)
-```
-
-Rule: commands that need a mission and are not given one list the candidates and exit with code 2. Nothing is guessed, and `continue` never resumes anything for you. Without a global install, run any command as `npx -y @ionivetech/mugiwara@latest <command>`.
+Rule: commands that need a mission and are not given one list the candidates and exit with code 2. Nothing is guessed. `continue` resumes on its own only when exactly one mission is in flight. Without a global install, run any command as `npx -y @ionivetech/mugiwara@latest <command>`.
 
 ## `mugiwara --help`
 
@@ -40,7 +35,7 @@ Usage:
   mugiwara doctor [--json]
                          read-only repo check (install, hooks, config, lane, missions, version pin);
                          one fix line per failure, exit 1 on any failure
-  mugiwara reset         wipe mission state (missions/ + legacy dirs)
+  mugiwara reset [<m>]   wipe ALL mission state (missions/ + legacy dirs), or only mission <m>
   mugiwara archive [<m>]  fold a closed mission's flow files into its report, then remove loose files
                          (no <m>: list missions, exit 2 = pick one)
   mugiwara clean [--include-live] [--stale <date>]
@@ -59,10 +54,11 @@ Usage:
                          engineer can act on (computed state + staleness check)
                          [--path <file>: append the provenance note for <file>]
                          (no <m>: list in-flight, exit 2 = pick one)
-  mugiwara sign [<m>]    attestation: sign report.md (auto/minisign/pure/off; --verify to check)
+  mugiwara crew          list the crew: role, when it appears, what it may write
+  mugiwara sign [<m>]    optional attestation add-on (not part of the core flow): sign report.md (auto/minisign/pure/off; --verify to check)
                          (no <m>: list signable, exit 2 = pick one)
   mugiwara sign --gen-key [--backend pure|minisign]
-                         create signing keys (pure ed25519 default)
+                         create signing keys (pure ed25519 default; optional add-on)
   mugiwara migrate [--dry-run] [--project <dir>]
                            move legacy .mugiwara/state/ layout to .mugiwara/missions/
   mugiwara migrate --to-team <member> [--mission <id>] [--dry-run]
@@ -81,7 +77,7 @@ Usage:
 Flags:
   --global               user-wide install
   --project <dir>        project install (default: cwd)
-  --target <ids|all>     comma-separated: claude, opencode, copilot, gemini, codex, windsurf, cline, kilo, antigravity
+  --target <ids|all>     comma-separated: claude, opencode, copilot, gemini, codex, cursor, windsurf, cline, kilo, antigravity
   --yes, -y              non-interactive (defaults: project, all targets)
   --force                overwrite differing files (with backup)
   --dry-run              print actions without writing
@@ -93,13 +89,13 @@ Flags:
    --keep-logs            with reset: keep lessons.md (lessons ledger survives)
 ```
 
-Two commands work but are not listed in `--help`: `mugiwara join` and `mugiwara plan`. Their usage is below. `sign` is an optional add-on, see [signing](../optional/signing.md).
+Two commands work but are not listed in `--help`: `mugiwara join` and `mugiwara plan`. Usage is below. `sign` is an optional [add-on](../optional/signing.md).
 
 ## `mugiwara doctor`
 
-Read-only repo check: install, hooks, config, lane, mission files. Each failure gets a fix line. Exit 1 on any failure. `--json` prints `{ version, ok, checks }`.
+Read-only repo check: install, hooks, config, lane, mission files. Each failure gets a fix line; exit 1 on any. `--json` prints `{ version, ok, checks }`.
 
-It also compares the npx pin in `.claude/commands/mugiwara.md` with the CLI. `install` warns on the same mismatch. It also flags a key set twice and a mode mismatch; `status` shows the same note.
+It also compares the npx pin in `.claude/commands/mugiwara.md` with the CLI. `install` warns on the same mismatch. It also flags a config key set twice (the first line wins) and a mode mismatch: a mission keeps the mode it started in, so a later `mode=` edit does not change it. `status` and `continue` show the mismatch note.
 
 ## Corrupt state
 
@@ -129,7 +125,6 @@ usage: mugiwara lesson "<text>" [--project <dir>]
 
 ## Notes
 
-- `--target` accepts the nine ids printed above. Cursor, Kimi and Pi install through their own marketplace manifests, and the CLI refuses them with a message saying so. See [install](../install.md).
+- `--target` accepts the ten ids printed above. Kimi and Pi install through their own marketplace manifests, and the CLI refuses them with a message saying so. See [install](../install.md).
 - `mugiwara run lane.sh` prints the computed lane (`direct`, `lean`, `standard`, `full`) for the current diff.
 - `mugiwara mode <guided|semi|auto>` is something you say in chat, not a CLI command.
-- Closing a mission: `archive` folds one, `clean` folds every closed one. See [the trail](../concepts/trail.md).

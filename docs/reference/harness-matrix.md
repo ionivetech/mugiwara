@@ -40,7 +40,7 @@ Only four personas are dispatch-worthy under the isolated model: bounded,
 evidence-in/verdict-out roles that can reconstruct everything they need from
 `.mugiwara/missions/<mission>/**`: `zoro-execution` (parallel workers),
 `brook-healing` (heal workers), `robin-reviewer`, `jinbe-security` (parallel
-review). The other ten personas, `luffy-orchestrator` above all since it
+review). The other nine personas, `luffy-orchestrator` above all since it
 alone owns live routing and the decision log across the whole mission, must
 run inline: embodied by the main thread via `/mugiwara` or the equivalent
 natural-language trigger, never invoked directly through an isolated-dispatch

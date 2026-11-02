@@ -32,7 +32,7 @@ A new release landed, or you want the crew out of a repo, and you do not want to
    OK mugiwara 1.0.5 installed (manifest: <project>/.mugiwara/manifest.json)
    ```
    *Real output, shortened. In this run one agent file had a local edit and one was deleted. Update wrote the missing file, replaced the edited one, and kept a copy of the edit under `.mugiwara/backup/<timestamp>-claude/`. Command files that already exist are kept as they are, so your own changes to `/mugiwara` survive an update.*
-4. Run `mugiwara list --check` again. It should report `missing=0 stale=0`.
+4. Run `mugiwara list --check` again. It should report `missing=0 stale=0`. Then run `mugiwara doctor`. If it says `installed command pins older version`, delete `.claude/commands/mugiwara.md` and run `mugiwara update` again: update keeps that file, so the old npx pin stays until you do.
 
 ## What happens to missions in flight
 
@@ -67,9 +67,9 @@ If your `features=` line in `.mugiwara/config` names an old skill, it still work
    ```
    ✗ Active mission for '<git author>'. Use --force to override.
    ```
-   *Masked: the real message prints your git name and email. `reset` refuses while you have a mission in flight, and it exits with code 0 even so, so a script will not notice.* With `--force`:
+   *The real message prints your git name. `reset` refuses while you have a mission in flight and exits 1.* With `--force`:
    ```
-   removed: missions
+   removed: missions, index.md
    kept: lessons.md, config, manifest.json
    ```
    Plain `reset --force` also removes `lessons.md`. Reset deletes mission folders, including reports you never committed. Commit what you want to keep first.
@@ -87,8 +87,8 @@ If your `features=` line in `.mugiwara/config` names an old skill, it still work
    OK removed 115 files
    ```
    Without `--yes` it asks `Proceed? [y/N]` first.
-8. Check `.claude/settings.json`. In a throwaway repo (v1.0.5) one `PreToolUse` entry for `pretool-guard.js` was still there after uninstall, pointing at a file that no longer exists. Delete that entry by hand. Your own settings stay as they were.
-9. Decide what to do with `.mugiwara/`. Uninstall leaves `config`, `lessons.md`, `missions/` and `backup/`. Your reports are yours, so keep them or delete the folder.
+8. Check `.claude/settings.json`. Uninstall removes only Mugiwara's hook entries (in a throwaway repo, v1.0.5, your own hooks and permissions stayed). The file itself stays, `{}` if it held nothing else.
+9. Decide what to do with `.mugiwara/`. Uninstall leaves `config`, `lessons.md`, `missions/`, `backup/` and the review ledger `review-dispatch.jsonl`. Your reports are yours, so keep them or delete the folder.
 
 ## If something goes wrong
 
@@ -96,7 +96,7 @@ If your `features=` line in `.mugiwara/config` names an old skill, it still work
 |---|---|---|
 | `mugiwara: command not found` | the global CLI is not installed | `npm i -g @ionivetech/mugiwara`, or run `npx -y @ionivetech/mugiwara@latest <command>` |
 | `✗ in-flight mission(s)` from `clean` | a mission still has live state | finish it, or pass `--force` and lose its resume point |
-| a hook entry still points at `.claude/hooks/` after uninstall | uninstall left one `PreToolUse` entry behind | delete that entry from `.claude/settings.json` |
+| `doctor` says the command pins an older version | `update` keeps an existing `.claude/commands/mugiwara.md` | delete it, run `mugiwara update` |
 
 ## What you end up with
 

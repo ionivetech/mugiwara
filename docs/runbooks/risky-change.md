@@ -42,11 +42,9 @@ A login change that ships with "tests pass" and nothing else is how a Friday nig
 
 ## What you will see on Claude Code
 
-- **The hold.** If you typed `/mugiwara <request>`, the change is risky, and no mission was recorded, the stop hook blocks the end of the turn with a plain message and the model continues. This happens at most twice a session, then it becomes a warning. Only `enforce=off` turns it off.
+- **The reminder and the hold.** If `/mugiwara <request>` names a risk area, a prompt hook reminds the model to take the full process. If the change is risky and no mission was recorded, or review files are missing, or the review ran inline, the stop hook blocks the end of the turn and the model continues. This happens at most twice a session, then it becomes a warning. Only `enforce=off` turns it off.
 - **The closure refusal.** On the full lane or a sensitive path, `mugiwara archive` refuses to close if the ledger shows no separate run of both Robin and Jinbe. The message names the missing check. Either run it as a separate agent and archive again, or set `independent_review=off`. `archive --force` closes anyway and the report says `Checked inline`.
 - **The cost.** The report's Cost section shows the process estimate against budget and the provider-reported tokens on a separate line. Independent review costs more: see [cost](../concepts/cost.md).
-
-Stage order is not enforced, so read the plan's file time against the build's.
 
 ## What each stage leaves in `.mugiwara/missions/<mission>/`
 
