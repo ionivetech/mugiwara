@@ -120,8 +120,16 @@ function unwireSettings(root: string): { changed: string[]; notes: string[] } {
   } catch {
     return { changed: [], notes: [`${file} is not valid JSON — left untouched`] };
   }
+  if (!unwireHooks(settings)) return { changed: [], notes: [] };
+  // an emptied settings.json still belongs to the user — rewrite, never remove
+  writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
+  return { changed: [file], notes: [] };
+}
+
+/** Remove mugiwara's hook entries from parsed settings in place. Returns whether anything changed. */
+export function unwireHooks(settings: Record<string, unknown>): boolean {
   const hooks = settings.hooks as Record<string, HookGroup[]> | undefined;
-  if (!hooks) return { changed: [], notes: [] };
+  if (!hooks) return false;
 
   const ours = new Set(['session-start.js', 'mugiwara-mode-tracker.js', 'auto-savepoint.js', 'pipeline-guard.js', 'engagement-marker.js', 'pretool-guard.js']);
   const isOurs = (h: HookEntry): boolean =>
@@ -139,11 +147,9 @@ function unwireSettings(root: string): { changed: string[]; notes: string[] } {
     if (kept.length) hooks[event] = kept;
     else { delete hooks[event]; changed = true; }
   }
-  if (!changed) return { changed: [], notes: [] };
+  if (!changed) return false;
   if (!Object.keys(hooks).length) delete settings.hooks;
-  // an emptied settings.json still belongs to the user — rewrite, never remove
-  writeFileSync(file, JSON.stringify(settings, null, 2) + '\n');
-  return { changed: [file], notes: [] };
+  return true;
 }
 
 export const target: Target = {

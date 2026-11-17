@@ -7,6 +7,7 @@ import { parseFrontmatter, type FrontmatterData } from './frontmatter.ts';
 import { DEFAULT_CONFIG } from './config.ts';
 import { EXTENSION_TABLE, resolveFeatures, type ResolveIntent } from './features.ts';
 import type { Scope } from './manifest.ts';
+import { GITIGNORE_BLOCK_START, stripGitignoreBlock } from './gitignore.ts';
 
 export type ContentItem = {
   name: string;
@@ -278,8 +279,6 @@ function assertNotSymlink(file: string): void {
   }
 }
 
-const GITIGNORE_BLOCK_START = '# >>> mugiwara >>>';
-const GITIGNORE_BLOCK_END = '# <<< mugiwara <<<';
 // legacy markers — pre-0.7 blocks ignored per-type dirs (.mugiwara/state/,
 // .mugiwara/continue/) instead of the mission-first layout. Kept for
 // detection so an old install is upgraded, not double-appended.
@@ -329,43 +328,11 @@ export function removeProjectGitignore(projectDir: string, { dryRun = false }: {
   assertNotSymlink(path);
   if (!existsSync(path)) return { removed: false, notes: [] };
   const current = readFileSync(path, 'utf8');
-
-  const delimited = current.includes(GITIGNORE_BLOCK_START);
-  let cleaned: string;
-  if (delimited) {
-    // strip everything between (and including) the delimiters. Both
-    // delimiters must be present — a missing END (hand-edit) with end=-1
-    // would slice() from char 18 and truncate the user's file.
-    const start = current.indexOf(GITIGNORE_BLOCK_START);
-    const end = current.indexOf(GITIGNORE_BLOCK_END);
-    if (end < start) return { removed: false, notes: ['delimiter mismatch — .gitignore left untouched'] };
-    cleaned = current.slice(0, start) + current.slice(end + GITIGNORE_BLOCK_END.length);
-  } else if (current.includes('# mugiwara')) {
-    // legacy (pre-0.7): strip the exact undelimited block — the header, the
-    // explanatory comment, and the known lines. Prefix-matching would
-    // delete user-owned lines that merely start with a mugiwara path.
-    const LEGACY_LINES = new Set([
-      '.mugiwara/state.json',
-      '.mugiwara/state-*.json',
-      '.mugiwara/config',
-      '.mugiwara/state/',
-      '.mugiwara/continue/',
-      '.mugiwara/continue.md',
-      '.mugiwara/refs/',
-    ]);
-    const lines = current.split('\n').filter(l => {
-      const t = l.trim();
-      if (t.startsWith('# mugiwara')) return false; // header + comment
-      return !LEGACY_LINES.has(t);
-    });
-    cleaned = lines.join('\n');
-  } else {
-    return { removed: false, notes: [] };
-  }
-
-  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').replace(/^\n+/, '').replace(/\n+$/, '\n');
-  if (cleaned.trim() === '') cleaned = '';
+  if (!current.includes(GITIGNORE_BLOCK_START) && !current.includes('# mugiwara')) return { removed: false, notes: [] };
+  const cleaned = stripGitignoreBlock(current);
+  if (cleaned === null) return { removed: false, notes: ['delimiter mismatch — .gitignore left untouched'] };
   if (cleaned === current) return { removed: false, notes: [] };
   if (!dryRun) writeFileSync(path, cleaned);
   return { removed: true, notes: [`.gitignore ${dryRun ? 'would strip' : 'stripped'} mugiwara block`] };
 }
+

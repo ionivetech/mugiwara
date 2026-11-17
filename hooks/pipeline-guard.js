@@ -25,8 +25,8 @@ function homeDir() {
 var init_home = () => {};
 
 // src/policy.ts
-import { existsSync as existsSync6, readFileSync as readFileSync4 } from "node:fs";
-import { join as join6 } from "node:path";
+import { existsSync as existsSync8, readFileSync as readFileSync7 } from "node:fs";
+import { join as join8 } from "node:path";
 function parsePolicyYaml(text) {
   const root = {};
   const stack = [{ keyIndent: -1, obj: root }];
@@ -322,10 +322,10 @@ function extractAttestation(text) {
 }
 function loadPolicy(projectDir) {
   for (const name of POLICY_FILES) {
-    const file = join6(projectDir, name);
-    if (!existsSync6(file))
+    const file = join8(projectDir, name);
+    if (!existsSync8(file))
       continue;
-    const text = readFileSync4(file, "utf8");
+    const text = readFileSync7(file, "utf8");
     const raw = parsePolicyYaml(text);
     const extra = extractExtraSecretPatterns(text);
     if (extra.length) {
@@ -477,17 +477,17 @@ var init_policy = __esm(() => {
 });
 
 // src/config.ts
-import { existsSync as existsSync9, lstatSync as lstatSync2, mkdirSync as mkdirSync3, readFileSync as readFileSync7, writeFileSync as writeFileSync5 } from "node:fs";
-import { join as join11 } from "node:path";
+import { existsSync as existsSync11, lstatSync as lstatSync2, mkdirSync as mkdirSync4, readFileSync as readFileSync10, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join13 } from "node:path";
 function configPaths2(projectDir) {
-  return [join11(projectDir, ".mugiwara", "config"), join11(homeDir(), ".mugiwara", "config")];
+  return [join13(projectDir, ".mugiwara", "config"), join13(homeDir(), ".mugiwara", "config")];
 }
 function readConfig2(projectDir) {
   const out = {};
   for (const file of configPaths2(projectDir)) {
-    if (!existsSync9(file))
+    if (!existsSync11(file))
       continue;
-    for (const line of readFileSync7(file, "utf8").split(/\r?\n/)) {
+    for (const line of readFileSync10(file, "utf8").split(/\r?\n/)) {
       const t = line.trim();
       if (!t || t.startsWith("#"))
         continue;
@@ -535,12 +535,12 @@ var init_config = __esm(() => {
 });
 
 // hooks/pipeline-guard.ts
-import { appendFileSync as appendFileSync3, existsSync as existsSync14, mkdirSync as mkdirSync7, readFileSync as readFileSync13, readdirSync as readdirSync8, statSync as statSync4, lstatSync as lstatSync3, writeFileSync as writeFileSync7 } from "fs";
+import { appendFileSync as appendFileSync3, existsSync as existsSync16, mkdirSync as mkdirSync8, readFileSync as readFileSync16, readdirSync as readdirSync9, statSync as statSync4, lstatSync as lstatSync3, writeFileSync as writeFileSync8 } from "fs";
 import { execFileSync as execFileSync5 } from "child_process";
 import { homedir as homedir2 } from "os";
-import { dirname as dirname2, join as join18 } from "path";
+import { dirname as dirname3, join as join20 } from "path";
 import { spawnSync as spawnSync3 } from "child_process";
-import { fileURLToPath as fileURLToPath2 } from "url";
+import { fileURLToPath as fileURLToPath3 } from "url";
 
 // src/run.ts
 import { existsSync } from "node:fs";
@@ -722,13 +722,13 @@ function reviewNextStep(mission, ran = new Set) {
 }
 
 // src/auto-close.ts
-import { existsSync as existsSync13, readFileSync as readFileSync12, readdirSync as readdirSync7 } from "node:fs";
-import { join as join17 } from "node:path";
+import { existsSync as existsSync15, readFileSync as readFileSync15, readdirSync as readdirSync8 } from "node:fs";
+import { join as join19 } from "node:path";
 
 // src/record.ts
 import { execFileSync, spawnSync as spawnSync2 } from "node:child_process";
-import { existsSync as existsSync5, mkdirSync as mkdirSync2, writeFileSync as writeFileSync2 } from "node:fs";
-import { join as join5 } from "node:path";
+import { existsSync as existsSync7, mkdirSync as mkdirSync3, readFileSync as readFileSync6, realpathSync, writeFileSync as writeFileSync3 } from "node:fs";
+import { isAbsolute, join as join7, relative } from "node:path";
 
 // src/active-mission.ts
 import { existsSync as existsSync4, readFileSync as readFileSync3, readdirSync as readdirSync2, statSync as statSync2 } from "node:fs";
@@ -756,6 +756,177 @@ function dispatchCounts2(cwd, mission) {
     }
   } catch {}
   return out;
+}
+
+// src/continue.ts
+import { existsSync as existsSync5, readFileSync as readFileSync4, readdirSync as readdirSync3 } from "node:fs";
+import { join as join5 } from "node:path";
+var SAFE2 = /^[A-Za-z0-9._-]+$/;
+var isSafeKey = (s) => SAFE2.test(s) && !/^\.+$/.test(s);
+var num = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+var text = (v) => typeof v === "string" ? v : "";
+var unreadable = [];
+function scan(projectDir, kind, map) {
+  unreadable.length = 0;
+  const base = join5(projectDir, ".mugiwara", "missions");
+  if (!existsSync5(base))
+    return [];
+  const out = [];
+  const missions = readdirSync3(base, { withFileTypes: true }).filter((e) => e.isDirectory() && isSafeKey(e.name)).map((e) => e.name).sort();
+  for (const mission of missions) {
+    const dir = join5(base, mission);
+    for (const f of readdirSync3(dir).filter((n) => n.endsWith(".json")).sort()) {
+      const stem = f.slice(0, -".json".length);
+      let member;
+      if (kind === "state") {
+        if (stem === "continue" || stem.startsWith("continue-"))
+          continue;
+        member = stem === "state" ? null : stem;
+      } else {
+        if (stem === "continue")
+          member = null;
+        else if (stem.startsWith("continue-"))
+          member = stem.slice("continue-".length);
+        else
+          continue;
+      }
+      if (member !== null && !isSafeKey(member))
+        continue;
+      try {
+        const raw = JSON.parse(readFileSync4(join5(dir, f), "utf8"));
+        if (text(raw.mission) !== mission)
+          continue;
+        out.push(map(raw, member));
+      } catch {
+        unreadable.push(join5(mission, f));
+      }
+    }
+  }
+  return out;
+}
+function readState(projectDir) {
+  return scan(projectDir, "state", (r, member) => {
+    const tasks = r.tasks ?? {};
+    const sv = r.schema_version;
+    return {
+      mission: text(r.mission),
+      member,
+      actor: text(r.actor),
+      branch: text(r.branch),
+      flow: num(r.flow ?? r.wave),
+      mode: text(r.mode) || "guided",
+      tasks_done: num(tasks.done),
+      tasks_total: num(tasks.total),
+      lane: text(r.lane) || "direct",
+      lane_reason: text(r.lane_reason),
+      lane_rose: r.lane_rose === true,
+      lane_prev: text(r.lane_prev),
+      lane_peak: text(r.lane_peak),
+      base_sha: text(r.base_sha),
+      sensitive_paths: Array.isArray(r.sensitive_paths) ? r.sensitive_paths.map(text).filter(Boolean) : [],
+      next_action: text(r.next_action),
+      next_session_prompt: text(r.next_session_prompt),
+      updated_at: text(r.updated_at),
+      blockers_open: num(r.blockers_open),
+      heal_cycle: num(r.heal_cycle),
+      heal_max_cycles: num(r.heal_max_cycles) || 3,
+      heal_halt: r.heal_halt === true,
+      delegate_threshold: num(r.delegate_threshold) || 60,
+      delegate_due: r.delegate_due === true,
+      tokens_est: num(r.tokens_est),
+      tokens_source: text(r.tokens_source),
+      tokens_process_est: num(r.tokens_process_est),
+      tokens_cache_read: num(r.tokens_cache_read),
+      tokens_cache_creation: num(r.tokens_cache_creation),
+      budget: num(r.budget),
+      budget_status: text(r.budget_status) || "ok",
+      files_touched: num(r.files_touched),
+      evidence: Array.isArray(r.evidence) ? r.evidence.map(text).filter(Boolean) : [],
+      schema_version: typeof sv === "number" || typeof sv === "string" ? sv : null
+    };
+  });
+}
+
+// src/gitignore.ts
+var GITIGNORE_BLOCK_START = "# >>> mugiwara >>>";
+var GITIGNORE_BLOCK_END = "# <<< mugiwara <<<";
+function stripGitignoreBlock(current) {
+  let cleaned = current;
+  if (current.includes(GITIGNORE_BLOCK_START)) {
+    const start = current.indexOf(GITIGNORE_BLOCK_START);
+    const end = current.indexOf(GITIGNORE_BLOCK_END);
+    if (end < start)
+      return null;
+    cleaned = current.slice(0, start) + current.slice(end + GITIGNORE_BLOCK_END.length);
+  } else if (current.includes("# mugiwara")) {
+    const LEGACY_LINES = new Set([
+      ".mugiwara/state.json",
+      ".mugiwara/state-*.json",
+      ".mugiwara/config",
+      ".mugiwara/state/",
+      ".mugiwara/continue/",
+      ".mugiwara/continue.md",
+      ".mugiwara/refs/"
+    ]);
+    const lines = current.split(`
+`).filter((l) => {
+      const t = l.trim();
+      if (t.startsWith("# mugiwara"))
+        return false;
+      return !LEGACY_LINES.has(t);
+    });
+    cleaned = lines.join(`
+`);
+  }
+  cleaned = cleaned.replace(/\n{3,}/g, `
+
+`).replace(/^\n+/, "").replace(/\n+$/, `
+`);
+  return cleaned.trim() === "" ? "" : cleaned;
+}
+
+// src/manifest.ts
+import { existsSync as existsSync6, mkdirSync as mkdirSync2, readFileSync as readFileSync5, writeFileSync as writeFileSync2 } from "node:fs";
+function readManifest(file) {
+  return existsSync6(file) ? JSON.parse(readFileSync5(file, "utf8")) : null;
+}
+
+// src/targets/claude.ts
+import { dirname as dirname2, join as join6 } from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+var here2 = dirname2(fileURLToPath2(import.meta.url));
+var HOOKS_SRC = join6(here2, "..", "..", "hooks");
+var COMMANDS_SRC = join6(here2, "..", "..", ".claude", "commands");
+var SCRIPTS_SRC = join6(here2, "..", "..", "scripts");
+function unwireHooks(settings) {
+  const hooks = settings.hooks;
+  if (!hooks)
+    return false;
+  const ours = new Set(["session-start.js", "mugiwara-mode-tracker.js", "auto-savepoint.js", "pipeline-guard.js", "engagement-marker.js", "pretool-guard.js"]);
+  const isOurs = (h) => [...ours].some((f) => h.command?.includes(join6("hooks", f)) || h.command?.includes(`hooks/${f}`));
+  let changed = false;
+  for (const [event, groups] of Object.entries(hooks)) {
+    if (!Array.isArray(groups))
+      continue;
+    const kept = groups.map((g) => ({ ...g, hooks: (g.hooks ?? []).filter((h) => !isOurs(h)) })).filter((g) => g.hooks.length > 0);
+    if (kept.length !== groups.length || kept.some((g, i) => g.hooks.length !== groups[i]?.hooks?.length)) {
+      changed = true;
+    }
+    if (kept.length)
+      hooks[event] = kept;
+    else {
+      delete hooks[event];
+      changed = true;
+    }
+  }
+  if (!changed)
+    return false;
+  if (!Object.keys(hooks).length)
+    delete settings.hooks;
+  return true;
 }
 
 // src/risk.ts
@@ -820,27 +991,96 @@ function git(projectDir, args) {
     return "";
   }
 }
-function changedFiles(projectDir) {
-  const tracked = git(projectDir, ["diff", "--name-only", "HEAD"]).split(`
-`);
-  const fresh = git(projectDir, ["ls-files", "--others", "--exclude-standard"]).split(`
-`);
-  return [...new Set([...tracked, ...fresh].filter((f) => f && !f.startsWith(".mugiwara/")))];
+function installedFiles(projectDir) {
+  try {
+    const m = readManifest(join7(projectDir, ".mugiwara", "manifest.json"));
+    const root = realpathSync(projectDir);
+    return new Set((m?.files ?? []).map((f) => isAbsolute(f) ? relative(root, existsSync7(f) ? realpathSync(f) : f) : f));
+  } catch {
+    return new Set;
+  }
+}
+var MERGED = {
+  ".gitignore": (t) => stripGitignoreBlock(t)?.trim() ?? null,
+  ".claude/settings.json": (t) => {
+    try {
+      const s = JSON.parse(t || "{}");
+      unwireHooks(s);
+      return JSON.stringify(s);
+    } catch {
+      return null;
+    }
+  }
+};
+function installEditOnly(projectDir, f, bases) {
+  const strip = MERGED[f];
+  const p = join7(projectDir, f);
+  if (!strip || !existsSync7(p))
+    return false;
+  const now = strip(readFileSync6(p, "utf8"));
+  return now !== null && bases.every((b) => strip(git(projectDir, ["show", `${b}:${f}`])) === now);
+}
+function missionFiles(projectDir, mission) {
+  const states = readState(projectDir).filter((s) => s.mission === mission);
+  if (!states.length)
+    return { error: `no state for mission '${mission}' — run \`mugiwara savepoint\` first.` };
+  const bases = [...new Set(states.map((s) => s.base_sha).filter((b) => b && b !== "unknown"))];
+  if (!bases.length)
+    return { error: `mission '${mission}' has no base_sha in state — cannot tell what the mission changed.` };
+  const installed = installedFiles(projectDir);
+  const out = new Set;
+  for (const base of bases)
+    for (const f of git(projectDir, ["diff", "--name-only", base]).split(`
+`))
+      if (f)
+        out.add(f);
+  for (const f of git(projectDir, ["ls-files", "--others", "--exclude-standard"]).split(`
+`))
+    if (f)
+      out.add(f);
+  const files = [...out].filter((f) => !f.startsWith(".mugiwara/") && !installed.has(f) && !installEditOnly(projectDir, f, bases));
+  return { files: files.sort(), bases };
 }
 var tail = (s, n = 20) => s.split(`
 `).slice(-n).join(`
 `).trim();
+var RUNS_CMD = ["gates", "quality", "healing"];
+function commandBlock(projectDir, cmd, timeoutMs) {
+  const r = spawnSync2(cmd, { cwd: projectDir, shell: true, encoding: "utf8", timeout: timeoutMs ?? 600000 });
+  const code = r.status === null ? `no exit (${r.signal ?? "timeout"})` : String(r.status);
+  return `Command: \`${cmd}\`
+Exit code: ${code} (${r.status === 0 ? "pass" : "fail"})
+
+\`\`\`
+${tail(`${r.stdout ?? ""}
+${r.stderr ?? ""}`)}
+\`\`\`
+`;
+}
 function buildStage(projectDir, mission, stage, o) {
   const note = o.note ? `
 ## Note
 
 ${o.note.trim()}
 ` : "";
-  const files = changedFiles(projectDir);
+  if (o.cmd && !RUNS_CMD.includes(stage)) {
+    return { error: `${stage} does not run commands — drop --cmd. Commands are recorded by: ${RUNS_CMD.join(", ")}.` };
+  }
+  let files = [];
+  let bases = [];
+  if (stage === "execution" || stage === "audit") {
+    const mf = missionFiles(projectDir, mission);
+    if ("error" in mf)
+      return mf;
+    ({ files, bases } = mf);
+  }
   switch (stage) {
     case "execution": {
       if (!files.length)
-        return { error: "no changed files to record (git shows no diff)." };
+        return { error: "no changed files to record — the mission diff from its base is empty." };
+      const stat = bases.map((b) => git(projectDir, ["diff", "--stat", b, "--", ...files])).filter(Boolean).join(`
+
+`);
       return { body: `# Execution
 
 Changed files (${files.length}):
@@ -849,7 +1089,7 @@ ${files.map((f) => `- ${f}`).join(`
 `)}
 
 \`\`\`
-${git(projectDir, ["diff", "--stat", "HEAD"])}
+${stat}
 \`\`\`
 ${note}` };
     }
@@ -864,18 +1104,9 @@ ${note}` };
     case "gates": {
       if (!o.cmd)
         return { error: 'gates needs --cmd "<command>": the CLI runs it and records the real exit code.' };
-      const r = spawnSync2(o.cmd, { cwd: projectDir, shell: true, encoding: "utf8", timeout: o.timeoutMs ?? 600000 });
-      const code = r.status === null ? `no exit (${r.signal ?? "timeout"})` : String(r.status);
       return { body: `# Gates
 
-Command: \`${o.cmd}\`
-Exit code: ${code} (${r.status === 0 ? "pass" : "fail"})
-
-\`\`\`
-${tail(`${r.stdout ?? ""}
-${r.stderr ?? ""}`)}
-\`\`\`
-${note}` };
+${commandBlock(projectDir, o.cmd, o.timeoutMs)}${note}` };
     }
     case "closure": {
       const ran = dispatchedAgents2(projectDir, mission);
@@ -888,36 +1119,39 @@ Independent review (from the dispatch ledger):
 ${rev}
 ${note}` };
     }
-    default:
-      if (!o.note)
-        return { error: `${stage} needs --note "<what happened>"; nothing is recorded without it.` };
+    default: {
+      if (!o.cmd && !o.note)
+        return { error: `${stage} needs --cmd "<command>" or --note "<what happened>"; nothing is recorded without one.` };
+      const ran = o.cmd ? `
+${commandBlock(projectDir, o.cmd, o.timeoutMs)}` : "";
       return { body: `# ${stage[0].toUpperCase()}${stage.slice(1)}
-${note}` };
+${ran}${note}` };
+    }
   }
 }
 function recordStage(projectDir, mission, stage, o = {}) {
-  const dir = join5(projectDir, ".mugiwara", "missions", mission);
-  if (!existsSync5(dir))
+  const dir = join7(projectDir, ".mugiwara", "missions", mission);
+  if (!existsSync7(dir))
     return { error: `no mission named '${mission}'.` };
   const built = buildStage(projectDir, mission, stage, o);
   if ("error" in built)
     return built;
-  const flows = join5(dir, "flows");
-  mkdirSync2(flows, { recursive: true });
-  const path = join5(flows, `0${STAGES.indexOf(stage) + 1}-${stage}.md`);
-  writeFileSync2(path, built.body);
+  const flows = join7(dir, "flows");
+  mkdirSync3(flows, { recursive: true });
+  const path = join7(flows, `0${STAGES.indexOf(stage) + 1}-${stage}.md`);
+  writeFileSync3(path, built.body);
   return { path };
 }
 
 // src/mission.ts
-import { existsSync as existsSync12, rmSync, readFileSync as readFileSync11, readdirSync as readdirSync6, mkdirSync as mkdirSync6, writeFileSync as writeFileSync6, renameSync, openSync, writeSync, closeSync } from "node:fs";
+import { existsSync as existsSync14, rmSync, readFileSync as readFileSync14, readdirSync as readdirSync7, mkdirSync as mkdirSync7, writeFileSync as writeFileSync7, renameSync, openSync, writeSync, closeSync } from "node:fs";
 import { execFileSync as execFileSync4 } from "node:child_process";
-import { join as join16 } from "node:path";
+import { join as join18 } from "node:path";
 
 // src/integrity.ts
 init_policy();
-import { existsSync as existsSync7, readdirSync as readdirSync3, readFileSync as readFileSync5 } from "node:fs";
-import { isAbsolute, join as join7, relative } from "node:path";
+import { existsSync as existsSync9, readdirSync as readdirSync4, readFileSync as readFileSync8 } from "node:fs";
+import { isAbsolute as isAbsolute2, join as join9, relative as relative2 } from "node:path";
 var SECRET_PATTERNS = [
   [/AKIA[0-9A-Z]{16}/, "AWS access key id", "block"],
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----/, "private key block", "block"],
@@ -977,8 +1211,8 @@ var TRAIL_EXTS = new Set([".md", ".json", ".sh", ".jsonl"]);
 function trailFiles(dir) {
   const out = [];
   const walk = (d) => {
-    for (const e of readdirSync3(d, { withFileTypes: true })) {
-      const p = join7(d, e.name);
+    for (const e of readdirSync4(d, { withFileTypes: true })) {
+      const p = join9(d, e.name);
       if (e.isDirectory())
         walk(p);
       else if (TRAIL_EXTS.has(e.name.slice(e.name.lastIndexOf(".")) || ""))
@@ -1006,7 +1240,7 @@ function collectPassCitedPaths(missionDir) {
   for (const f of trailFiles(missionDir)) {
     let body;
     try {
-      body = readFileSync5(f, "utf8");
+      body = readFileSync8(f, "utf8");
     } catch {
       continue;
     }
@@ -1031,19 +1265,19 @@ function checkTrail(missionDir, projectRoot) {
   for (const f of files) {
     let body;
     try {
-      body = readFileSync5(f, "utf8");
+      body = readFileSync8(f, "utf8");
     } catch {
       continue;
     }
     for (const target of linkedPaths(body)) {
-      if (isAbsolute(target))
+      if (isAbsolute2(target))
         continue;
-      const fromMission = join7(missionDir, target);
-      const fromRoot = join7(projectRoot, target);
-      if (!existsSync7(fromMission) && !existsSync7(fromRoot)) {
+      const fromMission = join9(missionDir, target);
+      const fromRoot = join9(projectRoot, target);
+      if (!existsSync9(fromMission) && !existsSync9(fromRoot)) {
         issues.push({
           kind: "dangling-path",
-          detail: `${relative(projectRoot, f)} links "${target}" — no such file (mission dir or repo root)`
+          detail: `${relative2(projectRoot, f)} links "${target}" — no such file (mission dir or repo root)`
         });
       }
     }
@@ -1051,25 +1285,25 @@ function checkTrail(missionDir, projectRoot) {
       const isWarn = severity === "warn";
       issues.push({
         kind: isWarn ? "secret-warn" : "secret",
-        detail: `${relative(projectRoot, f)} matches ${label}: ${hit.slice(0, 12)}…`,
+        detail: `${relative2(projectRoot, f)} matches ${label}: ${hit.slice(0, 12)}…`,
         severity: isWarn ? "warn" : "block"
       });
     }
   }
   const evidencePaths = [];
-  const stateFiles = existsSync7(missionDir) ? readdirSync3(missionDir).filter((n) => n.endsWith(".json") && n !== "continue.json" && !n.startsWith("continue-")).sort() : [];
+  const stateFiles = existsSync9(missionDir) ? readdirSync4(missionDir).filter((n) => n.endsWith(".json") && n !== "continue.json" && !n.startsWith("continue-")).sort() : [];
   for (const name of stateFiles) {
-    const evidenceFile = join7(missionDir, name);
+    const evidenceFile = join9(missionDir, name);
     try {
-      const s = JSON.parse(readFileSync5(evidenceFile, "utf8"));
+      const s = JSON.parse(readFileSync8(evidenceFile, "utf8"));
       if (!Array.isArray(s.evidence))
         continue;
       for (const e of s.evidence) {
         if (typeof e !== "string" || !e.trim())
           continue;
         evidencePaths.push(e);
-        const cand = join7(projectRoot, e);
-        if (!isAbsolute(e) && !existsSync7(cand) && !existsSync7(join7(missionDir, e))) {
+        const cand = join9(projectRoot, e);
+        if (!isAbsolute2(e) && !existsSync9(cand) && !existsSync9(join9(missionDir, e))) {
           issues.push({ kind: "evidence", detail: `${name} evidence "${e}" does not exist` });
         }
       }
@@ -1084,7 +1318,7 @@ function checkTrail(missionDir, projectRoot) {
         const stateLanes = new Set;
         for (const name of stateFiles) {
           try {
-            const s = JSON.parse(readFileSync5(join7(missionDir, name), "utf8"));
+            const s = JSON.parse(readFileSync8(join9(missionDir, name), "utf8"));
             if (typeof s.lane === "string")
               stateLanes.add(s.lane);
           } catch {}
@@ -1101,18 +1335,18 @@ function checkTrail(missionDir, projectRoot) {
   }
   const passCited = collectPassCitedPaths(missionDir);
   for (const e of passCited) {
-    if (!e.trim() || isAbsolute(e))
+    if (!e.trim() || isAbsolute2(e))
       continue;
     if (/(?:^|\/)(state|continue)(-[^\/]*)?\.json$/.test(e))
       continue;
-    const candMission = join7(missionDir, e);
-    const candRoot = join7(projectRoot, e);
-    const resolved = existsSync7(candMission) ? candMission : existsSync7(candRoot) ? candRoot : null;
+    const candMission = join9(missionDir, e);
+    const candRoot = join9(projectRoot, e);
+    const resolved = existsSync9(candMission) ? candMission : existsSync9(candRoot) ? candRoot : null;
     if (!resolved)
       continue;
     let body;
     try {
-      body = readFileSync5(resolved, "utf8");
+      body = readFileSync8(resolved, "utf8");
     } catch {
       continue;
     }
@@ -1120,13 +1354,13 @@ function checkTrail(missionDir, projectRoot) {
       issues.push({ kind: "evidence-thin", detail: `evidence "${e}" exists but lacks command output (no backticked command or exit-status token)` });
     }
   }
-  for (const rel of ["pr-verdict.md", join7("flows", "07-pr-verdict.md")]) {
-    const f = join7(missionDir, rel);
-    if (!existsSync7(f))
+  for (const rel of ["pr-verdict.md", join9("flows", "07-pr-verdict.md")]) {
+    const f = join9(missionDir, rel);
+    if (!existsSync9(f))
       continue;
     let body;
     try {
-      body = readFileSync5(f, "utf8");
+      body = readFileSync8(f, "utf8");
     } catch {
       continue;
     }
@@ -1174,12 +1408,12 @@ function formatIssues(issues) {
 }
 
 // src/check-artifacts.ts
-import { existsSync as existsSync8, readFileSync as readFileSync6, readdirSync as readdirSync4 } from "node:fs";
-import { join as join8 } from "node:path";
+import { existsSync as existsSync10, readFileSync as readFileSync9, readdirSync as readdirSync5 } from "node:fs";
+import { join as join10 } from "node:path";
 var LANE_MIN = new Set(["standard", "full", "spike"]);
 function checkMissionArtifacts(missionDir, opts = {}) {
-  const statePath = join8(missionDir, "state.json");
-  if (!existsSync8(statePath)) {
+  const statePath = join10(missionDir, "state.json");
+  if (!existsSync10(statePath)) {
     return { ok: true, missing: [], lane: null };
   }
   let lane = "unknown";
@@ -1192,17 +1426,17 @@ function checkMissionArtifacts(missionDir, opts = {}) {
     return { ok: true, missing: [], lane };
   }
   const missing = [];
-  if (!opts.unplanned && !existsSync8(join8(missionDir, "plan.md")))
+  if (!opts.unplanned && !existsSync10(join10(missionDir, "plan.md")))
     missing.push("plan.md");
-  const flowsDir = join8(missionDir, "flows");
-  const hasFlows = existsSync8(flowsDir) && readdirSync4(flowsDir).length > 0;
+  const flowsDir = join10(missionDir, "flows");
+  const hasFlows = existsSync10(flowsDir) && readdirSync5(flowsDir).length > 0;
   if (!hasFlows)
     missing.push("flows/ (no execution evidence)");
   return { ok: missing.length === 0, missing, lane };
 }
 function readFileSyncSafe(p) {
   try {
-    return readFileSync6(p, "utf8");
+    return readFileSync9(p, "utf8");
   } catch {
     return "";
   }
@@ -1210,8 +1444,8 @@ function readFileSyncSafe(p) {
 
 // src/rollback.ts
 import { execFileSync as execFileSync2 } from "node:child_process";
-import { writeFileSync as writeFileSync3 } from "node:fs";
-import { join as join9 } from "node:path";
+import { writeFileSync as writeFileSync4 } from "node:fs";
+import { join as join11 } from "node:path";
 function git2(cwd, args) {
   return execFileSync2("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 }
@@ -1250,8 +1484,8 @@ function generateRollback(projectDir, missionDir, input) {
     const commitsNewestFirst = [...revList].reverse();
     const filesTouched = input.baseSha === "unknown" ? [] : git2(projectDir, ["diff", "--name-only", input.baseSha, input.branch]).split(/\r?\n/).filter(Boolean);
     const body = buildRollback(input, commitsNewestFirst, filesTouched);
-    const file = join9(missionDir, "rollback.sh");
-    writeFileSync3(file, body, { mode: 493 });
+    const file = join11(missionDir, "rollback.sh");
+    writeFileSync4(file, body, { mode: 493 });
     return { file: "rollback.sh", commits: commitsNewestFirst.length };
   } catch {
     return null;
@@ -1260,8 +1494,8 @@ function generateRollback(projectDir, missionDir, input) {
 
 // src/provenance.ts
 import { execFileSync as execFileSync3 } from "node:child_process";
-import { writeFileSync as writeFileSync4 } from "node:fs";
-import { join as join10 } from "node:path";
+import { writeFileSync as writeFileSync5 } from "node:fs";
+import { join as join12 } from "node:path";
 function git3(cwd, args) {
   return execFileSync3("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
 }
@@ -1341,7 +1575,7 @@ function writeProvenance(projectDir, missionDir, state, baseSha) {
   const resolvedBase = baseSha ?? (typeof state.base_sha === "string" ? state.base_sha : undefined);
   const cleanBase = resolvedBase && resolvedBase !== "unknown" ? resolvedBase : undefined;
   const attached = attachGitNote(projectDir, state.branch, note, cleanBase);
-  writeFileSync4(join10(missionDir, "provenance.md"), renderProvenanceMd(note, attached ? attached.sha : null));
+  writeFileSync5(join12(missionDir, "provenance.md"), renderProvenanceMd(note, attached ? attached.sha : null));
 }
 
 // src/mission.ts
@@ -1402,8 +1636,8 @@ function renderRouting(ranked, mission) {
 
 // src/budget.ts
 init_config();
-import { existsSync as existsSync10, readdirSync as readdirSync5, statSync as statSync3 } from "node:fs";
-import { join as join12 } from "node:path";
+import { existsSync as existsSync12, readdirSync as readdirSync6, statSync as statSync3 } from "node:fs";
+import { join as join14 } from "node:path";
 function readBudgetConfig(projectDir) {
   const cfg = readConfig2(projectDir);
   const raw = cfg.context_budget_chars;
@@ -1419,15 +1653,15 @@ function measureContextChars(missionDir) {
       total += statSync3(p).size;
     } catch {}
   };
-  for (const f of readdirSync5(missionDir)) {
+  for (const f of readdirSync6(missionDir)) {
     if (/\.md$/.test(f))
-      add(join12(missionDir, f));
+      add(join14(missionDir, f));
   }
   for (const sub of ["flows", "waves"]) {
-    const dir = join12(missionDir, sub);
-    if (existsSync10(dir)) {
-      for (const f of readdirSync5(dir))
-        add(join12(dir, f));
+    const dir = join14(missionDir, sub);
+    if (existsSync12(dir)) {
+      for (const f of readdirSync6(dir))
+        add(join14(dir, f));
     }
   }
   return total;
@@ -1447,8 +1681,8 @@ function compressThreshold(budget) {
 }
 
 // src/cost.ts
-import { appendFileSync, mkdirSync as mkdirSync4, readFileSync as readFileSync8 } from "node:fs";
-import { join as join13 } from "node:path";
+import { appendFileSync, mkdirSync as mkdirSync5, readFileSync as readFileSync11 } from "node:fs";
+import { join as join15 } from "node:path";
 var LANE_BUDGET = {
   lean: 12000,
   standard: 30000,
@@ -1504,9 +1738,9 @@ function assertMissionDir(dir) {
 }
 function appendCostEvent(missionDir, event) {
   assertMissionDir(missionDir);
-  mkdirSync4(missionDir, { recursive: true });
+  mkdirSync5(missionDir, { recursive: true });
   const line = Object.assign({ ts: new Date().toISOString() }, event);
-  appendFileSync(join13(missionDir, COST_EVENTS_FILE), JSON.stringify(line) + `
+  appendFileSync(join15(missionDir, COST_EVENTS_FILE), JSON.stringify(line) + `
 `, "utf8");
 }
 var COMPRESSED_KIND = "compressed";
@@ -1514,11 +1748,11 @@ var DECISIONS_FILE = "decisions.md";
 var OPT_SECTION = "## Cost governor decisions";
 function recordOptDecision(missionDir, d) {
   assertMissionDir(missionDir);
-  mkdirSync4(missionDir, { recursive: true });
-  const file = join13(missionDir, DECISIONS_FILE);
+  mkdirSync5(missionDir, { recursive: true });
+  const file = join15(missionDir, DECISIONS_FILE);
   let hasSection = false;
   try {
-    hasSection = readFileSync8(file, "utf8").split(/\r?\n/).some((l) => l.trim() === OPT_SECTION);
+    hasSection = readFileSync11(file, "utf8").split(/\r?\n/).some((l) => l.trim() === OPT_SECTION);
   } catch {}
   const ts = new Date().toISOString();
   const flat = (s) => s.replace(/[\r\n]+/g, " ");
@@ -1537,8 +1771,8 @@ ${bullet}
 
 // src/evidence.ts
 import { createHash } from "node:crypto";
-import { appendFileSync as appendFileSync2, mkdirSync as mkdirSync5, readFileSync as readFileSync9 } from "node:fs";
-import { join as join14 } from "node:path";
+import { appendFileSync as appendFileSync2, mkdirSync as mkdirSync6, readFileSync as readFileSync12 } from "node:fs";
+import { join as join16 } from "node:path";
 function fingerprint(content) {
   return createHash("sha256").update(content).digest("hex");
 }
@@ -1560,10 +1794,10 @@ function assertMissionDir2(dir) {
 }
 function loadRegistry(missionDir) {
   assertMissionDir2(missionDir);
-  const file = join14(missionDir, REGISTRY_FILE);
+  const file = join16(missionDir, REGISTRY_FILE);
   try {
     const out = [];
-    for (const line of readFileSync9(file, "utf8").split(/\r?\n/)) {
+    for (const line of readFileSync12(file, "utf8").split(/\r?\n/)) {
       if (!line.trim())
         continue;
       let e;
@@ -1604,8 +1838,8 @@ function computeContextMetrics(stats) {
 }
 
 // src/reporting.ts
-import { existsSync as existsSync11, readFileSync as readFileSync10 } from "node:fs";
-import { join as join15 } from "node:path";
+import { existsSync as existsSync13, readFileSync as readFileSync13 } from "node:fs";
+import { join as join17 } from "node:path";
 function isAllowedMissionDir3(dir) {
   if (!dir || dir.includes(".."))
     return false;
@@ -1623,10 +1857,10 @@ function assertMissionDir3(dir) {
 }
 function parseDecisionTrail(missionDir) {
   assertMissionDir3(missionDir);
-  const file = join15(missionDir, "decisions.md");
-  if (!existsSync11(file))
+  const file = join17(missionDir, "decisions.md");
+  if (!existsSync13(file))
     return [];
-  const raw = readFileSync10(file, "utf8");
+  const raw = readFileSync13(file, "utf8");
   const lines = raw.split(/\r?\n/);
   const headerIdx = lines.findIndex((l) => l.trim() === "## Cost governor decisions" || l.trim() === "## Budget");
   const scan = headerIdx >= 0 ? lines.slice(headerIdx) : lines;
@@ -2090,7 +2324,7 @@ function primaryState(dir, files) {
   if (!name)
     return null;
   try {
-    return JSON.parse(readFileSync11(join16(dir, name), "utf8"));
+    return JSON.parse(readFileSync14(join18(dir, name), "utf8"));
   } catch {
     return null;
   }
@@ -2108,10 +2342,10 @@ function tasksFromState(state) {
 function countPlanTasks(missionDir) {
   let total = 0;
   let done = 0;
-  const planFile = join16(missionDir, "plan.md");
-  if (existsSync12(planFile)) {
+  const planFile = join18(missionDir, "plan.md");
+  if (existsSync14(planFile)) {
     try {
-      const text = readFileSync11(planFile, "utf8");
+      const text = readFileSync14(planFile, "utf8");
       for (const line of text.split(/\r?\n/)) {
         if (/^\s*-\s*\[[ xX]\]/.test(line)) {
           total++;
@@ -2122,13 +2356,13 @@ function countPlanTasks(missionDir) {
     } catch {}
   }
   if (total === 0) {
-    const subPlanDir = join16(missionDir, "sub-plan");
-    if (existsSync12(subPlanDir)) {
+    const subPlanDir = join18(missionDir, "sub-plan");
+    if (existsSync14(subPlanDir)) {
       try {
-        for (const f of readdirSync6(subPlanDir)) {
+        for (const f of readdirSync7(subPlanDir)) {
           if (!f.endsWith(".md"))
             continue;
-          const text = readFileSync11(join16(subPlanDir, f), "utf8");
+          const text = readFileSync14(join18(subPlanDir, f), "utf8");
           for (const line of text.split(/\r?\n/)) {
             if (/^\s*-\s*\[[ xX]\]/.test(line)) {
               total++;
@@ -2142,7 +2376,7 @@ function countPlanTasks(missionDir) {
   }
   return { done, total };
 }
-function changedFiles2(projectDir, state) {
+function changedFiles(projectDir, state) {
   const base = typeof state?.base_sha === "string" ? state.base_sha : "";
   const branch = typeof state?.branch === "string" ? state.branch : "";
   if (!base || base === "unknown" || !branch)
@@ -2158,10 +2392,10 @@ function changedFiles2(projectDir, state) {
   }
 }
 function rosterSize(missionDir) {
-  const plan = join16(missionDir, "plan.md");
-  if (!existsSync12(plan))
+  const plan = join18(missionDir, "plan.md");
+  if (!existsSync14(plan))
     return 1;
-  const text = readFileSync11(plan, "utf8");
+  const text = readFileSync14(plan, "utf8");
   const assignees = new Set;
   let inTable = false;
   for (const line of text.split(`
@@ -2185,10 +2419,10 @@ function rosterSize(missionDir) {
   return assignees.size || 1;
 }
 function rosterAssignees(missionDir) {
-  const plan = join16(missionDir, "plan.md");
-  if (!existsSync12(plan))
+  const plan = join18(missionDir, "plan.md");
+  if (!existsSync14(plan))
     return [];
-  const text = readFileSync11(plan, "utf8");
+  const text = readFileSync14(plan, "utf8");
   const assignees = new Set;
   let inTable = false;
   for (const line of text.split(`
@@ -2212,12 +2446,12 @@ function rosterAssignees(missionDir) {
   return [...assignees];
 }
 function readMemberStates(missionDir) {
-  if (!existsSync12(missionDir))
+  if (!existsSync14(missionDir))
     return [];
   const out = [];
-  for (const f of orderedStateFiles(readdirSync6(missionDir))) {
+  for (const f of orderedStateFiles(readdirSync7(missionDir))) {
     try {
-      const raw = JSON.parse(readFileSync11(join16(missionDir, f), "utf8"));
+      const raw = JSON.parse(readFileSync14(join18(missionDir, f), "utf8"));
       const member = f === "state.json" ? null : f.slice(0, -".json".length);
       const flow = Number(raw.flow ?? raw.wave ?? 0);
       if (member !== null && !/^[A-Za-z0-9._-]+$/.test(member))
@@ -2252,13 +2486,13 @@ function closureBlockers(missionDir, mission) {
 }
 function archiveMission(projectDir, mission, opts = {}) {
   const { dryRun = false, force = false } = opts;
-  const root = join16(projectDir, ".mugiwara");
+  const root = join18(projectDir, ".mugiwara");
   if (!mission || /[^a-zA-Z0-9._-]/.test(mission) || /^\.+$/.test(mission))
     throw new Error(`invalid mission name "${mission}" (allowlist: [a-zA-Z0-9._-], not a dot-path)`);
   const removed = [];
   const kept = [];
-  const dir = join16(root, "missions", mission);
-  if (!existsSync12(dir))
+  const dir = join18(root, "missions", mission);
+  if (!existsSync14(dir))
     return { report: null, removed, kept };
   if (!dryRun) {
     const blockers = closureBlockers(dir, mission);
@@ -2303,11 +2537,11 @@ ${warnText}`);
         throw new Error("closure integrity gate failed — attestation required but not checked: run `mugiwara archive` (CLI) or await requireAttestation() first");
     }
   }
-  const files = readdirSync6(dir);
+  const files = readdirSync7(dir);
   const state = primaryState(dir, files);
   if (!dryRun && !force && state) {
     const risky = state.lane === "full" || Array.isArray(state.sensitive_paths) && state.sensitive_paths.length > 0;
-    const ledgerActive = existsSync12(join16(root, ".engaged")) || existsSync12(join16(root, "review-dispatch.jsonl"));
+    const ledgerActive = existsSync14(join18(root, ".engaged")) || existsSync14(join18(root, "review-dispatch.jsonl"));
     if (risky && ledgerActive && readConfig2(projectDir).independent_review !== "off") {
       const ran = dispatchedAgents2(projectDir, mission);
       const missing = [
@@ -2336,7 +2570,7 @@ ${warnText}`);
         governor: state.budget_status === "stop" ? "stop" : state.budget_status === "warn" ? "avoid" : "normal"
       });
       try {
-        const wFiles = changedFiles2(projectDir, state);
+        const wFiles = changedFiles(projectDir, state);
         if (wFiles.length) {
           const wCheck = runWasteChecks({
             change: `archive:${mission}`,
@@ -2351,7 +2585,7 @@ ${warnText}`);
   } catch {}
   const stageModels = [...new Set(orderedStateFiles(files).map((f) => {
     try {
-      const s = JSON.parse(readFileSync11(join16(dir, f), "utf8"));
+      const s = JSON.parse(readFileSync14(join18(dir, f), "utf8"));
       return typeof s.model === "string" ? s.model : "";
     } catch {
       return "";
@@ -2395,7 +2629,7 @@ ${warnText}`);
     let cacheCreate = 0;
     for (const f of files.filter(isStateFile)) {
       try {
-        const s = JSON.parse(readFileSync11(join16(dir, f), "utf8"));
+        const s = JSON.parse(readFileSync14(join18(dir, f), "utf8"));
         if (s.tokens_source === "reported" && typeof s.tokens_est === "number") {
           reportedTotal += s.tokens_est;
           hasReported = true;
@@ -2436,11 +2670,11 @@ Used **${est.toLocaleString()}** of ${effBudget ? effBudget.toLocaleString() : "
     } catch {}
     if (shouldCompress(budget, chars)) {
       try {
-        const flowsDir = join16(dir, "flows");
-        const wavesDir = join16(dir, "waves");
-        const targetDir = existsSync12(flowsDir) ? flowsDir : existsSync12(wavesDir) ? wavesDir : null;
-        if (targetDir && existsSync12(targetDir)) {
-          const flowFiles = readdirSync6(targetDir).filter((f) => f.endsWith(".md"));
+        const flowsDir = join18(dir, "flows");
+        const wavesDir = join18(dir, "waves");
+        const targetDir = existsSync14(flowsDir) ? flowsDir : existsSync14(wavesDir) ? wavesDir : null;
+        if (targetDir && existsSync14(targetDir)) {
+          const flowFiles = readdirSync7(targetDir).filter((f) => f.endsWith(".md"));
           if (flowFiles.length) {
             const pct = Math.round(chars / budget * 100);
             const stub = `# Compressed trail
@@ -2449,10 +2683,10 @@ Trail ${chars} chars exceeds ${pct}% of budget ${budget} (threshold ${compressTh
 `;
             for (const f of flowFiles) {
               try {
-                rmSync(join16(targetDir, f), { force: true });
+                rmSync(join18(targetDir, f), { force: true });
               } catch {}
             }
-            writeFileSync6(join16(targetDir, "00-compressed.md"), stub);
+            writeFileSync7(join18(targetDir, "00-compressed.md"), stub);
           }
         }
         appendCostEvent(dir, {
@@ -2496,49 +2730,49 @@ Trail ${chars} chars exceeds ${pct}% of budget ${budget} (threshold ${compressTh
       fold.push(f);
   }
   const PR_VERDICT = "pr-verdict.md";
-  const PR_VERDICT_SRC = join16("flows", "07-pr-verdict.md");
-  const flowsDir = join16(dir, "flows");
-  const legacyWavesDir = join16(dir, "waves");
-  const artDir = existsSync12(flowsDir) ? flowsDir : existsSync12(legacyWavesDir) ? legacyWavesDir : flowsDir;
+  const PR_VERDICT_SRC = join18("flows", "07-pr-verdict.md");
+  const flowsDir = join18(dir, "flows");
+  const legacyWavesDir = join18(dir, "waves");
+  const artDir = existsSync14(flowsDir) ? flowsDir : existsSync14(legacyWavesDir) ? legacyWavesDir : flowsDir;
   const artRel = artDir === legacyWavesDir ? "waves" : "flows";
-  if (existsSync12(artDir)) {
-    for (const f of readdirSync6(artDir).sort()) {
+  if (existsSync14(artDir)) {
+    for (const f of readdirSync7(artDir).sort()) {
       if (artRel === "flows" && f === "07-pr-verdict.md")
         continue;
-      fold.push(join16(artRel, f));
+      fold.push(join18(artRel, f));
     }
   }
-  const hasCostEvents = existsSync12(join16(dir, "cost-events.jsonl"));
-  const hasRegistry = existsSync12(join16(dir, "context-registry.jsonl"));
+  const hasCostEvents = existsSync14(join18(dir, "cost-events.jsonl"));
+  const hasRegistry = existsSync14(join18(dir, "context-registry.jsonl"));
   let report = "";
-  const reportPath = join16(dir, "report.md");
+  const reportPath = join18(dir, "report.md");
   if (files.includes("report.md"))
-    report = readFileSync11(reportPath, "utf8");
-  else if (existsSync12(join16(artDir, "06-closure.md")))
-    report = readFileSync11(join16(artDir, "06-closure.md"), "utf8");
+    report = readFileSync14(reportPath, "utf8");
+  else if (existsSync14(join18(artDir, "06-closure.md")))
+    report = readFileSync14(join18(artDir, "06-closure.md"), "utf8");
   if (!dryRun) {
-    mkdirSync6(dir, { recursive: true });
-    const prVerdictSrc = join16(dir, PR_VERDICT_SRC);
-    if (existsSync12(prVerdictSrc)) {
-      const prVerdictPath = join16(dir, PR_VERDICT);
-      writeFileSync6(prVerdictPath, readFileSync11(prVerdictSrc, "utf8"));
-      kept.push(join16("missions", mission, PR_VERDICT));
+    mkdirSync7(dir, { recursive: true });
+    const prVerdictSrc = join18(dir, PR_VERDICT_SRC);
+    if (existsSync14(prVerdictSrc)) {
+      const prVerdictPath = join18(dir, PR_VERDICT);
+      writeFileSync7(prVerdictPath, readFileSync14(prVerdictSrc, "utf8"));
+      kept.push(join18("missions", mission, PR_VERDICT));
     }
     const rs = state;
     const num = (k) => rs && typeof rs[k] === "number" ? rs[k] : 0;
     const sens = rs && Array.isArray(rs.sensitive_paths) ? rs.sensitive_paths : [];
     const changeLine = state ? `${num("files_touched")} file${num("files_touched") === 1 ? "" : "s"} changed (+${num("loc_ins")} / -${num("loc_del")}) on branch \`${typeof state.branch === "string" ? state.branch : "unknown"}\`, closed ${new Date().toISOString().slice(0, 10)}.` + (sens.length ? ` Sensitive paths touched: \`${sens.join("`, `")}\`.` : "") : "";
-    const routingSection = state ? renderRouting(rankFiles(changedFiles2(projectDir, state), {
+    const routingSection = state ? renderRouting(rankFiles(changedFiles(projectDir, state), {
       mission,
       evidence: Array.isArray(state.evidence) ? state.evidence : [],
       sensitive_paths: Array.isArray(state.sensitive_paths) ? state.sensitive_paths : []
     }), mission) : "";
-    const seedIsClosure = !files.includes("report.md") && existsSync12(join16(artDir, "06-closure.md"));
-    const folded = fold.map((f) => ({ name: f.split("/").pop() ?? f, body: readFileSync11(join16(dir, f), "utf8") }));
+    const seedIsClosure = !files.includes("report.md") && existsSync14(join18(artDir, "06-closure.md"));
+    const folded = fold.map((f) => ({ name: f.split("/").pop() ?? f, body: readFileSync14(join18(dir, f), "utf8") }));
     const hasReportBody = fold.length > 0 || changeLine || routingSection || costSection;
-    if (hasReportBody || !existsSync12(reportPath)) {
+    if (hasReportBody || !existsSync14(reportPath)) {
       const tmp = `${reportPath}.tmp`;
-      writeFileSync6(tmp, buildReport({
+      writeFileSync7(tmp, buildReport({
         mission,
         seed: report,
         seedIsClosure,
@@ -2554,27 +2788,27 @@ Trail ${chars} chars exceeds ${pct}% of budget ${budget} (threshold ${compressTh
       renameSync(tmp, reportPath);
     }
     for (const f of fold) {
-      rmSync(join16(dir, f), { force: true, recursive: true });
-      removed.push(join16("missions", mission, f));
+      rmSync(join18(dir, f), { force: true, recursive: true });
+      removed.push(join18("missions", mission, f));
     }
     if (hasCostEvents) {
-      rmSync(join16(dir, "cost-events.jsonl"), { force: true });
-      removed.push(join16("missions", mission, "cost-events.jsonl"));
+      rmSync(join18(dir, "cost-events.jsonl"), { force: true });
+      removed.push(join18("missions", mission, "cost-events.jsonl"));
     }
     if (hasRegistry) {
-      rmSync(join16(dir, "context-registry.jsonl"), { force: true });
-      removed.push(join16("missions", mission, "context-registry.jsonl"));
+      rmSync(join18(dir, "context-registry.jsonl"), { force: true });
+      removed.push(join18("missions", mission, "context-registry.jsonl"));
     }
-    if (existsSync12(prVerdictSrc)) {
-      rmSync(join16(dir, PR_VERDICT_SRC), { force: true });
-      removed.push(join16("missions", mission, PR_VERDICT_SRC));
+    if (existsSync14(prVerdictSrc)) {
+      rmSync(join18(dir, PR_VERDICT_SRC), { force: true });
+      removed.push(join18("missions", mission, PR_VERDICT_SRC));
     }
     for (const f of files.filter((f) => f.endsWith(".json")))
-      rmSync(join16(dir, f), { force: true });
-    if (existsSync12(artDir) && readdirSync6(artDir).length === 0)
+      rmSync(join18(dir, f), { force: true });
+    if (existsSync14(artDir) && readdirSync7(artDir).length === 0)
       rmSync(artDir, { recursive: true, force: true });
-    if (!existsSync12(reportPath)) {
-      writeFileSync6(reportPath, `# Mission: ${mission}
+    if (!existsSync14(reportPath)) {
+      writeFileSync7(reportPath, `# Mission: ${mission}
 
 Archived before closure — no wave artifacts were present.
 
@@ -2590,7 +2824,7 @@ No review.md and no security.md in the mission folder, so nothing was checked or
         baseSha: typeof state.base_sha === "string" ? state.base_sha : "unknown"
       });
       if (rb)
-        kept.push(join16("missions", mission, rb.file));
+        kept.push(join18("missions", mission, rb.file));
       try {
         const st = tasksFromState(state);
         const pt = countPlanTasks(dir);
@@ -2609,25 +2843,25 @@ No review.md and no security.md in the mission folder, so nothing was checked or
           models: stageModels,
           base_sha: baseShaForNote
         }, baseShaForNote);
-        kept.push(join16("missions", mission, "provenance.md"));
+        kept.push(join18("missions", mission, "provenance.md"));
       } catch {}
     }
   } else {
     for (const f of fold)
-      removed.push(join16("missions", mission, f));
+      removed.push(join18("missions", mission, f));
   }
-  removed.push(join16("missions", mission, "<session state>"));
+  removed.push(join18("missions", mission, "<session state>"));
   if (files.includes("plan.md"))
-    kept.push(join16("missions", mission, "plan.md"));
+    kept.push(join18("missions", mission, "plan.md"));
   if (files.includes("handoff.md"))
-    kept.push(join16("missions", mission, "handoff.md"));
-  kept.push(join16("missions", mission, "report.md"));
+    kept.push(join18("missions", mission, "handoff.md"));
+  kept.push(join18("missions", mission, "report.md"));
   let index;
-  const indexFile = join16(root, "index.md");
+  const indexFile = join18(root, "index.md");
   const line = `- ${mission} — ${new Date().toISOString().slice(0, 10)}
 `;
   if (!dryRun) {
-    const existing = existsSync12(indexFile) ? readFileSync11(indexFile, "utf8") : "";
+    const existing = existsSync14(indexFile) ? readFileSync14(indexFile, "utf8") : "";
     if (!existing.split(/\r?\n/).some((l) => l.startsWith(`- ${mission} —`))) {
       const header = existing ? "" : `# Mission index
 
@@ -2641,17 +2875,17 @@ No review.md and no security.md in the mission folder, so nothing was checked or
     }
     index = "index.md";
   }
-  return { report: join16("missions", mission, "report.md"), removed, kept, index };
+  return { report: join18("missions", mission, "report.md"), removed, kept, index };
 }
 
 // src/auto-close.ts
 function missionMode(cwd, mission) {
-  const dir = join17(cwd, ".mugiwara", "missions", mission);
+  const dir = join19(cwd, ".mugiwara", "missions", mission);
   try {
-    for (const f of readdirSync7(dir).sort()) {
+    for (const f of readdirSync8(dir).sort()) {
       if (!f.endsWith(".json") || f === "continue.json" || f.startsWith("continue-"))
         continue;
-      const m = JSON.parse(readFileSync12(join17(dir, f), "utf8")).mode;
+      const m = JSON.parse(readFileSync15(join19(dir, f), "utf8")).mode;
       if (typeof m === "string")
         return m;
     }
@@ -2662,13 +2896,13 @@ function autoCloseIfAuto(cwd, mission) {
   const mode = missionMode(cwd, mission);
   if (mode !== "auto")
     return { closed: false, message: `not auto-closed: mission mode is ${mode || "unknown"}, a person decides.` };
-  const dir = join17(cwd, ".mugiwara", "missions", mission);
+  const dir = join19(cwd, ".mugiwara", "missions", mission);
   try {
     for (const stage of ["execution", "closure"]) {
-      if (!existsSync13(join17(dir, "flows", `0${stage === "execution" ? 1 : 6}-${stage}.md`)))
+      if (!existsSync15(join19(dir, "flows", `0${stage === "execution" ? 1 : 6}-${stage}.md`)))
         recordStage(cwd, mission, stage);
     }
-    const unplanned = !existsSync13(join17(dir, "plan.md"));
+    const unplanned = !existsSync15(join19(dir, "plan.md"));
     archiveMission(cwd, mission, { unplanned });
     return { closed: true, message: `closed mission "${mission}" automatically (mode auto): report.md written${unplanned ? ", plan listed as Not verified" : ""}.` };
   } catch (e) {
@@ -2677,10 +2911,10 @@ function autoCloseIfAuto(cwd, mission) {
 }
 var FAILING = /verdict[^\n]*\b(fail(ed|s)?|changes requested|needs? (fixes|changes)|blocked)\b/i;
 function openFindings(cwd, mission) {
-  const dir = join17(cwd, ".mugiwara", "missions", mission);
+  const dir = join19(cwd, ".mugiwara", "missions", mission);
   for (const f of ["security.md", "review.md"]) {
     try {
-      const line = readFileSync12(join17(dir, f), "utf8").split(`
+      const line = readFileSync15(join19(dir, f), "utf8").split(`
 `).find((l) => FAILING.test(l));
       if (line)
         return `${f}: ${line.replace(/[*#`]/g, "").trim().slice(0, 120)}`;
@@ -2692,9 +2926,9 @@ function healProgress(cwd, mission) {
   const robin = dispatchCounts2(cwd, mission).get("robin-reviewer") ?? 0;
   let max = 3;
   try {
-    const dir = join17(cwd, ".mugiwara", "missions", mission);
-    const f = readdirSync7(dir).find((x) => x.endsWith(".json") && x !== "continue.json" && !x.startsWith("continue-"));
-    const m = f ? JSON.parse(readFileSync12(join17(dir, f), "utf8")).heal_max_cycles : undefined;
+    const dir = join19(cwd, ".mugiwara", "missions", mission);
+    const f = readdirSync8(dir).find((x) => x.endsWith(".json") && x !== "continue.json" && !x.startsWith("continue-"));
+    const m = f ? JSON.parse(readFileSync15(join19(dir, f), "utf8")).heal_max_cycles : undefined;
     if (typeof m === "number" && m > 0)
       max = m;
   } catch {}
@@ -2708,10 +2942,10 @@ function readEnforce() {
   for (const base of [cwd, homedir2()]) {
     if (!base)
       continue;
-    const file = join18(base, ".mugiwara", "config");
-    if (!existsSync14(file))
+    const file = join20(base, ".mugiwara", "config");
+    if (!existsSync16(file))
       continue;
-    for (const line of readFileSync13(file, "utf8").split(/\r?\n/)) {
+    for (const line of readFileSync16(file, "utf8").split(/\r?\n/)) {
       const [k, v] = line.split("=").map((s) => s.trim());
       if (k !== "enforce")
         continue;
@@ -2726,19 +2960,19 @@ function readEnforce() {
 }
 function countForcedContinuation() {
   try {
-    const file = join18(cwd, ".mugiwara", ".forced-continuations");
-    const prev = existsSync14(file) ? Number(readFileSync13(file, "utf8").trim()) : 0;
-    mkdirSync7(join18(cwd, ".mugiwara"), { recursive: true });
-    writeFileSync7(file, `${(Number.isInteger(prev) && prev > 0 ? prev : 0) + 1}
+    const file = join20(cwd, ".mugiwara", ".forced-continuations");
+    const prev = existsSync16(file) ? Number(readFileSync16(file, "utf8").trim()) : 0;
+    mkdirSync8(join20(cwd, ".mugiwara"), { recursive: true });
+    writeFileSync8(file, `${(Number.isInteger(prev) && prev > 0 ? prev : 0) + 1}
 `);
   } catch {}
 }
 function engaged(sessionId) {
-  const file = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(file))
+  const file = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(file))
     return false;
   try {
-    const m = JSON.parse(readFileSync13(file, "utf8"));
+    const m = JSON.parse(readFileSync16(file, "utf8"));
     if (sessionId && m.session_id)
       return m.session_id === sessionId;
     const touched = Date.parse(m.touched_at ?? "") || 0;
@@ -2757,25 +2991,25 @@ function sourceChanged(ignoreInstallNoise = false) {
 }
 function sessionStartFrom(markerFile) {
   try {
-    const m = JSON.parse(readFileSync13(markerFile, "utf8"));
+    const m = JSON.parse(readFileSync16(markerFile, "utf8"));
     return Date.parse(m.first_seen ?? "") || Date.parse(m.touched_at ?? "") || 0;
   } catch {
     return 0;
   }
 }
 function artifactWorkNow() {
-  const markerFile = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(markerFile))
+  const markerFile = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(markerFile))
     return false;
   const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart)
     return false;
   try {
-    const stack = ["missions", "spec", "plans"].map((s) => join18(cwd, ".mugiwara", s)).filter((p) => existsSync14(p));
+    const stack = ["missions", "spec", "plans"].map((s) => join20(cwd, ".mugiwara", s)).filter((p) => existsSync16(p));
     while (stack.length) {
       const cur = stack.pop();
-      for (const e of readdirSync8(cur, { withFileTypes: true })) {
-        const full = join18(cur, e.name);
+      for (const e of readdirSync9(cur, { withFileTypes: true })) {
+        const full = join20(cur, e.name);
         try {
           if (e.isSymbolicLink())
             continue;
@@ -2794,22 +3028,22 @@ function artifactWorkNow() {
   return false;
 }
 function newestMissionState() {
-  const base = join18(cwd, ".mugiwara", "missions");
-  if (!existsSync14(base))
+  const base = join20(cwd, ".mugiwara", "missions");
+  if (!existsSync16(base))
     return null;
   let best = null;
   let bestAt = -1;
   try {
-    for (const e of readdirSync8(base, { withFileTypes: true })) {
+    for (const e of readdirSync9(base, { withFileTypes: true })) {
       if (!e.isDirectory())
         continue;
-      for (const f of readdirSync8(join18(base, e.name))) {
+      for (const f of readdirSync9(join20(base, e.name))) {
         const stem = f.replace(/\.json$/, "");
         if (!f.endsWith(".json") || stem === "continue" || stem.startsWith("continue-"))
           continue;
-        const p = join18(base, e.name, f);
+        const p = join20(base, e.name, f);
         try {
-          const s = JSON.parse(readFileSync13(p, "utf8"));
+          const s = JSON.parse(readFileSync16(p, "utf8"));
           if (typeof s.mission !== "string" || !s.mission)
             continue;
           const at = statSync4(p).mtimeMs;
@@ -2825,11 +3059,11 @@ function newestMissionState() {
 }
 var LANE_RANK = { direct: 0, lean: 1, standard: 2, full: 3, spike: 4 };
 function executorDispatched(sessionId) {
-  const file = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(file))
+  const file = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(file))
     return false;
   try {
-    const m = JSON.parse(readFileSync13(file, "utf8"));
+    const m = JSON.parse(readFileSync16(file, "utf8"));
     const at = Date.parse(m.executor_dispatched_at ?? "") || 0;
     if (!at)
       return false;
@@ -2841,11 +3075,11 @@ function executorDispatched(sessionId) {
   }
 }
 function plannerDispatched(sessionId) {
-  const file = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(file))
+  const file = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(file))
     return false;
   try {
-    const m = JSON.parse(readFileSync13(file, "utf8"));
+    const m = JSON.parse(readFileSync16(file, "utf8"));
     const at = Date.parse(m.planner_dispatched_at ?? "") || 0;
     if (!at)
       return false;
@@ -2857,25 +3091,25 @@ function plannerDispatched(sessionId) {
   }
 }
 function planTouched() {
-  const missionsDir = join18(cwd, ".mugiwara", "missions");
-  if (!existsSync14(missionsDir))
+  const missionsDir = join20(cwd, ".mugiwara", "missions");
+  if (!existsSync16(missionsDir))
     return false;
-  const markerFile = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(markerFile))
+  const markerFile = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(markerFile))
     return false;
   let sessionStart = 0;
   try {
-    const m = JSON.parse(readFileSync13(markerFile, "utf8"));
+    const m = JSON.parse(readFileSync16(markerFile, "utf8"));
     sessionStart = Date.parse(m.first_seen ?? "") || 0;
   } catch {}
   if (!sessionStart)
     return false;
   try {
-    for (const e of readdirSync8(missionsDir, { withFileTypes: true })) {
+    for (const e of readdirSync9(missionsDir, { withFileTypes: true })) {
       if (!e.isDirectory())
         continue;
-      const plan = join18(missionsDir, e.name, "plan.md");
-      if (!existsSync14(plan))
+      const plan = join20(missionsDir, e.name, "plan.md");
+      if (!existsSync16(plan))
         continue;
       const at = lstatSync3(plan).mtimeMs;
       if (at + 1000 >= sessionStart)
@@ -2898,13 +3132,13 @@ function extractBannerFlow(text) {
   return best;
 }
 function recordBannerFlow(flow, sessionId) {
-  const file = join18(cwd, ".mugiwara", ".engaged");
+  const file = join20(cwd, ".mugiwara", ".engaged");
   try {
-    const prev = existsSync14(file) ? JSON.parse(readFileSync13(file, "utf8")) : {};
+    const prev = existsSync16(file) ? JSON.parse(readFileSync16(file, "utf8")) : {};
     const sameSession = !sessionId || typeof prev.session_id !== "string" || prev.session_id === sessionId;
     if (!sameSession)
       return;
-    writeFileSync7(file, JSON.stringify({
+    writeFileSync8(file, JSON.stringify({
       ...prev,
       touched_at: new Date().toISOString(),
       last_banner_flow: flow,
@@ -2914,11 +3148,11 @@ function recordBannerFlow(flow, sessionId) {
   } catch {}
 }
 function bannerRecorded(sessionId) {
-  const file = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(file))
+  const file = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(file))
     return false;
   try {
-    const m = JSON.parse(readFileSync13(file, "utf8"));
+    const m = JSON.parse(readFileSync16(file, "utf8"));
     if (typeof m.last_banner_flow !== "number" || !m.last_banner_flow_at)
       return false;
     if (sessionId && m.session_id && m.session_id !== sessionId)
@@ -2933,41 +3167,41 @@ function bannerFromTranscript(payload) {
   if (typeof p !== "string" || !p)
     return null;
   try {
-    if (!existsSync14(p))
+    if (!existsSync16(p))
       return null;
-    return extractBannerFlow(readFileSync13(p, "utf8"));
+    return extractBannerFlow(readFileSync16(p, "utf8"));
   } catch {
     return null;
   }
 }
 function bannerThisSession() {
-  const markerFile = join18(cwd, ".mugiwara", ".engaged");
-  if (!existsSync14(markerFile))
+  const markerFile = join20(cwd, ".mugiwara", ".engaged");
+  if (!existsSync16(markerFile))
     return true;
   const sessionStart = sessionStartFrom(markerFile);
   if (!sessionStart)
     return true;
   const re = /^## .*Flow (\d+)\s*\u2014/m;
   try {
-    const missionsDir = join18(cwd, ".mugiwara", "missions");
-    for (const e of readdirSync8(missionsDir, { withFileTypes: true })) {
+    const missionsDir = join20(cwd, ".mugiwara", "missions");
+    for (const e of readdirSync9(missionsDir, { withFileTypes: true })) {
       if (!e.isDirectory())
         continue;
-      const files = [`${join18(missionsDir, e.name)}/decisions.md`];
-      const flowsDir = join18(missionsDir, e.name, "flows");
-      if (existsSync14(flowsDir)) {
-        for (const f of readdirSync8(flowsDir)) {
+      const files = [`${join20(missionsDir, e.name)}/decisions.md`];
+      const flowsDir = join20(missionsDir, e.name, "flows");
+      if (existsSync16(flowsDir)) {
+        for (const f of readdirSync9(flowsDir)) {
           if (f.endsWith(".md"))
-            files.push(join18(flowsDir, f));
+            files.push(join20(flowsDir, f));
         }
       }
       for (const f of files) {
         try {
-          if (!existsSync14(f))
+          if (!existsSync16(f))
             continue;
           if (statSync4(f).mtimeMs + 1000 < sessionStart)
             continue;
-          if (re.test(readFileSync13(f, "utf8")))
+          if (re.test(readFileSync16(f, "utf8")))
             return true;
         } catch {}
       }
@@ -2978,10 +3212,10 @@ function bannerThisSession() {
   return false;
 }
 var EXPLICIT_MAX_BLOCKS = 2;
-var root = join18(dirname2(fileURLToPath2(import.meta.url)), "..");
+var root = join20(dirname3(fileURLToPath3(import.meta.url)), "..");
 function readMarker() {
   try {
-    return JSON.parse(readFileSync13(join18(cwd, ".mugiwara", ".engaged"), "utf8"));
+    return JSON.parse(readFileSync16(join20(cwd, ".mugiwara", ".engaged"), "utf8"));
   } catch {
     return {};
   }
@@ -2997,8 +3231,8 @@ function explicitSession(sessionId) {
 function computedLane() {
   try {
     const bash = findBash();
-    const script = join18(root, "scripts", "lane.sh");
-    if (!bash || !existsSync14(script))
+    const script = join20(root, "scripts", "lane.sh");
+    if (!bash || !existsSync16(script))
       return null;
     const r = spawnSync3(bash, [script, "main", "--json"], { cwd, encoding: "utf8", timeout: 15000, stdio: ["ignore", "pipe", "ignore"] });
     if (r.status !== 0)
@@ -3017,13 +3251,13 @@ function computedLane() {
 }
 function closedThisSession(sessionId) {
   try {
-    const base = join18(cwd, ".mugiwara", "missions");
-    if (!existsSync14(base))
+    const base = join20(cwd, ".mugiwara", "missions");
+    if (!existsSync16(base))
       return false;
-    const start = sessionStartFrom(join18(cwd, ".mugiwara", ".engaged"));
+    const start = sessionStartFrom(join20(cwd, ".mugiwara", ".engaged"));
     let ledger = [];
     try {
-      ledger = readFileSync13(join18(cwd, ".mugiwara", "review-dispatch.jsonl"), "utf8").split(/\r?\n/).filter(Boolean).flatMap((l) => {
+      ledger = readFileSync16(join20(cwd, ".mugiwara", "review-dispatch.jsonl"), "utf8").split(/\r?\n/).filter(Boolean).flatMap((l) => {
         try {
           return [JSON.parse(l)];
         } catch {
@@ -3031,10 +3265,10 @@ function closedThisSession(sessionId) {
         }
       });
     } catch {}
-    for (const e of readdirSync8(base, { withFileTypes: true })) {
+    for (const e of readdirSync9(base, { withFileTypes: true })) {
       if (!e.isDirectory())
         continue;
-      const closed = ["report.md", "pr-verdict.md"].map((f) => join18(base, e.name, f)).filter((f) => existsSync14(f));
+      const closed = ["report.md", "pr-verdict.md"].map((f) => join20(base, e.name, f)).filter((f) => existsSync16(f));
       if (!closed.length)
         continue;
       if (start && closed.some((f) => statSync4(f).mtimeMs + 1000 >= start))
@@ -3062,11 +3296,11 @@ function explicitProblem(sessionId) {
   }
   if (!(lane.lane === "full" || state.sensitive || lane.sensitive.length))
     return null;
-  const dir = join18(cwd, ".mugiwara", "missions", state.dir);
+  const dir = join20(cwd, ".mugiwara", "missions", state.dir);
   const missing = [];
-  if (!existsSync14(join18(dir, "review.md")))
+  if (!existsSync16(join20(dir, "review.md")))
     missing.push("review");
-  if (!existsSync14(join18(dir, "security.md")))
+  if (!existsSync16(join20(dir, "security.md")))
     missing.push("security check");
   if (missing.length) {
     return `Mugiwara: this change has no ${missing.join(" and no ")}, and the crew's process was requested with /mugiwara. ` + `Run the ${missing.join(" and the ")} now and write the result into the mission folder before finishing.`;
@@ -3088,7 +3322,7 @@ function explicitCheck(sessionId) {
     return false;
   }
   try {
-    writeFileSync7(join18(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, explicit_blocks: blocks + 1 }, null, 2) + `
+    writeFileSync8(join20(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, explicit_blocks: blocks + 1 }, null, 2) + `
 `);
   } catch {}
   countForcedContinuation();
@@ -3103,7 +3337,7 @@ function closingCheck() {
     const marker = readMarker();
     const bump = (key, n) => {
       try {
-        writeFileSync7(join18(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, [key]: n + 1 }, null, 2) + `
+        writeFileSync8(join20(cwd, ".mugiwara", ".engaged"), JSON.stringify({ ...marker, [key]: n + 1 }, null, 2) + `
 `);
       } catch {}
       countForcedContinuation();
@@ -3179,7 +3413,7 @@ async function main() {
     }
     try {
       const risky = state.lane === "full" || state.sensitive;
-      const reviewed = ["review.md", "security.md"].some((f) => existsSync14(join18(cwd, ".mugiwara", "missions", state.dir, f)));
+      const reviewed = ["review.md", "security.md"].some((f) => existsSync16(join20(cwd, ".mugiwara", "missions", state.dir, f)));
       if (risky && reviewed && readConfig(cwd).independent_review !== "off" && dispatchedAgents(cwd, state.mission).size === 0) {
         process.stderr.write("Mugiwara: the review of this change ran in the same conversation that wrote it. " + "Ask the crew to run the independent review (Robin and Jinbe as separate agents), or set independent_review=off if you accept an inline review. " + reviewNextStep(state.mission, dispatchedAgents(cwd, state.mission)) + `
 `);
