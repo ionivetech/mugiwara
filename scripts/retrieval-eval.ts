@@ -88,6 +88,8 @@ interface Probe {
   skill: string;
   prompt: string;
   topK: number;
+  /** Case file this probe came from — reported when a probe is duplicated. */
+  file: string;
 }
 
 // --- build index ---
@@ -118,9 +120,28 @@ for (const rel of files) {
 
   const target = c.skill === '_no-skill' ? noSkillProbes : probes;
   for (const p of c.trigger?.positive ?? [])
-    target.push({ kind: 'positive', skill: c.skill, prompt: p.prompt, topK: p.top_k ?? 3 });
+    target.push({ kind: 'positive', skill: c.skill, prompt: p.prompt, topK: p.top_k ?? 3, file: f });
   for (const p of c.trigger?.negative ?? [])
-    target.push({ kind: 'negative', skill: c.skill, prompt: p.prompt, topK: 3 });
+    target.push({ kind: 'negative', skill: c.skill, prompt: p.prompt, topK: 3, file: f });
+}
+
+// --- uniqueness gate ---
+// A copied probe is not extra coverage: it inflates the probe count and the rank-1 rate.
+// Fail so the copy is removed at its source, instead of deduplicating silently. (R3)
+{
+  const firstSeen = new Map<string, string>();
+  const dupes: string[] = [];
+  for (const p of [...probes, ...noSkillProbes]) {
+    const key = `${p.kind}|${p.skill}|${p.prompt}`;
+    const prior = firstSeen.get(key);
+    if (prior) dupes.push(`  "${p.prompt}" (${p.skill}, ${p.kind}) — in ${prior} and ${p.file}`);
+    else firstSeen.set(key, p.file);
+  }
+  if (dupes.length) {
+    console.error(`duplicate retrieval probes: ${dupes.length}. Each prompt may appear in one case file only.`);
+    for (const d of dupes) console.error(d);
+    process.exit(1);
+  }
 }
 
 // --- coverage gate ---
@@ -253,7 +274,7 @@ if (ciArg !== -1) {
   };
   console.log(JSON.stringify(report, null, 2));
 } else {
-  console.log(`\nRetrieval eval: ${allPassed}/${totalProbes} passed, rank-1 ${rank1Rate.toFixed(1)}%, top-3 ${topKRate.toFixed(1)}%, neg ${negRate.toFixed(1)}%, ns ${nsRate.toFixed(1)}%`);
+  console.log(`\nRetrieval eval: ${allPassed}/${totalProbes} unique probes passed, rank-1 ${rank1Rate.toFixed(1)}%, top-3 ${topKRate.toFixed(1)}%, neg ${negRate.toFixed(1)}%, ns ${nsRate.toFixed(1)}%`);
   if (failures.length > 0) {
     console.error(`\n${failures.length} failures:`);
     for (const f of failures) console.error(`  ${f}`);

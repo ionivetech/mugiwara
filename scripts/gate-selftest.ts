@@ -1462,5 +1462,42 @@ console.log('\nT6 — fake-runbook-command mutation');
   }
 }
 
+// --- E1–E5, E7 mutations: evidence integrity (record file list, dropped --cmd, duplicate probes) ---
+console.log('\nE1–E5, E7 — evidence-integrity mutations');
+for (const [id, file, from, to, test, name] of [
+  ['E1', 'src/record.ts', "['diff', '--name-only', base]", "['diff', '--name-only', 'HEAD']", 'test/record.test.ts', 'committed mission work is listed'],
+  ['E2', 'src/record.ts', " && !installed.has(f)", '', 'test/record.test.ts', 'committed mission work is listed'],
+  ['E7', 'src/record.ts', ' && !installEditOnly(projectDir, f, bases)', '', 'test/record.test.ts', 'committed mission work is listed'],
+  ['E3', 'src/record.ts', 'const ran = o.cmd ?', 'const ran = false ?', 'test/record.test.ts', 'quality --cmd --note records both'],
+  ['E4', 'src/record.ts', 'if (o.cmd && !RUNS_CMD.includes(stage))', 'if (false)', 'test/record.test.ts', 'execution --cmd refuses'],
+  ['E5', 'scripts/retrieval-eval.ts', 'if (dupes.length) {', 'if (false) {', 'test/retrieval-eval.test.ts', 'a probe in two case files'],
+] as const) {
+  const f = join(root, file);
+  const original = readFileSync(f, 'utf8');
+  const broken = original.replace(from, to);
+  if (broken === original) { console.error(`✗ ${id}: mutation target not found`); failed++; continue; }
+  try {
+    writeFileSync(f, broken);
+    assert(`${id} mutated → "${name}" fails`, false, () => run(id, `bun test ${test} -t "${name}"`));
+  } finally {
+    writeFileSync(f, original);
+  }
+  assert(`${id} restored → "${name}" passes`, true, () => run(`${id}-restore`, `bun test ${test} -t "${name}"`));
+}
+
+// --- E6 mutation: one probe copied into a second case file → retrieval-eval red ---
+console.log('\nE6 — duplicate-probe mutation');
+{
+  const f = join(root, 'evals', 'cases', 'zz-selftest-duplicate.json');
+  const src = JSON.parse(readFileSync(join(root, 'evals', 'cases', 'retrieval', 'review.json'), 'utf8'));
+  try {
+    writeFileSync(f, JSON.stringify({ name: 'zz-selftest-duplicate', skill: src.skill, trigger: { positive: [src.trigger.positive[0]] } }));
+    assert('copied probe → retrieval-eval fails', false, () => run('E6', 'bun scripts/retrieval-eval.ts'));
+  } finally {
+    unlinkSync(f);
+  }
+  assert('removed → retrieval-eval passes', true, () => run('E6-restore', 'bun scripts/retrieval-eval.ts'));
+}
+
 console.log(`\n${passed} passed, ${failed} failed${FAST ? ' (--fast)' : ''}`);
 process.exit(failed > 0 ? 1 : 0);

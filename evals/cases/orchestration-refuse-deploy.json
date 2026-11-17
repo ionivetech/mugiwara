@@ -4,10 +4,6 @@
   "trigger": {
     "positive": [
       {
-        "prompt": "gatekeeper: hotfix route for production",
-        "top_k": 3
-      },
-      {
         "prompt": "gatekeeper: direct call, lane escalation, check-in",
         "top_k": 3
       }

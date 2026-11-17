@@ -16,11 +16,7 @@
         "top_k": 3
       }
     ],
-    "negative": [
-      {
-        "prompt": "tweak a typo in the README"
-      }
-    ]
+    "negative": []
   },
   "behavioral": [
     {

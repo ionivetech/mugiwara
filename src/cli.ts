@@ -325,7 +325,11 @@ function pickMission(projectDir: string, named: string | undefined, verb: string
 function recordCmd(flags: Args['flags'], positionals: string[]): void {
   const projectDir = resolveProjectDir(str(flags.project));
   const stage = positionals[1] as Stage | undefined;
-  if (!stage || !STAGES.includes(stage)) { console.error(`usage: mugiwara record <${STAGES.join('|')}> [mission] [--cmd "<command>"] [--note "<text>"]`); process.exit(2); }
+  if (!stage || !STAGES.includes(stage)) {
+    console.error(`usage: mugiwara record <${STAGES.join('|')}> [mission] [--cmd "<command>"] [--note "<text>"]`);
+    console.error('  --cmd is run and its real exit code recorded by: gates, quality, healing. Other stages refuse it.');
+    process.exit(2);
+  }
   const mission = pickMission(projectDir, positionals[2], `record ${stage}`);
   const r = recordStage(projectDir, mission, stage, { cmd: str(flags.cmd), note: str(flags.note) });
   if ('error' in r) { console.error(`✗ ${r.error}`); process.exit(1); }
