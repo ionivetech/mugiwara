@@ -34,7 +34,7 @@ To record real tokens, set `MUGIWARA_TOKENS` to a total, or write `input_tokens`
 
 `mugiwara cost` prints the ledger for a mission: the cost envelope, work the crew avoided, efficiency, and the number of cost decisions in the trail. Wasted work (repeated reads, filler, a fix loop that goes nowhere) is counted as detected, stopped or compressed, and the closing report lists it as avoided work. The crew acts on these verdicts and records them. They never force the model. Only decision rows written by the cost checks count in the ledger. Hand-written decision rows stay in the report as the audit trail.
 
-Measured: the skill and agent index holds 14 skills (**Current:** 3,960 chars). 300 pointers resolve, 0 broken. Retrieval probes: 268, with rank 1 at 96.7% on the positive cases.
+Measured: the skill and agent index holds 14 skills (**Current:** 3,960 chars). 300 pointers resolve, 0 broken. Retrieval probes: 225, with rank 1 at 95.7% on the positive cases.
 
 ## Habits from your host
 
