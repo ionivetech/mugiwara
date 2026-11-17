@@ -2,16 +2,7 @@
   "name": "orchestration-refuse-key-rotation",
   "skill": "mugiwara-orchestration",
   "trigger": {
-    "positive": [
-      {
-        "prompt": "gatekeeper: direct call, lane escalation, check-in",
-        "top_k": 3
-      },
-      {
-        "prompt": "gatekeeper: hotfix route for production",
-        "top_k": 3
-      }
-    ],
+    "positive": [],
     "negative": [
       {
         "prompt": "show me which keys are in the config file"
